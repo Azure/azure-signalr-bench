@@ -91,6 +91,16 @@ namespace JenkinsScript
             }
         }
 
+        public static string ReadFile(string path)
+        {
+            string content;
+            using (StreamReader file = new StreamReader(path, true))
+            {
+                content = file.ReadToEnd();
+            }
+            return content;
+        }
+
         public static class GuidEncoder
         {
             public static string Encode(string guidText)

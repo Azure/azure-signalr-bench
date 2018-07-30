@@ -131,9 +131,30 @@ namespace JenkinsScript
                         DogfoodSignalROps.UnregisterDogfoodCloud (argsOption.ExtensionScriptDir);
                     }
                     break;
-                case "StartAppServer":
-                    ShellHelper.StartAppServerBySsh(argsOption.AzureSignalrConnectionString,
-                        agentConfig.AppServer, agentConfig.SshPort, agentConfig.User, $"/home/{agentConfig.User}/azure-signalr-bench/v2/AppServer");
+                case "AutoRun":
+                    var typeList = jobConfig.ServiceTypeList;
+                    foreach (var serviceType in typeList)
+                    {
+                        foreach (var transportType in jobConfig.TransportTypeList)
+                        {
+                            foreach (var hubProtocol in jobConfig.HubProtocolList)
+                            {
+                                foreach (var scenario in jobConfig.ScenarioList)
+                                {
+                                    ShellHelper.CreateResultFolder($"log/{Environment.GetEnvironmentVariable("result_root")}");
+                                    var outputFile = $"log_appserver_{serviceType}_{transportType}_{ hubProtocol}_{scenario}.txt";
+                                    var started = ShellHelper.StartAppServerBySsh(argsOption.AzureSignalrConnectionString,
+                                        agentConfig.AppServer, agentConfig.SshPort, agentConfig.User,
+                                        $"/home/{agentConfig.User}/azure-signalr-bench/v2/AppServer", $"log/{outputFile}", 60);
+                                    if (!started)
+                                    {
+                                        Console.WriteLine("Fail to start app server");
+                                        continue;
+                                    }
+                                }
+                            }
+                        }
+                    }
                     break;
                 case "debugmaclocal":
                     {

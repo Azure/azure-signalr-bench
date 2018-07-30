@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Threading.Tasks;
 
 namespace JenkinsScript
@@ -44,6 +45,26 @@ namespace JenkinsScript
                 HandleResult (errCode, result);
             }
 
+            return (errCode, result);
+        }
+
+        public static (int, string) RemoteSshAndRecordOutput(string user, string host, int port, string cmd, string outputFile, bool wait = true, int retry = 1)
+        {
+            int errCode = 0;
+            string result = "";
+            for (var i = 0; i < retry; i++)
+            {
+                if (host.IndexOf("localhost") >= 0 || host.IndexOf("127.0.0.1") >= 0) return Bash(cmd, wait);
+                Util.Log($"port: {port}");
+                Util.Log($"host: {host}");
+                Util.Log($"cmd: {cmd}");
+                string sshCmd = $"ssh -p {port} -o StrictHostKeyChecking=no {user}@{host} \"{cmd}\" > {outputFile}";
+                Util.Log($"SSH Cmd: {sshCmd}");
+                (errCode, result) = Bash(sshCmd, wait: wait, handleRes: false);
+                if (errCode == 0) break;
+                Util.Log($"retry {i + 1}th time");
+                Task.Delay(TimeSpan.FromSeconds(1)).Wait();
+            }
             return (errCode, result);
         }
 
@@ -187,15 +208,33 @@ namespace JenkinsScript
 
         }
 
-        public static (int, string) StartAppServerBySsh(string azureSignalrConnectionString, string appServerHost, int sshPort, string loginUser, string appDir)
+        public static (int, string) CreateResultFolder(string resultRootDir)
+        {
+            var cmd = $"mkdir {resultRootDir}";
+            return Bash(cmd, wait: true, handleRes: true);
+        }
+
+        public static bool StartAppServerBySsh(string azureSignalrConnectionString, string appServerHost, int sshPort, string loginUser, string appDir, string outputFilePath, int wait)
         {
             var errCode = 0;
             var result = "";
+
             var cmd = $"cd {appDir}; " +
                 $"export Azure__SignalR__ConnectionString='{azureSignalrConnectionString}'; " +
                 $"dotnet run";
-            (errCode, result) = ShellHelper.RemoteSshBash(loginUser, appServerHost, sshPort, cmd, wait: false);
-            return (errCode, result);
+
+            (errCode, result) = RemoteSshAndRecordOutput(loginUser, appServerHost, sshPort, cmd, outputFilePath);
+            var i = 0;
+            while (i < wait)
+            {
+                var content = Util.ReadFile(outputFilePath);
+                if (content.Contains("HttpConnection Started"))
+                {
+                    break;
+                }
+                i++;
+            }
+            return i < wait;
         }
 
         public static (int, string) StartRpcSlaves (AgentConfig agentConfig, ArgsOption argsOption,
