@@ -211,7 +211,11 @@ namespace JenkinsScript
         public static (int, string) CreateResultFolder(string resultRootDir)
         {
             var cmd = $"mkdir {resultRootDir}";
-            return Bash(cmd, wait: true, handleRes: true);
+            if (!Directory.Exists(resultRootDir))
+            {
+                return Bash(cmd, wait: true, handleRes: true);
+            }
+            return (1, "");
         }
 
         public static bool StartAppServerBySsh(string azureSignalrConnectionString, string appServerHost, int sshPort, string loginUser, string appDir, string outputFilePath, int wait)
