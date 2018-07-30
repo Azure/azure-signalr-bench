@@ -1,0 +1,13 @@
+- name: "Modify limits.conf"
+  hosts: linux
+  user: "{{ansible_ssh_user}}"
+  become: true
+  become_user: root
+  become_method: sudo
+  #sudo: yes
+  tasks:
+  - pam_limits:
+     domain: "{{ansible_ssh_user}}"
+     limit_type: soft
+     limit_item: nofile
+     value: 655350

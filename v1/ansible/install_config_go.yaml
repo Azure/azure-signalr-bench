@@ -1,0 +1,46 @@
+- name: Install and configure GOPATH
+  hosts: linux
+  #become: yes
+  #become_method: sudo
+  vars:
+    user: "{{ansible_ssh_user}}"
+    home_dir: "/home/honzhan"
+    tools_dir: "/home/honzhan/Tools"
+  tasks:
+    - block:
+      - name: "Checking Tools folder"
+        stat:
+          path: "{{item}}"
+        register: folder_stats
+        with_items:
+        - "{{ tools_dir }}"
+      - name: "Creating Tools folder without disturbing previous permissions"
+        file:
+          path: "{{item.item}}"
+          state: directory
+          mode: 0755
+          group: "honzhan"
+          owner: "honzhan"
+        when: item.stat.exists == false
+        with_items:
+          - "{{folder_stats.results}}"
+    - name: Download golang tar
+      get_url:
+         url: "https://dl.google.com/go/go1.9.4.linux-amd64.tar.gz"
+         dest: "{{tools_dir}}"
+         mode: 0755
+    - name: Extract the Go tarball
+      unarchive:
+         src: "{{tools_dir}}/go1.9.4.linux-amd64.tar.gz"
+         copy: no
+         dest: "{{tools_dir}}"
+    - name: Modify .bashrc
+      blockinfile:
+         dest: "{{home_dir}}/.bashrc"
+         block: |
+           export GOROOT=$HOME/Tools/go
+           export GOBIN=$GOROOT/bin
+           export PATH=$GOBIN:$PATH
+         marker: '# {mark} ANSIBLE MANAGED BLOCK - changes for golang'
+         insertafter: EOF
+         create: yes

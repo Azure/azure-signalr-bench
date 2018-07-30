@@ -1,0 +1,18 @@
+- hosts: linux
+  become: true
+  become_user: root
+  become_method: sudo
+  tasks:
+  - name: "Add apt-transport-https"
+    apt: name="apt-transport-https" state=present
+  - name: "Add apt key"
+    apt_key:
+      url: https://packages.cloud.google.com/apt/doc/apt-key.gpg
+      state: present
+  - name: "Update source list"
+    shell: |
+      echo "deb http://apt.kubernetes.io/ kubernetes-xenial main" >> /etc/apt/sources.list.d/kubernetes.list
+  - name: "Install"
+    apt:
+      name: kubectl
+      update_cache: yes

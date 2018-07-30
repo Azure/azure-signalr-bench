@@ -1,0 +1,11 @@
+- name: Build sigbench branch
+  hosts: linux 
+  vars:
+    go_home: "/home/{{ansible_ssh_user}}/Tools/go/bin"
+    sigbench_home: "/home/{{ansible_ssh_user}}/sigbench"
+  tasks:
+    - name: "Build sigbench benchmark"
+      shell: |
+        export GOPATH="{{sigbench_home}}"
+        cd "{{sigbench_home}}"
+        "{{go_home}}/go" build -v -o websocket-bench aspnet.com

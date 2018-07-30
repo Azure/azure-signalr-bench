@@ -1,0 +1,7 @@
+- hosts: linux
+  tasks:
+  - git:
+       repo: https://github.com/realwanpengli/signalr_auto_test_framework.git
+       dest: "/home/{{ansible_ssh_user}}/signalr_auto_test_framework"
+       update: yes
+       version: master

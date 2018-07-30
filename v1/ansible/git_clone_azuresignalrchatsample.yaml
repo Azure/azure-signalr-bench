@@ -1,0 +1,7 @@
+- hosts: linux
+  tasks:
+  - git:
+       repo: https://github.com/clovertrail/signalr-bench.git
+       dest: "/home/{{ansible_user}}/signalr-bench"
+       update: yes
+       version: master

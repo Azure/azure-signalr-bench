@@ -1,0 +1,15 @@
+Phases:
+- Name: broadcast
+  UsersPerSecond: {{ UsersPerSecond }}
+  Duration: {{ Duration }}
+SessionNames:
+- signalrcoreservice:broadcast
+SessionPercentages:
+- 1
+SessionParams:
+ host: {{ Endpoint }}
+ repeatEcho: true
+ useNonBlocking: true
+ hub: {{ Hub }}
+ audience: {{ Endpoint }}/client/
+ key: {{ Key }}

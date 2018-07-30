@@ -1,0 +1,15 @@
+- hosts: linux
+  become: true
+  become_user: root
+  become_method: sudo
+  tasks:
+  - name: Install list of packages
+    apt: name={{item}} state=installed
+    with_items:
+      - python-pip
+      - unzip
+      - libcurl4-openssl-dev
+  - name: Install Python packages
+    pip: name={{item}}
+    with_items:
+      - jinja2

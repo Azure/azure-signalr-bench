@@ -1,0 +1,9 @@
+[linux]
+#ubuntu1 ansible_host=ubuntu1.southeastasia.cloudapp.azure.com ansible_port=22222 ansible_user=honzhan
+#ubuntu2 ansible_host=ubuntu2.southeastasia.cloudapp.azure.com ansible_port=22222 ansible_user=honzhan
+#service ansible_host=signalrservice.eastus.cloudapp.azure.com ansible_port=22222 ansible_user=honzhan
+#perf2 ansible_host=perf2.eastus.cloudapp.azure.com ansible_port=22222 ansible_user=honzhan
+#bench ansible_host=benchserver.eastus.cloudapp.azure.com ansible_port=22222 ansible_user=honzhan
+appserver ansible_host=appserver.eastus.cloudapp.azure.com ansible_port=22222 ansible_user=honzhan
+#vm5_bench ansible_ssh_host=52.230.29.121 ansible_ssh_port=50001 ansible_ssh_user=honzhan
+#vm6_bench ansible_ssh_host=52.230.29.121 ansible_ssh_port=50003 ansible_ssh_user=honzhan

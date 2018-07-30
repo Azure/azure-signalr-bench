@@ -1,0 +1,16 @@
+Phases:
+- Name: echo
+  UsersPerSecond: {{ UsersPerSecond }}
+  Duration: {{ Duration }}
+SessionNames:
+- signalrcoreservicemsgpack:echo
+SessionPercentages:
+- 1
+SessionParams:
+ host: {{ Endpoint }}
+ repeatEcho: true
+ useNonBlocking: true
+ #lazySending: true
+ hub: {{ Hub }}
+ audience: {{ Endpoint }}/client/
+ key: {{ Key }}

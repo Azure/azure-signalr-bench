@@ -1,0 +1,24 @@
+- hosts: linux
+  tasks:
+  - block:
+    - name: "Checking sigbench folder"
+      stat:
+       path: "{{item}}"
+      register: folder_stats
+      with_items:
+      - ["/home/honzhan/sigbench"]
+    - name: "Creating sigbench folder without disturbing previous permissions"
+      file:
+       path: "{{item.item}}"
+       state: directory
+       mode: 0755
+       group: honzhan #"{{ansible_ssh_user}}"
+       owner: honzhan #"{{ansible_ssh_user}}"
+      when: item.stat.exists == false
+      with_items:
+      - "{{folder_stats.results}}"
+  - git:
+       repo: https://github.com/clovertrail/websocket-bench-1.git
+       dest: "/home/{{ansible_ssh_user}}/sigbench/src/aspnet.com"
+       update: yes
+       version: master
