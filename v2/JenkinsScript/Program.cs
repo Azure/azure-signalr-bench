@@ -151,6 +151,10 @@ namespace JenkinsScript
                                         Console.WriteLine("Fail to start app server");
                                         continue;
                                     }
+                                    else
+                                    {
+                                        Console.WriteLine("App server is started!");
+                                    }
                                 }
                             }
                         }
