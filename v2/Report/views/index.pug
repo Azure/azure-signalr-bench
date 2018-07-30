@@ -1,0 +1,13 @@
+extends layout
+
+block content
+  h1= title
+  h2 Report
+  
+  ul
+    for res in results
+      li
+        a(href="detail?timestamp="+res) #{res}
+
+  script(src='https://cdn.bootcss.com/jquery/3.3.1/core.js')
+

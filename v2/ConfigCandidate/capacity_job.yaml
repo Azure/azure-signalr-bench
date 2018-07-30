@@ -1,0 +1,56 @@
+#####################################################
+# common config
+#concurrentConnection: 100
+duration: 10
+interval: 1
+pipeline: [createConn, startConn, scenario, stopConn, disposeConn]
+serverUrl: http://wanlsignalrautotestappserver.eastus.cloudapp.azure.com:5050/signalrbench
+#####################################################
+
+#####################################################
+signalrUnit: [unit1, unit2]
+#serviceTypeList: [selfhost]
+#####################################################
+
+###################################################
+# benchmark matrix
+hubProtocolList: [json]
+transportTypeList: [Websockets]
+scenarioList: [echo, broadcast, group]
+###################################################
+
+###################################################
+# pros: easy to add more config number
+# cons: if unit add one more, every array should be extended
+###################################################
+# signalr unit based config
+scenarios:
+  echo: 
+    connectionIncreaseStep: 
+      echo: [500]
+    connectionBase: 
+      echo: [1000]
+    connectionLength: 2
+  broadcast:
+    connectionIncreaseStep: 
+      broadcast: [100]
+    connectionBase: 
+      broadcast: [50]
+    connectionLength: 3
+  group:
+    connectionIncreaseStep: 
+      echo: [500]
+      broadcast: [100]
+      groupConnection: [100]
+      groupNum: [100]
+    connectionBase: 
+      echo: [1000]
+      broadcast: [50]
+      groupConnection: [50]
+      groupNum: [100]
+    connectionLength: 1
+#####################################################
+
+
+
+

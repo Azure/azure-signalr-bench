@@ -1,0 +1,52 @@
+#####################################################
+# common config
+#concurrentConnection: 100
+duration: 10
+interval: 1
+pipeline: [createConn, startConn, scenario, stopConn, disposeConn]
+serverUrl: http://wanlsignalrautotestappserver.eastus.cloudapp.azure.com:5050/signalrbench
+#####################################################
+
+
+###################################################
+# benchmark matrix
+hubProtocolList: [json,messagepack]
+transportTypeList: [Websockets, LongPolling, ServerSentEvents]
+scenarioList: [mix, broadcast, echo]
+###################################################
+
+###################################################
+# signalr unit based config
+#serviceTypeList: [selfhost]
+signalrUnit: [unit1]
+connectionIncreaseStep: 
+  echo: [500]
+  broadcast: [100]
+connectionBase: 
+  echo: [1000]
+  broadcast: [50]
+connectionLength: 1
+#####################################################
+
+#####################################################
+# mix scenario
+mix:
+  mixEchoConnection: 100
+  mixBroadcastConnection: 30
+  mixGroupConnection: 5
+  mixGroupName: group
+#####################################################
+
+#####################################################
+# based on different signalr unit
+group:
+  groupConnectionBase: [1000, 2000, 3000]
+  groupConnectionStep: [50,50,50]
+  groupConnectionLength: 2
+  groupNumBase: [30, 40, 50]
+  groupNumStep: [30, 40, 50]
+  groupNumLength: 2
+#####################################################
+
+
+

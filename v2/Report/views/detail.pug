@@ -1,0 +1,71 @@
+extends layout
+
+block content
+  div.container
+    ul#tab(class="nav nav-tabs")
+
+    h3= title
+    h4 Detail
+
+    h5 Environment
+
+    h5 Latency distribution
+
+    div#tab-content
+
+    script(src='https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js')
+    script(src='https://cdn.bootcss.com/Chart.js/2.7.2/Chart.bundle.min.js')
+    script(src='https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js')
+    script(src='javascripts/util.js')
+    script(src='javascripts/chart.js')
+
+
+
+  script.
+
+    function createTabpanels(results) {
+      // config tabpanels
+      var active = "active";
+      var contentActive = "in active";
+      for (var scenario in results) {
+          var tabName = parseScenarioLabel(scenario);
+          $("#tab").append(`<li class="${active}"><a data-toggle="tab" href="#${scenario}-content" id="${scenario}-navitem">${tabName}</a></li>`);
+          $("#tab-content").append(`<div id="${scenario}-content" class="tab-pane fade ${contentActive}">`);
+          $(`#${scenario}-content`).append(`<div id="canvas-holder-${scenario}" style='width:40%; position: absolute'></div>`);
+          $(`#canvas-holder-${scenario}`).append(createLatencyDistributionTable(results[scenario]));
+          $(`#canvas-holder-${scenario}`).append(`<canvas id="chart-area-${scenario}-pie"></canvas>`);
+          $(`#canvas-holder-${scenario}`).append(`<canvas id="chart-area-${scenario}-line-percentage"></canvas>`);
+          $(`#canvas-holder-${scenario}`).append(`<canvas id="chart-area-${scenario}-line-messageRate"></canvas>`);
+          
+          $(`#${scenario}-navitem`).click((e) => {
+            console.log('id', e.target.id);
+            var curScenario = e.target.id.split("-")[0];
+            $(`#${curScenario}-content`).show();
+            console.log("scenario", curScenario);
+            for (var snr in results) {
+              if (snr == curScenario) continue;
+              $(`#${snr}-content`).hide();
+              console.log("hide", snr);
+            }
+          });
+
+          if (active == "") $(`#${scenario}-content`).hide();
+          if (active != "") $(`#${scenario}-content`).show();
+          active = "";
+          contentActive = "";
+      }
+    }
+
+    $(document).ready(function () {
+
+        var results = !{data};
+        
+        createTabpanels(results);
+
+        createPieChart(results);
+
+        createLatencyLineChart(results);
+
+        createMessageRateLineChart(results);
+
+    });

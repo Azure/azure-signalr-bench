@@ -1,0 +1,20 @@
+{
+  "Default": {
+    "Client": "SignalRCoreEcho",
+    "State": "Waiting",
+    "ServerBenchmarkUriBaked": "http://wanlauto5c56132064AppSvrDNS0.eastus.cloudapp.azure.com:5000/signalrbench",
+    "ServerBenchmarkUri": "http://wanldebugappserver.eastus.cloudapp.azure.com:5000/signalrbench",
+    "ServerBenchmarkUriBak": "http://wanlsignalrautotestappserver.eastus.cloudapp.azure.com:5000/signalrbench",
+    "Duration": 120,
+    "Interval": 1,
+    "TransportType": "WebSockets",
+    "HubProtocolBak": "messagepack",
+    "HubProtocol": "json",
+    "Scenarios": "Echo",
+    "CallbackName": "echo"
+  },
+  "Echo1": {
+    "Id": 0,
+    "Connections": 1000
+  }
+}

@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp2.1</TargetFramework>
+    <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommandLineParser" Version="2.2.1" />
+    <PackageReference Include="Microsoft.Azure.Management.Fluent" Version="1.13.0" />
+    <PackageReference Include="Microsoft.Azure.Management.ResourceManager.Fluent" Version="1.13.0" />
+    <PackageReference Include="Microsoft.WindowsAzure.SDK" Version="2.9.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
+    <PackageReference Include="NuGet.CommandLine" Version="4.6.2" />
+    <PackageReference Include="WindowsAzure.Storage" Version="9.2.0" />
+    <PackageReference Include="YamlDotNet" Version="4.3.1" />
+  </ItemGroup>
+
+</Project>

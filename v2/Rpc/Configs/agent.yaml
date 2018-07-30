@@ -1,0 +1,10 @@
+master: localhost
+slaves:
+#  - wanlsignalrautotestagent.eastus.cloudapp.azure.com
+ - localhost
+appServer: localhost 
+rpcPort: 5555
+sshPort: 22222
+user: XXXXX
+password: XXXXX
+repo: https://github.com/realwanpengli/signalr_auto_test_framework.git

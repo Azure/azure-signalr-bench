@@ -1,0 +1,10 @@
+connections: 1000
+hubProtocol: json
+transportType: websockets
+interval: 1
+duration: 10
+scenarios: [echo]
+# serverUrl: http://localhost:5000/echo
+serverUrl: http://wanlsignalrautotestappserver.eastus.cloudapp.azure.com:5000/echo
+pipeline: [createConn, startConn, echo, stopConn, disposeConn]
+callbackName: "EchoCallback"
