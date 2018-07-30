@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using CommandLine;
@@ -27,14 +28,16 @@ namespace JenkinsScript
             // parse agent config file
             AgentConfig agentConfig = new AgentConfig ();
             JobConfig jobConfig = new JobConfig ();
-            //List<string> hosts = new List<string>();
-
-            if (argsOption.AgentConfigFile != null && argsOption.JobConfigFile != null)
+            var configLoader = new ConfigLoader();
+            if (argsOption.AgentConfigFile != null)
             {
-                var configLoader = new ConfigLoader ();
                 agentConfig = configLoader.Load<AgentConfig> (argsOption.AgentConfigFile);
-                jobConfig = configLoader.Load<JobConfig> (argsOption.JobConfigFile);
-                Util.Log ("finish loading config");
+                Util.Log ("finish loading agent config");
+            }
+            if (argsOption.JobConfigFile != null)
+            {
+                jobConfig = configLoader.Load<JobConfig>(argsOption.JobConfigFile);
+                Util.Log("finish loading job config");
             }
 
             var errCode = 0;
@@ -72,11 +75,11 @@ namespace JenkinsScript
                     }
                     else
                     {
-                        var destFile = System.IO.Path.Combine(argsOption.ExtensionScriptDir, "utils.sh");
-                        if (argsOption.UtilsFilePath != null)
-                        {
-                            System.IO.File.Copy(argsOption.UtilsFilePath, destFile, true);
-                        }
+                        // Download the secret shell scripts from Azure Blob
+                        Util.DownloadScrectScripts(argsOption.ExtensionScriptDir, "utils.sh");
+                        Util.DownloadScrectScripts(argsOption.ExtensionScriptDir, "kvsignalrdevseasia.config");
+                        Util.DownloadScrectScripts(argsOption.ExtensionScriptDir, "srdevacsrpd.config");
+
                         var postfix = Util.GenRandPrefix ();
                         resourceGroupName = Util.GenResourceGroupName (postfix);
                         signalrServiceName = Util.GenSignalRServiceName (postfix);
@@ -100,11 +103,10 @@ namespace JenkinsScript
                         }
                         else
                         {
-                            var destFile = System.IO.Path.Combine(argsOption.ExtensionScriptDir, "utils.sh");
-                            if (argsOption.UtilsFilePath != null)
-                            {
-                                System.IO.File.Copy(argsOption.UtilsFilePath, destFile, true);
-                            }
+                            // Download the secret shell scripts from Azure Blob
+                            Util.DownloadScrectScripts(argsOption.ExtensionScriptDir, "utils.sh");
+                            Util.DownloadScrectScripts(argsOption.ExtensionScriptDir, "kvsignalrdevseasia.config");
+                            Util.DownloadScrectScripts(argsOption.ExtensionScriptDir, "srdevacsrpd.config");
                             DogfoodSignalROps.DeleteDogfoodSignalRService (argsOption.ExtensionScriptDir, argsOption.ResourceGroup, argsOption.SignalRService);
                         }
                     }
@@ -128,6 +130,10 @@ namespace JenkinsScript
                     {
                         DogfoodSignalROps.UnregisterDogfoodCloud (argsOption.ExtensionScriptDir);
                     }
+                    break;
+                case "StartAppServer":
+                    ShellHelper.StartAppServerBySsh(argsOption.AzureSignalrConnectionString,
+                        agentConfig.AppServer, agentConfig.SshPort, agentConfig.User, $"/home/{agentConfig.User}/azure-signalr-bench/v2/AppServer");
                     break;
                 case "debugmaclocal":
                     {

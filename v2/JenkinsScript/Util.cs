@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using Newtonsoft.Json.Linq;
@@ -78,6 +79,16 @@ namespace JenkinsScript
             // SignalR Service name will be used in http url, so upper case will be automatically changed to lower case.
             // In order to avoid confusion, please use lower case in SignalR service naming.
             return "sr" + postfix;
+        }
+
+        public static void DownloadScrectScripts(string externalScriptDir, string blobFileName)
+        {
+            var content = AzureBlobReader.ReadBlob(blobFileName);
+            var destFile = Path.Combine(externalScriptDir, blobFileName);
+            using (StreamWriter sr = new StreamWriter(destFile, false))
+            {
+                sr.Write(content);
+            }
         }
 
         public static class GuidEncoder

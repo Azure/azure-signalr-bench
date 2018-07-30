@@ -31,6 +31,7 @@ namespace JenkinsScript
         [Option ('S', "step", Required = false, HelpText = "Specify the Step")]
         public string Step { get; set; }
 
+        #region Functionalities for calling external shell scripts
         [Option ("ExtensionScriptsDir", Required = false, HelpText = "Specify the absolute directory of extension scripts")]
         public string ExtensionScriptDir { get; set; }
 
@@ -46,6 +47,10 @@ namespace JenkinsScript
         [Option ("ResourceGroupLocation", Required = false, Default = "southeastasia", HelpText = "Specify the Location of resource group")]
         public string Location { get; set; }
 
+        [Option ("utils", Required = false, Default = null, HelpText = "Specify the Utils.sh which is required by external scripts")]
+        public string UtilsFilePath { get; set; }
+        #endregion
+
         [Option ('p', "spblobname", Required = false, HelpText = "Specify the Service Principal")]
         public string SpBlobName { get; set; }
 
@@ -54,9 +59,6 @@ namespace JenkinsScript
 
         [Option ("debug", Required = false, HelpText = " debug")]
         public string Debug { get; set; }
-
-        [Option ("utils", Required = false, Default = null, HelpText = "Specify the Utils.sh which is required by external scripts")]
-        public string UtilsFilePath { get; set; }
 
         [Option ("commit", Default = "", Required = false, HelpText = "")]
         public string Commit { get; set; }
