@@ -275,10 +275,10 @@ namespace JenkinsScript
                 {
                     cmd += $"dotnet run ";
                 }
-                cmd += "-- --rpcPort {rpcPort} --pidFile /tmp/agent.pid> {outputFile};";
+                cmd += $"-- --rpcPort {rpcPort} --pidFile /tmp/agent.pid> {outputFile};";
                 Util.Log($"CMD: {sshUser}@{host}: {cmd}");
                 (errCode, result) = RemoteSshIgnoreOutput(sshUser, host, sshPort, cmd, wait: false);
-                var localOutputFile = $"{slaveList.IndexOf(host)}_{outputFile}";
+                var localOutputFile = $"{outputFile}_{slaveList.IndexOf(host)}";
                 var i = 0;
                 while (i < timeOut)
                 {

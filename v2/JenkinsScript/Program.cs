@@ -164,6 +164,7 @@ namespace JenkinsScript
                                         $"/home/{agentConfig.User}/azure-signalr-bench/v2/Rpc/Bench.Server/",
                                         agentConfig.RpcPort, agentConfig.User, agentConfig.SshPort, outputLogFile, agentConfig.UseHomeDotnet, 60);
                                     Util.Log("All slaves are ready to accept master commands");
+
                                     // Start RPC Master
                                     outputLogFile = $"log/{resultRootDir}/log_rpcmaster_{serviceType}_{transportType}_{ hubProtocol}_{scenario}.txt";
                                     var outputDir = $"{serviceType}_{transportType}_{hubProtocol}_{scenario}_{agentConfig.Connections}";
