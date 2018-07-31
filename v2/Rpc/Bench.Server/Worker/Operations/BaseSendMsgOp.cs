@@ -68,13 +68,14 @@ namespace Bench.RpcSlave.Worker.Operations
                 var ind = i;
 
                 if (!_tk.Init)
-                    _tk.Connections[i - _tk.ConnectionRange.Begin].On(_tk.BenchmarkCellConfig.Scenario, (int count, string time, string thisId, string targetId) =>
-                    {
-                        var receiveTimestamp = Util.Timestamp();
-                        var sendTimestamp = Convert.ToInt64(time);
-                        _tk.Counters.CountLatency(sendTimestamp, receiveTimestamp);
-                        _tk.Counters.SetServerCounter(count);
-                    });
+                    _tk.Connections[i - _tk.ConnectionRange.Begin].On(_tk.BenchmarkCellConfig.Scenario,
+                        (int count, string time, string thisId, string targetId, byte[] messageBlob) =>
+                        {
+                            var receiveTimestamp = Util.Timestamp();
+                            var sendTimestamp = Convert.ToInt64(time);
+                            _tk.Counters.CountLatency(sendTimestamp, receiveTimestamp);
+                            _tk.Counters.SetServerCounter(count);
+                        });
 
             }
         }
@@ -114,9 +115,13 @@ namespace Bench.RpcSlave.Worker.Operations
                     try
                     {
                         if (_tk.BenchmarkCellConfig.Scenario.Contains("sendToClient"))
-                            await connection.SendAsync(_tk.BenchmarkCellConfig.Scenario, _tk.BenchmarkCellConfig.TargetConnectionIds[ind + _tk.ConnectionRange.Begin], $"{Util.Timestamp()}");
+                        {
+                            await connection.SendAsync(_tk.BenchmarkCellConfig.Scenario, _tk.BenchmarkCellConfig.TargetConnectionIds[ind + _tk.ConnectionRange.Begin], $"{Util.Timestamp()}", messageBlob);
+                        }
                         else
-                            await connection.SendAsync(_tk.BenchmarkCellConfig.Scenario, $"{Util.GuidEncoder.Encode(Guid.NewGuid())}", $"{Util.Timestamp()}");
+                        {
+                            await connection.SendAsync(_tk.BenchmarkCellConfig.Scenario, $"{Util.GuidEncoder.Encode(Guid.NewGuid())}", $"{Util.Timestamp()}", messageBlob);
+                        }
                         _sentMessages[ind]++;
                         _tk.Counters.IncreseSentMsg();
 

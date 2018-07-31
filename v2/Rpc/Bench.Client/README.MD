@@ -27,3 +27,8 @@ Pipeline should be `--pipeLine 'createConn;startConn;up1;scenario;up1;scenario;u
 
 `up1` names add one more connection to send message in next epoch.
 Only `up1`, `up2`, `up5`, `up100`, `up200`, `up500`, `up1000`, `up2000`, `up5000` can be used.
+
+
+#### Debug mode
+Set `--debug 'debug'` to debug in localhost, which will try to localhost:5555 and localhost:6666.
+In this mode, the slaveList should be `--slaveList 'localhost;localhost'`, and slave number should be `--slaves 2`
