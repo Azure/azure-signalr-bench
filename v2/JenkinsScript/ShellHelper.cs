@@ -296,7 +296,8 @@ namespace JenkinsScript
             var tasks = new List<Task>();
             slaveList.ForEach(host => tasks.Add(Task.Run(() =>
             {
-                cmd = $"pid=`cat /tmp/agent.pid`; kill -9 $pid; cd {slaveDir}; ";
+                cmd = "pid=`cat /tmp/agent.pid`; kill -9 $pid;";
+                cmd += $"cd {slaveDir}; ";
                 if (useDotnetPath)
                 {
                     cmd += $"/home/{sshUser}/.dotnet/dotnet run ";
