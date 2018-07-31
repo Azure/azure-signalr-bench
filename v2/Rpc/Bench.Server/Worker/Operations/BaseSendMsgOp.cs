@@ -116,10 +116,15 @@ namespace Bench.RpcSlave.Worker.Operations
                     {
                         if (_tk.BenchmarkCellConfig.Scenario.Contains("sendToClient"))
                         {
-                            await connection.SendAsync(_tk.BenchmarkCellConfig.Scenario, _tk.BenchmarkCellConfig.TargetConnectionIds[ind + _tk.ConnectionRange.Begin], $"{Util.Timestamp()}", messageBlob);
+                            var targetId = _tk.BenchmarkCellConfig.TargetConnectionIds[ind + _tk.ConnectionRange.Begin];
+                            var time = $"{Util.Timestamp()}";
+                            var n = sizeof(char) * (targetId.Length + time.Length);
+                            var messageBlob = new byte[1];
+                            await connection.SendAsync(_tk.BenchmarkCellConfig.Scenario, targetId, time, messageBlob);
                         }
                         else
                         {
+                            var messageBlob = new byte[1];
                             await connection.SendAsync(_tk.BenchmarkCellConfig.Scenario, $"{Util.GuidEncoder.Encode(Guid.NewGuid())}", $"{Util.Timestamp()}", messageBlob);
                         }
                         _sentMessages[ind]++;

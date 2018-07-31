@@ -15,7 +15,6 @@ namespace Microsoft.Azure.SignalR.PerfTest.AppServer
 
         public void ConnectionId()
         {
-            Console.WriteLine($"conn id: {Context.ConnectionId}");
             Clients.Client(Context.ConnectionId).SendAsync("connectionId", Context.ConnectionId);
         }
 

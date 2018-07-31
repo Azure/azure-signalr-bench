@@ -240,12 +240,6 @@ namespace Bench.RpcMaster
                         var mixGroupConn = Util.SplitNumber(argsOption.MixGroupConnection, indClient, slaveList.Count);
                         Util.Log($"conn: echoConn {mixEchoConn}, b: {mixBroadcastConn}, g: {mixGroupConn}");
 
-                        for (int xx = 0; xx < connectionAllConfigList.Configs.Count; xx++)
-                        {
-                            Util.Log($"send flag: {connectionAllConfigList.Configs[xx].SendFlag}");
-                        }
-                        Util.Log($"");
-
                         var benchmarkCellConfig = new BenchmarkCellConfig
                         {
                             ServiceType = argsOption.ServiceType,
@@ -259,7 +253,6 @@ namespace Bench.RpcMaster
                             MixGroupConnection = mixGroupConn
                         };
 
-                        Util.LogList("conn ids", connectionIds);
                         benchmarkCellConfig.TargetConnectionIds.AddRange(connectionIds);
 
                         Util.Log($"service: {benchmarkCellConfig.ServiceType}; transport: {benchmarkCellConfig.TransportType}; hubprotocol: {benchmarkCellConfig.HubProtocol}; scenario: {benchmarkCellConfig.Scenario}; step: {step}");
@@ -270,13 +263,11 @@ namespace Bench.RpcMaster
                             var beg = 0;
                             for (var indStart = 0; indStart < indClientInLoop; indStart++)
                             {
-                                Util.Log($"indStart: {indStart}, indClient:{indClientInLoop}");
                                 beg += Util.SplitNumber(argsOption.Connections, indStart, slaveList.Count);
                                 // beg += Util.SplitNumber(argsOption.Connections, indStart, slaveList.Count);
                             }
                             var currConnSliceCnt = Util.SplitNumber(argsOption.Connections, indClientInLoop, slaveList.Count);
 
-                            Util.Log($"range: ({beg}, {beg + currConnSliceCnt})");
                             client.LoadConnectionRange(new Range { Begin = beg, End = beg + currConnSliceCnt });
                             client.LoadConnectionConfig(connectionAllConfigList);
                             client.RunJob(benchmarkCellConfig);
@@ -323,7 +314,6 @@ namespace Bench.RpcMaster
                 var connectionIdsPerClient = client.GetConnectionIds(new Empty());
                 connectionIds.AddRange(connectionIdsPerClient.List);
             });
-            connectionIds.ForEach(id => Util.Log($"conn id: {id}"));
             return connectionIds;
         }
 
