@@ -209,21 +209,24 @@ namespace JenkinsScript
                 Util.Log($"cmd: {cmd}");
                 if (host.IndexOf("localhost") >= 0 || host.IndexOf("127.0.0.1") >= 0)
                 {
+                    string localCmd = null;
                     if (localOutputFile != null)
                     {
                         if (dumpToStandardOut)
                         {
-                            return Bash($"\"{cmd}\" 2>&1 | tee -a {localOutputFile}", wait);
+                            localCmd = $"\"{cmd}\" 2>&1 | tee -a {localOutputFile}";
                         }
                         else
                         {
-                            return Bash($"\"{cmd}\" > {localOutputFile}", wait);
+                            localCmd = $"\"{cmd}\" > {localOutputFile}";
                         }
                     }
                     else
                     {
-                        return Bash(cmd, wait);
+                        localCmd = cmd;
                     }
+                    Util.Log($"Local cmd: {localCmd}");
+                    return Bash(localCmd, wait);
                 }
                 string sshCmd = null;
                 if (localOutputFile != null)
