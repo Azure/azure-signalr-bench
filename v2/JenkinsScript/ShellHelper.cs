@@ -346,6 +346,7 @@ namespace JenkinsScript
                    $"--clear true --slaveList '{slaveList}'" +
                    $"--pidFile /tmp/master.pid --concurrentConnection {concurrentConnection}" +
                    $"-o {outputCountersPath}";
+            Util.Log($"CMD: {agentConfig.User}@{agentConfig.Master}: {cmd}");
             (errCode, result) = RemoteSshAndRecordOutput(agentConfig.User, agentConfig.Master,
                 agentConfig.SshPort, cmd, outputLogPath, true, wait: false);
             while (i < timeOut)
