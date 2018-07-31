@@ -103,7 +103,7 @@ namespace Bench.Common
         [Option("debug", Required = false, HelpText = "")]
         public string Debug { get; set; }
 
-        [Option("messageSize", Required = false, HelpText = "")]
-        public int MessageSize { get; set; }
+        [Option("messageSize", Default="0", Required = false, HelpText = "")]
+        public string MessageSize { get; set; }
     }
 }

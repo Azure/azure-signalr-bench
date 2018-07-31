@@ -128,7 +128,7 @@ namespace Bench.RpcMaster
                     {
                         Connections = clientConnections,
                         ConcurrentConnections = concurrentConnections,
-                        Slaves = argsOption.Slaves,
+                        // Slaves = argsOption.Slaves,
                         Interval = argsOption.Interval,
                         Duration = argsOption.Duration,
                         ServerUrl = argsOption.ServerUrl,
@@ -240,6 +240,14 @@ namespace Bench.RpcMaster
                         var mixGroupConn = Util.SplitNumber(argsOption.MixGroupConnection, indClient, slaveList.Count);
                         Util.Log($"conn: echoConn {mixEchoConn}, b: {mixBroadcastConn}, g: {mixGroupConn}");
 
+                        var messageSize = 0;
+                        if (argsOption.MessageSize.Contains("K") || argsOption.MessageSize.Contains("k"))
+                            messageSize = Convert.ToInt32(argsOption.MessageSize.Substring(0, argsOption.MessageSize.Length - 1)) * 1024;
+                        else if (argsOption.MessageSize.Contains("M") || argsOption.MessageSize.Contains("m"))
+                            messageSize = Convert.ToInt32(argsOption.MessageSize.Substring(0, argsOption.MessageSize.Length - 1)) * 1024 * 1024;
+                        else
+                            messageSize = Convert.ToInt32(argsOption.MessageSize);
+
                         var benchmarkCellConfig = new BenchmarkCellConfig
                         {
                             ServiceType = argsOption.ServiceType,
@@ -251,7 +259,7 @@ namespace Bench.RpcMaster
                             MixBroadcastConnection = mixBroadcastConn,
                             MixGroupName = argsOption.MixGroupName,
                             MixGroupConnection = mixGroupConn,
-                            MessageSize = argsOption.MessageSize
+                            MessageSize = messageSize
                         };
 
                         benchmarkCellConfig.TargetConnectionIds.AddRange(connectionIds);
