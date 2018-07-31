@@ -338,13 +338,13 @@ namespace JenkinsScript
             {
                 cmd += $"dotnet run ";
             }
-            cmd += $"-- --rpcPort {agentConfig.RpcPort}" +
-                   $"--duration {duration} --connections {connection} --interval {interval}" +
-                   $"--slaves {agentConfig.Slaves.Count} --serverUrl '{serverUrl}'" +
+            cmd += $"-- --rpcPort {agentConfig.RpcPort} " +
+                   $"--duration {duration} --connections {connection} --interval {interval} " +
+                   $"--slaves {agentConfig.Slaves.Count} --serverUrl '{serverUrl}' " +
                    $"--pipeLine '{string.Join(";", pipeLine)}' " +
                    $"-v {serviceType} -t {transportType} -p {hubProtocol} -s {scenario} " +
-                   $"--clear true --slaveList '{slaveList}'" +
-                   $"--pidFile /tmp/master.pid --concurrentConnection {concurrentConnection}" +
+                   $"--clear true --slaveList '{slaveList}' " +
+                   $"--pidFile /tmp/master.pid --concurrentConnection {concurrentConnection} " +
                    $"-o {outputCountersPath}";
             Util.Log($"CMD: {agentConfig.User}@{agentConfig.Master}: {cmd}");
             (errCode, result) = RemoteSshAndRecordOutput(agentConfig.User, agentConfig.Master,
