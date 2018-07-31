@@ -1,9 +1,9 @@
 #!/bin/bash
 . ./func_env.sh
 
-bench_slave_folder=/home/${bench_app_user}/signalr_auto_test_framework/signalr_bench/Rpc/Bench.Server
-bench_master_folder=/home/${bench_app_user}/signalr_auto_test_framework/signalr_bench/Rpc/Bench.Client
-bench_server_folder=/home/${bench_app_user}/signalr_auto_test_framework/signalr_bench/AppServer
+bench_slave_folder=/home/${bench_app_user}/azure-signalr-bench/v2/signalr_bench/Rpc/Bench.Server
+bench_master_folder=/home/${bench_app_user}/azure-signalr-bench/v2/signalr_bench/Rpc/Bench.Client
+bench_server_folder=/home/${bench_app_user}/azure-signalr-bench/v2/signalr_bench/AppServer
 cli_bench_start_script=autorun_start_cli_agent.sh
 cli_bench_stop_script=autorun_stop_cli_agent.sh
 cli_bench_agent_output=cli_agent_out.txt
@@ -95,7 +95,7 @@ then
 fi
 transport=${bench_transport}
 server=$server_endpoint
-pipeline="createConn;startConn;scenario;stopConn;disposeConn"
+pipeline="createConn;startConn;up${send_num};scenario;stopConn;disposeConn"
 slaveList="${cli_agents_g}"
 
 /home/${bench_app_user}/.dotnet/dotnet run -- --rpcPort 7000 --duration $sigbench_run_duration --connections $connection_num --interval 1 --serverUrl "\${server}" --pipeLine "\${pipeline}" -v $bench_type -t "\${transport}" -p ${codec} -s ${bench_name} --slaveList "\${slaveList}"	-o ${result_name}/counters.txt --pidFile /tmp/master.pid --concurrentConnection ${concurrent_num}
