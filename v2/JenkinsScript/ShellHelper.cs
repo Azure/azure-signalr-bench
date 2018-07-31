@@ -269,7 +269,7 @@ namespace JenkinsScript
                 cmd = $"pid=`cat /tmp/agent.pid`; kill -9 $pid; cd {slaveDir}; ";
                 if (useDotnetPath)
                 {
-                    cmd += "/home/{sshUser}/.dotnet/dotnet run ";
+                    cmd += $"/home/{sshUser}/.dotnet/dotnet run ";
                 }
                 else
                 {
