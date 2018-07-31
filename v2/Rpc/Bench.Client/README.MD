@@ -4,7 +4,7 @@
 
 ### Script Sample
 ```
-cd ~/workspace/signalr_auto_test_framework/signalr_bench/Rpc/Bench.Client/
+cd <YOUR_RPC_MASTER_FOLDER>
 dotnet run -- --rpcPort 5555 --duration 10 --connections 5 --interval 1 --slaves 2 \
 --serverUrl 'http://localhost:5050/signalrbench' \
 --pipeLine 'createConn;startConn;up1;scenario;up1;scenario;up1;scenario;up1;scenario;up1;scenario;stopConn;disposeConn' \
