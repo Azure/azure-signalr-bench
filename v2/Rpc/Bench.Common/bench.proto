@@ -28,6 +28,7 @@ message BenchmarkCellConfig {
 	int32 mixBroadcastConnection = 8;
 	int32 mixGroupConnection = 9;
 	repeated string targetConnectionIds = 10;
+	int32 messageSize = 11;
 }
 
 message ConnectionConfig {

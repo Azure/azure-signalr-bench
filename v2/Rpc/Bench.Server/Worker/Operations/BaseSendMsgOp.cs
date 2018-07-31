@@ -71,6 +71,7 @@ namespace Bench.RpcSlave.Worker.Operations
                     _tk.Connections[i - _tk.ConnectionRange.Begin].On(_tk.BenchmarkCellConfig.Scenario,
                         (int count, string time, string thisId, string targetId, byte[] messageBlob) =>
                         {
+                            Util.Log($"msg blob len: {messageBlob.Length}");
                             var receiveTimestamp = Util.Timestamp();
                             var sendTimestamp = Convert.ToInt64(time);
                             _tk.Counters.CountLatency(sendTimestamp, receiveTimestamp);
@@ -119,13 +120,16 @@ namespace Bench.RpcSlave.Worker.Operations
                             var targetId = _tk.BenchmarkCellConfig.TargetConnectionIds[ind + _tk.ConnectionRange.Begin];
                             var time = $"{Util.Timestamp()}";
                             var n = sizeof(char) * (targetId.Length + time.Length);
-                            var messageBlob = new byte[1];
+                            var messageBlob = new byte[_tk.BenchmarkCellConfig.MessageSize * 1024];
                             await connection.SendAsync(_tk.BenchmarkCellConfig.Scenario, targetId, time, messageBlob);
                         }
                         else
                         {
-                            var messageBlob = new byte[1];
-                            await connection.SendAsync(_tk.BenchmarkCellConfig.Scenario, $"{Util.GuidEncoder.Encode(Guid.NewGuid())}", $"{Util.Timestamp()}", messageBlob);
+                            var uid = $"{Util.GuidEncoder.Encode(Guid.NewGuid())}";
+                            var time = $"{Util.Timestamp()}";
+                            var n = sizeof(char) * (uid.Length + time.Length);
+                            var messageBlob = new byte[_tk.BenchmarkCellConfig.MessageSize * 1024];
+                            await connection.SendAsync(_tk.BenchmarkCellConfig.Scenario, uid, time, messageBlob);
                         }
                         _sentMessages[ind]++;
                         _tk.Counters.IncreseSentMsg();
