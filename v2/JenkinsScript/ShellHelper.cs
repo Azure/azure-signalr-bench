@@ -170,14 +170,24 @@ namespace JenkinsScript
 
         }
         #region Functions for SSH with Public Key
-        public static (int, string) CreateResultFolder(string resultRootDir)
+        public static (int, string) CreateResultFolder(string resultRootDir, bool removeExisting = false)
         {
-            var cmd = $"mkdir {resultRootDir}";
+            var cmd = "";
+            if (removeExisting && Directory.Exists(resultRootDir))
+            {
+                cmd = "rm -rf {resultRootDir}";
+                Bash(cmd, wait: true, handleRes: true);
+            }
             if (!Directory.Exists(resultRootDir))
             {
+                cmd = $"mkdir {resultRootDir}";
                 return Bash(cmd, wait: true, handleRes: true);
             }
-            return (1, "");
+            else
+            {
+                cmd = $"rm {resultRootDir}/*";
+                return Bash(cmd, wait: true, handleRes: true);
+            }
         }
 
         public static (int, string) RemoteSshIgnoreOutput(string user, string host, int port, string cmd,
