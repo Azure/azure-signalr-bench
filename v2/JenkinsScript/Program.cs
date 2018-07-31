@@ -148,13 +148,18 @@ namespace JenkinsScript
                                         $"/home/{agentConfig.User}/azure-signalr-bench/v2/AppServer", $"log/{outputFile}", 60);
                                     if (!started)
                                     {
-                                        Console.WriteLine("Fail to start app server");
+                                        Util.Log("Fail to start app server");
                                         continue;
                                     }
                                     else
                                     {
-                                        Console.WriteLine("App server is started!");
+                                        Util.Log("App server is started!");
                                     }
+                                    outputFile = $"log_rpcslave_{serviceType}_{transportType}_{ hubProtocol}_{scenario}.txt";
+                                    ShellHelper.StartRpcSlavesBySsh(agentConfig.Slaves,
+                                        $"/home/{agentConfig.User}/azure-signalr-bench/v2/Rpc/Bench.Server/",
+                                        agentConfig.RpcPort, agentConfig.User, agentConfig.SshPort, outputFile, 60);
+                                    Util.Log("All slaves are ready to accept master commands");
                                 }
                             }
                         }

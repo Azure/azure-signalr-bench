@@ -48,27 +48,14 @@ namespace JenkinsScript
             return (errCode, result);
         }
 
-        public static (int, string) RemoteSshAndRecordOutput(string user, string host, int port, string cmd, string outputFile, bool wait = true, int retry = 1)
+        public static (int, string) RemoteSshIgnoreOutput(string user, string host, int port, string cmd,
+            bool wait = true, bool handleRes = false, int retry = 1)
         {
-            int errCode = 0;
-            string result = "";
-            for (var i = 0; i < retry; i++)
-            {
-                if (host.IndexOf("localhost") >= 0 || host.IndexOf("127.0.0.1") >= 0) return Bash(cmd, wait);
-                Util.Log($"port: {port}");
-                Util.Log($"host: {host}");
-                Util.Log($"cmd: {cmd}");
-                string sshCmd = $"ssh -p {port} -o StrictHostKeyChecking=no {user}@{host} \"{cmd}\" > {outputFile}";
-                Util.Log($"SSH Cmd: {sshCmd}");
-                (errCode, result) = Bash(sshCmd, wait: wait, handleRes: false);
-                if (errCode == 0) break;
-                Util.Log($"retry {i + 1}th time");
-                Task.Delay(TimeSpan.FromSeconds(1)).Wait();
-            }
-            return (errCode, result);
+            return RemoteSshAndRecordOutput(user, host, port, cmd, null, wait, handleRes, retry);
         }
 
-        public static (int, string) RemoteSshBash(string user, string host, int port, string cmd, bool wait = true, bool handleRes = false, int retry = 1)
+        public static (int, string) RemoteSshAndRecordOutput(string user, string host, int port, string cmd, string localOutputFile,
+            bool wait = true, bool handleRes = false, int retry = 1)
         {
             int errCode = 0;
             string result = "";
@@ -78,7 +65,15 @@ namespace JenkinsScript
                 Util.Log($"port: {port}");
                 Util.Log($"host: {host}");
                 Util.Log($"cmd: {cmd}");
-                string sshCmd = $"ssh -p {port} -o StrictHostKeyChecking=no {user}@{host} \"{cmd}\"";
+                string sshCmd = null;
+                if (localOutputFile != null)
+                {
+                    sshCmd = $"ssh -p {port} -o StrictHostKeyChecking=no {user}@{host} \"{cmd}\" > {localOutputFile}";
+                }
+                else
+                {
+                    sshCmd = $"ssh -p {port} -o StrictHostKeyChecking=no {user}@{host} \"{cmd}\"";
+                }
                 Util.Log($"SSH Cmd: {sshCmd}");
                 (errCode, result) = Bash(sshCmd, wait: wait, handleRes: retry > 1 && i < retry - 1 ? false : handleRes);
                 if (errCode == 0) break;
@@ -88,7 +83,8 @@ namespace JenkinsScript
             return (errCode, result);
         }
 
-        public static (int, string) RemoteBash (string user, string host, int port, string password, string cmd, bool wait = true, bool handleRes = false, int retry = 1)
+        public static (int, string) RemoteBash (string user, string host, int port, string password, string cmd,
+            bool wait = true, bool handleRes = false, int retry = 1)
         {
 
             int errCode = 0;
@@ -218,7 +214,8 @@ namespace JenkinsScript
             return (1, "");
         }
 
-        public static bool StartAppServerBySsh(string azureSignalrConnectionString, string appServerHost, int sshPort, string loginUser, string appDir, string outputFilePath, int wait)
+        public static bool StartAppServerBySsh(string azureSignalrConnectionString, string appServerHost,
+            int sshPort, string loginUser, string appDir, string outputFilePath, int timeOut)
         {
             var errCode = 0;
             var result = "";
@@ -229,16 +226,54 @@ namespace JenkinsScript
 
             (errCode, result) = RemoteSshAndRecordOutput(loginUser, appServerHost, sshPort, cmd, outputFilePath, wait : false);
             var i = 0;
-            while (i < wait)
+            while (i < timeOut)
             {
                 var content = Util.ReadFile(outputFilePath);
                 if (content.Contains("HttpConnection Started"))
                 {
                     break;
                 }
+                Task.Delay(TimeSpan.FromSeconds(1)).GetAwaiter().GetResult();
                 i++;
             }
-            return i < wait;
+            return i < timeOut;
+        }
+
+        public static (int, string) RemoteCopy(string user, string host, int port, string srcFilePath, string destFilePath)
+        {
+            var cmd = $"scp -P {port} -o StrictHostKeyChecking=no {user}@{host}:{srcFilePath} {destFilePath}";
+            return Bash(cmd, wait: true);
+        }
+
+        public static bool StartRpcSlavesBySsh(List<string> slaveList, string slaveDir,
+            int rpcPort, string sshUser, int sshPort, string outputFile, int timeOut)
+        {
+            var errCode = 0;
+            var result = "";
+            var cmd = "";
+            var tasks = new List<Task>();
+            slaveList.ForEach(host => tasks.Add(Task.Run(() =>
+            {
+                cmd = $"pid=`cat /tmp/agent.pid`; kill -9 $pid; cd {slaveDir}; dotnet run -- --rpcPort {rpcPort} --pidFile /tmp/agent.pid> {outputFile};";
+                Util.Log($"CMD: {sshUser}@{host}: {cmd}");
+                (errCode, result) = RemoteSshAndRecordOutput(sshUser, host, sshPort, cmd, null, wait: false);
+                var localOutputFile = $"{slaveList.IndexOf(host)}_{outputFile}";
+                var i = 0;
+                while (i < timeOut)
+                {
+                    RemoteCopy(sshUser, host, sshPort, $"{slaveDir}/{outputFile}", localOutputFile);
+                    var content = Util.ReadFile(localOutputFile);
+                    if (content.Contains("started"))
+                    {
+                        Util.Log($"Slave on {host} has started");
+                        break;
+                    }
+                    Task.Delay(TimeSpan.FromSeconds(1)).GetAwaiter().GetResult();
+                    i++;
+                }
+            })));
+            Task.WhenAll(tasks).GetAwaiter().GetResult();
+            return true;
         }
 
         public static (int, string) StartRpcSlaves (AgentConfig agentConfig, ArgsOption argsOption,
