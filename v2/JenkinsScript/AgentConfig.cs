@@ -16,7 +16,8 @@ namespace JenkinsScript
         public string Password { get; set; }
         public string Prefix { get; set; }
         public string Location { get; set; }
-
+        // Some VMs install dotnet in /home/user/.dotnet folder
+        public bool UseHomeDotnet { get; set; }
         // slave vm
         public string SlaveVmSize { get; set; }
         // public string SlaveVmName { get; set; }

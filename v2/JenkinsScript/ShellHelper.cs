@@ -249,7 +249,7 @@ namespace JenkinsScript
         }
 
         public static bool StartRpcSlavesBySsh(List<string> slaveList, string slaveDir,
-            int rpcPort, string sshUser, int sshPort, string outputFile, int timeOut)
+            int rpcPort, string sshUser, int sshPort, string outputFile, int timeOut, bool useDotnetPath)
         {
             var errCode = 0;
             var result = "";
@@ -257,7 +257,14 @@ namespace JenkinsScript
             var tasks = new List<Task>();
             slaveList.ForEach(host => tasks.Add(Task.Run(() =>
             {
-                cmd = $"pid=`cat /tmp/agent.pid`; kill -9 $pid; cd {slaveDir}; dotnet run -- --rpcPort {rpcPort} --pidFile /tmp/agent.pid> {outputFile};";
+                if (useDotnetPath)
+                {
+                    cmd = $"pid=`cat /tmp/agent.pid`; kill -9 $pid; cd {slaveDir}; /home/{sshUser}/.dotnet/dotnet run -- --rpcPort {rpcPort} --pidFile /tmp/agent.pid> {outputFile};";
+                }
+                else
+                {
+                    cmd = $"pid=`cat /tmp/agent.pid`; kill -9 $pid; cd {slaveDir}; dotnet run -- --rpcPort {rpcPort} --pidFile /tmp/agent.pid> {outputFile};";
+                }
                 Util.Log($"CMD: {sshUser}@{host}: {cmd}");
                 (errCode, result) = RemoteSshAndRecordOutput(sshUser, host, sshPort, cmd, null, wait: false);
                 var localOutputFile = $"{slaveList.IndexOf(host)}_{outputFile}";
@@ -269,11 +276,12 @@ namespace JenkinsScript
                     if (content.Contains("started"))
                     {
                         Util.Log($"Slave on {host} has started");
-                        break;
+                        return;
                     }
                     Task.Delay(TimeSpan.FromSeconds(1)).GetAwaiter().GetResult();
                     i++;
                 }
+                Util.Log($"Fail to start slave for time out");
             })));
             Task.WhenAll(tasks).GetAwaiter().GetResult();
             return true;
