@@ -46,7 +46,7 @@ namespace Bench.RpcSlave
                 {
                     Connections = config.Connections,
                         ConcurrentConnections = config.ConcurrentConnections,
-                        Slaves = config.Slaves,
+                        // Slaves = config.Slaves,
                         Interval = config.Interval,
                         Duration = config.Duration,
                         ServerUrl = config.ServerUrl,

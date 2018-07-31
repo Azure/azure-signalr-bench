@@ -15,25 +15,24 @@ namespace Microsoft.Azure.SignalR.PerfTest.AppServer
 
         public void ConnectionId()
         {
-            Console.WriteLine($"conn id: {Context.ConnectionId}");
             Clients.Client(Context.ConnectionId).SendAsync("connectionId", Context.ConnectionId);
         }
 
-        public void SendToClient(string targetId, string time)
+        public void SendToClient(string targetId, string time, byte[] messageBlob)
         {
-            Clients.Client(targetId).SendAsync("sendToClient", 0, time, Context.ConnectionId, targetId);
+            Clients.Client(targetId).SendAsync("sendToClient", 0, time, Context.ConnectionId, targetId, messageBlob);
 
         }
-        public void Echo(string uid, string time)
+        public void Echo(string uid, string time, byte[] messageBlob)
         {
             Interlocked.Increment(ref _totalReceivedEcho);
-            Clients.Client(Context.ConnectionId).SendAsync("echo", _totalReceivedEcho, time, Context.ConnectionId, null);
+            Clients.Client(Context.ConnectionId).SendAsync("echo", _totalReceivedEcho, time, Context.ConnectionId, null, messageBlob);
         }
 
-        public void Broadcast(string uid, string time)
+        public void Broadcast(string uid, string time, byte[] messageBlob)
         {
             Interlocked.Increment(ref _totalReceivedBroadcast);
-            Clients.All.SendAsync("broadcast", _totalReceivedBroadcast, time, Context.ConnectionId, null);
+            Clients.All.SendAsync("broadcast", _totalReceivedBroadcast, time, Context.ConnectionId, null, messageBlob);
         }
 
         public void BroadcastMessage(string name, string message)

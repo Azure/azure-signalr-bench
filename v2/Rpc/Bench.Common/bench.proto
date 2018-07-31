@@ -28,6 +28,7 @@ message BenchmarkCellConfig {
 	int32 mixBroadcastConnection = 8;
 	int32 mixGroupConnection = 9;
 	repeated string targetConnectionIds = 10;
+	int32 messageSize = 11;
 }
 
 message ConnectionConfig {
@@ -64,7 +65,7 @@ message Path {
 message CellJobConfig {
 	int32 connections = 1;
 	int32 concurrentConnections = 2;
-	int32 slaves = 3;
+	// int32 slaves = 3;
 	int32 interval = 4;
 	int32 duration = 5;
 	string serverUrl = 6;

@@ -22,56 +22,57 @@ namespace Bench.Common {
     static BenchReflection() {
       byte[] descriptorData = global::System.Convert.FromBase64String(
           string.Concat(
-            "CgtCZW5jaC5wcm90bxIMQmVuY2guQ29tbW9uIoACChNCZW5jaG1hcmtDZWxs",
+            "CgtCZW5jaC5wcm90bxIMQmVuY2guQ29tbW9uIpUCChNCZW5jaG1hcmtDZWxs",
             "Q29uZmlnEhMKC3NlcnZpY2VUeXBlGAEgASgJEhUKDXRyYW5zcG9ydFR5cGUY",
             "AiABKAkSEwoLaHViUHJvdG9jb2wYAyABKAkSEAoIc2NlbmFyaW8YBCABKAkS",
             "DAoEc3RlcBgFIAEoCRIUCgxtaXhHcm91cE5hbWUYBiABKAkSGQoRbWl4RWNo",
             "b0Nvbm5lY3Rpb24YByABKAUSHgoWbWl4QnJvYWRjYXN0Q29ubmVjdGlvbhgI",
             "IAEoBRIaChJtaXhHcm91cENvbm5lY3Rpb24YCSABKAUSGwoTdGFyZ2V0Q29u",
-            "bmVjdGlvbklkcxgKIAMoCSI3ChBDb25uZWN0aW9uQ29uZmlnEhEKCWdyb3Vw",
-            "TmFtZRgBIAEoCRIQCghTZW5kRmxhZxgCIAEoCCJHChRDb25uZWN0aW9uQ29u",
-            "ZmlnTGlzdBIvCgdjb25maWdzGAEgAygLMh4uQmVuY2guQ29tbW9uLkNvbm5l",
-            "Y3Rpb25Db25maWciIwoFUmFuZ2USDQoFYmVnaW4YASABKAUSCwoDZW5kGAIg",
-            "ASgFIhYKBUZvcmNlEg0KBWZvcmNlGAEgASgIIiIKBFBhaXISCwoDa2V5GAEg",
-            "ASgJEg0KBXZhbHVlGAIgASgFIikKBERpY3QSIQoFcGFpcnMYASADKAsyEi5C",
-            "ZW5jaC5Db21tb24uUGFpciIVCgRQYXRoEg0KBXBwYXRoGAEgASgJIpwBCg1D",
-            "ZWxsSm9iQ29uZmlnEhMKC2Nvbm5lY3Rpb25zGAEgASgFEh0KFWNvbmN1cnJl",
-            "bnRDb25uZWN0aW9ucxgCIAEoBRIOCgZzbGF2ZXMYAyABKAUSEAoIaW50ZXJ2",
-            "YWwYBCABKAUSEAoIZHVyYXRpb24YBSABKAUSEQoJc2VydmVyVXJsGAYgASgJ",
-            "EhAKCHBpcGVsaW5lGAcgASgJIvcDCgRTdGF0EicKBXN0YXRlGAEgASgOMhgu",
-            "QmVuY2guQ29tbW9uLlN0YXQuU3RhdGUixQMKBVN0YXRlEg4KCkRFQlVHX1RP",
-            "RE8QABIXChNIVUJDT05OX1VOQ09OTkVDVEVEEAESFgoSSFVCQ09OTl9DT05O",
-            "RUNUSU5HEAISFQoRSFVCQ09OTl9DT05ORUNURUQQAxITCg9DT05GSUdfVU5M",
-            "T0FERUQQCBISCg5DT05GSUdfTE9BRElORxAJEhEKDUNPTkZJR19MT0FERUQQ",
-            "ChIOCgpTRU5EX1JFQURZEAsSEAoMU0VORF9SVU5OSU5HEAwSEQoNU0VORF9D",
-            "T01QTEVURRANEhIKDldPUktFUl9VTkVYSVNUEA4SEwoPV09SS0VSX0NSRUFU",
-            "SU5HEA8SEgoOV09SS0VSX0NSRUFURUQQEBISCg5XT1JLRVJfRVhJU1RFRBAR",
-            "EhUKEUhVQkNPTk5fVU5DUkVBVEVEEBISFAoQSFVCQ09OTl9DUkVBVElORxAT",
-            "EhMKD0hVQkNPTk5fQ1JFQVRFRBAUEhkKFUhVQkNPTk5fRElTQ09OTkVDVElO",
-            "RxAYEhgKFEhVQkNPTk5fRElTQ09OTkVDVEVEEBkSFQoRSFVCQ09OTl9ESVNQ",
-            "T1NJTkcQGhIUChBIVUJDT05OX0RJU1BPU0VEEBsiEwoEU3RyZxILCgNzdHIY",
-            "ASABKAkiGAoIU3RyZ0xpc3QSDAoEbGlzdBgBIAMoCSIZCglUaW1lc3RhbXAS",
-            "DAoEdGltZRgBIAEoBCIHCgVFbXB0eTLOBQoKUnBjU2VydmljZRI+CgxHZXRU",
-            "aW1lc3RhbXASEy5CZW5jaC5Db21tb24uRW1wdHkaFy5CZW5jaC5Db21tb24u",
-            "VGltZXN0YW1wIgASPgoRR2V0Q291bnRlckpzb25TdHISEy5CZW5jaC5Db21t",
-            "b24uRW1wdHkaEi5CZW5jaC5Db21tb24uU3RyZyIAEjUKCEdldFN0YXRlEhMu",
-            "QmVuY2guQ29tbW9uLkVtcHR5GhIuQmVuY2guQ29tbW9uLlN0YXQiABJCCg1M",
-            "b2FkSm9iQ29uZmlnEhsuQmVuY2guQ29tbW9uLkNlbGxKb2JDb25maWcaEi5C",
-            "ZW5jaC5Db21tb24uU3RhdCIAEjkKDENyZWF0ZVdvcmtlchITLkJlbmNoLkNv",
-            "bW1vbi5FbXB0eRoSLkJlbmNoLkNvbW1vbi5TdGF0IgASPAoPQ29sbGVjdENv",
-            "dW50ZXJzEhMuQmVuY2guQ29tbW9uLkZvcmNlGhIuQmVuY2guQ29tbW9uLkRp",
-            "Y3QiABJBCgZSdW5Kb2ISIS5CZW5jaC5Db21tb24uQmVuY2htYXJrQ2VsbENv",
-            "bmZpZxoSLkJlbmNoLkNvbW1vbi5TdGF0IgASMAoEVGVzdBISLkJlbmNoLkNv",
-            "bW1vbi5TdHJnGhIuQmVuY2guQ29tbW9uLlN0YXQiABJRChRMb2FkQ29ubmVj",
-            "dGlvbkNvbmZpZxIiLkJlbmNoLkNvbW1vbi5Db25uZWN0aW9uQ29uZmlnTGlz",
-            "dBoTLkJlbmNoLkNvbW1vbi5FbXB0eSIAEkEKE0xvYWRDb25uZWN0aW9uUmFu",
-            "Z2USEy5CZW5jaC5Db21tb24uUmFuZ2UaEy5CZW5jaC5Db21tb24uRW1wdHki",
-            "ABJBChBHZXRDb25uZWN0aW9uSWRzEhMuQmVuY2guQ29tbW9uLkVtcHR5GhYu",
-            "QmVuY2guQ29tbW9uLlN0cmdMaXN0IgBiBnByb3RvMw=="));
+            "bmVjdGlvbklkcxgKIAMoCRITCgttZXNzYWdlU2l6ZRgLIAEoBSI3ChBDb25u",
+            "ZWN0aW9uQ29uZmlnEhEKCWdyb3VwTmFtZRgBIAEoCRIQCghTZW5kRmxhZxgC",
+            "IAEoCCJHChRDb25uZWN0aW9uQ29uZmlnTGlzdBIvCgdjb25maWdzGAEgAygL",
+            "Mh4uQmVuY2guQ29tbW9uLkNvbm5lY3Rpb25Db25maWciIwoFUmFuZ2USDQoF",
+            "YmVnaW4YASABKAUSCwoDZW5kGAIgASgFIhYKBUZvcmNlEg0KBWZvcmNlGAEg",
+            "ASgIIiIKBFBhaXISCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgFIikKBERp",
+            "Y3QSIQoFcGFpcnMYASADKAsyEi5CZW5jaC5Db21tb24uUGFpciIVCgRQYXRo",
+            "Eg0KBXBwYXRoGAEgASgJIpwBCg1DZWxsSm9iQ29uZmlnEhMKC2Nvbm5lY3Rp",
+            "b25zGAEgASgFEh0KFWNvbmN1cnJlbnRDb25uZWN0aW9ucxgCIAEoBRIOCgZz",
+            "bGF2ZXMYAyABKAUSEAoIaW50ZXJ2YWwYBCABKAUSEAoIZHVyYXRpb24YBSAB",
+            "KAUSEQoJc2VydmVyVXJsGAYgASgJEhAKCHBpcGVsaW5lGAcgASgJIvcDCgRT",
+            "dGF0EicKBXN0YXRlGAEgASgOMhguQmVuY2guQ29tbW9uLlN0YXQuU3RhdGUi",
+            "xQMKBVN0YXRlEg4KCkRFQlVHX1RPRE8QABIXChNIVUJDT05OX1VOQ09OTkVD",
+            "VEVEEAESFgoSSFVCQ09OTl9DT05ORUNUSU5HEAISFQoRSFVCQ09OTl9DT05O",
+            "RUNURUQQAxITCg9DT05GSUdfVU5MT0FERUQQCBISCg5DT05GSUdfTE9BRElO",
+            "RxAJEhEKDUNPTkZJR19MT0FERUQQChIOCgpTRU5EX1JFQURZEAsSEAoMU0VO",
+            "RF9SVU5OSU5HEAwSEQoNU0VORF9DT01QTEVURRANEhIKDldPUktFUl9VTkVY",
+            "SVNUEA4SEwoPV09SS0VSX0NSRUFUSU5HEA8SEgoOV09SS0VSX0NSRUFURUQQ",
+            "EBISCg5XT1JLRVJfRVhJU1RFRBAREhUKEUhVQkNPTk5fVU5DUkVBVEVEEBIS",
+            "FAoQSFVCQ09OTl9DUkVBVElORxATEhMKD0hVQkNPTk5fQ1JFQVRFRBAUEhkK",
+            "FUhVQkNPTk5fRElTQ09OTkVDVElORxAYEhgKFEhVQkNPTk5fRElTQ09OTkVD",
+            "VEVEEBkSFQoRSFVCQ09OTl9ESVNQT1NJTkcQGhIUChBIVUJDT05OX0RJU1BP",
+            "U0VEEBsiEwoEU3RyZxILCgNzdHIYASABKAkiGAoIU3RyZ0xpc3QSDAoEbGlz",
+            "dBgBIAMoCSIZCglUaW1lc3RhbXASDAoEdGltZRgBIAEoBCIHCgVFbXB0eTLO",
+            "BQoKUnBjU2VydmljZRI+CgxHZXRUaW1lc3RhbXASEy5CZW5jaC5Db21tb24u",
+            "RW1wdHkaFy5CZW5jaC5Db21tb24uVGltZXN0YW1wIgASPgoRR2V0Q291bnRl",
+            "ckpzb25TdHISEy5CZW5jaC5Db21tb24uRW1wdHkaEi5CZW5jaC5Db21tb24u",
+            "U3RyZyIAEjUKCEdldFN0YXRlEhMuQmVuY2guQ29tbW9uLkVtcHR5GhIuQmVu",
+            "Y2guQ29tbW9uLlN0YXQiABJCCg1Mb2FkSm9iQ29uZmlnEhsuQmVuY2guQ29t",
+            "bW9uLkNlbGxKb2JDb25maWcaEi5CZW5jaC5Db21tb24uU3RhdCIAEjkKDENy",
+            "ZWF0ZVdvcmtlchITLkJlbmNoLkNvbW1vbi5FbXB0eRoSLkJlbmNoLkNvbW1v",
+            "bi5TdGF0IgASPAoPQ29sbGVjdENvdW50ZXJzEhMuQmVuY2guQ29tbW9uLkZv",
+            "cmNlGhIuQmVuY2guQ29tbW9uLkRpY3QiABJBCgZSdW5Kb2ISIS5CZW5jaC5D",
+            "b21tb24uQmVuY2htYXJrQ2VsbENvbmZpZxoSLkJlbmNoLkNvbW1vbi5TdGF0",
+            "IgASMAoEVGVzdBISLkJlbmNoLkNvbW1vbi5TdHJnGhIuQmVuY2guQ29tbW9u",
+            "LlN0YXQiABJRChRMb2FkQ29ubmVjdGlvbkNvbmZpZxIiLkJlbmNoLkNvbW1v",
+            "bi5Db25uZWN0aW9uQ29uZmlnTGlzdBoTLkJlbmNoLkNvbW1vbi5FbXB0eSIA",
+            "EkEKE0xvYWRDb25uZWN0aW9uUmFuZ2USEy5CZW5jaC5Db21tb24uUmFuZ2Ua",
+            "Ey5CZW5jaC5Db21tb24uRW1wdHkiABJBChBHZXRDb25uZWN0aW9uSWRzEhMu",
+            "QmVuY2guQ29tbW9uLkVtcHR5GhYuQmVuY2guQ29tbW9uLlN0cmdMaXN0IgBi",
+            "BnByb3RvMw=="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
           new pbr::GeneratedClrTypeInfo(null, new pbr::GeneratedClrTypeInfo[] {
-            new pbr::GeneratedClrTypeInfo(typeof(global::Bench.Common.BenchmarkCellConfig), global::Bench.Common.BenchmarkCellConfig.Parser, new[]{ "ServiceType", "TransportType", "HubProtocol", "Scenario", "Step", "MixGroupName", "MixEchoConnection", "MixBroadcastConnection", "MixGroupConnection", "TargetConnectionIds" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Bench.Common.BenchmarkCellConfig), global::Bench.Common.BenchmarkCellConfig.Parser, new[]{ "ServiceType", "TransportType", "HubProtocol", "Scenario", "Step", "MixGroupName", "MixEchoConnection", "MixBroadcastConnection", "MixGroupConnection", "TargetConnectionIds", "MessageSize" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Bench.Common.ConnectionConfig), global::Bench.Common.ConnectionConfig.Parser, new[]{ "GroupName", "SendFlag" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Bench.Common.ConnectionConfigList), global::Bench.Common.ConnectionConfigList.Parser, new[]{ "Configs" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Bench.Common.Range), global::Bench.Common.Range.Parser, new[]{ "Begin", "End" }, null, null, null),
@@ -125,6 +126,7 @@ namespace Bench.Common {
       mixBroadcastConnection_ = other.mixBroadcastConnection_;
       mixGroupConnection_ = other.mixGroupConnection_;
       targetConnectionIds_ = other.targetConnectionIds_.Clone();
+      messageSize_ = other.messageSize_;
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -241,6 +243,17 @@ namespace Bench.Common {
       get { return targetConnectionIds_; }
     }
 
+    /// <summary>Field number for the "messageSize" field.</summary>
+    public const int MessageSizeFieldNumber = 11;
+    private int messageSize_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public int MessageSize {
+      get { return messageSize_; }
+      set {
+        messageSize_ = value;
+      }
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public override bool Equals(object other) {
       return Equals(other as BenchmarkCellConfig);
@@ -264,6 +277,7 @@ namespace Bench.Common {
       if (MixBroadcastConnection != other.MixBroadcastConnection) return false;
       if (MixGroupConnection != other.MixGroupConnection) return false;
       if(!targetConnectionIds_.Equals(other.targetConnectionIds_)) return false;
+      if (MessageSize != other.MessageSize) return false;
       return true;
     }
 
@@ -280,6 +294,7 @@ namespace Bench.Common {
       if (MixBroadcastConnection != 0) hash ^= MixBroadcastConnection.GetHashCode();
       if (MixGroupConnection != 0) hash ^= MixGroupConnection.GetHashCode();
       hash ^= targetConnectionIds_.GetHashCode();
+      if (MessageSize != 0) hash ^= MessageSize.GetHashCode();
       return hash;
     }
 
@@ -327,6 +342,10 @@ namespace Bench.Common {
         output.WriteInt32(MixGroupConnection);
       }
       targetConnectionIds_.WriteTo(output, _repeated_targetConnectionIds_codec);
+      if (MessageSize != 0) {
+        output.WriteRawTag(88);
+        output.WriteInt32(MessageSize);
+      }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -360,6 +379,9 @@ namespace Bench.Common {
         size += 1 + pb::CodedOutputStream.ComputeInt32Size(MixGroupConnection);
       }
       size += targetConnectionIds_.CalculateSize(_repeated_targetConnectionIds_codec);
+      if (MessageSize != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeInt32Size(MessageSize);
+      }
       return size;
     }
 
@@ -396,6 +418,9 @@ namespace Bench.Common {
         MixGroupConnection = other.MixGroupConnection;
       }
       targetConnectionIds_.Add(other.targetConnectionIds_);
+      if (other.MessageSize != 0) {
+        MessageSize = other.MessageSize;
+      }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -444,6 +469,10 @@ namespace Bench.Common {
           }
           case 82: {
             targetConnectionIds_.AddEntriesFrom(input, _repeated_targetConnectionIds_codec);
+            break;
+          }
+          case 88: {
+            MessageSize = input.ReadInt32();
             break;
           }
         }

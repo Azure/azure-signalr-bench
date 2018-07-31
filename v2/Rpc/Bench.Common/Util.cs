@@ -155,5 +155,11 @@ namespace Bench.Common
             Util.Log(title);
             list.ForEach(el => Util.Log(el.ToString()));
         }
+
+        public static byte[] GenerateMessageBlob(int sizeInByte)
+        {
+            var messageBlob = new byte[sizeInByte];
+            return messageBlob;
+        }
     }
 }
