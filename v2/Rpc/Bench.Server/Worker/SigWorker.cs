@@ -67,5 +67,12 @@ namespace Bench.RpcSlave.Worker
         {
             return _tk.State;
         }
+
+        public StrgList GetConnectionIds()
+        {
+            var ids = new StrgList();
+            _tk.ConnectionIds.ForEach(id => ids.List.Add(id));
+            return ids;
+        }
     }
 }

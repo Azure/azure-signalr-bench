@@ -1,13 +1,13 @@
-using Bench.Common;
-using Bench.Common.Config;
-using Bench.RpcSlave.Worker;
-using Grpc.Core;
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
+using Bench.Common;
+using Bench.Common.Config;
+using Bench.RpcSlave.Worker;
 using Bench.RpcSlave.Worker.Operations;
+using Grpc.Core;
 
 namespace Bench.RpcSlave
 {
@@ -45,12 +45,12 @@ namespace Bench.RpcSlave
                 var jobConfig = new JobConfig
                 {
                     Connections = config.Connections,
-                    ConcurrentConnections = config.ConcurrentConnections,
-                    Slaves = config.Slaves,
-                    Interval = config.Interval,
-                    Duration = config.Duration,
-                    ServerUrl = config.ServerUrl,
-                    Pipeline = new List<string>(config.Pipeline.Split(';'))
+                        ConcurrentConnections = config.ConcurrentConnections,
+                        Slaves = config.Slaves,
+                        Interval = config.Interval,
+                        Duration = config.Duration,
+                        ServerUrl = config.ServerUrl,
+                        Pipeline = new List<string>(config.Pipeline.Split(';'))
                 };
 
                 // TODO: handle exception
@@ -96,7 +96,7 @@ namespace Bench.RpcSlave
             try
             {
                 var dict = new Dict();
-                if (force.Force_ != true && (int)_sigWorker.GetState() < (int)Stat.Types.State.SendRunning)
+                if (force.Force_ != true && (int) _sigWorker.GetState() < (int) Stat.Types.State.SendRunning)
                 {
                     return Task.FromResult(dict);
                 }
@@ -123,7 +123,7 @@ namespace Bench.RpcSlave
                 //     HubProtocol = cellConfig.HubProtocol,
                 //     TransportType = cellConfig.TransportType,
                 //     Scenario = cellConfig.Scenario
-                    
+
                 // };
                 Console.WriteLine($"LoadBenchmarkCellConfig");
                 _sigWorker.LoadBenchmarkCellConfig(cellConfig);
@@ -155,7 +155,12 @@ namespace Bench.RpcSlave
 
         public override Task<Stat> Test(Strg strg, ServerCallContext context)
         {
-            return Task.FromResult(new Stat { State = Stat.Types.State.DebugTodo});
+            return Task.FromResult(new Stat { State = Stat.Types.State.DebugTodo });
+        }
+
+        public override Task<StrgList> GetConnectionIds(Empty empty, ServerCallContext context)
+        {
+            return Task.FromResult(_sigWorker.GetConnectionIds());
         }
     }
 }

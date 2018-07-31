@@ -16,7 +16,6 @@ namespace Bench.RpcSlave.Worker.Operations
             _tk.State = Common.Stat.Types.State.HubconnDisconnecting;
             Stop(tk.Connections);
             _tk.State = Common.Stat.Types.State.HubconnDisconnected;
-
         }
 
         private void Stop(List<HubConnection> connections)

@@ -1,21 +1,20 @@
-﻿using Bench.Common;
-using Bench.RpcSlave.Worker.Savers;
-using Bench.RpcSlave.Worker.StartTimeOffsetGenerator;
-using Microsoft.AspNetCore.SignalR.Client;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Bench.Common;
+using Bench.RpcSlave.Worker.Savers;
+using Bench.RpcSlave.Worker.StartTimeOffsetGenerator;
+using Microsoft.AspNetCore.SignalR.Client;
 
 namespace Bench.RpcSlave.Worker.Operations
 {
-    class BaseSendMsgOp: BaseOp
+    class BaseSendMsgOp : BaseOp
     {
         private IStartTimeOffsetGenerator StartTimeOffsetGenerator;
         private List<int> _sentMessages;
         private WorkerToolkit _tk;
-
         public void Do(WorkerToolkit tk)
         {
             var waitTime = 5 * 1000;
@@ -26,7 +25,6 @@ namespace Bench.RpcSlave.Worker.Operations
             _tk.State = Stat.Types.State.SendReady;
 
             // setup
-            // var connRange = _tk.MixConnectionConfig.
             Setup();
             Task.Delay(5000).Wait();
 
@@ -56,37 +54,50 @@ namespace Bench.RpcSlave.Worker.Operations
             }
 
             SetCallbacks();
-            _tk.Counters.ResetCounters(withConnection: false);
+
+            // _tk.Counters.ResetCounters(withConnection: false);
+            if (!_tk.Init) _tk.Counters.ResetCounters(withConnection: false);
+            _tk.Init = true;
         }
 
         private void SetCallbacks()
         {
-            for (int i = 0; i < _tk.Connections.Count; i++)
+            Util.Log($"scenario: {_tk.BenchmarkCellConfig.Scenario}");
+            for (int i = _tk.ConnectionRange.Begin; i < _tk.ConnectionRange.End; i++)
             {
-                _tk.Connections[i].On(_tk.BenchmarkCellConfig.Scenario, (int count, string time) =>
-                {
-                    var receiveTimestamp = Util.Timestamp();
-                    var sendTimestamp = Convert.ToInt64(time);
+                var ind = i;
 
-                    _tk.Counters.CountLatency(sendTimestamp, receiveTimestamp);
-                    _tk.Counters.SetServerCounter(count);
-                });
+                if (!_tk.Init)
+                    _tk.Connections[i - _tk.ConnectionRange.Begin].On(_tk.BenchmarkCellConfig.Scenario, (int count, string time, string thisId, string targetId) =>
+                    {
+                        var receiveTimestamp = Util.Timestamp();
+                        var sendTimestamp = Convert.ToInt64(time);
+                        _tk.Counters.CountLatency(sendTimestamp, receiveTimestamp);
+                        _tk.Counters.SetServerCounter(count);
+                    });
 
             }
         }
 
         private void StartSendMsg()
         {
-            if (_tk.Connections.Count == 0)
+            var sendCnt = 0;
+            for (var i = _tk.ConnectionRange.Begin; i < _tk.ConnectionRange.End; i++)
+            {
+                var cfg = _tk.ConnectionConfigList.Configs[i];
+                if (cfg.SendFlag) sendCnt++;
+            }
+            if (_tk.Connections.Count == 0 || sendCnt == 0)
             {
                 Task.Delay(TimeSpan.FromSeconds(_tk.JobConfig.Duration + 5)).Wait();
             }
             else
             {
-                var tasks = new List<Task>(_tk.Connections.Count);
-                for (var i = 0; i < _tk.Connections.Count; i++)
+                var tasks = new List<Task>();
+                for (var i = _tk.ConnectionRange.Begin; i < _tk.ConnectionRange.End; i++)
                 {
-                    tasks.Add(StartSendingMessageAsync(_tk.Connections[i], i));
+                    var cfg = _tk.ConnectionConfigList.Configs[i];
+                    if (cfg.SendFlag) tasks.Add(StartSendingMessageAsync(_tk.Connections[i - _tk.ConnectionRange.Begin], i - _tk.ConnectionRange.Begin));
                 }
 
                 Task.WhenAll(tasks).Wait();
@@ -96,13 +107,16 @@ namespace Bench.RpcSlave.Worker.Operations
         private async Task StartSendingMessageAsync(HubConnection connection, int ind)
         {
             await Task.Delay(StartTimeOffsetGenerator.Delay(TimeSpan.FromSeconds(_tk.JobConfig.Interval)));
-            using (var cts = new CancellationTokenSource(TimeSpan.FromSeconds(_tk.JobConfig.Duration)))
+            using(var cts = new CancellationTokenSource(TimeSpan.FromSeconds(_tk.JobConfig.Duration)))
             {
                 while (!cts.IsCancellationRequested)
                 {
                     try
                     {
-                        await connection.SendAsync(_tk.BenchmarkCellConfig.Scenario, $"{Util.GuidEncoder.Encode(Guid.NewGuid())}", $"{Util.Timestamp()}");
+                        if (_tk.BenchmarkCellConfig.Scenario.Contains("sendToClient"))
+                            await connection.SendAsync(_tk.BenchmarkCellConfig.Scenario, _tk.BenchmarkCellConfig.TargetConnectionIds[ind + _tk.ConnectionRange.Begin], $"{Util.Timestamp()}");
+                        else
+                            await connection.SendAsync(_tk.BenchmarkCellConfig.Scenario, $"{Util.GuidEncoder.Encode(Guid.NewGuid())}", $"{Util.Timestamp()}");
                         _sentMessages[ind]++;
                         _tk.Counters.IncreseSentMsg();
 
@@ -111,7 +125,6 @@ namespace Bench.RpcSlave.Worker.Operations
                     {
                         _tk.Counters.IncreseNotSentFromClientMsg();
                     }
-
 
                     await Task.Delay(TimeSpan.FromSeconds(_tk.JobConfig.Interval));
                 }

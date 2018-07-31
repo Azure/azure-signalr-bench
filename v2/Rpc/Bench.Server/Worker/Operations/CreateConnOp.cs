@@ -18,14 +18,10 @@ namespace Bench.RpcSlave.Worker.Operations
         {
             _tk = tk;
 
-            // TODO: remove, only for debug
-            //_tk.Test = new List<int>();
-            //_tk.Test.Add(1);
-
             Util.Log($"server url: {_tk.JobConfig.ServerUrl}; conn: {_tk.JobConfig.Connections}; slaves: {_tk.JobConfig.Slaves};  _tk.BenchmarkCellConfig.TransportType: { _tk.BenchmarkCellConfig.TransportType}; _tk.BenchmarkCellConfig.HubProtocol: {_tk.BenchmarkCellConfig.HubProtocol}");
             _tk.State = Stat.Types.State.HubconnUnconnected;
-            _tk.Connections = Create(_tk.JobConfig.Connections, _tk.JobConfig.ServerUrl, _tk.BenchmarkCellConfig.TransportType, _tk.BenchmarkCellConfig.HubProtocol);
-            if (tk.Connections == null) Util.Log("connctions == null");
+            _tk.Connections = Create(_tk.ConnectionRange.End - _tk.ConnectionRange.Begin, _tk.JobConfig.ServerUrl, _tk.BenchmarkCellConfig.TransportType, _tk.BenchmarkCellConfig.HubProtocol);
+            if (tk.Connections == null) Util.Log("connections == null");
             Util.Log($"xxxconnections: {_tk.Connections.Count}");
         }
 

@@ -1,11 +1,11 @@
-using Bench.Common;
-using Bench.Common.Config;
-using Microsoft.AspNetCore.SignalR.Client;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
 using System.Threading.Tasks;
+using Bench.Common;
+using Bench.Common.Config;
+using Microsoft.AspNetCore.SignalR.Client;
 
 namespace Bench.RpcSlave.Worker.Operations
 {
@@ -23,37 +23,17 @@ namespace Bench.RpcSlave.Worker.Operations
             Util.Log($"start connections");
             _tk.State = Stat.Types.State.HubconnConnecting;
 
-
             var swConn = new Stopwatch();
             swConn.Start();
-            //int concurrency = 50;
-            //var tasks = new List<Task>(connections.Count);
-            //var i = 0;
-            //foreach (var conn in connections)
-            //{
-            //    tasks.Add(Task.Run(() =>
-            //    {
-            //        try
-            //        {
-            //            conn.StartAsync().Wait();
-            //        }
-            //        catch (Exception ex)
-            //        {
-            //            Util.Log($"start connection exception: {ex}");
-            //            _tk.Counters.IncreaseConnectionError();
-            //        }
-            //    }));
 
+            for (var i = 0; i < _tk.Connections.Count; i++)
+            {
+                _tk.ConnectionIds.Add("");
+            }
 
-            //    if (i > 0 && i % concurrency == 0)
-            //    {
-            //        Task.Delay(TimeSpan.FromSeconds(1)).Wait();
-            //    }
-            //}
-            //Task.WhenAll(tasks).Wait();
-            Util.Log($"concurrent conn: {_tk.JobConfig.ConcurrentConnections}");
+            Util.Log($"concurrent conn: {_tk.JobConfig.ConcurrentConnections} conn count: {connections.Count}");
             var left = connections.Count;
-            var nextBatch = _tk.JobConfig.ConcurrentConnections; // bug: concurrent could be 0 -> dead loop
+            var nextBatch = _tk.JobConfig.ConcurrentConnections;
             if (nextBatch <= left)
             {
                 var tasks = new List<Task>(connections.Count);
@@ -68,6 +48,8 @@ namespace Bench.RpcSlave.Worker.Operations
                             try
                             {
                                 connections[index].StartAsync().Wait();
+                                GetConnectionId(connections[index], _tk.ConnectionIds, index);
+
                             }
                             catch (Exception ex)
                             {
@@ -88,11 +70,18 @@ namespace Bench.RpcSlave.Worker.Operations
                 Task.WhenAll(tasks).Wait();
             }
 
+
             _tk.Counters.UpdateConnectionSuccess(_tk.Connections.Count);
             swConn.Stop();
             Util.Log($"connection time: {swConn.Elapsed.TotalSeconds}");
 
             _tk.State = Stat.Types.State.HubconnConnected;
+        }
+
+        private void GetConnectionId(HubConnection connection, List<string> targetConnectionIds, int index)
+        {
+            connection.On("connectionId", (string connectionId) => _tk.ConnectionIds[index] = connectionId);
+            connection.SendAsync("connectionId").Wait();
         }
     }
 }

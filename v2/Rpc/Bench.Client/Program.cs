@@ -32,61 +32,61 @@ namespace Bench.RpcMaster
         private static JObject _counters;
         private static string _jobResultFile = "./jobResult.txt";
         private static double _successThreshold = 0.7;
-        public static void Main (string[] args)
+        public static void Main(string[] args)
         {
             // parse args
-            var argsOption = new ArgsOption ();
-            var result = Parser.Default.ParseArguments<ArgsOption> (args)
-                .WithParsed (options => argsOption = options)
-                .WithNotParsed (error => { });
+            var argsOption = new ArgsOption();
+            var result = Parser.Default.ParseArguments<ArgsOption>(args)
+                .WithParsed(options => argsOption = options)
+                .WithNotParsed(error => { });
 
-            var pid = Process.GetCurrentProcess ().Id;
+            var pid = Process.GetCurrentProcess().Id;
             if (argsOption.PidFile != null)
             {
-                Util.SaveContentToFile (argsOption.PidFile, Convert.ToString (pid), false);
+                Util.SaveContentToFile(argsOption.PidFile, Convert.ToString(pid), false);
             }
 
-            var slaveList = new List<string> (argsOption.SlaveList.Split (';'));
+            var slaveList = new List<string>(argsOption.SlaveList.Split(';'));
 
             // open channel to rpc servers
-            var channels = new List<Channel> (slaveList.Count);
+            var channels = new List<Channel>(slaveList.Count);
             if (argsOption.Debug != "debug")
             {
                 for (var i = 0; i < slaveList.Count; i++)
                 {
-                    Util.Log ($"add channel: {slaveList[i]}:{argsOption.RpcPort}");
-                    channels.Add (new Channel ($"{slaveList[i]}:{argsOption.RpcPort}", ChannelCredentials.Insecure));
+                    Util.Log($"add channel: {slaveList[i]}:{argsOption.RpcPort}");
+                    channels.Add(new Channel($"{slaveList[i]}:{argsOption.RpcPort}", ChannelCredentials.Insecure));
                 }
             }
             else
             {
                 //debug
-                channels.Add (new Channel ($"{slaveList[0]}:5555", ChannelCredentials.Insecure));
-                channels.Add (new Channel ($"{slaveList[0]}:6666", ChannelCredentials.Insecure));
+                channels.Add(new Channel($"{slaveList[0]}:5555", ChannelCredentials.Insecure));
+                channels.Add(new Channel($"{slaveList[0]}:6666", ChannelCredentials.Insecure));
             }
 
             try
             {
                 if (argsOption.Clear == "true")
                 {
-                    if (File.Exists (_jobResultFile))
+                    if (File.Exists(_jobResultFile))
                     {
-                        File.Delete (_jobResultFile);
+                        File.Delete(_jobResultFile);
                     }
                 }
                 else
                 {
-                    if (File.Exists (_jobResultFile))
+                    if (File.Exists(_jobResultFile))
                     {
-                        CheckLastJobResults (_jobResultFile, argsOption.Retry, argsOption.Connections,
+                        CheckLastJobResults(_jobResultFile, argsOption.Retry, argsOption.Connections,
                             argsOption.ServiceType, argsOption.TransportType, argsOption.HubProtocal, argsOption.Scenario);
                     }
                 }
                 // create rpc clients
-                var clients = new List<RpcService.RpcServiceClient> (slaveList.Count);
+                var clients = new List<RpcService.RpcServiceClient>(slaveList.Count);
                 for (var i = 0; i < slaveList.Count; i++)
                 {
-                    clients.Add (new RpcService.RpcServiceClient (channels[i]));
+                    clients.Add(new RpcService.RpcServiceClient(channels[i]));
                 }
 
                 // check rpc connections
@@ -97,33 +97,33 @@ namespace Bench.RpcMaster
                         foreach (var client in clients)
                         {
                             var strg = new Strg { Str = "" };
-                            client.Test (strg);
+                            client.Test(strg);
                         }
                     }
                     catch (Exception ex)
                     {
-                        Util.Log ($"rpc connection ex: {ex}");
+                        Util.Log($"rpc connection ex: {ex}");
                         continue;
                     }
                     break;
                 }
                 // load job config
-                var jobConfig = new JobConfig (argsOption);
+                var jobConfig = new JobConfig(argsOption);
 
                 // call salves to load job config
-                clients.ForEach (client =>
+                clients.ForEach(client =>
                 {
-                    var i = clients.IndexOf (client);
-                    var clientConnections = Util.SplitNumber (argsOption.Connections, i, slaveList.Count);
-                    var concurrentConnections = Util.SplitNumber (argsOption.ConcurrentConnection, i, slaveList.Count);
+                    var i = clients.IndexOf(client);
+                    var clientConnections = Util.SplitNumber(argsOption.Connections, i, slaveList.Count);
+                    var concurrentConnections = Util.SplitNumber(argsOption.ConcurrentConnection, i, slaveList.Count);
                     // modify the illegal case
                     if (clientConnections > 0 && concurrentConnections == 0)
                     {
-                        Util.Log ($"Warning: the concurrent connection '{argsOption.ConcurrentConnection}' is too small, it is '{slaveList.Count}' at least");
+                        Util.Log($"Warning: the concurrent connection '{argsOption.ConcurrentConnection}' is too small, it is '{slaveList.Count}' at least");
                         concurrentConnections = 1;
                     }
-                    var state = new Stat ();
-                    state = client.CreateWorker (new Empty ());
+                    var state = new Stat();
+                    state = client.CreateWorker(new Empty());
                     var config = new CellJobConfig
                     {
                         Connections = clientConnections,
@@ -134,101 +134,117 @@ namespace Bench.RpcMaster
                         ServerUrl = argsOption.ServerUrl,
                         Pipeline = argsOption.PipeLine
                     };
-                    Util.Log ($"create worker state: {state.State}");
-                    Util.Log ($"client connections: {config.Connections}");
-                    state = client.LoadJobConfig (config);
-                    Util.Log ($"load job config state: {state.State}");
+                    Util.Log($"create worker state: {state.State}");
+                    Util.Log($"client connections: {config.Connections}");
+                    state = client.LoadJobConfig(config);
+                    Util.Log($"load job config state: {state.State}");
                 });
 
                 // collect counters
-                var collectTimer = new System.Timers.Timer (1000);
+                var collectTimer = new System.Timers.Timer(1000);
                 collectTimer.AutoReset = true;
                 collectTimer.Elapsed += (sender, e) =>
                 {
-                    var allClientCounters = new ConcurrentDictionary<string, int> ();
-                    var collectCountersTasks = new List<Task> (clients.Count);
+                    var allClientCounters = new ConcurrentDictionary<string, int>();
+                    var collectCountersTasks = new List<Task>(clients.Count);
                     var isSend = false;
                     var isComplete = false;
-                    var swCollect = new Stopwatch ();
-                    swCollect.Start ();
-                    clients.ForEach (client =>
+                    var swCollect = new Stopwatch();
+                    swCollect.Start();
+                    clients.ForEach(client =>
                     {
-                        var state = client.GetState (new Empty { });
+                        var state = client.GetState(new Empty { });
                         if ((int) state.State >= (int) Stat.Types.State.SendComplete) isComplete = true;
                         if ((int) state.State < (int) Stat.Types.State.SendRunning ||
                             (int) state.State > (int) Stat.Types.State.SendComplete && (int) state.State < (int) Stat.Types.State.HubconnDisconnecting) return;
                         isSend = true;
                         isComplete = false;
-                        var counters = client.CollectCounters (new Force { Force_ = false });
+                        var counters = client.CollectCounters(new Force { Force_ = false });
 
                         for (var i = 0; i < counters.Pairs.Count; i++)
                         {
                             var key = counters.Pairs[i].Key;
                             var value = counters.Pairs[i].Value;
-                            if (key.Contains ("server"))
+                            if (key.Contains("server"))
                             {
-                                allClientCounters.AddOrUpdate (key, value, (k, v) => Math.Max (v, value));
+                                allClientCounters.AddOrUpdate(key, value, (k, v) => Math.Max(v, value));
                             }
                             else
-                                allClientCounters.AddOrUpdate (key, value, (k, v) => v + value);
+                                allClientCounters.AddOrUpdate(key, value, (k, v) => v + value);
                         }
                     });
-                    swCollect.Stop ();
-                    Util.Log ($"collecting counters time: {swCollect.Elapsed.TotalSeconds} s");
+                    swCollect.Stop();
+                    Util.Log($"collecting counters time: {swCollect.Elapsed.TotalSeconds} s");
                     if (isSend == false || isComplete == true)
                     {
                         return;
                     }
 
-                    var jobj = new JObject ();
+                    var jobj = new JObject();
                     var received = 0;
                     foreach (var item in allClientCounters)
                     {
-                        jobj.Add (item.Key, item.Value);
-                        if (item.Key.Contains ("message") && (item.Key.Contains (":ge") || item.Key.Contains (":lt")))
+                        jobj.Add(item.Key, item.Value);
+                        if (item.Key.Contains("message") && (item.Key.Contains(":ge") || item.Key.Contains(":lt")))
                         {
                             received += item.Value;
                         }
                     }
 
-                    jobj.Add ("message:received", received);
-                    _counters = Util.Sort (jobj);
+                    jobj.Add("message:received", received);
+                    _counters = Util.Sort(jobj);
                     var finalRec = new JObject
-                    { { "Time", Util.Timestamp2DateTimeStr (Util.Timestamp ()) }, { "Counters", _counters }
+                    { { "Time", Util.Timestamp2DateTimeStr(Util.Timestamp()) }, { "Counters", _counters }
                     };
-                    string onelineRecord = Regex.Replace (finalRec.ToString (), @"\s+", "");
-                    onelineRecord = Regex.Replace (onelineRecord, @"\t|\n|\r", "");
+                    string onelineRecord = Regex.Replace(finalRec.ToString(), @"\s+", "");
+                    onelineRecord = Regex.Replace(onelineRecord, @"\t|\n|\r", "");
                     onelineRecord += "," + Environment.NewLine;
-                    Util.Log ("per second: " + onelineRecord);
+                    Util.Log("per second: " + onelineRecord);
 
                     try
                     {
-                        Util.SaveContentToFile (argsOption.OutputCounterFile, onelineRecord, true);
+                        Util.SaveContentToFile(argsOption.OutputCounterFile, onelineRecord, true);
                     }
                     catch (Exception ex)
                     {
-                        Util.Log ($"Cannot save file: {ex}");
+                        Util.Log($"Cannot save file: {ex}");
                     }
                 };
-                collectTimer.Start ();
+                collectTimer.Start();
 
                 // process jobs for each step
-                var pipeLines = new List<string> (argsOption.PipeLine.Split (';'));
+                var pipeLines = new List<string>(argsOption.PipeLine.Split(';'));
+                var connectionConfigBuilder = new ConnectionConfigBuilder();
+                var connectionAllConfigList = connectionConfigBuilder.Build(argsOption.Connections);
+                var connectionIds = new List<string>();
                 for (var i = 0; i < pipeLines.Count; i++)
                 {
-                    var tasks = new List<Task> (clients.Count);
+                    var tasks = new List<Task>(clients.Count);
                     var step = pipeLines[i];
                     int indClient = -1;
-                    var connectionConfigBuilder = new ConnectionConfigBuilder ();
-                    var connectionAllConfigList = connectionConfigBuilder.Build (argsOption.GroupConnection, argsOption.groupNum);
+                    var AdditionalSendConnCnt = (step.Contains("up")) ? Convert.ToInt32(step.Substring(2)) : 0;
 
-                    clients.ForEach (client =>
+                    // var connectionAllConfigList = connectionConfigBuilder.Build(argsOption.GroupConnection, argsOption.groupNum, sendConnCnt);
+
+                    if (step.Contains("up"))
+                    {
+                        Util.Log($"additional: {AdditionalSendConnCnt}");
+                        connectionAllConfigList = connectionConfigBuilder.UpdateSendConn(connectionAllConfigList, AdditionalSendConnCnt);
+                    }
+
+                    clients.ForEach(client =>
                     {
                         indClient++;
-                        var mixEchoConn = Util.SplitNumber (argsOption.MixEchoConnection, indClient, slaveList.Count);
-                        var mixBroadcastConn = Util.SplitNumber (argsOption.MixBroadcastConnection, indClient, slaveList.Count);
-                        var mixGroupConn = Util.SplitNumber (argsOption.MixGroupConnection, indClient, slaveList.Count);
-                        Util.Log ($"conn: echoConn {mixEchoConn}, b: {mixBroadcastConn}, g: {mixGroupConn}");
+                        var mixEchoConn = Util.SplitNumber(argsOption.MixEchoConnection, indClient, slaveList.Count);
+                        var mixBroadcastConn = Util.SplitNumber(argsOption.MixBroadcastConnection, indClient, slaveList.Count);
+                        var mixGroupConn = Util.SplitNumber(argsOption.MixGroupConnection, indClient, slaveList.Count);
+                        Util.Log($"conn: echoConn {mixEchoConn}, b: {mixBroadcastConn}, g: {mixGroupConn}");
+
+                        for (int xx = 0; xx < connectionAllConfigList.Configs.Count; xx++)
+                        {
+                            Util.Log($"send flag: {connectionAllConfigList.Configs[xx].SendFlag}");
+                        }
+                        Util.Log($"");
 
                         var benchmarkCellConfig = new BenchmarkCellConfig
                         {
@@ -243,85 +259,116 @@ namespace Bench.RpcMaster
                             MixGroupConnection = mixGroupConn
                         };
 
-                        Util.Log ($"service: {benchmarkCellConfig.ServiceType}; transport: {benchmarkCellConfig.TransportType}; hubprotocol: {benchmarkCellConfig.HubProtocol}; scenario: {benchmarkCellConfig.Scenario}; step: {step}");
+                        Util.LogList("conn ids", connectionIds);
+                        benchmarkCellConfig.TargetConnectionIds.AddRange(connectionIds);
+
+                        Util.Log($"service: {benchmarkCellConfig.ServiceType}; transport: {benchmarkCellConfig.TransportType}; hubprotocol: {benchmarkCellConfig.HubProtocol}; scenario: {benchmarkCellConfig.Scenario}; step: {step}");
 
                         var indClientInLoop = indClient;
-                        tasks.Add (Task.Run (() =>
+                        tasks.Add(Task.Run(() =>
                         {
                             var beg = 0;
                             for (var indStart = 0; indStart < indClientInLoop; indStart++)
                             {
-                                Util.Log ($"indStart: {indStart}, indClient:{indClientInLoop}");
-                                beg += Util.SplitNumber (argsOption.GroupConnection, indStart, slaveList.Count);
+                                Util.Log($"indStart: {indStart}, indClient:{indClientInLoop}");
+                                beg += Util.SplitNumber(argsOption.Connections, indStart, slaveList.Count);
+                                // beg += Util.SplitNumber(argsOption.Connections, indStart, slaveList.Count);
                             }
-                            var currConnSliceCnt = Util.SplitNumber (argsOption.GroupConnection, indClientInLoop, slaveList.Count);
-                            client.RunJob (benchmarkCellConfig);
-                            client.LoadConnectionConfig (connectionAllConfigList);
-                            Util.Log ($"range: ({beg}, {beg + currConnSliceCnt})");
-                            client.LoadConnectionRange (new Range { Begin = beg, End = beg + currConnSliceCnt });
+                            var currConnSliceCnt = Util.SplitNumber(argsOption.Connections, indClientInLoop, slaveList.Count);
+
+                            Util.Log($"range: ({beg}, {beg + currConnSliceCnt})");
+                            client.LoadConnectionRange(new Range { Begin = beg, End = beg + currConnSliceCnt });
+                            client.LoadConnectionConfig(connectionAllConfigList);
+                            client.RunJob(benchmarkCellConfig);
+
+                            // // group
+                            // var currGroupConnSliceCnt = Util.SplitNumber(argsOption.GroupConnection, indClientInLoop, slaveList.Count);
+                            // client.RunJob(benchmarkCellConfig);
+                            // client.LoadConnectionConfig(connectionAllConfigList);
+                            // Util.Log($"range: ({beg}, {beg + currGroupConnSliceCnt})");
+                            // client.LoadConnectionRange(new Range { Begin = beg, End = beg + currGroupConnSliceCnt });
                         }));
                     });
-                    Task.WhenAll (tasks).Wait ();
-                    Task.Delay (1000).Wait ();
+                    Task.WhenAll(tasks).Wait();
+                    Task.Delay(1000).Wait();
+
+                    // collect all connections' ids just after connections start
+                    if (step.Contains("startConn"))
+                    {
+                        connectionIds = CollectConnectionIds(clients);
+                        connectionIds.Shuffle();
+                    }
                 }
             }
             catch (Exception ex)
             {
-                Util.Log ($"Exception from RPC master: {ex}");
-                SaveJobResult (_jobResultFile, null, argsOption.Connections, argsOption.ServiceType, argsOption.TransportType, argsOption.HubProtocal, argsOption.Scenario);
+                Util.Log($"Exception from RPC master: {ex}");
+                SaveJobResult(_jobResultFile, null, argsOption.Connections, argsOption.ServiceType, argsOption.TransportType, argsOption.HubProtocal, argsOption.Scenario);
                 throw;
             }
-            SaveJobResult (_jobResultFile, _counters, argsOption.Connections, argsOption.ServiceType, argsOption.TransportType, argsOption.HubProtocal, argsOption.Scenario);
+            SaveJobResult(_jobResultFile, _counters, argsOption.Connections, argsOption.ServiceType, argsOption.TransportType, argsOption.HubProtocal, argsOption.Scenario);
 
             for (var i = 0; i < channels.Count; i++)
             {
-                channels[i].ShutdownAsync ().Wait ();
+                channels[i].ShutdownAsync().Wait();
             }
-            Console.WriteLine ("Exit client...");
+            Console.WriteLine("Exit client...");
         }
 
-        private static void SaveConfig (string path, int connection, string serviceType, string transportType, string protocol, string scenario)
+        private static List<string> CollectConnectionIds(List<RpcService.RpcServiceClient> clients)
+        {
+            var connectionIds = new List<string>();
+            clients.ForEach(client =>
+            {
+                var connectionIdsPerClient = client.GetConnectionIds(new Empty());
+                connectionIds.AddRange(connectionIdsPerClient.List);
+            });
+            connectionIds.ForEach(id => Util.Log($"conn id: {id}"));
+            return connectionIds;
+        }
+
+        private static void SaveConfig(string path, int connection, string serviceType, string transportType, string protocol, string scenario)
         {
             var jobj = new JObject
             { { "connection", connection }, { "serviceType", serviceType }, { "transportType", transportType }, { "protocol", protocol }, { "scenario", scenario }
             };
 
-            string onelineRecord = Regex.Replace (jobj.ToString (), @"\s+", "");
-            onelineRecord = Regex.Replace (onelineRecord, @"\t|\n|\r", "");
+            string onelineRecord = Regex.Replace(jobj.ToString(), @"\s+", "");
+            onelineRecord = Regex.Replace(onelineRecord, @"\t|\n|\r", "");
             onelineRecord += Environment.NewLine;
 
-            Util.SaveContentToFile (path, onelineRecord, false);
+            Util.SaveContentToFile(path, onelineRecord, false);
         }
 
-        private static void SaveToFile (string path, JObject jobj)
+        private static void SaveToFile(string path, JObject jobj)
         {
-            string onelineRecord = Regex.Replace (jobj.ToString (), @"\s+", "");
-            onelineRecord = Regex.Replace (onelineRecord, @"\t|\n|\r", "");
+            string onelineRecord = Regex.Replace(jobj.ToString(), @"\s+", "");
+            onelineRecord = Regex.Replace(onelineRecord, @"\t|\n|\r", "");
             onelineRecord += Environment.NewLine;
 
-            Util.SaveContentToFile (path, onelineRecord, true);
+            Util.SaveContentToFile(path, onelineRecord, true);
         }
 
-        private static double GetSuccessPercentage (JObject counters, string scenario, int connection)
+        private static double GetSuccessPercentage(JObject counters, string scenario, int connection)
         {
             var sent = (int) counters["message:sent"];
             var notSent = (int) counters["message:notSentFromClient"];
             var total = sent + notSent;
             var received = (int) counters["message:received"];
             var percentage = 0.0;
-            if (scenario.Contains ("broadcast"))
+            if (scenario.Contains("broadcast"))
             {
                 percentage = (double) received / (total * connection);
             }
-            else if (scenario.Contains ("echo"))
+            else if (scenario.Contains("echo"))
             {
                 percentage = (double) received / (total);
             }
-            else if (scenario.Contains ("mix"))
+            else if (scenario.Contains("mix"))
             {
                 percentage = 1.0; // todo
             }
-            else if (scenario.Contains ("group"))
+            else if (scenario.Contains("group"))
             {
                 percentage = 1.0; // todo
             }
@@ -329,7 +376,7 @@ namespace Bench.RpcMaster
             return percentage;
         }
 
-        private static void SaveJobResult (string path, JObject counters, int connection, string serviceType, string transportType, string protocol, string scenario)
+        private static void SaveJobResult(string path, JObject counters, int connection, string serviceType, string transportType, string protocol, string scenario)
         {
             // fail for sure
             if (counters == null)
@@ -338,29 +385,32 @@ namespace Bench.RpcMaster
                 { { "connection", connection }, { "serviceType", serviceType }, { "transportType", transportType }, { "protocol", protocol }, { "scenario", scenario }, { "result", "FAIL" }
                 };
 
-                SaveToFile (path, resFail);
+                SaveToFile(path, resFail);
                 return;
             }
 
             // maybe success
-            var percentage = GetSuccessPercentage (counters, scenario, connection);
-            var result = percentage > _successThreshold ? "SUCCESS" : "FAIL";
+            var percentage = GetSuccessPercentage(counters, scenario, connection);
+
+            // todo: define what is success
+            var result = "SUCCESS";
+            // var result = percentage > _successThreshold ? "SUCCESS" : "FAIL";
 
             var res = new JObject
             { { "connection", connection }, { "serviceType", serviceType }, { "transportType", transportType }, { "protocol", protocol }, { "scenario", scenario }, { "result", result }
             };
             if (result == "FAIL")
             {
-                SaveToFile (path, res);
-                throw new Exception ();
+                SaveToFile(path, res);
+                throw new Exception();
             }
             else
             {
-                SaveToFile (path, res);
+                SaveToFile(path, res);
             }
         }
 
-        private static void CheckLastJobResults (string path, int maxRetryCount, int connection, string serviceType,
+        private static void CheckLastJobResults(string path, int maxRetryCount, int connection, string serviceType,
             string transportType, string protocol, string scenario)
         {
             return;

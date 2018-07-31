@@ -1,8 +1,8 @@
 // Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using Microsoft.AspNetCore.SignalR;
 using System;
+using Microsoft.AspNetCore.SignalR;
 using Interlocked = System.Threading.Interlocked;
 
 namespace Microsoft.Azure.SignalR.PerfTest.AppServer
@@ -12,16 +12,28 @@ namespace Microsoft.Azure.SignalR.PerfTest.AppServer
         private static int _totalReceivedEcho = 0;
         private static int _totalReceivedBroadcast = 0;
         private static int _totalReceivedGroup = 0;
+
+        public void ConnectionId()
+        {
+            Console.WriteLine($"conn id: {Context.ConnectionId}");
+            Clients.Client(Context.ConnectionId).SendAsync("connectionId", Context.ConnectionId);
+        }
+
+        public void SendToClient(string targetId, string time)
+        {
+            Clients.Client(targetId).SendAsync("sendToClient", 0, time, Context.ConnectionId, targetId);
+
+        }
         public void Echo(string uid, string time)
         {
             Interlocked.Increment(ref _totalReceivedEcho);
-            Clients.Client(Context.ConnectionId).SendAsync("echo", _totalReceivedEcho, time);
+            Clients.Client(Context.ConnectionId).SendAsync("echo", _totalReceivedEcho, time, Context.ConnectionId, null);
         }
 
         public void Broadcast(string uid, string time)
         {
             Interlocked.Increment(ref _totalReceivedBroadcast);
-            Clients.All.SendAsync("broadcast", _totalReceivedBroadcast, time);
+            Clients.All.SendAsync("broadcast", _totalReceivedBroadcast, time, Context.ConnectionId, null);
         }
 
         public void BroadcastMessage(string name, string message)
@@ -70,7 +82,7 @@ namespace Microsoft.Azure.SignalR.PerfTest.AppServer
         public void Count(string name)
         {
             var count = 0;
-            if (name == "echo") count = _totalReceivedEcho; 
+            if (name == "echo") count = _totalReceivedEcho;
             if (name == "broadcast") count = _totalReceivedBroadcast;
             if (name == "group") count = _totalReceivedGroup;
             Clients.Client(Context.ConnectionId).SendAsync("count", count);

@@ -13,6 +13,7 @@ service RpcService {
 	rpc Test(Strg) returns (Stat) {}
 	rpc LoadConnectionConfig(ConnectionConfigList) returns (Empty) {}
 	rpc LoadConnectionRange(Range) returns(Empty) {}
+	rpc GetConnectionIds(Empty) returns (StrgList) {}
 }
 
 
@@ -26,10 +27,12 @@ message BenchmarkCellConfig {
 	int32 mixEchoConnection = 7;
 	int32 mixBroadcastConnection = 8;
 	int32 mixGroupConnection = 9;
+	repeated string targetConnectionIds = 10;
 }
 
 message ConnectionConfig {
 	string groupName = 1;
+	bool SendFlag = 2;
 }
 
 message ConnectionConfigList {
@@ -103,6 +106,10 @@ message Stat {
 
 message Strg {
 	string str = 1;
+}
+
+message StrgList {
+	repeated string list = 1;
 }
 
 message Timestamp {

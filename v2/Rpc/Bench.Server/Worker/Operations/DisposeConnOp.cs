@@ -16,6 +16,7 @@ namespace Bench.RpcSlave.Worker.Operations
             _tk.State = Common.Stat.Types.State.HubconnDisposing;
             DisposeAsync(tk.Connections);
             _tk.State = Common.Stat.Types.State.HubconnDisposed;
+            _tk.Init = false;
         }
 
         private void DisposeAsync(List<HubConnection> connections)

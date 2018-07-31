@@ -23,6 +23,7 @@ namespace Bench.Common {
     static readonly grpc::Marshaller<global::Bench.Common.BenchmarkCellConfig> __Marshaller_BenchmarkCellConfig = grpc::Marshallers.Create((arg) => global::Google.Protobuf.MessageExtensions.ToByteArray(arg), global::Bench.Common.BenchmarkCellConfig.Parser.ParseFrom);
     static readonly grpc::Marshaller<global::Bench.Common.ConnectionConfigList> __Marshaller_ConnectionConfigList = grpc::Marshallers.Create((arg) => global::Google.Protobuf.MessageExtensions.ToByteArray(arg), global::Bench.Common.ConnectionConfigList.Parser.ParseFrom);
     static readonly grpc::Marshaller<global::Bench.Common.Range> __Marshaller_Range = grpc::Marshallers.Create((arg) => global::Google.Protobuf.MessageExtensions.ToByteArray(arg), global::Bench.Common.Range.Parser.ParseFrom);
+    static readonly grpc::Marshaller<global::Bench.Common.StrgList> __Marshaller_StrgList = grpc::Marshallers.Create((arg) => global::Google.Protobuf.MessageExtensions.ToByteArray(arg), global::Bench.Common.StrgList.Parser.ParseFrom);
 
     static readonly grpc::Method<global::Bench.Common.Empty, global::Bench.Common.Timestamp> __Method_GetTimestamp = new grpc::Method<global::Bench.Common.Empty, global::Bench.Common.Timestamp>(
         grpc::MethodType.Unary,
@@ -94,6 +95,13 @@ namespace Bench.Common {
         __Marshaller_Range,
         __Marshaller_Empty);
 
+    static readonly grpc::Method<global::Bench.Common.Empty, global::Bench.Common.StrgList> __Method_GetConnectionIds = new grpc::Method<global::Bench.Common.Empty, global::Bench.Common.StrgList>(
+        grpc::MethodType.Unary,
+        __ServiceName,
+        "GetConnectionIds",
+        __Marshaller_Empty,
+        __Marshaller_StrgList);
+
     /// <summary>Service descriptor</summary>
     public static global::Google.Protobuf.Reflection.ServiceDescriptor Descriptor
     {
@@ -149,6 +157,11 @@ namespace Bench.Common {
       }
 
       public virtual global::System.Threading.Tasks.Task<global::Bench.Common.Empty> LoadConnectionRange(global::Bench.Common.Range request, grpc::ServerCallContext context)
+      {
+        throw new grpc::RpcException(new grpc::Status(grpc::StatusCode.Unimplemented, ""));
+      }
+
+      public virtual global::System.Threading.Tasks.Task<global::Bench.Common.StrgList> GetConnectionIds(global::Bench.Common.Empty request, grpc::ServerCallContext context)
       {
         throw new grpc::RpcException(new grpc::Status(grpc::StatusCode.Unimplemented, ""));
       }
@@ -338,6 +351,22 @@ namespace Bench.Common {
       {
         return CallInvoker.AsyncUnaryCall(__Method_LoadConnectionRange, null, options, request);
       }
+      public virtual global::Bench.Common.StrgList GetConnectionIds(global::Bench.Common.Empty request, grpc::Metadata headers = null, DateTime? deadline = null, CancellationToken cancellationToken = default(CancellationToken))
+      {
+        return GetConnectionIds(request, new grpc::CallOptions(headers, deadline, cancellationToken));
+      }
+      public virtual global::Bench.Common.StrgList GetConnectionIds(global::Bench.Common.Empty request, grpc::CallOptions options)
+      {
+        return CallInvoker.BlockingUnaryCall(__Method_GetConnectionIds, null, options, request);
+      }
+      public virtual grpc::AsyncUnaryCall<global::Bench.Common.StrgList> GetConnectionIdsAsync(global::Bench.Common.Empty request, grpc::Metadata headers = null, DateTime? deadline = null, CancellationToken cancellationToken = default(CancellationToken))
+      {
+        return GetConnectionIdsAsync(request, new grpc::CallOptions(headers, deadline, cancellationToken));
+      }
+      public virtual grpc::AsyncUnaryCall<global::Bench.Common.StrgList> GetConnectionIdsAsync(global::Bench.Common.Empty request, grpc::CallOptions options)
+      {
+        return CallInvoker.AsyncUnaryCall(__Method_GetConnectionIds, null, options, request);
+      }
       /// <summary>Creates a new instance of client from given <c>ClientBaseConfiguration</c>.</summary>
       protected override RpcServiceClient NewInstance(ClientBaseConfiguration configuration)
       {
@@ -359,7 +388,8 @@ namespace Bench.Common {
           .AddMethod(__Method_RunJob, serviceImpl.RunJob)
           .AddMethod(__Method_Test, serviceImpl.Test)
           .AddMethod(__Method_LoadConnectionConfig, serviceImpl.LoadConnectionConfig)
-          .AddMethod(__Method_LoadConnectionRange, serviceImpl.LoadConnectionRange).Build();
+          .AddMethod(__Method_LoadConnectionRange, serviceImpl.LoadConnectionRange)
+          .AddMethod(__Method_GetConnectionIds, serviceImpl.GetConnectionIds).Build();
     }
 
   }
