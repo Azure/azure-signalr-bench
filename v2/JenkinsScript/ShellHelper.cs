@@ -48,40 +48,6 @@ namespace JenkinsScript
             return (errCode, result);
         }
 
-        public static (int, string) RemoteSshIgnoreOutput(string user, string host, int port, string cmd,
-            bool wait = true, bool handleRes = false, int retry = 1)
-        {
-            return RemoteSshAndRecordOutput(user, host, port, cmd, null, wait, handleRes, retry);
-        }
-
-        public static (int, string) RemoteSshAndRecordOutput(string user, string host, int port, string cmd, string localOutputFile,
-            bool wait = true, bool handleRes = false, int retry = 1)
-        {
-            int errCode = 0;
-            string result = "";
-            for (var i = 0; i < retry; i++)
-            {
-                if (host.IndexOf("localhost") >= 0 || host.IndexOf("127.0.0.1") >= 0) return Bash(cmd, wait);
-                Util.Log($"port: {port}");
-                Util.Log($"host: {host}");
-                Util.Log($"cmd: {cmd}");
-                string sshCmd = null;
-                if (localOutputFile != null)
-                {
-                    sshCmd = $"ssh -p {port} -o StrictHostKeyChecking=no {user}@{host} \"{cmd}\" > {localOutputFile}";
-                }
-                else
-                {
-                    sshCmd = $"ssh -p {port} -o StrictHostKeyChecking=no {user}@{host} \"{cmd}\"";
-                }
-                Util.Log($"SSH Cmd: {sshCmd}");
-                (errCode, result) = Bash(sshCmd, wait: wait, handleRes: retry > 1 && i < retry - 1 ? false : handleRes);
-                if (errCode == 0) break;
-                Util.Log($"retry {i + 1}th time");
-                Task.Delay(TimeSpan.FromSeconds(1)).Wait();
-            }
-            return (errCode, result);
-        }
 
         public static (int, string) RemoteBash (string user, string host, int port, string password, string cmd,
             bool wait = true, bool handleRes = false, int retry = 1)
@@ -203,7 +169,7 @@ namespace JenkinsScript
             return (errCode, result);
 
         }
-
+        #region Functions for SSH with Public Key
         public static (int, string) CreateResultFolder(string resultRootDir)
         {
             var cmd = $"mkdir {resultRootDir}";
@@ -212,6 +178,49 @@ namespace JenkinsScript
                 return Bash(cmd, wait: true, handleRes: true);
             }
             return (1, "");
+        }
+
+        public static (int, string) RemoteSshIgnoreOutput(string user, string host, int port, string cmd,
+            bool wait = true, bool handleRes = false, int retry = 1)
+        {
+            return RemoteSshAndRecordOutput(user, host, port, cmd, null, false, wait, handleRes, retry);
+        }
+
+        public static (int, string) RemoteSshAndRecordOutput(string user, string host, int port, string cmd,
+            string localOutputFile, bool dumpToStandardOut = false,
+            bool wait = true, bool handleRes = false, int retry = 1)
+        {
+            int errCode = 0;
+            string result = "";
+            for (var i = 0; i < retry; i++)
+            {
+                if (host.IndexOf("localhost") >= 0 || host.IndexOf("127.0.0.1") >= 0) return Bash(cmd, wait);
+                Util.Log($"port: {port}");
+                Util.Log($"host: {host}");
+                Util.Log($"cmd: {cmd}");
+                string sshCmd = null;
+                if (localOutputFile != null)
+                {
+                    if (dumpToStandardOut)
+                    {
+                        sshCmd = $"ssh -p {port} -o StrictHostKeyChecking=no {user}@{host} \"{cmd}\" | tee -a {localOutputFile}";
+                    }
+                    else
+                    {
+                        sshCmd = $"ssh -p {port} -o StrictHostKeyChecking=no {user}@{host} \"{cmd}\" > {localOutputFile}";
+                    }
+                }
+                else
+                {
+                    sshCmd = $"ssh -p {port} -o StrictHostKeyChecking=no {user}@{host} \"{cmd}\"";
+                }
+                Util.Log($"SSH Cmd: {sshCmd}");
+                (errCode, result) = Bash(sshCmd, wait: wait, handleRes: retry > 1 && i < retry - 1 ? false : handleRes);
+                if (errCode == 0) break;
+                Util.Log($"retry {i + 1}th time");
+                Task.Delay(TimeSpan.FromSeconds(1)).Wait();
+            }
+            return (errCode, result);
         }
 
         public static bool StartAppServerBySsh(string azureSignalrConnectionString, string appServerHost,
@@ -249,7 +258,7 @@ namespace JenkinsScript
         }
 
         public static bool StartRpcSlavesBySsh(List<string> slaveList, string slaveDir,
-            int rpcPort, string sshUser, int sshPort, string outputFile, int timeOut, bool useDotnetPath)
+            int rpcPort, string sshUser, int sshPort, string outputFile, bool useDotnetPath, int timeOut)
         {
             var errCode = 0;
             var result = "";
@@ -257,16 +266,18 @@ namespace JenkinsScript
             var tasks = new List<Task>();
             slaveList.ForEach(host => tasks.Add(Task.Run(() =>
             {
+                cmd = $"pid=`cat /tmp/agent.pid`; kill -9 $pid; cd {slaveDir}; ";
                 if (useDotnetPath)
                 {
-                    cmd = $"pid=`cat /tmp/agent.pid`; kill -9 $pid; cd {slaveDir}; /home/{sshUser}/.dotnet/dotnet run -- --rpcPort {rpcPort} --pidFile /tmp/agent.pid> {outputFile};";
+                    cmd += "/home/{sshUser}/.dotnet/dotnet run ";
                 }
                 else
                 {
-                    cmd = $"pid=`cat /tmp/agent.pid`; kill -9 $pid; cd {slaveDir}; dotnet run -- --rpcPort {rpcPort} --pidFile /tmp/agent.pid> {outputFile};";
+                    cmd += $"dotnet run ";
                 }
+                cmd += "-- --rpcPort {rpcPort} --pidFile /tmp/agent.pid> {outputFile};";
                 Util.Log($"CMD: {sshUser}@{host}: {cmd}");
-                (errCode, result) = RemoteSshAndRecordOutput(sshUser, host, sshPort, cmd, null, wait: false);
+                (errCode, result) = RemoteSshIgnoreOutput(sshUser, host, sshPort, cmd, wait: false);
                 var localOutputFile = $"{slaveList.IndexOf(host)}_{outputFile}";
                 var i = 0;
                 while (i < timeOut)
@@ -286,6 +297,62 @@ namespace JenkinsScript
             Task.WhenAll(tasks).GetAwaiter().GetResult();
             return true;
         }
+
+        public static bool StartRpcMasterBySsh(AgentConfig agentConfig, string serviceType, string transportType, string hubProtocol,
+            string scenario, int connection, int concurrentConnection, int duration, int interval,
+            string pipeLine, string masterDir, string outputCountersPath,
+            string outputLogPath, bool useHomeDotnet, int timeOut)
+        {
+            var i = 0;
+            var errCode = 0;
+            var result = "";
+            var cmd = "";
+            var serverUrl = $"http://{agentConfig.AppServer}:5050/signalrbench";
+            var slaveList = "";
+            for (i = 0; i < agentConfig.Slaves.Count; i++)
+            {
+                slaveList += agentConfig.Slaves[i];
+                if (i < agentConfig.Slaves.Count - 1)
+                    slaveList += ";";
+            }
+            // kill existing master
+            cmd = $"pid=`cat /tmp/master.pid`; kill -9 $pid;";
+            (errCode, result) = RemoteSshIgnoreOutput(agentConfig.User, agentConfig.Master, agentConfig.SshPort, cmd, wait: true);
+            // Start master
+            cmd = $"cd {masterDir}; ";
+            if (useHomeDotnet)
+            {
+                cmd += $"/home/{agentConfig.User}/.dotnet/dotnet run ";
+            }
+            else
+            {
+                cmd += $"dotnet run ";
+            }
+            cmd += "-- --rpcPort { agentConfig.RpcPort}" +
+                    $"--duration {duration} --connections {connection} --interval {interval}" +
+                    $"--slaves {agentConfig.Slaves.Count} --serverUrl '{serverUrl}'" +
+                    $"--pipeLine '{string.Join(";", pipeLine)}' " +
+                    $"-v {serviceType} -t {transportType} -p {hubProtocol} -s {scenario} " +
+                    $"--clear true --slaveList '{slaveList}'" +
+                    $"--pidFile /tmp/master.pid --concurrentConnection {concurrentConnection}" +
+                    $"-o {outputCountersPath}";
+            (errCode, result) = RemoteSshAndRecordOutput(agentConfig.User, agentConfig.Master,
+                agentConfig.SshPort, cmd, outputLogPath, true, wait: false);
+            while (i < timeOut)
+            {
+                var content = Util.ReadFile(outputLogPath);
+                if (content.Contains("exception", StringComparison.OrdinalIgnoreCase))
+                {
+                    Util.Log($"Master on {agentConfig.Master} has errors");
+                    return false;
+                }
+                Task.Delay(TimeSpan.FromSeconds(1)).GetAwaiter().GetResult();
+                i++;
+            }
+            Util.Log($"Master on {agentConfig.Master} has started!");
+            return true;
+        }
+        #endregion
 
         public static (int, string) StartRpcSlaves (AgentConfig agentConfig, ArgsOption argsOption,
             string serviceType, string transportType, string hubProtocol, string scenario, int connection, string repoRoot = "/home/wanl/signalr_auto_test_framework")

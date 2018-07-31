@@ -141,11 +141,14 @@ namespace JenkinsScript
                             {
                                 foreach (var scenario in jobConfig.ScenarioList)
                                 {
-                                    ShellHelper.CreateResultFolder($"log/{Environment.GetEnvironmentVariable("result_root")}");
-                                    var outputFile = $"log_appserver_{serviceType}_{transportType}_{ hubProtocol}_{scenario}.txt";
+                                    var resultRootDir = Environment.GetEnvironmentVariable("result_root");
+                                    // Create result root folder to save all contents
+                                    ShellHelper.CreateResultFolder($"log/{resultRootDir}");
+                                    // Start App Server
+                                    var outputLogFile = $"log/{resultRootDir}log_appserver_{serviceType}_{transportType}_{ hubProtocol}_{scenario}.txt";
                                     var started = ShellHelper.StartAppServerBySsh(argsOption.AzureSignalrConnectionString,
                                         agentConfig.AppServer, agentConfig.SshPort, agentConfig.User,
-                                        $"/home/{agentConfig.User}/azure-signalr-bench/v2/AppServer", $"log/{outputFile}", 60);
+                                        $"/home/{agentConfig.User}/azure-signalr-bench/v2/AppServer", outputLogFile, 60);
                                     if (!started)
                                     {
                                         Util.Log("Fail to start app server");
@@ -155,11 +158,28 @@ namespace JenkinsScript
                                     {
                                         Util.Log("App server is started!");
                                     }
-                                    outputFile = $"log_rpcslave_{serviceType}_{transportType}_{ hubProtocol}_{scenario}.txt";
+                                    // Start RPC Slaves
+                                    outputLogFile = $"log/{resultRootDir}/log_rpcslave_{serviceType}_{transportType}_{ hubProtocol}_{scenario}.txt";
                                     ShellHelper.StartRpcSlavesBySsh(agentConfig.Slaves,
                                         $"/home/{agentConfig.User}/azure-signalr-bench/v2/Rpc/Bench.Server/",
-                                        agentConfig.RpcPort, agentConfig.User, agentConfig.SshPort, outputFile, 60, agentConfig.UseHomeDotnet);
+                                        agentConfig.RpcPort, agentConfig.User, agentConfig.SshPort, outputLogFile, agentConfig.UseHomeDotnet, 60);
                                     Util.Log("All slaves are ready to accept master commands");
+                                    // Start RPC Master
+                                    outputLogFile = $"log/{resultRootDir}/log_rpcmaster_{serviceType}_{transportType}_{ hubProtocol}_{scenario}.txt";
+                                    var outputDir = $"{serviceType}_{transportType}_{hubProtocol}_{scenario}_{agentConfig.Connections}";
+                                    started = ShellHelper.StartRpcMasterBySsh(agentConfig, serviceType, transportType, hubProtocol, scenario,
+                                        agentConfig.Connections, agentConfig.ConcurrentConnection, jobConfig.Duration, jobConfig.Interval, string.Join(";", jobConfig.Pipeline),
+                                        $"/home/{agentConfig.User}/azure-signalr-bench/v2/Rpc/Bench.Client/",
+                                        $"/home/{agentConfig.User}/azure-signalr-bench/v2/signalr_bench/Report/public/results/{resultRootDir}/{outputDir}/counters.txt",
+                                        outputLogFile, agentConfig.UseHomeDotnet, 60);
+                                    if (started)
+                                    {
+                                        Util.Log("Started RPC Master");
+                                    }
+                                    else
+                                    {
+                                        Util.Log("Fail to start RPC Master!");
+                                    }
                                 }
                             }
                         }
