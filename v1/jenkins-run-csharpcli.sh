@@ -33,11 +33,11 @@ then
    send_number=$connection_number
 fi
 
-if [ $send_number -gt $connection_number ]
-then
-   echo "Warning: currently we did not support sending number larger than connection number, so set it to be connection number"
-   send_number=$connection_number
-fi
+#if [ $send_number -gt $connection_number ]
+#then
+#   echo "Warning: currently we did not support sending number larger than connection number, so set it to be connection number"
+#   send_number=$connection_number
+#fi
 # jenkins normalized input
 
 echo "-------jenkins normalize your inputs------"
