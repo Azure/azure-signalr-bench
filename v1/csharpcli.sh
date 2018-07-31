@@ -1,9 +1,9 @@
 #!/bin/bash
 . ./func_env.sh
 
-bench_slave_folder=/home/${bench_app_user}/azure-signalr-bench/v2/signalr_bench/Rpc/Bench.Server
-bench_master_folder=/home/${bench_app_user}/azure-signalr-bench/v2/signalr_bench/Rpc/Bench.Client
-bench_server_folder=/home/${bench_app_user}/azure-signalr-bench/v2/signalr_bench/AppServer
+bench_slave_folder=/home/${bench_app_user}/azure-signalr-bench/v2/Rpc/Bench.Server
+bench_master_folder=/home/${bench_app_user}/azure-signalr-bench/v2/Rpc/Bench.Client
+bench_server_folder=/home/${bench_app_user}/azure-signalr-bench/v2/AppServer
 cli_bench_start_script=autorun_start_cli_agent.sh
 cli_bench_stop_script=autorun_stop_cli_agent.sh
 cli_bench_agent_output=cli_agent_out.txt
@@ -69,7 +69,7 @@ gen_cli_master_single_bench()
 		codec="messagepack"
 	fi
 
-cat << EOF > $sigbench_config_dir/${cmd_prefix}_${bench_codec}_${bench_name}_${bench_type}
+cat << EOF > $sigbench_config_dir/${cmd_config_prefix}_${bench_codec}_${bench_name}_${bench_type}
 connection=$connection_num
 connection_concurrent=$concurrent_num
 send=$send_num
@@ -95,7 +95,7 @@ then
 fi
 transport=${bench_transport}
 server=$server_endpoint
-pipeline="createConn;startConn;up${send_num};scenario;stopConn;disposeConn"
+pipeline="createConn;startConn;${send_num};stopConn;disposeConn"
 slaveList="${cli_agents_g}"
 
 /home/${bench_app_user}/.dotnet/dotnet run -- --rpcPort 7000 --duration $sigbench_run_duration --connections $connection_num --interval 1 --serverUrl "\${server}" --pipeLine "\${pipeline}" -v $bench_type -t "\${transport}" -p ${codec} -s ${bench_name} --slaveList "\${slaveList}"	-o ${result_name}/counters.txt --pidFile /tmp/master.pid --concurrentConnection ${concurrent_num}
@@ -187,33 +187,6 @@ entry_gen_all_cli_scripts()
 	gen_cli_agent_bench $cli_bench_start_script $cli_bench_stop_script $cli_bench_agent_output
 }
 
-check_cli_master_and_wait()
-{
-        local flag_file=$1
-	local output_log=$2
-        local rand=`date +%H%M%S`
-        local end=$((SECONDS + $sigbench_run_duration + 60))
-        local finish=0
-	local master_log=${output_log}_${rand}.txt
-        while [ $SECONDS -lt $end ] && [ "$finish" == "0" ]
-        do
-                # check whether master finished
-                finish=`cat $flag_file`
-                # check master output
-		fail_flag_g=`egrep -i "errors|exception" ${output_log}`
-                if [ "$fail_flag_g" != "" ]
-                then
-			cp ${output_log} $master_log
-			echo "master error: '$master_log'"
-			echo "Error occurs, please check $master_log"
-			mark_error ${master_log}
-                        break;
-                fi
-                #echo "wait benchmark to complete ('$finish')..."
-                sleep 1
-        done
-}
-
 launch_master_cli()
 {
         local script_name=$1
@@ -229,8 +202,7 @@ echo "0" > $status_file # flag indicates not finish
 ssh -o StrictHostKeyChecking=no -p $port ${user}@${server} "cd ${bench_master_folder}; sh $script_name" 2>&1|tee -a ${result_dir}/${script_name}.log
 echo "1" > $status_file # flag indicates finished
 _EOF
-        nohup sh $remote_run &
-	g_master_cli_pid=$!
+        sh $remote_run # RPC master exit when it finished
 }
 
 entry_launch_master_cli_script()
@@ -265,16 +237,12 @@ launch_single_master_cli_script()
 	echo "launch RPC master node"
         launch_master_cli ${cli_script_prefix}_${result_name}.sh $server $port $user $flag_file
 
-        check_cli_master_and_wait $flag_file ${result_dir}/${cli_script_prefix}_${result_name}.sh.log
+	echo "Finish running all"
         if [ "$pid_to_collect_top" != "" ]
         then
-                kill $pid_to_collect_top
+                kill -9 $pid_to_collect_top
         fi
 	scp -o StrictHostKeyChecking=no -r -P $port ${user}@${server}:${bench_master_folder}/$result_name ${result_dir}/
-	if [ "$g_master_cli_pid" != "" ]
-	then
-		kill $g_master_cli_pid
-	fi
 }
 
 start_cli_bench_server()

@@ -2,6 +2,58 @@
 g_CPU_requests="1|2|3|4"
 g_CPU_limits="1|2|3|4"
 g_Memory_limits="4000|4000|4000|4000"
+g_k8s_config_list="kvsignalrdevseasia.config|srdevacsrpd.config|kubeconfig.southeastasia.json"
+
+## Bourne shell does not support array, so a string is used
+## to work around with the hep of awk array
+
+## return the value according to index:
+## @param arr: array (using string)
+## @param index: array index (start from 1)
+## @param separator: string's separator which is used separate the array item
+array_get() {
+  local arr=$1
+  local index=$2
+  local separator=$3
+  echo ""|awk -v sep=$separator -v str="$arr" -v idx=$index '{
+   split(str, array, sep);
+   print array[idx]
+}'
+}
+
+## return the length of the array
+## @param arr: array (using string)
+## @param separator: string's separator which is used separate the array item
+array_len() {
+  local arr=$1
+  local separator=$2
+  echo ""|awk -v sep=$separator -v str="$arr" '{
+   split(str, array, sep);
+   print length(array)
+}'
+}
+
+function find_target_by_iterate_all_k8slist()
+{
+  local resName=$1
+  local callback=$2
+  local config
+  local result
+  local i=1
+  local len=$(array_len "$g_k8s_config_list" "|")
+  while [ $i -le $len ]
+  do
+     config=$(array_get $g_k8s_config_list $i "|")
+     result=$($callback $resName $config)
+     if [ "$result" != "" ]
+     then
+        g_config=$config
+        g_result=$result
+        break
+     fi
+     i=$(($i + 1))
+  done
+}
 
 function get_k8s_deploy_name() {
   local resName=$1
@@ -69,33 +121,54 @@ function update_k8s_deploy_env_connections() {
 function get_pod() {
   local resName=$1
   local output=$2
-  local config_file=kvsignalrdevseasia.config
-  local result=$(get_k8s_deploy_name $resName $config_file)
-  if [ "$result" == "" ]
-  then
-     config_file=srdevacsrpd.config
-     result=$(get_k8s_deploy_name $resName $config_file)
-  fi
+
+  g_config=""
+  g_result=""
+  find_target_by_iterate_all_k8slist $resName get_k8s_deploy_name
+  local config_file=$g_config
+  local result=$g_result
   echo "$result"
   kubectl get deploy $result -o=json --kubeconfig=${config_file} > $output
+}
+
+function get_kube_deployment()
+{
+  local resName=$1
+  local config_file=$2
+  local kubeId=`kubectl get deploy -o=json --selector resourceName=$resName --kubeconfig=${config_file}|jq '.items[0].metadata.labels.resourceKubeId'|tr -d '"'`
+  if [ "$kubeId" == "" ]
+  then
+    echo ""
+    return
+  fi
+  local len=`kubectl get pod -o=json --selector resourceKubeId=$kubeId --kubeconfig=${config_file}|jq '.items|length'`
+  if [ $len != "0" ]
+  then
+    echo "$kubeId"
+  else
+    echo ""
+  fi
 }
 
 function get_k8s_pod_status() {
   local resName=$1
   local outdir=$2
-  local config_file=kvsignalrdevseasia.config
+  g_config=""
+  g_result=""
+  find_target_by_iterate_all_k8slist $resName get_kube_deployment
+  local config_file=$g_config
   local kubeId=`kubectl get deploy -o=json --selector resourceName=$resName --kubeconfig=${config_file}|jq '.items[0].metadata.labels.resourceKubeId'|tr -d '"'`
+  if [ "$kubeId" == "" ]
+  then
+    echo "Cannot find $resName"
+    return
+  fi
+
   local len=`kubectl get pod -o=json --selector resourceKubeId=$kubeId --kubeconfig=${config_file}|jq '.items|length'`
   if [ $len == "0" ]
   then
-     config_file=srdevacsrpd.config
-     kubeId=`kubectl get deploy -o=json --selector resourceName=$resName --kubeconfig=${config_file}|jq '.items[0].metadata.labels.resourceKubeId'|tr -d '"'`
-     if [ "$kubeId" == "" ]
-     then
-       echo "Cannot find $resName"
-       return
-     fi
-     len=`kubectl get pod -o=json --selector resourceKubeId=$kubeId --kubeconfig=${config_file}|jq '.items|length'`
+     echo "Cannot find $resName"
+     return
   fi
   local i=0
   while [ $i -lt $len ]
@@ -105,7 +178,6 @@ function get_k8s_pod_status() {
      kubectl get pod $podname -o=json --kubeconfig=${config_file} > $outdir/${podname}_pod.json
      i=`expr $i + 1`
   done
-  
 }
 
 function k8s_get_pod_number() {
@@ -113,15 +185,15 @@ function k8s_get_pod_number() {
   local resName=$2
   local kubeId=`kubectl get deploy -o=json --selector resourceName=$resName --kubeconfig=${config_file}|jq '.items[0].metadata.labels.resourceKubeId'|tr -d '"'`
   local len=`kubectl get pod -o=json --selector resourceKubeId=$kubeId --kubeconfig=${config_file}|jq '.items|length'`
-  echo $len
+  echo "$len"
 }
 
 function k8s_query() {
-  local config_file=$1
-  local resName=$2
+  local config_file=$2
+  local resName=$1
   local kubeId=`kubectl get deploy -o=json --selector resourceName=$resName --kubeconfig=${config_file}|jq '.items[0].metadata.labels.resourceKubeId'|tr -d '"'`
   local len=`kubectl get pod -o=json --selector resourceKubeId=$kubeId --kubeconfig=${config_file}|jq '.items|length'`
-  if [ $len == "0" ]
+  if [ "$len" == "0" ]
   then
      return
   fi
@@ -171,13 +243,11 @@ function start_connection_tracking() {
   local i
   local resName=$1
   local output_dir=$2
-  local config_file=kvsignalrdevseasia.config
-  local result=$(k8s_query $config_file $resName)
-  if [ "$result" == "" ]
-  then
-     config_file=srdevacsrpd.config
-     result=$(k8s_query $config_file $resName)
-  fi
+  g_config=""
+  g_result=""
+  find_target_by_iterate_all_k8slist $resName k8s_query
+  local config_file=$g_config
+  local result=$g_result
   echo "'$result'"
   # install netstat
   for i in $result
@@ -207,13 +277,12 @@ function copy_syslog() {
   local i
   local resName=$1
   local outdir=$2
-  local config_file=kvsignalrdevseasia.config
-  local result=$(k8s_query $config_file $resName)
-  if [ "$result" == "" ]
-  then
-     config_file=srdevacsrpd.config
-     result=$(k8s_query $config_file $resName)
-  fi
+  g_config=""
+  g_result=""
+  find_target_by_iterate_all_k8slist $resName k8s_query
+  local config_file=$g_config
+  local result=$g_result
+
   for i in $result
   do
      kubectl cp default/${i}:/var/log/syslog $outdir/${i}_syslog.txt --kubeconfig=$config_file
@@ -264,13 +333,11 @@ function wait_deploy_ready() {
 function patch_liveprobe_timeout() {
   local resName=$1
   local timeout=$2 # second
-  local config_file=kvsignalrdevseasia.config
-  local result=$(get_k8s_deploy_name $resName $config_file)
-  if [ "$result" == "" ]
-  then
-     config_file=srdevacsrpd.config
-     result=$(get_k8s_deploy_name $resName $config_file)
-  fi
+  g_config=""
+  g_result=""
+  find_target_by_iterate_all_k8slist $resName get_k8s_deploy_name
+  local config_file=$g_config
+  local result=$g_result
 
   local pods=$(k8s_get_pod_number $config_file $resName)
   update_k8s_deploy_liveprobe_timeout $result "$timeout" $config_file
@@ -282,13 +349,11 @@ function patch_liveprobe_timeout() {
 function patch_connection_throttling_env() {
   local resName=$1
   local connection_limit=$2
-  local config_file=kvsignalrdevseasia.config
-  local result=$(get_k8s_deploy_name $resName $config_file)
-  if [ "$result" == "" ]
-  then
-     config_file=srdevacsrpd.config
-     result=$(get_k8s_deploy_name $resName $config_file)
-  fi
+  g_config=""
+  g_result=""
+  find_target_by_iterate_all_k8slist $resName get_k8s_deploy_name
+  local config_file=$g_config
+  local result=$g_result
 
   local pods=$(k8s_get_pod_number $config_file $resName)
   update_k8s_deploy_env_connections $result "${connection_limit}" $config_file
@@ -301,13 +366,11 @@ function patch_connection_throttling_env() {
 function read_connection_throttling_env() {
   local resName=$1
   local connection_limit=$2
-  local config_file=kvsignalrdevseasia.config
-  local result=$(get_k8s_deploy_name $resName $config_file)
-  if [ "$result" == "" ]
-  then
-     config_file=srdevacsrpd.config
-     result=$(get_k8s_deploy_name $resName $config_file)
-  fi
+  g_config=""
+  g_result=""
+  find_target_by_iterate_all_k8slist $resName get_k8s_deploy_name
+  local config_file=$g_config
+  local result=$g_result
 
   local pods=$(k8s_get_pod_number $config_file $resName)
   read_k8s_deploy_env $result "${connection_limit}" $config_file
@@ -318,13 +381,11 @@ function patch_replicas_env() {
   local replicas=$2
   local connection_limit=$3
 
-  local config_file=kvsignalrdevseasia.config
-  local result=$(get_k8s_deploy_name $resName $config_file)
-  if [ "$result" == "" ]
-  then
-     config_file=srdevacsrpd.config
-     result=$(get_k8s_deploy_name $resName $config_file)
-  fi
+  g_config=""
+  g_result=""
+  find_target_by_iterate_all_k8slist $resName get_k8s_deploy_name
+  local config_file=$g_config
+  local result=$g_result
   #echo "$result"
   update_k8s_deploy_replicas $result $replicas $config_file
   update_k8s_deploy_env_connections $result "${connection_limit}" $config_file
@@ -335,13 +396,12 @@ function patch_replicas_env() {
 function patch_replicas() {
   local resName=$1
   local replicas=$2
-  local config_file=kvsignalrdevseasia.config
-  local result=$(get_k8s_deploy_name $resName $config_file)
-  if [ "$result" == "" ]
-  then
-     config_file=srdevacsrpd.config
-     result=$(get_k8s_deploy_name $resName $config_file)
-  fi
+  g_config=""
+  g_result=""
+  find_target_by_iterate_all_k8slist $resName get_k8s_deploy_name
+  local config_file=$g_config
+  local result=$g_result
+
   #echo "$result"
   update_k8s_deploy_replicas $result $replicas $config_file
 
@@ -356,13 +416,12 @@ function patch() {
   local cpu_req=$4
   local mem_limit=$5
   local connect_limit=$6
-  local config_file=kvsignalrdevseasia.config
-  local result=$(get_k8s_deploy_name $resName $config_file)
-  if [ "$result" == "" ]
-  then
-     config_file=srdevacsrpd.config
-     result=$(get_k8s_deploy_name $resName $config_file)
-  fi
+  g_config=""
+  g_result=""
+  find_target_by_iterate_all_k8slist $resName get_k8s_deploy_name
+  local config_file=$g_config
+  local result=$g_result
+
   #echo "$result"
   update_k8s_deploy_replicas $result $replicas $config_file
 
