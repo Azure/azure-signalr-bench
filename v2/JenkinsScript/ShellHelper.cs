@@ -204,10 +204,27 @@ namespace JenkinsScript
             string result = "";
             for (var i = 0; i < retry; i++)
             {
-                if (host.IndexOf("localhost") >= 0 || host.IndexOf("127.0.0.1") >= 0) return Bash(cmd, wait);
                 Util.Log($"port: {port}");
                 Util.Log($"host: {host}");
                 Util.Log($"cmd: {cmd}");
+                if (host.IndexOf("localhost") >= 0 || host.IndexOf("127.0.0.1") >= 0)
+                {
+                    if (localOutputFile != null)
+                    {
+                        if (dumpToStandardOut)
+                        {
+                            return Bash($"\"{cmd}\" 2>&1 | tee -a {localOutputFile}", wait);
+                        }
+                        else
+                        {
+                            return Bash($"\"{cmd}\" > {localOutputFile}", wait);
+                        }
+                    }
+                    else
+                    {
+                        return Bash(cmd, wait);
+                    }
+                }
                 string sshCmd = null;
                 if (localOutputFile != null)
                 {
