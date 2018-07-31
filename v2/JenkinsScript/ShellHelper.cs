@@ -278,7 +278,7 @@ namespace JenkinsScript
                 cmd += $"-- --rpcPort {rpcPort} --pidFile /tmp/agent.pid> {outputFile};";
                 Util.Log($"CMD: {sshUser}@{host}: {cmd}");
                 (errCode, result) = RemoteSshIgnoreOutput(sshUser, host, sshPort, cmd, wait: false);
-                var localOutputFile = $"{outputFile}_{slaveList.IndexOf(host)}";
+                var localOutputFile = $"{slaveList.IndexOf(host)}_{outputFile}";
                 var i = 0;
                 while (i < timeOut)
                 {

@@ -145,7 +145,7 @@ namespace JenkinsScript
                                     // Create result root folder to save all contents
                                     ShellHelper.CreateResultFolder($"log/{resultRootDir}");
                                     // Start App Server
-                                    var outputLogFile = $"log/{resultRootDir}log_appserver_{serviceType}_{transportType}_{ hubProtocol}_{scenario}.txt";
+                                    var outputLogFile = $"log/{resultRootDir}/log_appserver_{serviceType}_{transportType}_{ hubProtocol}_{scenario}.txt";
                                     var started = ShellHelper.StartAppServerBySsh(argsOption.AzureSignalrConnectionString,
                                         agentConfig.AppServer, agentConfig.SshPort, agentConfig.User,
                                         $"/home/{agentConfig.User}/azure-signalr-bench/v2/AppServer", outputLogFile, 60);
@@ -159,7 +159,7 @@ namespace JenkinsScript
                                         Util.Log("App server is started!");
                                     }
                                     // Start RPC Slaves
-                                    outputLogFile = $"log/{resultRootDir}/log_rpcslave_{serviceType}_{transportType}_{ hubProtocol}_{scenario}.txt";
+                                    outputLogFile = $"log_rpcslave_{serviceType}_{transportType}_{ hubProtocol}_{scenario}.txt";
                                     ShellHelper.StartRpcSlavesBySsh(agentConfig.Slaves,
                                         $"/home/{agentConfig.User}/azure-signalr-bench/v2/Rpc/Bench.Server/",
                                         agentConfig.RpcPort, agentConfig.User, agentConfig.SshPort, outputLogFile, agentConfig.UseHomeDotnet, 60);
