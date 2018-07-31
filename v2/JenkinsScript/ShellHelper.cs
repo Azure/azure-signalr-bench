@@ -213,7 +213,7 @@ namespace JenkinsScript
                 {
                     if (dumpToStandardOut)
                     {
-                        sshCmd = $"ssh -p {port} -o StrictHostKeyChecking=no {user}@{host} \"{cmd}\" | tee -a {localOutputFile}";
+                        sshCmd = $"ssh -p {port} -o StrictHostKeyChecking=no {user}@{host} \"{cmd}\" 2>&1 | tee -a {localOutputFile}";
                     }
                     else
                     {
@@ -351,6 +351,7 @@ namespace JenkinsScript
                 agentConfig.SshPort, cmd, outputLogPath, true, wait: false);
             while (i < timeOut)
             {
+
                 var content = Util.ReadFile(outputLogPath);
                 if (content.Contains("exception", StringComparison.OrdinalIgnoreCase))
                 {
