@@ -228,10 +228,13 @@ namespace JenkinsScript
             var i = 0;
             while (i < timeOut)
             {
-                var content = Util.ReadFile(outputFilePath);
-                if (content.Contains("HttpConnection Started"))
+                if (File.Exists(outputFilePath))
                 {
-                    break;
+                    var content = Util.ReadFile(outputFilePath);
+                    if (content.Contains("HttpConnection Started"))
+                    {
+                        break;
+                    }
                 }
                 Task.Delay(TimeSpan.FromSeconds(1)).GetAwaiter().GetResult();
                 i++;
