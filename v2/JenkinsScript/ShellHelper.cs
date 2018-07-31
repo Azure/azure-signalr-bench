@@ -227,7 +227,7 @@ namespace JenkinsScript
                 $"export Azure__SignalR__ConnectionString='{azureSignalrConnectionString}'; " +
                 $"killall dotnet; dotnet run";
 
-            (errCode, result) = RemoteSshAndRecordOutput(loginUser, appServerHost, sshPort, cmd, outputFilePath);
+            (errCode, result) = RemoteSshAndRecordOutput(loginUser, appServerHost, sshPort, cmd, outputFilePath, wait : false);
             var i = 0;
             while (i < wait)
             {
