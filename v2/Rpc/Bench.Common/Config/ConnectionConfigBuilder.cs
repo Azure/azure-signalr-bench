@@ -88,7 +88,7 @@ namespace Bench.Common.Config
                 var idleConnInds = curConnSlice.Select((val, ind) => new { val, ind })
                     .Where(z => z.val.SendFlag == false)
                     .Select(z => z.ind).ToList();
-                Util.LogList($"idle inds", idleConnInds);
+                // Util.LogList($"idle inds", idleConnInds);
                 idleConnInds.Shuffle();
                 var curMore = Util.SplitNumber(more, i, slaveCnt);
                 for (int j = 0; j < curMore && j < idleConnInds.Count; j++)

@@ -23,7 +23,7 @@ namespace Bench.RpcSlave.Worker.Operations
             var debug = Environment.GetEnvironmentVariable("debug") == "debug" ? true : false;
 
             var waitTime = 5 * 1000;
-            Console.WriteLine($"wait time: {waitTime / 1000}s");
+            if (!debug) Console.WriteLine($"wait time: {waitTime / 1000}s");
             if (!debug) Task.Delay(waitTime).Wait();
 
             _tk = tk;
@@ -125,8 +125,6 @@ namespace Bench.RpcSlave.Worker.Operations
                         {
                             try
                             {
-                                if (ind == 0) _brokenConnectionInds[ind] = true;
-
                                 var time = $"{Util.Timestamp()}";
                                 var messageBlob = new byte[_tk.BenchmarkCellConfig.MessageSize];
                                 await connection.SendAsync(_tk.BenchmarkCellConfig.Scenario, id, time, messageBlob);
