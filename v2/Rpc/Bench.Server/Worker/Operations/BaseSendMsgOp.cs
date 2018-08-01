@@ -74,12 +74,11 @@ namespace Bench.RpcSlave.Worker.Operations
                         {
                             var receiveTimestamp = Util.Timestamp();
                             var sendTimestamp = Convert.ToInt64(time);
-                            var receiveSize = messageBlob.Length * sizeof(byte);
+                            var receiveSize = messageBlob != null ? messageBlob.Length * sizeof(byte) : 0;
                             _tk.Counters.CountLatency(sendTimestamp, receiveTimestamp);
                             _tk.Counters.SetServerCounter(count);
                             _tk.Counters.IncreaseReceivedMessageSize(receiveSize);
                         });
-
             }
         }
 
@@ -110,6 +109,14 @@ namespace Bench.RpcSlave.Worker.Operations
 
         private async Task StartSendingMessageAsync(HubConnection connection, int ind)
         {
+            var id = $"{Util.GuidEncoder.Encode(Guid.NewGuid())}";
+            byte[] messageBlob = null;
+            var blobSize = 0;
+            if (_tk.BenchmarkCellConfig.MessageSize != 0)
+            {
+                messageBlob = new byte[_tk.BenchmarkCellConfig.MessageSize];
+                blobSize = messageBlob.Length * sizeof(byte);
+            }
             await Task.Delay(StartTimeOffsetGenerator.Delay(TimeSpan.FromSeconds(_tk.JobConfig.Interval)));
             using(var cts = new CancellationTokenSource(TimeSpan.FromSeconds(_tk.JobConfig.Duration)))
             {
@@ -117,7 +124,6 @@ namespace Bench.RpcSlave.Worker.Operations
                 {
                     if (!_brokenConnectionInds[ind])
                     {
-                        var id = $"{Util.GuidEncoder.Encode(Guid.NewGuid())}";
                         if (_tk.BenchmarkCellConfig.Scenario.Contains("sendToClient"))
                             id = _tk.BenchmarkCellConfig.TargetConnectionIds[ind + _tk.ConnectionRange.Begin];
 
@@ -126,12 +132,10 @@ namespace Bench.RpcSlave.Worker.Operations
                             try
                             {
                                 var time = $"{Util.Timestamp()}";
-                                var messageBlob = new byte[_tk.BenchmarkCellConfig.MessageSize];
                                 await connection.SendAsync(_tk.BenchmarkCellConfig.Scenario, id, time, messageBlob);
-                                _tk.Counters.IncreaseSentMessageSize(messageBlob.Length * sizeof(byte));
+                                _tk.Counters.IncreaseSentMessageSize(blobSize);
                                 _sentMessages[ind]++;
                                 _tk.Counters.IncreseSentMsg();
-
                             }
                             catch
                             {
