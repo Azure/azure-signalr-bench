@@ -4,7 +4,7 @@ cat << EOF > jenkins_env.sh
 connection_number=$ConnectionNumber
 connection_concurrent=$ConnectionConcurrent
 connection_string="$ConnectionString"
-send_number=$SendNumber
+send_number="$SendNumber"
 sigbench_run_duration=$Duration
 EOF
 
