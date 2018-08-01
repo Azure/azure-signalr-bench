@@ -17,6 +17,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Bench.Common;
@@ -145,7 +146,7 @@ namespace Bench.RpcMaster
                 collectTimer.AutoReset = true;
                 collectTimer.Elapsed += (sender, e) =>
                 {
-                    var allClientCounters = new ConcurrentDictionary<string, int>();
+                    var allClientCounters = new ConcurrentDictionary<string, double>();
                     var collectCountersTasks = new List<Task>(clients.Count);
                     var isSend = false;
                     var isComplete = false;
@@ -181,7 +182,7 @@ namespace Bench.RpcMaster
                     }
 
                     var jobj = new JObject();
-                    var received = 0;
+                    var received = 0.0;
                     foreach (var item in allClientCounters)
                     {
                         jobj.Add(item.Key, item.Value);
@@ -229,7 +230,8 @@ namespace Bench.RpcMaster
                     if (step.Contains("up"))
                     {
                         Util.Log($"additional: {AdditionalSendConnCnt}");
-                        connectionAllConfigList = connectionConfigBuilder.UpdateSendConn(connectionAllConfigList, AdditionalSendConnCnt);
+                        connectionAllConfigList = connectionConfigBuilder.UpdateSendConn(connectionAllConfigList, AdditionalSendConnCnt, argsOption.Connections, slaveList.Count);
+                        Util.LogList("send conn", connectionAllConfigList.Configs.ToList());
                     }
 
                     clients.ForEach(client =>
@@ -238,7 +240,7 @@ namespace Bench.RpcMaster
                         var mixEchoConn = Util.SplitNumber(argsOption.MixEchoConnection, indClient, slaveList.Count);
                         var mixBroadcastConn = Util.SplitNumber(argsOption.MixBroadcastConnection, indClient, slaveList.Count);
                         var mixGroupConn = Util.SplitNumber(argsOption.MixGroupConnection, indClient, slaveList.Count);
-                        Util.Log($"conn: echoConn {mixEchoConn}, b: {mixBroadcastConn}, g: {mixGroupConn}");
+                        // Util.Log($"conn: echoConn {mixEchoConn}, b: {mixBroadcastConn}, g: {mixGroupConn}");
 
                         var messageSize = 0;
                         if (argsOption.MessageSize.Contains("K") || argsOption.MessageSize.Contains("k"))

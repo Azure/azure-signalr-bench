@@ -64,19 +64,40 @@ namespace Bench.Common.Config
             return connectionConfigList;
         }
 
-        public ConnectionConfigList UpdateSendConn(ConnectionConfigList configs, int more)
+        public ConnectionConfigList UpdateSendConn(ConnectionConfigList configs, int more, int totalConnection, int slaveCnt)
         {
-            var idleConnInds = new List<int>();
-            for (var i = 0; i < configs.Configs.Count; i++)
+            // var curMores = new List<int>();
+            // for (int i = 0; i < slaveCnt; i++)
+            // {
+            //     var curMore = Util.SplitNumber(more, i, slaveCnt);
+            //     curMores.Add(curMore);
+            // }
+            // curMores.Shuffle();
+            if (more % slaveCnt != 0 || totalConnection % slaveCnt != 0)
             {
-                if (!configs.Configs[i].SendFlag) idleConnInds.Add(i);
-            }
-            idleConnInds.Shuffle();
-            for (var i = 0; i < more; i++)
-            {
-                configs.Configs[idleConnInds[i]].SendFlag = true;
+                Util.Log($"more % slaveCnt != 0 || totalConnection % slaveCnt != 0");
+                throw new Exception();
             }
 
+            var beg = 0;
+            for (var i = 0; i < slaveCnt; i++)
+            {
+                var curConnCnt = Util.SplitNumber(totalConnection, i, slaveCnt);
+                var end = beg + curConnCnt;
+                var curConnSlice = configs.Configs.ToList().GetRange(beg, end - beg);
+                var idleConnInds = curConnSlice.Select((val, ind) => new { val, ind })
+                    .Where(z => z.val.SendFlag == false)
+                    .Select(z => z.ind).ToList();
+                Util.LogList($"idle inds", idleConnInds);
+                idleConnInds.Shuffle();
+                var curMore = Util.SplitNumber(more, i, slaveCnt);
+                for (int j = 0; j < curMore && j < idleConnInds.Count; j++)
+                {
+                    Util.Log($"ind: {idleConnInds[j] + beg}");
+                    configs.Configs[idleConnInds[j] + beg].SendFlag = true;
+                }
+                beg = end;
+            }
             return configs;
         }
     }

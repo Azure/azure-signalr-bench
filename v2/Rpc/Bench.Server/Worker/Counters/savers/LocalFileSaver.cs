@@ -12,13 +12,13 @@ namespace Bench.RpcSlave.Worker.Savers
 {
     class LocalFileSaver : ISaver
     {
-        public void Save(string url, long timestamp, ConcurrentDictionary<string, int> counters)
+        public void Save(string url, long timestamp, ConcurrentDictionary<string, double> counters)
         {
             JObject jCounters = JObject.FromObject(counters);
 
             jCounters = Util.Sort(jCounters);
 
-            var totalReceive = 0;
+            var totalReceive = 0.0;
             foreach (var c in counters)
             {
                 if (c.Key.Contains("message") && (c.Key.Contains(":ge") || c.Key.Contains(":lt")))

@@ -9,29 +9,28 @@ namespace Bench.RpcSlave.Worker.Counters
 {
     public class Counter
     {
-        private ConcurrentDictionary<string, int> InnerCounters { get; set; }
+        private ConcurrentDictionary<string, double> InnerCounters { get; set; }
         public int LatencyStep { get; set; }
         public int LatencyLength { get; set; }
         private ISaver _counterSaver;
-
 
         public Counter(ISaver saver, int latencyStep = 100, int latencyLength = 10)
         {
             LatencyStep = latencyStep;
             LatencyLength = latencyLength;
             _counterSaver = saver;
-            InnerCounters = new ConcurrentDictionary<string, int>();
+            InnerCounters = new ConcurrentDictionary<string, double>();
             ResetCounters();
         }
 
-        public List<Tuple<string, int>> GetAll()
+        public List<Tuple<string, double>> GetAll()
         {
-            var list = new List<Tuple<string, int>>();
-            lock (InnerCounters)
+            var list = new List<Tuple<string, double>>();
+            lock(InnerCounters)
             {
                 foreach (var counter in InnerCounters)
                 {
-                    list.Add(new Tuple<string, int>(counter.Key, counter.Value));
+                    list.Add(new Tuple<string, double>(counter.Key, counter.Value));
                 }
             }
 
@@ -50,7 +49,7 @@ namespace Bench.RpcSlave.Worker.Counters
             InnerCounters.AddOrUpdate("message:notSentFromClient", 0, (k, v) => 0);
             InnerCounters.AddOrUpdate("message:sent", 0, (k, v) => 0);
             InnerCounters.AddOrUpdate($"message:ge:{LatencyLength * LatencyStep}", 0, (k, v) => 0);
-            
+
             // connections
             if (withConnection == true)
             {
@@ -62,6 +61,9 @@ namespace Bench.RpcSlave.Worker.Counters
             InnerCounters.AddOrUpdate("group:join:fail", 0, (k, v) => 0);
             InnerCounters.AddOrUpdate("group:leave:fail", 0, (k, v) => 0);
 
+            // message size
+            InnerCounters.AddOrUpdate("message:sendSize", 0, (k, v) => 0);
+            InnerCounters.AddOrUpdate("message:recvSize", 0, (k, v) => 0);
         }
 
         public void IncreaseJoinGroupFail()
@@ -75,7 +77,7 @@ namespace Bench.RpcSlave.Worker.Counters
             InnerCounters.AddOrUpdate("group:leave:fail", 0, (k, v) => v + 1);
 
         }
-        
+
         public void CountLatency(long sendTimestamp, long receiveTimestamp)
         {
             long dTime = receiveTimestamp - sendTimestamp;
@@ -91,6 +93,16 @@ namespace Bench.RpcSlave.Worker.Counters
             InnerCounters.AddOrUpdate($"message:ge:{LatencyLength * LatencyStep}", 0, (k, v) => v + 1);
         }
 
+        public void IncreaseSentMessageSize(int size)
+        {
+            InnerCounters.AddOrUpdate("message:sendSize", 0, (k, v) => v + size);
+        }
+
+        public void IncreaseReceivedMessageSize(int size)
+        {
+            InnerCounters.AddOrUpdate("message:recvSize", 0, (k, v) => v + size);
+        }
+
         public void IncreseSentMsg()
         {
             InnerCounters.AddOrUpdate("message:sent", 0, (k, v) => v + 1);
@@ -104,9 +116,9 @@ namespace Bench.RpcSlave.Worker.Counters
 
         public void UpdateConnectionSuccess(int totalConn)
         {
-            InnerCounters.AddOrUpdate("connection:success", 0, (k, v) => 
+            InnerCounters.AddOrUpdate("connection:success", 0, (k, v) =>
             {
-                InnerCounters.TryGetValue("connection:error", out int errConn);
+                InnerCounters.TryGetValue("connection:error", out double errConn);
                 return totalConn - errConn;
             });
         }
@@ -129,12 +141,11 @@ namespace Bench.RpcSlave.Worker.Counters
         public void SaveCounters()
         {
             // TODO: choose lightest lock
-            lock (InnerCounters)
+            lock(InnerCounters)
             {
                 _counterSaver.Save("Record.txt", Util.Timestamp(), InnerCounters);
             }
         }
     }
 
-    
 }

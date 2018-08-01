@@ -33,42 +33,41 @@ namespace Bench.Common {
             "IAEoCCJHChRDb25uZWN0aW9uQ29uZmlnTGlzdBIvCgdjb25maWdzGAEgAygL",
             "Mh4uQmVuY2guQ29tbW9uLkNvbm5lY3Rpb25Db25maWciIwoFUmFuZ2USDQoF",
             "YmVnaW4YASABKAUSCwoDZW5kGAIgASgFIhYKBUZvcmNlEg0KBWZvcmNlGAEg",
-            "ASgIIiIKBFBhaXISCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgFIikKBERp",
+            "ASgIIiIKBFBhaXISCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgBIikKBERp",
             "Y3QSIQoFcGFpcnMYASADKAsyEi5CZW5jaC5Db21tb24uUGFpciIVCgRQYXRo",
-            "Eg0KBXBwYXRoGAEgASgJIpwBCg1DZWxsSm9iQ29uZmlnEhMKC2Nvbm5lY3Rp",
-            "b25zGAEgASgFEh0KFWNvbmN1cnJlbnRDb25uZWN0aW9ucxgCIAEoBRIOCgZz",
-            "bGF2ZXMYAyABKAUSEAoIaW50ZXJ2YWwYBCABKAUSEAoIZHVyYXRpb24YBSAB",
-            "KAUSEQoJc2VydmVyVXJsGAYgASgJEhAKCHBpcGVsaW5lGAcgASgJIvcDCgRT",
-            "dGF0EicKBXN0YXRlGAEgASgOMhguQmVuY2guQ29tbW9uLlN0YXQuU3RhdGUi",
-            "xQMKBVN0YXRlEg4KCkRFQlVHX1RPRE8QABIXChNIVUJDT05OX1VOQ09OTkVD",
-            "VEVEEAESFgoSSFVCQ09OTl9DT05ORUNUSU5HEAISFQoRSFVCQ09OTl9DT05O",
-            "RUNURUQQAxITCg9DT05GSUdfVU5MT0FERUQQCBISCg5DT05GSUdfTE9BRElO",
-            "RxAJEhEKDUNPTkZJR19MT0FERUQQChIOCgpTRU5EX1JFQURZEAsSEAoMU0VO",
-            "RF9SVU5OSU5HEAwSEQoNU0VORF9DT01QTEVURRANEhIKDldPUktFUl9VTkVY",
-            "SVNUEA4SEwoPV09SS0VSX0NSRUFUSU5HEA8SEgoOV09SS0VSX0NSRUFURUQQ",
-            "EBISCg5XT1JLRVJfRVhJU1RFRBAREhUKEUhVQkNPTk5fVU5DUkVBVEVEEBIS",
-            "FAoQSFVCQ09OTl9DUkVBVElORxATEhMKD0hVQkNPTk5fQ1JFQVRFRBAUEhkK",
-            "FUhVQkNPTk5fRElTQ09OTkVDVElORxAYEhgKFEhVQkNPTk5fRElTQ09OTkVD",
-            "VEVEEBkSFQoRSFVCQ09OTl9ESVNQT1NJTkcQGhIUChBIVUJDT05OX0RJU1BP",
-            "U0VEEBsiEwoEU3RyZxILCgNzdHIYASABKAkiGAoIU3RyZ0xpc3QSDAoEbGlz",
-            "dBgBIAMoCSIZCglUaW1lc3RhbXASDAoEdGltZRgBIAEoBCIHCgVFbXB0eTLO",
-            "BQoKUnBjU2VydmljZRI+CgxHZXRUaW1lc3RhbXASEy5CZW5jaC5Db21tb24u",
-            "RW1wdHkaFy5CZW5jaC5Db21tb24uVGltZXN0YW1wIgASPgoRR2V0Q291bnRl",
-            "ckpzb25TdHISEy5CZW5jaC5Db21tb24uRW1wdHkaEi5CZW5jaC5Db21tb24u",
-            "U3RyZyIAEjUKCEdldFN0YXRlEhMuQmVuY2guQ29tbW9uLkVtcHR5GhIuQmVu",
-            "Y2guQ29tbW9uLlN0YXQiABJCCg1Mb2FkSm9iQ29uZmlnEhsuQmVuY2guQ29t",
-            "bW9uLkNlbGxKb2JDb25maWcaEi5CZW5jaC5Db21tb24uU3RhdCIAEjkKDENy",
-            "ZWF0ZVdvcmtlchITLkJlbmNoLkNvbW1vbi5FbXB0eRoSLkJlbmNoLkNvbW1v",
-            "bi5TdGF0IgASPAoPQ29sbGVjdENvdW50ZXJzEhMuQmVuY2guQ29tbW9uLkZv",
-            "cmNlGhIuQmVuY2guQ29tbW9uLkRpY3QiABJBCgZSdW5Kb2ISIS5CZW5jaC5D",
-            "b21tb24uQmVuY2htYXJrQ2VsbENvbmZpZxoSLkJlbmNoLkNvbW1vbi5TdGF0",
-            "IgASMAoEVGVzdBISLkJlbmNoLkNvbW1vbi5TdHJnGhIuQmVuY2guQ29tbW9u",
-            "LlN0YXQiABJRChRMb2FkQ29ubmVjdGlvbkNvbmZpZxIiLkJlbmNoLkNvbW1v",
-            "bi5Db25uZWN0aW9uQ29uZmlnTGlzdBoTLkJlbmNoLkNvbW1vbi5FbXB0eSIA",
-            "EkEKE0xvYWRDb25uZWN0aW9uUmFuZ2USEy5CZW5jaC5Db21tb24uUmFuZ2Ua",
-            "Ey5CZW5jaC5Db21tb24uRW1wdHkiABJBChBHZXRDb25uZWN0aW9uSWRzEhMu",
-            "QmVuY2guQ29tbW9uLkVtcHR5GhYuQmVuY2guQ29tbW9uLlN0cmdMaXN0IgBi",
-            "BnByb3RvMw=="));
+            "Eg0KBXBwYXRoGAEgASgJIowBCg1DZWxsSm9iQ29uZmlnEhMKC2Nvbm5lY3Rp",
+            "b25zGAEgASgFEh0KFWNvbmN1cnJlbnRDb25uZWN0aW9ucxgCIAEoBRIQCghp",
+            "bnRlcnZhbBgEIAEoBRIQCghkdXJhdGlvbhgFIAEoBRIRCglzZXJ2ZXJVcmwY",
+            "BiABKAkSEAoIcGlwZWxpbmUYByABKAki9wMKBFN0YXQSJwoFc3RhdGUYASAB",
+            "KA4yGC5CZW5jaC5Db21tb24uU3RhdC5TdGF0ZSLFAwoFU3RhdGUSDgoKREVC",
+            "VUdfVE9ETxAAEhcKE0hVQkNPTk5fVU5DT05ORUNURUQQARIWChJIVUJDT05O",
+            "X0NPTk5FQ1RJTkcQAhIVChFIVUJDT05OX0NPTk5FQ1RFRBADEhMKD0NPTkZJ",
+            "R19VTkxPQURFRBAIEhIKDkNPTkZJR19MT0FESU5HEAkSEQoNQ09ORklHX0xP",
+            "QURFRBAKEg4KClNFTkRfUkVBRFkQCxIQCgxTRU5EX1JVTk5JTkcQDBIRCg1T",
+            "RU5EX0NPTVBMRVRFEA0SEgoOV09SS0VSX1VORVhJU1QQDhITCg9XT1JLRVJf",
+            "Q1JFQVRJTkcQDxISCg5XT1JLRVJfQ1JFQVRFRBAQEhIKDldPUktFUl9FWElT",
+            "VEVEEBESFQoRSFVCQ09OTl9VTkNSRUFURUQQEhIUChBIVUJDT05OX0NSRUFU",
+            "SU5HEBMSEwoPSFVCQ09OTl9DUkVBVEVEEBQSGQoVSFVCQ09OTl9ESVNDT05O",
+            "RUNUSU5HEBgSGAoUSFVCQ09OTl9ESVNDT05ORUNURUQQGRIVChFIVUJDT05O",
+            "X0RJU1BPU0lORxAaEhQKEEhVQkNPTk5fRElTUE9TRUQQGyITCgRTdHJnEgsK",
+            "A3N0chgBIAEoCSIYCghTdHJnTGlzdBIMCgRsaXN0GAEgAygJIhkKCVRpbWVz",
+            "dGFtcBIMCgR0aW1lGAEgASgEIgcKBUVtcHR5Ms4FCgpScGNTZXJ2aWNlEj4K",
+            "DEdldFRpbWVzdGFtcBITLkJlbmNoLkNvbW1vbi5FbXB0eRoXLkJlbmNoLkNv",
+            "bW1vbi5UaW1lc3RhbXAiABI+ChFHZXRDb3VudGVySnNvblN0chITLkJlbmNo",
+            "LkNvbW1vbi5FbXB0eRoSLkJlbmNoLkNvbW1vbi5TdHJnIgASNQoIR2V0U3Rh",
+            "dGUSEy5CZW5jaC5Db21tb24uRW1wdHkaEi5CZW5jaC5Db21tb24uU3RhdCIA",
+            "EkIKDUxvYWRKb2JDb25maWcSGy5CZW5jaC5Db21tb24uQ2VsbEpvYkNvbmZp",
+            "ZxoSLkJlbmNoLkNvbW1vbi5TdGF0IgASOQoMQ3JlYXRlV29ya2VyEhMuQmVu",
+            "Y2guQ29tbW9uLkVtcHR5GhIuQmVuY2guQ29tbW9uLlN0YXQiABI8Cg9Db2xs",
+            "ZWN0Q291bnRlcnMSEy5CZW5jaC5Db21tb24uRm9yY2UaEi5CZW5jaC5Db21t",
+            "b24uRGljdCIAEkEKBlJ1bkpvYhIhLkJlbmNoLkNvbW1vbi5CZW5jaG1hcmtD",
+            "ZWxsQ29uZmlnGhIuQmVuY2guQ29tbW9uLlN0YXQiABIwCgRUZXN0EhIuQmVu",
+            "Y2guQ29tbW9uLlN0cmcaEi5CZW5jaC5Db21tb24uU3RhdCIAElEKFExvYWRD",
+            "b25uZWN0aW9uQ29uZmlnEiIuQmVuY2guQ29tbW9uLkNvbm5lY3Rpb25Db25m",
+            "aWdMaXN0GhMuQmVuY2guQ29tbW9uLkVtcHR5IgASQQoTTG9hZENvbm5lY3Rp",
+            "b25SYW5nZRITLkJlbmNoLkNvbW1vbi5SYW5nZRoTLkJlbmNoLkNvbW1vbi5F",
+            "bXB0eSIAEkEKEEdldENvbm5lY3Rpb25JZHMSEy5CZW5jaC5Db21tb24uRW1w",
+            "dHkaFi5CZW5jaC5Db21tb24uU3RyZ0xpc3QiAGIGcHJvdG8z"));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
           new pbr::GeneratedClrTypeInfo(null, new pbr::GeneratedClrTypeInfo[] {
@@ -80,7 +79,7 @@ namespace Bench.Common {
             new pbr::GeneratedClrTypeInfo(typeof(global::Bench.Common.Pair), global::Bench.Common.Pair.Parser, new[]{ "Key", "Value" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Bench.Common.Dict), global::Bench.Common.Dict.Parser, new[]{ "Pairs" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Bench.Common.Path), global::Bench.Common.Path.Parser, new[]{ "Ppath" }, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Bench.Common.CellJobConfig), global::Bench.Common.CellJobConfig.Parser, new[]{ "Connections", "ConcurrentConnections", "Slaves", "Interval", "Duration", "ServerUrl", "Pipeline" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Bench.Common.CellJobConfig), global::Bench.Common.CellJobConfig.Parser, new[]{ "Connections", "ConcurrentConnections", "Interval", "Duration", "ServerUrl", "Pipeline" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Bench.Common.Stat), global::Bench.Common.Stat.Parser, new[]{ "State" }, null, new[]{ typeof(global::Bench.Common.Stat.Types.State) }, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Bench.Common.Strg), global::Bench.Common.Strg.Parser, new[]{ "Str" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Bench.Common.StrgList), global::Bench.Common.StrgList.Parser, new[]{ "List" }, null, null, null),
@@ -1043,9 +1042,9 @@ namespace Bench.Common {
 
     /// <summary>Field number for the "value" field.</summary>
     public const int ValueFieldNumber = 2;
-    private int value_;
+    private double value_;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    public int Value {
+    public double Value {
       get { return value_; }
       set {
         value_ = value;
@@ -1074,7 +1073,7 @@ namespace Bench.Common {
     public override int GetHashCode() {
       int hash = 1;
       if (Key.Length != 0) hash ^= Key.GetHashCode();
-      if (Value != 0) hash ^= Value.GetHashCode();
+      if (Value != 0D) hash ^= Value.GetHashCode();
       return hash;
     }
 
@@ -1089,9 +1088,9 @@ namespace Bench.Common {
         output.WriteRawTag(10);
         output.WriteString(Key);
       }
-      if (Value != 0) {
-        output.WriteRawTag(16);
-        output.WriteInt32(Value);
+      if (Value != 0D) {
+        output.WriteRawTag(17);
+        output.WriteDouble(Value);
       }
     }
 
@@ -1101,8 +1100,8 @@ namespace Bench.Common {
       if (Key.Length != 0) {
         size += 1 + pb::CodedOutputStream.ComputeStringSize(Key);
       }
-      if (Value != 0) {
-        size += 1 + pb::CodedOutputStream.ComputeInt32Size(Value);
+      if (Value != 0D) {
+        size += 1 + 8;
       }
       return size;
     }
@@ -1115,7 +1114,7 @@ namespace Bench.Common {
       if (other.Key.Length != 0) {
         Key = other.Key;
       }
-      if (other.Value != 0) {
+      if (other.Value != 0D) {
         Value = other.Value;
       }
     }
@@ -1132,8 +1131,8 @@ namespace Bench.Common {
             Key = input.ReadString();
             break;
           }
-          case 16: {
-            Value = input.ReadInt32();
+          case 17: {
+            Value = input.ReadDouble();
             break;
           }
         }
@@ -1394,7 +1393,6 @@ namespace Bench.Common {
     public CellJobConfig(CellJobConfig other) : this() {
       connections_ = other.connections_;
       concurrentConnections_ = other.concurrentConnections_;
-      slaves_ = other.slaves_;
       interval_ = other.interval_;
       duration_ = other.duration_;
       serverUrl_ = other.serverUrl_;
@@ -1428,20 +1426,12 @@ namespace Bench.Common {
       }
     }
 
-    /// <summary>Field number for the "slaves" field.</summary>
-    public const int SlavesFieldNumber = 3;
-    private int slaves_;
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    public int Slaves {
-      get { return slaves_; }
-      set {
-        slaves_ = value;
-      }
-    }
-
     /// <summary>Field number for the "interval" field.</summary>
     public const int IntervalFieldNumber = 4;
     private int interval_;
+    /// <summary>
+    /// int32 slaves = 3;
+    /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public int Interval {
       get { return interval_; }
@@ -1498,7 +1488,6 @@ namespace Bench.Common {
       }
       if (Connections != other.Connections) return false;
       if (ConcurrentConnections != other.ConcurrentConnections) return false;
-      if (Slaves != other.Slaves) return false;
       if (Interval != other.Interval) return false;
       if (Duration != other.Duration) return false;
       if (ServerUrl != other.ServerUrl) return false;
@@ -1511,7 +1500,6 @@ namespace Bench.Common {
       int hash = 1;
       if (Connections != 0) hash ^= Connections.GetHashCode();
       if (ConcurrentConnections != 0) hash ^= ConcurrentConnections.GetHashCode();
-      if (Slaves != 0) hash ^= Slaves.GetHashCode();
       if (Interval != 0) hash ^= Interval.GetHashCode();
       if (Duration != 0) hash ^= Duration.GetHashCode();
       if (ServerUrl.Length != 0) hash ^= ServerUrl.GetHashCode();
@@ -1533,10 +1521,6 @@ namespace Bench.Common {
       if (ConcurrentConnections != 0) {
         output.WriteRawTag(16);
         output.WriteInt32(ConcurrentConnections);
-      }
-      if (Slaves != 0) {
-        output.WriteRawTag(24);
-        output.WriteInt32(Slaves);
       }
       if (Interval != 0) {
         output.WriteRawTag(32);
@@ -1565,9 +1549,6 @@ namespace Bench.Common {
       if (ConcurrentConnections != 0) {
         size += 1 + pb::CodedOutputStream.ComputeInt32Size(ConcurrentConnections);
       }
-      if (Slaves != 0) {
-        size += 1 + pb::CodedOutputStream.ComputeInt32Size(Slaves);
-      }
       if (Interval != 0) {
         size += 1 + pb::CodedOutputStream.ComputeInt32Size(Interval);
       }
@@ -1593,9 +1574,6 @@ namespace Bench.Common {
       }
       if (other.ConcurrentConnections != 0) {
         ConcurrentConnections = other.ConcurrentConnections;
-      }
-      if (other.Slaves != 0) {
-        Slaves = other.Slaves;
       }
       if (other.Interval != 0) {
         Interval = other.Interval;
@@ -1625,10 +1603,6 @@ namespace Bench.Common {
           }
           case 16: {
             ConcurrentConnections = input.ReadInt32();
-            break;
-          }
-          case 24: {
-            Slaves = input.ReadInt32();
             break;
           }
           case 32: {
