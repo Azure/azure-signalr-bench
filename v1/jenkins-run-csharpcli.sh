@@ -27,11 +27,11 @@ then
    exit 1
 fi
 
-if [ "$send_number" == "" ]
-then
-   echo "Warning: send number is empty, so the default send number will be set to connection number"
-   send_number=$connection_number
-fi
+#if [ "$send_number" == "" ]
+#then
+#   echo "Warning: send number is empty, so the default send number will be set to connection number"
+#   send_number=$connection_number
+#fi
 
 #if [ $send_number -gt $connection_number ]
 #then
