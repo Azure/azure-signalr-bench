@@ -136,7 +136,7 @@ entry_copy_cli_scripts_to_master()
         scp -o StrictHostKeyChecking=no -P $port ${cli_script_prefix}_*.sh ${user}@${server}:${bench_master_folder}/
 }
 
-start_single_cli_bench()
+do_start_single_cli_bench()
 {
         local server=$1
         local port=$2
@@ -161,30 +161,30 @@ start_single_cli_bench()
 	done
 }
 
-stop_single_cli_bench()
+do_stop_single_cli_bench()
 {
-	local server=$1
+        local server=$1
         local port=$2
         local user=$3
         local script=$4
-	local rand=`date +%H%M%S`
-	local agent_file_name=${server}_${rand}_${cli_bench_agent_output}
+        local rand=`date +%H%M%S`
+        local agent_file_name=${server}_${rand}_${cli_bench_agent_output}
         local result_name=${bench_type}_${bench_codec}_${bench_name}
         scp -o StrictHostKeyChecking=no -P $port $script ${user}@${server}:${bench_slave_folder}
         ssh -o StrictHostKeyChecking=no -p $port ${user}@${server} "cd ${bench_slave_folder}; chmod +x ./$script"
         ssh -o StrictHostKeyChecking=no -p $port ${user}@${server} "cd ${bench_slave_folder}; ./$script"
-	echo "agent stoped!"
+        echo "agent stoped!"
 	scp -o StrictHostKeyChecking=no -P $port ${user}@${server}:${bench_slave_folder}/${cli_bench_agent_output} ${result_dir}/$result_name/$agent_file_name
 }
 
 start_single_cli_bench()
 {
-	start_single_cli_bench $1 $2 $3 $cli_bench_start_script
+	do_start_single_cli_bench $1 $2 $3 $cli_bench_start_script
 }
 
 stop_single_cli_bench()
 {
-	stop_single_cli_bench $1 $2 $3 $cli_bench_stop_script
+	do_stop_single_cli_bench $1 $2 $3 $cli_bench_stop_script
 }
 
 entry_copy_start_cli_bench()
