@@ -17,7 +17,7 @@ namespace Bench.RpcSlave.Worker.Operations
         private IStartTimeOffsetGenerator StartTimeOffsetGenerator;
         private List<int> _sentMessages;
         private WorkerToolkit _tk;
-        private List<bool> _brokenConnectionInd;
+        private List<bool> _brokenConnectionInds;
         public void Do(WorkerToolkit tk)
         {
             var debug = Environment.GetEnvironmentVariable("debug") == "debug" ? true : false;
@@ -53,7 +53,7 @@ namespace Bench.RpcSlave.Worker.Operations
             StartTimeOffsetGenerator = new RandomGenerator(new LocalFileSaver());
 
             _sentMessages = Enumerable.Repeat(0, _tk.JobConfig.Connections).ToList();
-            
+            _brokenConnectionInds = Enumerable.Repeat(false, _tk.JobConfig.Connections).ToList();
             SetCallbacks();
 
             // _tk.Counters.ResetCounters(withConnection: false);
@@ -115,27 +115,38 @@ namespace Bench.RpcSlave.Worker.Operations
             {
                 while (!cts.IsCancellationRequested)
                 {
-                    try
+                    if (!_brokenConnectionInds[ind])
                     {
-
                         var id = $"{Util.GuidEncoder.Encode(Guid.NewGuid())}";
                         if (_tk.BenchmarkCellConfig.Scenario.Contains("sendToClient"))
                             id = _tk.BenchmarkCellConfig.TargetConnectionIds[ind + _tk.ConnectionRange.Begin];
 
-                        var time = $"{Util.Timestamp()}";
-                        var messageBlob = new byte[_tk.BenchmarkCellConfig.MessageSize];
-                        await connection.SendAsync(_tk.BenchmarkCellConfig.Scenario, id, time, messageBlob);
-                        _tk.Counters.IncreaseSentMessageSize(messageBlob.Length * sizeof(byte));
+                        Task.Run(async() =>
+                        {
+                            try
+                            {
+                                if (ind == 0) _brokenConnectionInds[ind] = true;
 
-                        _sentMessages[ind]++;
-                        _tk.Counters.IncreseSentMsg();
+                                var time = $"{Util.Timestamp()}";
+                                var messageBlob = new byte[_tk.BenchmarkCellConfig.MessageSize];
+                                await connection.SendAsync(_tk.BenchmarkCellConfig.Scenario, id, time, messageBlob);
+                                _tk.Counters.IncreaseSentMessageSize(messageBlob.Length * sizeof(byte));
+                                _sentMessages[ind]++;
+                                _tk.Counters.IncreseSentMsg();
+
+                            }
+                            catch
+                            {
+                                _tk.Counters.IncreseNotSentFromClientMsg();
+                                _brokenConnectionInds[ind] = true;
+                            }
+                        });
 
                     }
-                    catch
+                    else
                     {
                         _tk.Counters.IncreseNotSentFromClientMsg();
                     }
-
                     await Task.Delay(TimeSpan.FromSeconds(_tk.JobConfig.Interval));
                 }
             }

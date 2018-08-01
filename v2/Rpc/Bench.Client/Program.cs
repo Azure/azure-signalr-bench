@@ -231,7 +231,6 @@ namespace Bench.RpcMaster
                     {
                         Util.Log($"additional: {AdditionalSendConnCnt}");
                         connectionAllConfigList = connectionConfigBuilder.UpdateSendConn(connectionAllConfigList, AdditionalSendConnCnt, argsOption.Connections, slaveList.Count);
-                        Util.LogList("send conn", connectionAllConfigList.Configs.ToList());
                     }
 
                     clients.ForEach(client =>
