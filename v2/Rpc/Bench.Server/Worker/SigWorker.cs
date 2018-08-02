@@ -53,7 +53,7 @@ namespace Bench.RpcSlave.Worker
             return _tk.JobConfig.Pipeline;
         }
 
-        public List<Tuple<string, double>> GetCounters()
+        public List<Tuple<string, ulong>> GetCounters()
         {
             return _tk.Counters.GetAll();
         }

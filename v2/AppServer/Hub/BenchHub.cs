@@ -45,10 +45,10 @@ namespace Microsoft.Azure.SignalR.PerfTest.AppServer
             Clients.Group(groupName).SendAsync("SendToGroup", Context.ConnectionId, message);
         }
 
-        public void SendGroup(string groupName, string message)
+        public void SendGroup(string groupName, string message, byte[] messageBlob)
         {
             Interlocked.Increment(ref _totalReceivedGroup);
-            Clients.Group(groupName).SendAsync("SendGroup", 0, message);
+            Clients.Group(groupName).SendAsync("SendGroup", 0, message, messageBlob);
         }
 
         public void JoinGroup(string groupName, string client)

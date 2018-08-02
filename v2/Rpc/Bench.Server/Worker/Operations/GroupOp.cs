@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -51,7 +52,7 @@ namespace Bench.RpcSlave.Worker.Operations
             else
             {
                 Util.Log($"join group");
-                JoinGroup();
+                JoinGroup().Wait();
                 if (!debug) Task.Delay(5000).Wait();
 
                 StartSendMsg();
@@ -83,8 +84,10 @@ namespace Bench.RpcSlave.Worker.Operations
 
         }
 
-        private void JoinGroup()
+        private async Task JoinGroup()
         {
+            var sw = new Stopwatch();
+            sw.Start();
             var tasks = new List<Task>();
             for (var i = _tk.ConnectionRange.Begin; i < _tk.ConnectionRange.End; i++)
             {
@@ -108,7 +111,9 @@ namespace Bench.RpcSlave.Worker.Operations
                     })
                 );
             }
-            Task.WhenAll(tasks).Wait();
+            await Task.WhenAll(tasks);
+            sw.Stop();
+            Util.Log($"join group time : {sw.Elapsed.TotalMilliseconds}");
         }
 
         private void LeaveGroup()
@@ -144,13 +149,15 @@ namespace Bench.RpcSlave.Worker.Operations
             {
                 var callbackName = "SendGroup";
 
-                _tk.Connections[i].On(callbackName, (int count, string time) =>
+                _tk.Connections[i].On(callbackName, (int count, string time, byte[] messageBlob) =>
                 {
                     var receiveTimestamp = Util.Timestamp();
                     var sendTimestamp = Convert.ToInt64(time);
+                    var receiveSize = messageBlob.Length * sizeof(byte);
 
                     _tk.Counters.CountLatency(sendTimestamp, receiveTimestamp);
                     _tk.Counters.SetServerCounter((ulong) count);
+                    _tk.Counters.IncreaseReceivedMessageSize((ulong) receiveSize);
                 });
 
                 _tk.Connections[i].On("JoinGroup", (string connectionId, string message) => { });
@@ -162,18 +169,24 @@ namespace Bench.RpcSlave.Worker.Operations
         private void StartSendMsg()
         {
 
+            var messageBlob = new byte[_tk.BenchmarkCellConfig.MessageSize];
+            Random rnd = new Random();
+            rnd.NextBytes(messageBlob);
+
             var tasks = new List<Task>(_tk.Connections.Count);
             for (var i = _tk.ConnectionRange.Begin; i < _tk.ConnectionRange.End; i++)
             {
                 var cfg = _tk.ConnectionConfigList.Configs[i];
-                if (cfg.SendFlag) tasks.Add(StartSendingMessageAsync(_tk.Connections[i - _tk.ConnectionRange.Begin], i));
+                if (cfg.SendFlag) tasks.Add(StartSendingMessageAsync(_tk.Connections[i - _tk.ConnectionRange.Begin], i, messageBlob));
             }
 
             Task.WhenAll(tasks).Wait();
         }
 
-        private async Task StartSendingMessageAsync(HubConnection connection, int i)
+        private async Task StartSendingMessageAsync(HubConnection connection, int i, byte[] messageBlob)
         {
+            var messageSize = (ulong) messageBlob.Length;
+
             await Task.Delay(StartTimeOffsetGenerator.Delay(TimeSpan.FromSeconds(_tk.JobConfig.Interval)));
 
             var name = "sendGroup";
@@ -186,21 +199,27 @@ namespace Bench.RpcSlave.Worker.Operations
                     var groupNameList = _tk.BenchmarkCellConfig.GroupNameList[i].Split(";");
                     for (var j = 0; j < groupNameList.Length; j++)
                     {
+                        var jInd = j;
                         if (!_brokenConnectionInds[i - _tk.ConnectionRange.Begin])
                         {
-                            try
+                            Task.Run(async() =>
                             {
-                                var groupName = groupNameList[j];
-                                await connection.SendAsync(name, groupName, $"{Util.Timestamp()}");
-                                _sentMessagesGroup[i - _tk.ConnectionRange.Begin]++;
-                                _tk.Counters.IncreseSentMsg();
-                            }
-                            catch (Exception ex)
-                            {
-                                Util.Log($"send msg fails: {name}, exception: {ex}");
-                                _tk.Counters.IncreseNotSentFromClientMsg();
-                                _brokenConnectionInds[i - _tk.ConnectionRange.Begin] = true;
-                            }
+                                try
+                                {
+                                    var groupName = groupNameList[jInd];
+                                    await connection.SendAsync(name, groupName, $"{Util.Timestamp()}", messageBlob);
+                                    _tk.Counters.IncreaseSentMessageSize(messageSize);
+                                    _sentMessagesGroup[i - _tk.ConnectionRange.Begin]++;
+                                    _tk.Counters.IncreseSentMsg();
+                                }
+                                catch (Exception ex)
+                                {
+                                    Util.Log($"send msg fails: {name}, exception: {ex}");
+                                    _tk.Counters.IncreseNotSentFromClientMsg();
+                                    _brokenConnectionInds[i - _tk.ConnectionRange.Begin] = true;
+                                }
+                            });
+
                         }
                         else
                         {

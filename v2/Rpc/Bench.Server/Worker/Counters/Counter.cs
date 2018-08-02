@@ -23,14 +23,14 @@ namespace Bench.RpcSlave.Worker.Counters
             ResetCounters();
         }
 
-        public List<Tuple<string, double>> GetAll()
+        public List<Tuple<string, ulong>> GetAll()
         {
-            var list = new List<Tuple<string, double>>();
+            var list = new List<Tuple<string, ulong>>();
             lock(InnerCounters)
             {
                 foreach (var counter in InnerCounters)
                 {
-                    list.Add(new Tuple<string, double>(counter.Key, counter.Value));
+                    list.Add(new Tuple<string, ulong>(counter.Key, counter.Value));
                 }
             }
 

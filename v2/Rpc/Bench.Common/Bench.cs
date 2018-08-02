@@ -34,7 +34,7 @@ namespace Bench.Common {
             "aWdMaXN0Ei8KB2NvbmZpZ3MYASADKAsyHi5CZW5jaC5Db21tb24uQ29ubmVj",
             "dGlvbkNvbmZpZyIjCgVSYW5nZRINCgViZWdpbhgBIAEoBRILCgNlbmQYAiAB",
             "KAUiFgoFRm9yY2USDQoFZm9yY2UYASABKAgiIgoEUGFpchILCgNrZXkYASAB",
-            "KAkSDQoFdmFsdWUYAiABKAEiKQoERGljdBIhCgVwYWlycxgBIAMoCzISLkJl",
+            "KAkSDQoFdmFsdWUYAiABKAQiKQoERGljdBIhCgVwYWlycxgBIAMoCzISLkJl",
             "bmNoLkNvbW1vbi5QYWlyIhUKBFBhdGgSDQoFcHBhdGgYASABKAkijAEKDUNl",
             "bGxKb2JDb25maWcSEwoLY29ubmVjdGlvbnMYASABKAUSHQoVY29uY3VycmVu",
             "dENvbm5lY3Rpb25zGAIgASgFEhAKCGludGVydmFsGAQgASgFEhAKCGR1cmF0",
@@ -1063,9 +1063,9 @@ namespace Bench.Common {
 
     /// <summary>Field number for the "value" field.</summary>
     public const int ValueFieldNumber = 2;
-    private double value_;
+    private ulong value_;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    public double Value {
+    public ulong Value {
       get { return value_; }
       set {
         value_ = value;
@@ -1094,7 +1094,7 @@ namespace Bench.Common {
     public override int GetHashCode() {
       int hash = 1;
       if (Key.Length != 0) hash ^= Key.GetHashCode();
-      if (Value != 0D) hash ^= Value.GetHashCode();
+      if (Value != 0UL) hash ^= Value.GetHashCode();
       return hash;
     }
 
@@ -1109,9 +1109,9 @@ namespace Bench.Common {
         output.WriteRawTag(10);
         output.WriteString(Key);
       }
-      if (Value != 0D) {
-        output.WriteRawTag(17);
-        output.WriteDouble(Value);
+      if (Value != 0UL) {
+        output.WriteRawTag(16);
+        output.WriteUInt64(Value);
       }
     }
 
@@ -1121,8 +1121,8 @@ namespace Bench.Common {
       if (Key.Length != 0) {
         size += 1 + pb::CodedOutputStream.ComputeStringSize(Key);
       }
-      if (Value != 0D) {
-        size += 1 + 8;
+      if (Value != 0UL) {
+        size += 1 + pb::CodedOutputStream.ComputeUInt64Size(Value);
       }
       return size;
     }
@@ -1135,7 +1135,7 @@ namespace Bench.Common {
       if (other.Key.Length != 0) {
         Key = other.Key;
       }
-      if (other.Value != 0D) {
+      if (other.Value != 0UL) {
         Value = other.Value;
       }
     }
@@ -1152,8 +1152,8 @@ namespace Bench.Common {
             Key = input.ReadString();
             break;
           }
-          case 17: {
-            Value = input.ReadDouble();
+          case 16: {
+            Value = input.ReadUInt64();
             break;
           }
         }

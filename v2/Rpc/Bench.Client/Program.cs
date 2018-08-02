@@ -257,7 +257,7 @@ namespace Bench.RpcMaster
             collectTimer.AutoReset = true;
             collectTimer.Elapsed += (sender, e) =>
             {
-                var allClientCounters = new ConcurrentDictionary<string, double>();
+                var allClientCounters = new ConcurrentDictionary<string, ulong>();
                 var collectCountersTasks = new List<Task>(clients.Count);
                 var isSend = false;
                 var isComplete = false;
