@@ -69,6 +69,12 @@ gen_cli_master_single_bench()
 		codec="messagepack"
 	fi
 
+	local send_size="2k" #defualt send size
+	if [ "$bench_send_size" != "" ]
+	then
+		send_size=$bench_send_size
+	fi
+
 cat << EOF > $sigbench_config_dir/${cmd_config_prefix}_${bench_codec}_${bench_name}_${bench_type}
 connection=$connection_num
 connection_concurrent=$concurrent_num
@@ -97,8 +103,9 @@ transport=${bench_transport}
 server=$server_endpoint
 pipeline="createConn;startConn;${send_num}stopConn;disposeConn"
 slaveList="${cli_agents_g}"
+sendSize="${send_size}"
 
-/home/${bench_app_user}/.dotnet/dotnet run -- --rpcPort 7000 --duration $sigbench_run_duration --connections $connection_num --interval 1 --serverUrl "\${server}" --pipeLine "\${pipeline}" -v $bench_type -t "\${transport}" -p ${codec} -s ${bench_name} --slaveList "\${slaveList}"	-o ${result_name}/counters.txt --pidFile /tmp/master.pid --concurrentConnection ${concurrent_num}
+/home/${bench_app_user}/.dotnet/dotnet run -- --rpcPort 7000 --duration $sigbench_run_duration --connections $connection_num --interval 1 --serverUrl "\${server}" --pipeLine "\${pipeline}" -v $bench_type -t "\${transport}" -p ${codec} -s ${bench_name} --slaveList "\${slaveList}"	-o ${result_name}/counters.txt --pidFile /tmp/master.pid --concurrentConnection ${concurrent_num} --messageSize "\${sendSize}"
 EOF
 }
 
