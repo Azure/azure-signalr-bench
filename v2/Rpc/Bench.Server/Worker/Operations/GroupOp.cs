@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -15,6 +16,7 @@ namespace Bench.RpcSlave.Worker.Operations
         private IStartTimeOffsetGenerator StartTimeOffsetGenerator;
         private List<int> _sentMessagesGroup;
         private WorkerToolkit _tk;
+        private List<bool> _brokenConnectionInds;
 
         public void Do(WorkerToolkit tk)
         {
@@ -72,12 +74,8 @@ namespace Bench.RpcSlave.Worker.Operations
         private void Setup()
         {
             StartTimeOffsetGenerator = new RandomGenerator(new LocalFileSaver());
-            _sentMessagesGroup = new List<int>(_tk.Connections.Count);
-
-            for (var i = 0; i < _tk.Connections.Count; i++)
-            {
-                _sentMessagesGroup.Add(0);
-            }
+            _brokenConnectionInds = Enumerable.Repeat(false, _tk.JobConfig.Connections).ToList();
+            _sentMessagesGroup = Enumerable.Repeat(0, _tk.JobConfig.Connections).ToList();
 
             SetCallbacks();
 
@@ -107,8 +105,6 @@ namespace Bench.RpcSlave.Worker.Operations
                                 _tk.Counters.IncreaseJoinGroupFail();
                             }
                         }
-                        Util.Log($"end");
-
                     })
                 );
             }
@@ -169,7 +165,8 @@ namespace Bench.RpcSlave.Worker.Operations
             var tasks = new List<Task>(_tk.Connections.Count);
             for (var i = _tk.ConnectionRange.Begin; i < _tk.ConnectionRange.End; i++)
             {
-                tasks.Add(StartSendingMessageAsync(_tk.Connections[i - _tk.ConnectionRange.Begin], i));
+                var cfg = _tk.ConnectionConfigList.Configs[i];
+                if (cfg.SendFlag) tasks.Add(StartSendingMessageAsync(_tk.Connections[i - _tk.ConnectionRange.Begin], i));
             }
 
             Task.WhenAll(tasks).Wait();
@@ -185,22 +182,32 @@ namespace Bench.RpcSlave.Worker.Operations
             {
                 while (!cts.IsCancellationRequested)
                 {
+
                     var groupNameList = _tk.BenchmarkCellConfig.GroupNameList[i].Split(";");
                     for (var j = 0; j < groupNameList.Length; j++)
                     {
-                        try
+                        if (!_brokenConnectionInds[i - _tk.ConnectionRange.Begin])
                         {
-                            var groupName = groupNameList[j];
-                            await connection.SendAsync(name, groupName, $"{Util.Timestamp()}");
-                            _sentMessagesGroup[i - _tk.ConnectionRange.Begin]++;
-                            _tk.Counters.IncreseSentMsg();
+                            try
+                            {
+                                var groupName = groupNameList[j];
+                                await connection.SendAsync(name, groupName, $"{Util.Timestamp()}");
+                                _sentMessagesGroup[i - _tk.ConnectionRange.Begin]++;
+                                _tk.Counters.IncreseSentMsg();
+                            }
+                            catch (Exception ex)
+                            {
+                                Util.Log($"send msg fails: {name}, exception: {ex}");
+                                _tk.Counters.IncreseNotSentFromClientMsg();
+                                _brokenConnectionInds[i - _tk.ConnectionRange.Begin] = true;
+                            }
                         }
-                        catch (Exception ex)
+                        else
                         {
-                            Util.Log($"send msg fails: {name}, exception: {ex}");
                             _tk.Counters.IncreseNotSentFromClientMsg();
                         }
                     }
+
                     await Task.Delay(TimeSpan.FromSeconds(_tk.JobConfig.Interval));
                 }
             }
