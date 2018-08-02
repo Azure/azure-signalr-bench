@@ -76,8 +76,8 @@ namespace Bench.RpcSlave.Worker.Operations
                             var sendTimestamp = Convert.ToInt64(time);
                             var receiveSize = messageBlob.Length * sizeof(byte);
                             _tk.Counters.CountLatency(sendTimestamp, receiveTimestamp);
-                            _tk.Counters.SetServerCounter(((ulong)count));
-                            _tk.Counters.IncreaseReceivedMessageSize((ulong)receiveSize);
+                            _tk.Counters.SetServerCounter(((ulong) count));
+                            _tk.Counters.IncreaseReceivedMessageSize((ulong) receiveSize);
                         });
 
             }
@@ -85,6 +85,10 @@ namespace Bench.RpcSlave.Worker.Operations
 
         private void StartSendMsg()
         {
+            var messageBlob = new byte[_tk.BenchmarkCellConfig.MessageSize];
+            Random rnd = new Random();
+            rnd.NextBytes(messageBlob);
+
             var sendCnt = 0;
             for (var i = _tk.ConnectionRange.Begin; i < _tk.ConnectionRange.End; i++)
             {
@@ -98,18 +102,20 @@ namespace Bench.RpcSlave.Worker.Operations
             else
             {
                 var tasks = new List<Task>();
+
                 for (var i = _tk.ConnectionRange.Begin; i < _tk.ConnectionRange.End; i++)
                 {
                     var cfg = _tk.ConnectionConfigList.Configs[i];
-                    if (cfg.SendFlag) tasks.Add(StartSendingMessageAsync(_tk.Connections[i - _tk.ConnectionRange.Begin], i - _tk.ConnectionRange.Begin));
+                    if (cfg.SendFlag) tasks.Add(StartSendingMessageAsync(_tk.Connections[i - _tk.ConnectionRange.Begin], i - _tk.ConnectionRange.Begin, messageBlob));
                 }
 
                 Task.WhenAll(tasks).Wait();
             }
         }
 
-        private async Task StartSendingMessageAsync(HubConnection connection, int ind)
+        private async Task StartSendingMessageAsync(HubConnection connection, int ind, byte[] messageBlob)
         {
+            var messageSize = (ulong) messageBlob.Length;
             await Task.Delay(StartTimeOffsetGenerator.Delay(TimeSpan.FromSeconds(_tk.JobConfig.Interval)));
             using(var cts = new CancellationTokenSource(TimeSpan.FromSeconds(_tk.JobConfig.Duration)))
             {
@@ -126,15 +132,14 @@ namespace Bench.RpcSlave.Worker.Operations
                             try
                             {
                                 var time = $"{Util.Timestamp()}";
-                                var messageBlob = new byte[_tk.BenchmarkCellConfig.MessageSize];
                                 await connection.SendAsync(_tk.BenchmarkCellConfig.Scenario, id, time, messageBlob);
-                                _tk.Counters.IncreaseSentMessageSize((ulong)messageBlob.Length * sizeof(byte));
+                                _tk.Counters.IncreaseSentMessageSize(messageSize);
                                 _sentMessages[ind]++;
                                 _tk.Counters.IncreseSentMsg();
-
                             }
-                            catch
+                            catch (Exception ex)
                             {
+                                Util.Log($"exception in sending: {ex}");
                                 _tk.Counters.IncreseNotSentFromClientMsg();
                                 _brokenConnectionInds[ind] = true;
                             }

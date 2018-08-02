@@ -76,15 +76,15 @@ namespace Bench.RpcMaster
                 // call salves to load job config
                 ClientsLoadJobConfig(clients, argsOption.Connections, slaveList,
                     argsOption.ConcurrentConnection, argsOption.Duration, argsOption.Interval,
-                    argsOption.PipeLine, argsOption.ServerUrl);
+                    argsOption.PipeLine, argsOption.ServerUrl, argsOption.MessageSize);
 
                 // collect counters
                 StartCollectCounters(clients, argsOption.OutputCounterFile);
 
                 // process jobs for each step
                 ProcessPipeline(clients, argsOption.PipeLine, slaveList,
-                argsOption.Connections, argsOption.ServiceType, argsOption.TransportType, argsOption.HubProtocal, argsOption.Scenario, argsOption.MessageSize,
-                argsOption.groupNum, argsOption.groupOverlap);
+                    argsOption.Connections, argsOption.ServiceType, argsOption.TransportType, argsOption.HubProtocal, argsOption.Scenario, argsOption.MessageSize,
+                    argsOption.groupNum, argsOption.groupOverlap);
             }
             catch (Exception ex)
             {
@@ -401,8 +401,10 @@ namespace Bench.RpcMaster
 
         private static void ClientsLoadJobConfig(List<RpcService.RpcServiceClient> clients,
             int connectionCnt, List<string> slaveList, int concurrentConnection, int duration,
-            int interval, string pipelineStr, string serverUrl)
+            int interval, string pipelineStr, string serverUrl, string messageSizeStr)
         {
+            var messageSize = ParseMessageSize(messageSizeStr);
+
             clients.ForEach(client =>
             {
                 var i = clients.IndexOf(client);
@@ -416,16 +418,18 @@ namespace Bench.RpcMaster
                 }
                 var state = new Stat();
                 state = client.CreateWorker(new Empty());
+
                 var config = new CellJobConfig
                 {
                     Connections = clientConnections,
                     ConcurrentConnections = concurrentConnections,
-                    // Slaves = argsOption.Slaves,
                     Interval = interval,
                     Duration = duration,
                     ServerUrl = serverUrl,
                     Pipeline = pipelineStr
                 };
+
+
                 Util.Log($"create worker state: {state.State}");
                 Util.Log($"client connections: {config.Connections}");
                 state = client.LoadJobConfig(config);

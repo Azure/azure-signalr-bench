@@ -18,9 +18,11 @@ namespace Bench.RpcSlave.Worker.Operations
 
         public void Do(WorkerToolkit tk)
         {
+            var debug = Environment.GetEnvironmentVariable("debug") == "debug" ? true : false;
+
             var waitTime = 5 * 1000;
-            Console.WriteLine($"wait time: {waitTime / 1000}s");
-            Task.Delay(waitTime).Wait();
+            if (!debug) Console.WriteLine($"wait time: {waitTime / 1000}s");
+            if (!debug) Task.Delay(waitTime).Wait();
 
             _tk = tk;
             _tk.State = Stat.Types.State.SendReady;
@@ -28,30 +30,36 @@ namespace Bench.RpcSlave.Worker.Operations
             // setup
             Util.Log($"group setup");
             Setup();
-            Task.Delay(5000).Wait();
+            if (!debug) Task.Delay(5000).Wait();
 
             _tk.State = Stat.Types.State.SendRunning;
-            Task.Delay(5000).Wait();
+            if (!debug) Task.Delay(5000).Wait();
 
-            if (_tk.Connections.Count == 0)
+            var sendCnt = 0;
+            for (var i = _tk.ConnectionRange.Begin; i < _tk.ConnectionRange.End; i++)
             {
-                Util.Log("no connections");
-                Task.Delay(TimeSpan.FromSeconds(_tk.JobConfig.Duration + 15)).Wait();
+                var cfg = _tk.ConnectionConfigList.Configs[i];
+                if (cfg.SendFlag) sendCnt++;
+            }
+
+            if (_tk.Connections.Count == 0 || sendCnt == 0)
+            {
+                Task.Delay(TimeSpan.FromSeconds(_tk.JobConfig.Duration + 5)).Wait();
             }
             else
             {
                 Util.Log($"join group");
                 JoinGroup();
-                Task.Delay(5000).Wait();
+                if (!debug) Task.Delay(5000).Wait();
 
                 StartSendMsg();
 
                 Util.Log($"leave group");
                 LeaveGroup();
-                Task.Delay(5000).Wait();
+                if (!debug) Task.Delay(5000).Wait();
             }
 
-            Task.Delay(30 * 1000).Wait();
+            if (!debug) Task.Delay(30 * 1000).Wait();
 
             // save counters
             SaveCounters();
@@ -79,42 +87,59 @@ namespace Bench.RpcSlave.Worker.Operations
 
         private void JoinGroup()
         {
+            var tasks = new List<Task>();
             for (var i = _tk.ConnectionRange.Begin; i < _tk.ConnectionRange.End; i++)
             {
                 var ind = i;
-                Task.Run(() =>
-                {
-                    try
+                tasks.Add(
+                    Task.Run(() =>
                     {
-                        _tk.Connections[ind - _tk.ConnectionRange.Begin].SendAsync("JoinGroup", _tk.ConnectionConfigList.Configs[ind].GroupName, "");
-                    }
-                    catch (Exception ex)
-                    {
-                        Util.Log($"Join group failed: {ex}");
-                        _tk.Counters.IncreaseJoinGroupFail();
-                    }
-                });
+                        var groupNameList = _tk.BenchmarkCellConfig.GroupNameList[ind].Split(";");
+                        for (var j = 0; j < groupNameList.Length; j++)
+                        {
+                            try
+                            {
+                                _tk.Connections[ind - _tk.ConnectionRange.Begin].SendAsync("JoinGroup", groupNameList[j], "").Wait(); // todo: await to catch exception
+                            }
+                            catch (Exception ex)
+                            {
+                                Util.Log($"Join group failed: {ex}");
+                                _tk.Counters.IncreaseJoinGroupFail();
+                            }
+                        }
+                        Util.Log($"end");
+
+                    })
+                );
             }
+            Task.WhenAll(tasks).Wait();
         }
 
         private void LeaveGroup()
         {
+            var tasks = new List<Task>();
             for (int i = _tk.ConnectionRange.Begin; i < _tk.ConnectionRange.End; i++)
             {
                 var ind = i;
-                Task.Run(() =>
+                tasks.Add(Task.Run(() =>
                 {
-                    try
+                    var groupNameList = _tk.BenchmarkCellConfig.GroupNameList[ind].Split(";");
+                    for (var j = 0; j < groupNameList.Length; j++)
                     {
-                        _tk.Connections[ind - _tk.ConnectionRange.Begin].SendAsync("LeaveGroup", _tk.ConnectionConfigList.Configs[ind].GroupName, "");
+                        try
+                        {
+                            _tk.Connections[ind - _tk.ConnectionRange.Begin].SendAsync("LeaveGroup", groupNameList[j], ""); // todo: await to catch exception
+                        }
+                        catch (Exception ex)
+                        {
+                            Util.Log($"Leave group failed: {ex}");
+                            _tk.Counters.IncreaseLeaveGroupFail();
+                        }
                     }
-                    catch (Exception ex)
-                    {
-                        Util.Log($"Leave group failed: {ex}");
-                        _tk.Counters.IncreaseLeaveGroupFail();
-                    }
-                });
+                }));
             }
+            Task.WhenAll(tasks).Wait();
+
         }
 
         private void SetCallbacks()
@@ -129,7 +154,7 @@ namespace Bench.RpcSlave.Worker.Operations
                     var sendTimestamp = Convert.ToInt64(time);
 
                     _tk.Counters.CountLatency(sendTimestamp, receiveTimestamp);
-                    _tk.Counters.SetServerCounter((ulong)count);
+                    _tk.Counters.SetServerCounter((ulong) count);
                 });
 
                 _tk.Connections[i].On("JoinGroup", (string connectionId, string message) => { });
@@ -140,21 +165,14 @@ namespace Bench.RpcSlave.Worker.Operations
 
         private void StartSendMsg()
         {
-            if (_tk.Connections.Count == 0)
-            {
-                Task.Delay(TimeSpan.FromSeconds(_tk.JobConfig.Duration + 5)).Wait();
-            }
-            else
-            {
-                var tasks = new List<Task>(_tk.Connections.Count);
-                for (var i = _tk.ConnectionRange.Begin; i < _tk.ConnectionRange.End; i++)
-                {
-                    Util.Log($"tk conn count: {_tk.Connections.Count}, ({_tk.ConnectionRange.Begin}, {_tk.ConnectionRange.End}), i:{i}");
-                    tasks.Add(StartSendingMessageAsync(_tk.Connections[i - _tk.ConnectionRange.Begin], i));
-                }
 
-                Task.WhenAll(tasks).Wait();
+            var tasks = new List<Task>(_tk.Connections.Count);
+            for (var i = _tk.ConnectionRange.Begin; i < _tk.ConnectionRange.End; i++)
+            {
+                tasks.Add(StartSendingMessageAsync(_tk.Connections[i - _tk.ConnectionRange.Begin], i));
             }
+
+            Task.WhenAll(tasks).Wait();
         }
 
         private async Task StartSendingMessageAsync(HubConnection connection, int i)
@@ -167,16 +185,21 @@ namespace Bench.RpcSlave.Worker.Operations
             {
                 while (!cts.IsCancellationRequested)
                 {
-                    try
+                    var groupNameList = _tk.BenchmarkCellConfig.GroupNameList[i].Split(";");
+                    for (var j = 0; j < groupNameList.Length; j++)
                     {
-                        await connection.SendAsync(name, _tk.ConnectionConfigList.Configs[i - _tk.ConnectionRange.Begin].GroupName, $"{Util.Timestamp()}");
-                        _sentMessagesGroup[i - _tk.ConnectionRange.Begin]++;
-                        _tk.Counters.IncreseSentMsg();
-                    }
-                    catch (Exception ex)
-                    {
-                        Util.Log($"send msg fails: {name}, exception: {ex}");
-                        _tk.Counters.IncreseNotSentFromClientMsg();
+                        try
+                        {
+                            var groupName = groupNameList[j];
+                            await connection.SendAsync(name, groupName, $"{Util.Timestamp()}");
+                            _sentMessagesGroup[i - _tk.ConnectionRange.Begin]++;
+                            _tk.Counters.IncreseSentMsg();
+                        }
+                        catch (Exception ex)
+                        {
+                            Util.Log($"send msg fails: {name}, exception: {ex}");
+                            _tk.Counters.IncreseNotSentFromClientMsg();
+                        }
                     }
                     await Task.Delay(TimeSpan.FromSeconds(_tk.JobConfig.Interval));
                 }

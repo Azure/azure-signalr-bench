@@ -71,6 +71,7 @@ message CellJobConfig {
 	int32 duration = 5;
 	string serverUrl = 6;
 	string pipeline = 7;
+	// bytes messageBlob = 8;
 }
 
 message Stat {

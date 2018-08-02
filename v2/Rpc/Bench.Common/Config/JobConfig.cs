@@ -16,7 +16,6 @@ namespace Bench.Common.Config
         public int Duration { get; set; }
         public string ServerUrl { get; set; }
         public List<string> Pipeline { get; set; }
-
         public JobConfig(ArgsOption argsOption)
         {
             Connections = argsOption.Connections;

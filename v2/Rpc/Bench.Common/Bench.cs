@@ -1486,6 +1486,9 @@ namespace Bench.Common {
     /// <summary>Field number for the "pipeline" field.</summary>
     public const int PipelineFieldNumber = 7;
     private string pipeline_ = "";
+    /// <summary>
+    /// bytes messageBlob = 8;
+    /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public string Pipeline {
       get { return pipeline_; }

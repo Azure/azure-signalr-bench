@@ -40,6 +40,7 @@ namespace Bench.RpcSlave
 
         public override Task<Stat> LoadJobConfig(CellJobConfig config, ServerCallContext context)
         {
+
             try
             {
                 var jobConfig = new JobConfig
