@@ -122,7 +122,7 @@
                 document.getElementById('sendmessage').addEventListener('click', function (event) {
                     // Call the broadcastMessage method on the hub.
                     if (messageInput.value) {
-                        connection.send('broadcastMessage', username, messageInput.value);
+                        connection.send('broadcastMessage', username, messageInput.value, null);
                     }
 
                     // Clear text box and reset focus for next comment.
@@ -139,7 +139,7 @@
                 });
                 document.getElementById('echo').addEventListener('click', function (event) {
                     // Call the echo method on the hub.
-                    connection.send('echo', username, messageInput.value);
+                    connection.send('echo', username, messageInput.value, null);
 
                     // Clear text box and reset focus for next comment.
                     messageInput.value = '';
