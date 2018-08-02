@@ -169,12 +169,11 @@ do_stop_single_cli_bench()
         local script=$4
         local rand=`date +%H%M%S`
         local agent_file_name=${server}_${rand}_${cli_bench_agent_output}
-        local result_name=${bench_type}_${bench_codec}_${bench_name}
         scp -o StrictHostKeyChecking=no -P $port $script ${user}@${server}:${bench_slave_folder}
         ssh -o StrictHostKeyChecking=no -p $port ${user}@${server} "cd ${bench_slave_folder}; chmod +x ./$script"
         ssh -o StrictHostKeyChecking=no -p $port ${user}@${server} "cd ${bench_slave_folder}; ./$script"
         echo "agent stoped!"
-	scp -o StrictHostKeyChecking=no -P $port ${user}@${server}:${bench_slave_folder}/${cli_bench_agent_output} ${result_dir}/$result_name/$agent_file_name
+	scp -o StrictHostKeyChecking=no -P $port ${user}@${server}:${bench_slave_folder}/${cli_bench_agent_output} ${result_dir}/$agent_file_name
 }
 
 start_single_cli_bench()
