@@ -1,23 +1,23 @@
-﻿using Bench.Common;
-using Bench.RpcSlave.Worker.Savers;
-using Bench.RpcSlave.Worker.StartTimeOffsetGenerator;
-using Microsoft.AspNetCore.SignalR.Client;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Bench.Common;
+using Bench.RpcSlave.Worker.Savers;
+using Bench.RpcSlave.Worker.StartTimeOffsetGenerator;
+using Microsoft.AspNetCore.SignalR.Client;
 
 namespace Bench.RpcSlave.Worker.Operations
 {
-    class MixOp: BaseOp
+    class MixOp : BaseOp
     {
         private IStartTimeOffsetGenerator StartTimeOffsetGenerator;
         private List<int> _sentMessagesEcho;
         private List<int> _sentMessagesBroadcast;
         private List<int> _sentMessagesGroup;
         private WorkerToolkit _tk;
-        
+
         public void Do(WorkerToolkit tk)
         {
             var waitTime = 5 * 1000;
@@ -70,7 +70,7 @@ namespace Bench.RpcSlave.Worker.Operations
             _sentMessagesBroadcast = new List<int>(_tk.BenchmarkCellConfig.MixBroadcastConnection);
             _sentMessagesGroup = new List<int>(_tk.BenchmarkCellConfig.MixGroupConnection);
 
-            for (var i = 0; i <_tk.BenchmarkCellConfig.MixEchoConnection; i++)
+            for (var i = 0; i < _tk.BenchmarkCellConfig.MixEchoConnection; i++)
             {
                 _sentMessagesEcho.Add(0);
             }
@@ -135,7 +135,6 @@ namespace Bench.RpcSlave.Worker.Operations
             }
         }
 
-
         private void SetCallbacks()
         {
             for (int i = 0; i < _tk.Connections.Count; i++)
@@ -155,7 +154,7 @@ namespace Bench.RpcSlave.Worker.Operations
                     var sendTimestamp = Convert.ToInt64(time);
 
                     _tk.Counters.CountLatency(sendTimestamp, receiveTimestamp);
-                    _tk.Counters.SetServerCounter(count);
+                    _tk.Counters.SetServerCounter((ulong)count);
                 });
             }
         }
@@ -189,9 +188,8 @@ namespace Bench.RpcSlave.Worker.Operations
             if (IsInRangeOf("echo", i, echoConnCnt, broadcastConnCnt, groupConnCnt)) name = "echo";
             if (IsInRangeOf("broadcast", i, echoConnCnt, broadcastConnCnt, groupConnCnt)) name = "broadcast";
             if (IsInRangeOf("group", i, echoConnCnt, broadcastConnCnt, groupConnCnt)) name = "sendGroup";
-            
 
-            using (var cts = new CancellationTokenSource(TimeSpan.FromSeconds(_tk.JobConfig.Duration)))
+            using(var cts = new CancellationTokenSource(TimeSpan.FromSeconds(_tk.JobConfig.Duration)))
             {
                 while (!cts.IsCancellationRequested)
                 {
@@ -200,20 +198,23 @@ namespace Bench.RpcSlave.Worker.Operations
                         await connection.SendAsync(name, _tk.BenchmarkCellConfig.MixGroupName, $"{Util.Timestamp()}");
                         if (IsInRangeOf("echo", i, echoConnCnt, broadcastConnCnt, groupConnCnt))
                         {
-                            (var beg, var end) = GetRange("echo", echoConnCnt, broadcastConnCnt, groupConnCnt);
-                            var ind  = i - beg;
+                            (var beg,
+                                var end) = GetRange("echo", echoConnCnt, broadcastConnCnt, groupConnCnt);
+                            var ind = i - beg;
                             _sentMessagesEcho[ind]++;
                         }
                         if (IsInRangeOf("broadcast", i, echoConnCnt, broadcastConnCnt, groupConnCnt))
                         {
-                            (var beg, var end) = GetRange("broadcast", echoConnCnt, broadcastConnCnt, groupConnCnt);
-                            var ind  = i - beg;
+                            (var beg,
+                                var end) = GetRange("broadcast", echoConnCnt, broadcastConnCnt, groupConnCnt);
+                            var ind = i - beg;
                             _sentMessagesBroadcast[ind]++;
                         }
                         if (IsInRangeOf("group", i, echoConnCnt, broadcastConnCnt, groupConnCnt))
                         {
-                            (var beg, var end) = GetRange("group", echoConnCnt, broadcastConnCnt, groupConnCnt);
-                            var ind  = i - beg;
+                            (var beg,
+                                var end) = GetRange("group", echoConnCnt, broadcastConnCnt, groupConnCnt);
+                            var ind = i - beg;
                             _sentMessagesGroup[ind]++;
                         }
                         _tk.Counters.IncreseSentMsg();
@@ -234,7 +235,7 @@ namespace Bench.RpcSlave.Worker.Operations
             _tk.Counters.SaveCounters();
         }
 
-        private (int, int) GetRange(string name, int echoConnCnt, int broadcastConnCnt, int groupConnCnt)
+        private(int, int) GetRange(string name, int echoConnCnt, int broadcastConnCnt, int groupConnCnt)
         {
             switch (name)
             {
@@ -245,7 +246,7 @@ namespace Bench.RpcSlave.Worker.Operations
                 case "group":
                     return (echoConnCnt + broadcastConnCnt, echoConnCnt + broadcastConnCnt + groupConnCnt);
                 default:
-                    return (-1,-1);
+                    return (-1, -1);
             }
         }
 

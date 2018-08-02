@@ -36,35 +36,15 @@ namespace Bench.RpcMaster
         public static void Main(string[] args)
         {
             // parse args
-            var argsOption = new ArgsOption();
-            var result = Parser.Default.ParseArguments<ArgsOption>(args)
-                .WithParsed(options => argsOption = options)
-                .WithNotParsed(error => { });
+            var argsOption = ParseArgs(args);
 
-            var pid = Process.GetCurrentProcess().Id;
-            if (argsOption.PidFile != null)
-            {
-                Util.SaveContentToFile(argsOption.PidFile, Convert.ToString(pid), false);
-            }
+            // save pid
+            SavePid(argsOption.PidFile);
 
-            var slaveList = new List<string>(argsOption.SlaveList.Split(';'));
+            var slaveList = ParseSlaveListStr(argsOption.SlaveList);
 
-            // open channel to rpc servers
-            var channels = new List<Channel>(slaveList.Count);
-            if (argsOption.Debug != "debug")
-            {
-                for (var i = 0; i < slaveList.Count; i++)
-                {
-                    Util.Log($"add channel: {slaveList[i]}:{argsOption.RpcPort}");
-                    channels.Add(new Channel($"{slaveList[i]}:{argsOption.RpcPort}", ChannelCredentials.Insecure));
-                }
-            }
-            else
-            {
-                //debug
-                channels.Add(new Channel($"{slaveList[0]}:5555", ChannelCredentials.Insecure));
-                channels.Add(new Channel($"{slaveList[0]}:6666", ChannelCredentials.Insecure));
-            }
+            // generate rpc channels
+            var channels = CreateRpcChannels(slaveList, argsOption.RpcPort, argsOption.Debug);
 
             try
             {
@@ -83,223 +63,28 @@ namespace Bench.RpcMaster
                             argsOption.ServiceType, argsOption.TransportType, argsOption.HubProtocal, argsOption.Scenario);
                     }
                 }
+
                 // create rpc clients
-                var clients = new List<RpcService.RpcServiceClient>(slaveList.Count);
-                for (var i = 0; i < slaveList.Count; i++)
-                {
-                    clients.Add(new RpcService.RpcServiceClient(channels[i]));
-                }
+                var clients = CreateRpcClients(channels);
 
                 // check rpc connections
-                while (true)
-                {
-                    try
-                    {
-                        foreach (var client in clients)
-                        {
-                            var strg = new Strg { Str = "" };
-                            client.Test(strg);
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        Util.Log($"rpc connection ex: {ex}");
-                        continue;
-                    }
-                    break;
-                }
+                WaitRpcConnectSuccess(clients);
+
                 // load job config
                 var jobConfig = new JobConfig(argsOption);
 
                 // call salves to load job config
-                clients.ForEach(client =>
-                {
-                    var i = clients.IndexOf(client);
-                    var clientConnections = Util.SplitNumber(argsOption.Connections, i, slaveList.Count);
-                    var concurrentConnections = Util.SplitNumber(argsOption.ConcurrentConnection, i, slaveList.Count);
-                    // modify the illegal case
-                    if (clientConnections > 0 && concurrentConnections == 0)
-                    {
-                        Util.Log($"Warning: the concurrent connection '{argsOption.ConcurrentConnection}' is too small, it is '{slaveList.Count}' at least");
-                        concurrentConnections = 1;
-                    }
-                    var state = new Stat();
-                    state = client.CreateWorker(new Empty());
-                    var config = new CellJobConfig
-                    {
-                        Connections = clientConnections,
-                        ConcurrentConnections = concurrentConnections,
-                        // Slaves = argsOption.Slaves,
-                        Interval = argsOption.Interval,
-                        Duration = argsOption.Duration,
-                        ServerUrl = argsOption.ServerUrl,
-                        Pipeline = argsOption.PipeLine
-                    };
-                    Util.Log($"create worker state: {state.State}");
-                    Util.Log($"client connections: {config.Connections}");
-                    state = client.LoadJobConfig(config);
-                    Util.Log($"load job config state: {state.State}");
-                });
+                ClientsLoadJobConfig(clients, argsOption.Connections, slaveList,
+                    argsOption.ConcurrentConnection, argsOption.Duration, argsOption.Interval,
+                    argsOption.PipeLine, argsOption.ServerUrl);
 
                 // collect counters
-                var collectTimer = new System.Timers.Timer(1000);
-                collectTimer.AutoReset = true;
-                collectTimer.Elapsed += (sender, e) =>
-                {
-                    var allClientCounters = new ConcurrentDictionary<string, double>();
-                    var collectCountersTasks = new List<Task>(clients.Count);
-                    var isSend = false;
-                    var isComplete = false;
-                    var swCollect = new Stopwatch();
-                    swCollect.Start();
-                    clients.ForEach(client =>
-                    {
-                        var state = client.GetState(new Empty { });
-                        if ((int) state.State >= (int) Stat.Types.State.SendComplete) isComplete = true;
-                        if ((int) state.State < (int) Stat.Types.State.SendRunning ||
-                            (int) state.State > (int) Stat.Types.State.SendComplete && (int) state.State < (int) Stat.Types.State.HubconnDisconnecting) return;
-                        isSend = true;
-                        isComplete = false;
-                        var counters = client.CollectCounters(new Force { Force_ = false });
-
-                        for (var i = 0; i < counters.Pairs.Count; i++)
-                        {
-                            var key = counters.Pairs[i].Key;
-                            var value = counters.Pairs[i].Value;
-                            if (key.Contains("server"))
-                            {
-                                allClientCounters.AddOrUpdate(key, value, (k, v) => Math.Max(v, value));
-                            }
-                            else
-                                allClientCounters.AddOrUpdate(key, value, (k, v) => v + value);
-                        }
-                    });
-                    swCollect.Stop();
-                    Util.Log($"collecting counters time: {swCollect.Elapsed.TotalSeconds} s");
-                    if (isSend == false || isComplete == true)
-                    {
-                        return;
-                    }
-
-                    var jobj = new JObject();
-                    var received = 0.0;
-                    foreach (var item in allClientCounters)
-                    {
-                        jobj.Add(item.Key, item.Value);
-                        if (item.Key.Contains("message") && (item.Key.Contains(":ge") || item.Key.Contains(":lt")))
-                        {
-                            received += item.Value;
-                        }
-                    }
-
-                    jobj.Add("message:received", received);
-                    _counters = Util.Sort(jobj);
-                    var finalRec = new JObject
-                    { { "Time", Util.Timestamp2DateTimeStr(Util.Timestamp()) }, { "Counters", _counters }
-                    };
-                    string onelineRecord = Regex.Replace(finalRec.ToString(), @"\s+", "");
-                    onelineRecord = Regex.Replace(onelineRecord, @"\t|\n|\r", "");
-                    onelineRecord += "," + Environment.NewLine;
-                    Util.Log("per second: " + onelineRecord);
-
-                    try
-                    {
-                        Util.SaveContentToFile(argsOption.OutputCounterFile, onelineRecord, true);
-                    }
-                    catch (Exception ex)
-                    {
-                        Util.Log($"Cannot save file: {ex}");
-                    }
-                };
-                collectTimer.Start();
+                StartCollectCounters(clients, argsOption.OutputCounterFile);
 
                 // process jobs for each step
-                var pipeLines = new List<string>(argsOption.PipeLine.Split(';'));
-                var connectionConfigBuilder = new ConnectionConfigBuilder();
-                var connectionAllConfigList = connectionConfigBuilder.Build(argsOption.Connections);
-                var connectionIds = new List<string>();
-                for (var i = 0; i < pipeLines.Count; i++)
-                {
-                    var tasks = new List<Task>(clients.Count);
-                    var step = pipeLines[i];
-                    int indClient = -1;
-                    var AdditionalSendConnCnt = (step.Contains("up")) ? Convert.ToInt32(step.Substring(2)) : 0;
-
-                    // var connectionAllConfigList = connectionConfigBuilder.Build(argsOption.GroupConnection, argsOption.groupNum, sendConnCnt);
-
-                    if (step.Contains("up"))
-                    {
-                        Util.Log($"additional: {AdditionalSendConnCnt}");
-                        connectionAllConfigList = connectionConfigBuilder.UpdateSendConn(connectionAllConfigList, AdditionalSendConnCnt, argsOption.Connections, slaveList.Count);
-                    }
-
-                    clients.ForEach(client =>
-                    {
-                        indClient++;
-                        var mixEchoConn = Util.SplitNumber(argsOption.MixEchoConnection, indClient, slaveList.Count);
-                        var mixBroadcastConn = Util.SplitNumber(argsOption.MixBroadcastConnection, indClient, slaveList.Count);
-                        var mixGroupConn = Util.SplitNumber(argsOption.MixGroupConnection, indClient, slaveList.Count);
-                        // Util.Log($"conn: echoConn {mixEchoConn}, b: {mixBroadcastConn}, g: {mixGroupConn}");
-
-                        var messageSize = 0;
-                        if (argsOption.MessageSize.Contains("K") || argsOption.MessageSize.Contains("k"))
-                            messageSize = Convert.ToInt32(argsOption.MessageSize.Substring(0, argsOption.MessageSize.Length - 1)) * 1024;
-                        else if (argsOption.MessageSize.Contains("M") || argsOption.MessageSize.Contains("m"))
-                            messageSize = Convert.ToInt32(argsOption.MessageSize.Substring(0, argsOption.MessageSize.Length - 1)) * 1024 * 1024;
-                        else
-                            messageSize = Convert.ToInt32(argsOption.MessageSize);
-
-                        var benchmarkCellConfig = new BenchmarkCellConfig
-                        {
-                            ServiceType = argsOption.ServiceType,
-                            TransportType = argsOption.TransportType,
-                            HubProtocol = argsOption.HubProtocal,
-                            Scenario = argsOption.Scenario,
-                            Step = step,
-                            MixEchoConnection = mixEchoConn,
-                            MixBroadcastConnection = mixBroadcastConn,
-                            MixGroupName = argsOption.MixGroupName,
-                            MixGroupConnection = mixGroupConn,
-                            MessageSize = messageSize
-                        };
-
-                        benchmarkCellConfig.TargetConnectionIds.AddRange(connectionIds);
-
-                        Util.Log($"service: {benchmarkCellConfig.ServiceType}; transport: {benchmarkCellConfig.TransportType}; hubprotocol: {benchmarkCellConfig.HubProtocol}; scenario: {benchmarkCellConfig.Scenario}; step: {step}");
-
-                        var indClientInLoop = indClient;
-                        tasks.Add(Task.Run(() =>
-                        {
-                            var beg = 0;
-                            for (var indStart = 0; indStart < indClientInLoop; indStart++)
-                            {
-                                beg += Util.SplitNumber(argsOption.Connections, indStart, slaveList.Count);
-                                // beg += Util.SplitNumber(argsOption.Connections, indStart, slaveList.Count);
-                            }
-                            var currConnSliceCnt = Util.SplitNumber(argsOption.Connections, indClientInLoop, slaveList.Count);
-
-                            client.LoadConnectionRange(new Range { Begin = beg, End = beg + currConnSliceCnt });
-                            client.LoadConnectionConfig(connectionAllConfigList);
-                            client.RunJob(benchmarkCellConfig);
-
-                            // // group
-                            // var currGroupConnSliceCnt = Util.SplitNumber(argsOption.GroupConnection, indClientInLoop, slaveList.Count);
-                            // client.RunJob(benchmarkCellConfig);
-                            // client.LoadConnectionConfig(connectionAllConfigList);
-                            // Util.Log($"range: ({beg}, {beg + currGroupConnSliceCnt})");
-                            // client.LoadConnectionRange(new Range { Begin = beg, End = beg + currGroupConnSliceCnt });
-                        }));
-                    });
-                    Task.WhenAll(tasks).Wait();
-                    Task.Delay(1000).Wait();
-
-                    // collect all connections' ids just after connections start
-                    if (step.Contains("startConn"))
-                    {
-                        connectionIds = CollectConnectionIds(clients);
-                        connectionIds.Shuffle();
-                    }
-                }
+                ProcessPipeline(clients, argsOption.PipeLine, slaveList,
+                argsOption.Connections, argsOption.ServiceType, argsOption.TransportType, argsOption.HubProtocal, argsOption.Scenario, argsOption.MessageSize,
+                argsOption.groupNum, argsOption.groupOverlap);
             }
             catch (Exception ex)
             {
@@ -309,10 +94,7 @@ namespace Bench.RpcMaster
             }
             SaveJobResult(_jobResultFile, _counters, argsOption.Connections, argsOption.ServiceType, argsOption.TransportType, argsOption.HubProtocal, argsOption.Scenario);
 
-            for (var i = 0; i < channels.Count; i++)
-            {
-                channels[i].ShutdownAsync().Wait();
-            }
+            WaitChannelsShutDown(channels);
             Console.WriteLine("Exit client...");
         }
 
@@ -325,6 +107,21 @@ namespace Bench.RpcMaster
                 connectionIds.AddRange(connectionIdsPerClient.List);
             });
             return connectionIds;
+        }
+
+        private static List<string> GenerateGroupNameList(int connCnt, int groupNum, int overlap)
+        {
+            var groupNameList = Enumerable.Repeat("", connCnt).ToList();
+            for (var j = 0; j < overlap; j++)
+            {
+                for (var i = 0; i < groupNameList.Count; i++)
+                {
+                    if (groupNameList[i].Length > 0) groupNameList[i] += ";";
+                    groupNameList[i] += $"group_{(i + j) % groupNum}";
+                }
+            }
+            groupNameList.Shuffle();
+            return groupNameList;
         }
 
         private static void SaveConfig(string path, int connection, string serviceType, string transportType, string protocol, string scenario)
@@ -414,38 +211,293 @@ namespace Bench.RpcMaster
             string transportType, string protocol, string scenario)
         {
             return;
-            //var failCount = 0;
-            //var lines = new List<string>(File.ReadAllLines(path));
-            //for (var i = lines.Count - 1; i > lines.Count - 1 - maxRetryCount - 1  && i >= 0; i--)
-            //{
-            //    JObject res = null;
-            //    try
-            //    {
-            //        res = JObject.Parse(lines[i]);
-            //    }
-            //    catch (Exception ex)
-            //    {
-            //        Util.Log($"parse result: {lines[i]}\n Exception: {ex}");
-            //        continue;
-            //    }
-            //    if ((string)res["serviceType"] == serviceType &&
-            //        (string)res["transportType"] == transportType && (string)res["protocol"] == protocol &&
-            //        (string)res["scenario"] == scenario && (string)res["result"] == "FAIL")
-            //    {
-            //        failCount++;
-            //    }
-            //    else
-            //    {
-            //        break;
-            //    }
-            //}
-            //Util.Log($"fail count: {failCount}");
-            //if (failCount >= maxRetryCount)
-            //{
-            //    Util.Log("Too many fails. Break job");
-            //    throw new Exception();
-            //}
+        }
 
+        private static int ParseMessageSize(string messageSizeStr)
+        {
+            var messageSize = 0;
+            if (messageSizeStr.Contains("K") || messageSizeStr.Contains("k"))
+                messageSize = Convert.ToInt32(messageSizeStr.Substring(0, messageSizeStr.Length - 1)) * 1024;
+            else if (messageSizeStr.Contains("M") || messageSizeStr.Contains("m"))
+                messageSize = Convert.ToInt32(messageSizeStr.Substring(0, messageSizeStr.Length - 1)) * 1024 * 1024;
+            else
+                messageSize = Convert.ToInt32(messageSizeStr);
+
+            return messageSize;
+        }
+
+        private static BenchmarkCellConfig GenerateBenchmarkConfig(int indClient, string step,
+            string serviceType, string transportType, string hubProtocol, string scenario, string MessageSizeStr,
+            List<string> connectionIds, List<string> groupNameList)
+        {
+            var messageSize = ParseMessageSize(MessageSizeStr);
+            var benchmarkCellConfig = new BenchmarkCellConfig
+            {
+                ServiceType = serviceType,
+                TransportType = transportType,
+                HubProtocol = hubProtocol,
+                Scenario = scenario,
+                Step = step,
+                MixEchoConnection = 0,
+                MixBroadcastConnection = 0,
+                MixGroupName = "",
+                MixGroupConnection = 0,
+                MessageSize = messageSize
+            };
+
+            // add lists
+            benchmarkCellConfig.TargetConnectionIds.AddRange(connectionIds);
+            benchmarkCellConfig.GroupNameList.AddRange(groupNameList);
+            return benchmarkCellConfig;
+        }
+
+        private static void StartCollectCounters(List<RpcService.RpcServiceClient> clients, string outputSaveFile)
+        {
+            var collectTimer = new System.Timers.Timer(1000);
+            collectTimer.AutoReset = true;
+            collectTimer.Elapsed += (sender, e) =>
+            {
+                var allClientCounters = new ConcurrentDictionary<string, double>();
+                var collectCountersTasks = new List<Task>(clients.Count);
+                var isSend = false;
+                var isComplete = false;
+                var swCollect = new Stopwatch();
+                swCollect.Start();
+                clients.ForEach(client =>
+                {
+                    var state = client.GetState(new Empty { });
+                    if ((int) state.State >= (int) Stat.Types.State.SendComplete) isComplete = true;
+                    if ((int) state.State < (int) Stat.Types.State.SendRunning ||
+                        (int) state.State > (int) Stat.Types.State.SendComplete && (int) state.State < (int) Stat.Types.State.HubconnDisconnecting) return;
+                    isSend = true;
+                    isComplete = false;
+                    var counters = client.CollectCounters(new Force { Force_ = false });
+
+                    for (var i = 0; i < counters.Pairs.Count; i++)
+                    {
+                        var key = counters.Pairs[i].Key;
+                        var value = counters.Pairs[i].Value;
+                        if (key.Contains("server"))
+                        {
+                            allClientCounters.AddOrUpdate(key, value, (k, v) => Math.Max(v, value));
+                        }
+                        else
+                            allClientCounters.AddOrUpdate(key, value, (k, v) => v + value);
+                    }
+                });
+                swCollect.Stop();
+                Util.Log($"collecting counters time: {swCollect.Elapsed.TotalSeconds} s");
+                if (isSend == false || isComplete == true)
+                {
+                    return;
+                }
+
+                var jobj = new JObject();
+                var received = 0.0;
+                foreach (var item in allClientCounters)
+                {
+                    jobj.Add(item.Key, item.Value);
+                    if (item.Key.Contains("message") && (item.Key.Contains(":ge") || item.Key.Contains(":lt")))
+                    {
+                        received += item.Value;
+                    }
+                }
+
+                jobj.Add("message:received", received);
+                _counters = Util.Sort(jobj);
+                var finalRec = new JObject
+                { { "Time", Util.Timestamp2DateTimeStr(Util.Timestamp()) }, { "Counters", _counters }
+                };
+                string onelineRecord = Regex.Replace(finalRec.ToString(), @"\s+", "");
+                onelineRecord = Regex.Replace(onelineRecord, @"\t|\n|\r", "");
+                onelineRecord += "," + Environment.NewLine;
+                Util.Log("per second: " + onelineRecord);
+
+                try
+                {
+                    Util.SaveContentToFile(outputSaveFile, onelineRecord, true);
+                }
+                catch (Exception ex)
+                {
+                    Util.Log($"Cannot save file: {ex}");
+                }
+            };
+            collectTimer.Start();
+        }
+
+        private static void WaitRpcConnectSuccess(List<RpcService.RpcServiceClient> clients)
+        {
+            while (true)
+            {
+                try
+                {
+                    foreach (var client in clients)
+                    {
+                        var strg = new Strg { Str = "" };
+                        client.Test(strg);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Util.Log($"rpc connection ex: {ex}");
+                    continue;
+                }
+                break;
+            }
+        }
+
+        private static ArgsOption ParseArgs(string[] args)
+        {
+            var argsOption = new ArgsOption();
+            var result = Parser.Default.ParseArguments<ArgsOption>(args)
+                .WithParsed(options => argsOption = options)
+                .WithNotParsed(error => { });
+            return argsOption;
+        }
+
+        private static List<string> ParseSlaveListStr(string slaveListStr)
+        {
+            return new List<string>(slaveListStr.Split(';'));
+        }
+        private static List<Channel> CreateRpcChannels(List<string> slaveList, int rpcPort, string debug)
+        {
+            // open channel to rpc servers
+            var channels = new List<Channel>(slaveList.Count);
+            if (debug != "debug")
+            {
+                for (var i = 0; i < slaveList.Count; i++)
+                {
+                    Util.Log($"add channel: {slaveList[i]}:{rpcPort}");
+                    channels.Add(new Channel($"{slaveList[i]}:{rpcPort}", ChannelCredentials.Insecure));
+                }
+            }
+            else
+            {
+                //debug
+                channels.Add(new Channel($"{slaveList[0]}:5555", ChannelCredentials.Insecure));
+                channels.Add(new Channel($"{slaveList[0]}:6666", ChannelCredentials.Insecure));
+            }
+
+            return channels;
+        }
+
+        private static List<RpcService.RpcServiceClient> CreateRpcClients(List<Channel> channels)
+        {
+            var clients = new List<RpcService.RpcServiceClient>();
+            for (var i = 0; i < channels.Count; i++)
+            {
+                clients.Add(new RpcService.RpcServiceClient(channels[i]));
+            }
+            return clients;
+        }
+
+        private static void WaitChannelsShutDown(List<Channel> channels)
+        {
+            for (var i = 0; i < channels.Count; i++)
+            {
+                channels[i].ShutdownAsync().Wait();
+            }
+        }
+
+        private static void ClientsLoadJobConfig(List<RpcService.RpcServiceClient> clients,
+            int connectionCnt, List<string> slaveList, int concurrentConnection, int duration,
+            int interval, string pipelineStr, string serverUrl)
+        {
+            clients.ForEach(client =>
+            {
+                var i = clients.IndexOf(client);
+                var clientConnections = Util.SplitNumber(connectionCnt, i, slaveList.Count);
+                var concurrentConnections = Util.SplitNumber(concurrentConnection, i, slaveList.Count);
+                // modify the illegal case
+                if (clientConnections > 0 && concurrentConnections == 0)
+                {
+                    Util.Log($"Warning: the concurrent connection '{concurrentConnection}' is too small, it is '{slaveList.Count}' at least");
+                    concurrentConnections = 1;
+                }
+                var state = new Stat();
+                state = client.CreateWorker(new Empty());
+                var config = new CellJobConfig
+                {
+                    Connections = clientConnections,
+                    ConcurrentConnections = concurrentConnections,
+                    // Slaves = argsOption.Slaves,
+                    Interval = interval,
+                    Duration = duration,
+                    ServerUrl = serverUrl,
+                    Pipeline = pipelineStr
+                };
+                Util.Log($"create worker state: {state.State}");
+                Util.Log($"client connections: {config.Connections}");
+                state = client.LoadJobConfig(config);
+                Util.Log($"load job config state: {state.State}");
+            });
+        }
+
+        private static void ProcessPipeline(List<RpcService.RpcServiceClient> clients, string pipelineStr, List<string> slaveList, int connections,
+            string serviceType, string transportType, string hubProtocol, string scenario, string messageSize,
+            int groupNum, int overlap)
+        {
+            var pipeline = pipelineStr.Split(';').ToList();
+            var connectionConfigBuilder = new ConnectionConfigBuilder();
+            var connectionAllConfigList = connectionConfigBuilder.Build(connections);
+            var connectionIds = new List<string>();
+            var groupNameList = GenerateGroupNameList(connections, groupNum, overlap);
+            for (var i = 0; i < pipeline.Count; i++)
+            {
+                var tasks = new List<Task>(clients.Count);
+                var step = pipeline[i];
+                int indClient = -1;
+                var AdditionalSendConnCnt = (step.Contains("up")) ? Convert.ToInt32(step.Substring(2)) : 0;
+
+                if (step.Contains("up"))
+                {
+                    Util.Log($"additional: {AdditionalSendConnCnt}");
+                    connectionAllConfigList = connectionConfigBuilder.UpdateSendConn(connectionAllConfigList, AdditionalSendConnCnt, connections, slaveList.Count);
+                }
+
+                clients.ForEach(client =>
+                {
+                    indClient++;
+
+                    var benchmarkCellConfig = GenerateBenchmarkConfig(indClient, step,
+                        serviceType, transportType, hubProtocol, scenario, messageSize, connectionIds, groupNameList);
+
+                    Util.Log($"service: {benchmarkCellConfig.ServiceType}; transport: {benchmarkCellConfig.TransportType}; hubprotocol: {benchmarkCellConfig.HubProtocol}; scenario: {benchmarkCellConfig.Scenario}; step: {step}");
+
+                    var indClientInLoop = indClient;
+                    tasks.Add(Task.Run(() =>
+                    {
+                        var beg = 0;
+                        for (var indStart = 0; indStart < indClientInLoop; indStart++)
+                        {
+                            beg += Util.SplitNumber(connections, indStart, slaveList.Count);
+                        }
+                        var currConnSliceCnt = Util.SplitNumber(connections, indClientInLoop, slaveList.Count);
+
+                        client.LoadConnectionRange(new Range { Begin = beg, End = beg + currConnSliceCnt });
+                        client.LoadConnectionConfig(connectionAllConfigList);
+                        client.RunJob(benchmarkCellConfig);
+                    }));
+                });
+                Task.WhenAll(tasks).Wait();
+                Task.Delay(1000).Wait();
+
+                // collect all connections' ids just after connections start
+                if (step.Contains("startConn"))
+                {
+                    connectionIds = CollectConnectionIds(clients);
+                    connectionIds.Shuffle();
+                }
+            }
+        }
+
+        private static void SavePid(string pidFile)
+        {
+            var pid = Process.GetCurrentProcess().Id;
+            if (pidFile != null)
+            {
+                Util.SaveContentToFile(pidFile, Convert.ToString(pid), false);
+            }
         }
     }
 }

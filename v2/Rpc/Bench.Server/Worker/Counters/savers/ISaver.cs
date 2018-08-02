@@ -7,6 +7,6 @@ namespace Bench.RpcSlave.Worker.Savers
 {
     public interface ISaver
     {
-        void Save(string url, long timestamp, ConcurrentDictionary<string, double> counters);
+        void Save(string url, long timestamp, ConcurrentDictionary<string, ulong> counters);
     }
 }

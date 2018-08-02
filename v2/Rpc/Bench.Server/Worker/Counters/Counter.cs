@@ -9,7 +9,7 @@ namespace Bench.RpcSlave.Worker.Counters
 {
     public class Counter
     {
-        private ConcurrentDictionary<string, double> InnerCounters { get; set; }
+        private ConcurrentDictionary<string, ulong> InnerCounters { get; set; }
         public int LatencyStep { get; set; }
         public int LatencyLength { get; set; }
         private ISaver _counterSaver;
@@ -19,7 +19,7 @@ namespace Bench.RpcSlave.Worker.Counters
             LatencyStep = latencyStep;
             LatencyLength = latencyLength;
             _counterSaver = saver;
-            InnerCounters = new ConcurrentDictionary<string, double>();
+            InnerCounters = new ConcurrentDictionary<string, ulong>();
             ResetCounters();
         }
 
@@ -93,12 +93,12 @@ namespace Bench.RpcSlave.Worker.Counters
             InnerCounters.AddOrUpdate($"message:ge:{LatencyLength * LatencyStep}", 0, (k, v) => v + 1);
         }
 
-        public void IncreaseSentMessageSize(int size)
+        public void IncreaseSentMessageSize(ulong size)
         {
             InnerCounters.AddOrUpdate("message:sendSize", 0, (k, v) => v + size);
         }
 
-        public void IncreaseReceivedMessageSize(int size)
+        public void IncreaseReceivedMessageSize(ulong size)
         {
             InnerCounters.AddOrUpdate("message:recvSize", 0, (k, v) => v + size);
         }
@@ -114,11 +114,11 @@ namespace Bench.RpcSlave.Worker.Counters
 
         }
 
-        public void UpdateConnectionSuccess(int totalConn)
+        public void UpdateConnectionSuccess(ulong totalConn)
         {
             InnerCounters.AddOrUpdate("connection:success", 0, (k, v) =>
             {
-                InnerCounters.TryGetValue("connection:error", out double errConn);
+                InnerCounters.TryGetValue("connection:error", out ulong errConn);
                 return totalConn - errConn;
             });
         }
@@ -128,7 +128,7 @@ namespace Bench.RpcSlave.Worker.Counters
             InnerCounters.AddOrUpdate("message:notSentFromClient", 0, (k, v) => v + 1);
         }
 
-        public void SetServerCounter(int count)
+        public void SetServerCounter(ulong count)
         {
             InnerCounters.AddOrUpdate("server:received", count, (k, v) => Math.Max(count, v));
         }

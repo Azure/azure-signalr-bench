@@ -76,8 +76,8 @@ namespace Bench.RpcSlave.Worker.Operations
                             var sendTimestamp = Convert.ToInt64(time);
                             var receiveSize = messageBlob.Length * sizeof(byte);
                             _tk.Counters.CountLatency(sendTimestamp, receiveTimestamp);
-                            _tk.Counters.SetServerCounter(count);
-                            _tk.Counters.IncreaseReceivedMessageSize(receiveSize);
+                            _tk.Counters.SetServerCounter(((ulong)count));
+                            _tk.Counters.IncreaseReceivedMessageSize((ulong)receiveSize);
                         });
 
             }
@@ -128,7 +128,7 @@ namespace Bench.RpcSlave.Worker.Operations
                                 var time = $"{Util.Timestamp()}";
                                 var messageBlob = new byte[_tk.BenchmarkCellConfig.MessageSize];
                                 await connection.SendAsync(_tk.BenchmarkCellConfig.Scenario, id, time, messageBlob);
-                                _tk.Counters.IncreaseSentMessageSize(messageBlob.Length * sizeof(byte));
+                                _tk.Counters.IncreaseSentMessageSize((ulong)messageBlob.Length * sizeof(byte));
                                 _sentMessages[ind]++;
                                 _tk.Counters.IncreseSentMsg();
 

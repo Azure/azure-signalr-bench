@@ -94,16 +94,16 @@ namespace Bench.Common
         [Option("mixGroupName", Required = false, HelpText = "")]
         public string MixGroupName { get; set; } = Guid.NewGuid().ToString("n").Substring(0, 8);
 
-        [Option("groupConnection", Required = false, HelpText = "")]
-        public int GroupConnection { get; set; }
-
         [Option("groupNum", Required = false, HelpText = "")]
         public int groupNum { get; set; }
+
+        [Option("groupOverlap", Required = false, HelpText = "Number of group(s) a connection belongs to")]
+        public int groupOverlap { get; set; }
 
         [Option("debug", Required = false, HelpText = "")]
         public string Debug { get; set; }
 
-        [Option("messageSize", Default="0", Required = false, HelpText = "")]
+        [Option("messageSize", Default = "0", Required = false, HelpText = "")]
         public string MessageSize { get; set; }
     }
 }

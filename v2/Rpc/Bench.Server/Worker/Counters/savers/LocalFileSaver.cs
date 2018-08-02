@@ -12,7 +12,7 @@ namespace Bench.RpcSlave.Worker.Savers
 {
     class LocalFileSaver : ISaver
     {
-        public void Save(string url, long timestamp, ConcurrentDictionary<string, double> counters)
+        public void Save(string url, long timestamp, ConcurrentDictionary<string, ulong> counters)
         {
             JObject jCounters = JObject.FromObject(counters);
 

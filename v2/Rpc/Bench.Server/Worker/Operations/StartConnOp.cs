@@ -71,7 +71,7 @@ namespace Bench.RpcSlave.Worker.Operations
             }
 
 
-            _tk.Counters.UpdateConnectionSuccess(_tk.Connections.Count);
+            _tk.Counters.UpdateConnectionSuccess(((ulong)_tk.Connections.Count));
             swConn.Stop();
             Util.Log($"connection time: {swConn.Elapsed.TotalSeconds}");
 
