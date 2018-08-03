@@ -293,7 +293,7 @@ namespace Bench.RpcMaster
                 }
 
                 var jobj = new JObject();
-                var received = 0.0;
+                var received = (ulong)0;
                 foreach (var item in allClientCounters)
                 {
                     jobj.Add(item.Key, item.Value);
