@@ -21,8 +21,6 @@ namespace Bench.RpcSlave.Worker.Operations
 
         public async Task Do(WorkerToolkit tk)
         {
-            throw new NotImplementedException();
-            
             var debug = Environment.GetEnvironmentVariable("debug") == "debug" ? true : false;
 
             var waitTime = 5 * 1000;

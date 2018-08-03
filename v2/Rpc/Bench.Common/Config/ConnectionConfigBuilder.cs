@@ -33,13 +33,40 @@ namespace Bench.Common.Config
             return connectionConfigList;
         }
 
+        private int GetNewTotalSendingConnectionCount(List<ConnectionConfig> sendFlagList)
+        {
+            var curSendConn = 0;
+            sendFlagList.ForEach(el => curSendConn += el.SendFlag ? 1 : 0);
+            return curSendConn;
+        }
+
+        private List<int> GetCurrentSendingConnectionCountList(int connCnt, int slaveCnt)
+        {
+            var list = new List<int>();
+            for (int i = 0; i < slaveCnt; i++)
+            {
+                list.Add(Util.SplitNumber(connCnt, i, slaveCnt));
+            }
+            return list;
+        }
+
+        private List<int> GetMoreSendingConnectionCountList(List<int> curSendConnList, List<int> newSendConnList)
+        {
+            var list = new List<int>();
+            if (curSendConnList.Count != newSendConnList.Count) return list;
+            for (int i = 0; i < curSendConnList.Count; i++)
+            {
+                list.Add(newSendConnList[i] - curSendConnList[i]);
+            }
+            return list;
+        }
         public ConnectionConfigList UpdateSendConn(ConnectionConfigList configs, int more, int totalConnection, int slaveCnt)
         {
-            if (more % slaveCnt != 0 || totalConnection % slaveCnt != 0)
-            {
-                Util.Log($"more % slaveCnt != 0 || totalConnection % slaveCnt != 0");
-                throw new Exception();
-            }
+            var curTotalSendConn = GetNewTotalSendingConnectionCount(configs.Configs.ToList());
+            var newTotalSendConn = curTotalSendConn + more;
+            var curSendConnList = GetCurrentSendingConnectionCountList(curTotalSendConn, slaveCnt);
+            var newSendConnList = GetCurrentSendingConnectionCountList(newTotalSendConn, slaveCnt);
+            var moreSendConnList = GetMoreSendingConnectionCountList(curSendConnList, newSendConnList);
 
             var beg = 0;
             for (var i = 0; i < slaveCnt; i++)
@@ -51,14 +78,19 @@ namespace Bench.Common.Config
                     .Where(z => z.val.SendFlag == false)
                     .Select(z => z.ind).ToList();
                 idleConnInds.Shuffle();
-                var curMore = Util.SplitNumber(more, i, slaveCnt);
-                for (int j = 0; j < curMore && j < idleConnInds.Count; j++)
+                // var curMore = Util.SplitNumber(more, i, slaveCnt);
+                for (int j = 0; j < moreSendConnList[i] && j < idleConnInds.Count; j++)
                 {
-                    // Util.Log($"ind: {idleConnInds[j] + beg}");
                     configs.Configs[idleConnInds[j] + beg].SendFlag = true;
                 }
                 beg = end;
             }
+
+            Util.LogList("curSendConnList", curSendConnList);
+            Util.LogList("newSendConnList", newSendConnList);
+            Util.LogList("moreSendConnList", moreSendConnList);
+            Util.LogList("configs.Configs", configs.Configs.ToList());
+
             return configs;
         }
     }

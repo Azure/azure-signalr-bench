@@ -54,6 +54,7 @@ namespace Bench.RpcSlave.Worker.Operations
 
             _sentMessages = Enumerable.Repeat(0, _tk.JobConfig.Connections).ToList();
             _brokenConnectionInds = Enumerable.Repeat(false, _tk.JobConfig.Connections).ToList();
+            Util.Log($"_brokenConnectionInds count: {_brokenConnectionInds.Count}");
             SetCallbacks();
 
             // _tk.Counters.ResetCounters(withConnection: false);
@@ -88,6 +89,9 @@ namespace Bench.RpcSlave.Worker.Operations
             Random rnd = new Random();
             rnd.NextBytes(messageBlob);
 
+            var beg = _tk.ConnectionRange.Begin;
+            var end = _tk.ConnectionRange.End;
+
             var sendCnt = 0;
             for (var i = _tk.ConnectionRange.Begin; i < _tk.ConnectionRange.End; i++)
             {
@@ -96,7 +100,7 @@ namespace Bench.RpcSlave.Worker.Operations
             }
             if (_tk.Connections.Count == 0 || sendCnt == 0)
             {
-                Util.Log($"wait scenario finish");
+                Util.Log($"nothing to do, wait scenario finish");
                 await Task.Delay(TimeSpan.FromSeconds(_tk.JobConfig.Duration + 5));
             }
             else
@@ -139,7 +143,7 @@ namespace Bench.RpcSlave.Worker.Operations
                             }
                             catch (Exception ex)
                             {
-                                Util.Log($"exception in sending: {ex}");
+                                Util.Log($"exception in sending message of {ind}th connection: {ex}");
                                 _tk.Counters.IncreseNotSentFromClientMsg();
                                 _brokenConnectionInds[ind] = true;
                             }

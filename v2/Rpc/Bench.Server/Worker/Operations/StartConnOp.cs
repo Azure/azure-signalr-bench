@@ -26,7 +26,7 @@ namespace Bench.RpcSlave.Worker.Operations
             var swConn = new Stopwatch();
             swConn.Start();
 
-            for (var i = 0; i < _tk.Connections.Count; i++)
+            for (var i = 0; i < connections.Count; i++)
             {
                 _tk.ConnectionIds.Add("");
             }
@@ -43,7 +43,7 @@ namespace Bench.RpcSlave.Worker.Operations
                     for (var j = 0; j < nextBatch; j++)
                     {
                         var index = i + j;
-                        tasks.Add(Task.Run(async () =>
+                        tasks.Add(Task.Run(async() =>
                         {
                             try
                             {
@@ -68,12 +68,12 @@ namespace Bench.RpcSlave.Worker.Operations
                     }
                 } while (left > 0);
                 await Task.WhenAll(tasks);
+                Util.LogList("conn ids", _tk.ConnectionIds);
             }
 
-
-            _tk.Counters.UpdateConnectionSuccess(((ulong)_tk.Connections.Count));
+            _tk.Counters.UpdateConnectionSuccess(((ulong) connections.Count));
             swConn.Stop();
-            Util.Log($"connection time: {swConn.Elapsed.TotalSeconds}");
+            Util.Log($"connection time: {swConn.Elapsed.TotalSeconds} s");
 
             _tk.State = Stat.Types.State.HubconnConnected;
         }

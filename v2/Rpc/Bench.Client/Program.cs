@@ -286,7 +286,7 @@ namespace Bench.RpcMaster
                         swRpc.Start();
                         var counters = await clients[ind].CollectCountersAsync(new Force { Force_ = false });
                         swRpc.Stop();
-                        Util.Log($"rpc time: {swRpc.Elapsed.TotalMilliseconds} ms");
+                        // Util.Log($"rpc time: {swRpc.Elapsed.TotalMilliseconds} ms");
 
                         for (var j = 0; j < counters.Pairs.Count; j++)
                         {
@@ -434,6 +434,11 @@ namespace Bench.RpcMaster
                 {
                     Util.Log($"Warning: the concurrent connection '{concurrentConnection}' is too small, it is '{slaveList.Count}' at least");
                     concurrentConnections = 1;
+                }
+                else if (concurrentConnection > connectionCnt)
+                {
+                    Util.Log($"Warning: the concurrent connection '{concurrentConnection}' is too large, it is '{connectionCnt}' at most");
+                    concurrentConnection = connectionCnt;
                 }
                 var state = new Stat();
                 state = client.CreateWorker(new Empty());
