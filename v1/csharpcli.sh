@@ -69,6 +69,12 @@ gen_cli_master_single_bench()
 		codec="messagepack"
 	fi
 
+	local send_size="2k" #defualt send size
+	if [ "$bench_send_size" != "" ]
+	then
+		send_size=$bench_send_size
+	fi
+
 cat << EOF > $sigbench_config_dir/${cmd_config_prefix}_${bench_codec}_${bench_name}_${bench_type}
 connection=$connection_num
 connection_concurrent=$concurrent_num
@@ -97,8 +103,9 @@ transport=${bench_transport}
 server=$server_endpoint
 pipeline="createConn;startConn;${send_num}stopConn;disposeConn"
 slaveList="${cli_agents_g}"
+sendSize="${send_size}"
 
-/home/${bench_app_user}/.dotnet/dotnet run -- --rpcPort 7000 --duration $sigbench_run_duration --connections $connection_num --interval 1 --serverUrl "\${server}" --pipeLine "\${pipeline}" -v $bench_type -t "\${transport}" -p ${codec} -s ${bench_name} --slaveList "\${slaveList}"	-o ${result_name}/counters.txt --pidFile /tmp/master.pid --concurrentConnection ${concurrent_num}
+/home/${bench_app_user}/.dotnet/dotnet run -- --rpcPort 7000 --duration $sigbench_run_duration --connections $connection_num --interval 1 --serverUrl "\${server}" --pipeLine "\${pipeline}" -v $bench_type -t "\${transport}" -p ${codec} -s ${bench_name} --slaveList "\${slaveList}"	-o ${result_name}/counters.txt --pidFile /tmp/master.pid --concurrentConnection ${concurrent_num} --messageSize "\${sendSize}"
 EOF
 }
 
@@ -136,7 +143,7 @@ entry_copy_cli_scripts_to_master()
         scp -o StrictHostKeyChecking=no -P $port ${cli_script_prefix}_*.sh ${user}@${server}:${bench_master_folder}/
 }
 
-start_single_cli_bench()
+do_start_single_cli_bench()
 {
         local server=$1
         local port=$2
@@ -161,30 +168,29 @@ start_single_cli_bench()
 	done
 }
 
-stop_single_cli_bench()
+do_stop_single_cli_bench()
 {
-	local server=$1
+        local server=$1
         local port=$2
         local user=$3
         local script=$4
-	local rand=`date +%H%M%S`
-	local agent_file_name=${server}_${rand}_${cli_bench_agent_output}
-        local result_name=${bench_type}_${bench_codec}_${bench_name}
+        local rand=`date +%H%M%S`
+        local agent_file_name=${server}_${rand}_${cli_bench_agent_output}
         scp -o StrictHostKeyChecking=no -P $port $script ${user}@${server}:${bench_slave_folder}
         ssh -o StrictHostKeyChecking=no -p $port ${user}@${server} "cd ${bench_slave_folder}; chmod +x ./$script"
         ssh -o StrictHostKeyChecking=no -p $port ${user}@${server} "cd ${bench_slave_folder}; ./$script"
-	echo "agent stoped!"
-	scp -o StrictHostKeyChecking=no -P $port ${user}@${server}:${bench_slave_folder}/${cli_bench_agent_output} ${result_dir}/$result_name/$agent_file_name
+        echo "agent stoped!"
+	scp -o StrictHostKeyChecking=no -P $port ${user}@${server}:${bench_slave_folder}/${cli_bench_agent_output} ${result_dir}/$agent_file_name
 }
 
 start_single_cli_bench()
 {
-	start_single_cli_bench $1 $2 $3 $cli_bench_start_script
+	do_start_single_cli_bench $1 $2 $3 $cli_bench_start_script
 }
 
 stop_single_cli_bench()
 {
-	stop_single_cli_bench $1 $2 $3 $cli_bench_stop_script
+	do_stop_single_cli_bench $1 $2 $3 $cli_bench_stop_script
 }
 
 entry_copy_start_cli_bench()
