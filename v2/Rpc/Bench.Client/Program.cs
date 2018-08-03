@@ -360,7 +360,15 @@ namespace Bench.RpcMaster
                     foreach (var client in clients)
                     {
                         var strg = new Strg { Str = "" };
-                        client.Test(strg);
+                        try
+                        {
+                            client.Test(strg);
+                        }
+                        catch (Exception)
+                        {
+                            Util.Log($"Fail to connect {client}");
+                            throw;
+                        }
                     }
                 }
                 catch (Exception ex)
