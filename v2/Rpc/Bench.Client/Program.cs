@@ -44,7 +44,7 @@ namespace Bench.RpcMaster
             var slaveList = ParseSlaveListStr(argsOption.SlaveList);
 
             // generate rpc channels
-            var channels = CreateRpcChannels(slaveList, argsOption.RpcPort, argsOption.Debug);
+            var channels = CreateRpcChannels(slaveList, argsOption.RpcPort, Util.isDebug(argsOption.Debug));
 
             try
             {
@@ -79,7 +79,7 @@ namespace Bench.RpcMaster
                     argsOption.PipeLine, argsOption.ServerUrl, argsOption.MessageSize);
 
                 // collect counters
-                StartCollectCounters(clients, argsOption.OutputCounterFile);
+                StartCollectCounters(clients, argsOption.OutputCounterFile, Util.isDebug(argsOption.Debug));
 
                 // process jobs for each step
                 ProcessPipeline(clients, argsOption.PipeLine, slaveList,
@@ -251,7 +251,7 @@ namespace Bench.RpcMaster
             return benchmarkCellConfig;
         }
 
-        private static void StartCollectCounters(List<RpcService.RpcServiceClient> clients, string outputSaveFile)
+        private static void StartCollectCounters(List<RpcService.RpcServiceClient> clients, string outputSaveFile, bool isDebug)
         {
             var collectTimer = new System.Timers.Timer(1000);
             collectTimer.AutoReset = true;
@@ -281,12 +281,19 @@ namespace Bench.RpcMaster
                         }
                         isSend = true;
                         isComplete = false;
-
-                        var swRpc = new Stopwatch();
-                        swRpc.Start();
-                        var counters = await clients[ind].CollectCountersAsync(new Force { Force_ = false });
-                        swRpc.Stop();
-                        Util.Log($"rpc time: {swRpc.Elapsed.TotalMilliseconds} ms");
+                        Dict counters = null;
+                        if (!isDebug)
+                        {
+                            counters = await clients[ind].CollectCountersAsync(new Force { Force_ = false });
+                        }
+                        else
+                        {
+                            var swRpc = new Stopwatch();
+                            swRpc.Start();
+                            counters = await clients[ind].CollectCountersAsync(new Force { Force_ = false });
+                            swRpc.Stop();
+                            Util.Log($"rpc time: {swRpc.Elapsed.TotalMilliseconds} ms");
+                        }
 
                         for (var j = 0; j < counters.Pairs.Count; j++)
                         {
@@ -378,11 +385,11 @@ namespace Bench.RpcMaster
         {
             return new List<string>(slaveListStr.Split(';'));
         }
-        private static List<Channel> CreateRpcChannels(List<string> slaveList, int rpcPort, string debug)
+        private static List<Channel> CreateRpcChannels(List<string> slaveList, int rpcPort, bool debug)
         {
             // open channel to rpc servers
             var channels = new List<Channel>(slaveList.Count);
-            if (debug != "debug")
+            if (!debug)
             {
                 for (var i = 0; i < slaveList.Count; i++)
                 {

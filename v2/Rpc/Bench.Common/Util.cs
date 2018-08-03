@@ -161,5 +161,10 @@ namespace Bench.Common
             var messageBlob = new byte[sizeInByte];
             return messageBlob;
         }
+
+        public static bool isDebug(string debug)
+        {
+            return debug == "debug";
+        }
     }
 }
