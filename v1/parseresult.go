@@ -9,25 +9,25 @@ import (
 )
 
 type Counters struct {
-	InProgress  int `json:"connection:inprogress"`
-	Established int `json:"connection:established"`
-	Error       int `json:"error"`
-	Success     int `json:"success"`
-	Send        int `json:"message:sent"`
-	Recv        int `json:"message:received"`
-	SendSize    int `json:"message:sendSize"`
-	RecvSize    int `json:"message:recvSize"`
-	LT_100      int `json:"message:lt:100"`
-	LT_200      int `json:"message:lt:200"`
-	LT_300      int `json:"message:lt:300"`
-	LT_400      int `json:"message:lt:400"`
-	LT_500      int `json:"message:lt:500"`
-	LT_600      int `json:"message:lt:600"`
-	LT_700      int `json:"message:lt:700"`
-	LT_800      int `json:"message:lt:800"`
-	LT_900      int `json:"message:lt:900"`
-	LT_1000     int `json:"message:lt:1000"`
-	GE_1000     int `json:"message:ge:1000"`
+	InProgress  int64 `json:"connection:inprogress"`
+	Established int64 `json:"connection:established"`
+	Error       int64 `json:"error"`
+	Success     int64 `json:"success"`
+	Send        int64 `json:"message:sent"`
+	Recv        int64 `json:"message:received"`
+	SendSize    int64 `json:"message:sendSize"`
+	RecvSize    int64 `json:"message:recvSize"`
+	LT_100      int64 `json:"message:lt:100"`
+	LT_200      int64 `json:"message:lt:200"`
+	LT_300      int64 `json:"message:lt:300"`
+	LT_400      int64 `json:"message:lt:400"`
+	LT_500      int64 `json:"message:lt:500"`
+	LT_600      int64 `json:"message:lt:600"`
+	LT_700      int64 `json:"message:lt:700"`
+	LT_800      int64 `json:"message:lt:800"`
+	LT_900      int64 `json:"message:lt:900"`
+	LT_1000     int64 `json:"message:lt:1000"`
+	GE_1000     int64 `json:"message:ge:1000"`
 }
 
 type Monitor struct {
@@ -86,7 +86,11 @@ func main() {
 		return
 	}
 	var monitors []Monitor
-	json.Unmarshal(raw, &monitors)
+	er := json.Unmarshal(raw, &monitors)
+	if er != nil {
+		fmt.Printf("Failed to parse json data: %s\n", er.Error())
+		return
+	}
 	if timeWindow && len(monitors) > 0 {
 		startTime, _ := time.Parse(time.RFC3339, monitors[0].Timestamp)
 		endTime, _ := time.Parse(time.RFC3339, monitors[len(monitors) - 1].Timestamp)
@@ -224,13 +228,13 @@ func main() {
 		fmt.Printf("\t]);\n")
 	}
 	if lastLatabPercent {
-		var sum int
+		var sum int64
 		var v Monitor
 		v = monitors[len(monitors)-1]
 		sum = v.Counters.LT_100 + v.Counters.LT_200 + v.Counters.LT_300 + v.Counters.LT_400 + v.Counters.LT_500 + v.Counters.LT_600 +
 			v.Counters.LT_700 + v.Counters.LT_800 + v.Counters.LT_900 + v.Counters.LT_1000 + v.Counters.GE_1000
-		var sumfloat float32
-		sumfloat = float32(sum)
+		var sumfloat float64
+		sumfloat = float64(sum)
 		if googlechart {
 			var chartfunc string
 			chartfunc = `
@@ -254,11 +258,11 @@ func main() {
 		`
 			fmt.Printf("%s\n", chartfunc)
 			fmt.Printf("\tdata.addRows([\n")
-			fmt.Printf("\t [%.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f],\n", float32(v.Counters.LT_100)/sumfloat*100, float32(v.Counters.LT_200)/sumfloat*100,
-				float32(v.Counters.LT_300)/sumfloat*100, float32(v.Counters.LT_400)/sumfloat*100,
-				float32(v.Counters.LT_500)/sumfloat*100, float32(v.Counters.LT_600)/sumfloat*100,
-				float32(v.Counters.LT_700)/sumfloat*100, float32(v.Counters.LT_800)/sumfloat*100,
-				float32(v.Counters.LT_900)/sumfloat*100, float32(v.Counters.LT_1000)/sumfloat*100, float32(v.Counters.GE_1000)/sumfloat*100)
+			fmt.Printf("\t [%.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f],\n", float64(v.Counters.LT_100)/sumfloat*100, float64(v.Counters.LT_200)/sumfloat*100,
+				float64(v.Counters.LT_300)/sumfloat*100, float64(v.Counters.LT_400)/sumfloat*100,
+				float64(v.Counters.LT_500)/sumfloat*100, float64(v.Counters.LT_600)/sumfloat*100,
+				float64(v.Counters.LT_700)/sumfloat*100, float64(v.Counters.LT_800)/sumfloat*100,
+				float64(v.Counters.LT_900)/sumfloat*100, float64(v.Counters.LT_1000)/sumfloat*100, float64(v.Counters.GE_1000)/sumfloat*100)
 			chartfunc = `
         ]);
         var table = new google.visualization.Table(document.getElementById('table_div'));
@@ -270,15 +274,15 @@ func main() {
 		}
 	}
 	if category500ms {
-		var sum, lt500, ge500 int
+		var sum, lt500, ge500 int64
 		var v Monitor
 		v = monitors[len(monitors)-1]
 		sum = v.Counters.LT_100 + v.Counters.LT_200 + v.Counters.LT_300 + v.Counters.LT_400 + v.Counters.LT_500 + v.Counters.LT_600 +
 			v.Counters.LT_700 + v.Counters.LT_800 + v.Counters.LT_900 + v.Counters.LT_1000 + v.Counters.GE_1000
 		lt500 = v.Counters.LT_100 + v.Counters.LT_200 + v.Counters.LT_300 + v.Counters.LT_400 + v.Counters.LT_500
 		ge500 = v.Counters.LT_600 + v.Counters.LT_700 + v.Counters.LT_800 + v.Counters.LT_900 + v.Counters.LT_1000 + v.Counters.GE_1000
-		var sumfloat float32
-		sumfloat = float32(sum)
+		var sumfloat float64
+		sumfloat = float64(sum)
 		if googlechart {
 			var chartfunc string
 			chartfunc = `
@@ -293,7 +297,7 @@ func main() {
 			`
 			fmt.Printf("%s\n", chartfunc)
 			fmt.Printf("\tdata.addRows([\n")
-			fmt.Printf("\t [%.2f, %.2f],\n", float32(lt500)/sumfloat*100, float32(ge500)/sumfloat*100)
+			fmt.Printf("\t [%.2f, %.2f],\n", float64(lt500)/sumfloat*100, float64(ge500)/sumfloat*100)
 			chartfunc = `
         ]);
         var table = new google.visualization.Table(document.getElementById('500ms_percent_table_div'));
@@ -305,15 +309,15 @@ func main() {
 		}
 	}
 	if category1s {
-		var sum, lt1, ge1 int
+		var sum, lt1, ge1 int64
 		var v Monitor
 		v = monitors[len(monitors)-1]
 		sum = v.Counters.LT_100 + v.Counters.LT_200 + v.Counters.LT_300 + v.Counters.LT_400 + v.Counters.LT_500 + v.Counters.LT_600 +
 			v.Counters.LT_700 + v.Counters.LT_800 + v.Counters.LT_900 + v.Counters.LT_1000 + v.Counters.GE_1000
 		lt1 = v.Counters.LT_100 + v.Counters.LT_200 + v.Counters.LT_300 + v.Counters.LT_400 + v.Counters.LT_500 + v.Counters.LT_600 + v.Counters.LT_700 + v.Counters.LT_800 + v.Counters.LT_900 + v.Counters.LT_1000
 		ge1 = v.Counters.GE_1000
-		var sumfloat float32
-		sumfloat = float32(sum)
+		var sumfloat float64
+		sumfloat = float64(sum)
 		if googlechart {
 			var chartfunc string
 			chartfunc = `
@@ -328,7 +332,7 @@ func main() {
 			`
 			fmt.Printf("%s\n", chartfunc)
 			fmt.Printf("\tdata.addRows([\n")
-			fmt.Printf("\t [%.2f, %.2f],\n", float32(lt1)/sumfloat*100, float32(ge1)/sumfloat*100)
+			fmt.Printf("\t [%.2f, %.2f],\n", float64(lt1)/sumfloat*100, float64(ge1)/sumfloat*100)
 			chartfunc = `
         ]);
         var table = new google.visualization.Table(document.getElementById('1s_percent_table_div'));

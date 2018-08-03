@@ -1,0 +1,7 @@
+- hosts: linux
+  tasks:
+  - git:
+       repo: https://github.com/Azure/azure-signalr-bench.git
+       dest: "/home/{{ansible_ssh_user}}/azure-signalr-bench"
+       update: yes
+       version: master
