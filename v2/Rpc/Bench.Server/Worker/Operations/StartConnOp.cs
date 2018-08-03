@@ -68,7 +68,7 @@ namespace Bench.RpcSlave.Worker.Operations
                     }
                 } while (left > 0);
                 await Task.WhenAll(tasks);
-                Util.LogList("conn ids", _tk.ConnectionIds);
+                // Util.LogList("conn ids", _tk.ConnectionIds);
             }
 
             _tk.Counters.UpdateConnectionSuccess(((ulong) connections.Count));

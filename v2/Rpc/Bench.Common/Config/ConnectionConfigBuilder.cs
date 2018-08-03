@@ -86,10 +86,10 @@ namespace Bench.Common.Config
                 beg = end;
             }
 
-            Util.LogList("curSendConnList", curSendConnList);
-            Util.LogList("newSendConnList", newSendConnList);
-            Util.LogList("moreSendConnList", moreSendConnList);
-            Util.LogList("configs.Configs", configs.Configs.ToList());
+            // Util.LogList("curSendConnList", curSendConnList);
+            // Util.LogList("newSendConnList", newSendConnList);
+            // Util.LogList("moreSendConnList", moreSendConnList);
+            // Util.LogList("configs.Configs", configs.Configs.ToList());
 
             return configs;
         }

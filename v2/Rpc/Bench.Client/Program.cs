@@ -44,7 +44,7 @@ namespace Bench.RpcMaster
             var slaveList = ParseSlaveListStr(argsOption.SlaveList);
 
             // generate rpc channels
-            var channels = CreateRpcChannels(slaveList, argsOption.RpcPort, argsOption.Debug);
+            var channels = CreateRpcChannels(slaveList, argsOption.RpcPort, Util.isDebug(argsOption.Debug));
 
             try
             {
@@ -353,7 +353,15 @@ namespace Bench.RpcMaster
                     foreach (var client in clients)
                     {
                         var strg = new Strg { Str = "" };
-                        client.Test(strg);
+                        try
+                        {
+                            client.Test(strg);
+                        }
+                        catch (Exception)
+                        {
+                            Util.Log($"Fail to connect {client}");
+                            throw;
+                        }
                     }
                 }
                 catch (Exception ex)
@@ -378,11 +386,11 @@ namespace Bench.RpcMaster
         {
             return new List<string>(slaveListStr.Split(';'));
         }
-        private static List<Channel> CreateRpcChannels(List<string> slaveList, int rpcPort, string debug)
+        private static List<Channel> CreateRpcChannels(List<string> slaveList, int rpcPort, bool debug)
         {
             // open channel to rpc servers
             var channels = new List<Channel>(slaveList.Count);
-            if (debug != "debug")
+            if (!debug)
             {
                 for (var i = 0; i < slaveList.Count; i++)
                 {
