@@ -46,6 +46,13 @@ namespace Bench.Common {
         __Marshaller_Empty,
         __Marshaller_Stat);
 
+    static readonly grpc::Method<global::Bench.Common.Timestamp, global::Bench.Common.Timestamp> __Method_GetStateStr = new grpc::Method<global::Bench.Common.Timestamp, global::Bench.Common.Timestamp>(
+        grpc::MethodType.Unary,
+        __ServiceName,
+        "GetStateStr",
+        __Marshaller_Timestamp,
+        __Marshaller_Timestamp);
+
     static readonly grpc::Method<global::Bench.Common.CellJobConfig, global::Bench.Common.Stat> __Method_LoadJobConfig = new grpc::Method<global::Bench.Common.CellJobConfig, global::Bench.Common.Stat>(
         grpc::MethodType.Unary,
         __ServiceName,
@@ -122,6 +129,11 @@ namespace Bench.Common {
       }
 
       public virtual global::System.Threading.Tasks.Task<global::Bench.Common.Stat> GetState(global::Bench.Common.Empty request, grpc::ServerCallContext context)
+      {
+        throw new grpc::RpcException(new grpc::Status(grpc::StatusCode.Unimplemented, ""));
+      }
+
+      public virtual global::System.Threading.Tasks.Task<global::Bench.Common.Timestamp> GetStateStr(global::Bench.Common.Timestamp request, grpc::ServerCallContext context)
       {
         throw new grpc::RpcException(new grpc::Status(grpc::StatusCode.Unimplemented, ""));
       }
@@ -238,6 +250,22 @@ namespace Bench.Common {
       public virtual grpc::AsyncUnaryCall<global::Bench.Common.Stat> GetStateAsync(global::Bench.Common.Empty request, grpc::CallOptions options)
       {
         return CallInvoker.AsyncUnaryCall(__Method_GetState, null, options, request);
+      }
+      public virtual global::Bench.Common.Timestamp GetStateStr(global::Bench.Common.Timestamp request, grpc::Metadata headers = null, DateTime? deadline = null, CancellationToken cancellationToken = default(CancellationToken))
+      {
+        return GetStateStr(request, new grpc::CallOptions(headers, deadline, cancellationToken));
+      }
+      public virtual global::Bench.Common.Timestamp GetStateStr(global::Bench.Common.Timestamp request, grpc::CallOptions options)
+      {
+        return CallInvoker.BlockingUnaryCall(__Method_GetStateStr, null, options, request);
+      }
+      public virtual grpc::AsyncUnaryCall<global::Bench.Common.Timestamp> GetStateStrAsync(global::Bench.Common.Timestamp request, grpc::Metadata headers = null, DateTime? deadline = null, CancellationToken cancellationToken = default(CancellationToken))
+      {
+        return GetStateStrAsync(request, new grpc::CallOptions(headers, deadline, cancellationToken));
+      }
+      public virtual grpc::AsyncUnaryCall<global::Bench.Common.Timestamp> GetStateStrAsync(global::Bench.Common.Timestamp request, grpc::CallOptions options)
+      {
+        return CallInvoker.AsyncUnaryCall(__Method_GetStateStr, null, options, request);
       }
       public virtual global::Bench.Common.Stat LoadJobConfig(global::Bench.Common.CellJobConfig request, grpc::Metadata headers = null, DateTime? deadline = null, CancellationToken cancellationToken = default(CancellationToken))
       {
@@ -382,6 +410,7 @@ namespace Bench.Common {
           .AddMethod(__Method_GetTimestamp, serviceImpl.GetTimestamp)
           .AddMethod(__Method_GetCounterJsonStr, serviceImpl.GetCounterJsonStr)
           .AddMethod(__Method_GetState, serviceImpl.GetState)
+          .AddMethod(__Method_GetStateStr, serviceImpl.GetStateStr)
           .AddMethod(__Method_LoadJobConfig, serviceImpl.LoadJobConfig)
           .AddMethod(__Method_CreateWorker, serviceImpl.CreateWorker)
           .AddMethod(__Method_CollectCounters, serviceImpl.CollectCounters)

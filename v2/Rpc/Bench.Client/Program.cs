@@ -32,7 +32,7 @@ namespace Bench.RpcMaster
     {
         private static JObject _counters;
         private static string _jobResultFile = "./jobResult.txt";
-        private static double _successThreshold = 0.7;
+        // private static double _successThreshold = 0.7;
         public static void Main(string[] args)
         {
             // parse args
@@ -255,45 +255,64 @@ namespace Bench.RpcMaster
         {
             var collectTimer = new System.Timers.Timer(1000);
             collectTimer.AutoReset = true;
-            collectTimer.Elapsed += (sender, e) =>
+            collectTimer.Elapsed += async(sender, e) =>
             {
                 var allClientCounters = new ConcurrentDictionary<string, ulong>();
                 var collectCountersTasks = new List<Task>(clients.Count);
                 var isSend = false;
                 var isComplete = false;
                 var swCollect = new Stopwatch();
+                // Util.Log("\n\nstart collecting");
                 swCollect.Start();
-                clients.ForEach(client =>
+                for (var i = 0; i < clients.Count; i++)
                 {
-                    var state = client.GetState(new Empty { });
-                    if ((int) state.State >= (int) Stat.Types.State.SendComplete) isComplete = true;
-                    if ((int) state.State < (int) Stat.Types.State.SendRunning ||
-                        (int) state.State > (int) Stat.Types.State.SendComplete && (int) state.State < (int) Stat.Types.State.HubconnDisconnecting) return;
-                    isSend = true;
-                    isComplete = false;
-                    var counters = client.CollectCounters(new Force { Force_ = false });
-
-                    for (var i = 0; i < counters.Pairs.Count; i++)
+                    var ind = i;
+                    collectCountersTasks.Add(Task.Run(async() =>
                     {
-                        var key = counters.Pairs[i].Key;
-                        var value = counters.Pairs[i].Value;
-                        if (key.Contains("server"))
+                        var state = clients[ind].GetState(new Empty { });
+
+                        if ((int) state.State >= (int) Stat.Types.State.SendComplete) isComplete = true;
+
+                        // if (false)
+                        if ((int) state.State < (int) Stat.Types.State.SendRunning ||
+                            (int) state.State > (int) Stat.Types.State.SendComplete && (int) state.State < (int) Stat.Types.State.HubconnDisconnecting)
                         {
-                            allClientCounters.AddOrUpdate(key, value, (k, v) => Math.Max(v, value));
+                            return;
                         }
-                        else
-                            allClientCounters.AddOrUpdate(key, value, (k, v) => v + value);
-                    }
-                });
+                        isSend = true;
+                        isComplete = false;
+
+                        var swRpc = new Stopwatch();
+                        swRpc.Start();
+                        var counters = await clients[ind].CollectCountersAsync(new Force { Force_ = false });
+                        swRpc.Stop();
+                        Util.Log($"rpc time: {swRpc.Elapsed.TotalMilliseconds} ms");
+
+                        for (var j = 0; j < counters.Pairs.Count; j++)
+                        {
+                            var key = counters.Pairs[j].Key;
+                            var value = counters.Pairs[j].Value;
+                            if (key.Contains("server"))
+                            {
+                                allClientCounters.AddOrUpdate(key, value, (k, v) => Math.Max(v, value));
+                            }
+                            else
+                                allClientCounters.AddOrUpdate(key, value, (k, v) => v + value);
+                        }
+                    }));
+
+                }
+
+                await Task.WhenAll(collectCountersTasks);
                 swCollect.Stop();
-                Util.Log($"collecting counters time: {swCollect.Elapsed.TotalSeconds} s");
+                Util.Log($"collecting counters time: {swCollect.Elapsed.TotalMilliseconds} ms");
                 if (isSend == false || isComplete == true)
                 {
                     return;
                 }
 
                 var jobj = new JObject();
-                var received = (ulong)0;
+                var received = (ulong) 0;
                 foreach (var item in allClientCounters)
                 {
                     jobj.Add(item.Key, item.Value);
@@ -429,7 +448,6 @@ namespace Bench.RpcMaster
                     Pipeline = pipelineStr
                 };
 
-
                 Util.Log($"create worker state: {state.State}");
                 Util.Log($"client connections: {config.Connections}");
                 state = client.LoadJobConfig(config);
@@ -455,7 +473,7 @@ namespace Bench.RpcMaster
 
                 if (step.Contains("up"))
                 {
-                    Util.Log($"additional: {AdditionalSendConnCnt}");
+                    // Util.Log($"additional: {AdditionalSendConnCnt}");
                     connectionAllConfigList = connectionConfigBuilder.UpdateSendConn(connectionAllConfigList, AdditionalSendConnCnt, connections, slaveList.Count);
                 }
 

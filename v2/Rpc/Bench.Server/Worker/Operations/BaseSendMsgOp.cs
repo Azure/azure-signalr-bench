@@ -18,28 +18,28 @@ namespace Bench.RpcSlave.Worker.Operations
         private List<int> _sentMessages;
         private WorkerToolkit _tk;
         private List<bool> _brokenConnectionInds;
-        public void Do(WorkerToolkit tk)
+        public async Task Do(WorkerToolkit tk)
         {
             var debug = Environment.GetEnvironmentVariable("debug") == "debug" ? true : false;
 
             var waitTime = 5 * 1000;
             if (!debug) Console.WriteLine($"wait time: {waitTime / 1000}s");
-            if (!debug) Task.Delay(waitTime).Wait();
+            if (!debug) await Task.Delay(waitTime);
 
             _tk = tk;
             _tk.State = Stat.Types.State.SendReady;
 
             // setup
             Setup();
-            if (!debug) Task.Delay(5000).Wait();
+            if (!debug) await Task.Delay(5000);
 
             _tk.State = Stat.Types.State.SendRunning;
-            if (!debug) Task.Delay(5000).Wait();
+            if (!debug) await Task.Delay(5000);
 
             // send message
-            StartSendMsg();
+            await StartSendMsg();
 
-            if (!debug) Task.Delay(30 * 1000).Wait();
+            if (!debug) await Task.Delay(30 * 1000);
 
             // save counters
             SaveCounters();
@@ -82,7 +82,7 @@ namespace Bench.RpcSlave.Worker.Operations
             }
         }
 
-        private void StartSendMsg()
+        private async Task StartSendMsg()
         {
             var messageBlob = new byte[_tk.BenchmarkCellConfig.MessageSize];
             Random rnd = new Random();
@@ -96,7 +96,8 @@ namespace Bench.RpcSlave.Worker.Operations
             }
             if (_tk.Connections.Count == 0 || sendCnt == 0)
             {
-                Task.Delay(TimeSpan.FromSeconds(_tk.JobConfig.Duration + 5)).Wait();
+                Util.Log($"wait scenario finish");
+                await Task.Delay(TimeSpan.FromSeconds(_tk.JobConfig.Duration + 5));
             }
             else
             {
@@ -108,7 +109,7 @@ namespace Bench.RpcSlave.Worker.Operations
                     if (cfg.SendFlag) tasks.Add(StartSendingMessageAsync(_tk.Connections[i - _tk.ConnectionRange.Begin], i - _tk.ConnectionRange.Begin, messageBlob));
                 }
 
-                Task.WhenAll(tasks).Wait();
+                await Task.WhenAll(tasks);
             }
         }
 

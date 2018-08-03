@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
@@ -20,11 +21,19 @@ namespace Bench.RpcSlave
             return Task.FromResult(new Timestamp { Time = 123 });
         }
 
+        public override Task<Timestamp> GetStateStr(Timestamp send, ServerCallContext context)
+        {
+            var curTime = Util.Timestamp();
+            Util.Log($"receive from master time: {(ulong)curTime - send.Time} ms");
+            return Task.FromResult(new Timestamp { Time = (ulong) curTime });
+        }
+
         public override Task<Stat> GetState(Empty empty, ServerCallContext context)
         {
             try
             {
-                return Task.FromResult(new Stat { State = _sigWorker.GetState() });
+                var state = Task.FromResult(new Stat { State = _sigWorker.GetState() });
+                return state;
             }
             catch (Exception ex)
             {
@@ -113,26 +122,20 @@ namespace Bench.RpcSlave
             }
         }
 
-        public override Task<Stat> RunJob(Common.BenchmarkCellConfig cellConfig, ServerCallContext context)
+        public override async Task<Stat> RunJob(Common.BenchmarkCellConfig cellConfig, ServerCallContext context)
         {
             try
             {
                 Console.WriteLine($"Run Job");
-                // Worker.BenchmarkCellConfig benchmarkCellConfig = new Worker.BenchmarkCellConfig
-                // {
-                //     ServiceType = cellConfig.ServiveType,
-                //     HubProtocol = cellConfig.HubProtocol,
-                //     TransportType = cellConfig.TransportType,
-                //     Scenario = cellConfig.Scenario
 
-                // };
                 Console.WriteLine($"LoadBenchmarkCellConfig");
                 _sigWorker.LoadBenchmarkCellConfig(cellConfig);
 
                 Console.WriteLine($"ProcessJob step: {cellConfig.Step}");
-                _sigWorker.ProcessJob(cellConfig.Step);
+                await _sigWorker.ProcessJob(cellConfig.Step);
 
-                return Task.FromResult(new Stat { State = Stat.Types.State.DebugTodo });
+                return new Stat { State = Stat.Types.State.DebugTodo };
+                // return Task.FromResult(new Stat { State = Stat.Types.State.DebugTodo });
             }
             catch (Exception ex)
             {

@@ -10,23 +10,23 @@ namespace Bench.RpcSlave.Worker.Operations
     class DisposeConnOp: BaseOp, IOperation
     {
         private WorkerToolkit _tk;
-        public void Do(WorkerToolkit tk)
+        public async Task Do(WorkerToolkit tk)
         {
             _tk = tk;
             _tk.State = Common.Stat.Types.State.HubconnDisposing;
-            DisposeAsync(tk.Connections);
+            await DisposeAsync(tk.Connections);
             _tk.State = Common.Stat.Types.State.HubconnDisposed;
             _tk.Init = false;
         }
 
-        private void DisposeAsync(List<HubConnection> connections)
+        private async Task DisposeAsync(List<HubConnection> connections)
         {
             var tasks = new List<Task>(connections.Count);
             foreach (var conn in connections)
             {
                 tasks.Add(conn.DisposeAsync());
             }
-            Task.WhenAll(tasks).Wait();
+            await Task.WhenAll(tasks);
         }
     }
 }

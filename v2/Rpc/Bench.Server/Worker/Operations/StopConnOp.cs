@@ -9,16 +9,16 @@ namespace Bench.RpcSlave.Worker.Operations
 {
     class StopConnOp : BaseOp, IOperation
     {
-        private WorkerToolkit _tk; 
-        public void Do(WorkerToolkit tk)
+        private WorkerToolkit _tk;
+        public async Task Do(WorkerToolkit tk)
         {
             _tk = tk;
             _tk.State = Common.Stat.Types.State.HubconnDisconnecting;
-            Stop(tk.Connections);
+            await Stop(tk.Connections);
             _tk.State = Common.Stat.Types.State.HubconnDisconnected;
         }
 
-        private void Stop(List<HubConnection> connections)
+        private async Task Stop(List<HubConnection> connections)
         {
             var tasks = new List<Task>(connections.Count);
             foreach(var conn in connections)
@@ -26,7 +26,7 @@ namespace Bench.RpcSlave.Worker.Operations
                 tasks.Add(conn.StopAsync());
             }
 
-            Task.WhenAll(tasks).Wait();
+            await Task.WhenAll(tasks);
         }
     }
 }

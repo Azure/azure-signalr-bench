@@ -23,6 +23,7 @@ The main update is supporting the the number of connections which sending messag
 * Echo: ` -s echo `
 * Broadcast: ` -s broadcast `
 * P2P: ` -s sendToClient `
+* Group: `-s group`
 
 Pipeline should be `--pipeLine 'createConn;startConn;up1;scenario;up1;scenario;up1;scenario;up1;scenario;up1;scenario;stopConn;disposeConn'`
 

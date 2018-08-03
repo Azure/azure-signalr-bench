@@ -7,6 +7,6 @@ namespace Bench.RpcSlave.Worker.Operations
 {
     public interface IOperation
     {
-        void Do(WorkerToolkit tk);
+        Task Do(WorkerToolkit tk);
     }
 }

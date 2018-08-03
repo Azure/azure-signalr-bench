@@ -1,10 +1,11 @@
-using Bench.Common.Config;
-using Microsoft.AspNetCore.SignalR.Client;
 using System;
 using System.Collections.Generic;
 using System.Text;
-using Bench.RpcSlave.Worker.Operations;
+using System.Threading.Tasks;
 using Bench.Common;
+using Bench.Common.Config;
+using Bench.RpcSlave.Worker.Operations;
+using Microsoft.AspNetCore.SignalR.Client;
 
 namespace Bench.RpcSlave.Worker
 {
@@ -29,10 +30,10 @@ namespace Bench.RpcSlave.Worker
 
         public void LoadConnectionRange(Range range)
         {
-            _tk.ConnectionRange  = range;
+            _tk.ConnectionRange = range;
         }
 
-        public Stat.Types.State ProcessJob(string opName)
+        public async Task<Stat.Types.State> ProcessJob(string opName)
         {
             // process operations
             //GetPipeline().ForEach(opName =>
@@ -41,7 +42,7 @@ namespace Bench.RpcSlave.Worker
             var obj = tuple.Item1;
             var type = tuple.Item2;
             dynamic op = Convert.ChangeType(obj, type);
-            op.Do(_tk);
+            await op.Do(_tk);
             //});
 
             return _tk.State;

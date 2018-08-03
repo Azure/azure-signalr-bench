@@ -10,7 +10,7 @@ namespace Bench.RpcSlave
 {
     class Program
     {
-        public static void Main (string[] args)
+        public static async Task Main (string[] args)
         {
             Console.WriteLine("MachineName: {0}", Environment.MachineName);
             var argsOption = new ArgsOption();
@@ -30,7 +30,7 @@ namespace Bench.RpcSlave
             {
                 Util.SaveContentToFile(argsOption.PidFile, Convert.ToString(pid), false);
             }
-            Task.Delay(Timeout.Infinite).Wait();
+            await Task.Delay(Timeout.Infinite);
         }
     }
 }

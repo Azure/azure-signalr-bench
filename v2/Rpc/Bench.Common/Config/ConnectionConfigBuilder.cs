@@ -54,7 +54,7 @@ namespace Bench.Common.Config
                 var curMore = Util.SplitNumber(more, i, slaveCnt);
                 for (int j = 0; j < curMore && j < idleConnInds.Count; j++)
                 {
-                    Util.Log($"ind: {idleConnInds[j] + beg}");
+                    // Util.Log($"ind: {idleConnInds[j] + beg}");
                     configs.Configs[idleConnInds[j] + beg].SendFlag = true;
                 }
                 beg = end;

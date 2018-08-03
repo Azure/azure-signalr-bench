@@ -14,7 +14,7 @@ namespace Bench.RpcSlave.Worker.Operations
     class CreateConnOp : BaseOp, IOperation
     {
         private WorkerToolkit _tk;
-        public void Do(WorkerToolkit tk)
+        public async Task Do(WorkerToolkit tk)
         {
             _tk = tk;
 

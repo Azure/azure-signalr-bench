@@ -6,6 +6,7 @@ service RpcService {
 	rpc GetTimestamp (Empty) returns (Timestamp) {}
 	rpc GetCounterJsonStr(Empty) returns (Strg) {}
 	rpc GetState(Empty) returns (Stat) {}
+	rpc GetStateStr(Timestamp) returns (Timestamp) {}
 	rpc LoadJobConfig (CellJobConfig) returns (Stat) {}
 	rpc CreateWorker(Empty) returns (Stat) {}
 	rpc CollectCounters(Force) returns (Dict) {}

@@ -12,13 +12,13 @@ namespace Bench.RpcSlave.Worker.Operations
     class StartConnOp : BaseOp, IOperation
     {
         private WorkerToolkit _tk;
-        public void Do(WorkerToolkit tk)
+        public async Task Do(WorkerToolkit tk)
         {
             _tk = tk;
-            Start(tk.Connections);
+            await Start(tk.Connections);
         }
 
-        private void Start(List<HubConnection> connections)
+        private async Task Start(List<HubConnection> connections)
         {
             Util.Log($"start connections");
             _tk.State = Stat.Types.State.HubconnConnecting;
@@ -43,12 +43,12 @@ namespace Bench.RpcSlave.Worker.Operations
                     for (var j = 0; j < nextBatch; j++)
                     {
                         var index = i + j;
-                        tasks.Add(Task.Run(() =>
+                        tasks.Add(Task.Run(async () =>
                         {
                             try
                             {
-                                connections[index].StartAsync().Wait();
-                                GetConnectionId(connections[index], _tk.ConnectionIds, index);
+                                await connections[index].StartAsync();
+                                await GetConnectionId(connections[index], _tk.ConnectionIds, index);
 
                             }
                             catch (Exception ex)
@@ -59,7 +59,7 @@ namespace Bench.RpcSlave.Worker.Operations
                         }));
                     }
 
-                    Task.Delay(TimeSpan.FromSeconds(1)).Wait();
+                    await Task.Delay(TimeSpan.FromSeconds(1));
                     i += nextBatch;
                     left = left - nextBatch;
                     if (left < nextBatch)
@@ -67,7 +67,7 @@ namespace Bench.RpcSlave.Worker.Operations
                         nextBatch = left;
                     }
                 } while (left > 0);
-                Task.WhenAll(tasks).Wait();
+                await Task.WhenAll(tasks);
             }
 
 
@@ -78,10 +78,10 @@ namespace Bench.RpcSlave.Worker.Operations
             _tk.State = Stat.Types.State.HubconnConnected;
         }
 
-        private void GetConnectionId(HubConnection connection, List<string> targetConnectionIds, int index)
+        private async Task GetConnectionId(HubConnection connection, List<string> targetConnectionIds, int index)
         {
             connection.On("connectionId", (string connectionId) => _tk.ConnectionIds[index] = connectionId);
-            connection.SendAsync("connectionId").Wait();
+            await connection.SendAsync("connectionId");
         }
     }
 }
