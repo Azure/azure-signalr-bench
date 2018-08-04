@@ -19,6 +19,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using Bench.Common;
 using Bench.Common.Config;
@@ -32,6 +33,9 @@ namespace Bench.RpcMaster
     {
         private static JObject _counters;
         private static string _jobResultFile = "./jobResult.txt";
+        // protect the file writing
+        private static readonly SemaphoreSlim _writeLock = new SemaphoreSlim(1);
+
         // private static double _successThreshold = 0.7;
         public static void Main(string[] args)
         {
@@ -334,11 +338,17 @@ namespace Bench.RpcMaster
 
                 try
                 {
+                    _writeLock.Wait();
+                    // make sure only one process is writing
                     Util.SaveContentToFile(outputSaveFile, onelineRecord, true);
                 }
                 catch (Exception ex)
                 {
                     Util.Log($"Cannot save file: {ex}");
+                }
+                finally
+                {
+                    _writeLock.Release();
                 }
             };
             collectTimer.Start();
