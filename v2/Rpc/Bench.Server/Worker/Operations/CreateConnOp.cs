@@ -58,11 +58,18 @@ namespace Bench.RpcSlave.Worker.Operations
                     CookieContainer = cookies,
                 };
                 var hubConnectionBuilder = new HubConnectionBuilder()
-                    .ConfigureLogging(logging =>
-                    {
-                        logging.AddConsole();
-                        logging.SetMinimumLevel(LogLevel.Warning);
-                    })
+                    /* TODO. Console log is important for finding errors.
+                     * But if every connection enables it, there will be thousands of
+                     * 'Console logger queue processing thread' which degrade the system
+                     * response, and bring issues to counters statistic.
+                     * Temporarily, we disable it. We need to find the best way
+                     * to enable it.
+                     */
+                    //.ConfigureLogging(logging =>
+                    //{
+                    //    logging.AddConsole();
+                    //    logging.SetMinimumLevel(LogLevel.Warning);
+                    //})
                     .WithUrl(url, httpConnectionOptions =>
                     {
                         httpConnectionOptions.HttpMessageHandlerFactory = _ => httpClientHandler;
