@@ -35,6 +35,24 @@ array_len() {
 }'
 }
 
+verify_accel_network() {
+  local host_list="$1"
+  local ssh_user="$2"
+  local ssh_port="$3"
+  local host
+  local len=$(array_len $host_list "|")
+  local i
+  i=1
+  while [ $i -le $len ]
+  do
+    host=$(array_get "$host_list" $i "|")
+    echo "ssh -o StrictHostKeyChecking=no -p ${ssh_port} ${ssh_user}@${host}"
+    ssh -o StrictHostKeyChecking=no -p ${ssh_port} ${ssh_user}@${host} "lspci"
+    ssh -o StrictHostKeyChecking=no -p ${ssh_port} ${ssh_user}@${host} "ethtool -S eth0 | grep vf_"
+    i=$(($i+1))
+  done
+}
+
 ## given "echo" and "connection_number"
 ## return the value of $echoconnection_number
 derefer_2vars() {
