@@ -58,11 +58,11 @@ namespace Bench.RpcSlave.Worker.Operations
                     CookieContainer = cookies,
                 };
                 var hubConnectionBuilder = new HubConnectionBuilder()
-                    .ConfigureLogging(logging =>
-                    {
-                        logging.AddConsole();
-                        logging.SetMinimumLevel(LogLevel.Warning);
-                    })
+                    //.ConfigureLogging(logging =>
+                    //{
+                    //    logging.AddConsole();
+                    //    logging.SetMinimumLevel(LogLevel.Warning);
+                    //})
                     .WithUrl(url, httpConnectionOptions =>
                     {
                         httpConnectionOptions.HttpMessageHandlerFactory = _ => httpClientHandler;
