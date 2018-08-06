@@ -441,6 +441,8 @@ namespace Bench.RpcMaster
             int interval, string pipelineStr, string serverUrl, string messageSizeStr)
         {
             var messageSize = ParseMessageSize(messageSizeStr);
+            var servers = serverUrl.Split(';');
+            var serverCount = servers.Length;
 
             clients.ForEach(client =>
             {
@@ -467,7 +469,7 @@ namespace Bench.RpcMaster
                     ConcurrentConnections = concurrentConnections,
                     Interval = interval,
                     Duration = duration,
-                    ServerUrl = serverUrl,
+                    ServerUrl = servers[i % serverCount],
                     Pipeline = pipelineStr
                 };
 
