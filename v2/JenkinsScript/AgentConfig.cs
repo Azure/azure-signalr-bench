@@ -28,7 +28,7 @@ namespace JenkinsScript
         // public string AppSvrVmName { get; set; }
         // public string AppSvrVmPassWord { get; set; }
 
-        // app server
+        // service
         public string SvcVmSize { get; set; }
         // public string SvcVmName { get; set; }
         // public string SvcVmPassWord { get; set; }
