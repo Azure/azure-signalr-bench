@@ -56,6 +56,16 @@ namespace JenkinsScript
             (errCode, result) = Bash(cmd, wait : true, handleRes : true);
             return (errCode, result);
         }
+
+        public static(int, string) ScpDirecotryRemoteToLocal(string user, string host, string password, string src, string dst)
+        {
+            int errCode = 0;
+            string result = "";
+            string cmd = $"sshpass -p {password} scp -r -o StrictHostKeyChecking=no {user}@{host}:{src} {dst}";
+            (errCode, result) = Bash(cmd, wait : true, handleRes : true);
+            return (errCode, result);
+        }
+
         public static(int, string) RemoteBash(string user, string host, int port, string password, string cmd, bool wait = true, bool handleRes = false, int retry = 1)
         {
 
@@ -203,13 +213,13 @@ namespace JenkinsScript
             return (errCode, result);
         }
         public static(int, string) StartAppServer(string host, string user, string password, int sshPort, string azureSignalrConnectionString,
-            string logPath, string useLocalSingalR = "false", string repoRoot = "/home/wanl/signalr_auto_test_framework")
+            string logPath, string useLocalSingalR = "false", string appSvrRoot = "/home/wanl/signalr_auto_test_framework")
         {
             var errCode = 0;
             var result = "";
             var cmd = "";
 
-            cmd = $"cd {Path.Join(repoRoot, "v2/AppServer/")}; " +
+            cmd = $"cd {appSvrRoot}; " +
                 $"export Azure__SignalR__ConnectionString='{azureSignalrConnectionString}'; " +
                 $"export useLocalSignalR={useLocalSingalR}; " +
                 $"dotnet run > {logPath}";
@@ -227,7 +237,7 @@ namespace JenkinsScript
         }
 
         public static(int, string) StartRpcSlaves(List<string> slaves, string user, string password, int sshPort, int rpcPort,
-            string logPath, string repoRoot = "/home/wanl/signalr_auto_test_framework")
+            string logPath, string slaveRoot)
         {
             var errCode = 0;
             var result = "";
@@ -235,7 +245,7 @@ namespace JenkinsScript
 
             slaves.ForEach(host =>
             {
-                cmd = $"cd {Path.Join(repoRoot, "v2/Rpc/Bench.Server/")}; dotnet run -- --rpcPort {rpcPort} -d 0.0.0.0 > {logPath}";
+                cmd = $"cd {slaveRoot}; dotnet run -- --rpcPort {rpcPort} -d 0.0.0.0 > {logPath}";
                 Util.Log($"CMD: {user}@{host}: {cmd}");
                 (errCode, result) = ShellHelper.RemoteBash(user, host, sshPort, password, cmd, wait : false);
                 if (errCode != 0) return;
@@ -255,7 +265,7 @@ namespace JenkinsScript
             string serviceType, string transportType, string hubProtocol, string scenario,
             int connection, int concurrentConnection, int duration, int interval, List<string> pipeLine,
             int groupNum, int groupOverlap,
-            string serverUrl, string suffix, string repoRoot = "/home/wanl/signalr_auto_test_framework")
+            string serverUrl, string suffix, string masterRoot)
         {
 
             Util.Log($"service type: {serviceType}, transport type: {transportType}, hub protocol: {hubProtocol}, scenario: {scenario}");
@@ -282,7 +292,7 @@ namespace JenkinsScript
             var outputCounterDir = Path.Join(userRoot, $"results/{Environment.GetEnvironmentVariable("result_root")}/{suffix}/");
             outputCounterFile = outputCounterDir + $"counters.txt";
 
-            cmd = $"cd {Path.Join(repoRoot, "v2/Rpc/Bench.Client/")}; ";
+            cmd = $"cd {masterRoot}; ";
             cmd += $"mkdir -p {outputCounterDir} || true;";
             cmd += $"dotnet run -- " +
                 $"--rpcPort 5555 " +
@@ -437,5 +447,21 @@ namespace JenkinsScript
 
         }
 
+        public static(int, string) CollectStatistics(List<string> hosts, string user, string password, int sshPort, string remote, string local)
+        {
+            var errCode = 0;
+            var result = "";
+
+            hosts.ForEach(host =>
+            {
+                (errCode, result) = ShellHelper.ScpDirecotryRemoteToLocal(user, host, password, remote, local);
+                if (errCode != 0)
+                {
+                    Util.Log($"ERR {errCode}: {result}");
+                    Environment.Exit(1);
+                }
+            });
+            return (errCode, result);
+        }
     }
 }

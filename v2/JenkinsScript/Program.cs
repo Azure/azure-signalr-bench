@@ -177,7 +177,7 @@ namespace JenkinsScript
                         var slavesPvtIp = privateIps.SlavePrivateIp.Split(";").ToList();
                         var masterPvtIp = privateIps.MasterPrivateIp;
 
-                        var serviceDir = "???";
+                        var serviceDir = "~/OSSServices-SignalR-Service/src/Microsoft.Azure.SignalR.ServiceRuntime";
 
                         // agent config
                         var user = agentConfig.User;
@@ -185,7 +185,10 @@ namespace JenkinsScript
                         var sshPort = agentConfig.SshPort;
                         var rpcPort = agentConfig.RpcPort;
                         var remoteRepo = agentConfig.Repo;
-                        var localRepoRoot = debug ? "~/workspace/azure-signalr-bench/" : "~/signal-bench";
+                        var localRepoRoot = debug ? "~/workspace/azure-signalr-bench/" : "~/signalr-bench";
+                        var appSvrRoot = Path.Join(localRepoRoot, "v2/AppServer/");
+                        var masterRoot = Path.Join(localRepoRoot, "v2/Rpc/Bench.Client/");
+                        var slaveRoot = Path.Join(localRepoRoot, "v2/Rpc/Bench.Server/");
                         var logRoot = "~/logs";
                         var resultRoot = Environment.GetEnvironmentVariable("result_root");
                         var waitTime = TimeSpan.FromSeconds(5);
@@ -232,7 +235,7 @@ namespace JenkinsScript
                         var logPathMaster = result;
 
                         // clone repo to all vms
-                        if (!debug) ShellHelper.ScpRepo(hosts, remoteRepo, user, password,
+                        if (!debug) ShellHelper.GitCloneRepo(hosts, remoteRepo, user, password,
                             sshPort, commit: "", branch: "rigin/master", repoRoot : localRepoRoot);
 
                         // kill all dotnet
@@ -243,20 +246,25 @@ namespace JenkinsScript
                         Task.Delay(waitTime).Wait();
 
                         // start app server
-                        ShellHelper.StartAppServer(privateIps.AppServerPrivateIp, user, password, sshPort, azureSignalrConnectionString, logPathAppServer, useLocalSignalR, repoRoot : localRepoRoot);
+                        ShellHelper.StartAppServer(privateIps.AppServerPrivateIp, user, password, sshPort, azureSignalrConnectionString, logPathAppServer, useLocalSignalR, appSvrRoot);
                         Task.Delay(waitTime).Wait();
 
                         // start slaves
-                        ShellHelper.StartRpcSlaves(privateIps.SlavePrivateIp.Split(";").ToList(), user, password, sshPort, rpcPort, logPathSlave, repoRoot : localRepoRoot);
+                        ShellHelper.StartRpcSlaves(privateIps.SlavePrivateIp.Split(";").ToList(), user, password, sshPort, rpcPort, logPathSlave, slaveRoot);
                         Task.Delay(waitTime).Wait();
 
                         // start master
-                        ShellHelper.StartRpcMaster(privateIps.MasterPrivateIp, privateIps.SlavePrivateIp.Split(";").ToList(), user, password, sshPort, logPathMaster, serviceType, transportType, hubProtocol, scenario, connection, concurrentConnection, duration, interval, pipeline, groupNum, overlap, serverUrl, suffix, localRepoRoot);
+                        ShellHelper.StartRpcMaster(privateIps.MasterPrivateIp, privateIps.SlavePrivateIp.Split(";").ToList(), user, password, sshPort, logPathMaster, serviceType, transportType, hubProtocol, scenario, connection, concurrentConnection, duration, interval, pipeline, groupNum, overlap, serverUrl, suffix, masterRoot);
 
                         // collect all logs
-                        // todo
+                        ShellHelper.CollectStatistics(hosts, user, password, sshPort, "~/logs", Util.MakeSureDirectoryExist("~/signalr-bench-statistics/logs"));
+
+                        // collect results from master
+                        ShellHelper.CollectStatistics((new string[] { privateIps.MasterPrivateIp }).ToList(), user, password, sshPort, "~/results", Util.MakeSureDirectoryExist("~/signalr-bench-statistics/results"));
+
                         break;
                     }
+
                     // case "debugmaclocal":
                     //     {
                     //     //     var repoRoot = "/Users/albertxavier/workspace/signalr_auto_test_framework";

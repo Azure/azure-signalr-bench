@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using Newtonsoft.Json.Linq;
@@ -26,6 +27,15 @@ namespace JenkinsScript
         {
             var unixDateTime = (long)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalMilliseconds;
             return unixDateTime;
+        }
+
+        public static string MakeSureDirectoryExist(string dir)
+        {
+            if (!Directory.Exists(dir))
+            {
+                Directory.CreateDirectory(dir);
+            }
+            return dir;
         }
 
         public static JObject Sort(JObject jobj)

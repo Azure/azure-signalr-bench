@@ -10,6 +10,7 @@ using Microsoft.Azure.Management.Compute.Fluent.VirtualMachine.Definition;
 using Microsoft.Azure.Management.Fluent;
 using Microsoft.Azure.Management.Network.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent;
+using Microsoft.Azure.Management.ResourceManager.Fluent.Authentication;
 using Microsoft.Azure.Management.ResourceManager.Fluent.Core;
 using Microsoft.Azure.Management.ResourceManager.Fluent.Core.ResourceActions;
 
@@ -18,9 +19,11 @@ namespace JenkinsScript
     public class BenchmarkVmBuilder
     {
         private AgentConfig _agentConfig;
+        private ServicePrincipalConfig _servicePrincipal;
         private IAzure _azure;
         private string _rndNum;
 
+        private AzureCredentials _credentials;
         public BenchmarkVmBuilder(AgentConfig agentConfig)
         {
             try
@@ -188,17 +191,17 @@ namespace JenkinsScript
         public void LoginAzure()
         {
             var content = AzureBlobReader.ReadBlob("ServicePrincipalFileName");
-            var sp = AzureBlobReader.ParseYaml<ServicePrincipalConfig>(content);
+            _servicePrincipal = AzureBlobReader.ParseYaml<ServicePrincipalConfig>(content);
 
             // auth
-            var credentials = SdkContext.AzureCredentialsFactory
-                .FromServicePrincipal(sp.ClientId, sp.ClientSecret, sp.TenantId, AzureEnvironment.AzureGlobalCloud);
+            _credentials = SdkContext.AzureCredentialsFactory
+                .FromServicePrincipal(_servicePrincipal.ClientId, _servicePrincipal.ClientSecret, _servicePrincipal.TenantId, AzureEnvironment.AzureGlobalCloud);
 
             _azure = Azure
                 .Configure()
                 .WithLogLevel(HttpLoggingDelegatingHandler.Level.BodyAndHeaders)
-                .Authenticate(credentials)
-                .WithSubscription(sp.Subscription);
+                .Authenticate(_credentials)
+                .WithSubscription(_servicePrincipal.Subscription);
         }
 
         public IResourceGroup CreateResourceGroup(string groupName)
@@ -304,6 +307,15 @@ namespace JenkinsScript
                 .ToPort(3000)
                 .WithAnyProtocol()
                 .WithPriority(105)
+                .Attach()
+                .DefineRule("JENKINS")
+                .AllowInbound()
+                .FromAnyAddress()
+                .FromAnyPort()
+                .ToAnyAddress()
+                .ToPort(8080)
+                .WithAnyProtocol()
+                .WithPriority(106)
                 .Attach()
                 .CreateAsync();
         }
@@ -734,13 +746,9 @@ namespace JenkinsScript
 
         public string GetPrivateIp(string nicName)
         {
-            var content = AzureBlobReader.ReadBlob("ServicePrincipalFileName");
-            var sp = AzureBlobReader.ParseYaml<ServicePrincipalConfig>(content);
-            var credentials = SdkContext.AzureCredentialsFactory
-                .FromServicePrincipal(sp.ClientId, sp.ClientSecret, sp.TenantId, AzureEnvironment.AzureGlobalCloud);
-            using(var client = new NetworkManagementClient(credentials))
+            using(var client = new NetworkManagementClient(_credentials))
             {
-                client.SubscriptionId = sp.Subscription;
+                client.SubscriptionId = _servicePrincipal.Subscription;
                 var network = NetworkInterfacesOperationsExtensions.GetAsync(client.NetworkInterfaces, GroupName, nicName).GetAwaiter().GetResult();
                 string ip = network.IpConfigurations[0].PrivateIPAddress;
                 return ip;
