@@ -64,7 +64,7 @@ namespace JenkinsScript
         [Option("commit", Default = "", Required = false, HelpText = "")]
         public string Commit { get; set; }
 
-        [Option("branch", Default = "master", Required = false, HelpText = "")]
+        [Option("branch", Default = "origin/master", Required = false, HelpText = "")]
         public string Branch { get; set; }
 
         [Option("useLocalSignalR", Default = "false", Required = false, HelpText = "")]

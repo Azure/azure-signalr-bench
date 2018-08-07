@@ -192,6 +192,7 @@ namespace JenkinsScript
                         var logRoot = "~/logs";
                         var resultRoot = Environment.GetEnvironmentVariable("result_root");
                         var waitTime = TimeSpan.FromSeconds(5);
+                        var branch = argsOption.Branch;
 
                         // benchmark config
                         var serviceType = jobConfigV2.ServiceType;
@@ -236,7 +237,7 @@ namespace JenkinsScript
 
                         // clone repo to all vms
                         if (!debug) ShellHelper.GitCloneRepo(hosts, remoteRepo, user, password,
-                            sshPort, commit: "", branch: "rigin/master", repoRoot : localRepoRoot);
+                            sshPort, commit: "", branch: branch, repoRoot : localRepoRoot);
 
                         // kill all dotnet
                         if (!debug) ShellHelper.KillAllDotnetProcess(hosts, remoteRepo, user, password, sshPort, repoRoot : localRepoRoot);
