@@ -1,4 +1,4 @@
-
+ansible-playbook -i signalr_hosts change_sh_softlink.yaml
 ansible-playbook -i signalr_hosts pam_limits.yaml
 ansible-playbook -i signalr_hosts sysctl.yaml
 ansible-playbook -i signalr_hosts install_config_go.yaml

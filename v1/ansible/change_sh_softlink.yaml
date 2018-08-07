@@ -1,0 +1,16 @@
+- name: Change /bin/sh to /bin/bash
+  hosts: linux
+  user: "{{ansible_ssh_user}}"
+  become: true
+  become_user: root
+  become_method: sudo
+  tasks:
+   #- name: Remove /bin/sh
+   #  file:
+   #    path: "/bin/sh"
+   #    state: absent
+   - name: Create name /bin/sh
+     file:
+       src: "/bin/bash"
+       dest: "/bin/sh"
+       state: link
