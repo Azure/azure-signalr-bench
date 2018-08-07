@@ -19,24 +19,19 @@ namespace JenkinsScript
 
         // slave vm
         public string SlaveVmSize { get; set; }
-        // public string SlaveVmName { get; set; }
-        // public string SlaveVmPassWord { get; set; }
         public int SlaveVmCount { get; set; }
 
         // app server
         public string AppSvrVmSize { get; set; }
-        // public string AppSvrVmName { get; set; }
-        // public string AppSvrVmPassWord { get; set; }
 
         // service
         public string SvcVmSize { get; set; }
-        // public string SvcVmName { get; set; }
-        // public string SvcVmPassWord { get; set; }
 
+        // bench
+        public string BenchVmSize { get; set; }
         public string Ssh { get; set; }
 
         public string ImageId { get; set; }
-
 
     }
 }

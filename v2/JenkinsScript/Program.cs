@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using CommandLine;
@@ -24,6 +26,8 @@ namespace JenkinsScript
             {
                 return;
             }
+
+            SavePid(argsOption.PidFile);
 
             var resourceGroupName = "";
             var signalrServiceName = "";
@@ -160,7 +164,10 @@ namespace JenkinsScript
 
                         var debug = argsOption.Debug;
 
-                        var useLocalSignalR = debug ? "true" : "false";
+                        // app server
+                        var useLocalSignalR = debug && argsOption.AzureSignalrConnectionString == "" ? "true" : "false";
+                        var azureSignalrConnectionString = argsOption.AzureSignalrConnectionString;
+
                         // load private ips
                         var privateIps = configLoader.Load<PrivateIpConfig>(argsOption.PrivateIps);
                         var jobConfigV2 = configLoader.Load<JobConfigV2>(argsOption.JobConfigFileV2);
@@ -225,7 +232,7 @@ namespace JenkinsScript
                         var logPathMaster = result;
 
                         // clone repo to all vms
-                        if (!debug) ShellHelper.GitCloneRepo(hosts, remoteRepo, user, password,
+                        if (!debug) ShellHelper.ScpRepo(hosts, remoteRepo, user, password,
                             sshPort, commit: "", branch: "rigin/master", repoRoot : localRepoRoot);
 
                         // kill all dotnet
@@ -236,7 +243,7 @@ namespace JenkinsScript
                         Task.Delay(waitTime).Wait();
 
                         // start app server
-                        ShellHelper.StartAppServer(privateIps.AppServerPrivateIp, user, password, sshPort, "", logPathAppServer, useLocalSignalR, repoRoot : localRepoRoot);
+                        ShellHelper.StartAppServer(privateIps.AppServerPrivateIp, user, password, sshPort, azureSignalrConnectionString, logPathAppServer, useLocalSignalR, repoRoot : localRepoRoot);
                         Task.Delay(waitTime).Wait();
 
                         // start slaves
@@ -245,7 +252,7 @@ namespace JenkinsScript
 
                         // start master
                         ShellHelper.StartRpcMaster(privateIps.MasterPrivateIp, privateIps.SlavePrivateIp.Split(";").ToList(), user, password, sshPort, logPathMaster, serviceType, transportType, hubProtocol, scenario, connection, concurrentConnection, duration, interval, pipeline, groupNum, overlap, serverUrl, suffix, localRepoRoot);
-                        
+
                         // collect all logs
                         // todo
                         break;
@@ -497,6 +504,15 @@ namespace JenkinsScript
             string scenario, int connections, int concurrentConnection, int groupNum = 0, int overlap = 0, bool isGroupJoinLeave = false)
         {
             return $"{agent}_{serviceType}_{transportType}_{hubProtocol}_{scenario}_{connections}_{concurrentConnection}_{groupNum}_{overlap}_{(isGroupJoinLeave ? "true" : "false")}";
+        }
+
+        private static void SavePid(string pidFile)
+        {
+            var pid = Process.GetCurrentProcess().Id;
+            if (pidFile != null)
+            {
+                File.AppendAllText(pidFile, $"{pid}");
+            }
         }
     }
 }

@@ -49,6 +49,7 @@ namespace JenkinsScript
 
             List<Task> tasks = new List<Task>();
             tasks.Add(Task.Run(() => CreateAppServerVmCore(vnet)));
+            tasks.Add(Task.Run(() => CreateBenchVmCore(vnet)));
             tasks.Add(Task.Run(() => CreateServiceVmCore(vnet)));
             tasks.Add(Task.Run(() => CreateAgentVmsCore(vnet)));
             Task.WhenAll(tasks).Wait();
@@ -56,10 +57,12 @@ namespace JenkinsScript
             // debug: list all private ip
             var appPvtIp = GetPrivateIp(AppSvrNicBase + "0");
             var svcPvtIp = GetPrivateIp(ServiceNicBase + "0");
+            var benchPvtIp = GetPrivateIp(BenchNicBase + "0");
             var slvPvtIps = new List<string>();
             for (var i = 0; i < _agentConfig.SlaveVmCount; i++) slvPvtIps.Add(GetPrivateIp(NicBase + $"{i}"));
 
             Util.Log($"app pvt ip: {appPvtIp}");
+            Util.Log($"bench pvt ip: {benchPvtIp}");
             Util.Log($"svc pvt ip: {svcPvtIp}");
             slvPvtIps.ForEach(ip => Util.Log($"slv pvt ip: {ip}"));
 
@@ -67,6 +70,7 @@ namespace JenkinsScript
             var str = "";
             str += $"servicePrivateIp: {svcPvtIp}\n";
             str += $"appServerPrivateIp: {appPvtIp}\n";
+            str += $"benchPrivateIp: {benchPvtIp}\n";
             str += $"masterPrivateIp: {slvPvtIps[0]}\n";
             str += "slavePrivateIp: ";
             for (var i = 1; i < slvPvtIps.Count; i++)
@@ -75,7 +79,7 @@ namespace JenkinsScript
                 if (i < slvPvtIps.Count - 1) str += ";";
             }
             str += "\n";
-            File.AppendAllText("privateIps.yaml", str);
+            File.WriteAllText("privateIps.yaml", str);
         }
 
         public Task CreateAppServerVm()
@@ -93,6 +97,21 @@ namespace JenkinsScript
             var nsg = CreateNetworkSecurityGroupAsync(AppSvrNsgBase, Location, GroupName, _agentConfig.SshPort).GetAwaiter().GetResult();
             var nic = CreateNetworkInterfaceAsync(AppSvrNicBase, Location, GroupName, SubNet, vnet, publicIp, nsg).GetAwaiter().GetResult();
             var vmTemp = GenerateVmTemplateAsync(AppSvrVmNameBase, Location, GroupName, _agentConfig.ImageId, _agentConfig.User, _agentConfig.Password, _agentConfig.Ssh, AppSvrVmSize, nic).GetAwaiter().GetResult();
+            vmTemp.Create();
+            sw.Stop();
+            Util.Log($"create vm time: {sw.Elapsed.TotalMinutes} min");
+        }
+
+        public void CreateBenchVmCore(INetwork vnet = null)
+        {
+            var sw = new Stopwatch();
+            sw.Start();
+            var resourceGroup = CreateResourceGroup(GroupName);
+            if (vnet == null) vnet = CreateVirtualNetwork(AppSvrVnet, Location, GroupName, SubNet);
+            var publicIp = CreatePublicIpAsync(BenchPublicIpBase, Location, GroupName, BenchPublicDnsBase).GetAwaiter().GetResult();
+            var nsg = CreateNetworkSecurityGroupAsync(BenchNsgBase, Location, GroupName, _agentConfig.SshPort).GetAwaiter().GetResult();
+            var nic = CreateNetworkInterfaceAsync(BenchNicBase, Location, GroupName, SubNet, vnet, publicIp, nsg).GetAwaiter().GetResult();
+            var vmTemp = GenerateVmTemplateAsync(BenchVmNameBase, Location, GroupName, _agentConfig.ImageId, _agentConfig.User, _agentConfig.Password, _agentConfig.Ssh, BenchVmSize, nic).GetAwaiter().GetResult();
             vmTemp.Create();
             sw.Stop();
             Util.Log($"create vm time: {sw.Elapsed.TotalMinutes} min");
@@ -310,11 +329,11 @@ namespace JenkinsScript
                 .WithRegion(location)
                 .WithExistingResourceGroup(groupName)
                 .WithExistingPrimaryNetworkInterface(networkInterface)
-                // .WithLinuxCustomImage(imageId)
-                .WithPopularLinuxImage(KnownLinuxVirtualMachineImage.UbuntuServer16_04_Lts)
+                .WithLinuxCustomImage(imageId)
+                // .WithPopularLinuxImage(KnownLinuxVirtualMachineImage.UbuntuServer16_04_Lts)
                 .WithRootUsername(user)
                 .WithRootPassword(password)
-                .WithSsh(ssh)
+                // .WithSsh(ssh)
                 .WithComputerName(vmNameBase + Convert.ToString(i));
 
             IWithCreate creator = null;
@@ -446,6 +465,16 @@ namespace JenkinsScript
             }
 
         }
+
+        public string BenchVmNameBase
+        {
+            get
+            {
+                return _agentConfig.Prefix.ToLower() + _rndNum + "benchvm";
+            }
+
+        }
+
         public string VmNameBase
         {
             get
@@ -486,6 +515,14 @@ namespace JenkinsScript
             }
         }
 
+        public string BenchNicBase
+        {
+            get
+            {
+                return _agentConfig.Prefix + _rndNum + "BenchNIC";
+            }
+        }
+
         public string NicBase
         {
             get
@@ -506,6 +543,14 @@ namespace JenkinsScript
             get
             {
                 return _agentConfig.Prefix + _rndNum + "ServiceNSG";
+            }
+        }
+
+        public string BenchNsgBase
+        {
+            get
+            {
+                return _agentConfig.Prefix + _rndNum + "BenchNSG";
             }
         }
 
@@ -541,6 +586,14 @@ namespace JenkinsScript
             }
         }
 
+        public string BenchPublicIpBase
+        {
+            get
+            {
+                return _agentConfig.Prefix + _rndNum + "BenchPublicIP";
+            }
+        }
+
         public string PublicDnsBase
         {
             get
@@ -562,6 +615,14 @@ namespace JenkinsScript
             get
             {
                 return _agentConfig.Prefix + _rndNum + "ServiceDNS";
+            }
+        }
+
+        public string BenchPublicDnsBase
+        {
+            get
+            {
+                return _agentConfig.Prefix + _rndNum + "BenchDNS";
             }
         }
 
@@ -620,6 +681,15 @@ namespace JenkinsScript
             get
             {
                 return GetVmSize(_agentConfig.SvcVmSize);
+            }
+
+        }
+
+        public VirtualMachineSizeTypes BenchVmSize
+        {
+            get
+            {
+                return GetVmSize(_agentConfig.BenchVmSize);
             }
 
         }

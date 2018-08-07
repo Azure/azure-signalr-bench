@@ -25,7 +25,7 @@ namespace JenkinsScript
         [Option('A', "agentblobname", Required = false, HelpText = "Specify Azure Blob Name For Agent Config File")]
         public string AgentBlobName { get; set; }
 
-        [Option('s', "azuresignalr", Required = false, HelpText = "Specify Azure Signalr connection string")]
+        [Option('s', "AzureSignalrConnectionString", Default = "", Required = false, HelpText = "Specify Azure Signalr connection string")]
         public string AzureSignalrConnectionString { get; set; }
 
         [Option('o', "outputcounterfile", Required = false, HelpText = "Specify Output File For Counters")]
@@ -72,6 +72,9 @@ namespace JenkinsScript
 
         [Option("PrivateIps", Default = "", Required = false, HelpText = "")]
         public string PrivateIps { get; set; }
+
+        [Option("PidFile", Default = "", Required = false, HelpText = "")]
+        public string PidFile { get; set; }
 
     }
 }

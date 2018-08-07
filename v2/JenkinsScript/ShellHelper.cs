@@ -48,6 +48,14 @@ namespace JenkinsScript
             return (errCode, result);
         }
 
+        public static(int, string) ScpDirecotryLocalToRemote(string user, string host, string password, string src, string dst)
+        {
+            int errCode = 0;
+            string result = "";
+            string cmd = $"sshpass -p {password} scp -r -o StrictHostKeyChecking=no {src} {user}@{host}:{dst}";
+            (errCode, result) = Bash(cmd, wait : true, handleRes : true);
+            return (errCode, result);
+        }
         public static(int, string) RemoteBash(string user, string host, int port, string password, string cmd, bool wait = true, bool handleRes = false, int retry = 1)
         {
 
@@ -137,6 +145,63 @@ namespace JenkinsScript
             return (errCode, result);
         }
 
+        public static(int, string) ScpRepo(List<string> hosts, string repoUrl, string user, string password, int sshPort,
+            string commit = "", string branch = "origin/master", string repoRoot = "/home/wanl/signalr_auto_test_framework")
+        {
+            var errCode = 0;
+            var result = "";
+
+            var tasks = new List<Task>();
+
+            hosts.ForEach(host =>
+            {
+                tasks.Add(Task.Run(() =>
+                {
+                    var errCodeInner = 0;
+                    var resultInner = "";
+
+                    if (host.Contains("localhost") || host.Contains("127.0.0.1")) return;
+
+                    // clear old repo
+                    var cmdInner = $"rm -rf {repoRoot};"; //TODO
+                    Util.Log($"CMD: {user}@{host}: {cmdInner}");
+                    (errCodeInner, resultInner) = ShellHelper.RemoteBash(user, host, sshPort, password, cmdInner);
+
+                    if (errCodeInner != 0)
+                    {
+                        errCode = errCodeInner;
+                        result = resultInner;
+                    }
+
+                    // scp local repo to remote
+                    ScpDirecotryLocalToRemote(user, host, password, repoRoot, repoRoot);
+
+                    // // set node on git
+                    // cmdInner = $"cd {repoRoot};";
+                    // cmdInner += $"git checkout {branch};";
+                    // cmdInner += $"git reset --hard {commit};";
+                    // cmdInner += $" cd ~ ;";
+                    // Util.Log($"CMD: {user}@{host}: {cmdInner}");
+                    // (errCodeInner, resultInner) = ShellHelper.RemoteBash(user, host, sshPort, password, cmdInner);
+
+                    if (errCodeInner != 0)
+                    {
+                        errCode = errCodeInner;
+                        result = resultInner;
+                    }
+                }));
+            });
+
+            Task.WhenAll(tasks).Wait();
+
+            if (errCode != 0)
+            {
+                Util.Log($"ERR {errCode}: {result}");
+                Environment.Exit(1);
+            }
+
+            return (errCode, result);
+        }
         public static(int, string) StartAppServer(string host, string user, string password, int sshPort, string azureSignalrConnectionString,
             string logPath, string useLocalSingalR = "false", string repoRoot = "/home/wanl/signalr_auto_test_framework")
         {
