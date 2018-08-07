@@ -34,7 +34,29 @@ gen_cli_master_single_bench()
         local bench_name=$3
 
         local result_name=${bench_type}_${bench_codec}_${bench_name}
-        local server_endpoint="http://${bench_app_pub_server}:${bench_app_port}/${bench_config_hub}"
+        local server_endpoint
+	local i
+	local app_server_list=""
+	local server
+	local len=$(array_len $bench_app_pub_server "|")
+	if [ $len == 1 ]
+	then
+		server_endpoint="http://${bench_app_pub_server}:${bench_app_port}/${bench_config_hub}"
+	else
+		i=1
+		while [ $i -le $len ]
+		do
+			server=$(array_get "$bench_app_pub_server" $i "|")
+			if [ "$app_server_list" == "" ]
+			then
+				app_server_list="http://${server}:${bench_app_port}/${bench_config_hub}"
+			else
+				app_server_list="${app_server_list};http://${server}:${bench_app_port}/${bench_config_hub}"
+			fi
+			i=$(($i+1))
+		done
+		server_endpoint="$app_server_list"
+	fi
 
         local customized_connection=$(derefer_2vars $bench_name "connection_number")
         local customized_concurrent=$(derefer_2vars $bench_name "connection_concurrent")
@@ -100,7 +122,7 @@ then
 	rm jobResult.txt
 fi
 transport=${bench_transport}
-server=$server_endpoint
+server="$server_endpoint"
 pipeline="createConn;startConn;${send_num}stopConn;disposeConn"
 slaveList="${cli_agents_g}"
 sendSize="${send_size}"
@@ -267,11 +289,61 @@ launch_single_master_cli_script()
 	scp -o StrictHostKeyChecking=no -r -P $port ${user}@${server}:${bench_master_folder}/$result_name ${result_dir}/
 }
 
-start_cli_bench_server()
+iterate_all_app_server_and_connection_str()
 {
-. ./servers_env.sh
-        local connection_str="$1"
-        local output_log=$2
+	local connection_string_list="$1"
+	local app_server_list="$2"
+	local callback=$3
+	local ssh_user=$4
+	local ssh_port=$5
+	local output_log_dir="$6"
+	local conn_str_len=$(array_len "$connection_string_list" "|")
+	local app_server_len=$(array_len "$app_server_list" "|")
+	if [ "$conn_str_len" != "$app_server_len" ]
+	then
+		echo "connection string list does not match app server, they are different number"
+		exit 1
+	fi
+	local i=1
+	local app_server
+	local conn_str
+	while [ $i -le $conn_str_len ]
+	do
+		conn_str=$(array_get "$connection_string_list" $i "|")
+		app_server=$(array_get "$app_server_list" $i "|")
+		output_log="app_log_${i}_${app_server}.log"
+		$callback "$app_server" $ssh_user $ssh_port "$conn_str" "$output_log_dir"
+		i=$(($i+1))
+	done
+}
+
+start_multiple_app_server()
+{
+	local conn_str_list="$1"
+	local app_server_list="$2"
+	local ssh_user=$3
+	local ssh_port=$4
+	local output_dir="$5"
+	iterate_all_app_server_and_connection_str "$conn_str_list" "$app_server_list" start_single_app_server $ssh_user $ssh_port "$output_dir"
+}
+
+stop_multiple_app_server()
+{
+	local conn_str_list="$1"
+	local app_server_list="$2"
+	local ssh_user=$3
+	local ssh_port=$4
+	local output_dir="$5"
+	iterate_all_app_server_and_connection_str "$conn_str_list" "$app_server_list" stop_single_app_server $ssh_user $ssh_port "$output_dir"
+}
+
+start_single_app_server()
+{
+	local app_server="$1"
+	local app_user=$2
+	local app_ssh_port=$3
+	local connection_str="$4"
+	local output_log="$5/$app_running_log"
         local local_run_script="auto_local_launch.sh"
         local remote_run_script="auto_launch_app.sh"
 cat << _EOF > $remote_run_script
@@ -280,15 +352,15 @@ cat << _EOF > $remote_run_script
 killall dotnet
 cd ${bench_server_folder} 
 export Azure__SignalR__ConnectionString="$connection_str"
-/home/${bench_app_user}/.dotnet/dotnet run
+/home/${app_user}/.dotnet/dotnet run
 _EOF
 
-scp -o StrictHostKeyChecking=no -P ${bench_app_pub_port} $remote_run_script ${bench_app_user}@${bench_app_pub_server}:~/
+scp -o StrictHostKeyChecking=no -P ${app_ssh_port} $remote_run_script ${app_user}@${app_server}:~/
 
 cat << _EOF > $local_run_script
 #!/bin/bash
 #automatic generated script
-ssh -o StrictHostKeyChecking=no -p ${bench_app_pub_port} ${bench_app_user}@${bench_app_pub_server} "sh $remote_run_script"
+ssh -o StrictHostKeyChecking=no -p ${app_ssh_port} ${app_user}@${app_server} "sh $remote_run_script"
 _EOF
 
         nohup sh $local_run_script > ${output_log} 2>&1 &
@@ -310,8 +382,24 @@ _EOF
         done
 }
 
+stop_single_app_server()
+{
+	local app_server=$1
+	local ssh_user=$2
+	local ssh_port=$3
+	ssh -o StrictHostKeyChecking=no -p ${ssh_port} ${ssh_user}@${app_server} "killall dotnet"
+}
+
+start_cli_bench_server()
+{
+	local connection_str="$1"
+	local output_dir=$2
+. ./servers_env.sh
+	start_single_app_server $bench_app_pub_server $bench_app_user $bench_app_pub_port "$connection_str" $output_dir
+}
+
 stop_cli_bench_server()
 {
 	. ./servers_env.sh
-        ssh -o StrictHostKeyChecking=no -p ${bench_app_pub_port} ${bench_app_user}@${bench_app_pub_server} "killall dotnet"
+	stop_single_app_server ${bench_app_pub_server} ${bench_app_user} ${bench_app_pub_port}
 }
