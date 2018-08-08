@@ -137,7 +137,7 @@ namespace JenkinsScript
                     var cmdInner = $"rm -rf {repoRoot}; git clone {repoUrl} {repoRoot}; "; //TODO
                     cmdInner += $"cd {repoRoot};";
                     cmdInner += $"git checkout {branch};";
-                    cmdInner += $"git reset --hard {commit};";
+                    if (commit != null && commit != "") cmdInner += $"git reset --hard {commit};";
                     cmdInner += $" cd ~ ;";
                     Util.Log($"CMD: {user}@{host}: {cmdInner}");
                     (errCodeInner, resultInner) = ShellHelper.RemoteBash(user, host, sshPort, password, cmdInner);
