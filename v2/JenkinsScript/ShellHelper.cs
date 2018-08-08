@@ -521,6 +521,8 @@ namespace JenkinsScript
             var result = "";
             var cmd = "";
 
+            Util.Log($"modify service appsettings");
+
             if (hosts.Count != dnses.Count)
             {
                 throw new Exception();

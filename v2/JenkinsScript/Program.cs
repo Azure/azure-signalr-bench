@@ -202,7 +202,7 @@ namespace JenkinsScript
                         if (argsOption.AgentConfigFile != null)
                             ac = configLoader.Load<AgentConfig>(argsOption.AgentConfigFile);
 
-                        ShellHelper.TransferServiceRuntimeToVm(new List<string>(new string[] { privateIps.ServicePrivateIp }), ac.User, ac.Password, ac.SshPort, $"/home/{ac.User}", "OSSServices-SignalR-Service", $"/home/{ac.User}");
+                        ShellHelper.TransferServiceRuntimeToVm(privateIps.ServicePrivateIp.Split(";").ToList(), ac.User, ac.Password, ac.SshPort, $"/home/{ac.User}", "OSSServices-SignalR-Service", $"/home/{ac.User}");
                         break;
                     }
                 case "AllInSameVnet":
@@ -304,7 +304,7 @@ namespace JenkinsScript
                         // start service
                         if (!debug)
                         {
-                            ShellHelper.ModifyServiceAppsettings(new List<string>(new string[] { privateIps.ServicePrivateIp }), user, password, sshPort, publicIps.ServicePublicIp.Split(";").ToList(), $"/home/{user}", "OSSServices-SignalR-Service", $"/home/{user}");
+                            ShellHelper.ModifyServiceAppsettings(privateIps.ServicePrivateIp.Split(";").ToList(), user, password, sshPort, publicIps.ServicePublicIp.Split(";").ToList(), $"/home/{user}", "OSSServices-SignalR-Service", $"/home/{user}");
                             (errCode, result) = ShellHelper.StartSignalrService(privateIps.ServicePrivateIp.Split(";").ToList(), user, password, sshPort, serviceDir, logPathService);
                         }
                         Task.Delay(waitTime).Wait();
