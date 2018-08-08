@@ -175,7 +175,7 @@ namespace JenkinsScript
                         {
                             try
                             {
-                                vmBuilder.CreateAllVmsInSameVnet(argsOption.VnetGroupName, argsOption.VnetName, argsOption.SubnetName);
+                                vmBuilder.CreateAllVmsInSameVnet(argsOption.VnetGroupName, argsOption.VnetName, argsOption.SubnetName, agentConfig.AppSvrVmCount, agentConfig.SvcVmCount);
                             }
                             catch (Exception ex)
                             {
@@ -248,6 +248,8 @@ namespace JenkinsScript
                         var resultRoot = Environment.GetEnvironmentVariable("result_root");
                         var waitTime = TimeSpan.FromSeconds(5);
                         var branch = argsOption.Branch;
+                        var serviceVmCnt = agentConfig.SvcVmCount;
+                        var appserverVmCount = agentConfig.AppSvrVmCount;
 
                         // benchmark config
                         var serviceType = jobConfigV2.ServiceType;
@@ -302,7 +304,7 @@ namespace JenkinsScript
                         // start service
                         if (!debug)
                         {
-                            ShellHelper.ModifyServiceAppsettings(new List<string>(new string[] { privateIps.ServicePrivateIp }), user, password, sshPort, new List<string>(new string[] { publicIps.ServicePublicIp }), $"/home/{user}", "OSSServices-SignalR-Service", $"/home/{user}");
+                            ShellHelper.ModifyServiceAppsettings(new List<string>(new string[] { privateIps.ServicePrivateIp }), user, password, sshPort, publicIps.ServicePublicIp.Split(";").ToList(), $"/home/{user}", "OSSServices-SignalR-Service", $"/home/{user}");
                             (errCode, result) = ShellHelper.StartSignalrService(privateIps.ServicePrivateIp, user, password, sshPort, serviceDir, logPathService);
                         }
                         Task.Delay(waitTime).Wait();

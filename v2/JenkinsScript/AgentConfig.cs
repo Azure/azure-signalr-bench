@@ -23,10 +23,10 @@ namespace JenkinsScript
 
         // app server
         public string AppSvrVmSize { get; set; }
-
+        public int AppSvrVmCount { get; set; }
         // service
         public string SvcVmSize { get; set; }
-
+        public int SvcVmCount { get; set; }
         // bench
         public string BenchVmSize { get; set; }
 
