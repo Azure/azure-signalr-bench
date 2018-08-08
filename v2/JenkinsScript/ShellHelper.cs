@@ -303,7 +303,7 @@ namespace JenkinsScript
             cmd += $"mkdir -p {outputCounterDir} || true;";
             cmd += $"dotnet run -- " +
                 $"--rpcPort 5555 " +
-                $"--duration {duration} --connections {connection} --interval {interval} --slaves {slaves.Count} --serverUrl 'http://{serverUrl}:5050/signalrbench' --pipeLine '{string.Join(";", pipeLine)}' " +
+                $"--duration {duration} --connections {connection} --interval {interval} --slaves {slaves.Count} --serverUrl '{serverUrl}' --pipeLine '{string.Join(";", pipeLine)}' " +
                 $"-v {serviceType} -t {transportType} -p {hubProtocol} -s {scenario} " +
                 $" --slaveList '{slaveList}' " +
                 $" --retry {0} " +
