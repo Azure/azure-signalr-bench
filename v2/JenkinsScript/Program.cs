@@ -299,7 +299,11 @@ namespace JenkinsScript
                         if (!debug) ShellHelper.KillAllDotnetProcess(hosts, remoteRepo, user, password, sshPort, repoRoot : localRepoRoot);
 
                         // start service
-                        if (!debug) (errCode, result) = ShellHelper.StartSignalrService(privateIps.ServicePrivateIp, user, password, sshPort, serviceDir, logPathService);
+                        if (!debug)
+                        {
+                            ShellHelper.ModifyServiceAppsettings(new List<string>(new string[] { privateIps.ServicePrivateIp }), user, password, sshPort, new List<string>(new string[] { publicIps.ServicePublicIp }), $"/home/{user}", "OSSServices-SignalR-Service", $"/home/{user}");
+                            (errCode, result) = ShellHelper.StartSignalrService(privateIps.ServicePrivateIp, user, password, sshPort, serviceDir, logPathService);
+                        }
                         Task.Delay(waitTime).Wait();
 
                         // start app server

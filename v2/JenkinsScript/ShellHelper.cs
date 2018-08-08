@@ -509,5 +509,26 @@ namespace JenkinsScript
             return (errCode, result);
 
         }
+
+        public static(int, string) ModifyServiceAppsettings(List<string> hosts, string user, string password, int sshPort, List<string> dnses, string srcDirParent, string srcDirName, string dstDir)
+        {
+            var errCode = 0;
+            var result = "";
+            var cmd = "";
+
+            if (hosts.Count != dnses.Count)
+            {
+                throw new Exception();
+            }
+
+            for (var i = 0; i < hosts.Count; i++)
+            {
+                var appsettings = File.ReadAllText($"{Path.Join(srcDirParent, srcDirName, "src/Microsoft.Azure.SignalR.ServiceRuntime/appsettings.json")}");
+                appsettings = appsettings.Replace("localhost", dnses[i]);
+                File.WriteAllText("appsettings.json", appsettings);
+                (errCode, result) = ScpFileLocalToRemote(user, hosts[i], password, "appsettings.json", Path.Join(dstDir, srcDirName, "src/Microsoft.Azure.SignalR.ServiceRuntime"));
+            }
+            return (errCode, result);
+        }
     }
 }
