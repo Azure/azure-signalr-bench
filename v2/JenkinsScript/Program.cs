@@ -218,7 +218,7 @@ namespace JenkinsScript
 
                         // app server
                         var useLocalSignalR = debug && argsOption.AzureSignalrConnectionString == "" ? "true" : "false";
-                        var azureSignalrConnectionString = argsOption.AzureSignalrConnectionString;
+                        var azureSignalrConnectionStrings = argsOption.AzureSignalrConnectionString.Split(";").ToList();
 
                         // load private ips
                         var privateIps = configLoader.Load<PrivateIpConfig>(argsOption.PrivateIps);
@@ -305,12 +305,12 @@ namespace JenkinsScript
                         if (!debug)
                         {
                             ShellHelper.ModifyServiceAppsettings(new List<string>(new string[] { privateIps.ServicePrivateIp }), user, password, sshPort, publicIps.ServicePublicIp.Split(";").ToList(), $"/home/{user}", "OSSServices-SignalR-Service", $"/home/{user}");
-                            (errCode, result) = ShellHelper.StartSignalrService(privateIps.ServicePrivateIp, user, password, sshPort, serviceDir, logPathService);
+                            (errCode, result) = ShellHelper.StartSignalrService(privateIps.ServicePrivateIp.Split(";").ToList(), user, password, sshPort, serviceDir, logPathService);
                         }
                         Task.Delay(waitTime).Wait();
 
                         // start app server
-                        ShellHelper.StartAppServer(privateIps.AppServerPrivateIp, user, password, sshPort, azureSignalrConnectionString, logPathAppServer, useLocalSignalR, appSvrRoot);
+                        ShellHelper.StartAppServer(privateIps.AppServerPrivateIp.Split(";").ToList(), user, password, sshPort, azureSignalrConnectionStrings, logPathAppServer, useLocalSignalR, appSvrRoot);
                         Task.Delay(waitTime).Wait();
 
                         // start slaves

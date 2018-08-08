@@ -134,7 +134,8 @@ namespace JenkinsScript
             var tasks = new List<Task>();
             for (int i = 0; i < count; i++)
             {
-                tasks.Add(Task.Run(() => CreateAppServerVmCore(i, vnet, subnet)));
+                var ind = i;
+                tasks.Add(Task.Run(() => CreateAppServerVmCore(ind, vnet, subnet)));
             }
             Task.WhenAll(tasks).Wait();
         }
@@ -175,7 +176,8 @@ namespace JenkinsScript
             var tasks = new List<Task>();
             for (int i = 0; i < count; i++)
             {
-                tasks.Add(Task.Run(() => CreateServiceVmCore(i, vnet, subnet)));
+                var ind = i;
+                tasks.Add(Task.Run(() => CreateServiceVmCore(ind, vnet, subnet)));
             }
             Task.WhenAll(tasks).Wait();
         }

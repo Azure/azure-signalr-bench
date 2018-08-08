@@ -217,24 +217,27 @@ namespace JenkinsScript
 
             return (errCode, result);
         }
-        public static(int, string) StartAppServer(string host, string user, string password, int sshPort, string azureSignalrConnectionString,
+        public static(int, string) StartAppServer(List<string> hosts, string user, string password, int sshPort, List<string> azureSignalrConnectionStrings,
             string logPath, string useLocalSingalR = "false", string appSvrRoot = "/home/wanl/signalr_auto_test_framework")
         {
             var errCode = 0;
             var result = "";
             var cmd = "";
 
-            cmd = $"cd {appSvrRoot}; " +
-                $"export Azure__SignalR__ConnectionString='{azureSignalrConnectionString}'; " +
-                $"export useLocalSignalR={useLocalSingalR}; " +
-                $"dotnet run > {logPath}";
-            Util.Log($"{user}@{host}: {cmd}");
-            (errCode, result) = ShellHelper.RemoteBash(user, host, sshPort, password, cmd, wait : false);
-
-            if (errCode != 0)
+            for (var i = 0; i < hosts.Count; i++)
             {
-                Util.Log($"ERR {errCode}: {result}");
-                Environment.Exit(1);
+                cmd = $"cd {appSvrRoot}; " +
+                    $"export Azure__SignalR__ConnectionString='{azureSignalrConnectionStrings[i]}'; " +
+                    $"export useLocalSignalR={useLocalSingalR}; " +
+                    $"dotnet run > {logPath}";
+                Util.Log($"{user}@{hosts[i]}: {cmd}");
+                (errCode, result) = ShellHelper.RemoteBash(user, hosts[i], sshPort, password, cmd, wait : false);
+
+                if (errCode != 0)
+                {
+                    Util.Log($"ERR {errCode}: {result}");
+                    Environment.Exit(1);
+                }
             }
 
             return (errCode, result);
@@ -323,20 +326,23 @@ namespace JenkinsScript
 
         }
 
-        public static(int, string) StartSignalrService(string host, string user, string password, int sshPort, string serviceDir, string logPath)
+        public static(int, string) StartSignalrService(List<string> hosts, string user, string password, int sshPort, string serviceDir, string logPath)
         {
             var errCode = 0;
             var result = "";
             var cmd = "";
 
-            cmd += $"cd {serviceDir}; dotnet run > {logPath}";
-            Util.Log($"{user}@{host}: {cmd}");
-            (errCode, result) = ShellHelper.RemoteBash(user, host, sshPort, password, cmd, wait : false);
-
-            if (errCode != 0)
+            for (var i = 0; i < hosts.Count; i++)
             {
-                Util.Log($"ERR {errCode}: {result}");
-                Environment.Exit(1);
+                cmd += $"cd {serviceDir}; dotnet run > {logPath}";
+                Util.Log($"{user}@{hosts[i]}: {cmd}");
+                (errCode, result) = ShellHelper.RemoteBash(user, hosts[i], sshPort, password, cmd, wait : false);
+
+                if (errCode != 0)
+                {
+                    Util.Log($"ERR {errCode}: {result}");
+                    Environment.Exit(1);
+                }
             }
 
             return (errCode, result);
