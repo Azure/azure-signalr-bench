@@ -278,14 +278,14 @@ namespace JenkinsScript
                         foreach (var ip in privateIps.ServicePrivateIp.Split(";").ToList())
                         {
                             suffix = GenerateSuffix($"service{ip}", serviceType, transportType, hubProtocol, scenario, connection, concurrentConnection, groupNum, overlap, isGroupJoinLeave, messageSize);
-                            (errCode, result) = ShellHelper.PrepareLogPath(servicePvtIp, user, password, sshPort, logRoot, resultRoot, suffix);
+                            (errCode, result) = ShellHelper.PrepareLogPath(ip, user, password, sshPort, logRoot, resultRoot, suffix);
                         }
                         var logPathService = result;
 
                         foreach (var ip in privateIps.AppServerPrivateIp.Split(";").ToList())
                         {
                             suffix = GenerateSuffix($"appserver{ip}", serviceType, transportType, hubProtocol, scenario, connection, concurrentConnection, groupNum, overlap, isGroupJoinLeave, messageSize);
-                            (errCode, result) = ShellHelper.PrepareLogPath(appserverPvtIp, user, password, sshPort, logRoot, resultRoot, suffix);
+                            (errCode, result) = ShellHelper.PrepareLogPath(ip, user, password, sshPort, logRoot, resultRoot, suffix);
                         }
                         var logPathAppServer = result;
 
