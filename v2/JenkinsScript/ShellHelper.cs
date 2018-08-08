@@ -469,7 +469,6 @@ namespace JenkinsScript
             return (errCode, result);
         }
 
-        // todo: only support private ip
         public static(int, string) TransferServiceRuntimeToVm(List<string> hosts, string user, string password, int sshPort, string srcDirParent, string srcDirName, string dstDir)
         {
             var errCode = 0;
