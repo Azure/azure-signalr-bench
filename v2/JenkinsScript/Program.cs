@@ -309,6 +309,8 @@ namespace JenkinsScript
 
                         // kill all dotnet
                         if (!debug) ShellHelper.KillAllDotnetProcess(hosts, remoteRepo, user, password, sshPort, repoRoot : localRepoRoot);
+                        Task.Delay(waitTime).Wait();
+                        Task.Delay(waitTime).Wait();
 
                         // start service
                         if (!debug)
