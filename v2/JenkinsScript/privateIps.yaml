@@ -1,5 +1,4 @@
 servicePrivateIp: 10.0.0.5
 appServerPrivateIp: 10.0.0.6
-benchPrivateIp: 10.0.0.4
-masterPrivateIp: 10.0.0.8
-slavePrivateIp: 10.0.0.9;10.0.0.7
+masterPrivateIp: 10.0.0.7
+slavePrivateIp: 10.0.0.9;10.0.0.8

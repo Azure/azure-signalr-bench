@@ -116,6 +116,44 @@ namespace JenkinsScript
                         DogfoodSignalROps.UnregisterDogfoodCloud(argsOption.ExtensionScriptDir);
                     }
                     break;
+                case "CreateBenchServer":
+                    {
+                        // parse agent config file
+                        AgentConfig agentConfig = new AgentConfig();
+                        var configLoader = new ConfigLoader();
+
+                        if (argsOption.AgentConfigFile != null)
+                            agentConfig = configLoader.Load<AgentConfig>(argsOption.AgentConfigFile);
+
+                        AzureManager azureManager = null;
+                        BenchmarkVmBuilder vmBuilder = null;
+                        if (argsOption.ExtensionScriptDir == null)
+                        {
+                            azureManager = new AzureManager();
+                            vmBuilder = new BenchmarkVmBuilder(agentConfig);
+                        }
+
+                        while (true)
+                        {
+                            try
+                            {
+                                vmBuilder.CreateBenchServer();
+                            }
+                            catch (Exception ex)
+                            {
+                                Util.Log($"creating VMs Exception: {ex}");
+                                Util.Log($"delete all vms");
+                                azureManager.DeleteResourceGroup(vmBuilder.GroupName);
+                                azureManager.DeleteResourceGroup(vmBuilder.AppSvrGroupName);
+                                Util.Log($"going to retry creating vms in 1s");
+                                Task.Delay(1000).Wait();
+                                continue;
+                            }
+                            break;
+                        }
+
+                        break;
+                    }
                 case "CreateAllVmsInSameVnet":
                     {
                         // parse agent config file
@@ -137,7 +175,7 @@ namespace JenkinsScript
                         {
                             try
                             {
-                                vmBuilder.CreateAllVmsInSameVnet();
+                                vmBuilder.CreateAllVmsInSameVnet(argsOption.VnetGroupName, argsOption.VnetName, argsOption.SubnetName);
                             }
                             catch (Exception ex)
                             {
@@ -151,6 +189,20 @@ namespace JenkinsScript
                             }
                             break;
                         }
+                        break;
+                    }
+                case "TransferServiceRuntimeToVm":
+                    {
+                        // parse agent config file
+                        AgentConfig ac = new AgentConfig();
+                        var configLoader = new ConfigLoader();
+
+                        var privateIps = configLoader.Load<PrivateIpConfig>(argsOption.PrivateIps);
+
+                        if (argsOption.AgentConfigFile != null)
+                            ac = configLoader.Load<AgentConfig>(argsOption.AgentConfigFile);
+
+                        ShellHelper.TransferServiceRuntimeToVm(new List<string>(new string[] {privateIps.ServicePrivateIp}), ac.User, ac.Password, ac.SshPort, "~/OSSServices-SignalR-Service", "~");
                         break;
                     }
                 case "AllInSameVnet":
@@ -237,7 +289,7 @@ namespace JenkinsScript
 
                         // clone repo to all vms
                         if (!debug) ShellHelper.GitCloneRepo(hosts, remoteRepo, user, password,
-                            sshPort, commit: "", branch: branch, repoRoot : localRepoRoot);
+                            sshPort, commit: "", branch : branch, repoRoot : localRepoRoot);
 
                         // kill all dotnet
                         if (!debug) ShellHelper.KillAllDotnetProcess(hosts, remoteRepo, user, password, sshPort, repoRoot : localRepoRoot);

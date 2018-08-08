@@ -57,6 +57,15 @@ namespace JenkinsScript
             return (errCode, result);
         }
 
+        public static(int, string) ScpFileLocalToRemote(string user, string host, string password, string srcFile, string dstDir)
+        {
+            int errCode = 0;
+            string result = "";
+            string cmd = $"sshpass -p {password} scp -o StrictHostKeyChecking=no {srcFile} {user}@{host}:{dstDir}";
+            (errCode, result) = Bash(cmd, wait : true, handleRes : true);
+            return (errCode, result);
+        }
+
         public static(int, string) ScpDirecotryRemoteToLocal(string user, string host, string password, string src, string dst)
         {
             int errCode = 0;
@@ -74,12 +83,7 @@ namespace JenkinsScript
             for (var i = 0; i < retry; i++)
             {
                 if (host.IndexOf("localhost") >= 0 || host.IndexOf("127.0.0.1") >= 0) return Bash(cmd, wait);
-                Util.Log($"password: {password}");
-                Util.Log($"port: {port}");
-                Util.Log($"host: {host}");
-                Util.Log($"cmd: {cmd}");
                 string sshPassCmd = $"sshpass -p {password} ssh -p {port} -o StrictHostKeyChecking=no {user}@{host} \"{cmd}\"";
-                Util.Log($"SSH Pass Cmd: {sshPassCmd}");
                 (errCode, result) = Bash(sshPassCmd, wait : wait, handleRes : retry > 1 && i < retry - 1 ? false : handleRes);
                 if (errCode == 0) break;
                 Util.Log($"retry {i+1}th time");
@@ -462,6 +466,43 @@ namespace JenkinsScript
                 }
             });
             return (errCode, result);
+        }
+
+        // todo: only support private ip
+        public static(int, string) TransferServiceRuntimeToVm(List<string> hosts, string user, string password, int sshPort, string srcDir, string dstDir)
+        {
+            var errCode = 0;
+            var result = "";
+            var cmd = "";
+
+            // zip local service repo
+            cmd = $"zip -r serviceruntime.zip {srcDir}";
+            (errCode, result) = Bash(cmd, true, true);
+
+            // scp
+            foreach (var host in hosts)
+            {
+                (errCode, result) = ScpFileLocalToRemote(user, host, password, "serviceruntime.zip", "~/");
+                if (errCode != 0)
+                {
+                    Util.Log($"ERR {errCode}: {result}");
+                    Environment.Exit(1);
+                }
+
+                // install unzip
+                cmd = $"sudo install -y zip; unzip -o -d {dstDir} ~/serviceruntime.zip";
+                RemoteBash(user, host, sshPort, password, cmd, handleRes : true);
+
+                // modify appsetting.json
+                var appsettings = File.ReadAllText($"{Path.Join(srcDir,"src/Microsoft.Azure.SignalR.ServiceRuntime")}");
+                appsettings.Replace("localhost", host);
+                File.WriteAllText("appsettings.json", appsettings);
+                (errCode, result) = ScpFileLocalToRemote(user, host, password, "", Path.Join(dstDir, "src/Microsoft.Azure.SignalR.ServiceRuntime"));
+
+            }
+
+            return (errCode, result);
+
         }
     }
 }

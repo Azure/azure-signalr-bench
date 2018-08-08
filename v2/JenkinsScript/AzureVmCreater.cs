@@ -9,6 +9,7 @@ using Microsoft.Azure.Management.Compute.Fluent.Models;
 using Microsoft.Azure.Management.Compute.Fluent.VirtualMachine.Definition;
 using Microsoft.Azure.Management.Fluent;
 using Microsoft.Azure.Management.Network.Fluent;
+using Microsoft.Azure.Management.Network.Fluent.Models;
 using Microsoft.Azure.Management.ResourceManager.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent.Authentication;
 using Microsoft.Azure.Management.ResourceManager.Fluent.Core;
@@ -42,30 +43,32 @@ namespace JenkinsScript
 
         }
 
-        public void CreateAllVmsInSameVnet()
+        public void CreateBenchServer()
         {
-
             var vnetName = _agentConfig.Prefix + _rndNum + "VNet";
             var subnetName = _agentConfig.Prefix + _rndNum + "Subnet";
-            var resourceGroup = CreateResourceGroup(GroupName);
-            var vnet = CreateVirtualNetwork(vnetName, Location, GroupName, subnetName);
+            var resourceGroup = CreateResourceGroup(BenchGroupName);
+            var vnet = CreateVirtualNetwork(vnetName, Location, BenchGroupName, subnetName);
+            CreateBenchServerCore(vnet);
+        }
+        public void CreateAllVmsInSameVnet(string groupName, string vnetName, string subnetName)
+        {
+            (var vnet,
+                var subnet) = GetVnetSubnet(groupName, vnetName, subnetName);
 
             List<Task> tasks = new List<Task>();
-            tasks.Add(Task.Run(() => CreateAppServerVmCore(vnet)));
-            tasks.Add(Task.Run(() => CreateBenchVmCore(vnet)));
-            tasks.Add(Task.Run(() => CreateServiceVmCore(vnet)));
-            tasks.Add(Task.Run(() => CreateAgentVmsCore(vnet)));
+            tasks.Add(Task.Run(() => CreateAppServerVmCore(vnet, subnet)));
+            tasks.Add(Task.Run(() => CreateServiceVmCore(vnet, subnet)));
+            tasks.Add(Task.Run(() => CreateAgentVmsCore(vnet, subnet)));
             Task.WhenAll(tasks).Wait();
 
             // debug: list all private ip
             var appPvtIp = GetPrivateIp(AppSvrNicBase + "0");
             var svcPvtIp = GetPrivateIp(ServiceNicBase + "0");
-            var benchPvtIp = GetPrivateIp(BenchNicBase + "0");
             var slvPvtIps = new List<string>();
             for (var i = 0; i < _agentConfig.SlaveVmCount; i++) slvPvtIps.Add(GetPrivateIp(NicBase + $"{i}"));
 
             Util.Log($"app pvt ip: {appPvtIp}");
-            Util.Log($"bench pvt ip: {benchPvtIp}");
             Util.Log($"svc pvt ip: {svcPvtIp}");
             slvPvtIps.ForEach(ip => Util.Log($"slv pvt ip: {ip}"));
 
@@ -73,7 +76,6 @@ namespace JenkinsScript
             var str = "";
             str += $"servicePrivateIp: {svcPvtIp}\n";
             str += $"appServerPrivateIp: {appPvtIp}\n";
-            str += $"benchPrivateIp: {benchPvtIp}\n";
             str += $"masterPrivateIp: {slvPvtIps[0]}\n";
             str += "slavePrivateIp: ";
             for (var i = 1; i < slvPvtIps.Count; i++)
@@ -90,7 +92,7 @@ namespace JenkinsScript
             return Task.Run(() => CreateAppServerVmCore());
         }
 
-        public void CreateAppServerVmCore(INetwork vnet = null)
+        public void CreateAppServerVmCore(INetwork vnet = null, ISubnet subnet = null)
         {
             var sw = new Stopwatch();
             sw.Start();
@@ -98,29 +100,29 @@ namespace JenkinsScript
             if (vnet == null) vnet = CreateVirtualNetwork(AppSvrVnet, Location, GroupName, SubNet);
             var publicIp = CreatePublicIpAsync(AppSvrPublicIpBase, Location, GroupName, AppSvrPublicDnsBase).GetAwaiter().GetResult();
             var nsg = CreateNetworkSecurityGroupAsync(AppSvrNsgBase, Location, GroupName, _agentConfig.SshPort).GetAwaiter().GetResult();
-            var nic = CreateNetworkInterfaceAsync(AppSvrNicBase, Location, GroupName, SubNet, vnet, publicIp, nsg).GetAwaiter().GetResult();
+            var nic = CreateNetworkInterfaceAsync(AppSvrNicBase, Location, GroupName, subnet == null? SubNet : subnet.Name, vnet, publicIp, nsg).GetAwaiter().GetResult();
             var vmTemp = GenerateVmTemplateAsync(AppSvrVmNameBase, Location, GroupName, _agentConfig.ImageId, _agentConfig.User, _agentConfig.Password, _agentConfig.Ssh, AppSvrVmSize, nic).GetAwaiter().GetResult();
             vmTemp.Create();
             sw.Stop();
             Util.Log($"create vm time: {sw.Elapsed.TotalMinutes} min");
         }
 
-        public void CreateBenchVmCore(INetwork vnet = null)
+        public void CreateBenchServerCore(INetwork vnet = null, ISubnet subnet = null)
         {
             var sw = new Stopwatch();
             sw.Start();
-            var resourceGroup = CreateResourceGroup(GroupName);
-            if (vnet == null) vnet = CreateVirtualNetwork(AppSvrVnet, Location, GroupName, SubNet);
-            var publicIp = CreatePublicIpAsync(BenchPublicIpBase, Location, GroupName, BenchPublicDnsBase).GetAwaiter().GetResult();
-            var nsg = CreateNetworkSecurityGroupAsync(BenchNsgBase, Location, GroupName, _agentConfig.SshPort).GetAwaiter().GetResult();
-            var nic = CreateNetworkInterfaceAsync(BenchNicBase, Location, GroupName, SubNet, vnet, publicIp, nsg).GetAwaiter().GetResult();
-            var vmTemp = GenerateVmTemplateAsync(BenchVmNameBase, Location, GroupName, _agentConfig.ImageId, _agentConfig.User, _agentConfig.Password, _agentConfig.Ssh, BenchVmSize, nic).GetAwaiter().GetResult();
+            var resourceGroup = CreateResourceGroup(BenchGroupName);
+            if (vnet == null) vnet = CreateVirtualNetwork(AppSvrVnet, Location, BenchGroupName, SubNet);
+            var publicIp = CreatePublicIpAsync(BenchPublicIpBase, Location, BenchGroupName, BenchPublicDnsBase).GetAwaiter().GetResult();
+            var nsg = CreateNetworkSecurityGroupAsync(BenchNsgBase, Location, BenchGroupName, _agentConfig.SshPort).GetAwaiter().GetResult();
+            var nic = CreateNetworkInterfaceAsync(BenchNicBase, Location, BenchGroupName, subnet == null? SubNet : subnet.Name, vnet, publicIp, nsg).GetAwaiter().GetResult();
+            var vmTemp = GenerateVmTemplateAsync(BenchVmNameBase, Location, BenchGroupName, _agentConfig.ImageId, _agentConfig.User, _agentConfig.Password, _agentConfig.Ssh, BenchVmSize, nic).GetAwaiter().GetResult();
             vmTemp.Create();
             sw.Stop();
             Util.Log($"create vm time: {sw.Elapsed.TotalMinutes} min");
         }
 
-        public void CreateServiceVmCore(INetwork vnet = null)
+        public void CreateServiceVmCore(INetwork vnet = null, ISubnet subnet = null)
         {
             var sw = new Stopwatch();
             sw.Start();
@@ -128,7 +130,7 @@ namespace JenkinsScript
             if (vnet == null) vnet = CreateVirtualNetwork(AppSvrVnet, Location, GroupName, SubNet);
             var publicIp = CreatePublicIpAsync(ServicePublicIpBase, Location, GroupName, ServicePublicDnsBase).GetAwaiter().GetResult();
             var nsg = CreateNetworkSecurityGroupAsync(ServiceNsgBase, Location, GroupName, _agentConfig.SshPort).GetAwaiter().GetResult();
-            var nic = CreateNetworkInterfaceAsync(ServiceNicBase, Location, GroupName, SubNet, vnet, publicIp, nsg).GetAwaiter().GetResult();
+            var nic = CreateNetworkInterfaceAsync(ServiceNicBase, Location, GroupName, subnet == null? SubNet : subnet.Name, vnet, publicIp, nsg).GetAwaiter().GetResult();
             var vmTemp = GenerateVmTemplateAsync(ServiceVmNameBase, Location, GroupName, _agentConfig.ImageId, _agentConfig.User, _agentConfig.Password, _agentConfig.Ssh, ServiceVmSize, nic).GetAwaiter().GetResult();
             vmTemp.Create();
             sw.Stop();
@@ -140,7 +142,7 @@ namespace JenkinsScript
             return Task.Run(() => CreateAgentVmsCore());
         }
 
-        public void CreateAgentVmsCore(INetwork vNet = null)
+        public void CreateAgentVmsCore(INetwork vNet = null, ISubnet subnet = null)
         {
             var sw = new Stopwatch();
             sw.Start();
@@ -168,7 +170,7 @@ namespace JenkinsScript
             var nicTasks = new List<Task<INetworkInterface>>();
             for (var i = 0; i < _agentConfig.SlaveVmCount; i++)
             {
-                nicTasks.Add(CreateNetworkInterfaceAsync(NicBase, Location, GroupName, SubNet, vNet, publicIps[i], nsgs[i], i));
+                nicTasks.Add(CreateNetworkInterfaceAsync(NicBase, Location, GroupName, subnet == null? SubNet : subnet.Name, vNet, publicIps[i], nsgs[i], i));
             }
             var nics = Task.WhenAll(nicTasks).GetAwaiter().GetResult();
 
@@ -744,6 +746,15 @@ namespace JenkinsScript
             }
         }
 
+        public string BenchGroupName
+        {
+            get
+            {
+                return _agentConfig.Prefix + "BenchResourceGroup" + _rndNum;
+
+            }
+        }
+
         public string GetPrivateIp(string nicName)
         {
             using(var client = new NetworkManagementClient(_credentials))
@@ -755,5 +766,23 @@ namespace JenkinsScript
             }
         }
 
+        public INetwork GetVnet(string groupName, string vnetName)
+        {
+            foreach (var vnet in _azure.Networks.ListByResourceGroup(groupName))
+            {
+                if (vnet.Name == vnetName) return vnet;
+            }
+            return null;
+        }
+
+        public(INetwork, ISubnet) GetVnetSubnet(string groupName, string vnetName, string subnetName)
+        {
+            foreach (var vnet in _azure.Networks.ListByResourceGroup(groupName))
+            {
+                var subnet = vnet.Subnets.GetValueOrDefault(subnetName);
+                if (vnet.Name == vnetName) return (vnet, subnet);
+            }
+            return (null, null);
+        }
     }
 }

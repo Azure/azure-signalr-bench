@@ -76,5 +76,14 @@ namespace JenkinsScript
         [Option("PidFile", Default = "", Required = false, HelpText = "")]
         public string PidFile { get; set; }
 
+        [Option("VnetGroupName", Default = "", Required = false, HelpText = "")]
+        public string VnetGroupName { get; set; }
+
+        [Option("VnetName", Default = "", Required = false, HelpText = "")]
+        public string VnetName { get; set; }
+
+        [Option("SubnetName", Default = "", Required = false, HelpText = "")]
+        public string SubnetName { get; set; }
+
     }
 }

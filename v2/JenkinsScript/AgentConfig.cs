@@ -29,6 +29,7 @@ namespace JenkinsScript
 
         // bench
         public string BenchVmSize { get; set; }
+
         public string Ssh { get; set; }
 
         public string ImageId { get; set; }
