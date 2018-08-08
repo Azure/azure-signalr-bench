@@ -334,7 +334,7 @@ namespace JenkinsScript
 
         for (var i = 0; i < hosts.Count; i++)
         {
-            cmd += $"cd {serviceDir}; dotnet run > {logPath[i]}";
+            cmd = $"cd {serviceDir}; dotnet run > {logPath[i]}";
             Util.Log($"{user}@{hosts[i]}: {cmd}");
             (errCode, result) = ShellHelper.RemoteBash(user, hosts[i], sshPort, password, cmd, wait : false);
 
