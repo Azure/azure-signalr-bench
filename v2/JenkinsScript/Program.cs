@@ -271,30 +271,33 @@ namespace JenkinsScript
                         hosts.AddRange(privateIps.ServicePrivateIp.Split(";").ToList());
                         hosts.AddRange(privateIps.AppServerPrivateIp.Split(";").ToList());
                         hosts.Add(privateIps.MasterPrivateIp);
-                        hosts.AddRange(privateIps.SlavePrivateIp.Split(";"));
+                        hosts.AddRange(privateIps.SlavePrivateIp.Split(";").ToList());
 
                         // prepare log dirs
                         var suffix = "";
+                        var logPathService = new List<string>();
                         foreach (var ip in privateIps.ServicePrivateIp.Split(";").ToList())
                         {
                             suffix = GenerateSuffix($"service{ip}", serviceType, transportType, hubProtocol, scenario, connection, concurrentConnection, groupNum, overlap, isGroupJoinLeave, messageSize);
                             (errCode, result) = ShellHelper.PrepareLogPath(ip, user, password, sshPort, logRoot, resultRoot, suffix);
+                            logPathService.Add(result);
                         }
-                        var logPathService = result;
 
+                        var logPathAppServer = new List<string>();
                         foreach (var ip in privateIps.AppServerPrivateIp.Split(";").ToList())
                         {
                             suffix = GenerateSuffix($"appserver{ip}", serviceType, transportType, hubProtocol, scenario, connection, concurrentConnection, groupNum, overlap, isGroupJoinLeave, messageSize);
                             (errCode, result) = ShellHelper.PrepareLogPath(ip, user, password, sshPort, logRoot, resultRoot, suffix);
+                            logPathAppServer.Add(result);
                         }
-                        var logPathAppServer = result;
 
+                        var logPathSlave = new List<string>();
                         slavesPvtIp.ForEach(ip =>
                         {
                             suffix = GenerateSuffix($"slave{ip}", serviceType, transportType, hubProtocol, scenario, connection, concurrentConnection, groupNum, overlap, isGroupJoinLeave, messageSize);
                             (errCode, result) = ShellHelper.PrepareLogPath(ip, user, password, sshPort, logRoot, resultRoot, suffix);
+                            logPathSlave.Add(result);
                         });
-                        var logPathSlave = result;
 
                         suffix = GenerateSuffix("master", serviceType, transportType, hubProtocol, scenario, connection, concurrentConnection, groupNum, overlap, isGroupJoinLeave, messageSize);
                         (errCode, result) = ShellHelper.PrepareLogPath(masterPvtIp, user, password, sshPort, logRoot, resultRoot, suffix);
@@ -579,7 +582,7 @@ namespace JenkinsScript
         // }
 
         private static string GenerateSuffix(string agent, string serviceType, string transportType, string hubProtocol,
-            string scenario, int connections, int concurrentConnection, int groupNum = 0, int overlap = 0, bool isGroupJoinLeave = false, string messageSize="0")
+            string scenario, int connections, int concurrentConnection, int groupNum = 0, int overlap = 0, bool isGroupJoinLeave = false, string messageSize = "0")
         {
             return $"{agent}_{serviceType}_{transportType}_{hubProtocol}_{scenario}_{connections}_{concurrentConnection}_{groupNum}_{overlap}_{(isGroupJoinLeave ? "true" : "false")}_{messageSize}";
         }
