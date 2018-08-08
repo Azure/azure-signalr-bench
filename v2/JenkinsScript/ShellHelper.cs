@@ -84,7 +84,7 @@ namespace JenkinsScript
             for (var i = 0; i < retry; i++)
             {
                 if (host.IndexOf("localhost") >= 0 || host.IndexOf("127.0.0.1") >= 0) return Bash(cmd, wait);
-                string sshPassCmd = $"sshpass -p {password} ssh -p {port} -o StrictHostKeyChecking=no {user}@{host} \"{cmd}\"";
+                string sshPassCmd = $"echo \"\" > /home/wanl/.ssh/known_hosts; sshpass -p {password} ssh -p {port} -o StrictHostKeyChecking=no {user}@{host} \"{cmd}\"";
                 (errCode, result) = Bash(sshPassCmd, wait : wait, handleRes : retry > 1 && i < retry - 1 ? false : handleRes);
                 if (errCode == 0) break;
                 Util.Log($"retry {i+1}th time");
@@ -134,7 +134,7 @@ namespace JenkinsScript
                 {
                     var errCodeInner = 0;
                     var resultInner = "";
-                    var cmdInner = $"rm -rf {repoRoot}; git clone {repoUrl} {repoRoot} || true; "; //TODO
+                    var cmdInner = $"rm -rf {repoRoot}  || true; git clone {repoUrl} {repoRoot}; "; //TODO
                     cmdInner += $"cd {repoRoot};";
                     cmdInner += $"git checkout {branch};";
                     if (commit != null && commit != "") cmdInner += $"git reset --hard {commit};";
