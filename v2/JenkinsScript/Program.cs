@@ -263,6 +263,7 @@ namespace JenkinsScript
                         var isGroupJoinLeave = jobConfigV2.IsGroupJoinLeave;
                         var pipeline = jobConfigV2.Pipeline;
                         var serverUrl = jobConfigV2.ServerUrl;
+                        var messageSize = jobConfigV2.MessageSize;
 
                         var hosts = new List<string>();
                         hosts.Add(privateIps.ServicePrivateIp);
@@ -315,7 +316,7 @@ namespace JenkinsScript
                         Task.Delay(waitTime).Wait();
 
                         // start master
-                        ShellHelper.StartRpcMaster(privateIps.MasterPrivateIp, privateIps.SlavePrivateIp.Split(";").ToList(), user, password, sshPort, logPathMaster, serviceType, transportType, hubProtocol, scenario, connection, concurrentConnection, duration, interval, pipeline, groupNum, overlap, serverUrl, suffix, masterRoot);
+                        ShellHelper.StartRpcMaster(privateIps.MasterPrivateIp, privateIps.SlavePrivateIp.Split(";").ToList(), user, password, sshPort, logPathMaster, serviceType, transportType, hubProtocol, scenario, connection, concurrentConnection, duration, interval, pipeline, groupNum, overlap, messageSize, serverUrl, suffix, masterRoot);
 
                         // collect all logs
                         ShellHelper.CollectStatistics(hosts, user, password, sshPort, $"/home/{user}/logs", Util.MakeSureDirectoryExist($"/home/{user}/signalr-bench-statistics/"));

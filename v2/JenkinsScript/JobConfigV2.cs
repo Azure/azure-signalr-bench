@@ -15,7 +15,7 @@ namespace JenkinsScript
         public string HubProtocol { get; set; }
         public string Scenario { get; set; }
         public int Connection { get; set; }
-        public int ConcurrentConnection {get; set;}
+        public int ConcurrentConnection { get; set; }
         public int Duration { get; set; }
         public int Interval { get; set; }
         public int GroupNum { get; set; }
@@ -23,6 +23,7 @@ namespace JenkinsScript
         public bool IsGroupJoinLeave { get; set; }
         public List<string> Pipeline { get; set; }
         public string ServerUrl { get; set; }
+        public string MessageSize {get; set;}
 
     }
 }
