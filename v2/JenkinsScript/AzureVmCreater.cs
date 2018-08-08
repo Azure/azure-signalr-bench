@@ -107,7 +107,7 @@ namespace JenkinsScript
             str += $"servicePublicIp: ";
             for (var i = 0; i < svcVmCount; i++)
             {
-                str += $"{ServicePublicDnsBase}{i}.{Location}.cloudapp.azure.com;";
+                str += $"{ServicePublicDnsBase}{i}.{Location}.cloudapp.azure.com";
                 if (i < svcVmCount - 1) str += ";";
             }
             str += "\n";
@@ -115,7 +115,7 @@ namespace JenkinsScript
             str += $"appServerPublicIp: ";
             for (var i = 0; i < appSvrVmCount; i++)
             {
-                str += $"{AppSvrPublicDnsBase}{i}.{Location}.cloudapp.azure.com;";
+                str += $"{AppSvrPublicDnsBase}{i}.{Location}.cloudapp.azure.com";
                 if (i < appSvrVmCount - 1) str += ";";
             }
             str += "\n";
