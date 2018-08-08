@@ -134,7 +134,7 @@ namespace JenkinsScript
                 {
                     var errCodeInner = 0;
                     var resultInner = "";
-                    var cmdInner = $"rm -rf {repoRoot}; git clone {repoUrl} {repoRoot}; "; //TODO
+                    var cmdInner = $"rm -rf {repoRoot}; git clone {repoUrl} {repoRoot} || true; "; //TODO
                     cmdInner += $"cd {repoRoot};";
                     cmdInner += $"git checkout {branch};";
                     if (commit != null && commit != "") cmdInner += $"git reset --hard {commit};";
