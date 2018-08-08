@@ -218,7 +218,7 @@ namespace JenkinsScript
 
                         // app server
                         var useLocalSignalR = debug && argsOption.AzureSignalrConnectionString == "" ? "true" : "false";
-                        var azureSignalrConnectionStrings = argsOption.AzureSignalrConnectionString.Split(";").ToList();
+                        var azureSignalrConnectionStrings = argsOption.AzureSignalrConnectionString.Split("^").ToList();
 
                         // load private ips
                         var privateIps = configLoader.Load<PrivateIpConfig>(argsOption.PrivateIps);
