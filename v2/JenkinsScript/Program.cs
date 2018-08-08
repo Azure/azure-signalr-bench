@@ -268,29 +268,35 @@ namespace JenkinsScript
                         var messageSize = jobConfigV2.MessageSize;
 
                         var hosts = new List<string>();
-                        hosts.Add(privateIps.ServicePrivateIp);
-                        hosts.Add(privateIps.AppServerPrivateIp);
+                        hosts.AddRange(privateIps.ServicePrivateIp.Split(";").ToList());
+                        hosts.AddRange(privateIps.AppServerPrivateIp.Split(";").ToList());
                         hosts.Add(privateIps.MasterPrivateIp);
                         hosts.AddRange(privateIps.SlavePrivateIp.Split(";"));
 
                         // prepare log dirs
                         var suffix = "";
-                        suffix = GenerateSuffix("service", serviceType, transportType, hubProtocol, scenario, connection, concurrentConnection, groupNum, overlap, isGroupJoinLeave);
-                        (errCode, result) = ShellHelper.PrepareLogPath(servicePvtIp, user, password, sshPort, logRoot, resultRoot, suffix);
+                        foreach (var ip in privateIps.ServicePrivateIp.Split(";").ToList())
+                        {
+                            suffix = GenerateSuffix($"service{ip}", serviceType, transportType, hubProtocol, scenario, connection, concurrentConnection, groupNum, overlap, isGroupJoinLeave, messageSize);
+                            (errCode, result) = ShellHelper.PrepareLogPath(servicePvtIp, user, password, sshPort, logRoot, resultRoot, suffix);
+                        }
                         var logPathService = result;
 
-                        suffix = GenerateSuffix("appserver", serviceType, transportType, hubProtocol, scenario, connection, concurrentConnection, groupNum, overlap, isGroupJoinLeave);
-                        (errCode, result) = ShellHelper.PrepareLogPath(appserverPvtIp, user, password, sshPort, logRoot, resultRoot, suffix);
+                        foreach (var ip in privateIps.AppServerPrivateIp.Split(";").ToList())
+                        {
+                            suffix = GenerateSuffix($"appserver{ip}", serviceType, transportType, hubProtocol, scenario, connection, concurrentConnection, groupNum, overlap, isGroupJoinLeave, messageSize);
+                            (errCode, result) = ShellHelper.PrepareLogPath(appserverPvtIp, user, password, sshPort, logRoot, resultRoot, suffix);
+                        }
                         var logPathAppServer = result;
 
                         slavesPvtIp.ForEach(ip =>
                         {
-                            suffix = GenerateSuffix($"slave{ip}", serviceType, transportType, hubProtocol, scenario, connection, concurrentConnection, groupNum, overlap, isGroupJoinLeave);
+                            suffix = GenerateSuffix($"slave{ip}", serviceType, transportType, hubProtocol, scenario, connection, concurrentConnection, groupNum, overlap, isGroupJoinLeave, messageSize);
                             (errCode, result) = ShellHelper.PrepareLogPath(ip, user, password, sshPort, logRoot, resultRoot, suffix);
                         });
                         var logPathSlave = result;
 
-                        suffix = GenerateSuffix("master", serviceType, transportType, hubProtocol, scenario, connection, concurrentConnection, groupNum, overlap, isGroupJoinLeave);
+                        suffix = GenerateSuffix("master", serviceType, transportType, hubProtocol, scenario, connection, concurrentConnection, groupNum, overlap, isGroupJoinLeave, messageSize);
                         (errCode, result) = ShellHelper.PrepareLogPath(masterPvtIp, user, password, sshPort, logRoot, resultRoot, suffix);
                         var logPathMaster = result;
 
@@ -573,9 +579,9 @@ namespace JenkinsScript
         // }
 
         private static string GenerateSuffix(string agent, string serviceType, string transportType, string hubProtocol,
-            string scenario, int connections, int concurrentConnection, int groupNum = 0, int overlap = 0, bool isGroupJoinLeave = false)
+            string scenario, int connections, int concurrentConnection, int groupNum = 0, int overlap = 0, bool isGroupJoinLeave = false, string messageSize="0")
         {
-            return $"{agent}_{serviceType}_{transportType}_{hubProtocol}_{scenario}_{connections}_{concurrentConnection}_{groupNum}_{overlap}_{(isGroupJoinLeave ? "true" : "false")}";
+            return $"{agent}_{serviceType}_{transportType}_{hubProtocol}_{scenario}_{connections}_{concurrentConnection}_{groupNum}_{overlap}_{(isGroupJoinLeave ? "true" : "false")}_{messageSize}";
         }
 
         private static void SavePid(string pidFile)
