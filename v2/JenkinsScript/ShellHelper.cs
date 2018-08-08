@@ -53,6 +53,7 @@ namespace JenkinsScript
             int errCode = 0;
             string result = "";
             string cmd = $"sshpass -p {password} scp -r -o StrictHostKeyChecking=no {src} {user}@{host}:{dst}";
+            Util.Log($"scp cmd: {cmd}");
             (errCode, result) = Bash(cmd, wait : true, handleRes : true);
             return (errCode, result);
         }
@@ -469,14 +470,16 @@ namespace JenkinsScript
         }
 
         // todo: only support private ip
-        public static(int, string) TransferServiceRuntimeToVm(List<string> hosts, string user, string password, int sshPort, string srcDir, string dstDir)
+        public static(int, string) TransferServiceRuntimeToVm(List<string> hosts, string user, string password, int sshPort, string srcDirParent, string srcDirName, string dstDir)
         {
             var errCode = 0;
             var result = "";
             var cmd = "";
 
+            (errCode, result) = Bash("pwd", true, true);
+            var curDir = result;
             // zip local service repo
-            cmd = $"zip -r serviceruntime.zip {srcDir}";
+            cmd = $"cd {srcDirParent}; zip -r serviceruntime.zip {srcDirName}/*; mv serviceruntime.zip {curDir}";
             (errCode, result) = Bash(cmd, true, true);
 
             // scp
@@ -490,16 +493,18 @@ namespace JenkinsScript
                 }
 
                 // install unzip
-                cmd = $"sudo install -y zip; unzip -o -d {dstDir} ~/serviceruntime.zip";
+                cmd = $"sudo apt-get install -y zip; unzip -o -d {dstDir} ~/serviceruntime.zip";
                 RemoteBash(user, host, sshPort, password, cmd, handleRes : true);
 
                 // modify appsetting.json
-                var appsettings = File.ReadAllText($"{Path.Join(srcDir,"src/Microsoft.Azure.SignalR.ServiceRuntime")}");
-                appsettings.Replace("localhost", host);
+                var appsettings = File.ReadAllText($"{Path.Join(srcDirParent, srcDirName, "src/Microsoft.Azure.SignalR.ServiceRuntime/appsettings.json")}");
+                appsettings = appsettings.Replace("localhost", host);
                 File.WriteAllText("appsettings.json", appsettings);
-                (errCode, result) = ScpFileLocalToRemote(user, host, password, "", Path.Join(dstDir, "src/Microsoft.Azure.SignalR.ServiceRuntime"));
+                (errCode, result) = ScpFileLocalToRemote(user, host, password, "appsettings.json", Path.Join(dstDir, srcDirName, "src/Microsoft.Azure.SignalR.ServiceRuntime"));
 
             }
+
+            (errCode, result) = Bash($"cd {curDir}", true, true);
 
             return (errCode, result);
 

@@ -38,3 +38,7 @@ msbuild.wrn
 
 # debug scripts
 DebugScripts/**/*.sh
+
+
+*.zip
+JenkinsScript/*.json
