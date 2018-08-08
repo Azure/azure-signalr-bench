@@ -222,6 +222,9 @@ namespace JenkinsScript
 
                         // load private ips
                         var privateIps = configLoader.Load<PrivateIpConfig>(argsOption.PrivateIps);
+                        // load public ips
+                        var publicIps = configLoader.Load<PublicIpConfig>(argsOption.PublicIps);
+                        // load job config v2
                         var jobConfigV2 = configLoader.Load<JobConfigV2>(argsOption.JobConfigFileV2);
 
                         var servicePvtIp = privateIps.ServicePrivateIp;
@@ -311,10 +314,10 @@ namespace JenkinsScript
                         ShellHelper.StartRpcMaster(privateIps.MasterPrivateIp, privateIps.SlavePrivateIp.Split(";").ToList(), user, password, sshPort, logPathMaster, serviceType, transportType, hubProtocol, scenario, connection, concurrentConnection, duration, interval, pipeline, groupNum, overlap, serverUrl, suffix, masterRoot);
 
                         // collect all logs
-                        ShellHelper.CollectStatistics(hosts, user, password, sshPort, $"/home/{user}/logs", Util.MakeSureDirectoryExist($"/home/{user}/signalr-bench-statistics/logs"));
+                        ShellHelper.CollectStatistics(hosts, user, password, sshPort, $"/home/{user}/logs", Util.MakeSureDirectoryExist($"/home/{user}/signalr-bench-statistics/"));
 
                         // collect results from master
-                        ShellHelper.CollectStatistics((new string[] { privateIps.MasterPrivateIp }).ToList(), user, password, sshPort, $"/home/{user}/results", Util.MakeSureDirectoryExist($"/home/{user}/signalr-bench-statistics/results"));
+                        ShellHelper.CollectStatistics((new string[] { privateIps.MasterPrivateIp }).ToList(), user, password, sshPort, $"/home/{user}/results", Util.MakeSureDirectoryExist($"/home/{user}/signalr-bench-statistics/"));
 
                         break;
                     }

@@ -85,6 +85,13 @@ namespace JenkinsScript
             }
             str += "\n";
             File.WriteAllText("privateIps.yaml", str);
+
+            // save public IP of service and appserver
+            str = "";
+            str += $"servicePublicIp: {ServicePublicDnsBase}0.{Location}.cloudapp.azure.com\n";
+            str += $"appServerPublicIp: {AppSvrPublicDnsBase}0.{Location}.cloudapp.azure.com\n";
+            File.WriteAllText("publicIps.yaml", str);
+
         }
 
         public Task CreateAppServerVm()
@@ -724,6 +731,8 @@ namespace JenkinsScript
                     return VirtualMachineSizeTypes.StandardD2V2;
                 case "StandardF2s":
                     return VirtualMachineSizeTypes.StandardF2s;
+                case "StandardF4s":
+                    return VirtualMachineSizeTypes.StandardF4s;
                 default:
                     return VirtualMachineSizeTypes.StandardDS1;
             }
@@ -784,5 +793,11 @@ namespace JenkinsScript
             }
             return (null, null);
         }
+
+        // public string GetDnsByPrivateIp(string pvtIp, string groupName)
+        // {
+        //     var vms = _azure.Networks.;
+
+        // }
     }
 }

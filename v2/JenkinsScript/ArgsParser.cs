@@ -73,6 +73,9 @@ namespace JenkinsScript
         [Option("PrivateIps", Default = "", Required = false, HelpText = "")]
         public string PrivateIps { get; set; }
 
+        [Option("PublicIps", Default = "", Required = false, HelpText = "")]
+        public string PublicIps { get; set; }
+
         [Option("PidFile", Default = "", Required = false, HelpText = "")]
         public string PidFile { get; set; }
 
