@@ -202,7 +202,7 @@ namespace JenkinsScript
                         if (argsOption.AgentConfigFile != null)
                             ac = configLoader.Load<AgentConfig>(argsOption.AgentConfigFile);
 
-                        ShellHelper.TransferServiceRuntimeToVm(new List<string>(new string[] {privateIps.ServicePrivateIp}), ac.User, ac.Password, ac.SshPort, $"/home/{ac.User}", "OSSServices-SignalR-Service", $"/home/{ac.User}");
+                        ShellHelper.TransferServiceRuntimeToVm(new List<string>(new string[] { privateIps.ServicePrivateIp }), ac.User, ac.Password, ac.SshPort, $"/home/{ac.User}", "OSSServices-SignalR-Service", $"/home/{ac.User}");
                         break;
                     }
                 case "AllInSameVnet":
@@ -264,6 +264,7 @@ namespace JenkinsScript
                         var hosts = new List<string>();
                         hosts.Add(privateIps.ServicePrivateIp);
                         hosts.Add(privateIps.AppServerPrivateIp);
+                        hosts.Add(privateIps.MasterPrivateIp);
                         hosts.AddRange(privateIps.SlavePrivateIp.Split(";"));
 
                         // prepare log dirs
