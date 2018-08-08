@@ -58,7 +58,7 @@ namespace Bench.Common
         [Option("slaves", Required = false, HelpText = "Specify Connection Increase Step")]
         public int Slaves { get; set; }
 
-        [Option("serverUrl", Required = false, HelpText = "Specify Connection Increase Step")]
+        [Option("serverUrl", Required = false, HelpText = "Specify App Server URLs, ';' is used to separate multiple URLs")]
         public string ServerUrl { get; set; }
 
         [Option("pipeLine", Required = false, HelpText = "Specify Connection Increase Step")]
