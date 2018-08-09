@@ -94,6 +94,28 @@ function zip_signalr_service() {
   tar zcvf ${dir}.tgz $dir
 }
 
+function gen_connection_string_list_from_multiple_service() {
+  local vm_list="$1"
+  local i len vm_host
+  local conn_str_list=""
+  local conn_str
+  len=$(array_len $vm_list "|")
+  i=1
+  while [ $i -le $len ]
+  do
+    vm_host=$(array_get "$vm_list" $i "|")
+    conn_str=$(gen_connection_string_from_host $vm_host)
+    if [ "$conn_str_list" == "" ]
+    then
+       conn_str_list="$conn_str"
+    else
+       conn_str_list="${conn_str_list}|$conn_str"
+    fi
+    i=$(($i+1))
+  done
+  echo "$conn_str_list"
+}
+
 function gen_connection_string_from_host() {
   local hostname=$1
   echo "Endpoint=http://$hostname;AccessKey=ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"

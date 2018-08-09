@@ -297,7 +297,11 @@ iterate_all_app_server_and_connection_str()
 	local callback=$3
 	local ssh_user=$4
 	local ssh_port=$5
-	local output_log_dir="$6"
+	local output_log_dir=""
+	if [ $# -ne 5 ]
+	then
+	  output_log_dir="$6"
+	fi
 	local conn_str_len=$(array_len "$connection_string_list" "|")
 	local app_server_len=$(array_len "$app_server_list" "|")
 	if [ "$conn_str_len" != "$app_server_len" ]
@@ -334,8 +338,7 @@ stop_multiple_app_server()
 	local app_server_list="$2"
 	local ssh_user=$3
 	local ssh_port=$4
-	local output_dir="$5"
-	iterate_all_app_server_and_connection_str "$conn_str_list" "$app_server_list" stop_single_app_server $ssh_user $ssh_port "$output_dir"
+	iterate_all_app_server_and_connection_str "$conn_str_list" "$app_server_list" stop_single_app_server $ssh_user $ssh_port
 }
 
 start_single_app_server()
@@ -344,7 +347,7 @@ start_single_app_server()
 	local app_user=$2
 	local app_ssh_port=$3
 	local connection_str="$4"
-	local output_log="$5/$app_running_log"
+	local output_log="$5/${app_server}_${app_running_log}"
         local local_run_script="auto_local_launch.sh"
         local remote_run_script="auto_launch_app.sh"
 cat << _EOF > $remote_run_script
