@@ -39,10 +39,10 @@ namespace Bench.RpcSlave.Worker.Operations
             // send message
             await StartSendMsg();
 
-            if (!debug) await Task.Delay(30 * 1000);
+            // if (!debug) await Task.Delay(30 * 1000);
 
             // save counters
-            SaveCounters();
+            // SaveCounters();
 
             _tk.State = Stat.Types.State.SendComplete;
             Util.Log($"Sending Complete");
