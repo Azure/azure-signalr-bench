@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Timers;
 using CommandLine;
 
 namespace JenkinsScript
@@ -315,20 +316,24 @@ namespace JenkinsScript
                         // start service
                         if (!debug)
                         {
+                            privateIps.ServicePrivateIp.Split(";").ToList().ForEach(host => StartCollectMachineStatisticsTimer(host, user, password, sshPort, Util.MakeSureDirectoryExist($"/home/{user}/signalr-bench-statistics/machine/") + $"service{host}.txt", TimeSpan.FromSeconds(1)));
                             ShellHelper.ModifyServiceAppsettings(privateIps.ServicePrivateIp.Split(";").ToList(), user, password, sshPort, publicIps.ServicePublicIp.Split(";").ToList(), $"/home/{user}", "OSSServices-SignalR-Service", $"/home/{user}");
                             (errCode, result) = ShellHelper.StartSignalrService(privateIps.ServicePrivateIp.Split(";").ToList(), user, password, sshPort, serviceDir, logPathService);
                         }
                         Task.Delay(waitTime).Wait();
 
                         // start app server
+                        privateIps.AppServerPrivateIp.Split(";").ToList().ForEach(host => StartCollectMachineStatisticsTimer(host, user, password, sshPort, Util.MakeSureDirectoryExist($"/home/{user}/signalr-bench-statistics/machine/") + $"appserver{host}.txt", TimeSpan.FromSeconds(1)));
                         ShellHelper.StartAppServer(privateIps.AppServerPrivateIp.Split(";").ToList(), user, password, sshPort, azureSignalrConnectionStrings, logPathAppServer, useLocalSignalR, appSvrRoot);
                         Task.Delay(waitTime).Wait();
 
                         // start slaves
+                        privateIps.SlavePrivateIp.Split(";").ToList().ForEach(host => StartCollectMachineStatisticsTimer(host, user, password, sshPort, Util.MakeSureDirectoryExist($"/home/{user}/signalr-bench-statistics/machine/") + $"slave{host}.txt", TimeSpan.FromSeconds(1)));
                         ShellHelper.StartRpcSlaves(privateIps.SlavePrivateIp.Split(";").ToList(), user, password, sshPort, rpcPort, logPathSlave, slaveRoot);
                         Task.Delay(waitTime).Wait();
 
                         // start master
+                        privateIps.MasterPrivateIp.Split(";").ToList().ForEach(host => StartCollectMachineStatisticsTimer(host, user, password, sshPort, Util.MakeSureDirectoryExist($"/home/{user}/signalr-bench-statistics/machine/") + $"master{host}.txt", TimeSpan.FromSeconds(1)));
                         ShellHelper.StartRpcMaster(privateIps.MasterPrivateIp, privateIps.SlavePrivateIp.Split(";").ToList(), user, password, sshPort, logPathMaster, serviceType, transportType, hubProtocol, scenario, connection, concurrentConnection, duration, interval, pipeline, groupNum, overlap, messageSize, serverUrl, suffix, masterRoot);
 
                         // collect all logs
@@ -339,249 +344,9 @@ namespace JenkinsScript
 
                         break;
                     }
-
-                    // case "debugmaclocal":
-                    //     {
-                    //     //     var repoRoot = "/Users/albertxavier/workspace/signalr_auto_test_framework";
-
-                    //     //     // create agent & appserver vms
-                    //     //     agentConfig.AppServer = "localhost";
-                    //     //     agentConfig.Slaves = new List<string>();
-                    //     //     agentConfig.Slaves.Add("localhost");
-
-                    //     //     // genrate host list
-                    //     //     var hosts = new List<string>();
-                    //     //     hosts.Add(agentConfig.AppServer);
-                    //     //     agentConfig.Slaves.ForEach(slv => hosts.Add(slv));
-                    //     //     hosts.Add(agentConfig.Master);
-
-                    //     //     // TODO: check if ssh success
-                    //     //     Task.Delay(20 * 1000).Wait();
-
-                    //     //     var types = jobConfig.ServiceTypeList;
-                    //     //     var isSelfHost = true;
-                    //     //     if (jobConfig.ServiceTypeList == null || jobConfig.ServiceTypeList.Count == 0)
-                    //     //     {
-                    //     //         types = jobConfig.SignalrUnit;
-                    //     //         isSelfHost = false;
-                    //     //     }
-
-                    //     //     int indType = 0;
-                    //     //     foreach (var serviceType in types)
-                    //     //     {
-                    //     //         var unit = 1;
-                    //     //         unit = Convert.ToInt32(serviceType.Substring(4));
-                    //     //         foreach (var transportType in jobConfig.TransportTypeList)
-                    //     //         {
-                    //     //             foreach (var hubProtocol in jobConfig.HubProtocolList)
-                    //     //             {
-                    //     //                 foreach (var scenario in jobConfig.ScenarioList)
-                    //     //                 {
-                    //     //                     (int connectionBase, int connectionIncreaseStep, int connectionLength) = GetConnectionConfig(scenario, jobConfig, indType);
-                    //     //                     (int groupNumBase, int groupNumStep, int groupNumLength) = GetGroupNumConfig(scenario, jobConfig, indType);
-
-                    //     //                     for (var connection = connectionBase; connection < connectionBase + connectionIncreaseStep * jobConfig.ConnectionLength; connection += connectionIncreaseStep)
-                    //     //                     {
-
-                    //     //                         for (var groupNum = groupNumBase; groupNum < groupNumBase + groupNumStep * groupNumLength; groupNum += groupNumStep)
-                    //     //                         {
-                    //     //                             RunJob(serviceType, transportType, hubProtocol, scenario, connection, groupNum, jobConfig, agentConfig, argsOption, hosts, repoRoot, serverUrl: "localhost", useLocalSignalR: "false", waitTime : TimeSpan.FromSeconds(5));
-                    //     //                         }
-                    //     //                     }
-                    //     //                 }
-                    //     //             }
-                    //     //         }
-                    //     //         indType++;
-                    //     //     }
-                    //     //     break;
-                    //     // }
-                    // case "All":
-                    // default:
-                    //     {
-                    //         // create agent & appserver vms
-                    //         while (true)
-                    //         {
-                    //             try
-                    //             {
-                    //                 var createResourceTasks = new List<Task>();
-                    //                 createResourceTasks.Add(vmBuilder.CreateAppServerVm());
-                    //                 createResourceTasks.Add(vmBuilder.CreateAgentVms());
-                    //                 Task.WhenAll(createResourceTasks).Wait();
-
-                    //             }
-                    //             catch (Exception ex)
-                    //             {
-                    //                 Util.Log($"creating VMs Exception: {ex}");
-                    //                 Util.Log($"delete all vms");
-                    //                 azureManager.DeleteResourceGroup(vmBuilder.GroupName);
-                    //                 azureManager.DeleteResourceGroup(vmBuilder.AppSvrGroupName);
-                    //                 Util.Log($"going to retry creating vms in 1s");
-                    //                 Task.Delay(1000).Wait();
-                    //                 continue;
-                    //             }
-                    //             break;
-                    //         }
-
-                    //         agentConfig.AppServer = vmBuilder.AppSvrDomainName();
-                    //         agentConfig.Slaves = new List<string>();
-                    //         for (var i = 0; i < agentConfig.SlaveVmCount; i++)
-                    //         {
-                    //             agentConfig.Slaves.Add(vmBuilder.SlaveDomainName(i));
-                    //         }
-
-                    //         // genrate host list
-                    //         var hosts = new List<string>();
-                    //         hosts.Add(agentConfig.AppServer);
-                    //         agentConfig.Slaves.ForEach(slv => hosts.Add(slv));
-                    //         hosts.Add(agentConfig.Master);
-
-                    //         // TODO: check if ssh success
-                    //         Task.Delay(20 * 1000).Wait();
-
-                    //         (errCode, result) = ShellHelper.KillAllDotnetProcess(hosts, agentConfig, argsOption);
-                    //         (errCode, result) = ShellHelper.GitCloneRepo(hosts, agentConfig, argsOption.Commit, argsOption.Branch);
-
-                    //         var types = jobConfig.ServiceTypeList;
-                    //         var isSelfHost = true;
-                    //         if (jobConfig.ServiceTypeList == null || jobConfig.ServiceTypeList.Count == 0)
-                    //         {
-                    //             types = jobConfig.SignalrUnit;
-                    //             isSelfHost = false;
-                    //         }
-
-                    //         int indType = 0;
-                    //         foreach (var serviceType in types)
-                    //         {
-                    //             var unit = 1;
-                    //             unit = Convert.ToInt32(serviceType.Substring(4));
-
-                    //             // create signalr service
-                    //             if (argsOption.AzureSignalrConnectionString == null || argsOption.AzureSignalrConnectionString == "")
-                    //             {
-                    //                 while (true)
-                    //                 {
-                    //                     try
-                    //                     {
-                    //                         var createSignalrR = Task.Run(() =>
-                    //                         {
-                    //                             (errCode, argsOption.AzureSignalrConnectionString) = ShellHelper.CreateSignalrService(argsOption, unit);
-                    //                         });
-                    //                         Task.WhenAll(createSignalrR).Wait();
-                    //                     }
-                    //                     catch (Exception ex)
-                    //                     {
-                    //                         Util.Log($"Creating SignalR Exception: {ex}");
-                    //                         Util.Log($"deleting all signalr services");
-                    //                         (errCode, result) = ShellHelper.DeleteSignalr(argsOption); // TODO what if delete fail
-                    //                         Util.Log($"going to retry creating signalr service in 1s");
-                    //                         Task.Delay(1000).Wait();
-                    //                         continue;
-                    //                     }
-                    //                     break;
-                    //                 }
-                    //             }
-
-                    //             foreach (var transportType in jobConfig.TransportTypeList)
-                    //             {
-                    //                 foreach (var hubProtocol in jobConfig.HubProtocolList)
-                    //                 {
-                    //                     foreach (var scenario in jobConfig.ScenarioList)
-                    //                     {
-                    //                         (int connectionBase, int connectionIncreaseStep, int connectionLength) = GetConnectionConfig(scenario, jobConfig, indType);
-                    //                         (int groupNumBase, int groupNumStep, int groupNumLength) = GetGroupNumConfig(scenario, jobConfig, indType);
-
-                    //                         for (var connection = connectionBase; connection < connectionBase + connectionIncreaseStep * connectionLength; connection += connectionIncreaseStep)
-                    //                         {
-                    //                             for (var groupNum = groupNumBase; groupNum < groupNumBase + groupNumStep * groupNumLength; groupNum += groupNumStep)
-                    //                             {
-                    //                                 RunJob(serviceType, transportType, hubProtocol, scenario, connection, groupNum, jobConfig, agentConfig, argsOption, hosts, repoRoot: "~/signalr_auto_test_framework", serverUrl : vmBuilder.AppSvrDomainName(), argsOption.UseLocalSignalR, waitTime : TimeSpan.FromSeconds(20));
-                    //                             }
-                    //                         }
-                    //                     }
-                    //                 }
-                    //             }
-                    //             indType++;
-                    //             if (argsOption.UseLocalSignalR == "true" ||
-                    //                 argsOption.AzureSignalrConnectionString == null ||
-                    //                 argsOption.AzureSignalrConnectionString == "")
-                    //                 (errCode, result) = ShellHelper.DeleteSignalr(argsOption);
-
-                    //             //(errCode, result) = ShellHelper.DeleteSignalr(argsOption);
-                    //         }
-                    //         //(errCode, result) = ShellHelper.GenerateAllReports(hosts, agentConfig);
-
-                    //         //azureManager.DeleteResourceGroup(vmBuilder.GroupName);
-                    //         //azureManager.DeleteResourceGroup(vmBuilder.AppSvrGroupName);
-                    //         break;
-                    //     }
             }
 
         }
-
-        // static private(int, int, int) GetConnectionConfig(string scenario, JobConfig jobConfig, int indType)
-        // {
-        //     var propName = scenario.First().ToString().ToUpper() + scenario.Substring(1);
-        //     var connectionBase = 0;
-        //     var connectionIncreaseStep = 1;
-        //     var connectionLength = 1;
-        //     if (propName.ToLower().Contains("echo") || propName.ToLower().Contains("broadcast"))
-        //     {
-        //         connectionBase = (jobConfig.ConnectionBase.GetType().GetProperty(propName).GetValue(jobConfig.ConnectionBase) as List<int>) [indType];
-        //         connectionIncreaseStep = (jobConfig.ConnectionIncreaseStep.GetType().GetProperty(propName).GetValue(jobConfig.ConnectionIncreaseStep) as List<int>) [indType];
-        //         connectionLength = jobConfig.ConnectionLength;
-        //     }
-        //     else if (propName.ToLower().Contains("group"))
-        //     {
-        //         connectionBase = jobConfig.Group.GroupConnectionBase[indType];
-        //         connectionIncreaseStep = jobConfig.Group.GroupConnectionStep[indType];
-        //         connectionLength = jobConfig.Group.GroupConnectionLength;
-        //     }
-        //     else
-        //     {
-        //         connectionBase = jobConfig.Mix.MixEchoConnection + jobConfig.Mix.MixBroadcastConnection + jobConfig.Mix.MixGroupConnection;
-        //         connectionIncreaseStep = 1;
-        //         connectionLength = 1;
-        //     }
-
-        //     return (connectionBase, connectionIncreaseStep, connectionLength);
-        // }
-
-        // static private(int, int, int) GetGroupNumConfig(string scenario, JobConfig jobConfig, int indType)
-        // {
-        //     var groupNumBase = 0;
-        //     var groupNumStep = 1;
-        //     var groupNumLength = 1;
-        //     if (scenario.ToLower().Contains("group"))
-        //     {
-        //         groupNumBase = jobConfig.Group.GroupNumBase[indType];
-        //         groupNumStep = jobConfig.Group.GroupNumStep[indType];
-        //         groupNumLength = jobConfig.Group.GroupNumLength;
-        //     }
-        //     return (groupNumBase, groupNumStep, groupNumLength);
-        // }
-
-        // static private void RunJob(string serviceType, string transportType, string hubProtocol, string scenario, int connection, int groupNum,
-        //     JobConfig jobConfig, AgentConfig agentConfig, ArgsOption argsOption,
-        //     List<string> hosts, string repoRoot, string serverUrl, string useLocalSignalR, TimeSpan waitTime)
-        // {
-        //     var errCode = 0;
-        //     var result = "";
-        //     Util.Log($"current connection: {connection}, duration: {jobConfig.Duration}, interval: {jobConfig.Interval}, transport type: {transportType}, protocol: {hubProtocol}, scenario: {scenario}");
-        //     (errCode, result) = ShellHelper.KillAllDotnetProcess(hosts, agentConfig, argsOption, repoRoot);
-        //     Task.Delay(waitTime).Wait();
-        //     // (errCode, result) = ShellHelper.StartSelfhostSignalrService(ServiceUrl, ServicePassword, ServicePort);
-        //     // Task.Delay(waitTime).Wait();
-        //     (errCode, result) = ShellHelper.StartAppServer(hosts, agentConfig, argsOption.AzureSignalrConnectionString, serviceType, transportType, hubProtocol, scenario, connection, useLocalSignalR, repoRoot);
-        //     Task.Delay(waitTime).Wait();
-        //     (errCode, result) = ShellHelper.StartRpcSlaves(agentConfig, argsOption, serviceType, transportType, hubProtocol, scenario, connection, repoRoot);
-        //     Task.Delay(waitTime).Wait();
-        //     (errCode, result) = ShellHelper.StartRpcMaster(agentConfig, argsOption,
-        //         serviceType, transportType, hubProtocol, scenario, connection, jobConfig.Duration,
-        //         jobConfig.Interval, string.Join(";", jobConfig.Pipeline),
-        //         jobConfig.Mix.MixEchoConnection, jobConfig.Mix.MixBroadcastConnection, jobConfig.Mix.MixGroupConnection, jobConfig.Mix.MixGroupName,
-        //         groupNum,
-        //         serverUrl, repoRoot);
-        // }
 
         private static string GenerateSuffix(string agent, string serviceType, string transportType, string hubProtocol,
             string scenario, int connections, int concurrentConnection, int groupNum = 0, int overlap = 0, bool isGroupJoinLeave = false, string messageSize = "0")
@@ -596,6 +361,17 @@ namespace JenkinsScript
             {
                 File.AppendAllText(pidFile, $"{pid}");
             }
+        }
+
+        private static void StartCollectMachineStatisticsTimer(string host, string user, string password, int sshPort, string path, TimeSpan interval)
+        {
+            var timer = new Timer(interval.TotalMilliseconds);
+            timer.AutoReset = true;
+            timer.Elapsed += async(sender, e) =>
+            {
+                ShellHelper.CollectMachineStatistics(host, user, password, sshPort, path);
+            };
+
         }
     }
 }
