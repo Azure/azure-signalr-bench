@@ -639,14 +639,49 @@ iterate_all_vms() {
   local user=$2
   local port=$3
   local callback=$4
+  local appendix=""
   local i len vm_host
+  if [ $# -eq 5 ]
+  then
+     appendix="$5"
+  fi
   len=$(array_len $vm_list "|")
   i=1
   while [ $i -le $len ]
   do
     vm_host=$(array_get "$vm_list" $i "|")
-    $callback $vm_host $user $port
+    $callback $vm_host $user $port $appendix
     i=$(($i+1))
   done
+}
+
+function collect_top_on_single_vm() {
+  local vm_host=$1
+  local ssh_user=$2
+  local ssh_port=$3
+  local output_folder=$4
+  local random=`tr -cd '[:alnum:]' < /dev/urandom | fold -w4 | head -n1`
+  local output_file="top_${random}_${vm_host}.txt"
+  local bg_pid_file="top_nohup_pid_${random}"
+  local script="/tmp/nohup_top_${random}.sh"
+cat << EOF > $script
+#!/bin/bash
+while [ 1 ]
+do
+  ssh -o StrictHostKeyChecking=no -p ${ssh_port} ${ssh_user}@${vm_host} "top -b|head -n 10" >> $output_folder/$output_file
+  sleep 1
+done
+EOF
+  chmod +x $script
+  nohup $script &
+  echo $! > $output_folder/$bg_pid_file
+}
+
+function collect_top_on_all_vms() {
+  local vm_list="$1"
+  local user=$2
+  local port=$3
+  local output_folder=$4
+  iterate_all_vms "$vm_list" $user $port collect_top_on_single_vm $output_folder
 }
 
