@@ -1,5 +1,7 @@
 #!/bin/bash
+. ./func_env.sh
 g_service_runtime=Microsoft.Azure.SignalR.ServiceRuntime
+g_bin_folder_name="ASRS"
 
 function build_signalr_service() {
   local SignalRRootInDir=$1
@@ -11,6 +13,45 @@ function build_signalr_service() {
   dotnet restore --no-cache
   dotnet publish -c Release -f netcoreapp2.1 -o "$OutDir" -r linux-x64 --self-contained
   cd -
+}
+
+# input:
+#  output folder of ASRS Bin
+#  Redis connection string
+#  host vm list
+function deploy_package_4_multiple_service_vm() {
+  local raw_bin_dir=$1
+  local redis_str="$2"
+  local host_list="$3"
+  local user=$4
+  local port=$5
+  local tmp_folder="/tmp"
+  local out_dir_name=$g_bin_folder_name
+  local tmp_out_dir=${tmp_folder}/${out_dir_name}
+  local i len vm_host
+  local uuid=`cat /proc/sys/kernel/random/uuid`
+  local appsettings_tmpl="servicetmpl/appsettings_redis.json"
+  local redisConnStrPlaceholder="RedisConnectionString"
+  len=$(array_len $host_list "|")
+  i=1
+  while [ $i -le $len ]
+  do
+    vm_host=$(array_get "$host_list" $i "|")
+    # modify appsettings.json
+    if [ -e $tmp_out_dir ]
+    then
+       rm -rf $tmp_out_dir
+    fi
+    cp -r $raw_bin_dir $tmp_out_dir
+    sed -e "s/localhost/$vm_host/g" -e "s/dev/$uuid/g" -e "s/$redisConnStrPlaceholder/${redis_str}/g" $appsettings_tmpl > $tmp_out_dir/appsettings.json
+    # pack
+    cd $tmp_folder
+    tar zcvf ${out_dir_name}.tgz $out_dir_name
+    cd -
+    # deploy
+    scp -o StrictHostKeyChecking=no -P $port ${tmp_folder}/${out_dir_name}.tgz ${user}@${vm_host}:~/
+    i=$(($i+1))
+  done
 }
 
 function replace_appsettings() {
@@ -94,7 +135,16 @@ function stop_service() {
  ssh -o StrictHostKeyChecking=no -p $port ${user}@${hostname} "killall ${g_service_runtime}"
 }
 
-function launch_service() {
+function launch_service_on_single_vm() {
+ local hostname=$1
+ local user=$2
+ local port=$3
+ local outdir=$g_bin_folder_name
+ local local_log=${hostname}.log
+ launch_single_service $outdir $hostname $user $port $local_log
+}
+
+function launch_single_service() {
  local outdir=$1
  local hostname=$2
  local user=$3
@@ -102,25 +152,35 @@ function launch_service() {
  local output_log=$5
  local auto_launch_script=auto_local_launch_service.sh
 
- scp -o StrictHostKeyChecking=no -P $port ${outdir}.tgz ${user}@${hostname}:~/
-
  ssh -o StrictHostKeyChecking=no -p $port ${user}@${hostname} "tar zxvf ${outdir}.tgz"
-
+ local launch_service_pid_file="/tmp/launch_service.pid"
 cat << EOF > $auto_launch_script
 #!/bin/bash
 #automatic generated script
-ssh -o StrictHostKeyChecking=no -p $port ${user}@${hostname} "killall -9 ${g_service_runtime}"
-sleep 2 # wait for the exit of previous running
-ssh -o StrictHostKeyChecking=no -p $port ${user}@${hostname} "cd $outdir; ./${g_service_runtime}"
-EOF
+cd ${outdir}
+if [ -e $launch_service_pid_file ]
+then
+  pid=\`cat $launch_service_pid_file\`
+  kill -9 \$pid
+fi
 
- nohup sh $auto_launch_script > ${output_log} 2>&1 &
+killall ${g_service_runtime}
+sleep 2 # wait for the exit of previous running
+
+rm out.log
+nohup ./${g_service_runtime} > out.log &
+echo \$! > $launch_service_pid_file
+EOF
+ scp -o StrictHostKeyChecking=no -P ${port} $auto_launch_script ${user}@${hostname}:~
+ ssh -o StrictHostKeyChecking=no -p ${port} ${user}@${hostname} "chmod +x $auto_launch_script"
+ ssh -o StrictHostKeyChecking=no -p ${port} ${user}@${hostname} "./$auto_launch_script"
 
  local end=$((SECONDS + 60))
  local finish=0
  local check
  while [ $SECONDS -lt $end ] && [ "$finish" == "0" ]
  do
+	scp -o StrictHostKeyChecking=no -P ${port} ${user}@${hostname}:~/${outdir}/out.log ${output_log}
 	check=$(check_service_launch_status ${output_log})
 	if [ $check -eq 0 ]
 	then
@@ -132,4 +192,40 @@ EOF
 	fi
 	sleep 1
  done
+}
+
+iterate_all_vms() {
+  local vm_list="$1"
+  local user=$2
+  local port=$3
+  local callback=$4
+  local i len vm_host
+  len=$(array_len $vm_list "|")
+  i=1
+  while [ $i -le $len ]
+  do
+    vm_host=$(array_get "$vm_list" $i "|")
+    $callback $vm_host $user $port
+    i=$(($i+1))
+  done
+}
+
+function launch_service_on_all_vms() {
+  local vm_list="$1"
+  local user=$2
+  local port=$3
+  iterate_all_vms "$vm_list" $user $port launch_service_on_single_vm
+}
+
+function launch_service() {
+ local outdir=$1
+ local hostname=$2
+ local user=$3
+ local port=$4
+ local output_log=$5
+ local auto_launch_script=auto_local_launch_service.sh
+
+ scp -o StrictHostKeyChecking=no -P $port ${outdir}.tgz ${user}@${hostname}:~/
+
+ launch_single_service $outdir $hostname $user $port $output_log
 }

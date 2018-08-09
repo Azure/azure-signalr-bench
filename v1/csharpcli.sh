@@ -175,10 +175,11 @@ do_start_single_cli_bench()
         ssh -o StrictHostKeyChecking=no -p $port ${user}@${server} "cd ${bench_slave_folder}; chmod +x ./$script"
         nohup ssh -o StrictHostKeyChecking=no -p $port ${user}@${server} "cd ${bench_slave_folder}; ./$script" &
 	local end=$((SECONDS + 120))
+	local cli_log="cli_agent_${server}.log"
 	while [ $SECONDS -lt $end ]
 	do
-		scp -o StrictHostKeyChecking=no -P $port ${user}@${server}:${bench_slave_folder}/${cli_bench_agent_output} .
-		local check=`grep "started" ${cli_bench_agent_output}`
+		scp -o StrictHostKeyChecking=no -P $port ${user}@${server}:${bench_slave_folder}/${cli_bench_agent_output} $cli_log
+		local check=`grep "started" ${cli_log}`
 		if [ "$check" != "" ]
 		then
 			echo "agent started!"
@@ -350,8 +351,9 @@ cat << _EOF > $remote_run_script
 #!/bin/bash
 #automatic generated script
 killall dotnet
-cd ${bench_server_folder} 
-export Azure__SignalR__ConnectionString="$connection_str"
+cd ${bench_server_folder}
+/home/${bench_app_user}/.dotnet/dotnet restore --no-cache # never use cache library
+/home/${app_user}/.dotnet/dotnet user-secrets set Azure:SignalR:ConnectionString "$connection_str"
 /home/${app_user}/.dotnet/dotnet run
 _EOF
 

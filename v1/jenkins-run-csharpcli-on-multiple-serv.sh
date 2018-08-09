@@ -1,5 +1,6 @@
 #!/bin/bash
 . ./jenkins_env.sh
+. ./servers_env.sh
 
 MaxConnectionNumber=1000000
 

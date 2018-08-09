@@ -5,15 +5,12 @@ def gen_normal_steps(connections, send, expectStep):
   s=int(send)
   expStep=int(expectStep)
   rtn = ""
-  if conn % s != 0:
-     rtn = "Wrong input for '" + connections + "' and '" + send + "'"
-  else:
-     step = conn / s
-     if expStep > 0 and expStep < step:
-       step = expStep
-     rtn = ""
-     for x in range(step):
-        rtn = rtn + "up" + send + ";scenario;"
+  step = conn / s
+  if expStep > 0 and expStep < step:
+    step = expStep
+  rtn = ""
+  for x in range(step):
+     rtn = rtn + "up" + send + ";scenario;"
   return rtn
 
 if __name__=="__main__":
