@@ -54,6 +54,34 @@ function deploy_package_4_multiple_service_vm() {
   done
 }
 
+update_single_azure_signalr_bench_appserver() {
+  local host=$1
+  local ssh_user=$2
+  local ssh_port=$3
+  ssh -o StrictHostKeyChecking=no -p ${ssh_port} ${ssh_user}@${host} "cd /home/${ssh_user}/azure-signalr-bench; git pull; cd v2/AppServer; /home/${ssh_user}/.dotnet/dotnet build"
+}
+
+update_azure_signalr_bench_appserver() {
+  local vm_list="$1"
+  local user=$2
+  local port=$3
+  iterate_all_vms "$vm_list" $user $port update_single_azure_signalr_bench_appserver
+}
+
+update_single_azure_signalr_bench_client() {
+  local host=$1
+  local ssh_user=$2
+  local ssh_port=$3
+  ssh -o StrictHostKeyChecking=no -p ${ssh_port} ${ssh_user}@${host} "cd /home/${ssh_user}/azure-signalr-bench; git pull; cd v2/Rpc/Bench.Server; /home/${ssh_user}/.dotnet/dotnet build"
+}
+
+update_azure_signalr_bench_client() {
+  local vm_list="$1"
+  local user=$2
+  local port=$3
+  iterate_all_vms "$vm_list" $user $port update_single_azure_signalr_bench_client
+}
+
 function replace_appsettings() {
   local dir=$1
   local serviceHost=$2
@@ -208,6 +236,20 @@ iterate_all_vms() {
     $callback $vm_host $user $port
     i=$(($i+1))
   done
+}
+
+function stop_single_service() {
+  local vm_host=$1
+  local ssh_user=$2
+  local ssh_port=$3
+  ssh -o StrictHostKeyChecking=no -p ${ssh_port} ${ssh_user}@${vm_host} "killall ${g_service_runtime}"
+}
+
+function stop_service_on_all_vms() {
+  local vm_list="$1"
+  local user=$2
+  local port=$3
+  iterate_all_vms "$vm_list" $user $port stop_single_service
 }
 
 function launch_service_on_all_vms() {
