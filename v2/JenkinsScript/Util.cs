@@ -25,12 +25,13 @@ namespace JenkinsScript
 
         public static long Timestamp()
         {
-            var unixDateTime = (long)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalMilliseconds;
+            var unixDateTime = (long) (DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalMilliseconds;
             return unixDateTime;
         }
 
         public static string MakeSureDirectoryExist(string dir)
         {
+            Util.Log($"MakeSureDirectoryExist: {dir}");
             if (!Directory.Exists(dir))
             {
                 Directory.CreateDirectory(dir);
@@ -52,8 +53,7 @@ namespace JenkinsScript
                         latency = Convert.ToInt32((p.Name.Substring(startInd)));
                     }
                     catch (Exception)
-                    {
-                    }
+                    { }
 
                     if (p.Name.IndexOf("ge") >= 0)
                     {
