@@ -36,8 +36,7 @@ namespace Bench.RpcMaster
         // protect the file writing
         private static readonly SemaphoreSlim _writeLock = new SemaphoreSlim(1);
 
-        // private static double _successThreshold = 0.7;
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             // parse args
             var argsOption = ParseArgs(args);
@@ -86,7 +85,7 @@ namespace Bench.RpcMaster
                 StartCollectCounters(clients, argsOption.OutputCounterFile);
 
                 // process jobs for each step
-                ProcessPipeline(clients, argsOption.PipeLine, slaveList,
+                await ProcessPipeline(clients, argsOption.PipeLine, slaveList,
                     argsOption.Connections, argsOption.ServiceType, argsOption.TransportType, argsOption.HubProtocal, argsOption.Scenario, argsOption.MessageSize,
                     argsOption.groupNum, argsOption.groupOverlap);
             }
@@ -480,7 +479,7 @@ namespace Bench.RpcMaster
             });
         }
 
-        private static void ProcessPipeline(List<RpcService.RpcServiceClient> clients, string pipelineStr, List<string> slaveList, int connections,
+        private static async Task ProcessPipeline(List<RpcService.RpcServiceClient> clients, string pipelineStr, List<string> slaveList, int connections,
             string serviceType, string transportType, string hubProtocol, string scenario, string messageSize,
             int groupNum, int overlap)
         {
@@ -526,8 +525,8 @@ namespace Bench.RpcMaster
                         client.RunJob(benchmarkCellConfig);
                     }));
                 });
-                Task.WhenAll(tasks).Wait();
-                Task.Delay(1000).Wait();
+                await Task.WhenAll(tasks);
+                await Task.Delay(1000);
 
                 // collect all connections' ids just after connections start
                 if (step.Contains("startConn"))
