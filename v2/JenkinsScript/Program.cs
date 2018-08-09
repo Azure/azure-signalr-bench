@@ -371,6 +371,7 @@ namespace JenkinsScript
             {
                 ShellHelper.CollectMachineStatistics(host, user, password, sshPort, path);
             };
+            timer.Start();
 
         }
     }
