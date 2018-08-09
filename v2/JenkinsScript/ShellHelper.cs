@@ -226,7 +226,7 @@ namespace JenkinsScript
 
             for (var i = 0; i < hosts.Count; i++)
             {
-                cmd = $"rm -rf ~/logs || true; rm -rf ~/results || true; cd {appSvrRoot}; " +
+                cmd = $"cd {appSvrRoot}; " +
                     $"export Azure__SignalR__ConnectionString='{azureSignalrConnectionStrings[i]}'; " +
                     $"export useLocalSignalR={useLocalSingalR}; " +
                     $"dotnet run > {logPath[i]}";
@@ -253,7 +253,7 @@ namespace JenkinsScript
 
             for (var i = 0; i < slaves.Count; i++)
             {
-                cmd = $"rm -rf ~/logs || true; rm -rf ~/results || true; cd {slaveRoot}; dotnet run -- --rpcPort {rpcPort} -d 0.0.0.0 > {logPath[i]}";
+                cmd = $"cd {slaveRoot}; dotnet run -- --rpcPort {rpcPort} -d 0.0.0.0 > {logPath[i]}";
                 Util.Log($"CMD: {user}@{slaves[i]}: {cmd}");
                 (errCode, result) = ShellHelper.RemoteBash(user, slaves[i], sshPort, password, cmd, wait : false);
                 if (errCode != 0) break;
@@ -299,7 +299,7 @@ namespace JenkinsScript
             var outputCounterDir = Path.Join(userRoot, $"results/{Environment.GetEnvironmentVariable("result_root")}/{suffix}/");
             outputCounterFile = outputCounterDir + $"counters.txt";
 
-            cmd = $"rm -rf ~/logs || true; rm -rf ~/results || true; cd {masterRoot}; ";
+            cmd = $"cd {masterRoot}; ";
             cmd += $"mkdir -p {outputCounterDir} || true;";
             cmd += $"dotnet run -- " +
                 $"--rpcPort 5555 " +
@@ -334,7 +334,7 @@ namespace JenkinsScript
 
             for (var i = 0; i < hosts.Count; i++)
             {
-                cmd = $"rm -rf ~/logs || true; rm -rf ~/results || true; cd {serviceDir}; dotnet run > {logPath[i]}";
+                cmd = $"cd {serviceDir}; dotnet run > {logPath[i]}";
                 Util.Log($"{user}@{hosts[i]}: {cmd}");
                 (errCode, result) = ShellHelper.RemoteBash(user, hosts[i], sshPort, password, cmd, wait : false);
 
@@ -442,7 +442,7 @@ namespace JenkinsScript
 
             var errCode = 0;
             var result = "";
-            var cmd = $"mkdir -p {targetDir}";
+            var cmd = $"rm -rf ~/logs || true; rm -rf ~/results || true; mkdir -p {targetDir}";
 
             Util.Log($"{user}@{host}: {cmd}");
             (errCode, result) = ShellHelper.RemoteBash(user, host, sshPort, password, cmd, wait : false);
