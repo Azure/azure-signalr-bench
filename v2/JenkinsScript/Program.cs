@@ -340,7 +340,7 @@ namespace JenkinsScript
                         ShellHelper.CollectStatistics(hosts, user, password, sshPort, $"/home/{user}/logs", Util.MakeSureDirectoryExist($"/home/{user}/signalr-bench-statistics/"));
 
                         // collect results from master
-                        ShellHelper.CollectStatistics((new string[] { privateIps.MasterPrivateIp }).ToList(), user, password, sshPort, $"/home/{user}/results", Util.MakeSureDirectoryExist($"/home/{user}/signalr-bench-statistics/"));
+                        ShellHelper.CollectStatistics((new string[] { privateIps.MasterPrivateIp }).ToList(), user, password, sshPort, $"/home/{user}/results/", Util.MakeSureDirectoryExist($"/home/{user}/signalr-bench-statistics/{resultRoot}/"));
 
                         break;
                     }
