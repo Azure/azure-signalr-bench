@@ -334,11 +334,10 @@ start_multiple_app_server()
 
 stop_multiple_app_server()
 {
-	local conn_str_list="$1"
-	local app_server_list="$2"
-	local ssh_user=$3
-	local ssh_port=$4
-	iterate_all_app_server_and_connection_str "$conn_str_list" "$app_server_list" stop_single_app_server $ssh_user $ssh_port
+	local app_server_list="$1"
+	local ssh_user=$2
+	local ssh_port=$3
+	iterate_all_vms "$app_server_list" $ssh_user $ssh_port stop_single_app_server
 }
 
 start_single_app_server()

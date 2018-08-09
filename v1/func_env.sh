@@ -633,3 +633,20 @@ function gen_final_report() {
   sh gen_summary.sh # refresh summary.html in NginxRoot gen_summary
   sh send_mail.sh $HOME/NginxRoot/$result_root/allunits.html
 }
+
+iterate_all_vms() {
+  local vm_list="$1"
+  local user=$2
+  local port=$3
+  local callback=$4
+  local i len vm_host
+  len=$(array_len $vm_list "|")
+  i=1
+  while [ $i -le $len ]
+  do
+    vm_host=$(array_get "$vm_list" $i "|")
+    $callback $vm_host $user $port
+    i=$(($i+1))
+  done
+}
+

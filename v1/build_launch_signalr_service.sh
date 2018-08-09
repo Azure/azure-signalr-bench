@@ -244,22 +244,6 @@ EOF
  done
 }
 
-iterate_all_vms() {
-  local vm_list="$1"
-  local user=$2
-  local port=$3
-  local callback=$4
-  local i len vm_host
-  len=$(array_len $vm_list "|")
-  i=1
-  while [ $i -le $len ]
-  do
-    vm_host=$(array_get "$vm_list" $i "|")
-    $callback $vm_host $user $port
-    i=$(($i+1))
-  done
-}
-
 function stop_single_service() {
   local vm_host=$1
   local ssh_user=$2
