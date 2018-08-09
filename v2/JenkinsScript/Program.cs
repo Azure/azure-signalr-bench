@@ -337,10 +337,10 @@ namespace JenkinsScript
                         ShellHelper.StartRpcMaster(privateIps.MasterPrivateIp, privateIps.SlavePrivateIp.Split(";").ToList(), user, password, sshPort, logPathMaster, serviceType, transportType, hubProtocol, scenario, connection, concurrentConnection, duration, interval, pipeline, groupNum, overlap, messageSize, serverUrl, suffix, masterRoot);
 
                         // collect all logs
-                        ShellHelper.CollectStatistics(hosts, user, password, sshPort, $"/home/{user}/logs", Util.MakeSureDirectoryExist($"/home/{user}/signalr-bench-statistics/logs/{resultRoot}/"));
+                        ShellHelper.CollectStatistics(hosts, user, password, sshPort, $"/home/{user}/logs/{resultRoot}/", Util.MakeSureDirectoryExist($"/home/{user}/signalr-bench-statistics/logs/"));
 
                         // collect results from master
-                        ShellHelper.CollectStatistics(privateIps.MasterPrivateIp.Split(";").ToList(), user, password, sshPort, $"/home/{user}/results/", Util.MakeSureDirectoryExist($"/home/{user}/signalr-bench-statistics/results/{resultRoot}/"));
+                        ShellHelper.CollectStatistics(privateIps.MasterPrivateIp.Split(";").ToList(), user, password, sshPort, $"/home/{user}/results/{resultRoot}/", Util.MakeSureDirectoryExist($"/home/{user}/signalr-bench-statistics/results/"));
 
                         break;
                     }
