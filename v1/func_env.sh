@@ -655,6 +655,15 @@ iterate_all_vms() {
   done
 }
 
+function stop_collect_top_on_single_vm() {
+  local output_dir=$1
+  for i in `ls $output_dir/top_nohup_pid_*`
+  do
+    local pid=`cat $i`
+    kill -9 $pid
+  done
+}
+
 function collect_top_on_single_vm() {
   local vm_host=$1
   local ssh_user=$2
