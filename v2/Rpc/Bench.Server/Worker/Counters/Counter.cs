@@ -81,7 +81,7 @@ namespace Bench.RpcSlave.Worker.Counters
         public void CountLatency(long sendTimestamp, long receiveTimestamp)
         {
             long dTime = receiveTimestamp - sendTimestamp;
-            var i = (ulong)dTime / LatencyStep;
+            var i = (ulong)(dTime < 0 ? 0 : dTime) / LatencyStep;
             if (i >= LatencyLength)
             {
                 InnerCounters.AddOrUpdate($"message:ge:{LatencyLength * LatencyStep}", 0, (k, v) => v + 1);
