@@ -694,3 +694,47 @@ function collect_top_on_all_vms() {
   iterate_all_vms "$vm_list" $user $port collect_top_on_single_vm $output_folder
 }
 
+function check_single_service_client_connection() {
+  local vm_host=$1
+  local ssh_user=$2
+  local ssh_port=$3
+  local client_conn=`ssh -o StrictHostKeyChecking=no -p ${ssh_port} ${ssh_user}@${vm_host} "curl http://localhost:5003/health/stat"`
+  #"netstat -an|grep :5001|grep EST|wc -l"
+  echo "${vm_host}: ${client_conn}"
+}
+
+function check_all_service_client_connection() {
+  local vm_list="$1"
+  local user=$2
+  local port=$3
+  iterate_all_vms "$vm_list" $user $port check_single_service_client_connection
+}
+
+function force_sync_time_on_single_vm() {
+  local vm_host=$1
+  local ssh_user=$2
+  local ssh_port=$3
+  ssh -o StrictHostKeyChecking=no -p ${ssh_port} ${ssh_user}@${vm_host} "sudo service ntp stop;ntpd -gq;service ntp start;ntpq -np"
+}
+
+function force_sync_time_on_all_vim() {
+  local vm_list="$1"
+  local user=$2
+  local port=$3
+  iterate_all_vms "$vm_list" $user $port force_sync_time_on_single_vm
+}
+
+
+function install_ntp_on_single_vm() {
+  local vm_host=$1
+  local ssh_user=$2
+  local ssh_port=$3
+  ssh -o StrictHostKeyChecking=no -p ${ssh_port} ${ssh_user}@${vm_host} "sudo -s; apt-get install -y ntp ntpstat"
+}
+
+function install_ntp_on_all_vm() {
+  local vm_list="$1"
+  local user=$2
+  local port=$3
+  iterate_all_vms "$vm_list" $user $port install_ntp_on_single_vm
+}

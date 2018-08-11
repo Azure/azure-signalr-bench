@@ -356,9 +356,10 @@ killall dotnet
 cd ${bench_server_folder}
 /home/${bench_app_user}/.dotnet/dotnet restore --no-cache # never use cache library
 /home/${app_user}/.dotnet/dotnet user-secrets set Azure:SignalR:ConnectionString "$connection_str"
-/home/${app_user}/.dotnet/dotnet run
+/home/${app_user}/.dotnet/dotnet run # >out.log
 _EOF
 
+echo "scp -o StrictHostKeyChecking=no -P ${app_ssh_port} $remote_run_script ${app_user}@${app_server}:~/"
 scp -o StrictHostKeyChecking=no -P ${app_ssh_port} $remote_run_script ${app_user}@${app_server}:~/
 
 cat << _EOF > $local_run_script
@@ -366,24 +367,27 @@ cat << _EOF > $local_run_script
 #automatic generated script
 ssh -o StrictHostKeyChecking=no -p ${app_ssh_port} ${app_user}@${app_server} "sh $remote_run_script"
 _EOF
-
-        nohup sh $local_run_script > ${output_log} 2>&1 &
-        local end=$((SECONDS + 60))
+        nohup sh $local_run_script > ${output_log} &
+        local end=$((SECONDS + 120))
         local finish=0
         local check
         while [ $SECONDS -lt $end ] && [ "$finish" == "0" ]
         do
+		#echo "scp -o StrictHostKeyChecking=no -P ${app_ssh_port} ${app_user}@${app_server}:${bench_server_folder}/out.log ${output_log}"
+		#scp -o StrictHostKeyChecking=no -P ${app_ssh_port} ${app_user}@${app_server}:${bench_server_folder}/out.log ${output_log}
                 check=`grep "HttpConnection Started" ${output_log}|wc -l`
                 if [ "$check" -ge "5" ]
                 then
                         finish=1
                         echo "server is started!"
-                        break
+                        return
                 else
                         echo "wait for server starting..."
                 fi
                 sleep 1
         done
+	echo "!!Fail server does not start!!"
+	exit 1
 }
 
 stop_single_app_server()
