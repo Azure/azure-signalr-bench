@@ -109,14 +109,14 @@ namespace Bench.RpcMaster
             return connectionIds;
         }
 
-        private static List<string> InternalMoveConnectionIdsOnEachClient(List<RpcService.RpcServiceClient> clients)
+        private static List<string> LeftShiftConnectionIdsOnEachClient(List<RpcService.RpcServiceClient> clients)
         {
             var connectionIds = new List<string>();
             clients.ForEach(client =>
             {
                 var connectionIdsPerClient = client.GetConnectionIds(new Empty());
                 var connectionIdsMoved = new List<string>(connectionIdsPerClient.List);
-                connectionIdsMoved.InternalMove();
+                connectionIdsMoved.CircleLeftShift();
                 connectionIds.AddRange(connectionIdsMoved);
             });
             return connectionIds;
@@ -568,7 +568,7 @@ namespace Bench.RpcMaster
                 {
                     if (bool.Parse(argsOption.sendToFixedClient))
                     {
-                        targetConnectionIds = InternalMoveConnectionIdsOnEachClient(clients);
+                        targetConnectionIds = LeftShiftConnectionIdsOnEachClient(clients);
                     }
                     else
                     {
