@@ -86,9 +86,7 @@ namespace Bench.RpcMaster
                 StartCollectCounters(clients, argsOption.OutputCounterFile);
 
                 // process jobs for each step
-                ProcessPipeline(clients, argsOption.PipeLine, slaveList,
-                    argsOption.Connections, argsOption.ServiceType, argsOption.TransportType, argsOption.HubProtocal, argsOption.Scenario, argsOption.MessageSize,
-                    argsOption.groupNum, argsOption.groupOverlap);
+                ProcessPipeline(clients, slaveList, argsOption);
             }
             catch (Exception ex)
             {
@@ -109,6 +107,19 @@ namespace Bench.RpcMaster
             {
                 var connectionIdsPerClient = client.GetConnectionIds(new Empty());
                 connectionIds.AddRange(connectionIdsPerClient.List);
+            });
+            return connectionIds;
+        }
+
+        private static List<string> InternalMoveConnectionIdsOnEachClient(List<RpcService.RpcServiceClient> clients)
+        {
+            var connectionIds = new List<string>();
+            clients.ForEach(client =>
+            {
+                var connectionIdsPerClient = client.GetConnectionIds(new Empty());
+                var connectionIdsMoved = new List<string>(connectionIdsPerClient.List);
+                connectionIdsMoved.InternalMove();
+                connectionIds.AddRange(connectionIdsMoved);
             });
             return connectionIds;
         }
@@ -231,8 +242,8 @@ namespace Bench.RpcMaster
         }
 
         private static BenchmarkCellConfig GenerateBenchmarkConfig(int indClient, string step,
-            string serviceType, string transportType, string hubProtocol, string scenario, string MessageSizeStr,
-            List<string> connectionIds, List<string> groupNameList)
+            string serviceType, string transportType, string hubProtocol, string scenario,
+            string MessageSizeStr, List<string> targetConnectionIds, List<string> groupNameList)
         {
             var messageSize = ParseMessageSize(MessageSizeStr);
             var benchmarkCellConfig = new BenchmarkCellConfig
@@ -250,7 +261,7 @@ namespace Bench.RpcMaster
             };
 
             // add lists
-            benchmarkCellConfig.TargetConnectionIds.AddRange(connectionIds);
+            benchmarkCellConfig.TargetConnectionIds.AddRange(targetConnectionIds);
             benchmarkCellConfig.GroupNameList.AddRange(groupNameList);
             return benchmarkCellConfig;
         }
@@ -480,14 +491,22 @@ namespace Bench.RpcMaster
             });
         }
 
-        private static void ProcessPipeline(List<RpcService.RpcServiceClient> clients, string pipelineStr, List<string> slaveList, int connections,
-            string serviceType, string transportType, string hubProtocol, string scenario, string messageSize,
-            int groupNum, int overlap)
+        private static void ProcessPipeline(List<RpcService.RpcServiceClient> clients, List<string> slaveList, ArgsOption argsOption)
         {
+            var pipelineStr = argsOption.PipeLine;
+            var connections = argsOption.Connections;
+            var serviceType = argsOption.ServiceType;
+            var transportType = argsOption.TransportType;
+            var hubProtocol = argsOption.HubProtocal;
+            var scenario = argsOption.Scenario;
+            var messageSize = argsOption.MessageSize;
+            var groupNum = argsOption.groupNum;
+            var overlap = argsOption.groupOverlap;
+
             var pipeline = pipelineStr.Split(';').ToList();
             var connectionConfigBuilder = new ConnectionConfigBuilder();
             var connectionAllConfigList = connectionConfigBuilder.Build(connections);
-            var connectionIds = new List<string>();
+            var targetConnectionIds = new List<string>();
             var groupNameList = GenerateGroupNameList(connections, groupNum, overlap);
             for (var i = 0; i < pipeline.Count; i++)
             {
@@ -507,7 +526,8 @@ namespace Bench.RpcMaster
                     indClient++;
 
                     var benchmarkCellConfig = GenerateBenchmarkConfig(indClient, step,
-                        serviceType, transportType, hubProtocol, scenario, messageSize, connectionIds, groupNameList);
+                        serviceType, transportType, hubProtocol, scenario, messageSize,
+                        targetConnectionIds, groupNameList);
 
                     Util.Log($"service: {benchmarkCellConfig.ServiceType}; transport: {benchmarkCellConfig.TransportType}; hubprotocol: {benchmarkCellConfig.HubProtocol}; scenario: {benchmarkCellConfig.Scenario}; step: {step}");
 
@@ -532,8 +552,15 @@ namespace Bench.RpcMaster
                 // collect all connections' ids just after connections start
                 if (step.Contains("startConn"))
                 {
-                    connectionIds = CollectConnectionIds(clients);
-                    connectionIds.Shuffle();
+                    if (bool.Parse(argsOption.sendToFixedClient))
+                    {
+                        targetConnectionIds = InternalMoveConnectionIdsOnEachClient(clients);
+                    }
+                    else
+                    {
+                        targetConnectionIds = CollectConnectionIds(clients);
+                        targetConnectionIds.Shuffle();
+                    }
                 }
             }
         }
