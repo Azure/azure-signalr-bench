@@ -78,9 +78,7 @@ namespace Bench.RpcMaster
                 var jobConfig = new JobConfig(argsOption);
 
                 // call salves to load job config
-                ClientsLoadJobConfig(clients, argsOption.Connections, slaveList,
-                    argsOption.ConcurrentConnection, argsOption.Duration, argsOption.Interval,
-                    argsOption.PipeLine, argsOption.ServerUrl, argsOption.MessageSize);
+                ClientsLoadJobConfig(clients, slaveList, argsOption);
 
                 // collect counters
                 StartCollectCounters(clients, argsOption.OutputCounterFile);
@@ -448,9 +446,16 @@ namespace Bench.RpcMaster
         }
 
         private static void ClientsLoadJobConfig(List<RpcService.RpcServiceClient> clients,
-            int connectionCnt, List<string> slaveList, int concurrentConnection, int duration,
-            int interval, string pipelineStr, string serverUrl, string messageSizeStr)
+            List<string> slaveList, ArgsOption argsOption)
         {
+            var connectionCnt = argsOption.Connections;
+            var concurrentConnection = argsOption.ConcurrentConnection;
+            var duration = argsOption.Duration;
+            var interval = argsOption.Interval;
+            var pipelineStr = argsOption.PipeLine;
+            var serverUrl = argsOption.ServerUrl;
+            var messageSizeStr = argsOption.MessageSize;
+
             var messageSize = ParseMessageSize(messageSizeStr);
             var servers = serverUrl.Split(';');
             var serverCount = servers.Length;
@@ -474,13 +479,22 @@ namespace Bench.RpcMaster
                 var state = new Stat();
                 state = client.CreateWorker(new Empty());
 
+                string server = null;
+                if (bool.Parse(argsOption.sendToFixedClient))
+                {
+                    server = serverUrl;
+                }
+                else
+                {
+                    server = servers[i % serverCount];
+                }
                 var config = new CellJobConfig
                 {
                     Connections = clientConnections,
                     ConcurrentConnections = concurrentConnections,
                     Interval = interval,
                     Duration = duration,
-                    ServerUrl = servers[i % serverCount],
+                    ServerUrl = server,
                     Pipeline = pipelineStr
                 };
 
