@@ -34,7 +34,7 @@ namespace Bench.Common
         }
 
         // Circle left shift of values on index of 
-        // 0, 1, 2, ..., n-1 to n-1, 0, 1, ..., 0
+        // 0, 1, 2, ..., n-2, n-1 to 1, 2, 3, ..., n-1, 0
         public static void CircleLeftShift<T>(this IList<T> list)
         {
             var n = list.Count;

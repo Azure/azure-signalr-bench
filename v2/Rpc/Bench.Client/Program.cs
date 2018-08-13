@@ -117,6 +117,12 @@ namespace Bench.RpcMaster
                 var connectionIdsPerClient = client.GetConnectionIds(new Empty());
                 var connectionIdsMoved = new List<string>(connectionIdsPerClient.List);
                 connectionIdsMoved.CircleLeftShift();
+                // The corner case: target connection Id is self
+                // This case happens, for example, 3 connections, 2 servers:
+                //    Connections belongs to 2 servers: 0, 1, 0
+                //    After left shift, the target is:  1, 0, 0
+                //    which means target connections: [0] -> [1], [1] -> [0], [0] -> [0]
+                //    you see, there is a self to self message sending (echo)
                 connectionIds.AddRange(connectionIdsMoved);
             });
             return connectionIds;
@@ -522,6 +528,7 @@ namespace Bench.RpcMaster
             var connectionAllConfigList = connectionConfigBuilder.Build(connections);
             var targetConnectionIds = new List<string>();
             var groupNameList = GenerateGroupNameList(connections, groupNum, overlap);
+            var serverUrls = argsOption.ServerUrl.Split(';');
             for (var i = 0; i < pipeline.Count; i++)
             {
                 var tasks = new List<Task>(clients.Count);
@@ -566,7 +573,11 @@ namespace Bench.RpcMaster
                 // collect all connections' ids just after connections start
                 if (step.Contains("startConn"))
                 {
-                    if (bool.Parse(argsOption.sendToFixedClient))
+                    // There are more than 1 server, we'd prefer to send message to target connection
+                    // on different service, which means those message will go to Redis.
+                    // In addition, in order to avoid time difference of different clients,
+                    // The message should be sent to connections on the same clients.
+                    if (bool.Parse(argsOption.sendToFixedClient) && serverUrls.Length > 1)
                     {
                         targetConnectionIds = LeftShiftConnectionIdsOnEachClient(clients);
                     }
