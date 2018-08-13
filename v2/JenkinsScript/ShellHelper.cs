@@ -434,6 +434,15 @@ namespace JenkinsScript
             return (errCode, result);
         }
 
+        public static(int, string) RemoveSyslog(string host, string user, string password, int sshPort)
+        {
+            var errCode = 0;
+            var result = "";
+            var cmd = "sudo rm -rf /var/log/syslog";
+            Util.Log($"{user}@{host}: {cmd}");
+            (errCode, result) = ShellHelper.RemoteBash(user, host, sshPort, password, cmd, handleRes: true);
+            return (errCode, result);
+        }
         public static(int, string) PrepareLogPath(string host, string user, string password, int sshPort,
             string dstDir, string time, string suffix)
         {
