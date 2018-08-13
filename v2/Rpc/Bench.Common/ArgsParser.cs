@@ -106,7 +106,7 @@ namespace Bench.Common
         [Option("messageSize", Default = "0", Required = false, HelpText = "")]
         public string MessageSize { get; set; }
 
-        [Option("sendToFixedClient", Default = "false", Required = false, HelpText = "Every client sends message to another fixed client")]
+        [Option("sendToFixedClient", Default = "true", Required = false, HelpText = "Every client sends message to another fixed client")]
         public string sendToFixedClient { get; set; }
 
     }
