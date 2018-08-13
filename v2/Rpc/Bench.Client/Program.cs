@@ -528,7 +528,7 @@ namespace Bench.RpcMaster
             var connectionAllConfigList = connectionConfigBuilder.Build(connections);
             var targetConnectionIds = new List<string>();
             var groupNameList = GenerateGroupNameList(connections, groupNum, overlap);
-            var serverUrls = serverCount;
+            // var serverUrls = serverCount;
             for (var i = 0; i < pipeline.Count; i++)
             {
                 var tasks = new List<Task>(clients.Count);
