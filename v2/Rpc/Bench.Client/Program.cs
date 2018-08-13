@@ -109,7 +109,7 @@ namespace Bench.RpcMaster
             return connectionIds;
         }
 
-        private static List<string> LeftShiftConnectionIdsOnEachClient(List<RpcService.RpcServiceClient> clients)
+        private static List<string> LeftShiftConnectionIdsOnEachClient(List<RpcService.RpcServiceClient> clients, int serverCount)
         {
             var connectionIds = new List<string>();
             clients.ForEach(client =>
@@ -117,12 +117,19 @@ namespace Bench.RpcMaster
                 var connectionIdsPerClient = client.GetConnectionIds(new Empty());
                 var connectionIdsMoved = new List<string>(connectionIdsPerClient.List);
                 connectionIdsMoved.CircleLeftShift();
-                // The corner case: target connection Id is self
-                // This case happens, for example, 3 connections, 2 servers:
-                //    Connections belongs to 2 servers: 0, 1, 0
-                //    After left shift, the target is:  1, 0, 0
-                //    which means target connections: [0] -> [1], [1] -> [0], [0] -> [0]
-                //    you see, there is a self to self message sending (echo)
+                var connectionCount = connectionIdsMoved.Count;
+                // The corner case: 1st connection and last connection connect to the same server
+                // This case happens, for example, 3 connections: c0, c1, c2, 2 servers: s0, s1
+                //    Connections to 2 servers: connection0(c0-s0), connection1(c1-s1), connection2(c2-s0)
+                //    After left shift, the target is:  connection1, connection2, connection0
+                //    which means message sent: connection0 -> connection1, connection1 -> connection2, connection2 -> connection0
+                //    you see, connection2 and connection0 belong to the same server: s0.
+                //    As a result, the message will not go to Redis.
+                //    We force to change connection2 to send message to another connection1
+                if ((connectionCount - 1) % serverCount == 0)
+                {
+                    connectionIdsMoved[connectionCount - 1] = connectionIdsMoved[1];
+                }
                 connectionIds.AddRange(connectionIdsMoved);
             });
             return connectionIds;
@@ -579,7 +586,7 @@ namespace Bench.RpcMaster
                     // The message should be sent to connections on the same clients.
                     if (bool.Parse(argsOption.sendToFixedClient) && serverUrls.Length > 1)
                     {
-                        targetConnectionIds = LeftShiftConnectionIdsOnEachClient(clients);
+                        targetConnectionIds = LeftShiftConnectionIdsOnEachClient(clients, serverUrls.Length);
                     }
                     else
                     {
