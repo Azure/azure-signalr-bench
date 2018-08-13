@@ -1,5 +1,6 @@
 #!/bin/bash
 . ./jenkins_env.sh
+. ./servers_env.sh
 
 MaxConnectionNumber=1000000
 
@@ -75,7 +76,7 @@ fi
 sh run_csharp_cli.sh
 
 echo "Stop app server"
-stop_multiple_app_server "$connection_string_list" "$bench_app_pub_server" $bench_app_user $bench_app_pub_port "$app_launch_log_dir"
+stop_multiple_app_server "$bench_app_pub_server" $bench_app_user $bench_app_pub_port
 
 if [ "$service_name" != "" ]
 then

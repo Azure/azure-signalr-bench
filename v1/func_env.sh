@@ -633,3 +633,123 @@ function gen_final_report() {
   sh gen_summary.sh # refresh summary.html in NginxRoot gen_summary
   sh send_mail.sh $HOME/NginxRoot/$result_root/allunits.html
 }
+
+iterate_all_vms() {
+  local vm_list="$1"
+  local user=$2
+  local port=$3
+  local callback=$4
+  local appendix=""
+  local i len vm_host
+  if [ $# -eq 5 ]
+  then
+     appendix="$5"
+  fi
+  len=$(array_len $vm_list "|")
+  i=1
+  while [ $i -le $len ]
+  do
+    vm_host=$(array_get "$vm_list" $i "|")
+    $callback $vm_host $user $port $appendix
+    i=$(($i+1))
+  done
+}
+
+function stop_collect_top_on_single_vm() {
+  local output_dir=$1
+  for i in `ls $output_dir/top_nohup_pid_*`
+  do
+    local pid=`cat $i`
+    kill -9 $pid
+  done
+}
+
+function collect_top_on_single_vm() {
+  local vm_host=$1
+  local ssh_user=$2
+  local ssh_port=$3
+  local output_folder=$4
+  local random=`tr -cd '[:alnum:]' < /dev/urandom | fold -w4 | head -n1`
+  local output_file="top_${random}_${vm_host}.txt"
+  local bg_pid_file="top_nohup_pid_${random}"
+  local script="/tmp/nohup_top_${random}.sh"
+cat << EOF > $script
+#!/bin/bash
+while [ 1 ]
+do
+  ssh -o StrictHostKeyChecking=no -p ${ssh_port} ${ssh_user}@${vm_host} "top -b|head -n 10" >> $output_folder/$output_file
+  sleep 1
+done
+EOF
+  chmod +x $script
+  nohup $script &
+  echo $! > $output_folder/$bg_pid_file
+}
+
+function collect_top_on_all_vms() {
+  local vm_list="$1"
+  local user=$2
+  local port=$3
+  local output_folder=$4
+  iterate_all_vms "$vm_list" $user $port collect_top_on_single_vm $output_folder
+}
+
+function check_single_service_client_connection() {
+  local vm_host=$1
+  local ssh_user=$2
+  local ssh_port=$3
+  #local client_conn=`ssh -o StrictHostKeyChecking=no -p ${ssh_port} ${ssh_user}@${vm_host} "curl http://localhost:5003/health/stat"`
+  local client_conn=`ssh -o StrictHostKeyChecking=no -p ${ssh_port} ${ssh_user}@${vm_host} "netstat -an|grep :5001|grep EST|wc -l"`
+  echo "${vm_host}: ${client_conn}"
+}
+
+function check_all_service_client_connection() {
+  local vm_list="$1"
+  local user=$2
+  local port=$3
+  iterate_all_vms "$vm_list" $user $port check_single_service_client_connection
+}
+
+function get_ntpq_stat_on_single_vm() {
+  local vm_host=$1
+  local ssh_user=$2
+  local ssh_port=$3
+  echo "=======================$vm_host================="
+  ssh -o StrictHostKeyChecking=no -p ${ssh_port} ${ssh_user}@${vm_host} "ntpq -np"
+}
+
+function get_ntpq_stat_on_all_vm() {
+  local vm_list="$1"
+  local user=$2
+  local port=$3
+  iterate_all_vms "$vm_list" $user $port get_ntpq_stat_on_single_vm
+}
+
+function force_sync_time_on_single_vm() {
+  local vm_host=$1
+  local ssh_user=$2
+  local ssh_port=$3
+  ssh -o StrictHostKeyChecking=no -p ${ssh_port} ${ssh_user}@${vm_host} "sudo service ntp stop;sudo ntpd -gq;sudo service ntp start;ntpq -np"
+}
+
+function force_sync_time_on_all_vm() {
+  local vm_list="$1"
+  local user=$2
+  local port=$3
+  iterate_all_vms "$vm_list" $user $port force_sync_time_on_single_vm
+}
+
+
+function install_ntp_on_single_vm() {
+  local vm_host=$1
+  local ssh_user=$2
+  local ssh_port=$3
+  ssh -o StrictHostKeyChecking=no -p ${ssh_port} ${ssh_user}@${vm_host} "sudo apt-get install -y ntp ntpstat"
+}
+
+function install_ntp_on_all_vm() {
+  local vm_list="$1"
+  local user=$2
+  local port=$3
+  iterate_all_vms "$vm_list" $user $port install_ntp_on_single_vm
+}

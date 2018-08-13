@@ -260,9 +260,11 @@ function start_connection_tracking() {
      for i in $result
      do
        local date_time=`date --iso-8601='seconds'`
-       local cli_connection=`kubectl exec $i --kubeconfig=$config_file -- bash -c "netstat -an|grep 5001|grep EST|wc -l"`
-       local ser_connection=`kubectl exec $i --kubeconfig=$config_file -- bash -c "netstat -an|grep 5002|grep EST|wc -l"`
-       echo "${date_time} $cli_connection $ser_connection" >> $output_dir/${i}_connections.txt
+       local cli_ser_stat=`kubectl exec $i --kubeconfig=$config_file -- bash -c "curl http://localhost:5003/health/stat" 2> /dev/null`
+       echo "${date_time} ${cli_ser_stat}" >> $output_dir/${i}_connections.txt
+       #local cli_connection=`kubectl exec $i --kubeconfig=$config_file -- bash -c "netstat -an|grep 5001|grep EST|wc -l"`
+       #local ser_connection=`kubectl exec $i --kubeconfig=$config_file -- bash -c "netstat -an|grep 5002|grep EST|wc -l"`
+       #echo "${date_time} $cli_connection $ser_connection" >> $output_dir/${i}_connections.txt
      done
      sleep 1
   done

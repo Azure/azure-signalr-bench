@@ -175,10 +175,11 @@ do_start_single_cli_bench()
         ssh -o StrictHostKeyChecking=no -p $port ${user}@${server} "cd ${bench_slave_folder}; chmod +x ./$script"
         nohup ssh -o StrictHostKeyChecking=no -p $port ${user}@${server} "cd ${bench_slave_folder}; ./$script" &
 	local end=$((SECONDS + 120))
+	local cli_log="cli_agent_${server}.log"
 	while [ $SECONDS -lt $end ]
 	do
-		scp -o StrictHostKeyChecking=no -P $port ${user}@${server}:${bench_slave_folder}/${cli_bench_agent_output} .
-		local check=`grep "started" ${cli_bench_agent_output}`
+		scp -o StrictHostKeyChecking=no -P $port ${user}@${server}:${bench_slave_folder}/${cli_bench_agent_output} $cli_log
+		local check=`grep "started" ${cli_log}`
 		if [ "$check" != "" ]
 		then
 			echo "agent started!"
@@ -296,7 +297,11 @@ iterate_all_app_server_and_connection_str()
 	local callback=$3
 	local ssh_user=$4
 	local ssh_port=$5
-	local output_log_dir="$6"
+	local output_log_dir=""
+	if [ $# -ne 5 ]
+	then
+	  output_log_dir="$6"
+	fi
 	local conn_str_len=$(array_len "$connection_string_list" "|")
 	local app_server_len=$(array_len "$app_server_list" "|")
 	if [ "$conn_str_len" != "$app_server_len" ]
@@ -329,12 +334,10 @@ start_multiple_app_server()
 
 stop_multiple_app_server()
 {
-	local conn_str_list="$1"
-	local app_server_list="$2"
-	local ssh_user=$3
-	local ssh_port=$4
-	local output_dir="$5"
-	iterate_all_app_server_and_connection_str "$conn_str_list" "$app_server_list" stop_single_app_server $ssh_user $ssh_port "$output_dir"
+	local app_server_list="$1"
+	local ssh_user=$2
+	local ssh_port=$3
+	iterate_all_vms "$app_server_list" $ssh_user $ssh_port stop_single_app_server
 }
 
 start_single_app_server()
@@ -343,18 +346,20 @@ start_single_app_server()
 	local app_user=$2
 	local app_ssh_port=$3
 	local connection_str="$4"
-	local output_log="$5/$app_running_log"
+	local output_log="$5/${app_server}_${app_running_log}"
         local local_run_script="auto_local_launch.sh"
         local remote_run_script="auto_launch_app.sh"
 cat << _EOF > $remote_run_script
 #!/bin/bash
 #automatic generated script
 killall dotnet
-cd ${bench_server_folder} 
-export Azure__SignalR__ConnectionString="$connection_str"
-/home/${app_user}/.dotnet/dotnet run
+cd ${bench_server_folder}
+/home/${bench_app_user}/.dotnet/dotnet restore --no-cache # never use cache library
+/home/${app_user}/.dotnet/dotnet user-secrets set Azure:SignalR:ConnectionString "$connection_str"
+/home/${app_user}/.dotnet/dotnet run # >out.log
 _EOF
 
+echo "scp -o StrictHostKeyChecking=no -P ${app_ssh_port} $remote_run_script ${app_user}@${app_server}:~/"
 scp -o StrictHostKeyChecking=no -P ${app_ssh_port} $remote_run_script ${app_user}@${app_server}:~/
 
 cat << _EOF > $local_run_script
@@ -362,24 +367,27 @@ cat << _EOF > $local_run_script
 #automatic generated script
 ssh -o StrictHostKeyChecking=no -p ${app_ssh_port} ${app_user}@${app_server} "sh $remote_run_script"
 _EOF
-
-        nohup sh $local_run_script > ${output_log} 2>&1 &
-        local end=$((SECONDS + 60))
+        nohup sh $local_run_script > ${output_log} &
+        local end=$((SECONDS + 120))
         local finish=0
         local check
         while [ $SECONDS -lt $end ] && [ "$finish" == "0" ]
         do
+		#echo "scp -o StrictHostKeyChecking=no -P ${app_ssh_port} ${app_user}@${app_server}:${bench_server_folder}/out.log ${output_log}"
+		#scp -o StrictHostKeyChecking=no -P ${app_ssh_port} ${app_user}@${app_server}:${bench_server_folder}/out.log ${output_log}
                 check=`grep "HttpConnection Started" ${output_log}|wc -l`
                 if [ "$check" -ge "5" ]
                 then
                         finish=1
                         echo "server is started!"
-                        break
+                        return
                 else
                         echo "wait for server starting..."
                 fi
                 sleep 1
         done
+	echo "!!Fail server does not start!!"
+	exit 1
 }
 
 stop_single_app_server()

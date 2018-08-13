@@ -77,9 +77,7 @@ namespace Bench.RpcMaster
                 var jobConfig = new JobConfig(argsOption);
 
                 // call salves to load job config
-                ClientsLoadJobConfig(clients, argsOption.Connections, slaveList,
-                    argsOption.ConcurrentConnection, argsOption.Duration, argsOption.Interval,
-                    argsOption.PipeLine, argsOption.ServerUrl, argsOption.MessageSize);
+                ClientsLoadJobConfig(clients, slaveList, argsOption);
 
                 // collect counters
                 StartCollectCounters(clients, argsOption.OutputCounterFile);
@@ -87,7 +85,7 @@ namespace Bench.RpcMaster
                 // process jobs for each step
                 await ProcessPipeline(clients, argsOption.PipeLine, slaveList,
                     argsOption.Connections, argsOption.ServiceType, argsOption.TransportType, argsOption.HubProtocal, argsOption.Scenario, argsOption.MessageSize,
-                    argsOption.groupNum, argsOption.groupOverlap);
+                    argsOption.groupNum, argsOption.groupOverlap, argsOption.ServerUrl.Split(";").ToList().Count, argsOption.sendToFixedClient);
             }
             catch (Exception ex)
             {
@@ -108,6 +106,32 @@ namespace Bench.RpcMaster
             {
                 var connectionIdsPerClient = client.GetConnectionIds(new Empty());
                 connectionIds.AddRange(connectionIdsPerClient.List);
+            });
+            return connectionIds;
+        }
+
+        private static List<string> LeftShiftConnectionIdsOnEachClient(List<RpcService.RpcServiceClient> clients, int serverCount)
+        {
+            var connectionIds = new List<string>();
+            clients.ForEach(client =>
+            {
+                var connectionIdsPerClient = client.GetConnectionIds(new Empty());
+                var connectionIdsMoved = new List<string>(connectionIdsPerClient.List);
+                connectionIdsMoved.CircleLeftShift();
+                var connectionCount = connectionIdsMoved.Count;
+                // The corner case: 1st connection and last connection connect to the same server
+                // This case happens, for example, 3 connections: c0, c1, c2, 2 servers: s0, s1
+                //    Connections to 2 servers: connection0(c0-s0), connection1(c1-s1), connection2(c2-s0)
+                //    After left shift, the target is:  connection1, connection2, connection0
+                //    which means message sent: connection0 -> connection1, connection1 -> connection2, connection2 -> connection0
+                //    you see, connection2 and connection0 belong to the same server: s0.
+                //    As a result, the message will not go to Redis.
+                //    We force to change connection2 to send message to another connection1
+                if ((connectionCount - 1) % serverCount == 0)
+                {
+                    connectionIdsMoved[connectionCount - 1] = connectionIdsMoved[1];
+                }
+                connectionIds.AddRange(connectionIdsMoved);
             });
             return connectionIds;
         }
@@ -230,8 +254,8 @@ namespace Bench.RpcMaster
         }
 
         private static BenchmarkCellConfig GenerateBenchmarkConfig(int indClient, string step,
-            string serviceType, string transportType, string hubProtocol, string scenario, string MessageSizeStr,
-            List<string> connectionIds, List<string> groupNameList)
+            string serviceType, string transportType, string hubProtocol, string scenario,
+            string MessageSizeStr, List<string> targetConnectionIds, List<string> groupNameList)
         {
             var messageSize = ParseMessageSize(MessageSizeStr);
             var benchmarkCellConfig = new BenchmarkCellConfig
@@ -249,7 +273,7 @@ namespace Bench.RpcMaster
             };
 
             // add lists
-            benchmarkCellConfig.TargetConnectionIds.AddRange(connectionIds);
+            benchmarkCellConfig.TargetConnectionIds.AddRange(targetConnectionIds);
             benchmarkCellConfig.GroupNameList.AddRange(groupNameList);
             return benchmarkCellConfig;
         }
@@ -436,9 +460,16 @@ namespace Bench.RpcMaster
         }
 
         private static void ClientsLoadJobConfig(List<RpcService.RpcServiceClient> clients,
-            int connectionCnt, List<string> slaveList, int concurrentConnection, int duration,
-            int interval, string pipelineStr, string serverUrl, string messageSizeStr)
+            List<string> slaveList, ArgsOption argsOption)
         {
+            var connectionCnt = argsOption.Connections;
+            var concurrentConnection = argsOption.ConcurrentConnection;
+            var duration = argsOption.Duration;
+            var interval = argsOption.Interval;
+            var pipelineStr = argsOption.PipeLine;
+            var serverUrl = argsOption.ServerUrl;
+            var messageSizeStr = argsOption.MessageSize;
+
             var messageSize = ParseMessageSize(messageSizeStr);
             var servers = serverUrl.Split(';');
             var serverCount = servers.Length;
@@ -462,13 +493,22 @@ namespace Bench.RpcMaster
                 var state = new Stat();
                 state = client.CreateWorker(new Empty());
 
+                string server = null;
+                if (bool.Parse(argsOption.sendToFixedClient))
+                {
+                    server = serverUrl;
+                }
+                else
+                {
+                    server = servers[i % serverCount];
+                }
                 var config = new CellJobConfig
                 {
                     Connections = clientConnections,
                     ConcurrentConnections = concurrentConnections,
                     Interval = interval,
                     Duration = duration,
-                    ServerUrl = servers[i % serverCount],
+                    ServerUrl = server,
                     Pipeline = pipelineStr
                 };
 
@@ -481,13 +521,14 @@ namespace Bench.RpcMaster
 
         private static async Task ProcessPipeline(List<RpcService.RpcServiceClient> clients, string pipelineStr, List<string> slaveList, int connections,
             string serviceType, string transportType, string hubProtocol, string scenario, string messageSize,
-            int groupNum, int overlap)
+            int groupNum, int overlap, int serverCount, string sendToFixedClient)
         {
             var pipeline = pipelineStr.Split(';').ToList();
             var connectionConfigBuilder = new ConnectionConfigBuilder();
             var connectionAllConfigList = connectionConfigBuilder.Build(connections);
-            var connectionIds = new List<string>();
+            var targetConnectionIds = new List<string>();
             var groupNameList = GenerateGroupNameList(connections, groupNum, overlap);
+            var serverUrls = serverCount;
             for (var i = 0; i < pipeline.Count; i++)
             {
                 var tasks = new List<Task>(clients.Count);
@@ -506,7 +547,8 @@ namespace Bench.RpcMaster
                     indClient++;
 
                     var benchmarkCellConfig = GenerateBenchmarkConfig(indClient, step,
-                        serviceType, transportType, hubProtocol, scenario, messageSize, connectionIds, groupNameList);
+                        serviceType, transportType, hubProtocol, scenario, messageSize,
+                        targetConnectionIds, groupNameList);
 
                     Util.Log($"service: {benchmarkCellConfig.ServiceType}; transport: {benchmarkCellConfig.TransportType}; hubprotocol: {benchmarkCellConfig.HubProtocol}; scenario: {benchmarkCellConfig.Scenario}; step: {step}");
 
@@ -531,8 +573,19 @@ namespace Bench.RpcMaster
                 // collect all connections' ids just after connections start
                 if (step.Contains("startConn"))
                 {
-                    connectionIds = CollectConnectionIds(clients);
-                    connectionIds.Shuffle();
+                    // There are more than 1 server, we'd prefer to send message to target connection
+                    // on different service, which means those message will go to Redis.
+                    // In addition, in order to avoid time difference of different clients,
+                    // The message should be sent to connections on the same clients.
+                    if (bool.Parse(sendToFixedClient) && serverCount > 1)
+                    {
+                        targetConnectionIds = LeftShiftConnectionIdsOnEachClient(clients, serverCount);
+                    }
+                    else
+                    {
+                        targetConnectionIds = CollectConnectionIds(clients);
+                        targetConnectionIds.Shuffle();
+                    }
                 }
             }
         }

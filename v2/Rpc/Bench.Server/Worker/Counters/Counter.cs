@@ -81,7 +81,16 @@ namespace Bench.RpcSlave.Worker.Counters
         public void CountLatency(long sendTimestamp, long receiveTimestamp)
         {
             long dTime = receiveTimestamp - sendTimestamp;
-            var i = (ulong)(dTime < 0 ? 0 : dTime) / LatencyStep;
+            if (dTime < 0)
+            {
+                // This happens because
+                //    (1) latency is very small, for example, echo/P2P scenario takes 1~2ms for the most fast case.
+                //    (2) VM's time difference. The difference generally is 1~2ms after NTP time sync.
+                // So, we can treat it as 0 and then it will go to LT_100ms category,
+                // and it does not give negative impact for final result.
+                dTime = 0;
+            }
+            var i = (ulong)dTime / LatencyStep;
             if (i >= LatencyLength)
             {
                 InnerCounters.AddOrUpdate($"message:ge:{LatencyLength * LatencyStep}", 0, (k, v) => v + 1);
