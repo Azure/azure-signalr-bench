@@ -6,7 +6,7 @@ namespace Bench.RpcSlave.Worker.Operations
     {
         public async Task Do(WorkerToolkit tk)
         {
-
+            tk.Counters.ResetCounters(withConnection:false);
         }
     }
 

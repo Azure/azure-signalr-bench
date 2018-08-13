@@ -272,7 +272,7 @@ namespace JenkinsScript
             string logPath,
             string serviceType, string transportType, string hubProtocol, string scenario,
             int connection, int concurrentConnection, int duration, int interval, List<string> pipeLine,
-            int groupNum, int groupOverlap, string messageSize, string serverUrl, string suffix, string masterRoot)
+            int groupNum, int groupOverlap, string messageSize, string serverUrl, string suffix, string masterRoot, string sendToFixedClient)
         {
 
             Util.Log($"service type: {serviceType}, transport type: {transportType}, hub protocol: {hubProtocol}, scenario: {scenario}");
@@ -312,6 +312,7 @@ namespace JenkinsScript
                 $" --groupNum {groupNum} " +
                 $" --groupOverlap {groupOverlap} " +
                 $"--messageSize {messageSize} " +
+                $"--sendToFixedClient true " +
                 $" -o '{outputCounterFile}' > {logPath}";
 
             Util.Log($"CMD: {user}@{host}: {cmd}");
@@ -440,7 +441,7 @@ namespace JenkinsScript
             var result = "";
             var cmd = "sudo rm -rf /var/log/syslog";
             Util.Log($"{user}@{host}: {cmd}");
-            (errCode, result) = ShellHelper.RemoteBash(user, host, sshPort, password, cmd, handleRes: true);
+            (errCode, result) = ShellHelper.RemoteBash(user, host, sshPort, password, cmd, handleRes : true);
             return (errCode, result);
         }
         public static(int, string) PrepareLogPath(string host, string user, string password, int sshPort,
