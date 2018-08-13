@@ -277,7 +277,7 @@ namespace JenkinsScript
                         // clear syslog
                         foreach (var host in hosts)
                         {
-                            
+                            (errCode, result) = ShellHelper.RemoveSyslog(host, user, password, sshPort);
                         }
 
                         // prepare log dirs
@@ -347,6 +347,9 @@ namespace JenkinsScript
 
                         // collect results from master
                         ShellHelper.CollectStatistics(privateIps.MasterPrivateIp.Split(";").ToList(), user, password, sshPort, $"/home/{user}/results/{resultRoot}/", Util.MakeSureDirectoryExist($"/home/{user}/signalr-bench-statistics/results/"));
+
+                        // killall process to avoid wirting log
+                        if (!debug) ShellHelper.KillAllDotnetProcess(hosts, remoteRepo, user, password, sshPort, repoRoot : localRepoRoot);
 
                         break;
                     }
