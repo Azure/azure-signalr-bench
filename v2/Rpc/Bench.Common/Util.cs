@@ -32,6 +32,22 @@ namespace Bench.Common
                 list[n] = value;
             }
         }
+
+        // Circle left shift of values on index of 
+        // 0, 1, 2, ..., n-2, n-1 to 1, 2, 3, ..., n-1, 0
+        public static void CircleLeftShift<T>(this IList<T> list)
+        {
+            var n = list.Count;
+            if (n > 1)
+            {
+                T v = list[0];
+                for (var i = 1; i < n; i++)
+                {
+                    list[i - 1] = list[i];
+                }
+                list[n - 1] = v;
+            }
+        }
     }
 
     public class Util

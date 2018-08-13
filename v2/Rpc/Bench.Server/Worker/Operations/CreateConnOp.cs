@@ -47,6 +47,8 @@ namespace Bench.RpcSlave.Worker.Operations
                     break;
             }
 
+            // Many Urls are allowed for sharding every connection to different Server
+            var serverUrls = url.Split(';');
             _tk.State = Stat.Types.State.HubconnCreating;
             var connections = new List<HubConnection>(conn);
             for (var i = 0; i < conn; i++)
@@ -70,7 +72,7 @@ namespace Bench.RpcSlave.Worker.Operations
                     //    logging.AddConsole();
                     //    logging.SetMinimumLevel(LogLevel.Warning);
                     //})
-                    .WithUrl(url, httpConnectionOptions =>
+                    .WithUrl(serverUrls[i % serverUrls.Length], httpConnectionOptions =>
                     {
                         httpConnectionOptions.HttpMessageHandlerFactory = _ => httpClientHandler;
                         httpConnectionOptions.Transports = transportType;
