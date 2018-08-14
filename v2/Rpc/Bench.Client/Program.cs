@@ -129,7 +129,7 @@ namespace Bench.RpcMaster
                 //    We force to change connection2 to send message to another connection1
                 if ((connectionCount - 1) % serverCount == 0)
                 {
-                    connectionIdsMoved[connectionCount - 1] = connectionIdsMoved[1];
+                    connectionIdsMoved[connectionCount - 1] = connectionIdsMoved[connectionIdsMoved.Count <= 1 ? 0 : 1]; // one slave VM may have only one connection
                 }
                 connectionIds.AddRange(connectionIdsMoved);
             });
@@ -258,6 +258,7 @@ namespace Bench.RpcMaster
             string MessageSizeStr, List<string> targetConnectionIds, List<string> groupNameList)
         {
             var messageSize = ParseMessageSize(MessageSizeStr);
+
             var benchmarkCellConfig = new BenchmarkCellConfig
             {
                 ServiceType = serviceType,
@@ -534,9 +535,10 @@ namespace Bench.RpcMaster
                 var tasks = new List<Task>(clients.Count);
                 var step = pipeline[i];
                 int indClient = -1;
-                var AdditionalSendConnCnt = (step.Contains("up")) ? Convert.ToInt32(step.Substring(2)) : 0;
+                Util.Log($"step: {step}");
+                var AdditionalSendConnCnt = (step.Substring(0, 2) == "up") ? Convert.ToInt32(step.Substring(2)) : 0;
 
-                if (step.Contains("up"))
+                if (step.Substring(0, 2) == "up")
                 {
                     // Util.Log($"additional: {AdditionalSendConnCnt}");
                     connectionAllConfigList = connectionConfigBuilder.UpdateSendConn(connectionAllConfigList, AdditionalSendConnCnt, connections, slaveList.Count);

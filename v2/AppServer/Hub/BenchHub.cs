@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR;
 using Interlocked = System.Threading.Interlocked;
 
@@ -45,15 +46,15 @@ namespace Microsoft.Azure.SignalR.PerfTest.AppServer
             Clients.Group(groupName).SendAsync("SendToGroup", Context.ConnectionId, message);
         }
 
-        public void SendGroup(string groupName, string message, byte[] messageBlob)
+        public void SendGroup(string groupName, string time, byte[] messageBlob)
         {
             Interlocked.Increment(ref _totalReceivedGroup);
-            Clients.Group(groupName).SendAsync("SendGroup", 0, message, messageBlob);
+            Clients.Group(groupName).SendAsync("SendGroup", 0, time, null, null, messageBlob);
         }
 
-        public void JoinGroup(string groupName, string client)
+        public async Task JoinGroup(string groupName, string client)
         {
-            Groups.AddToGroupAsync(Context.ConnectionId, groupName).Wait();
+            await Groups.AddToGroupAsync(Context.ConnectionId, groupName);
             if (string.Equals(client, "perf", StringComparison.Ordinal))
             {
                 // for perf test
@@ -65,9 +66,9 @@ namespace Microsoft.Azure.SignalR.PerfTest.AppServer
             }
         }
 
-        public void LeaveGroup(string groupName, string client)
+        public async Task LeaveGroup(string groupName, string client)
         {
-            Groups.RemoveFromGroupAsync(Context.ConnectionId, groupName).Wait();
+            await Groups.RemoveFromGroupAsync(Context.ConnectionId, groupName);
             if (string.Equals(client, "perf", StringComparison.Ordinal))
             {
                 Clients.Client(Context.ConnectionId).SendAsync("LeaveGroup", Context.ConnectionId, $"{Context.ConnectionId} left {groupName}");

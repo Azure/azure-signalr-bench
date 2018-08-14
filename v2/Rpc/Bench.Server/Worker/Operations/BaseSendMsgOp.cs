@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
@@ -39,11 +40,6 @@ namespace Bench.RpcSlave.Worker.Operations
             // send message
             await StartSendMsg();
 
-            // if (!debug) await Task.Delay(30 * 1000);
-
-            // save counters
-            // SaveCounters();
-
             _tk.State = Stat.Types.State.SendComplete;
             Util.Log($"Sending Complete");
         }
@@ -57,9 +53,6 @@ namespace Bench.RpcSlave.Worker.Operations
             Util.Log($"_brokenConnectionInds count: {_brokenConnectionInds.Count}");
             SetCallbacks();
 
-            // _tk.Counters.ResetCounters(withConnection: false);
-            if (!_tk.Init) _tk.Counters.ResetCounters(withConnection: false);
-            _tk.Init = true;
         }
 
         private void SetCallbacks()
@@ -110,14 +103,40 @@ namespace Bench.RpcSlave.Worker.Operations
                 for (var i = _tk.ConnectionRange.Begin; i < _tk.ConnectionRange.End; i++)
                 {
                     var cfg = _tk.ConnectionConfigList.Configs[i];
-                    if (cfg.SendFlag) tasks.Add(StartSendingMessageAsync(_tk.Connections[i - _tk.ConnectionRange.Begin], i - _tk.ConnectionRange.Begin, messageBlob));
+                    var ids = GenerateId(_tk.BenchmarkCellConfig.Scenario, i - _tk.ConnectionRange.Begin);
+                    if (cfg.SendFlag)
+                    {
+                        foreach (var id in ids)
+                        {
+                            tasks.Add(StartSendingMessageAsync(_tk.Connections[i - _tk.ConnectionRange.Begin], i - _tk.ConnectionRange.Begin, messageBlob, id));
+                        }
+                    }
                 }
 
                 await Task.WhenAll(tasks);
             }
         }
 
-        private async Task StartSendingMessageAsync(HubConnection connection, int ind, byte[] messageBlob)
+        private List<string> GenerateId(string mode, int ind)
+        {
+            List<string> groupNameList = new List<string>();
+            var ids = new List<string>();
+            if (mode.Contains("sendToClient"))
+            {
+                ids.Add(_tk.BenchmarkCellConfig.TargetConnectionIds[ind + _tk.ConnectionRange.Begin]);
+            }
+            else if (_tk.BenchmarkCellConfig.Scenario.Contains("SendGroup"))
+            {
+                ids.AddRange(_tk.BenchmarkCellConfig.GroupNameList[ind + _tk.ConnectionRange.Begin].Split(";").ToList());
+            }
+            else
+            {
+                ids.Add($"{Util.GuidEncoder.Encode(Guid.NewGuid())}");
+            }
+
+            return ids;
+        }
+        private async Task StartSendingMessageAsync(HubConnection connection, int ind, byte[] messageBlob, string id)
         {
             var messageSize = (ulong) messageBlob.Length;
             await Task.Delay(StartTimeOffsetGenerator.Delay(TimeSpan.FromSeconds(_tk.JobConfig.Interval)));
@@ -127,9 +146,6 @@ namespace Bench.RpcSlave.Worker.Operations
                 {
                     if (!_brokenConnectionInds[ind])
                     {
-                        var id = $"{Util.GuidEncoder.Encode(Guid.NewGuid())}";
-                        if (_tk.BenchmarkCellConfig.Scenario.Contains("sendToClient"))
-                            id = _tk.BenchmarkCellConfig.TargetConnectionIds[ind + _tk.ConnectionRange.Begin];
 
                         Task.Run(async() =>
                         {
@@ -144,16 +160,13 @@ namespace Bench.RpcSlave.Worker.Operations
                             catch (Exception ex)
                             {
                                 Util.Log($"exception in sending message of {ind}th connection: {ex}");
-                                _tk.Counters.IncreseNotSentFromClientMsg();
+                                _tk.Counters.IncreaseConnectionError();
+                                _tk.Counters.UpdateConnectionSuccess((ulong) _tk.JobConfig.Connections);
                                 _brokenConnectionInds[ind] = true;
                             }
                         });
+                    }
 
-                    }
-                    else
-                    {
-                        _tk.Counters.IncreseNotSentFromClientMsg();
-                    }
                     await Task.Delay(TimeSpan.FromSeconds(_tk.JobConfig.Interval));
                 }
             }

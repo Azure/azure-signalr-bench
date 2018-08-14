@@ -20,6 +20,8 @@ namespace Bench.RpcSlave.Worker.Operations
 
         public void Do(WorkerToolkit tk)
         {
+            throw new NotImplementedException();
+            
             var waitTime = 5 * 1000;
             Console.WriteLine($"wait time: {waitTime / 1000}s");
             Task.Delay(waitTime).Wait();
@@ -223,7 +225,7 @@ namespace Bench.RpcSlave.Worker.Operations
                     catch (Exception ex)
                     {
                         Util.Log($"send msg fails: {name}, exception: {ex}");
-                        _tk.Counters.IncreseNotSentFromClientMsg();
+                        // _tk.Counters.IncreseNotSentFromClientMsg();
                     }
                     await Task.Delay(TimeSpan.FromSeconds(_tk.JobConfig.Interval));
                 }

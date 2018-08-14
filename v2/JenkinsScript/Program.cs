@@ -268,7 +268,7 @@ namespace JenkinsScript
                         var serverUrl = jobConfigV2.ServerUrl;
                         var messageSize = jobConfigV2.MessageSize;
                         var sendToFixedClient = argsOption.SendToFixedClient;
-                        
+
                         var hosts = new List<string>();
                         hosts.AddRange(privateIps.ServicePrivateIp.Split(";").ToList());
                         hosts.AddRange(privateIps.AppServerPrivateIp.Split(";").ToList());
