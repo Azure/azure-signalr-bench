@@ -37,10 +37,41 @@ function deallocate_vms() {
      if [ "$stats" == "\"VM running\"" ]
      then
         echo "VM is running, and it will be stopped"
-        az vm deallocate -g ${res_grp} -n "${i}"
+        az vm deallocate -g ${res_grp} -n "${i}" --no-wait
      fi
   done
 
+}
+
+function stop_all_vms_in_group()
+{
+  local rsg=$1
+  local vm_list=""
+  for i in `az vm list -g $rsg|jq ".[].name"|tr -d '"'`
+  do
+    if [ "$vm_list" == "" ]
+    then
+       vm_list="$i"
+    else
+       vm_list="$vm_list $i"
+    fi
+  done
+  deallocate_vms $rsg "$vm_list"
+}
+
+function start_all_vms_in_group()
+{
+  local rsg=$1
+  for i in `az vm list -g $rsg|jq ".[].name"|tr -d '"'`
+  do
+    if [ "$vm_list" == "" ]
+    then
+       vm_list="$i"
+    else
+       vm_list="$vm_list $i"
+    fi
+  done
+  start_vms $rsg "$vm_list"
 }
 
 #vmss_name="honzhanvmss"
