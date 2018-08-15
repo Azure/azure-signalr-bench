@@ -46,14 +46,18 @@ namespace Bench.RpcSlave.Worker.Operations
 
         }
 
-        private void Setup()
+        protected void Setup()
         {
 
-            SetCallbacks();
+            if (!_tk.Init)
+            {
+                SetCallbacks();
+                _tk.Init = true;
+            }
 
         }
 
-        private async Task JoinLeaveGroup()
+        protected async Task JoinLeaveGroup()
         {
             var sw = new Stopwatch();
             sw.Start();
@@ -86,27 +90,26 @@ namespace Bench.RpcSlave.Worker.Operations
             Util.Log($"{_tk.BenchmarkCellConfig.Step} time : {sw.Elapsed.TotalMilliseconds} ms");
         }
 
-        private void SetCallbacks()
+        protected void SetCallbacks()
         {
             Util.Log($"step: {_tk.BenchmarkCellConfig.Step}");
             for (int i = _tk.ConnectionRange.Begin; i < _tk.ConnectionRange.End; i++)
             {
                 var ind = i;
 
-                if (!_tk.Init)
-                {
-                    _tk.Connections[i - _tk.ConnectionRange.Begin].On(_tk.BenchmarkCellConfig.Step,
-                        (int count, string time, string thisId, string targetId, byte[] messageBlob) =>
-                        {
-                            var receiveTimestamp = Util.Timestamp();
-                            var sendTimestamp = Convert.ToInt64(time);
-                            var receiveSize = messageBlob != null ? messageBlob.Length * sizeof(byte) : 0;
-                            _tk.Counters.CountLatency(sendTimestamp, receiveTimestamp);
-                            _tk.Counters.SetServerCounter(((ulong) count));
-                            _tk.Counters.IncreaseReceivedMessageSize((ulong) receiveSize);
-                        });
-                        _tk.Init = true;
-                }
+                
+                _tk.Connections[i - _tk.ConnectionRange.Begin].On(_tk.BenchmarkCellConfig.Step,
+                    (int count, string time, string thisId, string targetId, byte[] messageBlob) =>
+                    {
+                        var receiveTimestamp = Util.Timestamp();
+                        var sendTimestamp = Convert.ToInt64(time);
+                        var receiveSize = messageBlob != null ? messageBlob.Length * sizeof(byte) : 0;
+                        _tk.Counters.CountLatency(sendTimestamp, receiveTimestamp);
+                        _tk.Counters.SetServerCounter(((ulong) count));
+                        _tk.Counters.IncreaseReceivedMessageSize((ulong) receiveSize);
+                    });
+                        
+                
             }
         }
 

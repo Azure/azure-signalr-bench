@@ -50,8 +50,11 @@ namespace Bench.RpcSlave.Worker.Operations
 
             _sentMessages = Enumerable.Repeat(0, _tk.JobConfig.Connections).ToList();
             _brokenConnectionInds = Enumerable.Repeat(false, _tk.JobConfig.Connections).ToList();
-            SetCallbacks();
-
+            if (!_tk.Init)
+            {
+                SetCallbacks();
+                _tk.Init = true;
+            }
         }
 
         private void SetCallbacks()
@@ -61,20 +64,16 @@ namespace Bench.RpcSlave.Worker.Operations
             {
                 var ind = i;
 
-                if (!_tk.Init)
-                {
-                    _tk.Connections[i - _tk.ConnectionRange.Begin].On(_tk.BenchmarkCellConfig.Scenario,
-                        (int count, string time, string thisId, string targetId, byte[] messageBlob) =>
-                        {
-                            var receiveTimestamp = Util.Timestamp();
-                            var sendTimestamp = Convert.ToInt64(time);
-                            var receiveSize = messageBlob != null ? messageBlob.Length * sizeof(byte) : 0;
-                            _tk.Counters.CountLatency(sendTimestamp, receiveTimestamp);
-                            _tk.Counters.SetServerCounter(((ulong) count));
-                            _tk.Counters.IncreaseReceivedMessageSize((ulong) receiveSize);
-                        });
-                    _tk.Init = true;
-                }
+                _tk.Connections[i - _tk.ConnectionRange.Begin].On(_tk.BenchmarkCellConfig.Scenario,
+                    (int count, string time, string thisId, string targetId, byte[] messageBlob) =>
+                    {
+                        var receiveTimestamp = Util.Timestamp();
+                        var sendTimestamp = Convert.ToInt64(time);
+                        var receiveSize = messageBlob != null ? messageBlob.Length * sizeof(byte) : 0;
+                        _tk.Counters.CountLatency(sendTimestamp, receiveTimestamp);
+                        _tk.Counters.SetServerCounter(((ulong) count));
+                        _tk.Counters.IncreaseReceivedMessageSize((ulong) receiveSize);
+                    });
             }
         }
 
