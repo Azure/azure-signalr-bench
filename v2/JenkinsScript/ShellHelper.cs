@@ -552,7 +552,7 @@ namespace JenkinsScript
         {
             var errCode = 0;
             var result = "";
-            var cmd = "top -n 1 -b | head -n 15";
+            var cmd = "top -n 1 -b | head -n 15; exit";
             (errCode, result) = RemoteBash(user, host, sshPort, password, cmd, handleRes : true);
 
             File.AppendAllText(path, result);
