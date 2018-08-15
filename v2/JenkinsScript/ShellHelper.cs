@@ -63,6 +63,7 @@ namespace JenkinsScript
             int errCode = 0;
             string result = "";
             string cmd = $"sshpass -p {password} scp -o StrictHostKeyChecking=no {srcFile} {user}@{host}:{dstDir}";
+            Util.Log($"CMD: {user}@{host}: {cmd}");
             (errCode, result) = Bash(cmd, wait : true, handleRes : true);
             return (errCode, result);
         }
@@ -72,6 +73,7 @@ namespace JenkinsScript
             int errCode = 0;
             string result = "";
             string cmd = $"sshpass -p {password} scp -r -o StrictHostKeyChecking=no {user}@{host}:{src} {dst}";
+            Util.Log($"CMD: {user}@{host}: {cmd}");
             (errCode, result) = Bash(cmd, wait : true, handleRes : true);
             return (errCode, result);
         }
