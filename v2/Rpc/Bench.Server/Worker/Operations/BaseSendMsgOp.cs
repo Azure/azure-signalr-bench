@@ -50,7 +50,6 @@ namespace Bench.RpcSlave.Worker.Operations
 
             _sentMessages = Enumerable.Repeat(0, _tk.JobConfig.Connections).ToList();
             _brokenConnectionInds = Enumerable.Repeat(false, _tk.JobConfig.Connections).ToList();
-            Util.Log($"_brokenConnectionInds count: {_brokenConnectionInds.Count}");
             SetCallbacks();
 
         }
@@ -63,6 +62,7 @@ namespace Bench.RpcSlave.Worker.Operations
                 var ind = i;
 
                 if (!_tk.Init)
+                {
                     _tk.Connections[i - _tk.ConnectionRange.Begin].On(_tk.BenchmarkCellConfig.Scenario,
                         (int count, string time, string thisId, string targetId, byte[] messageBlob) =>
                         {
@@ -73,6 +73,8 @@ namespace Bench.RpcSlave.Worker.Operations
                             _tk.Counters.SetServerCounter(((ulong) count));
                             _tk.Counters.IncreaseReceivedMessageSize((ulong) receiveSize);
                         });
+                    _tk.Init = true;
+                }
             }
         }
 
@@ -133,7 +135,7 @@ namespace Bench.RpcSlave.Worker.Operations
             {
                 ids.Add($"{Util.GuidEncoder.Encode(Guid.NewGuid())}");
             }
-
+            Util.LogList("IDs", ids);
             return ids;
         }
         private async Task StartSendingMessageAsync(HubConnection connection, int ind, byte[] messageBlob, string id)
