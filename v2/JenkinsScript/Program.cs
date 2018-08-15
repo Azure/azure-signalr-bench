@@ -276,10 +276,10 @@ namespace JenkinsScript
                         hosts.AddRange(privateIps.SlavePrivateIp.Split(";").ToList());
 
                         // clear syslog
-                        foreach (var host in hosts)
-                        {
-                            (errCode, result) = ShellHelper.RemoveSyslog(host, user, password, sshPort);
-                        }
+                        // foreach (var host in hosts)
+                        // {
+                        //     (errCode, result) = ShellHelper.RemoveSyslog(host, user, password, sshPort);
+                        // }
 
                         // prepare log dirs
                         var suffix = "";
