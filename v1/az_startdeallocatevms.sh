@@ -62,6 +62,7 @@ function stop_all_vms_in_group()
 function start_all_vms_in_group()
 {
   local rsg=$1
+  local vm_list=""
   for i in `az vm list -g $rsg|jq ".[].name"|tr -d '"'`
   do
     if [ "$vm_list" == "" ]
