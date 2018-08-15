@@ -19,7 +19,7 @@ namespace Bench.RpcSlave.Worker
         public ConnectionConfigList ConnectionConfigList { get; set; }
         public Range ConnectionRange { get; set; }
 
-        public bool Init { get; set; } = false;
+        public Dictionary<string, bool> Init { get; set; }
 
         public List<string> ConnectionIds { get; set; } = new List<string>();
     }

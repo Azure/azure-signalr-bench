@@ -49,10 +49,10 @@ namespace Bench.RpcSlave.Worker.Operations
         protected void Setup()
         {
 
-            if (!_tk.Init)
+            if (!_tk.Init.ContainsKey(_tk.BenchmarkCellConfig.Step))
             {
                 SetCallbacks();
-                _tk.Init = true;
+                _tk.Init[_tk.BenchmarkCellConfig.Step] = true;
             }
 
         }
@@ -97,7 +97,6 @@ namespace Bench.RpcSlave.Worker.Operations
             {
                 var ind = i;
 
-                
                 _tk.Connections[i - _tk.ConnectionRange.Begin].On(_tk.BenchmarkCellConfig.Step,
                     (int count, string time, string thisId, string targetId, byte[] messageBlob) =>
                     {
@@ -108,8 +107,7 @@ namespace Bench.RpcSlave.Worker.Operations
                         _tk.Counters.SetServerCounter(((ulong) count));
                         _tk.Counters.IncreaseReceivedMessageSize((ulong) receiveSize);
                     });
-                        
-                
+
             }
         }
 

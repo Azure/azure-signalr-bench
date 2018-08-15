@@ -50,10 +50,10 @@ namespace Bench.RpcSlave.Worker.Operations
 
             _sentMessages = Enumerable.Repeat(0, _tk.JobConfig.Connections).ToList();
             _brokenConnectionInds = Enumerable.Repeat(false, _tk.JobConfig.Connections).ToList();
-            if (!_tk.Init)
+            if (!_tk.Init.ContainsKey(_tk.BenchmarkCellConfig.Step))
             {
                 SetCallbacks();
-                _tk.Init = true;
+                _tk.Init[_tk.BenchmarkCellConfig.Step] = true;
             }
         }
 
