@@ -55,13 +55,13 @@ namespace Bench.RpcSlave.Worker.Counters
             {
                 InnerCounters.AddOrUpdate("connection:error", 0, (k, v) => 0);
                 InnerCounters.AddOrUpdate("connection:success", 0, (k, v) => 0);
-            }
 
-            // join/leave groups
-            InnerCounters.AddOrUpdate("group:join:fail", 0, (k, v) => 0);
-            InnerCounters.AddOrUpdate("group:leave:fail", 0, (k, v) => 0);
-            InnerCounters.AddOrUpdate("group:join:success", 0, (k, v) => 0);
-            InnerCounters.AddOrUpdate("group:leave:success", 0, (k, v) => 0);
+                // join/leave groups
+                InnerCounters.AddOrUpdate("group:join:fail", 0, (k, v) => 0);
+                InnerCounters.AddOrUpdate("group:leave:fail", 0, (k, v) => 0);
+                InnerCounters.AddOrUpdate("group:join:success", 0, (k, v) => 0);
+                InnerCounters.AddOrUpdate("group:leave:success", 0, (k, v) => 0);
+            }
 
             // message size
             InnerCounters.AddOrUpdate("message:sendSize", 0, (k, v) => 0);

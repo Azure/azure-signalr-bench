@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -76,7 +77,7 @@ namespace Bench.RpcSlave.Worker.Operations
                             try
                             {
                                 // await Task.Delay(startTimeOffsetGenerator.Delay(TimeSpan.FromSeconds(20)));
-                                await _tk.Connections[ind - _tk.ConnectionRange.Begin].SendAsync(_tk.BenchmarkCellConfig.Step, groupNameList[j], "");
+                                await _tk.Connections[ind - _tk.ConnectionRange.Begin].SendAsync(_tk.BenchmarkCellConfig.Step, groupNameList[j], "perf");
                             }
                             catch (Exception ex)
                             {
@@ -101,20 +102,18 @@ namespace Bench.RpcSlave.Worker.Operations
             for (int i = _tk.ConnectionRange.Begin; i < _tk.ConnectionRange.End; i++)
             {
                 var ind = i;
-
-                _tk.Connections[i - _tk.ConnectionRange.Begin].On(_tk.BenchmarkCellConfig.Step,
-                    (int count, string time, string thisId, string targetId, byte[] messageBlob) =>
+                var callbackName = _tk.BenchmarkCellConfig.Step.First().ToString().ToUpper() + _tk.BenchmarkCellConfig.Step.Substring(1);
+                _tk.Connections[i - _tk.ConnectionRange.Begin].On(callbackName,
+                    (string thisId, string message) =>
                     {
-                        var receiveTimestamp = Util.Timestamp();
-                        var sendTimestamp = Convert.ToInt64(time);
-                        var receiveSize = messageBlob != null ? messageBlob.Length * sizeof(byte) : 0;
-                        _tk.Counters.CountLatency(sendTimestamp, receiveTimestamp);
-                        // _tk.Counters.SetServerCounter(((ulong) count));
-                        // _tk.Counters.IncreaseReceivedMessageSize((ulong) receiveSize);
-                        if (_tk.BenchmarkCellConfig.Step.Contains("join", StringComparison.OrdinalIgnoreCase))
+                        if (_tk.BenchmarkCellConfig.Step.Contains("join"))
+                        {
                             _tk.Counters.IncreaseJoinGroupSuccess();
+                        }
                         else
+                        {
                             _tk.Counters.IncreaseLeaveGroupSuccess();
+                        }
                     });
 
             }

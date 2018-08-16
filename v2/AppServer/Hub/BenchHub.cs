@@ -46,31 +46,30 @@ namespace Microsoft.Azure.SignalR.PerfTest.AppServer
             Clients.Group(groupName).SendAsync("SendToGroup", Context.ConnectionId, message);
         }
 
-        public async Task SendGroup(string groupName, string time, byte[] messageBlob)
+        public void SendGroup(string groupName, string time, byte[] messageBlob)
         {
-            Task.Run(async() =>
-            {
-                Interlocked.Increment(ref _totalReceivedGroup);
-                Clients.Group(groupName).SendAsync("SendGroup", 0, time, null, null, messageBlob);
-            });
+            // Task.Run(async() =>
+            // {
+            Interlocked.Increment(ref _totalReceivedGroup);
+            Clients.Group(groupName).SendAsync("SendGroup", 0, time, null, null, messageBlob);
+            // });
 
         }
 
         public async Task JoinGroup(string groupName, string client)
         {
-            Task.Run(async() =>
+            // Console.WriteLine($"join group: {groupName}");
+            await Groups.AddToGroupAsync(Context.ConnectionId, groupName);
+            // Console.WriteLine($"join group end: {groupName}");
+            if (string.Equals(client, "perf", StringComparison.Ordinal))
             {
-                await Groups.AddToGroupAsync(Context.ConnectionId, groupName);
-                if (string.Equals(client, "perf", StringComparison.Ordinal))
-                {
-                    // for perf test
-                    Clients.Client(Context.ConnectionId).SendAsync("JoinGroup", Context.ConnectionId, $"{Context.ConnectionId} joined {groupName}");
-                }
-                else
-                {
-                    Clients.Group(groupName).SendAsync("JoinGroup", Context.ConnectionId, $"{Context.ConnectionId} joined {groupName}");
-                }
-            });
+                // for perf test
+                Clients.Client(Context.ConnectionId).SendAsync("JoinGroup", Context.ConnectionId, $"{Context.ConnectionId} joined {groupName}");
+            }
+            else
+            {
+                Clients.Group(groupName).SendAsync("JoinGroup", Context.ConnectionId, $"{Context.ConnectionId} joined {groupName}");
+            }
 
         }
 
@@ -85,6 +84,7 @@ namespace Microsoft.Azure.SignalR.PerfTest.AppServer
             {
                 Clients.Group(groupName).SendAsync("LeaveGroup", Context.ConnectionId, $"{Context.ConnectionId} left {groupName}");
             }
+
         }
 
         public void Count(string name)
