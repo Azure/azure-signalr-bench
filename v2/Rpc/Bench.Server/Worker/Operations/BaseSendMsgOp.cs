@@ -134,7 +134,7 @@ namespace Bench.RpcSlave.Worker.Operations
             {
                 ids.Add($"{Util.GuidEncoder.Encode(Guid.NewGuid())}");
             }
-            Util.LogList("IDs", ids);
+            // Util.LogList("IDs", ids);
             return ids;
         }
         private async Task StartSendingMessageAsync(HubConnection connection, int ind, byte[] messageBlob, string id)
