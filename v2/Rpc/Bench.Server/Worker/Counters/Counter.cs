@@ -60,6 +60,8 @@ namespace Bench.RpcSlave.Worker.Counters
             // join/leave groups
             InnerCounters.AddOrUpdate("group:join:fail", 0, (k, v) => 0);
             InnerCounters.AddOrUpdate("group:leave:fail", 0, (k, v) => 0);
+            InnerCounters.AddOrUpdate("group:join:success", 0, (k, v) => 0);
+            InnerCounters.AddOrUpdate("group:leave:success", 0, (k, v) => 0);
 
             // message size
             InnerCounters.AddOrUpdate("message:sendSize", 0, (k, v) => 0);
@@ -72,9 +74,21 @@ namespace Bench.RpcSlave.Worker.Counters
 
         }
 
+        public void IncreaseJoinGroupSuccess()
+        {
+            InnerCounters.AddOrUpdate("group:join:success", 0, (k, v) => v + 1);
+
+        }
+
         public void IncreaseLeaveGroupFail()
         {
             InnerCounters.AddOrUpdate("group:leave:fail", 0, (k, v) => v + 1);
+
+        }
+
+        public void IncreaseLeaveGroupSuccess()
+        {
+            InnerCounters.AddOrUpdate("group:leave:success", 0, (k, v) => v + 1);
 
         }
 
@@ -90,7 +104,7 @@ namespace Bench.RpcSlave.Worker.Counters
                 // and it does not give negative impact for final result.
                 dTime = 0;
             }
-            var i = (ulong)dTime / LatencyStep;
+            var i = (ulong) dTime / LatencyStep;
             if (i >= LatencyLength)
             {
                 InnerCounters.AddOrUpdate($"message:ge:{LatencyLength * LatencyStep}", 0, (k, v) => v + 1);
@@ -119,6 +133,12 @@ namespace Bench.RpcSlave.Worker.Counters
         public void IncreaseConnectionError()
         {
             InnerCounters.AddOrUpdate("connection:error", 0, (k, v) => v + 1);
+
+        }
+
+        public void IncreaseConnectionSuccess()
+        {
+            InnerCounters.AddOrUpdate("connection:success", 0, (k, v) => v + 1);
 
         }
 

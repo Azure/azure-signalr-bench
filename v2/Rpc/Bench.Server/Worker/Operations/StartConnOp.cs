@@ -48,6 +48,7 @@ namespace Bench.RpcSlave.Worker.Operations
                             try
                             {
                                 await connections[index].StartAsync();
+                                _tk.Counters.IncreaseConnectionSuccess();
                                 await GetConnectionId(connections[index], _tk.ConnectionIds, index);
 
                             }
@@ -71,7 +72,7 @@ namespace Bench.RpcSlave.Worker.Operations
                 // Util.LogList("conn ids", _tk.ConnectionIds);
             }
 
-            _tk.Counters.UpdateConnectionSuccess(((ulong) connections.Count));
+            // _tk.Counters.UpdateConnectionSuccess(((ulong) connections.Count));
             swConn.Stop();
             Util.Log($"connection time: {swConn.Elapsed.TotalSeconds} s");
 
