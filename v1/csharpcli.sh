@@ -38,6 +38,13 @@ gen_cli_master_single_bench()
 	local i
 	local app_server_list=""
 	local server
+	local secenario=$bench_name
+	local sendToFixClient_option=""
+	if [ "$bench_name" == "sendToFixClient" ]
+	then
+		sendToFixClient_option="--sendToFixedClient true"
+		secenario="sendToClient"
+	fi
 	local len=$(array_len $bench_app_pub_server "|")
 	if [ $len == 1 ]
 	then
@@ -126,8 +133,9 @@ server="$server_endpoint"
 pipeline="createConn;startConn;${send_num}stopConn;disposeConn"
 slaveList="${cli_agents_g}"
 sendSize="${send_size}"
+scenario="$secenario"
 
-/home/${bench_app_user}/.dotnet/dotnet run -- --rpcPort 7000 --duration $sigbench_run_duration --connections $connection_num --interval 1 --serverUrl "\${server}" --pipeLine "\${pipeline}" -v $bench_type -t "\${transport}" -p ${codec} -s ${bench_name} --slaveList "\${slaveList}"	-o ${result_name}/counters.txt --pidFile /tmp/master.pid --concurrentConnection ${concurrent_num} --messageSize "\${sendSize}"
+/home/${bench_app_user}/.dotnet/dotnet run -- --rpcPort 7000 --duration $sigbench_run_duration --connections $connection_num --interval 1 --serverUrl "\${server}" --pipeLine "\${pipeline}" -v $bench_type -t "\${transport}" -p ${codec} -s "\${scenario}" --slaveList "\${slaveList}"	-o ${result_name}/counters.txt --pidFile /tmp/master.pid --concurrentConnection ${concurrent_num} --messageSize "\${sendSize}" ${sendToFixClient_option}
 EOF
 }
 

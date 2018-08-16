@@ -729,7 +729,8 @@ function force_sync_time_on_single_vm() {
   local vm_host=$1
   local ssh_user=$2
   local ssh_port=$3
-  ssh -o StrictHostKeyChecking=no -p ${ssh_port} ${ssh_user}@${vm_host} "sudo service ntp stop;sudo ntpd -gq;sudo service ntp start;ntpq -np"
+  echo "=======================$vm_host================="
+  ssh -o StrictHostKeyChecking=no -p ${ssh_port} ${ssh_user}@${vm_host} "sudo service ntp stop;sudo ntpd -gq;sudo service ntp start;sudo ntpq -np"
 }
 
 function force_sync_time_on_all_vm() {
