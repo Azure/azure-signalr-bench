@@ -54,16 +54,20 @@ namespace Microsoft.Azure.SignalR.PerfTest.AppServer
 
         public async Task JoinGroup(string groupName, string client)
         {
-            await Groups.AddToGroupAsync(Context.ConnectionId, groupName);
-            if (string.Equals(client, "perf", StringComparison.Ordinal))
+            Task.Run(async() =>
             {
-                // for perf test
-                Clients.Client(Context.ConnectionId).SendAsync("JoinGroup", Context.ConnectionId, $"{Context.ConnectionId} joined {groupName}");
-            }
-            else
-            {
-                Clients.Group(groupName).SendAsync("JoinGroup", Context.ConnectionId, $"{Context.ConnectionId} joined {groupName}");
-            }
+                await Groups.AddToGroupAsync(Context.ConnectionId, groupName);
+                if (string.Equals(client, "perf", StringComparison.Ordinal))
+                {
+                    // for perf test
+                    Clients.Client(Context.ConnectionId).SendAsync("JoinGroup", Context.ConnectionId, $"{Context.ConnectionId} joined {groupName}");
+                }
+                else
+                {
+                    Clients.Group(groupName).SendAsync("JoinGroup", Context.ConnectionId, $"{Context.ConnectionId} joined {groupName}");
+                }
+            });
+
         }
 
         public async Task LeaveGroup(string groupName, string client)
