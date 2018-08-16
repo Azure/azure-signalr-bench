@@ -59,6 +59,8 @@ namespace Bench.RpcSlave.Worker.Operations
 
         protected async Task JoinLeaveGroup()
         {
+            var startTimeOffsetGenerator = new RandomGenerator(new LocalFileSaver());
+
             var sw = new Stopwatch();
             sw.Start();
             var tasks = new List<Task>();
@@ -73,7 +75,7 @@ namespace Bench.RpcSlave.Worker.Operations
                         {
                             try
                             {
-                                // Util.Log($"join group {groupNameList[j]}");
+                                await Task.Delay(startTimeOffsetGenerator.Delay(TimeSpan.FromSeconds(20)));
                                 await _tk.Connections[ind - _tk.ConnectionRange.Begin].SendAsync(_tk.BenchmarkCellConfig.Step, groupNameList[j], "");
                             }
                             catch (Exception ex)
