@@ -77,10 +77,6 @@ namespace Bench.RpcSlave.Worker.Operations
                             {
                                 // await Task.Delay(startTimeOffsetGenerator.Delay(TimeSpan.FromSeconds(20)));
                                 await _tk.Connections[ind - _tk.ConnectionRange.Begin].SendAsync(_tk.BenchmarkCellConfig.Step, groupNameList[j], "");
-                                if (_tk.BenchmarkCellConfig.Step.Contains("join", StringComparison.OrdinalIgnoreCase))
-                                    _tk.Counters.IncreaseJoinGroupSuccess();
-                                else
-                                    _tk.Counters.IncreaseLeaveGroupSuccess();
                             }
                             catch (Exception ex)
                             {
@@ -113,8 +109,12 @@ namespace Bench.RpcSlave.Worker.Operations
                         var sendTimestamp = Convert.ToInt64(time);
                         var receiveSize = messageBlob != null ? messageBlob.Length * sizeof(byte) : 0;
                         _tk.Counters.CountLatency(sendTimestamp, receiveTimestamp);
-                        _tk.Counters.SetServerCounter(((ulong) count));
-                        _tk.Counters.IncreaseReceivedMessageSize((ulong) receiveSize);
+                        // _tk.Counters.SetServerCounter(((ulong) count));
+                        // _tk.Counters.IncreaseReceivedMessageSize((ulong) receiveSize);
+                        if (_tk.BenchmarkCellConfig.Step.Contains("join", StringComparison.OrdinalIgnoreCase))
+                            _tk.Counters.IncreaseJoinGroupSuccess();
+                        else
+                            _tk.Counters.IncreaseLeaveGroupSuccess();
                     });
 
             }
