@@ -16,7 +16,7 @@ function start_vms() {
      if [ "$stats" == "\"VM deallocated\"" ] || [ "$stats" == "\"VM stopped\"" ]
      then
         echo "VM is stopped, and it will be started"
-        az vm start -g ${res_grp} -n "${i}"
+        az vm start -g ${res_grp} -n "${i}" --no-wait
         starting="1"
      fi
   done
