@@ -91,5 +91,8 @@ namespace JenkinsScript
         [Option("sendToFixedClient", Default = "", Required = false, HelpText = "")]
         public string SendToFixedClient { get; set; }
 
+        [Option("StatisticsSuffix", Default = "", Required = false, HelpText = "")]
+        public string StatisticsSuffix { get; set; }
+
     }
 }

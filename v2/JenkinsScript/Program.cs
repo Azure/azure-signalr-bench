@@ -268,6 +268,7 @@ namespace JenkinsScript
                         var serverUrl = jobConfigV2.ServerUrl;
                         var messageSize = jobConfigV2.MessageSize;
                         var sendToFixedClient = argsOption.SendToFixedClient;
+                        var StatisticsSuffix = argsOption.StatisticsSuffix;
 
                         var hosts = new List<string>();
                         hosts.AddRange(privateIps.ServicePrivateIp.Split(";").ToList());
@@ -323,31 +324,31 @@ namespace JenkinsScript
                         // start service
                         if (!debug)
                         {
-                            privateIps.ServicePrivateIp.Split(";").ToList().ForEach(host => StartCollectMachineStatisticsTimer(host, user, password, sshPort, Util.MakeSureDirectoryExist($"/home/{user}/signalr-bench-statistics/machine/{resultRoot}/") + $"service{host}.txt", TimeSpan.FromSeconds(1)));
+                            privateIps.ServicePrivateIp.Split(";").ToList().ForEach(host => StartCollectMachineStatisticsTimer(host, user, password, sshPort, Util.MakeSureDirectoryExist($"/home/{user}/signalr-bench-statistics-{StatisticsSuffix}/machine/{resultRoot}/") + $"service{host}.txt", TimeSpan.FromSeconds(1)));
                             ShellHelper.ModifyServiceAppsettings(privateIps.ServicePrivateIp.Split(";").ToList(), user, password, sshPort, publicIps.ServicePublicIp.Split(";").ToList(), $"/home/{user}", "OSSServices-SignalR-Service", $"/home/{user}");
                             (errCode, result) = ShellHelper.StartSignalrService(privateIps.ServicePrivateIp.Split(";").ToList(), user, password, sshPort, serviceDir, logPathService);
                         }
                         Task.Delay(waitTime).Wait();
 
                         // start app server
-                        privateIps.AppServerPrivateIp.Split(";").ToList().ForEach(host => StartCollectMachineStatisticsTimer(host, user, password, sshPort, Util.MakeSureDirectoryExist($"/home/{user}/signalr-bench-statistics/machine/{resultRoot}/") + $"appserver{host}.txt", TimeSpan.FromSeconds(1)));
+                        privateIps.AppServerPrivateIp.Split(";").ToList().ForEach(host => StartCollectMachineStatisticsTimer(host, user, password, sshPort, Util.MakeSureDirectoryExist($"/home/{user}/signalr-bench-statistics-{StatisticsSuffix}/machine/{resultRoot}/") + $"appserver{host}.txt", TimeSpan.FromSeconds(1)));
                         ShellHelper.StartAppServer(privateIps.AppServerPrivateIp.Split(";").ToList(), user, password, sshPort, azureSignalrConnectionStrings, logPathAppServer, useLocalSignalR, appSvrRoot);
                         Task.Delay(waitTime).Wait();
 
                         // start slaves
-                        privateIps.SlavePrivateIp.Split(";").ToList().ForEach(host => StartCollectMachineStatisticsTimer(host, user, password, sshPort, Util.MakeSureDirectoryExist($"/home/{user}/signalr-bench-statistics/machine/{resultRoot}/") + $"slave{host}.txt", TimeSpan.FromSeconds(1)));
+                        privateIps.SlavePrivateIp.Split(";").ToList().ForEach(host => StartCollectMachineStatisticsTimer(host, user, password, sshPort, Util.MakeSureDirectoryExist($"/home/{user}/signalr-bench-statistics-{StatisticsSuffix}/machine/{resultRoot}/") + $"slave{host}.txt", TimeSpan.FromSeconds(1)));
                         ShellHelper.StartRpcSlaves(privateIps.SlavePrivateIp.Split(";").ToList(), user, password, sshPort, rpcPort, logPathSlave, slaveRoot);
                         Task.Delay(waitTime).Wait();
 
                         // start master
-                        privateIps.MasterPrivateIp.Split(";").ToList().ForEach(host => StartCollectMachineStatisticsTimer(host, user, password, sshPort, Util.MakeSureDirectoryExist($"/home/{user}/signalr-bench-statistics/machine/{resultRoot}/") + $"master{host}.txt", TimeSpan.FromSeconds(1)));
+                        privateIps.MasterPrivateIp.Split(";").ToList().ForEach(host => StartCollectMachineStatisticsTimer(host, user, password, sshPort, Util.MakeSureDirectoryExist($"/home/{user}/signalr-bench-statistics-{StatisticsSuffix}/machine/{resultRoot}/") + $"master{host}.txt", TimeSpan.FromSeconds(1)));
                         ShellHelper.StartRpcMaster(privateIps.MasterPrivateIp, privateIps.SlavePrivateIp.Split(";").ToList(), user, password, sshPort, logPathMaster, serviceType, transportType, hubProtocol, scenario, connection, concurrentConnection, duration, interval, pipeline, groupNum, overlap, messageSize, serverUrl, suffix, masterRoot, sendToFixedClient);
 
                         // collect all logs
-                        ShellHelper.CollectStatistics(hosts, user, password, sshPort, $"/home/{user}/logs/{resultRoot}/", Util.MakeSureDirectoryExist($"/home/{user}/signalr-bench-statistics/logs/"));
+                        ShellHelper.CollectStatistics(hosts, user, password, sshPort, $"/home/{user}/logs/{resultRoot}/", Util.MakeSureDirectoryExist($"/home/{user}/signalr-bench-statistics-{StatisticsSuffix}/logs/"));
 
                         // collect results from master
-                        ShellHelper.CollectStatistics(privateIps.MasterPrivateIp.Split(";").ToList(), user, password, sshPort, $"/home/{user}/results/{resultRoot}/", Util.MakeSureDirectoryExist($"/home/{user}/signalr-bench-statistics/results/"));
+                        ShellHelper.CollectStatistics(privateIps.MasterPrivateIp.Split(";").ToList(), user, password, sshPort, $"/home/{user}/results/{resultRoot}/", Util.MakeSureDirectoryExist($"/home/{user}/signalr-bench-statistics-{StatisticsSuffix}/results/"));
 
                         // killall process to avoid wirting log
                         if (!debug) ShellHelper.KillAllDotnetProcess(hosts, remoteRepo, user, password, sshPort, repoRoot : localRepoRoot);
