@@ -20,6 +20,10 @@ if [ "$prepare_service" == "1" ]
 then
   sh start_service_on_multiple_vms.sh
   sh start_collect_top_on_multiple_services.sh $result_root
+fi
+
+if [ "$sync_time" == "1" ]
+then
   sh sync_time_on_allclients.sh
 fi
 

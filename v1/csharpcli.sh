@@ -330,6 +330,24 @@ iterate_all_app_server_and_connection_str()
 	done
 }
 
+start_multiple_app_server_with_single_service()
+{
+	local conn_str="$1"
+	local app_server_list="$2"
+	local ssh_user=$3
+	local ssh_port=$4
+	local output_dir="$5"
+	local app_server_len=$(array_len "$app_server_list" "|")
+	local i=1
+        local app_server
+	while [ $i -le $app_server_len ]
+	do
+		app_server=$(array_get "$app_server_list" $i "|")
+		start_single_app_server "$app_server" $ssh_user $ssh_port "$conn_str" "$output_dir"
+		i=$(($i+1))
+	done
+}
+
 start_multiple_app_server()
 {
 	local conn_str_list="$1"
@@ -357,6 +375,19 @@ start_single_app_server()
 	local output_log="$5/${app_server}_${app_running_log}"
         local local_run_script="auto_local_launch.sh"
         local remote_run_script="auto_launch_app.sh"
+	local useLocalSignalr=$g_use_local_signalr
+	if [ "$useLocalSignalr" == "true" ]
+	then
+cat << _EOF > $remote_run_script
+#!/bin/bash
+#automatic generated script
+killall dotnet
+cd ${bench_server_folder}
+/home/${bench_app_user}/.dotnet/dotnet restore --no-cache # never use cache library
+export useLocalSignalR="true"
+/home/${app_user}/.dotnet/dotnet run # >out.log
+_EOF
+	else
 cat << _EOF > $remote_run_script
 #!/bin/bash
 #automatic generated script
@@ -366,6 +397,7 @@ cd ${bench_server_folder}
 /home/${app_user}/.dotnet/dotnet user-secrets set Azure:SignalR:ConnectionString "$connection_str"
 /home/${app_user}/.dotnet/dotnet run # >out.log
 _EOF
+	fi
 
 echo "scp -o StrictHostKeyChecking=no -P ${app_ssh_port} $remote_run_script ${app_user}@${app_server}:~/"
 scp -o StrictHostKeyChecking=no -P ${app_ssh_port} $remote_run_script ${app_user}@${app_server}:~/
@@ -383,15 +415,28 @@ _EOF
         do
 		#echo "scp -o StrictHostKeyChecking=no -P ${app_ssh_port} ${app_user}@${app_server}:${bench_server_folder}/out.log ${output_log}"
 		#scp -o StrictHostKeyChecking=no -P ${app_ssh_port} ${app_user}@${app_server}:${bench_server_folder}/out.log ${output_log}
-                check=`grep "HttpConnection Started" ${output_log}|wc -l`
-                if [ "$check" -ge "5" ]
-                then
+		if [ "$g_use_local_signalr" == "true" ]
+		then
+		  check=`grep "Application started" ${output_log}`
+		  if [ "$check" != "" ]
+		  then
+			finish=1
+			echo "server is started!"
+			return
+		  else
+			echo "wait for server starting..."
+		  fi
+		else
+                  check=`grep "HttpConnection Started" ${output_log}|wc -l`
+                  if [ "$check" -ge "5" ]
+                  then
                         finish=1
                         echo "server is started!"
                         return
-                else
+                  else
                         echo "wait for server starting..."
-                fi
+                  fi
+		fi
                 sleep 1
         done
 	echo "!!Fail server does not start!!"
