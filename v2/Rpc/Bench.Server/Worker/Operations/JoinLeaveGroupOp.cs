@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Bench.Common;
+using Bench.RpcSlave.Worker.Counters;
 using Bench.RpcSlave.Worker.Savers;
 using Bench.RpcSlave.Worker.StartTimeOffsetGenerator;
 using Microsoft.AspNetCore.SignalR.Client;
@@ -40,7 +41,7 @@ namespace Bench.RpcSlave.Worker.Operations
             if (!debug) await Task.Delay(5000);
 
             // send message
-            await JoinLeaveGroup(_tk.BenchmarkCellConfig.Step);
+            await JoinLeaveGroup(_tk.BenchmarkCellConfig.Step, _tk.Connections, _tk.BenchmarkCellConfig.GroupNameList.ToList(), _tk.Counters);
 
             _tk.State = Stat.Types.State.SendComplete;
             Util.Log($"Sending Complete");
@@ -52,65 +53,60 @@ namespace Bench.RpcSlave.Worker.Operations
 
             if (!_tk.Init.ContainsKey(_tk.BenchmarkCellConfig.Step))
             {
-                SetCallbacks(_tk.BenchmarkCellConfig.Step);
+                SetCallbacks(_tk.BenchmarkCellConfig.Step, _tk.Connections, _tk.Counters);
                 _tk.Init[_tk.BenchmarkCellConfig.Step] = true;
             }
 
         }
 
-        protected async Task JoinLeaveGroup(string mode)
+        public static async Task JoinLeaveGroup(string mode, List<HubConnection> connections, List<string> groupNameMatrix, Counter counter)
         {
-            var sw = new Stopwatch();
-            sw.Start();
             var tasks = new List<Task>();
-            for (var i = _tk.ConnectionRange.Begin; i < _tk.ConnectionRange.End; i++)
+            for (var i = 0; i < connections.Count; i++)
             {
                 var ind = i;
                 tasks.Add(
                     Task.Run(async() =>
                     {
-                        var groupNameList = _tk.BenchmarkCellConfig.GroupNameList[ind].Split(";");
+                        var groupNameList = groupNameMatrix[ind].Split(";");
                         for (var j = 0; j < groupNameList.Length; j++)
                         {
                             try
                             {
-                                // await Task.Delay(startTimeOffsetGenerator.Delay(TimeSpan.FromSeconds(20)));
-                                await _tk.Connections[ind - _tk.ConnectionRange.Begin].SendAsync(mode, groupNameList[j], "perf");
+                                await connections[ind].SendAsync(mode, groupNameList[j], "perf");
                             }
                             catch (Exception ex)
                             {
                                 Util.Log($"{mode} failed: {ex}");
-                                if (mode.Contains("join", StringComparison.OrdinalIgnoreCase))
-                                    _tk.Counters.IncreaseJoinGroupFail();
+                                if (mode.ToLower().Contains("join"))
+                                    counter.IncreaseJoinGroupFail();
                                 else
-                                    _tk.Counters.IncreaseLeaveGroupFail();
+                                    counter.IncreaseLeaveGroupFail();
                             }
                         }
                     })
                 );
             }
             await Task.WhenAll(tasks);
-            sw.Stop();
-            Util.Log($"{mode} time : {sw.Elapsed.TotalMilliseconds} ms");
         }
 
-        protected void SetCallbacks(string mode)
+        public static void SetCallbacks(string mode, List<HubConnection> connections, Counter counter)
         {
-            Util.Log($"step: {mode}");
-            for (int i = _tk.ConnectionRange.Begin; i < _tk.ConnectionRange.End; i++)
+            Util.Log($"SetCallbacks step: {mode}");
+            for (int i = 0; i < connections.Count; i++)
             {
                 var ind = i;
                 var callbackName = mode.First().ToString().ToUpper() + mode.Substring(1);
-                _tk.Connections[i - _tk.ConnectionRange.Begin].On(callbackName,
+                connections[i].On(callbackName,
                     (string thisId, string message) =>
                     {
-                        if (mode.Contains("join"))
+                        if (mode.ToLower().Contains("join"))
                         {
-                            _tk.Counters.IncreaseJoinGroupSuccess();
+                            counter.IncreaseJoinGroupSuccess();
                         }
                         else
                         {
-                            _tk.Counters.IncreaseLeaveGroupSuccess();
+                            counter.IncreaseLeaveGroupSuccess();
                         }
                     });
 

@@ -541,7 +541,7 @@ namespace Bench.RpcMaster
                 var tasks = new List<Task>(clients.Count);
                 var step = pipeline[i];
                 int indClient = -1;
-                Util.Log($"step: {step}");
+                Util.Log($"current step: {step}");
 
                 // up op
                 if (step.Substring(0, 2) == "up")
@@ -569,8 +569,7 @@ namespace Bench.RpcMaster
                 if (onlyOneSendAllGroup) groupNameList = UpdateGroupNameList(groupNameList);
 
                 // remove last one callback
-                var removeLastOneCallback = step.Contains("removeLastOneCallback") ? true : false;
-                if (removeLastOneCallback) callbackList[callbackList.Count - 1] = false;
+                RemoveExceptLastOneCallback(step, callbackList);
 
                 clients.ForEach(client =>
                 {
@@ -620,6 +619,18 @@ namespace Bench.RpcMaster
             }
         }
 
+        private static void RemoveExceptLastOneCallback(string step, List<bool> callbackList)
+        {
+            var removeExceptLastOneCallback = step.Contains("removeExceptLastOneCallback") ? true : false;
+            if (removeExceptLastOneCallback) return;
+            for (var i = 0; i < callbackList.Count; i++)
+            {
+                callbackList[i] = false;
+            }
+            callbackList[callbackList.Count - 1] = true;
+
+        }
+
         private static List<string> UpdateGroupNameList(List<string> groupNameList)
         {
             var groupNameSet = new HashSet<string>();
@@ -631,7 +642,6 @@ namespace Bench.RpcMaster
                 }
             }
             groupNameList[groupNameList.Count - 1] = String.Join(";", groupNameSet.ToArray());
-            Util.Log($"all groups: " + String.Join(";", groupNameSet.ToArray()));
             return groupNameList;
         }
 

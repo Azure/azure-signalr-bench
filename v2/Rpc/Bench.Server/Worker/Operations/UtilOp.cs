@@ -9,7 +9,7 @@ namespace Bench.RpcSlave.Worker.Operations
         }
     }
 
-    class RemoveLastOneCallbackOp : UtilOp {}
+    class RemoveExceptLastOneCallbackOp : UtilOp {}
 
 
 }

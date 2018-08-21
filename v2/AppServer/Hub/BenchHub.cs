@@ -51,7 +51,7 @@ namespace Microsoft.Azure.SignalR.PerfTest.AppServer
             // Task.Run(async() =>
             // {
             Interlocked.Increment(ref _totalReceivedGroup);
-            Clients.Group(groupName).SendAsync("SendGroup", 0, time, null, null, messageBlob);
+            Clients.Group(groupName).SendAsync("SendGroup", 0, time, groupName, null, messageBlob);
             // });
 
         }
