@@ -40,7 +40,7 @@ namespace Bench.RpcSlave.Worker.Operations
             if (!debug) await Task.Delay(5000);
 
             // send message
-            await JoinLeaveGroup();
+            await JoinLeaveGroup(_tk.BenchmarkCellConfig.Step);
 
             _tk.State = Stat.Types.State.SendComplete;
             Util.Log($"Sending Complete");
@@ -52,16 +52,14 @@ namespace Bench.RpcSlave.Worker.Operations
 
             if (!_tk.Init.ContainsKey(_tk.BenchmarkCellConfig.Step))
             {
-                SetCallbacks();
+                SetCallbacks(_tk.BenchmarkCellConfig.Step);
                 _tk.Init[_tk.BenchmarkCellConfig.Step] = true;
             }
 
         }
 
-        protected async Task JoinLeaveGroup()
+        protected async Task JoinLeaveGroup(string mode)
         {
-            // var startTimeOffsetGenerator = new RandomGenerator(new LocalFileSaver());
-
             var sw = new Stopwatch();
             sw.Start();
             var tasks = new List<Task>();
@@ -77,12 +75,12 @@ namespace Bench.RpcSlave.Worker.Operations
                             try
                             {
                                 // await Task.Delay(startTimeOffsetGenerator.Delay(TimeSpan.FromSeconds(20)));
-                                await _tk.Connections[ind - _tk.ConnectionRange.Begin].SendAsync(_tk.BenchmarkCellConfig.Step, groupNameList[j], "perf");
+                                await _tk.Connections[ind - _tk.ConnectionRange.Begin].SendAsync(mode, groupNameList[j], "perf");
                             }
                             catch (Exception ex)
                             {
-                                Util.Log($"{_tk.BenchmarkCellConfig.Step} failed: {ex}");
-                                if (_tk.BenchmarkCellConfig.Step.Contains("join", StringComparison.OrdinalIgnoreCase))
+                                Util.Log($"{mode} failed: {ex}");
+                                if (mode.Contains("join", StringComparison.OrdinalIgnoreCase))
                                     _tk.Counters.IncreaseJoinGroupFail();
                                 else
                                     _tk.Counters.IncreaseLeaveGroupFail();
@@ -93,20 +91,20 @@ namespace Bench.RpcSlave.Worker.Operations
             }
             await Task.WhenAll(tasks);
             sw.Stop();
-            Util.Log($"{_tk.BenchmarkCellConfig.Step} time : {sw.Elapsed.TotalMilliseconds} ms");
+            Util.Log($"{mode} time : {sw.Elapsed.TotalMilliseconds} ms");
         }
 
-        protected void SetCallbacks()
+        protected void SetCallbacks(string mode)
         {
-            Util.Log($"step: {_tk.BenchmarkCellConfig.Step}");
+            Util.Log($"step: {mode}");
             for (int i = _tk.ConnectionRange.Begin; i < _tk.ConnectionRange.End; i++)
             {
                 var ind = i;
-                var callbackName = _tk.BenchmarkCellConfig.Step.First().ToString().ToUpper() + _tk.BenchmarkCellConfig.Step.Substring(1);
+                var callbackName = mode.First().ToString().ToUpper() + mode.Substring(1);
                 _tk.Connections[i - _tk.ConnectionRange.Begin].On(callbackName,
                     (string thisId, string message) =>
                     {
-                        if (_tk.BenchmarkCellConfig.Step.Contains("join"))
+                        if (mode.Contains("join"))
                         {
                             _tk.Counters.IncreaseJoinGroupSuccess();
                         }

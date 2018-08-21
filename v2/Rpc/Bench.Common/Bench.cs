@@ -22,58 +22,59 @@ namespace Bench.Common {
     static BenchReflection() {
       byte[] descriptorData = global::System.Convert.FromBase64String(
           string.Concat(
-            "CgtCZW5jaC5wcm90bxIMQmVuY2guQ29tbW9uIqwCChNCZW5jaG1hcmtDZWxs",
+            "CgtCZW5jaC5wcm90bxIMQmVuY2guQ29tbW9uIsICChNCZW5jaG1hcmtDZWxs",
             "Q29uZmlnEhMKC3NlcnZpY2VUeXBlGAEgASgJEhUKDXRyYW5zcG9ydFR5cGUY",
             "AiABKAkSEwoLaHViUHJvdG9jb2wYAyABKAkSEAoIc2NlbmFyaW8YBCABKAkS",
             "DAoEc3RlcBgFIAEoCRIUCgxtaXhHcm91cE5hbWUYBiABKAkSGQoRbWl4RWNo",
             "b0Nvbm5lY3Rpb24YByABKAUSHgoWbWl4QnJvYWRjYXN0Q29ubmVjdGlvbhgI",
             "IAEoBRIaChJtaXhHcm91cENvbm5lY3Rpb24YCSABKAUSGwoTdGFyZ2V0Q29u",
             "bmVjdGlvbklkcxgKIAMoCRITCgttZXNzYWdlU2l6ZRgLIAEoAxIVCg1ncm91",
-            "cE5hbWVMaXN0GAwgAygJIjcKEENvbm5lY3Rpb25Db25maWcSEQoJZ3JvdXBO",
-            "YW1lGAEgASgJEhAKCFNlbmRGbGFnGAIgASgIIkcKFENvbm5lY3Rpb25Db25m",
-            "aWdMaXN0Ei8KB2NvbmZpZ3MYASADKAsyHi5CZW5jaC5Db21tb24uQ29ubmVj",
-            "dGlvbkNvbmZpZyIjCgVSYW5nZRINCgViZWdpbhgBIAEoBRILCgNlbmQYAiAB",
-            "KAUiFgoFRm9yY2USDQoFZm9yY2UYASABKAgiIgoEUGFpchILCgNrZXkYASAB",
-            "KAkSDQoFdmFsdWUYAiABKAQiKQoERGljdBIhCgVwYWlycxgBIAMoCzISLkJl",
-            "bmNoLkNvbW1vbi5QYWlyIhUKBFBhdGgSDQoFcHBhdGgYASABKAkijAEKDUNl",
-            "bGxKb2JDb25maWcSEwoLY29ubmVjdGlvbnMYASABKAUSHQoVY29uY3VycmVu",
-            "dENvbm5lY3Rpb25zGAIgASgFEhAKCGludGVydmFsGAQgASgFEhAKCGR1cmF0",
-            "aW9uGAUgASgFEhEKCXNlcnZlclVybBgGIAEoCRIQCghwaXBlbGluZRgHIAEo",
-            "CSL3AwoEU3RhdBInCgVzdGF0ZRgBIAEoDjIYLkJlbmNoLkNvbW1vbi5TdGF0",
-            "LlN0YXRlIsUDCgVTdGF0ZRIOCgpERUJVR19UT0RPEAASFwoTSFVCQ09OTl9V",
-            "TkNPTk5FQ1RFRBABEhYKEkhVQkNPTk5fQ09OTkVDVElORxACEhUKEUhVQkNP",
-            "Tk5fQ09OTkVDVEVEEAMSEwoPQ09ORklHX1VOTE9BREVEEAgSEgoOQ09ORklH",
-            "X0xPQURJTkcQCRIRCg1DT05GSUdfTE9BREVEEAoSDgoKU0VORF9SRUFEWRAL",
-            "EhAKDFNFTkRfUlVOTklORxAMEhEKDVNFTkRfQ09NUExFVEUQDRISCg5XT1JL",
-            "RVJfVU5FWElTVBAOEhMKD1dPUktFUl9DUkVBVElORxAPEhIKDldPUktFUl9D",
-            "UkVBVEVEEBASEgoOV09SS0VSX0VYSVNURUQQERIVChFIVUJDT05OX1VOQ1JF",
-            "QVRFRBASEhQKEEhVQkNPTk5fQ1JFQVRJTkcQExITCg9IVUJDT05OX0NSRUFU",
-            "RUQQFBIZChVIVUJDT05OX0RJU0NPTk5FQ1RJTkcQGBIYChRIVUJDT05OX0RJ",
-            "U0NPTk5FQ1RFRBAZEhUKEUhVQkNPTk5fRElTUE9TSU5HEBoSFAoQSFVCQ09O",
-            "Tl9ESVNQT1NFRBAbIhMKBFN0cmcSCwoDc3RyGAEgASgJIhgKCFN0cmdMaXN0",
-            "EgwKBGxpc3QYASADKAkiGQoJVGltZXN0YW1wEgwKBHRpbWUYASABKAQiBwoF",
-            "RW1wdHkykQYKClJwY1NlcnZpY2USPgoMR2V0VGltZXN0YW1wEhMuQmVuY2gu",
-            "Q29tbW9uLkVtcHR5GhcuQmVuY2guQ29tbW9uLlRpbWVzdGFtcCIAEj4KEUdl",
-            "dENvdW50ZXJKc29uU3RyEhMuQmVuY2guQ29tbW9uLkVtcHR5GhIuQmVuY2gu",
-            "Q29tbW9uLlN0cmciABI1CghHZXRTdGF0ZRITLkJlbmNoLkNvbW1vbi5FbXB0",
-            "eRoSLkJlbmNoLkNvbW1vbi5TdGF0IgASQQoLR2V0U3RhdGVTdHISFy5CZW5j",
-            "aC5Db21tb24uVGltZXN0YW1wGhcuQmVuY2guQ29tbW9uLlRpbWVzdGFtcCIA",
-            "EkIKDUxvYWRKb2JDb25maWcSGy5CZW5jaC5Db21tb24uQ2VsbEpvYkNvbmZp",
-            "ZxoSLkJlbmNoLkNvbW1vbi5TdGF0IgASOQoMQ3JlYXRlV29ya2VyEhMuQmVu",
-            "Y2guQ29tbW9uLkVtcHR5GhIuQmVuY2guQ29tbW9uLlN0YXQiABI8Cg9Db2xs",
-            "ZWN0Q291bnRlcnMSEy5CZW5jaC5Db21tb24uRm9yY2UaEi5CZW5jaC5Db21t",
-            "b24uRGljdCIAEkEKBlJ1bkpvYhIhLkJlbmNoLkNvbW1vbi5CZW5jaG1hcmtD",
-            "ZWxsQ29uZmlnGhIuQmVuY2guQ29tbW9uLlN0YXQiABIwCgRUZXN0EhIuQmVu",
-            "Y2guQ29tbW9uLlN0cmcaEi5CZW5jaC5Db21tb24uU3RhdCIAElEKFExvYWRD",
-            "b25uZWN0aW9uQ29uZmlnEiIuQmVuY2guQ29tbW9uLkNvbm5lY3Rpb25Db25m",
-            "aWdMaXN0GhMuQmVuY2guQ29tbW9uLkVtcHR5IgASQQoTTG9hZENvbm5lY3Rp",
-            "b25SYW5nZRITLkJlbmNoLkNvbW1vbi5SYW5nZRoTLkJlbmNoLkNvbW1vbi5F",
-            "bXB0eSIAEkEKEEdldENvbm5lY3Rpb25JZHMSEy5CZW5jaC5Db21tb24uRW1w",
-            "dHkaFi5CZW5jaC5Db21tb24uU3RyZ0xpc3QiAGIGcHJvdG8z"));
+            "cE5hbWVMaXN0GAwgAygJEhQKDGNhbGxiYWNrTGlzdBgNIAMoCCI3ChBDb25u",
+            "ZWN0aW9uQ29uZmlnEhEKCWdyb3VwTmFtZRgBIAEoCRIQCghTZW5kRmxhZxgC",
+            "IAEoCCJHChRDb25uZWN0aW9uQ29uZmlnTGlzdBIvCgdjb25maWdzGAEgAygL",
+            "Mh4uQmVuY2guQ29tbW9uLkNvbm5lY3Rpb25Db25maWciIwoFUmFuZ2USDQoF",
+            "YmVnaW4YASABKAUSCwoDZW5kGAIgASgFIhYKBUZvcmNlEg0KBWZvcmNlGAEg",
+            "ASgIIiIKBFBhaXISCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgEIikKBERp",
+            "Y3QSIQoFcGFpcnMYASADKAsyEi5CZW5jaC5Db21tb24uUGFpciIVCgRQYXRo",
+            "Eg0KBXBwYXRoGAEgASgJIp0BCg1DZWxsSm9iQ29uZmlnEhMKC2Nvbm5lY3Rp",
+            "b25zGAEgASgFEh0KFWNvbmN1cnJlbnRDb25uZWN0aW9ucxgCIAEoBRIQCghp",
+            "bnRlcnZhbBgEIAEoBRIQCghkdXJhdGlvbhgFIAEoBRIRCglzZXJ2ZXJVcmwY",
+            "BiABKAkSEAoIcGlwZWxpbmUYByABKAkSDwoHb25lU2VuZBgIIAEoBSL3AwoE",
+            "U3RhdBInCgVzdGF0ZRgBIAEoDjIYLkJlbmNoLkNvbW1vbi5TdGF0LlN0YXRl",
+            "IsUDCgVTdGF0ZRIOCgpERUJVR19UT0RPEAASFwoTSFVCQ09OTl9VTkNPTk5F",
+            "Q1RFRBABEhYKEkhVQkNPTk5fQ09OTkVDVElORxACEhUKEUhVQkNPTk5fQ09O",
+            "TkVDVEVEEAMSEwoPQ09ORklHX1VOTE9BREVEEAgSEgoOQ09ORklHX0xPQURJ",
+            "TkcQCRIRCg1DT05GSUdfTE9BREVEEAoSDgoKU0VORF9SRUFEWRALEhAKDFNF",
+            "TkRfUlVOTklORxAMEhEKDVNFTkRfQ09NUExFVEUQDRISCg5XT1JLRVJfVU5F",
+            "WElTVBAOEhMKD1dPUktFUl9DUkVBVElORxAPEhIKDldPUktFUl9DUkVBVEVE",
+            "EBASEgoOV09SS0VSX0VYSVNURUQQERIVChFIVUJDT05OX1VOQ1JFQVRFRBAS",
+            "EhQKEEhVQkNPTk5fQ1JFQVRJTkcQExITCg9IVUJDT05OX0NSRUFURUQQFBIZ",
+            "ChVIVUJDT05OX0RJU0NPTk5FQ1RJTkcQGBIYChRIVUJDT05OX0RJU0NPTk5F",
+            "Q1RFRBAZEhUKEUhVQkNPTk5fRElTUE9TSU5HEBoSFAoQSFVCQ09OTl9ESVNQ",
+            "T1NFRBAbIhMKBFN0cmcSCwoDc3RyGAEgASgJIhgKCFN0cmdMaXN0EgwKBGxp",
+            "c3QYASADKAkiGQoJVGltZXN0YW1wEgwKBHRpbWUYASABKAQiBwoFRW1wdHky",
+            "kQYKClJwY1NlcnZpY2USPgoMR2V0VGltZXN0YW1wEhMuQmVuY2guQ29tbW9u",
+            "LkVtcHR5GhcuQmVuY2guQ29tbW9uLlRpbWVzdGFtcCIAEj4KEUdldENvdW50",
+            "ZXJKc29uU3RyEhMuQmVuY2guQ29tbW9uLkVtcHR5GhIuQmVuY2guQ29tbW9u",
+            "LlN0cmciABI1CghHZXRTdGF0ZRITLkJlbmNoLkNvbW1vbi5FbXB0eRoSLkJl",
+            "bmNoLkNvbW1vbi5TdGF0IgASQQoLR2V0U3RhdGVTdHISFy5CZW5jaC5Db21t",
+            "b24uVGltZXN0YW1wGhcuQmVuY2guQ29tbW9uLlRpbWVzdGFtcCIAEkIKDUxv",
+            "YWRKb2JDb25maWcSGy5CZW5jaC5Db21tb24uQ2VsbEpvYkNvbmZpZxoSLkJl",
+            "bmNoLkNvbW1vbi5TdGF0IgASOQoMQ3JlYXRlV29ya2VyEhMuQmVuY2guQ29t",
+            "bW9uLkVtcHR5GhIuQmVuY2guQ29tbW9uLlN0YXQiABI8Cg9Db2xsZWN0Q291",
+            "bnRlcnMSEy5CZW5jaC5Db21tb24uRm9yY2UaEi5CZW5jaC5Db21tb24uRGlj",
+            "dCIAEkEKBlJ1bkpvYhIhLkJlbmNoLkNvbW1vbi5CZW5jaG1hcmtDZWxsQ29u",
+            "ZmlnGhIuQmVuY2guQ29tbW9uLlN0YXQiABIwCgRUZXN0EhIuQmVuY2guQ29t",
+            "bW9uLlN0cmcaEi5CZW5jaC5Db21tb24uU3RhdCIAElEKFExvYWRDb25uZWN0",
+            "aW9uQ29uZmlnEiIuQmVuY2guQ29tbW9uLkNvbm5lY3Rpb25Db25maWdMaXN0",
+            "GhMuQmVuY2guQ29tbW9uLkVtcHR5IgASQQoTTG9hZENvbm5lY3Rpb25SYW5n",
+            "ZRITLkJlbmNoLkNvbW1vbi5SYW5nZRoTLkJlbmNoLkNvbW1vbi5FbXB0eSIA",
+            "EkEKEEdldENvbm5lY3Rpb25JZHMSEy5CZW5jaC5Db21tb24uRW1wdHkaFi5C",
+            "ZW5jaC5Db21tb24uU3RyZ0xpc3QiAGIGcHJvdG8z"));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
           new pbr::GeneratedClrTypeInfo(null, new pbr::GeneratedClrTypeInfo[] {
-            new pbr::GeneratedClrTypeInfo(typeof(global::Bench.Common.BenchmarkCellConfig), global::Bench.Common.BenchmarkCellConfig.Parser, new[]{ "ServiceType", "TransportType", "HubProtocol", "Scenario", "Step", "MixGroupName", "MixEchoConnection", "MixBroadcastConnection", "MixGroupConnection", "TargetConnectionIds", "MessageSize", "GroupNameList" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Bench.Common.BenchmarkCellConfig), global::Bench.Common.BenchmarkCellConfig.Parser, new[]{ "ServiceType", "TransportType", "HubProtocol", "Scenario", "Step", "MixGroupName", "MixEchoConnection", "MixBroadcastConnection", "MixGroupConnection", "TargetConnectionIds", "MessageSize", "GroupNameList", "CallbackList" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Bench.Common.ConnectionConfig), global::Bench.Common.ConnectionConfig.Parser, new[]{ "GroupName", "SendFlag" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Bench.Common.ConnectionConfigList), global::Bench.Common.ConnectionConfigList.Parser, new[]{ "Configs" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Bench.Common.Range), global::Bench.Common.Range.Parser, new[]{ "Begin", "End" }, null, null, null),
@@ -81,7 +82,7 @@ namespace Bench.Common {
             new pbr::GeneratedClrTypeInfo(typeof(global::Bench.Common.Pair), global::Bench.Common.Pair.Parser, new[]{ "Key", "Value" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Bench.Common.Dict), global::Bench.Common.Dict.Parser, new[]{ "Pairs" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Bench.Common.Path), global::Bench.Common.Path.Parser, new[]{ "Ppath" }, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Bench.Common.CellJobConfig), global::Bench.Common.CellJobConfig.Parser, new[]{ "Connections", "ConcurrentConnections", "Interval", "Duration", "ServerUrl", "Pipeline" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Bench.Common.CellJobConfig), global::Bench.Common.CellJobConfig.Parser, new[]{ "Connections", "ConcurrentConnections", "Interval", "Duration", "ServerUrl", "Pipeline", "OneSend" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Bench.Common.Stat), global::Bench.Common.Stat.Parser, new[]{ "State" }, null, new[]{ typeof(global::Bench.Common.Stat.Types.State) }, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Bench.Common.Strg), global::Bench.Common.Strg.Parser, new[]{ "Str" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Bench.Common.StrgList), global::Bench.Common.StrgList.Parser, new[]{ "List" }, null, null, null),
@@ -129,6 +130,7 @@ namespace Bench.Common {
       targetConnectionIds_ = other.targetConnectionIds_.Clone();
       messageSize_ = other.messageSize_;
       groupNameList_ = other.groupNameList_.Clone();
+      callbackList_ = other.callbackList_.Clone();
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -266,6 +268,16 @@ namespace Bench.Common {
       get { return groupNameList_; }
     }
 
+    /// <summary>Field number for the "callbackList" field.</summary>
+    public const int CallbackListFieldNumber = 13;
+    private static readonly pb::FieldCodec<bool> _repeated_callbackList_codec
+        = pb::FieldCodec.ForBool(106);
+    private readonly pbc::RepeatedField<bool> callbackList_ = new pbc::RepeatedField<bool>();
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public pbc::RepeatedField<bool> CallbackList {
+      get { return callbackList_; }
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public override bool Equals(object other) {
       return Equals(other as BenchmarkCellConfig);
@@ -291,6 +303,7 @@ namespace Bench.Common {
       if(!targetConnectionIds_.Equals(other.targetConnectionIds_)) return false;
       if (MessageSize != other.MessageSize) return false;
       if(!groupNameList_.Equals(other.groupNameList_)) return false;
+      if(!callbackList_.Equals(other.callbackList_)) return false;
       return true;
     }
 
@@ -309,6 +322,7 @@ namespace Bench.Common {
       hash ^= targetConnectionIds_.GetHashCode();
       if (MessageSize != 0L) hash ^= MessageSize.GetHashCode();
       hash ^= groupNameList_.GetHashCode();
+      hash ^= callbackList_.GetHashCode();
       return hash;
     }
 
@@ -361,6 +375,7 @@ namespace Bench.Common {
         output.WriteInt64(MessageSize);
       }
       groupNameList_.WriteTo(output, _repeated_groupNameList_codec);
+      callbackList_.WriteTo(output, _repeated_callbackList_codec);
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -398,6 +413,7 @@ namespace Bench.Common {
         size += 1 + pb::CodedOutputStream.ComputeInt64Size(MessageSize);
       }
       size += groupNameList_.CalculateSize(_repeated_groupNameList_codec);
+      size += callbackList_.CalculateSize(_repeated_callbackList_codec);
       return size;
     }
 
@@ -438,6 +454,7 @@ namespace Bench.Common {
         MessageSize = other.MessageSize;
       }
       groupNameList_.Add(other.groupNameList_);
+      callbackList_.Add(other.callbackList_);
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -494,6 +511,11 @@ namespace Bench.Common {
           }
           case 98: {
             groupNameList_.AddEntriesFrom(input, _repeated_groupNameList_codec);
+            break;
+          }
+          case 106:
+          case 104: {
+            callbackList_.AddEntriesFrom(input, _repeated_callbackList_codec);
             break;
           }
         }
@@ -1419,6 +1441,7 @@ namespace Bench.Common {
       duration_ = other.duration_;
       serverUrl_ = other.serverUrl_;
       pipeline_ = other.pipeline_;
+      oneSend_ = other.oneSend_;
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -1487,14 +1510,22 @@ namespace Bench.Common {
     /// <summary>Field number for the "pipeline" field.</summary>
     public const int PipelineFieldNumber = 7;
     private string pipeline_ = "";
-    /// <summary>
-    /// bytes messageBlob = 8;
-    /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public string Pipeline {
       get { return pipeline_; }
       set {
         pipeline_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+
+    /// <summary>Field number for the "oneSend" field.</summary>
+    public const int OneSendFieldNumber = 8;
+    private int oneSend_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public int OneSend {
+      get { return oneSend_; }
+      set {
+        oneSend_ = value;
       }
     }
 
@@ -1517,6 +1548,7 @@ namespace Bench.Common {
       if (Duration != other.Duration) return false;
       if (ServerUrl != other.ServerUrl) return false;
       if (Pipeline != other.Pipeline) return false;
+      if (OneSend != other.OneSend) return false;
       return true;
     }
 
@@ -1529,6 +1561,7 @@ namespace Bench.Common {
       if (Duration != 0) hash ^= Duration.GetHashCode();
       if (ServerUrl.Length != 0) hash ^= ServerUrl.GetHashCode();
       if (Pipeline.Length != 0) hash ^= Pipeline.GetHashCode();
+      if (OneSend != 0) hash ^= OneSend.GetHashCode();
       return hash;
     }
 
@@ -1563,6 +1596,10 @@ namespace Bench.Common {
         output.WriteRawTag(58);
         output.WriteString(Pipeline);
       }
+      if (OneSend != 0) {
+        output.WriteRawTag(64);
+        output.WriteInt32(OneSend);
+      }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -1585,6 +1622,9 @@ namespace Bench.Common {
       }
       if (Pipeline.Length != 0) {
         size += 1 + pb::CodedOutputStream.ComputeStringSize(Pipeline);
+      }
+      if (OneSend != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeInt32Size(OneSend);
       }
       return size;
     }
@@ -1611,6 +1651,9 @@ namespace Bench.Common {
       }
       if (other.Pipeline.Length != 0) {
         Pipeline = other.Pipeline;
+      }
+      if (other.OneSend != 0) {
+        OneSend = other.OneSend;
       }
     }
 
@@ -1644,6 +1687,10 @@ namespace Bench.Common {
           }
           case 58: {
             Pipeline = input.ReadString();
+            break;
+          }
+          case 64: {
+            OneSend = input.ReadInt32();
             break;
           }
         }

@@ -60,7 +60,8 @@ namespace Bench.RpcSlave
                         Interval = config.Interval,
                         Duration = config.Duration,
                         ServerUrl = config.ServerUrl,
-                        Pipeline = new List<string>(config.Pipeline.Split(';'))
+                        Pipeline = new List<string>(config.Pipeline.Split(';')),
+                        OneSend = config.OneSend
                 };
 
                 // TODO: handle exception

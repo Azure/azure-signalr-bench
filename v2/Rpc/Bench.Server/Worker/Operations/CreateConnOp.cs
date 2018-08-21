@@ -1,13 +1,14 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net;
+using System.Net.Http;
+using System.Threading.Tasks;
 using Bench.Common;
 using Microsoft.AspNetCore.Http.Connections;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.Net;
-using System.Net.Http;
-using System.Threading.Tasks;
 
 namespace Bench.RpcSlave.Worker.Operations
 {
@@ -21,6 +22,7 @@ namespace Bench.RpcSlave.Worker.Operations
             Util.Log($"server url: {_tk.JobConfig.ServerUrl}; conn: {_tk.JobConfig.Connections};  _tk.BenchmarkCellConfig.TransportType: { _tk.BenchmarkCellConfig.TransportType}; _tk.BenchmarkCellConfig.HubProtocol: {_tk.BenchmarkCellConfig.HubProtocol}");
             _tk.State = Stat.Types.State.HubconnUnconnected;
             _tk.Connections = Create(_tk.ConnectionRange.End - _tk.ConnectionRange.Begin, _tk.JobConfig.ServerUrl, _tk.BenchmarkCellConfig.TransportType, _tk.BenchmarkCellConfig.HubProtocol);
+
             if (tk.Connections == null) Util.Log("connections == null");
             Util.Log($"xxxconnections: {_tk.Connections.Count}");
         }
@@ -105,7 +107,7 @@ namespace Bench.RpcSlave.Worker.Operations
                 };
                 connections.Add(connection);
             }
-
+            
             _tk.State = Stat.Types.State.HubconnCreated;
             return connections;
 

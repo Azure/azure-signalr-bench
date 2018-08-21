@@ -31,6 +31,7 @@ message BenchmarkCellConfig {
 	repeated string targetConnectionIds = 10;
 	int64 messageSize = 11;
 	repeated string groupNameList = 12;
+	repeated bool callbackList = 13;
 }
 
 message ConnectionConfig {
@@ -72,7 +73,7 @@ message CellJobConfig {
 	int32 duration = 5;
 	string serverUrl = 6;
 	string pipeline = 7;
-	// bytes messageBlob = 8;
+	int32 oneSend = 8;
 }
 
 message Stat {

@@ -64,7 +64,7 @@ namespace Bench.RpcSlave.Worker.Operations
             {
                 var ind = i;
 
-                _tk.Connections[i - _tk.ConnectionRange.Begin].On(_tk.BenchmarkCellConfig.Scenario,
+                if (_tk.BenchmarkCellConfig.CallbackList[i]) _tk.ConnectionCallbacks.Add(_tk.Connections[i - _tk.ConnectionRange.Begin].On(_tk.BenchmarkCellConfig.Scenario,
                     (int count, string time, string thisId, string targetId, byte[] messageBlob) =>
                     {
                         var receiveTimestamp = Util.Timestamp();
@@ -73,7 +73,7 @@ namespace Bench.RpcSlave.Worker.Operations
                         _tk.Counters.CountLatency(sendTimestamp, receiveTimestamp);
                         _tk.Counters.SetServerCounter(((ulong) count));
                         _tk.Counters.IncreaseReceivedMessageSize((ulong) receiveSize);
-                    });
+                    }));
             }
         }
 

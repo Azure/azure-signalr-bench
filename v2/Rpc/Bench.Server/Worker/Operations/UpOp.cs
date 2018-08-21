@@ -10,6 +10,7 @@ namespace Bench.RpcSlave.Worker.Operations
         }
     }
 
+    class UpLastOneOp : UpOp {}
     class Up0Op : UpOp { }
     class Up1Op : UpOp { }
     class Up2Op : UpOp { }
