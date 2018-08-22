@@ -25,5 +25,7 @@ namespace JenkinsScript
         public string ServerUrl { get; set; }
         public string MessageSize {get; set;}
 
+        public int SendGroupCnt {get; set;}
+
     }
 }

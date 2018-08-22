@@ -476,6 +476,7 @@ namespace Bench.RpcMaster
             var messageSize = ParseMessageSize(messageSizeStr);
             var servers = serverUrl.Split(';');
             var serverCount = servers.Length;
+            var sendGroupCnt = argsOption.SendGroupCnt;
 
             clients.ForEach(client =>
             {
@@ -513,7 +514,8 @@ namespace Bench.RpcMaster
                     Duration = duration,
                     ServerUrl = server,
                     Pipeline = pipelineStr,
-                    OneSend = i == clients.Count - 1 ? 1 : 0
+                    OneSend = i == clients.Count - 1 ? 1 : 0,
+                    SendGroupCnt = sendGroupCnt
                 };
 
                 Util.Log($"create worker state: {state.State}");

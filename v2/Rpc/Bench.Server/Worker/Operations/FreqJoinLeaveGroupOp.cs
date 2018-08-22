@@ -33,9 +33,9 @@ namespace Bench.RpcSlave.Worker.Operations
                 var ids = GenerateId("SendGroup", i - _tk.ConnectionRange.Begin);
                 if (i == _tk.ConnectionRange.End - 1 && _tk.JobConfig.OneSend == 1)
                 {
-                    foreach (var id in ids)
+                    for (var j = 0; j < ids.Count && j < _tk.JobConfig.SendGroupCnt; j++)
                     {
-                        tasks.Add(StartSendingMessageAsync("SendGroup", _tk.Connections[i - _tk.ConnectionRange.Begin], i - _tk.ConnectionRange.Begin, messageBlob, id, _tk.Connections.Count, _tk.JobConfig.Duration, _tk.JobConfig.Interval, _tk.Counters, _brokenConnectionInds));
+                        tasks.Add(StartSendingMessageAsync("SendGroup", _tk.Connections[i - _tk.ConnectionRange.Begin], i - _tk.ConnectionRange.Begin, messageBlob, ids[j], _tk.Connections.Count, _tk.JobConfig.Duration, _tk.JobConfig.Interval, _tk.Counters, _brokenConnectionInds));
                     }
                 }
                 else if (cfg.SendFlag)

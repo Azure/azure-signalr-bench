@@ -16,6 +16,7 @@ namespace Bench.Common.Config
         public string ServerUrl { get; set; }
         public List<string> Pipeline { get; set; }
         public int OneSend { get; set; }
+        public int SendGroupCnt { get; set; }
 
         public JobConfig(ArgsOption argsOption)
         {
@@ -26,6 +27,7 @@ namespace Bench.Common.Config
             Duration = argsOption.Duration;
             ServerUrl = argsOption.ServerUrl;
             Pipeline = new List<string>(argsOption.PipeLine.Split(';'));
+            SendGroupCnt = argsOption.SendGroupCnt;
         }
 
         public JobConfig() { }

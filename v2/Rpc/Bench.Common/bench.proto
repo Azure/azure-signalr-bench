@@ -76,6 +76,7 @@ message CellJobConfig {
 	string serverUrl = 6;
 	string pipeline = 7;
 	int32 oneSend = 8;
+	int32 sendGroupCnt = 9;
 }
 
 message Stat {
