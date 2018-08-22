@@ -312,9 +312,9 @@ iterate_all_app_server_and_connection_str()
 	fi
 	local conn_str_len=$(array_len "$connection_string_list" "|")
 	local app_server_len=$(array_len "$app_server_list" "|")
-	if [ "$conn_str_len" != "$app_server_len" ]
+	if [ "$conn_str_len" -gt "$app_server_len" ]
 	then
-		echo "connection string list does not match app server, they are different number"
+		echo "connection string items ($conn_str_len) are larger than app server ($app_server_len), it means there are some connection strings cannot be running"
 		exit 1
 	fi
 	local i=1
