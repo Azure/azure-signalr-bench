@@ -32,6 +32,8 @@ message BenchmarkCellConfig {
 	int64 messageSize = 11;
 	repeated string groupNameList = 12;
 	repeated bool callbackList = 13;
+	repeated bool joinLeaveGroupList = 14;
+
 }
 
 message ConnectionConfig {

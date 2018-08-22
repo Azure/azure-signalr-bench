@@ -513,7 +513,7 @@ namespace Bench.RpcMaster
                     Duration = duration,
                     ServerUrl = server,
                     Pipeline = pipelineStr,
-                    OneSend = 0
+                    OneSend = i == clients.Count - 1 ? 1 : 0
                 };
 
                 Util.Log($"create worker state: {state.State}");

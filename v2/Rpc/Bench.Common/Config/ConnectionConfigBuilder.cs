@@ -60,6 +60,7 @@ namespace Bench.Common.Config
             }
             return list;
         }
+
         public ConnectionConfigList UpdateSendConn(ConnectionConfigList configs, int more, int totalConnection, int slaveCnt, bool lastOne)
         {
             if (lastOne)

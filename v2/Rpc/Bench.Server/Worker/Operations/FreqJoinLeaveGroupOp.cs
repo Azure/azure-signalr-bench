@@ -31,15 +31,16 @@ namespace Bench.RpcSlave.Worker.Operations
             {
                 var cfg = _tk.ConnectionConfigList.Configs[i];
                 var ids = GenerateId("SendGroup", i - _tk.ConnectionRange.Begin);
-                if (cfg.SendFlag)
+                if (i == _tk.ConnectionRange.End - 1 && _tk.JobConfig.OneSend == 1)
                 {
                     foreach (var id in ids)
                     {
                         tasks.Add(StartSendingMessageAsync("SendGroup", _tk.Connections[i - _tk.ConnectionRange.Begin], i - _tk.ConnectionRange.Begin, messageBlob, id, _tk.Connections.Count, _tk.JobConfig.Duration, _tk.JobConfig.Interval, _tk.Counters, _brokenConnectionInds));
                     }
                 }
-                else
+                else if (cfg.SendFlag)
                 {
+                    // Util.Log($"join/leave conn {i}");
                     tasks.Add(StartJoinLeaveGroupAsync(_tk.Connections.GetRange(i - _tk.ConnectionRange.Begin, 1), i - _tk.ConnectionRange.Begin, _tk.BenchmarkCellConfig.GroupNameList.ToList().GetRange(i - _tk.ConnectionRange.Begin, 1), _tk.Connections.Count, _tk.JobConfig.Duration, _tk.JobConfig.Interval, _tk.Counters, _brokenConnectionInds));
                 }
             }
