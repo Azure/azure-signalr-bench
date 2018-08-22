@@ -37,7 +37,7 @@ namespace Bench.RpcSlave.Worker.Counters
             return list;
         }
 
-        public void ResetCounters(bool withConnection = true)
+        public void ResetCounters(bool withConnection = true, bool withGroup = true)
         {
 
             // messages
@@ -56,6 +56,10 @@ namespace Bench.RpcSlave.Worker.Counters
                 InnerCounters.AddOrUpdate("connection:error", 0, (k, v) => 0);
                 InnerCounters.AddOrUpdate("connection:success", 0, (k, v) => 0);
 
+            }
+
+            if (withGroup)
+            {
                 // join/leave groups
                 InnerCounters.AddOrUpdate("group:join:fail", 0, (k, v) => 0);
                 InnerCounters.AddOrUpdate("group:leave:fail", 0, (k, v) => 0);
