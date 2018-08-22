@@ -144,7 +144,7 @@ namespace Bench.RpcMaster
                 for (var i = 0; i < groupNameList.Count; i++)
                 {
                     if (groupNameList[i].Length > 0) groupNameList[i] += ";";
-                    groupNameList[i] += $"group_{(i + j) % groupNum}";
+                    groupNameList[i] += $"gp{(i + j) % groupNum}";
                 }
             }
             groupNameList.Shuffle();
