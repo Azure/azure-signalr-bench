@@ -41,7 +41,12 @@ echo "[AppServerLoginUser]: $bench_app_user"
 echo "[AppServerSSHPort]: $bench_app_port"
 . ./csharpcli.sh
 
-service_name=$(extract_servicename_from_connectionstring $connection_string)
+conn_str_len=$(array_len "$connection_string_list" "|")
+app_server_len=$(array_len "$bench_app_pub_server" "|")
+if [ "$conn_str_len" == 1 ]
+then
+  service_name=$(extract_servicename_from_connectionstring $connection_string_list)
+fi
 app_launch_log_dir=""
 k8s_result_dir=""
 if [ -d $result_root/$bench_type_list ]
@@ -53,7 +58,12 @@ else
   k8s_result_dir=$result_root
 fi
 
-start_multiple_app_server "$connection_string_list" "$bench_app_pub_server" $bench_app_user $bench_app_pub_port "$app_launch_log_dir"
+if [ "$conn_str_len" == 1 ]
+then
+  start_multiple_app_server_with_single_service "$connection_string_list" "$bench_app_pub_server" $bench_app_user $bench_app_pub_port "$app_launch_log_dir"
+else
+  start_multiple_app_server "$connection_string_list" "$bench_app_pub_server" $bench_app_user $bench_app_pub_port "$app_launch_log_dir"
+fi
 
 err_check=`grep -i "error" ${app_launch_log_file}`
 if [ "$err_check" != "" ]
@@ -69,6 +79,9 @@ if [ "$service_name" != "" ]
 then
    nohup sh collect_connections.sh $service_name $k8s_result_dir &
    collect_conn_pid=$!
+   echo "nohup sh collect_pod_top.sh $service_name $k8s_result_dir &"
+   nohup sh collect_pod_top.sh $service_name $k8s_result_dir &
+   collect_pod_top_pid=$!
 else
    echo "It seems you are running a self-host SignalR service because the service name is not standard"
 fi
@@ -81,6 +94,7 @@ stop_multiple_app_server "$bench_app_pub_server" $bench_app_user $bench_app_pub_
 if [ "$service_name" != "" ]
 then
    kill $collect_conn_pid
+   kill $collect_pod_top_pid
    if [ "$copy_syslog" == "true" ]
    then
      copy_syslog $service_name $k8s_result_dir

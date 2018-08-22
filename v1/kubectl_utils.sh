@@ -239,6 +239,33 @@ function install_nettools() {
   kubectl exec --kubeconfig=${config_file} ${pod_name} apt-get install net-tools
 }
 
+function start_top_tracking() {
+  local i
+  local resName=$1
+  local output_dir=$2
+  g_config=""
+  g_result=""
+  find_target_by_iterate_all_k8slist $resName k8s_query
+  local config_file=$g_config
+  local result=$g_result
+  echo "'$result'"
+  while [ 1 ]
+  do
+     for i in $result
+     do
+       local date_time=`date --iso-8601='seconds'`
+       echo "${date_time} " >> $output_dir/${i}_top.txt
+       kubectl exec $i --kubeconfig=$config_file -- bash -c "top -b -n 1" >> $output_dir/${i}_top.txt
+     done
+     sleep 1
+  done
+}
+
+function stop_top_tracking() {
+  local top_start_pid=$1
+  kill $top_start_pid
+}
+
 function start_connection_tracking() {
   local i
   local resName=$1

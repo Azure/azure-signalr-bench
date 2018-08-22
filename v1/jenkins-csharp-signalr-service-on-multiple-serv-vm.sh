@@ -27,6 +27,8 @@ then
   sh sync_time_on_allclients.sh
 fi
 
+mkdir $result_root/$bench_type_list
+
 sh jenkins-run-csharpcli-on-multiple-serv.sh
 
 if [ "$prepare_service" == "1" ]
