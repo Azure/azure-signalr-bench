@@ -182,5 +182,6 @@ namespace Bench.Common
         {
             return debug == "debug";
         }
+
     }
 }

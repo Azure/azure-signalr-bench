@@ -70,13 +70,10 @@ message Path {
 message CellJobConfig {
 	int32 connections = 1;
 	int32 concurrentConnections = 2;
-	// int32 slaves = 3;
 	int32 interval = 4;
 	int32 duration = 5;
 	string serverUrl = 6;
 	string pipeline = 7;
-	int32 oneSend = 8;
-	int32 sendGroupCnt = 9;
 }
 
 message Stat {

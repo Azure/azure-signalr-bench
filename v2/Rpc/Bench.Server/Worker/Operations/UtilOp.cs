@@ -16,5 +16,4 @@ namespace Bench.RpcSlave.Worker.Operations
             tk.Counters.ResetCounters(withConnection: false, withGroup: true);
         }
     }
-
 }

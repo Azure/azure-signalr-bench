@@ -61,6 +61,40 @@ namespace Bench.Common.Config
             return list;
         }
 
+        public ConnectionConfigList UpdateSendConnPerGroup(ConnectionConfigList configs, List<string> groupNameMatrix)
+        {
+            var groupNameDict = new Dictionary<string, HashSet<int>>();
+            for (var i = 0; i < groupNameMatrix.Count; i++)
+            {
+                foreach (var groupName in groupNameMatrix[i].Split(";").ToList())
+                {
+                    if (groupNameDict.ContainsKey(groupName))
+                    {
+                        groupNameDict[groupName].Add(i);
+                    }
+                    else
+                    {
+                        groupNameDict[groupName] = new HashSet<int>();
+                    }
+                }
+            }
+
+            foreach (var groupNameIndexSetPair in groupNameDict)
+            {
+                var indexSet = groupNameIndexSetPair.Value;
+                var indexList = indexSet.ToList();
+
+                if (indexList == null) throw new ArgumentNullException();
+                if (indexList.Count == 0) throw new ArgumentOutOfRangeException();
+
+                indexList.Shuffle();
+                configs.Configs[indexList[0]].SendFlag = true;
+            }
+
+            return configs;
+
+        }
+
         public ConnectionConfigList UpdateSendConn(ConnectionConfigList configs, int more, int totalConnection, int slaveCnt, bool lastOne)
         {
             if (lastOne)

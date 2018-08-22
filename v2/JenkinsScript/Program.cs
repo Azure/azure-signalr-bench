@@ -269,7 +269,6 @@ namespace JenkinsScript
                         var messageSize = jobConfigV2.MessageSize;
                         var sendToFixedClient = argsOption.SendToFixedClient;
                         var StatisticsSuffix = argsOption.StatisticsSuffix;
-                        var sendGroupCnt = jobConfigV2.SendGroupCnt;
 
                         var hosts = new List<string>();
                         hosts.AddRange(privateIps.ServicePrivateIp.Split(";").ToList());
@@ -343,7 +342,7 @@ namespace JenkinsScript
 
                         // start master
                         privateIps.MasterPrivateIp.Split(";").ToList().ForEach(host => StartCollectMachineStatisticsTimer(host, user, password, sshPort, Util.MakeSureDirectoryExist($"/home/{user}/signalr-bench-statistics-{StatisticsSuffix}/machine/{resultRoot}/") + $"master{host}.txt", TimeSpan.FromSeconds(1)));
-                        ShellHelper.StartRpcMaster(privateIps.MasterPrivateIp, privateIps.SlavePrivateIp.Split(";").ToList(), user, password, sshPort, logPathMaster, serviceType, transportType, hubProtocol, scenario, connection, concurrentConnection, duration, interval, pipeline, groupNum, overlap, messageSize, serverUrl, suffix, masterRoot, sendToFixedClient, sendGroupCnt);
+                        ShellHelper.StartRpcMaster(privateIps.MasterPrivateIp, privateIps.SlavePrivateIp.Split(";").ToList(), user, password, sshPort, logPathMaster, serviceType, transportType, hubProtocol, scenario, connection, concurrentConnection, duration, interval, pipeline, groupNum, overlap, messageSize, serverUrl, suffix, masterRoot, sendToFixedClient);
 
                         // collect all logs
                         ShellHelper.CollectStatistics(hosts, user, password, sshPort, $"/home/{user}/logs/{resultRoot}/", Util.MakeSureDirectoryExist($"/home/{user}/signalr-bench-statistics-{StatisticsSuffix}/logs/"));

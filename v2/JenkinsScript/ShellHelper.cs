@@ -274,8 +274,7 @@ namespace JenkinsScript
             string logPath,
             string serviceType, string transportType, string hubProtocol, string scenario,
             int connection, int concurrentConnection, int duration, int interval, List<string> pipeLine,
-            int groupNum, int groupOverlap, string messageSize, string serverUrl, string suffix, string masterRoot, string sendToFixedClient,
-            int sendGroupCnt)
+            int groupNum, int groupOverlap, string messageSize, string serverUrl, string suffix, string masterRoot, string sendToFixedClient)
         {
 
             Util.Log($"service type: {serviceType}, transport type: {transportType}, hub protocol: {hubProtocol}, scenario: {scenario}");
@@ -316,7 +315,6 @@ namespace JenkinsScript
                 $" --groupOverlap {groupOverlap} " +
                 $"--messageSize {messageSize} " +
                 $"--sendToFixedClient true " +
-                $"--sendGroupCnt {sendGroupCnt} " +
                 $" -o '{outputCounterFile}' > {logPath}";
 
             Util.Log($"CMD: {user}@{host}: {cmd}");

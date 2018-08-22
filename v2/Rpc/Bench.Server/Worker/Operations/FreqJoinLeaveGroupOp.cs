@@ -25,33 +25,32 @@ namespace Bench.RpcSlave.Worker.Operations
 
             var beg = _tk.ConnectionRange.Begin;
             var end = _tk.ConnectionRange.End;
-            await AddRemoveSendingOneToAllGroups("JoinGroup", _tk.Connections, _tk.BenchmarkCellConfig.GroupNameList.ToList().GetRange(beg, end - beg), _tk.BenchmarkCellConfig.CallbackList.ToList().GetRange(beg, end - beg));
 
             for (var i = _tk.ConnectionRange.Begin; i < _tk.ConnectionRange.End; i++)
             {
                 var cfg = _tk.ConnectionConfigList.Configs[i];
                 var ids = GenerateId("SendGroup", i - _tk.ConnectionRange.Begin);
-                if (i == _tk.ConnectionRange.End - 1 && _tk.JobConfig.OneSend == 1)
+                if (cfg.SendFlag)
                 {
-                    for (var j = 0; j < ids.Count && j < _tk.JobConfig.SendGroupCnt; j++)
+                    for (var j = 0; j < ids.Count; j++)
                     {
-                        tasks.Add(StartSendingMessageAsync("SendGroup", _tk.Connections[i - _tk.ConnectionRange.Begin], i - _tk.ConnectionRange.Begin, messageBlob, ids[j], _tk.Connections.Count, _tk.JobConfig.Duration, _tk.JobConfig.Interval, _tk.Counters, _brokenConnectionInds));
+                        tasks.Add(StartSendingMessageAsync("SendGroup", _tk.Connections[i - _tk.ConnectionRange.Begin], 
+                        i - _tk.ConnectionRange.Begin, messageBlob, ids[j], _tk.Connections.Count, 
+                        _tk.JobConfig.Duration, _tk.JobConfig.Interval, _tk.Counters, _brokenConnectionInds));
                     }
                 }
-                else if (cfg.SendFlag)
+                else
                 {
-                    // Util.Log($"join/leave conn {i}");
-                    tasks.Add(StartJoinLeaveGroupAsync(_tk.Connections.GetRange(i - _tk.ConnectionRange.Begin, 1), i - _tk.ConnectionRange.Begin, _tk.BenchmarkCellConfig.GroupNameList.ToList().GetRange(i - _tk.ConnectionRange.Begin, 1), _tk.Connections.Count, _tk.JobConfig.Duration, _tk.JobConfig.Interval, _tk.Counters, _brokenConnectionInds));
+                    tasks.Add(StartJoinLeaveGroupAsync(_tk.Connections.GetRange(i - _tk.ConnectionRange.Begin, 1), 
+                    i - _tk.ConnectionRange.Begin, _tk.BenchmarkCellConfig.GroupNameList.ToList().GetRange(i - _tk.ConnectionRange.Begin, 1), 
+                    _tk.Connections.Count, _tk.JobConfig.Duration, _tk.JobConfig.Interval, _tk.Counters, _brokenConnectionInds));
                 }
             }
 
             await Task.WhenAll(tasks);
-
-            await AddRemoveSendingOneToAllGroups("LeaveGroup", _tk.Connections, _tk.BenchmarkCellConfig.GroupNameList.ToList().GetRange(beg, end - beg), _tk.BenchmarkCellConfig.CallbackList.ToList().GetRange(beg, end - beg));
-
         }
 
-        private async Task AddRemoveSendingOneToAllGroups(string mode, List<HubConnection> connections, List<string> groupNameMatrix, List<bool> callbackList)
+        private async Task AddRemoveSendingConnectionsToAllGroups(string mode, List<HubConnection> connections, List<string> groupNameMatrix, List<bool> callbackList)
         {
             for (var i = 0; i < callbackList.Count; i++)
             {
@@ -65,16 +64,14 @@ namespace Bench.RpcSlave.Worker.Operations
         public override void SetCallbacks()
         {
             SetCallbacksForJoinLeaveGroup();
-            SetCallbacksForSendingConnection();
+            SetCallbacksReceivingMessages();
         }
 
-        protected void SetCallbacksForSendingConnection()
+        protected void SetCallbacksReceivingMessages()
         {
-            // set callback for the sending connection
+            // set callbacks
             for (int i = _tk.ConnectionRange.Begin; i < _tk.ConnectionRange.End; i++)
             {
-                if (_tk.BenchmarkCellConfig.CallbackList[i] == false) continue;
-
                 _tk.ConnectionCallbacks.Add(
                     _tk.Connections[i - _tk.ConnectionRange.Begin].On("SendGroup",
                         (int count, string time, string thisId, string targetId, byte[] messageBlob) =>

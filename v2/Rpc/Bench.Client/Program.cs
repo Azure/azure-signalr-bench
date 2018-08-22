@@ -476,7 +476,6 @@ namespace Bench.RpcMaster
             var messageSize = ParseMessageSize(messageSizeStr);
             var servers = serverUrl.Split(';');
             var serverCount = servers.Length;
-            var sendGroupCnt = argsOption.SendGroupCnt;
 
             clients.ForEach(client =>
             {
@@ -513,9 +512,7 @@ namespace Bench.RpcMaster
                     Interval = interval,
                     Duration = duration,
                     ServerUrl = server,
-                    Pipeline = pipelineStr,
-                    OneSend = i == clients.Count - 1 ? 1 : 0,
-                    SendGroupCnt = sendGroupCnt
+                    Pipeline = pipelineStr
                 };
 
                 Util.Log($"create worker state: {state.State}");
@@ -546,25 +543,10 @@ namespace Bench.RpcMaster
                 Util.Log($"current step: {step}");
 
                 // up op
-                if (step.Substring(0, 2) == "up")
-                {
-                    var AdditionalSendConnCnt = 0;
-                    var lastOne = false;
-                    if (step.Substring(0, 2) == "up")
-                    {
-                        if (step.Contains("LastOne"))
-                        {
-                            AdditionalSendConnCnt = 1;
-                            lastOne = true;
-                        }
-                        else
-                        {
-                            AdditionalSendConnCnt = Convert.ToInt32(step.Substring(2));
-                        }
-                    }
+                HandleBasicUpOp(step, connectionConfigBuilder, connectionAllConfigList, connections, slaveList);
 
-                    connectionAllConfigList = connectionConfigBuilder.UpdateSendConn(connectionAllConfigList, AdditionalSendConnCnt, connections, slaveList.Count, lastOne);
-                }
+                // handle up per group op
+                HandleUpPerGroupOp(step, connectionConfigBuilder, connectionAllConfigList, groupNameList);
 
                 // update group name list
                 var onlyOneSendAllGroup = step.Contains("configOnlyOneSendAllGroup") ? true : false;
@@ -618,6 +600,44 @@ namespace Bench.RpcMaster
                         targetConnectionIds.Shuffle();
                     }
                 }
+            }
+        }
+
+        private static void HandleUpPerGroupOp(string step, ConnectionConfigBuilder connectionConfigBuilder, ConnectionConfigList connectionAllConfigList, List<string> groupNameMat)
+        {
+            var pattern = "upPerGroup";
+            if (step.Contains(pattern))
+            {
+                var isNumeric = int.TryParse(step.Substring(pattern.Length), out int upNum);
+                if (!isNumeric) throw new Exception();
+                connectionConfigBuilder.UpdateSendConnPerGroup(connectionAllConfigList, groupNameMat);
+            }
+        }
+
+        private static void HandleBasicUpOp(string step, ConnectionConfigBuilder connectionConfigBuilder,
+            ConnectionConfigList connectionAllConfigList, int connectionCnt, List<string> slaveList)
+        {
+            var isNumeric = int.TryParse(step.Substring(2), out int n);
+
+            if (step.Substring(0, 2) == "up" && isNumeric)
+            {
+                var AdditionalSendConnCnt = 0;
+                var lastOne = false;
+                if (step.Substring(0, 2) == "up")
+                {
+                    if (step.Contains("LastOne"))
+                    {
+                        AdditionalSendConnCnt = 1;
+                        lastOne = true;
+                    }
+                    else
+                    {
+                        AdditionalSendConnCnt = Convert.ToInt32(step.Substring(2));
+                    }
+                }
+
+                connectionAllConfigList = connectionConfigBuilder.UpdateSendConn(connectionAllConfigList,
+                    AdditionalSendConnCnt, connectionCnt, slaveList.Count, lastOne);
             }
         }
 
