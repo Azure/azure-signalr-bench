@@ -37,25 +37,7 @@ namespace Bench.RpcSlave.Worker.Operations
     class Up500000Op : UpOp { }
 
     // per group
-    class UpPerGroup0Op : UpOp { }
     class UpPerGroup1Op : UpOp { }
-    class UpPerGroup2Op : UpOp { }
-    class UpPerGroup5Op : UpOp { }
 
-    class UpPerGroup10Op : UpOp { }
-    class UpPerGroup20Op : UpOp { }
-    class UpPerGroup50Op : UpOp { }
-
-    class UpPerGroup100Op : UpOp { }
-    class UpPerGroup200Op : UpOp { }
-    class UpPerGroup500Op : UpOp { }
-
-    class UpPerGroup1000Op : UpOp { }
-    class UpPerGroup2000Op : UpOp { }
-    class UpPerGroup5000Op : UpOp { }
-
-    class UpPerGroup10000Op : UpOp { }
-    class UpPerGroup20000Op : UpOp { }
-    class UpPerGroup50000Op : UpOp { }
 
 }

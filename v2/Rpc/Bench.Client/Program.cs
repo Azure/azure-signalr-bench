@@ -85,7 +85,7 @@ namespace Bench.RpcMaster
                 // process jobs for each step
                 await ProcessPipeline(clients, argsOption.PipeLine, slaveList,
                     argsOption.Connections, argsOption.ServiceType, argsOption.TransportType, argsOption.HubProtocal, argsOption.Scenario, argsOption.MessageSize,
-                    argsOption.groupNum, argsOption.groupOverlap, argsOption.ServerUrl.Split(";").ToList().Count, argsOption.sendToFixedClient);
+                    argsOption.groupNum, argsOption.groupOverlap, argsOption.ServerUrl.Split(";").ToList().Count, argsOption.SendToFixedClient);
             }
             catch (Exception ex)
             {
@@ -255,7 +255,7 @@ namespace Bench.RpcMaster
 
         private static BenchmarkCellConfig GenerateBenchmarkConfig(int indClient, string step,
             string serviceType, string transportType, string hubProtocol, string scenario,
-            string MessageSizeStr, List<string> targetConnectionIds, List<string> groupNameList, List<bool> callbackList)
+            string MessageSizeStr, List<string> targetConnectionIds, List<string> groupNameList, List<bool> callbackList, int messageCountPerInterval)
         {
             var messageSize = ParseMessageSize(MessageSizeStr);
 
@@ -270,7 +270,8 @@ namespace Bench.RpcMaster
                 MixBroadcastConnection = 0,
                 MixGroupName = "",
                 MixGroupConnection = 0,
-                MessageSize = messageSize
+                MessageSize = messageSize,
+                MessageCountPerInterval = messageCountPerInterval
             };
 
             // add lists
@@ -497,7 +498,7 @@ namespace Bench.RpcMaster
                 state = client.CreateWorker(new Empty());
 
                 string server = null;
-                if (bool.Parse(argsOption.sendToFixedClient))
+                if (bool.Parse(argsOption.SendToFixedClient))
                 {
                     server = serverUrl;
                 }
@@ -512,7 +513,7 @@ namespace Bench.RpcMaster
                     Interval = interval,
                     Duration = duration,
                     ServerUrl = server,
-                    Pipeline = pipelineStr
+                    Pipeline = pipelineStr,
                 };
 
                 Util.Log($"create worker state: {state.State}");
@@ -532,6 +533,7 @@ namespace Bench.RpcMaster
             var targetConnectionIds = new List<string>();
             var groupNameList = GenerateGroupNameList(connections, groupNum, overlap);
             var callbackList = Enumerable.Repeat(true, connections).ToList();
+            var messageCountPerInterval = 1;
 
             // var serverUrls = serverCount;
             for (var i = 0; i < pipeline.Count; i++)
@@ -552,6 +554,10 @@ namespace Bench.RpcMaster
                 var onlyOneSendAllGroup = step.Contains("configOnlyOneSendAllGroup") ? true : false;
                 if (onlyOneSendAllGroup) groupNameList = UpdateGroupNameList(groupNameList);
 
+                // handle config message count per interval
+                var configMessageCountPerInterval = step.Contains("configMessageCountPerInterval") ? true : false;
+                if (configMessageCountPerInterval) int.TryParse(Util.TrimPrefix(step), out messageCountPerInterval);
+
                 // remove last one callback
                 RemoveExceptLastOneCallback(step, callbackList);
 
@@ -561,7 +567,7 @@ namespace Bench.RpcMaster
 
                     var benchmarkCellConfig = GenerateBenchmarkConfig(indClient, step,
                         serviceType, transportType, hubProtocol, scenario, messageSize,
-                        targetConnectionIds, groupNameList, callbackList);
+                        targetConnectionIds, groupNameList, callbackList, messageCountPerInterval);
 
                     Util.Log($"service: {benchmarkCellConfig.ServiceType}; transport: {benchmarkCellConfig.TransportType}; hubprotocol: {benchmarkCellConfig.HubProtocol}; scenario: {benchmarkCellConfig.Scenario}; step: {step}");
 

@@ -33,6 +33,7 @@ message BenchmarkCellConfig {
 	repeated string groupNameList = 12;
 	repeated bool callbackList = 13;
 	repeated bool joinLeaveGroupList = 14;
+	int32 messageCountPerInterval = 15;
 
 }
 

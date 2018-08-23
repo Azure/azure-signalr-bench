@@ -23,8 +23,7 @@ namespace JenkinsScript
         public bool IsGroupJoinLeave { get; set; }
         public List<string> Pipeline { get; set; }
         public string ServerUrl { get; set; }
-        public string MessageSize {get; set;}
-
+        public string MessageSize { get; set; }
 
     }
 }

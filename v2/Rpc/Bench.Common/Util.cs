@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using Newtonsoft.Json.Linq;
 
@@ -181,6 +182,12 @@ namespace Bench.Common
         public static bool isDebug(string debug)
         {
             return debug == "debug";
+        }
+
+        public static string TrimPrefix(string input)
+        {
+            var trimmed = Regex.Replace(input, @"^[A-Za-z]+", "");
+            return trimmed;
         }
 
     }

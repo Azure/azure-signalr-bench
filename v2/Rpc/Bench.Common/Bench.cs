@@ -22,7 +22,7 @@ namespace Bench.Common {
     static BenchReflection() {
       byte[] descriptorData = global::System.Convert.FromBase64String(
           string.Concat(
-            "CgtCZW5jaC5wcm90bxIMQmVuY2guQ29tbW9uIt4CChNCZW5jaG1hcmtDZWxs",
+            "CgtCZW5jaC5wcm90bxIMQmVuY2guQ29tbW9uIv8CChNCZW5jaG1hcmtDZWxs",
             "Q29uZmlnEhMKC3NlcnZpY2VUeXBlGAEgASgJEhUKDXRyYW5zcG9ydFR5cGUY",
             "AiABKAkSEwoLaHViUHJvdG9jb2wYAyABKAkSEAoIc2NlbmFyaW8YBCABKAkS",
             "DAoEc3RlcBgFIAEoCRIUCgxtaXhHcm91cE5hbWUYBiABKAkSGQoRbWl4RWNo",
@@ -30,51 +30,52 @@ namespace Bench.Common {
             "IAEoBRIaChJtaXhHcm91cENvbm5lY3Rpb24YCSABKAUSGwoTdGFyZ2V0Q29u",
             "bmVjdGlvbklkcxgKIAMoCRITCgttZXNzYWdlU2l6ZRgLIAEoAxIVCg1ncm91",
             "cE5hbWVMaXN0GAwgAygJEhQKDGNhbGxiYWNrTGlzdBgNIAMoCBIaChJqb2lu",
-            "TGVhdmVHcm91cExpc3QYDiADKAgiNwoQQ29ubmVjdGlvbkNvbmZpZxIRCgln",
-            "cm91cE5hbWUYASABKAkSEAoIU2VuZEZsYWcYAiABKAgiRwoUQ29ubmVjdGlv",
-            "bkNvbmZpZ0xpc3QSLwoHY29uZmlncxgBIAMoCzIeLkJlbmNoLkNvbW1vbi5D",
-            "b25uZWN0aW9uQ29uZmlnIiMKBVJhbmdlEg0KBWJlZ2luGAEgASgFEgsKA2Vu",
-            "ZBgCIAEoBSIWCgVGb3JjZRINCgVmb3JjZRgBIAEoCCIiCgRQYWlyEgsKA2tl",
-            "eRgBIAEoCRINCgV2YWx1ZRgCIAEoBCIpCgREaWN0EiEKBXBhaXJzGAEgAygL",
-            "MhIuQmVuY2guQ29tbW9uLlBhaXIiFQoEUGF0aBINCgVwcGF0aBgBIAEoCSKM",
-            "AQoNQ2VsbEpvYkNvbmZpZxITCgtjb25uZWN0aW9ucxgBIAEoBRIdChVjb25j",
-            "dXJyZW50Q29ubmVjdGlvbnMYAiABKAUSEAoIaW50ZXJ2YWwYBCABKAUSEAoI",
-            "ZHVyYXRpb24YBSABKAUSEQoJc2VydmVyVXJsGAYgASgJEhAKCHBpcGVsaW5l",
-            "GAcgASgJIvcDCgRTdGF0EicKBXN0YXRlGAEgASgOMhguQmVuY2guQ29tbW9u",
-            "LlN0YXQuU3RhdGUixQMKBVN0YXRlEg4KCkRFQlVHX1RPRE8QABIXChNIVUJD",
-            "T05OX1VOQ09OTkVDVEVEEAESFgoSSFVCQ09OTl9DT05ORUNUSU5HEAISFQoR",
-            "SFVCQ09OTl9DT05ORUNURUQQAxITCg9DT05GSUdfVU5MT0FERUQQCBISCg5D",
-            "T05GSUdfTE9BRElORxAJEhEKDUNPTkZJR19MT0FERUQQChIOCgpTRU5EX1JF",
-            "QURZEAsSEAoMU0VORF9SVU5OSU5HEAwSEQoNU0VORF9DT01QTEVURRANEhIK",
-            "DldPUktFUl9VTkVYSVNUEA4SEwoPV09SS0VSX0NSRUFUSU5HEA8SEgoOV09S",
-            "S0VSX0NSRUFURUQQEBISCg5XT1JLRVJfRVhJU1RFRBAREhUKEUhVQkNPTk5f",
-            "VU5DUkVBVEVEEBISFAoQSFVCQ09OTl9DUkVBVElORxATEhMKD0hVQkNPTk5f",
-            "Q1JFQVRFRBAUEhkKFUhVQkNPTk5fRElTQ09OTkVDVElORxAYEhgKFEhVQkNP",
-            "Tk5fRElTQ09OTkVDVEVEEBkSFQoRSFVCQ09OTl9ESVNQT1NJTkcQGhIUChBI",
-            "VUJDT05OX0RJU1BPU0VEEBsiEwoEU3RyZxILCgNzdHIYASABKAkiGAoIU3Ry",
-            "Z0xpc3QSDAoEbGlzdBgBIAMoCSIZCglUaW1lc3RhbXASDAoEdGltZRgBIAEo",
-            "BCIHCgVFbXB0eTKRBgoKUnBjU2VydmljZRI+CgxHZXRUaW1lc3RhbXASEy5C",
-            "ZW5jaC5Db21tb24uRW1wdHkaFy5CZW5jaC5Db21tb24uVGltZXN0YW1wIgAS",
-            "PgoRR2V0Q291bnRlckpzb25TdHISEy5CZW5jaC5Db21tb24uRW1wdHkaEi5C",
-            "ZW5jaC5Db21tb24uU3RyZyIAEjUKCEdldFN0YXRlEhMuQmVuY2guQ29tbW9u",
-            "LkVtcHR5GhIuQmVuY2guQ29tbW9uLlN0YXQiABJBCgtHZXRTdGF0ZVN0chIX",
-            "LkJlbmNoLkNvbW1vbi5UaW1lc3RhbXAaFy5CZW5jaC5Db21tb24uVGltZXN0",
-            "YW1wIgASQgoNTG9hZEpvYkNvbmZpZxIbLkJlbmNoLkNvbW1vbi5DZWxsSm9i",
-            "Q29uZmlnGhIuQmVuY2guQ29tbW9uLlN0YXQiABI5CgxDcmVhdGVXb3JrZXIS",
-            "Ey5CZW5jaC5Db21tb24uRW1wdHkaEi5CZW5jaC5Db21tb24uU3RhdCIAEjwK",
-            "D0NvbGxlY3RDb3VudGVycxITLkJlbmNoLkNvbW1vbi5Gb3JjZRoSLkJlbmNo",
-            "LkNvbW1vbi5EaWN0IgASQQoGUnVuSm9iEiEuQmVuY2guQ29tbW9uLkJlbmNo",
-            "bWFya0NlbGxDb25maWcaEi5CZW5jaC5Db21tb24uU3RhdCIAEjAKBFRlc3QS",
-            "Ei5CZW5jaC5Db21tb24uU3RyZxoSLkJlbmNoLkNvbW1vbi5TdGF0IgASUQoU",
-            "TG9hZENvbm5lY3Rpb25Db25maWcSIi5CZW5jaC5Db21tb24uQ29ubmVjdGlv",
-            "bkNvbmZpZ0xpc3QaEy5CZW5jaC5Db21tb24uRW1wdHkiABJBChNMb2FkQ29u",
-            "bmVjdGlvblJhbmdlEhMuQmVuY2guQ29tbW9uLlJhbmdlGhMuQmVuY2guQ29t",
-            "bW9uLkVtcHR5IgASQQoQR2V0Q29ubmVjdGlvbklkcxITLkJlbmNoLkNvbW1v",
-            "bi5FbXB0eRoWLkJlbmNoLkNvbW1vbi5TdHJnTGlzdCIAYgZwcm90bzM="));
+            "TGVhdmVHcm91cExpc3QYDiADKAgSHwoXbWVzc2FnZUNvdW50UGVySW50ZXJ2",
+            "YWwYDyABKAUiNwoQQ29ubmVjdGlvbkNvbmZpZxIRCglncm91cE5hbWUYASAB",
+            "KAkSEAoIU2VuZEZsYWcYAiABKAgiRwoUQ29ubmVjdGlvbkNvbmZpZ0xpc3QS",
+            "LwoHY29uZmlncxgBIAMoCzIeLkJlbmNoLkNvbW1vbi5Db25uZWN0aW9uQ29u",
+            "ZmlnIiMKBVJhbmdlEg0KBWJlZ2luGAEgASgFEgsKA2VuZBgCIAEoBSIWCgVG",
+            "b3JjZRINCgVmb3JjZRgBIAEoCCIiCgRQYWlyEgsKA2tleRgBIAEoCRINCgV2",
+            "YWx1ZRgCIAEoBCIpCgREaWN0EiEKBXBhaXJzGAEgAygLMhIuQmVuY2guQ29t",
+            "bW9uLlBhaXIiFQoEUGF0aBINCgVwcGF0aBgBIAEoCSKMAQoNQ2VsbEpvYkNv",
+            "bmZpZxITCgtjb25uZWN0aW9ucxgBIAEoBRIdChVjb25jdXJyZW50Q29ubmVj",
+            "dGlvbnMYAiABKAUSEAoIaW50ZXJ2YWwYBCABKAUSEAoIZHVyYXRpb24YBSAB",
+            "KAUSEQoJc2VydmVyVXJsGAYgASgJEhAKCHBpcGVsaW5lGAcgASgJIvcDCgRT",
+            "dGF0EicKBXN0YXRlGAEgASgOMhguQmVuY2guQ29tbW9uLlN0YXQuU3RhdGUi",
+            "xQMKBVN0YXRlEg4KCkRFQlVHX1RPRE8QABIXChNIVUJDT05OX1VOQ09OTkVD",
+            "VEVEEAESFgoSSFVCQ09OTl9DT05ORUNUSU5HEAISFQoRSFVCQ09OTl9DT05O",
+            "RUNURUQQAxITCg9DT05GSUdfVU5MT0FERUQQCBISCg5DT05GSUdfTE9BRElO",
+            "RxAJEhEKDUNPTkZJR19MT0FERUQQChIOCgpTRU5EX1JFQURZEAsSEAoMU0VO",
+            "RF9SVU5OSU5HEAwSEQoNU0VORF9DT01QTEVURRANEhIKDldPUktFUl9VTkVY",
+            "SVNUEA4SEwoPV09SS0VSX0NSRUFUSU5HEA8SEgoOV09SS0VSX0NSRUFURUQQ",
+            "EBISCg5XT1JLRVJfRVhJU1RFRBAREhUKEUhVQkNPTk5fVU5DUkVBVEVEEBIS",
+            "FAoQSFVCQ09OTl9DUkVBVElORxATEhMKD0hVQkNPTk5fQ1JFQVRFRBAUEhkK",
+            "FUhVQkNPTk5fRElTQ09OTkVDVElORxAYEhgKFEhVQkNPTk5fRElTQ09OTkVD",
+            "VEVEEBkSFQoRSFVCQ09OTl9ESVNQT1NJTkcQGhIUChBIVUJDT05OX0RJU1BP",
+            "U0VEEBsiEwoEU3RyZxILCgNzdHIYASABKAkiGAoIU3RyZ0xpc3QSDAoEbGlz",
+            "dBgBIAMoCSIZCglUaW1lc3RhbXASDAoEdGltZRgBIAEoBCIHCgVFbXB0eTKR",
+            "BgoKUnBjU2VydmljZRI+CgxHZXRUaW1lc3RhbXASEy5CZW5jaC5Db21tb24u",
+            "RW1wdHkaFy5CZW5jaC5Db21tb24uVGltZXN0YW1wIgASPgoRR2V0Q291bnRl",
+            "ckpzb25TdHISEy5CZW5jaC5Db21tb24uRW1wdHkaEi5CZW5jaC5Db21tb24u",
+            "U3RyZyIAEjUKCEdldFN0YXRlEhMuQmVuY2guQ29tbW9uLkVtcHR5GhIuQmVu",
+            "Y2guQ29tbW9uLlN0YXQiABJBCgtHZXRTdGF0ZVN0chIXLkJlbmNoLkNvbW1v",
+            "bi5UaW1lc3RhbXAaFy5CZW5jaC5Db21tb24uVGltZXN0YW1wIgASQgoNTG9h",
+            "ZEpvYkNvbmZpZxIbLkJlbmNoLkNvbW1vbi5DZWxsSm9iQ29uZmlnGhIuQmVu",
+            "Y2guQ29tbW9uLlN0YXQiABI5CgxDcmVhdGVXb3JrZXISEy5CZW5jaC5Db21t",
+            "b24uRW1wdHkaEi5CZW5jaC5Db21tb24uU3RhdCIAEjwKD0NvbGxlY3RDb3Vu",
+            "dGVycxITLkJlbmNoLkNvbW1vbi5Gb3JjZRoSLkJlbmNoLkNvbW1vbi5EaWN0",
+            "IgASQQoGUnVuSm9iEiEuQmVuY2guQ29tbW9uLkJlbmNobWFya0NlbGxDb25m",
+            "aWcaEi5CZW5jaC5Db21tb24uU3RhdCIAEjAKBFRlc3QSEi5CZW5jaC5Db21t",
+            "b24uU3RyZxoSLkJlbmNoLkNvbW1vbi5TdGF0IgASUQoUTG9hZENvbm5lY3Rp",
+            "b25Db25maWcSIi5CZW5jaC5Db21tb24uQ29ubmVjdGlvbkNvbmZpZ0xpc3Qa",
+            "Ey5CZW5jaC5Db21tb24uRW1wdHkiABJBChNMb2FkQ29ubmVjdGlvblJhbmdl",
+            "EhMuQmVuY2guQ29tbW9uLlJhbmdlGhMuQmVuY2guQ29tbW9uLkVtcHR5IgAS",
+            "QQoQR2V0Q29ubmVjdGlvbklkcxITLkJlbmNoLkNvbW1vbi5FbXB0eRoWLkJl",
+            "bmNoLkNvbW1vbi5TdHJnTGlzdCIAYgZwcm90bzM="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
           new pbr::GeneratedClrTypeInfo(null, new pbr::GeneratedClrTypeInfo[] {
-            new pbr::GeneratedClrTypeInfo(typeof(global::Bench.Common.BenchmarkCellConfig), global::Bench.Common.BenchmarkCellConfig.Parser, new[]{ "ServiceType", "TransportType", "HubProtocol", "Scenario", "Step", "MixGroupName", "MixEchoConnection", "MixBroadcastConnection", "MixGroupConnection", "TargetConnectionIds", "MessageSize", "GroupNameList", "CallbackList", "JoinLeaveGroupList" }, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::Bench.Common.BenchmarkCellConfig), global::Bench.Common.BenchmarkCellConfig.Parser, new[]{ "ServiceType", "TransportType", "HubProtocol", "Scenario", "Step", "MixGroupName", "MixEchoConnection", "MixBroadcastConnection", "MixGroupConnection", "TargetConnectionIds", "MessageSize", "GroupNameList", "CallbackList", "JoinLeaveGroupList", "MessageCountPerInterval" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Bench.Common.ConnectionConfig), global::Bench.Common.ConnectionConfig.Parser, new[]{ "GroupName", "SendFlag" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Bench.Common.ConnectionConfigList), global::Bench.Common.ConnectionConfigList.Parser, new[]{ "Configs" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Bench.Common.Range), global::Bench.Common.Range.Parser, new[]{ "Begin", "End" }, null, null, null),
@@ -132,6 +133,7 @@ namespace Bench.Common {
       groupNameList_ = other.groupNameList_.Clone();
       callbackList_ = other.callbackList_.Clone();
       joinLeaveGroupList_ = other.joinLeaveGroupList_.Clone();
+      messageCountPerInterval_ = other.messageCountPerInterval_;
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -289,6 +291,17 @@ namespace Bench.Common {
       get { return joinLeaveGroupList_; }
     }
 
+    /// <summary>Field number for the "messageCountPerInterval" field.</summary>
+    public const int MessageCountPerIntervalFieldNumber = 15;
+    private int messageCountPerInterval_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public int MessageCountPerInterval {
+      get { return messageCountPerInterval_; }
+      set {
+        messageCountPerInterval_ = value;
+      }
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public override bool Equals(object other) {
       return Equals(other as BenchmarkCellConfig);
@@ -316,6 +329,7 @@ namespace Bench.Common {
       if(!groupNameList_.Equals(other.groupNameList_)) return false;
       if(!callbackList_.Equals(other.callbackList_)) return false;
       if(!joinLeaveGroupList_.Equals(other.joinLeaveGroupList_)) return false;
+      if (MessageCountPerInterval != other.MessageCountPerInterval) return false;
       return true;
     }
 
@@ -336,6 +350,7 @@ namespace Bench.Common {
       hash ^= groupNameList_.GetHashCode();
       hash ^= callbackList_.GetHashCode();
       hash ^= joinLeaveGroupList_.GetHashCode();
+      if (MessageCountPerInterval != 0) hash ^= MessageCountPerInterval.GetHashCode();
       return hash;
     }
 
@@ -390,6 +405,10 @@ namespace Bench.Common {
       groupNameList_.WriteTo(output, _repeated_groupNameList_codec);
       callbackList_.WriteTo(output, _repeated_callbackList_codec);
       joinLeaveGroupList_.WriteTo(output, _repeated_joinLeaveGroupList_codec);
+      if (MessageCountPerInterval != 0) {
+        output.WriteRawTag(120);
+        output.WriteInt32(MessageCountPerInterval);
+      }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -429,6 +448,9 @@ namespace Bench.Common {
       size += groupNameList_.CalculateSize(_repeated_groupNameList_codec);
       size += callbackList_.CalculateSize(_repeated_callbackList_codec);
       size += joinLeaveGroupList_.CalculateSize(_repeated_joinLeaveGroupList_codec);
+      if (MessageCountPerInterval != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeInt32Size(MessageCountPerInterval);
+      }
       return size;
     }
 
@@ -471,6 +493,9 @@ namespace Bench.Common {
       groupNameList_.Add(other.groupNameList_);
       callbackList_.Add(other.callbackList_);
       joinLeaveGroupList_.Add(other.joinLeaveGroupList_);
+      if (other.MessageCountPerInterval != 0) {
+        MessageCountPerInterval = other.MessageCountPerInterval;
+      }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -537,6 +562,10 @@ namespace Bench.Common {
           case 114:
           case 112: {
             joinLeaveGroupList_.AddEntriesFrom(input, _repeated_joinLeaveGroupList_codec);
+            break;
+          }
+          case 120: {
+            MessageCountPerInterval = input.ReadInt32();
             break;
           }
         }

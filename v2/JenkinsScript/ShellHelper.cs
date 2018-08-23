@@ -314,7 +314,7 @@ namespace JenkinsScript
                 $" --groupNum {groupNum} " +
                 $" --groupOverlap {groupOverlap} " +
                 $"--messageSize {messageSize} " +
-                $"--sendToFixedClient true " +
+                $"--sendToFixedClient {sendToFixedClient} " +
                 $" -o '{outputCounterFile}' > {logPath}";
 
             Util.Log($"CMD: {user}@{host}: {cmd}");

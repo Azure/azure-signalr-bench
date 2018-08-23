@@ -107,7 +107,6 @@ namespace Bench.Common
         public string MessageSize { get; set; }
 
         [Option("sendToFixedClient", Default = "false", Required = false, HelpText = "Every client sends message to another fixed client, which will go to Redis.")]
-        public string sendToFixedClient { get; set; }
-
+        public string SendToFixedClient { get; set; }
     }
 }
