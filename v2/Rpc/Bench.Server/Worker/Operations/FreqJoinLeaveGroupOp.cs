@@ -26,6 +26,9 @@ namespace Bench.RpcSlave.Worker.Operations
             var beg = _tk.ConnectionRange.Begin;
             var end = _tk.ConnectionRange.End;
 
+            // join group at the begining if the scenario is not frequently join and leave group
+            if (_tk.BenchmarkCellConfig.EnableGroupJoinLeave) await JoinLeaveGroupOp.JoinLeaveGroup("JoinGroup", _tk.Connections, _tk.BenchmarkCellConfig.GroupNameList.ToList(), _tk.Counters);
+
             for (var i = _tk.ConnectionRange.Begin; i < _tk.ConnectionRange.End; i++)
             {
                 var cfg = _tk.ConnectionConfigList.Configs[i];
@@ -42,13 +45,15 @@ namespace Bench.RpcSlave.Worker.Operations
                         }
                     }
                 }
-                else
+                else if (_tk.BenchmarkCellConfig.EnableGroupJoinLeave)
                 {
                     tasks.Add(StartJoinLeaveGroupAsync(_tk.Connections.GetRange(i - _tk.ConnectionRange.Begin, 1),
                         i - _tk.ConnectionRange.Begin, _tk.BenchmarkCellConfig.GroupNameList.ToList().GetRange(i - _tk.ConnectionRange.Begin, 1),
                         _tk.Connections.Count, _tk.JobConfig.Duration, _tk.JobConfig.Interval, _tk.Counters, _brokenConnectionInds));
                 }
             }
+
+            if (_tk.BenchmarkCellConfig.EnableGroupJoinLeave) await JoinLeaveGroupOp.JoinLeaveGroup("LeaveGroup", _tk.Connections, _tk.BenchmarkCellConfig.GroupNameList.ToList(), _tk.Counters);
 
             await Task.WhenAll(tasks);
         }

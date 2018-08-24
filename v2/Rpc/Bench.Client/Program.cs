@@ -85,7 +85,7 @@ namespace Bench.RpcMaster
                 // process jobs for each step
                 await ProcessPipeline(clients, argsOption.PipeLine, slaveList,
                     argsOption.Connections, argsOption.ServiceType, argsOption.TransportType, argsOption.HubProtocal, argsOption.Scenario, argsOption.MessageSize,
-                    argsOption.groupNum, argsOption.groupOverlap, argsOption.ServerUrl.Split(";").ToList().Count, argsOption.SendToFixedClient);
+                    argsOption.groupNum, argsOption.groupOverlap, argsOption.ServerUrl.Split(";").ToList().Count, argsOption.SendToFixedClient, argsOption.EnableGroupJoinLeave);
             }
             catch (Exception ex)
             {
@@ -255,7 +255,7 @@ namespace Bench.RpcMaster
 
         private static BenchmarkCellConfig GenerateBenchmarkConfig(int indClient, string step,
             string serviceType, string transportType, string hubProtocol, string scenario,
-            string MessageSizeStr, List<string> targetConnectionIds, List<string> groupNameList, List<bool> callbackList, int messageCountPerInterval)
+            string MessageSizeStr, List<string> targetConnectionIds, List<string> groupNameList, List<bool> callbackList, int messageCountPerInterval, bool enableGroupJoinLeave)
         {
             var messageSize = ParseMessageSize(MessageSizeStr);
 
@@ -271,7 +271,8 @@ namespace Bench.RpcMaster
                 MixGroupName = "",
                 MixGroupConnection = 0,
                 MessageSize = messageSize,
-                MessageCountPerInterval = messageCountPerInterval
+                MessageCountPerInterval = messageCountPerInterval,
+                EnableGroupJoinLeave = enableGroupJoinLeave
             };
 
             // add lists
@@ -525,7 +526,7 @@ namespace Bench.RpcMaster
 
         private static async Task ProcessPipeline(List<RpcService.RpcServiceClient> clients, string pipelineStr, List<string> slaveList, int connections,
             string serviceType, string transportType, string hubProtocol, string scenario, string messageSize,
-            int groupNum, int overlap, int serverCount, string sendToFixedClient)
+            int groupNum, int overlap, int serverCount, string sendToFixedClient, bool enableGroupJoinLeave)
         {
             var pipeline = pipelineStr.Split(';').ToList();
             var connectionConfigBuilder = new ConnectionConfigBuilder();
@@ -567,7 +568,7 @@ namespace Bench.RpcMaster
 
                     var benchmarkCellConfig = GenerateBenchmarkConfig(indClient, step,
                         serviceType, transportType, hubProtocol, scenario, messageSize,
-                        targetConnectionIds, groupNameList, callbackList, messageCountPerInterval);
+                        targetConnectionIds, groupNameList, callbackList, messageCountPerInterval, enableGroupJoinLeave);
 
                     Util.Log($"service: {benchmarkCellConfig.ServiceType}; transport: {benchmarkCellConfig.TransportType}; hubprotocol: {benchmarkCellConfig.HubProtocol}; scenario: {benchmarkCellConfig.Scenario}; step: {step}");
 
@@ -616,7 +617,7 @@ namespace Bench.RpcMaster
             {
                 var isNumeric = int.TryParse(step.Substring(pattern.Length), out int upNum);
                 if (!isNumeric) throw new Exception();
-                connectionConfigBuilder.UpdateSendConnPerGroup(connectionAllConfigList, groupNameMat);
+                connectionConfigBuilder.UpdateSendConnPerGroup(connectionAllConfigList, groupNameMat, upNum);
             }
         }
 

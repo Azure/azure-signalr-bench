@@ -264,7 +264,7 @@ namespace JenkinsScript
                         var interval = jobConfigV2.Interval;
                         var groupNum = jobConfigV2.GroupNum;
                         var overlap = jobConfigV2.Overlap;
-                        var isGroupJoinLeave = jobConfigV2.IsGroupJoinLeave;
+                        var enableGroupJoinLeave = jobConfigV2.EnableGroupJoinLeave;
                         var pipeline = jobConfigV2.Pipeline;
                         var serverUrl = jobConfigV2.ServerUrl;
                         var messageSize = jobConfigV2.MessageSize;
@@ -288,7 +288,7 @@ namespace JenkinsScript
                         var logPathService = new List<string>();
                         foreach (var ip in privateIps.ServicePrivateIp.Split(";").ToList())
                         {
-                            suffix = GenerateSuffix($"service{ip}", serviceType, transportType, hubProtocol, scenario, connection, concurrentConnection, groupNum, overlap, isGroupJoinLeave, messageSize);
+                            suffix = GenerateSuffix($"service{ip}", serviceType, transportType, hubProtocol, scenario, connection, concurrentConnection, groupNum, overlap, enableGroupJoinLeave, messageSize);
                             (errCode, result) = ShellHelper.PrepareLogPath(ip, user, password, sshPort, logRoot, resultRoot, suffix);
                             logPathService.Add(result);
                         }
@@ -296,7 +296,7 @@ namespace JenkinsScript
                         var logPathAppServer = new List<string>();
                         foreach (var ip in privateIps.AppServerPrivateIp.Split(";").ToList())
                         {
-                            suffix = GenerateSuffix($"appserver{ip}", serviceType, transportType, hubProtocol, scenario, connection, concurrentConnection, groupNum, overlap, isGroupJoinLeave, messageSize);
+                            suffix = GenerateSuffix($"appserver{ip}", serviceType, transportType, hubProtocol, scenario, connection, concurrentConnection, groupNum, overlap, enableGroupJoinLeave, messageSize);
                             (errCode, result) = ShellHelper.PrepareLogPath(ip, user, password, sshPort, logRoot, resultRoot, suffix);
                             logPathAppServer.Add(result);
                         }
@@ -304,12 +304,12 @@ namespace JenkinsScript
                         var logPathSlave = new List<string>();
                         slavesPvtIp.ForEach(ip =>
                         {
-                            suffix = GenerateSuffix($"slave{ip}", serviceType, transportType, hubProtocol, scenario, connection, concurrentConnection, groupNum, overlap, isGroupJoinLeave, messageSize);
+                            suffix = GenerateSuffix($"slave{ip}", serviceType, transportType, hubProtocol, scenario, connection, concurrentConnection, groupNum, overlap, enableGroupJoinLeave, messageSize);
                             (errCode, result) = ShellHelper.PrepareLogPath(ip, user, password, sshPort, logRoot, resultRoot, suffix);
                             logPathSlave.Add(result);
                         });
 
-                        suffix = GenerateSuffix("master", serviceType, transportType, hubProtocol, scenario, connection, concurrentConnection, groupNum, overlap, isGroupJoinLeave, messageSize);
+                        suffix = GenerateSuffix("master", serviceType, transportType, hubProtocol, scenario, connection, concurrentConnection, groupNum, overlap, enableGroupJoinLeave, messageSize);
                         (errCode, result) = ShellHelper.PrepareLogPath(masterPvtIp, user, password, sshPort, logRoot, resultRoot, suffix);
                         var logPathMaster = result;
 
@@ -343,7 +343,7 @@ namespace JenkinsScript
 
                         // start master
                         privateIps.MasterPrivateIp.Split(";").ToList().ForEach(host => StartCollectMachineStatisticsTimer(host, user, password, sshPort, Util.MakeSureDirectoryExist($"/home/{user}/signalr-bench-statistics-{statisticsSuffix}/machine/{resultRoot}/") + $"master{host}.txt", TimeSpan.FromSeconds(1)));
-                        ShellHelper.StartRpcMaster(privateIps.MasterPrivateIp, privateIps.SlavePrivateIp.Split(";").ToList(), user, password, sshPort, logPathMaster, serviceType, transportType, hubProtocol, scenario, connection, concurrentConnection, duration, interval, pipeline, groupNum, overlap, messageSize, serverUrl, suffix, masterRoot, sendToFixedClient);
+                        ShellHelper.StartRpcMaster(privateIps.MasterPrivateIp, privateIps.SlavePrivateIp.Split(";").ToList(), user, password, sshPort, logPathMaster, serviceType, transportType, hubProtocol, scenario, connection, concurrentConnection, duration, interval, pipeline, groupNum, overlap, messageSize, serverUrl, suffix, masterRoot, sendToFixedClient, enableGroupJoinLeave);
 
                         // collect all logs
                         ShellHelper.CollectStatistics(hosts, user, password, sshPort, $"/home/{user}/logs/{resultRoot}/", Util.MakeSureDirectoryExist($"/home/{user}/signalr-bench-statistics-{statisticsSuffix}/logs/"));

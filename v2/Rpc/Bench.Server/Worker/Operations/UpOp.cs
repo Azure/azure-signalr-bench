@@ -38,6 +38,10 @@ namespace Bench.RpcSlave.Worker.Operations
 
     // per group
     class UpPerGroup1Op : UpOp { }
-
+    class UpPerGroup2Op : UpOp { }
+    class UpPerGroup5Op : UpOp { }
+    class UpPerGroup10Op : UpOp { }
+    class UpPerGroup20Op : UpOp { }
+    class UpPerGroup50Op : UpOp { }
 
 }

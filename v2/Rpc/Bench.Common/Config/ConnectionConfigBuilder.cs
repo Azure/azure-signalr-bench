@@ -61,7 +61,7 @@ namespace Bench.Common.Config
             return list;
         }
 
-        public ConnectionConfigList UpdateSendConnPerGroup(ConnectionConfigList configs, List<string> groupNameMatrix)
+        public ConnectionConfigList UpdateSendConnPerGroup(ConnectionConfigList configs, List<string> groupNameMatrix, int upNum)
         {
             var groupNameDict = new Dictionary<string, HashSet<int>>();
             for (var i = 0; i < groupNameMatrix.Count; i++)
@@ -88,7 +88,11 @@ namespace Bench.Common.Config
                 if (indexList.Count == 0) throw new ArgumentOutOfRangeException();
 
                 indexList.Shuffle();
-                configs.Configs[indexList[0]].SendFlag = true;
+                for (var i = 0; i < indexList.Count; i++)
+                {
+                    if (i < upNum) configs.Configs[indexList[i]].SendFlag = true;
+                    else configs.Configs[indexList[i]].SendFlag = false;
+                }
             }
 
             return configs;
