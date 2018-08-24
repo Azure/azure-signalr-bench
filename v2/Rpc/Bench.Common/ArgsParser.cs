@@ -109,7 +109,7 @@ namespace Bench.Common
         [Option("sendToFixedClient", Default = "false", Required = false, HelpText = "Every client sends message to another fixed client, which will go to Redis.")]
         public string SendToFixedClient { get; set; }
 
-        [Option("isGroupJoinLeave", Required = false, HelpText = "")]
+        [Option("enableGroupJoinLeave", Required = false, HelpText = "")]
         public bool EnableGroupJoinLeave { get; set; }
     }
 }
