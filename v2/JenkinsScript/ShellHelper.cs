@@ -511,7 +511,7 @@ namespace JenkinsScript
                 }
 
                 // install unzip
-                cmd = $"sudo apt-get install -y zip; unzip -o -d {dstDir} ~/serviceruntime.zip";
+                cmd = $"rm -rf OSS*/; sudo apt-get install -y zip; unzip -o -d {dstDir} ~/serviceruntime.zip";
                 RemoteBash(user, host, sshPort, password, cmd, handleRes : true);
 
                 // modify appsetting.json
