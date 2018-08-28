@@ -77,11 +77,16 @@ fi
 
 if [ "$service_name" != "" ]
 then
-   nohup sh collect_connections.sh $service_name $k8s_result_dir &
-   collect_conn_pid=$!
+   #nohup sh collect_connections.sh $service_name $k8s_result_dir &
+   #collect_conn_pid=$!
    echo "nohup sh collect_pod_top.sh $service_name $k8s_result_dir &"
    nohup sh collect_pod_top.sh $service_name $k8s_result_dir &
    collect_pod_top_pid=$!
+   if [ "$g_nginx_ns" != "" ]
+   then
+      nohup sh collect_nginx_top.sh $service_name $g_nginx_ns $k8s_result_dir &
+      collect_nginx_top_pid=$!
+   fi
 else
    echo "It seems you are running a self-host SignalR service because the service name is not standard"
 fi
@@ -93,8 +98,12 @@ stop_multiple_app_server "$bench_app_pub_server" $bench_app_user $bench_app_pub_
 
 if [ "$service_name" != "" ]
 then
-   kill $collect_conn_pid
+   #kill $collect_conn_pid
    kill $collect_pod_top_pid
+   if [ "$collect_nginx_top_pid" != "" ]
+   then
+     kill $collect_nginx_top_pid
+   fi
    if [ "$copy_syslog" == "true" ]
    then
      copy_syslog $service_name $k8s_result_dir
