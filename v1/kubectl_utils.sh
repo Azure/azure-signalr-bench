@@ -40,11 +40,16 @@ function find_target_by_iterate_all_k8slist()
   local config
   local result
   local i=1
+  local ns=""
+  if [ $# -eq 3 ]
+  then
+    ns=$3
+  fi
   local len=$(array_len "$g_k8s_config_list" "|")
   while [ $i -le $len ]
   do
      config=$(array_get $g_k8s_config_list $i "|")
-     result=$($callback $resName $config)
+     result=$($callback $resName $config "$ns")
      if [ "$result" != "" ]
      then
         g_config=$config
@@ -191,8 +196,17 @@ function k8s_get_pod_number() {
 function k8s_query() {
   local config_file=$2
   local resName=$1
-  local kubeId=`kubectl get deploy -o=json --selector resourceName=$resName --kubeconfig=${config_file}|jq '.items[0].metadata.labels.resourceKubeId'|tr -d '"'`
-  local len=`kubectl get pod -o=json --selector resourceKubeId=$kubeId --kubeconfig=${config_file}|jq '.items|length'`
+  local kubeId len
+  local ns=""
+  if [ $# -eq 3 ]
+  then
+    ns=$3
+    kubeId=`kubectl get deploy -o=json --namespace=$ns --selector resourceName=$resName --kubeconfig=${config_file}|jq '.items[0].metadata.labels.resourceKubeId'|tr -d '"'`
+    len=`kubectl get pod -o=json --namespace=$ns --selector resourceKubeId=$kubeId --kubeconfig=${config_file}|jq '.items|length'`
+  else
+    kubeId=`kubectl get deploy -o=json --selector resourceName=$resName --kubeconfig=${config_file}|jq '.items[0].metadata.labels.resourceKubeId'|tr -d '"'`
+    len=`kubectl get pod -o=json --selector resourceKubeId=$kubeId --kubeconfig=${config_file}|jq '.items|length'`
+  fi
   if [ "$len" == "0" ]
   then
      return
@@ -200,7 +214,12 @@ function k8s_query() {
   local i=0
   while [ $i -lt $len ]
   do
-     kubectl get pod -o=json --selector resourceKubeId=$kubeId --kubeconfig=${config_file}|jq ".items[$i].metadata.name"|tr -d '"'
+     if [ "$ns" == "" ]
+     then
+       kubectl get pod -o=json --selector resourceKubeId=$kubeId --kubeconfig=${config_file}|jq ".items[$i].metadata.name"|tr -d '"'
+     else
+       kubectl get pod -o=json --namespace=$ns --selector resourceKubeId=$kubeId --kubeconfig=${config_file}|jq ".items[$i].metadata.name"|tr -d '"'
+     fi
      i=`expr $i + 1`
   done
 }
@@ -243,9 +262,14 @@ function start_top_tracking() {
   local i
   local resName=$1
   local output_dir=$2
+  local ns=""
   g_config=""
   g_result=""
-  find_target_by_iterate_all_k8slist $resName k8s_query
+  if [ $# -eq 3 ]
+  then
+    ns=$3
+  fi
+  find_target_by_iterate_all_k8slist $resName k8s_query $ns
   local config_file=$g_config
   local result=$g_result
   echo "'$result'"
@@ -477,4 +501,36 @@ function patch_and_wait() {
   local mem_limit=$(array_get $g_Memory_limits $index "|")
   patch ${name} $replica $cpu_limit $cpu_req $mem_limit 500000
   #patch_liveprobe_timeout ${name} 2
+}
+
+function get_nginx_pod() {
+  local res=$1
+  local ns=$2
+  local config=kubeconfig.southeastasia.json
+  local appId=`kubectl get deploy -o=json --namespace=${ns} --selector resourceName=${res} --kubeconfig=${config}|jq '.items[0].spec.selector.matchLabels.app'|tr -d '"'`
+  local len=`kubectl get pod -o=json --namespace=${ns} --selector app=${appId} --kubeconfig=${config}|jq '.items|length'`
+  local i=0
+  while [ $i -lt $len ]
+  do
+    kubectl get pod -o=json --namespace=$ns --selector app=${appId} --kubeconfig=${config}|jq ".items[$i].metadata.name"|tr -d '"'
+    i=`expr $i + 1`
+  done
+}
+
+function track_nginx_top() {
+  local res=$1
+  local ns=$2
+  local output_dir=$3
+  local config_file=kubeconfig.southeastasia.json
+  local result=$(get_nginx_pod $res $ns)
+  while [ 1 ]
+  do
+     for i in $result
+     do
+       local date_time=`date --iso-8601='seconds'`
+       echo "${date_time} " >> $output_dir/${i}_top.txt
+       kubectl exec $i --namespace=$ns --kubeconfig=$config_file -- bash -c "top -b -n 1" >> $output_dir/${i}_top.txt
+     done
+     sleep 1
+  done
 }

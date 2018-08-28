@@ -10,7 +10,6 @@ fi
 
 function query() {
   local resName=$1
-  local resName=$1
   local output_dir=$2
   g_config=""
   g_result=""
