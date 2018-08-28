@@ -44,3 +44,24 @@ dotnet run -- [options]
 --messageSize: Determine the message size sent between client and server. Default: "0". Example: "256", "2K", "2k".
 
 ```
+
+### Examples
+#### Frequent join/leave group
+```
+dotnet run -- --rpcPort 5555 --duration 10 --connections 100 --interval 1 \
+--serverUrl 'http://localhost:5050/signalrbench' \
+--pipeLine 'createConn;startConn;upPerGroup2;clearJoinLeaveCounters;configMessageCountPerInterval1;freqJoinLeaveGroup;stopConn;disposeConn' \
+-v unit1 -t Websockets -p json -s 'SendGroup'  \
+--slaveList 'localhost;localhost'  \
+--debug 'debug' \
+--messageSize '2' \
+--groupNum 4 \
+--groupOverlap 1 \
+--concurrentConnection 100 \
+--retry 0  --clear false -o 'counters.txt'
+```
+
+`upPerGroup2` means 2 connection in a group will send messages.
+`clearJoinLeaveCounters` means clear counters for the freqJoinLeaveGroup scenario.
+`configMessageCountPerInterval1` means 1 message will be sent in the interval specified.
+`freqJoinLeaveGroup` means the scenario of frequently join and leave groups.
