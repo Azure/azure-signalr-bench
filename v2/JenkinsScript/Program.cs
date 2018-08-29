@@ -6,6 +6,8 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Timers;
 using CommandLine;
+using YamlDotNet.Serialization;
+using YamlDotNet.Serialization.NamingConventions;
 
 namespace JenkinsScript
 {
@@ -121,6 +123,20 @@ namespace JenkinsScript
                     {
                         var azureManager = new AzureManager();
                         azureManager.DeleteResourceGroup(argsOption.ResourceGroup);
+                        break;
+                    }
+                case "UpdateServerUrl":
+                    {
+                        var configLoader = new ConfigLoader();
+                        var publicIps = configLoader.Load<PublicIpConfig>(argsOption.PublicIps);
+                        var serverUrl = publicIps.AppServerPublicIp.Split(";").ToList().Select(ip => ip + ":5050/signalrbench").ToList();
+                        var serverUrlStr = String.Join(";", serverUrl);
+
+                        var jobConfigV2 = configLoader.Load<JobConfigV2>(argsOption.JobConfigFileV2);
+                        jobConfigV2.ServerUrl = serverUrlStr;
+                        var serializer = new SerializerBuilder().WithNamingConvention(new CamelCaseNamingConvention()).Build();
+                        var yaml = serializer.Serialize(jobConfigV2);
+                        File.WriteAllText(argsOption.JobConfigFileV2, yaml);
                         break;
                     }
                 case "CreateBenchServer":
