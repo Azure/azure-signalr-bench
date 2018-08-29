@@ -148,6 +148,7 @@ namespace Bench.RpcMaster
                 }
             }
             groupNameList.Shuffle();
+
             return groupNameList;
         }
 
@@ -552,8 +553,8 @@ namespace Bench.RpcMaster
                 HandleUpPerGroupOp(step, connectionConfigBuilder, connectionAllConfigList, groupNameList);
 
                 // update group name list
-                var onlyOneSendAllGroup = step.Contains("configOnlyOneSendAllGroup") ? true : false;
-                if (onlyOneSendAllGroup) groupNameList = UpdateGroupNameList(groupNameList);
+                // var onlyOneSendAllGroup = step.Contains("configOnlyOneSendAllGroup") ? true : false;
+                // if (onlyOneSendAllGroup) groupNameList = UpdateGroupNameList(groupNameList);
 
                 // handle config message count per interval
                 var configMessageCountPerInterval = step.Contains("configMessageCountPerInterval") ? true : false;

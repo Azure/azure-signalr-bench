@@ -65,7 +65,7 @@ namespace Bench.RpcSlave.Worker.Operations
             {
                 var ind = i;
 
-                if (_tk.BenchmarkCellConfig.CallbackList[i]) _tk.ConnectionCallbacks.Add(_tk.Connections[i - _tk.ConnectionRange.Begin].On(_tk.BenchmarkCellConfig.Scenario,
+                _tk.ConnectionCallbacks.Add(_tk.Connections[i - _tk.ConnectionRange.Begin].On(_tk.BenchmarkCellConfig.Scenario,
                     (int count, string time, string thisId, string targetId, byte[] messageBlob) =>
                     {
                         var receiveTimestamp = Util.Timestamp();
@@ -141,6 +141,7 @@ namespace Bench.RpcSlave.Worker.Operations
         protected async Task StartSendingMessageAsync(string mode, HubConnection connection, int ind, byte[] messageBlob, string id,
             int connectionCnt, int duration, int interval, Counter counter, List<bool> brokenConnectionInds)
         {
+            Util.Log($"{mode}, {id}");
             var messageSize = (ulong) messageBlob.Length;
             await Task.Delay(StartTimeOffsetGenerator.Delay(TimeSpan.FromSeconds(interval)));
             using(var cts = new CancellationTokenSource(TimeSpan.FromSeconds(duration)))

@@ -170,7 +170,8 @@ namespace Bench.Common
         public static void LogList<T>(string title, List<T> list)
         {
             Util.Log(title);
-            list.ForEach(el => Util.Log(el.ToString()));
+            var i = 0;
+            list.ForEach(el => Util.Log($"[{i++}]: {el.ToString()}"));
         }
 
         public static byte[] GenerateMessageBlob(int sizeInByte)

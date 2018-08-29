@@ -58,17 +58,6 @@ namespace Bench.RpcSlave.Worker.Operations
             await Task.WhenAll(tasks);
         }
 
-        private async Task AddRemoveSendingConnectionsToAllGroups(string mode, List<HubConnection> connections, List<string> groupNameMatrix, List<bool> callbackList)
-        {
-            for (var i = 0; i < callbackList.Count; i++)
-            {
-                if (!callbackList[i]) continue;
-                await JoinLeaveGroupOp.JoinLeaveGroup(mode, _tk.Connections.GetRange(i, 1),
-                    groupNameMatrix.GetRange(i, 1), _tk.Counters);
-            }
-
-        }
-
         public override void SetCallbacks()
         {
             SetCallbacksForJoinLeaveGroup();

@@ -40,8 +40,9 @@ namespace Bench.RpcSlave.Worker.Operations
             _tk.State = Stat.Types.State.SendRunning;
             if (!debug) await Task.Delay(5000);
 
-            // send message
-            await JoinLeaveGroup(_tk.BenchmarkCellConfig.Step, _tk.Connections, _tk.BenchmarkCellConfig.GroupNameList.ToList(), _tk.Counters);
+            var beg = _tk.ConnectionRange.Begin;
+            var end = _tk.ConnectionRange.End;
+            await JoinLeaveGroup(_tk.BenchmarkCellConfig.Step, _tk.Connections, _tk.BenchmarkCellConfig.GroupNameList.ToList().GetRange(beg, end - beg), _tk.Counters);
 
             _tk.State = Stat.Types.State.SendComplete;
             Util.Log($"Sending Complete");
