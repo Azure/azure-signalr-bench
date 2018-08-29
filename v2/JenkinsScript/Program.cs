@@ -117,6 +117,12 @@ namespace JenkinsScript
                         DogfoodSignalROps.UnregisterDogfoodCloud(argsOption.ExtensionScriptDir);
                     }
                     break;
+                case "DeleteResourceGroup":
+                    {
+                        var azureManager = new AzureManager();
+                        azureManager.DeleteResourceGroup(argsOption.ResourceGroup);
+                        break;
+                    }
                 case "CreateBenchServer":
                     {
                         // parse agent config file

@@ -46,6 +46,9 @@ namespace JenkinsScript
             {
                 _azure.ResourceGroups.DeleteByName(name);
             }
+            else{
+                Util.Log($"Resource group {name} doesn't exist");
+            }
         }
     }
 }
