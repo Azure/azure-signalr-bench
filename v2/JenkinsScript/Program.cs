@@ -293,6 +293,9 @@ namespace JenkinsScript
                         var sendToFixedClient = argsOption.SendToFixedClient;
                         var statisticsSuffix = argsOption.StatisticsSuffix;
 
+                        // 
+                        // var kubeConfigFile = 
+
                         var hosts = new List<string>();
                         hosts.AddRange(privateIps.ServicePrivateIp.Split(";").ToList());
                         hosts.AddRange(privateIps.AppServerPrivateIp.Split(";").ToList());
@@ -342,6 +345,7 @@ namespace JenkinsScript
                         if (!debug)
                         {
                             privateIps.ServicePrivateIp.Split(";").ToList().ForEach(host => StartCollectMachineStatisticsTimer(host, user, password, sshPort, Util.MakeSureDirectoryExist($"/home/{user}/signalr-bench-statistics-{statisticsSuffix}/machine/{resultRoot}/") + $"service{host}.txt", TimeSpan.FromSeconds(1)));
+                            // if () StartCollectMachineStatisticsTimer()
                             ShellHelper.ModifyServiceAppsettings(privateIps.ServicePrivateIp.Split(";").ToList(), user, password, sshPort, publicIps.ServicePublicIp.Split(";").ToList(), $"/home/{user}", "OSSServices-SignalR-Service", $"/home/{user}");
                             (errCode, result) = ShellHelper.StartSignalrService(privateIps.ServicePrivateIp.Split(";").ToList(), user, password, sshPort, serviceDir, logPathService);
                         }

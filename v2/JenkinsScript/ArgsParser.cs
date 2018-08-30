@@ -94,5 +94,8 @@ namespace JenkinsScript
         [Option("StatisticsSuffix", Default = "", Required = false, HelpText = "")]
         public string StatisticsSuffix { get; set; }
 
+        [Option("KubeConfigFile", Default = "", Required = false, HelpText = "")]
+        public string KubeConfigFile { get; set; }
+
     }
 }

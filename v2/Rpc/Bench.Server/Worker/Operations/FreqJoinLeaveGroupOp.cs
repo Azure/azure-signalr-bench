@@ -48,7 +48,7 @@ namespace Bench.RpcSlave.Worker.Operations
                 else if (_tk.BenchmarkCellConfig.EnableGroupJoinLeave)
                 {
                     tasks.Add(StartJoinLeaveGroupAsync(_tk.Connections.GetRange(i - _tk.ConnectionRange.Begin, 1),
-                        i - _tk.ConnectionRange.Begin, _tk.BenchmarkCellConfig.GroupNameList.ToList().GetRange(i - _tk.ConnectionRange.Begin, 1),
+                        i - _tk.ConnectionRange.Begin, _tk.BenchmarkCellConfig.GroupNameList.ToList().GetRange(i, 1),
                         _tk.Connections.Count, _tk.JobConfig.Duration, _tk.JobConfig.Interval, _tk.Counters, _brokenConnectionInds));
                 }
             }
