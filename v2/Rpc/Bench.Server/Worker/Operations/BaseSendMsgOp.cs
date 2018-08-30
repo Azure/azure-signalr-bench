@@ -141,7 +141,6 @@ namespace Bench.RpcSlave.Worker.Operations
         protected async Task StartSendingMessageAsync(string mode, HubConnection connection, int ind, byte[] messageBlob, string id,
             int connectionCnt, int duration, int interval, Counter counter, List<bool> brokenConnectionInds)
         {
-            Util.Log($"{mode}, {id}");
             var messageSize = (ulong) messageBlob.Length;
             await Task.Delay(StartTimeOffsetGenerator.Delay(TimeSpan.FromSeconds(interval)));
             using(var cts = new CancellationTokenSource(TimeSpan.FromSeconds(duration)))
@@ -180,7 +179,8 @@ namespace Bench.RpcSlave.Worker.Operations
             int connectionCnt, int duration, int interval, Counter counter, List<bool> brokenConnectionInds)
         {
             var isJoin = true;
-
+            // Util.Log($"groupNameMatrix[{ind}] = {groupNameMatrix[0]}");
+            // Util.Log(string.Join(";", _tk.BenchmarkCellConfig.GroupNameList.ToList()));
             await Task.Delay(StartTimeOffsetGenerator.Delay(TimeSpan.FromSeconds(interval)));
             using(var cts = new CancellationTokenSource(TimeSpan.FromSeconds(duration)))
             {

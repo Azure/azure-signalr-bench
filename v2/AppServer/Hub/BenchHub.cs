@@ -49,16 +49,13 @@ namespace Microsoft.Azure.SignalR.PerfTest.AppServer
         public void SendGroup(string groupName, string time, byte[] messageBlob)
         {
             Interlocked.Increment(ref _totalReceivedGroup);
-            Console.WriteLine($"{groupName}");
             Clients.Group(groupName).SendAsync("SendGroup", 0, time, groupName, null, messageBlob);
 
         }
 
         public async Task JoinGroup(string groupName, string client)
         {
-            // Console.WriteLine($"join group: {groupName}");
             await Groups.AddToGroupAsync(Context.ConnectionId, groupName);
-            // Console.WriteLine($"join group end: {groupName}");
             if (string.Equals(client, "perf", StringComparison.Ordinal))
             {
                 // for perf test
