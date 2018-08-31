@@ -330,6 +330,39 @@ iterate_all_app_server_and_connection_str()
 	done
 }
 
+start_collect_top_on_app_server()
+{
+	local app_server_list="$1"
+	local ssh_user=$2
+	local ssh_port=$3
+	local output_dir="$4"
+	local app_server_len=$(array_len "$app_server_list" "|")
+	local i=1
+        local app_server
+	local outfile
+	local pidfile
+	while [ $i -le $app_server_len ]
+	do
+		app_server=$(array_get "$app_server_list" $i "|")
+		outfile=${app_server}_top.txt
+		pidfile=${app_server}_pid.txt
+		nohup sh collect_top.sh "$app_server" $ssh_port $ssh_user "${output_dir}/$outfile" &
+		echo $! > ${output_dir}/$pidfile
+		i=$(($i+1))
+	done
+}
+
+stop_collect_top_on_app_server()
+{
+	local output_dir=$1
+	local pid
+	for i in `ls ${output_dir}/*_pid.txt`
+	do
+		pid=`cat $i`
+		kill $pid
+	done
+}
+
 start_multiple_app_server_with_single_service()
 {
 	local conn_str="$1"

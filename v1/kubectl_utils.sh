@@ -534,3 +534,27 @@ function track_nginx_top() {
      sleep 1
   done
 }
+
+function get_nginx_log() {
+  local res=$1
+  local ns=$2
+  local outdir=$3
+  local config_file=kubeconfig.southeastasia.json
+  local result=$(get_nginx_pod $res $ns)
+  for i in $result
+  do
+    kubectl logs $i --namespace=$ns --kubeconfig=$config_file > $outdir/${i}.log
+  done
+}
+
+function delete_all_nginx_pods() {
+  local res=$1
+  local ns=$2
+  local config_file=kubeconfig.southeastasia.json
+  local result=$(get_nginx_pod $res $ns)
+  for i in $result
+  do
+    kubectl delete pods $i --namespace=$ns --kubeconfig=$config_file
+  done
+
+}

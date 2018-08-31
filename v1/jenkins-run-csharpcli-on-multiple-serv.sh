@@ -65,6 +65,8 @@ else
   start_multiple_app_server "$connection_string_list" "$bench_app_pub_server" $bench_app_user $bench_app_pub_port "$app_launch_log_dir"
 fi
 
+start_collect_top_on_app_server "$bench_app_pub_server" $bench_app_user $bench_app_pub_port "$app_launch_log_dir"
+
 err_check=`grep -i "error" ${app_launch_log_file}`
 if [ "$err_check" != "" ]
 then
@@ -95,6 +97,7 @@ sh run_csharp_cli.sh
 
 echo "Stop app server"
 stop_multiple_app_server "$bench_app_pub_server" $bench_app_user $bench_app_pub_port
+stop_collect_top_on_app_server "$app_launch_log_dir"
 
 if [ "$service_name" != "" ]
 then
@@ -107,6 +110,10 @@ then
    if [ "$copy_syslog" == "true" ]
    then
      copy_syslog $service_name $k8s_result_dir
+   fi
+   if [ "$copy_nginx_log" == "true" ]
+   then
+     get_nginx_log $service_name "ingress-nginx" $k8s_result_dir
    fi
    get_k8s_pod_status $service_name $k8s_result_dir
 fi
