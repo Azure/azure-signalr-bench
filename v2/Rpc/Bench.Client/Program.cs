@@ -83,7 +83,9 @@ namespace Bench.RpcMaster
                 StartCollectCounters(clients, argsOption.OutputCounterFile);
 
                 // process jobs for each step
-                await ProcessPipeline(clients, slaveList, argsOption);
+                await ProcessPipeline(clients, argsOption.PipeLine, slaveList,
+                    argsOption.Connections, argsOption.ServiceType, argsOption.TransportType, argsOption.HubProtocal, argsOption.Scenario, argsOption.MessageSize,
+                    argsOption.groupNum, argsOption.groupOverlap, argsOption.ServerUrl.Split(";").ToList().Count, argsOption.SendToFixedClient, argsOption.EnableGroupJoinLeave);
             }
             catch (Exception ex)
             {
@@ -127,7 +129,7 @@ namespace Bench.RpcMaster
                 //    We force to change connection2 to send message to another connection1
                 if ((connectionCount - 1) % serverCount == 0)
                 {
-                    connectionIdsMoved[connectionCount - 1] = connectionIdsMoved[1];
+                    connectionIdsMoved[connectionCount - 1] = connectionIdsMoved[connectionIdsMoved.Count <= 1 ? 0 : 1]; // one slave VM may have only one connection
                 }
                 connectionIds.AddRange(connectionIdsMoved);
             });
@@ -142,7 +144,7 @@ namespace Bench.RpcMaster
                 for (var i = 0; i < groupNameList.Count; i++)
                 {
                     if (groupNameList[i].Length > 0) groupNameList[i] += ";";
-                    groupNameList[i] += $"group_{(i + j) % groupNum}";
+                    groupNameList[i] += $"gp{(i + j) % groupNum}";
                 }
             }
             groupNameList.Shuffle();
@@ -253,9 +255,10 @@ namespace Bench.RpcMaster
 
         private static BenchmarkCellConfig GenerateBenchmarkConfig(int indClient, string step,
             string serviceType, string transportType, string hubProtocol, string scenario,
-            string MessageSizeStr, List<string> targetConnectionIds, List<string> groupNameList)
+            string MessageSizeStr, List<string> targetConnectionIds, List<string> groupNameList, List<bool> callbackList, int messageCountPerInterval, bool enableGroupJoinLeave)
         {
             var messageSize = ParseMessageSize(MessageSizeStr);
+
             var benchmarkCellConfig = new BenchmarkCellConfig
             {
                 ServiceType = serviceType,
@@ -267,12 +270,16 @@ namespace Bench.RpcMaster
                 MixBroadcastConnection = 0,
                 MixGroupName = "",
                 MixGroupConnection = 0,
-                MessageSize = messageSize
+                MessageSize = messageSize,
+                MessageCountPerInterval = messageCountPerInterval,
+                EnableGroupJoinLeave = enableGroupJoinLeave
             };
 
             // add lists
             benchmarkCellConfig.TargetConnectionIds.AddRange(targetConnectionIds);
             benchmarkCellConfig.GroupNameList.AddRange(groupNameList);
+            benchmarkCellConfig.CallbackList.AddRange(callbackList);
+
             return benchmarkCellConfig;
         }
 
@@ -492,7 +499,7 @@ namespace Bench.RpcMaster
                 state = client.CreateWorker(new Empty());
 
                 string server = null;
-                if (bool.Parse(argsOption.sendToFixedClient))
+                if (bool.Parse(argsOption.SendToFixedClient))
                 {
                     server = serverUrl;
                 }
@@ -507,7 +514,7 @@ namespace Bench.RpcMaster
                     Interval = interval,
                     Duration = duration,
                     ServerUrl = server,
-                    Pipeline = pipelineStr
+                    Pipeline = pipelineStr,
                 };
 
                 Util.Log($"create worker state: {state.State}");
@@ -517,37 +524,54 @@ namespace Bench.RpcMaster
             });
         }
 
-        private static async Task ProcessPipeline(List<RpcService.RpcServiceClient> clients, List<string> slaveList, ArgsOption argsOption)
+        private static async Task ProcessPipeline(List<RpcService.RpcServiceClient> clients, string pipelineStr, List<string> slaveList, int connections,
+            string serviceType, string transportType, string hubProtocol, string scenario, string messageSize,
+            int groupNum, int overlap, int serverCount, string sendToFixedClient, bool enableGroupJoinLeave)
         {
-            var connections = argsOption.Connections;
-            var serviceType = argsOption.ServiceType;
-            var transportType = argsOption.TransportType;
-            var hubProtocol = argsOption.HubProtocal;
-            var scenario = argsOption.Scenario;
-            var messageSize = argsOption.MessageSize;
-            var groupNum = argsOption.groupNum;
-            var overlap = argsOption.groupOverlap;
-            var serverCount = argsOption.ServerUrl.Split(";").ToList().Count;
-            var sendToFixedClient = argsOption.sendToFixedClient;
-            var pipeline = argsOption.PipeLine.Split(';').ToList();
+            // var connections = argsOption.Connections;
+            // var serviceType = argsOption.ServiceType;
+            // var transportType = argsOption.TransportType;
+            // var hubProtocol = argsOption.HubProtocal;
+            // var scenario = argsOption.Scenario;
+            // var messageSize = argsOption.MessageSize;
+            // var groupNum = argsOption.groupNum;
+            // var overlap = argsOption.groupOverlap;
+            // var serverCount = argsOption.ServerUrl.Split(";").ToList().Count;
+            // var sendToFixedClient = argsOption.sendToFixedClient;
+            // var pipeline = argsOption.PipeLine.Split(';').ToList();
+            var pipeline = pipelineStr.Split(';').ToList();
             var connectionConfigBuilder = new ConnectionConfigBuilder();
             var connectionAllConfigList = connectionConfigBuilder.Build(connections);
             var targetConnectionIds = new List<string>();
             var groupNameList = GenerateGroupNameList(connections, groupNum, overlap);
-            var serverUrls = serverCount;
+            var callbackList = Enumerable.Repeat(true, connections).ToList();
+            var messageCountPerInterval = 1;
 
+            // var serverUrls = serverCount;
             for (var i = 0; i < pipeline.Count; i++)
             {
+
                 var tasks = new List<Task>(clients.Count);
                 var step = pipeline[i];
                 int indClient = -1;
-                var AdditionalSendConnCnt = (step.Contains("up")) ? Convert.ToInt32(step.Substring(2)) : 0;
+                Util.Log($"current step: {step}");
 
-                if (step.Contains("up"))
-                {
-                    // Util.Log($"additional: {AdditionalSendConnCnt}");
-                    connectionAllConfigList = connectionConfigBuilder.UpdateSendConn(connectionAllConfigList, AdditionalSendConnCnt, connections, slaveList.Count);
-                }
+                // up op
+                HandleBasicUpOp(step, connectionConfigBuilder, connectionAllConfigList, connections, slaveList);
+
+                // handle up per group op
+                HandleUpPerGroupOp(step, connectionConfigBuilder, connectionAllConfigList, groupNameList);
+
+                // update group name list
+                var onlyOneSendAllGroup = step.Contains("configOnlyOneSendAllGroup") ? true : false;
+                if (onlyOneSendAllGroup) groupNameList = UpdateGroupNameList(groupNameList);
+
+                // handle config message count per interval
+                var configMessageCountPerInterval = step.Contains("configMessageCountPerInterval") ? true : false;
+                if (configMessageCountPerInterval) int.TryParse(Util.TrimPrefix(step), out messageCountPerInterval);
+
+                // remove last one callback
+                RemoveExceptLastOneCallback(step, callbackList);
 
                 clients.ForEach(client =>
                 {
@@ -555,7 +579,7 @@ namespace Bench.RpcMaster
 
                     var benchmarkCellConfig = GenerateBenchmarkConfig(indClient, step,
                         serviceType, transportType, hubProtocol, scenario, messageSize,
-                        targetConnectionIds, groupNameList);
+                        targetConnectionIds, groupNameList, callbackList, messageCountPerInterval, enableGroupJoinLeave);
 
                     Util.Log($"service: {benchmarkCellConfig.ServiceType}; transport: {benchmarkCellConfig.TransportType}; hubprotocol: {benchmarkCellConfig.HubProtocol}; scenario: {benchmarkCellConfig.Scenario}; step: {step}");
 
@@ -595,6 +619,70 @@ namespace Bench.RpcMaster
                     }
                 }
             }
+        }
+
+        private static void HandleUpPerGroupOp(string step, ConnectionConfigBuilder connectionConfigBuilder, ConnectionConfigList connectionAllConfigList, List<string> groupNameMat)
+        {
+            var pattern = "upPerGroup";
+            if (step.Contains(pattern))
+            {
+                var isNumeric = int.TryParse(step.Substring(pattern.Length), out int upNum);
+                if (!isNumeric) throw new Exception();
+                connectionConfigBuilder.UpdateSendConnPerGroup(connectionAllConfigList, groupNameMat, upNum);
+            }
+        }
+
+        private static void HandleBasicUpOp(string step, ConnectionConfigBuilder connectionConfigBuilder,
+            ConnectionConfigList connectionAllConfigList, int connectionCnt, List<string> slaveList)
+        {
+            var isNumeric = int.TryParse(step.Substring(2), out int n);
+
+            if (step.Substring(0, 2) == "up" && isNumeric)
+            {
+                var AdditionalSendConnCnt = 0;
+                var lastOne = false;
+                if (step.Substring(0, 2) == "up")
+                {
+                    if (step.Contains("LastOne"))
+                    {
+                        AdditionalSendConnCnt = 1;
+                        lastOne = true;
+                    }
+                    else
+                    {
+                        AdditionalSendConnCnt = Convert.ToInt32(step.Substring(2));
+                    }
+                }
+
+                connectionAllConfigList = connectionConfigBuilder.UpdateSendConn(connectionAllConfigList,
+                    AdditionalSendConnCnt, connectionCnt, slaveList.Count, lastOne);
+            }
+        }
+
+        private static void RemoveExceptLastOneCallback(string step, List<bool> callbackList)
+        {
+            var removeExceptLastOneCallback = step.Contains("removeExceptLastOneCallback") ? true : false;
+            if (removeExceptLastOneCallback) return;
+            for (var i = 0; i < callbackList.Count; i++)
+            {
+                callbackList[i] = false;
+            }
+            callbackList[callbackList.Count - 1] = true;
+
+        }
+
+        private static List<string> UpdateGroupNameList(List<string> groupNameList)
+        {
+            var groupNameSet = new HashSet<string>();
+            foreach (var groupNames in groupNameList)
+            {
+                foreach (var groupName in groupNames.Split(";").ToArray())
+                {
+                    groupNameSet.Add(groupName);
+                }
+            }
+            groupNameList[groupNameList.Count - 1] = String.Join(";", groupNameSet.ToArray());
+            return groupNameList;
         }
 
         private static void SavePid(string pidFile)

@@ -6,10 +6,11 @@ namespace Bench.RpcSlave.Worker.Operations
     {
         public async Task Do(WorkerToolkit tk)
         {
-
+            tk.Counters.ResetCounters(withConnection: false, withGroup: false);
         }
     }
 
+    class UpLastOneOp : UpOp { }
     class Up0Op : UpOp { }
     class Up1Op : UpOp { }
     class Up2Op : UpOp { }
@@ -64,4 +65,13 @@ namespace Bench.RpcSlave.Worker.Operations
     class Up100000Op : UpOp { }
     class Up200000Op : UpOp { }
     class Up500000Op : UpOp { }
+
+    // per group
+    class UpPerGroup1Op : UpOp { }
+    class UpPerGroup2Op : UpOp { }
+    class UpPerGroup5Op : UpOp { }
+    class UpPerGroup10Op : UpOp { }
+    class UpPerGroup20Op : UpOp { }
+    class UpPerGroup50Op : UpOp { }
+
 }

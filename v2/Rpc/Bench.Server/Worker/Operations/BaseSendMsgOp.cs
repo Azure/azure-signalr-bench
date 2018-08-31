@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
@@ -6,18 +7,19 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Bench.Common;
+using Bench.RpcSlave.Worker.Counters;
 using Bench.RpcSlave.Worker.Savers;
 using Bench.RpcSlave.Worker.StartTimeOffsetGenerator;
 using Microsoft.AspNetCore.SignalR.Client;
 
 namespace Bench.RpcSlave.Worker.Operations
 {
-    class BaseSendMsgOp : BaseOp
+    class BaseSendMsgOp : BaseSignalrOp
     {
-        private IStartTimeOffsetGenerator StartTimeOffsetGenerator;
-        private List<int> _sentMessages;
-        private WorkerToolkit _tk;
-        private List<bool> _brokenConnectionInds;
+        protected IStartTimeOffsetGenerator StartTimeOffsetGenerator;
+        protected List<int> _sentMessages;
+        protected WorkerToolkit _tk;
+        protected List<bool> _brokenConnectionInds;
         public async Task Do(WorkerToolkit tk)
         {
             var debug = Environment.GetEnvironmentVariable("debug") == "debug" ? true : false;
@@ -39,51 +41,44 @@ namespace Bench.RpcSlave.Worker.Operations
             // send message
             await StartSendMsg();
 
-            // if (!debug) await Task.Delay(30 * 1000);
-
-            // save counters
-            // SaveCounters();
-
             _tk.State = Stat.Types.State.SendComplete;
             Util.Log($"Sending Complete");
         }
 
-        private void Setup()
+        public override void Setup()
         {
             StartTimeOffsetGenerator = new RandomGenerator(new LocalFileSaver());
 
             _sentMessages = Enumerable.Repeat(0, _tk.JobConfig.Connections).ToList();
             _brokenConnectionInds = Enumerable.Repeat(false, _tk.JobConfig.Connections).ToList();
-            Util.Log($"_brokenConnectionInds count: {_brokenConnectionInds.Count}");
-            SetCallbacks();
-
-            // _tk.Counters.ResetCounters(withConnection: false);
-            if (!_tk.Init) _tk.Counters.ResetCounters(withConnection: false);
-            _tk.Init = true;
+            if (!_tk.Init.ContainsKey(_tk.BenchmarkCellConfig.Step))
+            {
+                SetCallbacks();
+                _tk.Init[_tk.BenchmarkCellConfig.Step] = true;
+            }
         }
 
-        private void SetCallbacks()
+        public override void SetCallbacks()
         {
             Util.Log($"scenario: {_tk.BenchmarkCellConfig.Scenario}");
             for (int i = _tk.ConnectionRange.Begin; i < _tk.ConnectionRange.End; i++)
             {
                 var ind = i;
 
-                if (!_tk.Init)
-                    _tk.Connections[i - _tk.ConnectionRange.Begin].On(_tk.BenchmarkCellConfig.Scenario,
-                        (int count, string time, string thisId, string targetId, byte[] messageBlob) =>
-                        {
-                            var receiveTimestamp = Util.Timestamp();
-                            var sendTimestamp = Convert.ToInt64(time);
-                            var receiveSize = messageBlob != null ? messageBlob.Length * sizeof(byte) : 0;
-                            _tk.Counters.CountLatency(sendTimestamp, receiveTimestamp);
-                            _tk.Counters.SetServerCounter(((ulong) count));
-                            _tk.Counters.IncreaseReceivedMessageSize((ulong) receiveSize);
-                        });
+                if (_tk.BenchmarkCellConfig.CallbackList[i]) _tk.ConnectionCallbacks.Add(_tk.Connections[i - _tk.ConnectionRange.Begin].On(_tk.BenchmarkCellConfig.Scenario,
+                    (int count, string time, string thisId, string targetId, byte[] messageBlob) =>
+                    {
+                        var receiveTimestamp = Util.Timestamp();
+                        var sendTimestamp = Convert.ToInt64(time);
+                        var receiveSize = messageBlob != null ? messageBlob.Length * sizeof(byte) : 0;
+                        _tk.Counters.CountLatency(sendTimestamp, receiveTimestamp);
+                        _tk.Counters.SetServerCounter(((ulong) count));
+                        _tk.Counters.IncreaseReceivedMessageSize((ulong) receiveSize);
+                    }));
             }
         }
 
-        private async Task StartSendMsg()
+        public override async Task StartSendMsg()
         {
             var messageBlob = new byte[_tk.BenchmarkCellConfig.MessageSize];
             Random rnd = new Random();
@@ -110,56 +105,96 @@ namespace Bench.RpcSlave.Worker.Operations
                 for (var i = _tk.ConnectionRange.Begin; i < _tk.ConnectionRange.End; i++)
                 {
                     var cfg = _tk.ConnectionConfigList.Configs[i];
-                    if (cfg.SendFlag) tasks.Add(StartSendingMessageAsync(_tk.Connections[i - _tk.ConnectionRange.Begin], i - _tk.ConnectionRange.Begin, messageBlob));
+                    var ids = GenerateId(_tk.BenchmarkCellConfig.Scenario, i - _tk.ConnectionRange.Begin);
+                    if (cfg.SendFlag)
+                    {
+                        foreach (var id in ids)
+                        {
+                            tasks.Add(StartSendingMessageAsync(_tk.BenchmarkCellConfig.Scenario, _tk.Connections[i - _tk.ConnectionRange.Begin], i - _tk.ConnectionRange.Begin, messageBlob, id, _tk.Connections.Count, _tk.JobConfig.Duration, _tk.JobConfig.Interval, _tk.Counters, _brokenConnectionInds));
+                        }
+                    }
                 }
 
                 await Task.WhenAll(tasks);
             }
         }
 
-        private async Task StartSendingMessageAsync(HubConnection connection, int ind, byte[] messageBlob)
+        protected List<string> GenerateId(string mode, int ind)
+        {
+            List<string> groupNameList = new List<string>();
+            var ids = new List<string>();
+            if (mode.Contains("sendToClient"))
+            {
+                ids.Add(_tk.BenchmarkCellConfig.TargetConnectionIds[ind + _tk.ConnectionRange.Begin]);
+            }
+            else if (_tk.BenchmarkCellConfig.Scenario.Contains("SendGroup"))
+            {
+                ids.AddRange(_tk.BenchmarkCellConfig.GroupNameList[ind + _tk.ConnectionRange.Begin].Split(";").ToList());
+            }
+            else
+            {
+                ids.Add($"{Util.GuidEncoder.Encode(Guid.NewGuid())}");
+            }
+            // Util.LogList("IDs", ids);
+            return ids;
+        }
+        protected async Task StartSendingMessageAsync(string mode, HubConnection connection, int ind, byte[] messageBlob, string id,
+            int connectionCnt, int duration, int interval, Counter counter, List<bool> brokenConnectionInds)
         {
             var messageSize = (ulong) messageBlob.Length;
-            await Task.Delay(StartTimeOffsetGenerator.Delay(TimeSpan.FromSeconds(_tk.JobConfig.Interval)));
-            using(var cts = new CancellationTokenSource(TimeSpan.FromSeconds(_tk.JobConfig.Duration)))
+            await Task.Delay(StartTimeOffsetGenerator.Delay(TimeSpan.FromSeconds(interval)));
+            using(var cts = new CancellationTokenSource(TimeSpan.FromSeconds(duration)))
             {
                 while (!cts.IsCancellationRequested)
                 {
-                    if (!_brokenConnectionInds[ind])
+                    if (!brokenConnectionInds[ind])
                     {
-                        var id = $"{Util.GuidEncoder.Encode(Guid.NewGuid())}";
-                        if (_tk.BenchmarkCellConfig.Scenario.Contains("sendToClient"))
-                            id = _tk.BenchmarkCellConfig.TargetConnectionIds[ind + _tk.ConnectionRange.Begin];
 
                         Task.Run(async() =>
                         {
                             try
                             {
                                 var time = $"{Util.Timestamp()}";
-                                await connection.SendAsync(_tk.BenchmarkCellConfig.Scenario, id, time, messageBlob);
-                                _tk.Counters.IncreaseSentMessageSize(messageSize);
+                                await connection.SendAsync(mode, id, time, messageBlob);
+                                counter.IncreaseSentMessageSize(messageSize);
                                 _sentMessages[ind]++;
-                                _tk.Counters.IncreseSentMsg();
+                                counter.IncreseSentMsg();
                             }
                             catch (Exception ex)
                             {
                                 Util.Log($"exception in sending message of {ind}th connection: {ex}");
-                                _tk.Counters.IncreseNotSentFromClientMsg();
-                                _brokenConnectionInds[ind] = true;
+                                counter.IncreaseConnectionError();
+                                counter.UpdateConnectionSuccess((ulong) connectionCnt);
+                                brokenConnectionInds[ind] = true;
                             }
                         });
+                    }
 
-                    }
-                    else
-                    {
-                        _tk.Counters.IncreseNotSentFromClientMsg();
-                    }
-                    await Task.Delay(TimeSpan.FromSeconds(_tk.JobConfig.Interval));
+                    await Task.Delay(TimeSpan.FromSeconds(interval));
                 }
             }
         }
 
-        private void SaveCounters()
+        protected async Task StartJoinLeaveGroupAsync(List<HubConnection> connection, int ind, List<string> groupNameMatrix,
+            int connectionCnt, int duration, int interval, Counter counter, List<bool> brokenConnectionInds)
+        {
+            var isJoin = true;
+
+            await Task.Delay(StartTimeOffsetGenerator.Delay(TimeSpan.FromSeconds(interval)));
+            using(var cts = new CancellationTokenSource(TimeSpan.FromSeconds(duration)))
+            {
+                while (!cts.IsCancellationRequested)
+                {
+                    var mode = isJoin ? "JoinGroup" : "LeaveGroup";
+                    isJoin = !isJoin;
+
+                    JoinLeaveGroupOp.JoinLeaveGroup(mode, connection, groupNameMatrix, counter);
+                    await Task.Delay(TimeSpan.FromSeconds(interval));
+                }
+            }
+        }
+
+        protected void SaveCounters()
         {
             _tk.Counters.SaveCounters();
         }

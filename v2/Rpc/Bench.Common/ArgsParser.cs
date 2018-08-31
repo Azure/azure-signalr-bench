@@ -103,11 +103,13 @@ namespace Bench.Common
         [Option("debug", Required = false, HelpText = "")]
         public string Debug { get; set; }
 
-        [Option("messageSize", Default = "0", Required = false, HelpText = "")]
+        [Option("messageSize", Default = "1", Required = false, HelpText = "")]
         public string MessageSize { get; set; }
 
         [Option("sendToFixedClient", Default = "false", Required = false, HelpText = "Every client sends message to another fixed client, which will go to Redis.")]
-        public string sendToFixedClient { get; set; }
+        public string SendToFixedClient { get; set; }
 
+        [Option("enableGroupJoinLeave", Required = false, HelpText = "")]
+        public bool EnableGroupJoinLeave { get; set; }
     }
 }

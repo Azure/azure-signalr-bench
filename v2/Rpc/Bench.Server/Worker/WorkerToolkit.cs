@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Bench.Common;
 using Bench.Common.Config;
@@ -11,6 +12,7 @@ namespace Bench.RpcSlave.Worker
     {
         public JobConfig JobConfig { get; set; }
         public List<HubConnection> Connections { get; set; }
+        public List<IDisposable> ConnectionCallbacks { get; set; } = new List<IDisposable>();
         public Stat.Types.State State { get; set; } = Stat.Types.State.WorkerUnexist;
         public Counter Counters { get; set; } = new Counter(new LocalFileSaver());
         public Common.BenchmarkCellConfig BenchmarkCellConfig { get; set; }
@@ -19,7 +21,7 @@ namespace Bench.RpcSlave.Worker
         public ConnectionConfigList ConnectionConfigList { get; set; }
         public Range ConnectionRange { get; set; }
 
-        public bool Init { get; set; } = false;
+        public Dictionary<string, bool> Init { get; set; } = new Dictionary<string, bool>();
 
         public List<string> ConnectionIds { get; set; } = new List<string>();
     }

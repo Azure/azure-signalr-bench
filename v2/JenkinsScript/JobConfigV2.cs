@@ -20,10 +20,10 @@ namespace JenkinsScript
         public int Interval { get; set; }
         public int GroupNum { get; set; }
         public int Overlap { get; set; }
-        public bool IsGroupJoinLeave { get; set; }
+        public bool EnableGroupJoinLeave { get; set; }
         public List<string> Pipeline { get; set; }
         public string ServerUrl { get; set; }
-        public string MessageSize {get; set;}
+        public string MessageSize { get; set; }
 
     }
 }

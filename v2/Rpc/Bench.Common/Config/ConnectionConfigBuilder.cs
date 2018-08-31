@@ -60,36 +60,83 @@ namespace Bench.Common.Config
             }
             return list;
         }
-        public ConnectionConfigList UpdateSendConn(ConnectionConfigList configs, int more, int totalConnection, int slaveCnt)
-        {
-            var curTotalSendConn = GetNewTotalSendingConnectionCount(configs.Configs.ToList());
-            var newTotalSendConn = curTotalSendConn + more;
-            var curSendConnList = GetCurrentSendingConnectionCountList(curTotalSendConn, slaveCnt);
-            var newSendConnList = GetCurrentSendingConnectionCountList(newTotalSendConn, slaveCnt);
-            var moreSendConnList = GetMoreSendingConnectionCountList(curSendConnList, newSendConnList);
 
-            var beg = 0;
-            for (var i = 0; i < slaveCnt; i++)
+        public ConnectionConfigList UpdateSendConnPerGroup(ConnectionConfigList configs, List<string> groupNameMatrix, int upNum)
+        {
+            var groupNameDict = new Dictionary<string, HashSet<int>>();
+            for (var i = 0; i < groupNameMatrix.Count; i++)
             {
-                var curConnCnt = Util.SplitNumber(totalConnection, i, slaveCnt);
-                var end = beg + curConnCnt;
-                var curConnSlice = configs.Configs.ToList().GetRange(beg, end - beg);
-                var idleConnInds = curConnSlice.Select((val, ind) => new { val, ind })
-                    .Where(z => z.val.SendFlag == false)
-                    .Select(z => z.ind).ToList();
-                idleConnInds.Shuffle();
-                // var curMore = Util.SplitNumber(more, i, slaveCnt);
-                for (int j = 0; j < moreSendConnList[i] && j < idleConnInds.Count; j++)
+                foreach (var groupName in groupNameMatrix[i].Split(";").ToList())
                 {
-                    configs.Configs[idleConnInds[j] + beg].SendFlag = true;
+                    if (groupNameDict.ContainsKey(groupName))
+                    {
+                        groupNameDict[groupName].Add(i);
+                    }
+                    else
+                    {
+                        groupNameDict[groupName] = new HashSet<int>();
+                    }
                 }
-                beg = end;
             }
 
-            // Util.LogList("curSendConnList", curSendConnList);
-            // Util.LogList("newSendConnList", newSendConnList);
-            // Util.LogList("moreSendConnList", moreSendConnList);
-            // Util.LogList("configs.Configs", configs.Configs.ToList());
+            foreach (var groupNameIndexSetPair in groupNameDict)
+            {
+                var indexSet = groupNameIndexSetPair.Value;
+                var indexList = indexSet.ToList();
+
+                if (indexList == null) throw new ArgumentNullException();
+                if (indexList.Count == 0) throw new ArgumentOutOfRangeException();
+
+                indexList.Shuffle();
+                for (var i = 0; i < indexList.Count; i++)
+                {
+                    if (i < upNum) configs.Configs[indexList[i]].SendFlag = true;
+                    else configs.Configs[indexList[i]].SendFlag = false;
+                }
+            }
+
+            return configs;
+
+        }
+
+        public ConnectionConfigList UpdateSendConn(ConnectionConfigList configs, int more, int totalConnection, int slaveCnt, bool lastOne)
+        {
+            if (lastOne)
+            {
+                if (configs == null || configs.Configs == null)
+                    throw new NullReferenceException();
+                else if (configs.Configs.Count == 0)
+                    throw new ArgumentOutOfRangeException();
+
+                configs.Configs[configs.Configs.Count - 1].SendFlag = true;
+            }
+            else
+            {
+
+                var curTotalSendConn = GetNewTotalSendingConnectionCount(configs.Configs.ToList());
+                var newTotalSendConn = curTotalSendConn + more;
+                var curSendConnList = GetCurrentSendingConnectionCountList(curTotalSendConn, slaveCnt);
+                var newSendConnList = GetCurrentSendingConnectionCountList(newTotalSendConn, slaveCnt);
+                var moreSendConnList = GetMoreSendingConnectionCountList(curSendConnList, newSendConnList);
+
+                var beg = 0;
+                for (var i = 0; i < slaveCnt; i++)
+                {
+                    var curConnCnt = Util.SplitNumber(totalConnection, i, slaveCnt);
+                    var end = beg + curConnCnt;
+                    var curConnSlice = configs.Configs.ToList().GetRange(beg, end - beg);
+                    var idleConnInds = curConnSlice.Select((val, ind) => new { val, ind })
+                        .Where(z => z.val.SendFlag == false)
+                        .Select(z => z.ind).ToList();
+                    idleConnInds.Shuffle();
+                    // var curMore = Util.SplitNumber(more, i, slaveCnt);
+                    for (int j = 0; j < moreSendConnList[i] && j < idleConnInds.Count; j++)
+                    {
+                        configs.Configs[idleConnInds[j] + beg].SendFlag = true;
+                    }
+                    beg = end;
+                }
+            }
 
             return configs;
         }

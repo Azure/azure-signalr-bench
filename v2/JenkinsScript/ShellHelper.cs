@@ -63,6 +63,7 @@ namespace JenkinsScript
             int errCode = 0;
             string result = "";
             string cmd = $"sshpass -p {password} scp -o StrictHostKeyChecking=no {srcFile} {user}@{host}:{dstDir}";
+            Util.Log($"CMD: {user}@{host}: {cmd}");
             (errCode, result) = Bash(cmd, wait : true, handleRes : true);
             return (errCode, result);
         }
@@ -72,6 +73,7 @@ namespace JenkinsScript
             int errCode = 0;
             string result = "";
             string cmd = $"sshpass -p {password} scp -r -o StrictHostKeyChecking=no {user}@{host}:{src} {dst}";
+            Util.Log($"CMD: {user}@{host}: {cmd}");
             (errCode, result) = Bash(cmd, wait : true, handleRes : true);
             return (errCode, result);
         }
@@ -272,7 +274,7 @@ namespace JenkinsScript
             string logPath,
             string serviceType, string transportType, string hubProtocol, string scenario,
             int connection, int concurrentConnection, int duration, int interval, List<string> pipeLine,
-            int groupNum, int groupOverlap, string messageSize, string serverUrl, string suffix, string masterRoot)
+            int groupNum, int groupOverlap, string messageSize, string serverUrl, string suffix, string masterRoot, string sendToFixedClient, bool enableGroupJoinLeave)
         {
 
             Util.Log($"service type: {serviceType}, transport type: {transportType}, hub protocol: {hubProtocol}, scenario: {scenario}");
@@ -312,6 +314,8 @@ namespace JenkinsScript
                 $" --groupNum {groupNum} " +
                 $" --groupOverlap {groupOverlap} " +
                 $"--messageSize {messageSize} " +
+                $"--sendToFixedClient {sendToFixedClient} " +
+                $"--enableGroupJoinLeave {enableGroupJoinLeave} " +
                 $" -o '{outputCounterFile}' > {logPath}";
 
             Util.Log($"CMD: {user}@{host}: {cmd}");
@@ -434,6 +438,15 @@ namespace JenkinsScript
             return (errCode, result);
         }
 
+        public static(int, string) RemoveSyslog(string host, string user, string password, int sshPort)
+        {
+            var errCode = 0;
+            var result = "";
+            var cmd = "sudo rm -rf /var/log/syslog";
+            Util.Log($"{user}@{host}: {cmd}");
+            (errCode, result) = ShellHelper.RemoteBash(user, host, sshPort, password, cmd, handleRes : true);
+            return (errCode, result);
+        }
         public static(int, string) PrepareLogPath(string host, string user, string password, int sshPort,
             string dstDir, string time, string suffix)
         {
@@ -498,7 +511,7 @@ namespace JenkinsScript
                 }
 
                 // install unzip
-                cmd = $"sudo apt-get install -y zip; unzip -o -d {dstDir} ~/serviceruntime.zip";
+                cmd = $"rm -rf OSS*/; sudo apt-get install -y zip; unzip -o -d {dstDir} ~/serviceruntime.zip";
                 RemoteBash(user, host, sshPort, password, cmd, handleRes : true);
 
                 // modify appsetting.json
@@ -542,7 +555,7 @@ namespace JenkinsScript
         {
             var errCode = 0;
             var result = "";
-            var cmd = "top -n 1 -b | head -n 15";
+            var cmd = "top -n 1 -b | head -n 15; exit";
             (errCode, result) = RemoteBash(user, host, sshPort, password, cmd, handleRes : true);
 
             File.AppendAllText(path, result);
