@@ -91,14 +91,18 @@ namespace JenkinsScript
             }
             str += "\n";
 
-            str += $"masterPrivateIp: {slvPvtIps[0]}\n";
-            str += "slavePrivateIp: ";
-            for (var i = 1; i < slvPvtIps.Count; i++)
+            // agent private IP
+            if (slvPvtIps.Count > 0)
             {
-                str += slvPvtIps[i];
-                if (i < slvPvtIps.Count - 1) str += ";";
+                str += $"masterPrivateIp: {slvPvtIps[0]}\n";
+                str += "slavePrivateIp: ";
+                for (var i = 1; i < slvPvtIps.Count; i++)
+                {
+                    str += slvPvtIps[i];
+                    if (i < slvPvtIps.Count - 1) str += ";";
+                }
+                str += "\n";
             }
-            str += "\n";
             File.WriteAllText("privateIps.yaml", str);
 
             // save public IP of service and appserver
@@ -301,125 +305,182 @@ namespace JenkinsScript
 
         public Task<IPublicIPAddress> CreatePublicIpAsync(string publicIpBase, Region location, string groupName, string publicDnsBase, int i = 0)
         {
-            return _azure.PublicIPAddresses.Define(publicIpBase + Convert.ToString(i))
-                .WithRegion(location)
-                .WithExistingResourceGroup(groupName)
-                .WithLeafDomainLabel(publicDnsBase + Convert.ToString(i))
-                .WithDynamicIP()
-                .CreateAsync();
+            return Task.Run(async() =>
+            {
+                while (true)
+                {
+                    try
+                    {
+                        var newIp = await _azure.PublicIPAddresses.Define(publicIpBase + Convert.ToString(i))
+                            .WithRegion(location)
+                            .WithExistingResourceGroup(groupName)
+                            .WithLeafDomainLabel(publicDnsBase + Convert.ToString(i))
+                            .WithDynamicIP()
+                            .CreateAsync();
+                        return newIp;
+                    }
+                    catch (System.Exception)
+                    {
+                        await Task.Delay(2000);
+                        Util.Log($"retry create {i}th public th ip");
+
+                        continue;
+                    }
+
+                }
+
+            });
+
         }
 
         public Task<INetworkSecurityGroup> CreateNetworkSecurityGroupAsync(string nsgBase, Region location, string groupName, int sshPort, int i = 0)
         {
-            Console.WriteLine($"Creating {i}th network security group in resource group {groupName}");
-            return _azure.NetworkSecurityGroups.Define(nsgBase + Convert.ToString(i))
-                .WithRegion(location)
-                .WithExistingResourceGroup(groupName)
-                .DefineRule("SSH-PORT")
-                .AllowInbound()
-                .FromAnyAddress()
-                .FromAnyPort()
-                .ToAnyAddress()
-                .ToPort(22)
-                .WithAnyProtocol()
-                .WithPriority(100)
-                .Attach()
-                .DefineRule("NEW-SSH-PORT")
-                .AllowInbound()
-                .FromAnyAddress()
-                .FromAnyPort()
-                .ToAnyAddress()
-                .ToPort(sshPort)
-                .WithAnyProtocol()
-                .WithPriority(101)
-                .Attach()
-                .DefineRule("BENCHMARK-PORT")
-                .AllowInbound()
-                .FromAnyAddress()
-                .FromAnyPort()
-                .ToAnyAddress()
-                .ToPort(7000)
-                .WithAnyProtocol()
-                .WithPriority(102)
-                .Attach()
-                .DefineRule("RPC")
-                .AllowInbound()
-                .FromAnyAddress()
-                .FromAnyPort()
-                .ToAnyAddress()
-                .ToPort(5555)
-                .WithAnyProtocol()
-                .WithPriority(103)
-                .Attach()
-                .DefineRule("AppServer")
-                .AllowInbound()
-                .FromAnyAddress()
-                .FromAnyPort()
-                .ToAnyAddress()
-                .ToPort(5050)
-                .WithAnyProtocol()
-                .WithPriority(104)
-                .Attach()
-                .DefineRule("Report")
-                .AllowInbound()
-                .FromAnyAddress()
-                .FromAnyPort()
-                .ToAnyAddress()
-                .ToPort(3000)
-                .WithAnyProtocol()
-                .WithPriority(105)
-                .Attach()
-                .DefineRule("JENKINS")
-                .AllowInbound()
-                .FromAnyAddress()
-                .FromAnyPort()
-                .ToAnyAddress()
-                .ToPort(8080)
-                .WithAnyProtocol()
-                .WithPriority(106)
-                .Attach()
-                .DefineRule("5001")
-                .AllowInbound()
-                .FromAnyAddress()
-                .FromAnyPort()
-                .ToAnyAddress()
-                .ToPort(5001)
-                .WithAnyProtocol()
-                .WithPriority(107)
-                .Attach()
-                .DefineRule("5002")
-                .AllowInbound()
-                .FromAnyAddress()
-                .FromAnyPort()
-                .ToAnyAddress()
-                .ToPort(5002)
-                .WithAnyProtocol()
-                .WithPriority(108)
-                .Attach()
-                .DefineRule("5003")
-                .AllowInbound()
-                .FromAnyAddress()
-                .FromAnyPort()
-                .ToAnyAddress()
-                .ToPort(5003)
-                .WithAnyProtocol()
-                .WithPriority(109)
-                .Attach()
-                .CreateAsync();
+
+            return Task.Run(async() =>
+            {
+
+                while (true)
+                {
+                    try
+                    {
+                        Console.WriteLine($"Creating {i}th network security group in resource group {groupName}");
+                        var newNsg = await _azure.NetworkSecurityGroups.Define(nsgBase + Convert.ToString(i))
+                            .WithRegion(location)
+                            .WithExistingResourceGroup(groupName)
+                            .DefineRule("SSH-PORT")
+                            .AllowInbound()
+                            .FromAnyAddress()
+                            .FromAnyPort()
+                            .ToAnyAddress()
+                            .ToPort(22)
+                            .WithAnyProtocol()
+                            .WithPriority(100)
+                            .Attach()
+                            .DefineRule("NEW-SSH-PORT")
+                            .AllowInbound()
+                            .FromAnyAddress()
+                            .FromAnyPort()
+                            .ToAnyAddress()
+                            .ToPort(sshPort)
+                            .WithAnyProtocol()
+                            .WithPriority(101)
+                            .Attach()
+                            .DefineRule("BENCHMARK-PORT")
+                            .AllowInbound()
+                            .FromAnyAddress()
+                            .FromAnyPort()
+                            .ToAnyAddress()
+                            .ToPort(7000)
+                            .WithAnyProtocol()
+                            .WithPriority(102)
+                            .Attach()
+                            .DefineRule("RPC")
+                            .AllowInbound()
+                            .FromAnyAddress()
+                            .FromAnyPort()
+                            .ToAnyAddress()
+                            .ToPort(5555)
+                            .WithAnyProtocol()
+                            .WithPriority(103)
+                            .Attach()
+                            .DefineRule("AppServer")
+                            .AllowInbound()
+                            .FromAnyAddress()
+                            .FromAnyPort()
+                            .ToAnyAddress()
+                            .ToPort(5050)
+                            .WithAnyProtocol()
+                            .WithPriority(104)
+                            .Attach()
+                            .DefineRule("Report")
+                            .AllowInbound()
+                            .FromAnyAddress()
+                            .FromAnyPort()
+                            .ToAnyAddress()
+                            .ToPort(3000)
+                            .WithAnyProtocol()
+                            .WithPriority(105)
+                            .Attach()
+                            .DefineRule("JENKINS")
+                            .AllowInbound()
+                            .FromAnyAddress()
+                            .FromAnyPort()
+                            .ToAnyAddress()
+                            .ToPort(8080)
+                            .WithAnyProtocol()
+                            .WithPriority(106)
+                            .Attach()
+                            .DefineRule("5001")
+                            .AllowInbound()
+                            .FromAnyAddress()
+                            .FromAnyPort()
+                            .ToAnyAddress()
+                            .ToPort(5001)
+                            .WithAnyProtocol()
+                            .WithPriority(107)
+                            .Attach()
+                            .DefineRule("5002")
+                            .AllowInbound()
+                            .FromAnyAddress()
+                            .FromAnyPort()
+                            .ToAnyAddress()
+                            .ToPort(5002)
+                            .WithAnyProtocol()
+                            .WithPriority(108)
+                            .Attach()
+                            .DefineRule("5003")
+                            .AllowInbound()
+                            .FromAnyAddress()
+                            .FromAnyPort()
+                            .ToAnyAddress()
+                            .ToPort(5003)
+                            .WithAnyProtocol()
+                            .WithPriority(109)
+                            .Attach()
+                            .CreateAsync();
+                        return newNsg;
+                    }
+                    catch (System.Exception)
+                    {
+                        await Task.Delay(2000);
+                        Util.Log($"retry create {i}th nsg");
+                        continue;
+                    }
+                }
+
+            });
+
         }
 
         public Task<INetworkInterface> CreateNetworkInterfaceAsync(string nicBase, Region location, string groupName, string subNet, INetwork network, IPublicIPAddress publicIPAddress, INetworkSecurityGroup nsg, int i = 0)
         {
             Console.WriteLine($"Creating {i}th network interface in resource group {groupName}");
-            return _azure.NetworkInterfaces.Define(nicBase + Convert.ToString(i))
-                .WithRegion(location)
-                .WithExistingResourceGroup(groupName)
-                .WithExistingPrimaryNetwork(network)
-                .WithSubnet(subNet)
-                .WithPrimaryPrivateIPAddressDynamic()
-                .WithExistingPrimaryPublicIPAddress(publicIPAddress)
-                .WithExistingNetworkSecurityGroup(nsg)
-                .CreateAsync();
+            return Task.Run(async() =>
+            {
+                while (true)
+                {
+                    try
+                    {
+                        var newNic = await _azure.NetworkInterfaces.Define(nicBase + Convert.ToString(i))
+                            .WithRegion(location)
+                            .WithExistingResourceGroup(groupName)
+                            .WithExistingPrimaryNetwork(network)
+                            .WithSubnet(subNet)
+                            .WithPrimaryPrivateIPAddressDynamic()
+                            .WithExistingPrimaryPublicIPAddress(publicIPAddress)
+                            .WithExistingNetworkSecurityGroup(nsg)
+                            .CreateAsync();
+                        return newNic;
+                    }
+                    catch (System.Exception)
+                    {
+                        await Task.Delay(2000);
+                        Util.Log($"retry create {i}th nic");
+                        continue;
+                    }
+                }
+            });
+
         }
 
         public Task<IWithCreate> GenerateVmTemplateAsync(string vmNameBase, Region location, string groupName, string imageId, string user, string password, string ssh, VirtualMachineSizeTypes vmSize, INetworkInterface networkInterface, IAvailabilitySet availabilitySet = null, int i = 0)
@@ -741,11 +802,14 @@ namespace JenkinsScript
                 Region location = null;
                 switch (_agentConfig.Location.ToLower())
                 {
-                    case "useast":
+                    case "eastus":
                         location = Region.USEast;
                         break;
                     case "westus":
                         location = Region.USWest;
+                        break;
+                    case "westus2":
+                        location = Region.USWest2;
                         break;
                     case "southeastasia":
                         location = Region.AsiaSouthEast;
@@ -800,6 +864,8 @@ namespace JenkinsScript
             {
                 case "StandardDS1":
                     return VirtualMachineSizeTypes.StandardDS1;
+                case "StandardDS1V2":
+                    return VirtualMachineSizeTypes.StandardDS1V2;
                 case "StandardDS4":
                     return VirtualMachineSizeTypes.StandardDS4;
                 case "StandardDS4V2":
@@ -812,6 +878,8 @@ namespace JenkinsScript
                     return VirtualMachineSizeTypes.StandardF2s;
                 case "StandardF4s":
                     return VirtualMachineSizeTypes.StandardF4s;
+                case "StandardF4sV2":
+                    return VirtualMachineSizeTypes.StandardF4sV2;
                 default:
                     return VirtualMachineSizeTypes.StandardDS1;
             }

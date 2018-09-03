@@ -135,7 +135,6 @@ namespace Bench.RpcSlave.Worker.Operations
             {
                 ids.Add($"{Util.GuidEncoder.Encode(Guid.NewGuid())}");
             }
-            // Util.LogList("IDs", ids);
             return ids;
         }
         protected async Task StartSendingMessageAsync(string mode, HubConnection connection, int ind, byte[] messageBlob, string id,
@@ -179,8 +178,6 @@ namespace Bench.RpcSlave.Worker.Operations
             int connectionCnt, int duration, int interval, Counter counter, List<bool> brokenConnectionInds)
         {
             var isJoin = true;
-            // Util.Log($"groupNameMatrix[{ind}] = {groupNameMatrix[0]}");
-            // Util.Log(string.Join(";", _tk.BenchmarkCellConfig.GroupNameList.ToList()));
             await Task.Delay(StartTimeOffsetGenerator.Delay(TimeSpan.FromSeconds(interval)));
             using(var cts = new CancellationTokenSource(TimeSpan.FromSeconds(duration)))
             {
@@ -188,7 +185,6 @@ namespace Bench.RpcSlave.Worker.Operations
                 {
                     var mode = isJoin ? "JoinGroup" : "LeaveGroup";
                     isJoin = !isJoin;
-
                     JoinLeaveGroupOp.JoinLeaveGroup(mode, connection, groupNameMatrix, counter);
                     await Task.Delay(TimeSpan.FromSeconds(interval));
                 }

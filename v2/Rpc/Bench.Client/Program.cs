@@ -256,7 +256,9 @@ namespace Bench.RpcMaster
 
         private static BenchmarkCellConfig GenerateBenchmarkConfig(int indClient, string step,
             string serviceType, string transportType, string hubProtocol, string scenario,
-            string MessageSizeStr, List<string> targetConnectionIds, List<string> groupNameList, List<bool> callbackList, int messageCountPerInterval, bool enableGroupJoinLeave)
+            string MessageSizeStr, List<string> targetConnectionIds, List<string> groupNameList,
+            List<bool> callbackList, int messageCountPerInterval, bool enableGroupJoinLeave,
+            List<bool> joinLeavePerGroupList)
         {
             var messageSize = ParseMessageSize(MessageSizeStr);
 
@@ -280,6 +282,7 @@ namespace Bench.RpcMaster
             benchmarkCellConfig.TargetConnectionIds.AddRange(targetConnectionIds);
             benchmarkCellConfig.GroupNameList.AddRange(groupNameList);
             benchmarkCellConfig.CallbackList.AddRange(callbackList);
+            benchmarkCellConfig.JoinLeaveGroupList.AddRange(joinLeavePerGroupList);
 
             return benchmarkCellConfig;
         }
@@ -536,6 +539,8 @@ namespace Bench.RpcMaster
             var groupNameList = GenerateGroupNameList(connections, groupNum, overlap);
             var callbackList = Enumerable.Repeat(true, connections).ToList();
             var messageCountPerInterval = 1;
+            var joinLeavePerGroupAdditionalCnt = 0;
+            var joinLeavePerGroupList = Enumerable.Repeat(false, connections).ToList();
 
             // var serverUrls = serverCount;
             for (var i = 0; i < pipeline.Count; i++)
@@ -552,14 +557,17 @@ namespace Bench.RpcMaster
                 // handle up per group op
                 HandleUpPerGroupOp(step, connectionConfigBuilder, connectionAllConfigList, groupNameList);
 
-                // update group name list
-                // var onlyOneSendAllGroup = step.Contains("configOnlyOneSendAllGroup") ? true : false;
-                // if (onlyOneSendAllGroup) groupNameList = UpdateGroupNameList(groupNameList);
-
                 // handle config message count per interval
                 var configMessageCountPerInterval = step.Contains("configMessageCountPerInterval") ? true : false;
                 if (configMessageCountPerInterval) int.TryParse(Util.TrimPrefix(step), out messageCountPerInterval);
 
+                // handle up join/leave group per group
+                var upJoinLeavePerGroup = step.Contains("upJoinLeavePerGroup") ? true : false;
+                if (upJoinLeavePerGroup)
+                {
+                    int.TryParse(Util.TrimPrefix(step), out joinLeavePerGroupAdditionalCnt);
+                    joinLeavePerGroupList = UpdateJoinLeavePergroupList(joinLeavePerGroupList, connectionAllConfigList, groupNameList, joinLeavePerGroupAdditionalCnt);
+                }
                 // remove last one callback
                 RemoveExceptLastOneCallback(step, callbackList);
 
@@ -569,7 +577,7 @@ namespace Bench.RpcMaster
 
                     var benchmarkCellConfig = GenerateBenchmarkConfig(indClient, step,
                         serviceType, transportType, hubProtocol, scenario, messageSize,
-                        targetConnectionIds, groupNameList, callbackList, messageCountPerInterval, enableGroupJoinLeave);
+                        targetConnectionIds, groupNameList, callbackList, messageCountPerInterval, enableGroupJoinLeave, joinLeavePerGroupList);
 
                     Util.Log($"service: {benchmarkCellConfig.ServiceType}; transport: {benchmarkCellConfig.TransportType}; hubprotocol: {benchmarkCellConfig.HubProtocol}; scenario: {benchmarkCellConfig.Scenario}; step: {step}");
 
@@ -609,6 +617,41 @@ namespace Bench.RpcMaster
                     }
                 }
             }
+        }
+
+        private static List<bool> UpdateJoinLeavePergroupList(List<bool> joinLeavePerGroupList, ConnectionConfigList connectionAllConfigList, List<string> groupNameList, int up)
+        {
+            var groupSet = new HashSet<string>();
+
+            // get all group name
+            groupNameList.ForEach(groups => groups.Split(";").ToList().ForEach(groupName => groupSet.Add(groupName)));
+
+            // get connection id list in each group
+            var connectionIdListForEachGroup = new Dictionary<string, List<int>>();
+            groupSet.ToList().ForEach(groupName =>
+            {
+                if (!connectionIdListForEachGroup.ContainsKey(groupName)) connectionIdListForEachGroup.Add(groupName, new List<int>());
+            });
+
+            // fill connectionIdListForEachGroup with connections that never join/leave group
+            for (var i = 0; i < groupNameList.Count; i++)
+            {
+                if (!joinLeavePerGroupList[i] && !connectionAllConfigList.Configs.ToList() [i].SendFlag)
+                    groupNameList[i].Split(";").ToList().ForEach(groupName => connectionIdListForEachGroup[groupName].Add(i));
+            }
+
+            // update joinLeavePerGroupList
+            foreach (var entry in connectionIdListForEachGroup)
+            {
+                var connectionIdList = entry.Value;
+                connectionIdList.Shuffle();
+                for (var i = 0; i < up; i++)
+                {
+                    joinLeavePerGroupList[connectionIdList[i]] = true;
+                }
+            }
+
+            return joinLeavePerGroupList;
         }
 
         private static void HandleUpPerGroupOp(string step, ConnectionConfigBuilder connectionConfigBuilder, ConnectionConfigList connectionAllConfigList, List<string> groupNameMat)

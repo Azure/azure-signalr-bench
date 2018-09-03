@@ -34,6 +34,12 @@ namespace Bench.RpcSlave.Worker.Operations
             Util.Log($"concurrent conn: {_tk.JobConfig.ConcurrentConnections} conn count: {connections.Count}");
             var left = connections.Count;
             var nextBatch = _tk.JobConfig.ConcurrentConnections;
+            if (_tk.JobConfig.ConcurrentConnections > connections.Count)
+            {
+                Util.Log("Warning: concurrent connection > connections");
+                nextBatch = connections.Count;
+            }
+
             if (nextBatch <= left)
             {
                 var tasks = new List<Task>(connections.Count);

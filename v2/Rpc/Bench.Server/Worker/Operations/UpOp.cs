@@ -44,4 +44,8 @@ namespace Bench.RpcSlave.Worker.Operations
     class UpPerGroup20Op : UpOp { }
     class UpPerGroup50Op : UpOp { }
 
+    // increase sending conn for join/leave group
+    class UpJoinLeavePerGroup1Op : UpOp { }
+    class UpJoinLeavePerGroup2Op : UpOp { }
+
 }
