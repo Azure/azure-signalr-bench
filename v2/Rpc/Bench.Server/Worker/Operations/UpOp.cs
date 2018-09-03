@@ -47,5 +47,21 @@ namespace Bench.RpcSlave.Worker.Operations
     // increase sending conn for join/leave group
     class UpJoinLeavePerGroup1Op : UpOp { }
     class UpJoinLeavePerGroup2Op : UpOp { }
+    class UpJoinLeavePerGroup5Op : UpOp { }
+    class UpJoinLeavePerGroup10Op : UpOp { }
+    class UpJoinLeavePerGroup20Op : UpOp { }
+    class UpJoinLeavePerGroup50Op : UpOp { }
+    class UpJoinLeavePerGroup100Op : UpOp { }
+    class UpJoinLeavePerGroup200Op : UpOp { }
+    class UpJoinLeavePerGroup500Op : UpOp { }
+    class UpJoinLeavePerGroup1000Op : UpOp { }
+    class UpJoinLeavePerGroup2000Op : UpOp { }
+    class UpJoinLeavePerGroup5000Op : UpOp { }
+    class UpJoinLeavePerGroup10000Op : UpOp { }
+    class UpJoinLeavePerGroup20000Op : UpOp { }
+    class UpJoinLeavePerGroup50000Op : UpOp { }
+    class UpJoinLeavePerGroup100000Op : UpOp { }
+    class UpJoinLeavePerGroup200000Op : UpOp { }
+    class UpJoinLeavePerGroup500000Op : UpOp { }
 
 }
