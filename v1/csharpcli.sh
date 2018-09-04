@@ -461,7 +461,7 @@ _EOF
 		  fi
 		else
                   check=`grep "HttpConnection Started" ${output_log}|wc -l`
-                  if [ "$check" -ge "5" ]
+                  if [ "$check" != "" ]
                   then
                         finish=1
                         echo "server is started!"

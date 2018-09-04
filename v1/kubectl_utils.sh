@@ -2,7 +2,7 @@
 g_CPU_requests="1|2|3|4"
 g_CPU_limits="1|2|3|4"
 g_Memory_limits="4000|4000|4000|4000"
-g_k8s_config_list="kvsignalrdevseasia.config|srdevacsrpd.config|kubeconfig.southeastasia.json"
+g_k8s_config_list="srdevacsrpd.config|kubeconfig.southeastasia.json"
 
 ## Bourne shell does not support array, so a string is used
 ## to work around with the hep of awk array
@@ -338,12 +338,12 @@ function copy_syslog() {
 
   for i in $result
   do
-     kubectl cp default/${i}:/var/log/syslog $outdir/${i}_syslog.txt --kubeconfig=$config_file
-     if [ -e $outdir/${i}_syslog.txt ]
+     kubectl cp default/${i}:/var/log/ASRS/ASRS.log $outdir/${i}_ASRS.txt --kubeconfig=$config_file
+     if [ -e $outdir/${i}_ASRS.txt ]
      then
         cd $outdir
-        tar zcvf ${i}_syslog.tgz ${i}_syslog.txt
-        rm ${i}_syslog.txt
+        tar zcvf ${i}_ASRS.tgz ${i}_ASRS.txt
+        rm ${i}_ASRS.txt
         cd -
      fi
   done
