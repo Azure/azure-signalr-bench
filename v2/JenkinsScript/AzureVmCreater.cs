@@ -880,6 +880,14 @@ namespace JenkinsScript
                     return VirtualMachineSizeTypes.StandardF4s;
                 case "StandardF4sV2":
                     return VirtualMachineSizeTypes.StandardF4sV2;
+                case "StandardF8sV2":
+                    return VirtualMachineSizeTypes.StandardF8sV2;
+                case "StandardF16sV2":
+                    return VirtualMachineSizeTypes.StandardF16sV2;
+                case "StandardD16sV3":
+                    return VirtualMachineSizeTypes.StandardD16sV3;
+                case "StandardD32sV3":
+                    return VirtualMachineSizeTypes.StandardD32sV3;
                 default:
                     return VirtualMachineSizeTypes.StandardDS1;
             }
