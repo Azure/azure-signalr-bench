@@ -164,6 +164,7 @@ namespace Bench.RpcSlave.Worker.Operations
                                 Util.Log($"exception in sending message of {ind}th connection: {ex}");
                                 counter.IncreaseConnectionError();
                                 counter.UpdateConnectionSuccess((ulong) connectionCnt);
+                                counter.IncreseNotSentFromClientMsg();
                                 brokenConnectionInds[ind] = true;
                             }
                         });
