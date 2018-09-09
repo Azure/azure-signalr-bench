@@ -17,7 +17,10 @@ namespace Bench.RpcSlave
             var result = Parser.Default.ParseArguments<ArgsOption>(args)
                 .WithParsed(options => argsOption = options)
                 .WithNotParsed(error => { });
-            Grpc.Core.Server server = new Grpc.Core.Server
+            Grpc.Core.Server server = new Grpc.Core.Server(new ChannelOption[]
+            {
+                new ChannelOption(ChannelOptions.MaxReceiveMessageLength, 8192000)
+            })
             {
                 Services = { RpcService.BindService(new RpcServiceImpl()) },
                 Ports = { new ServerPort(argsOption.DnsName, argsOption.RpcPort, ServerCredentials.Insecure) }
