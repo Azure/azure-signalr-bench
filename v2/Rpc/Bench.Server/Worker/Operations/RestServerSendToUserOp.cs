@@ -61,11 +61,31 @@ namespace Bench.RpcSlave.Worker.Operations
             var beg = _tk.ConnectionRange.Begin;
             var end = _tk.ConnectionRange.End;
 
+            var sendCnt = 0;
             for (var i = beg; i < end; i++)
             {
-                await StartSendingMessageAsync(i, messageBlob,
-                    _tk.JobConfig.Duration, _tk.JobConfig.Interval, _tk.Counters);
+                var cfg = _tk.ConnectionConfigList.Configs[i];
+                if (cfg.SendFlag) sendCnt++;
             }
+            if (_tk.Connections.Count == 0 || sendCnt == 0)
+            {
+                Util.Log($"nothing to do, wait scenario finish");
+                await Task.Delay(TimeSpan.FromSeconds(_tk.JobConfig.Duration + 5));
+            }
+            else
+            {
+                var tasks = new List<Task>();
+                for (var i = beg; i < end; i++)
+                {
+                    var cfg = _tk.ConnectionConfigList.Configs[i];
+                    if (cfg.SendFlag)
+                    {
+                        await StartSendingMessageAsync(i, messageBlob,
+                            _tk.JobConfig.Duration, _tk.JobConfig.Interval, _tk.Counters);
+                    }   
+                }
+            }
+            
         }
 
         protected async Task StartSendingMessageAsync(int index, byte[] messageBlob, int duration, int interval, Counter counter)
