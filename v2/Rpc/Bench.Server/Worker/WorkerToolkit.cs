@@ -24,5 +24,8 @@ namespace Bench.RpcSlave.Worker
         public Dictionary<string, bool> Init { get; set; } = new Dictionary<string, bool>();
 
         public List<string> ConnectionIds { get; set; } = new List<string>();
+
+        // serverless mode needs connection string
+        public string ConnectionString { get; set; }
     }
 }
