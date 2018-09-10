@@ -27,6 +27,8 @@ namespace Bench.RpcSlave.Worker.Operations
         public async Task Do(WorkerToolkit tk)
         {
             _tk = tk;
+            var waitTime = 5 * 1000;
+            Console.WriteLine($"wait time: {waitTime / 1000}s");
 
             Setup();
 
@@ -74,18 +76,19 @@ namespace Bench.RpcSlave.Worker.Operations
             }
             else
             {
+                Util.Log($"send count: {sendCnt}");
                 var tasks = new List<Task>();
                 for (var i = beg; i < end; i++)
                 {
                     var cfg = _tk.ConnectionConfigList.Configs[i];
                     if (cfg.SendFlag)
                     {
-                        await StartSendingMessageAsync(i, messageBlob,
-                            _tk.JobConfig.Duration, _tk.JobConfig.Interval, _tk.Counters);
+                        tasks.Add(StartSendingMessageAsync(i, messageBlob,
+                            _tk.JobConfig.Duration, _tk.JobConfig.Interval, _tk.Counters));
                     }   
                 }
+                await Task.WhenAll(tasks);
             }
-            
         }
 
         protected async Task StartSendingMessageAsync(int index, byte[] messageBlob, int duration, int interval, Counter counter)
@@ -118,6 +121,8 @@ namespace Bench.RpcSlave.Worker.Operations
                         request.Content = new StringContent(JsonConvert.SerializeObject(payloadRequest), Encoding.UTF8, "application/json");
                         var response = await _client.SendAsync(request);
                         response.EnsureSuccessStatusCode();
+                        counter.IncreaseSentMessageSize(messageSize);
+                        counter.IncreseSentMsg();
                     }
                     catch (Exception ex)
                     {
