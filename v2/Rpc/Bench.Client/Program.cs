@@ -482,11 +482,12 @@ namespace Bench.RpcMaster
 
             var messageSize = ParseMessageSize(messageSizeStr);
             string[] servers = null;
+            int serverCount = 0;
             if (serverUrl != null)
             {
                 servers = serverUrl.Split(';');
-            }
-            var serverCount = servers.Length;
+                serverCount = servers.Length;
+            } 
             var connectionString = argsOption.ConnectionString;
 
             clients.ForEach(client =>
