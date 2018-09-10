@@ -11,6 +11,7 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.SignalR.Client;
 
 namespace Bench.RpcSlave.Worker.Operations
 {
@@ -23,6 +24,7 @@ namespace Bench.RpcSlave.Worker.Operations
         protected string _serverName;
         protected ServiceUtils _serviceUtils;
         protected string _endpoint;
+        protected string _content;
 
         public async Task Do(WorkerToolkit tk)
         {
@@ -42,7 +44,20 @@ namespace Bench.RpcSlave.Worker.Operations
 
         public override void SetCallbacks()
         {
-            // nothing to do
+            Util.Log($"scenario: {_tk.BenchmarkCellConfig.Scenario}");
+            for (int i = _tk.ConnectionRange.Begin; i < _tk.ConnectionRange.End; i++)
+            {
+                var ind = i;
+
+                _tk.ConnectionCallbacks.Add(_tk.Connections[i - _tk.ConnectionRange.Begin].On(ServiceUtils.MethodName,
+                    (string server, string timestamp, string content) =>
+                    {
+                        var receiveTimestamp = Util.Timestamp();
+                        var sendTimestamp = Convert.ToInt64(timestamp);
+                        _tk.Counters.CountLatency(sendTimestamp, receiveTimestamp);
+                        _tk.Counters.IncreaseReceivedMessageSize((ulong)content.Length);
+                    }));
+            }
         }
 
         public override void Setup()
@@ -52,6 +67,11 @@ namespace Bench.RpcSlave.Worker.Operations
             _serviceUtils = new ServiceUtils(_tk.ConnectionString);
             _endpoint = _serviceUtils.Endpoint;
             StartTimeOffsetGenerator = new RandomGenerator(new LocalFileSaver());
+            if (!_tk.Init.ContainsKey(_tk.BenchmarkCellConfig.Step))
+            {
+                SetCallbacks();
+                _tk.Init[_tk.BenchmarkCellConfig.Step] = true;
+            }
         }
 
         public override async Task StartSendMsg()
@@ -59,7 +79,7 @@ namespace Bench.RpcSlave.Worker.Operations
             var messageBlob = new byte[_tk.BenchmarkCellConfig.MessageSize];
             Random rnd = new Random();
             rnd.NextBytes(messageBlob);
-
+            _content = UTF8Encoding.ASCII.GetString(messageBlob);
             var beg = _tk.ConnectionRange.Begin;
             var end = _tk.ConnectionRange.End;
 
@@ -116,6 +136,7 @@ namespace Bench.RpcSlave.Worker.Operations
                             {
                                 _serverName,
                                 $"{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}",
+                                _content
                             }
                         };
                         request.Content = new StringContent(JsonConvert.SerializeObject(payloadRequest), Encoding.UTF8, "application/json");

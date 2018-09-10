@@ -118,13 +118,6 @@ namespace Bench.RpcSlave.Worker.Operations
 
                     return Task.CompletedTask;
                 };
-                connection.On<string, string>(ServiceUtils.MethodName,
-                    (string server, string timestamp) =>
-                    {
-                        var receiveTimestamp = Util.Timestamp();
-                        var sendTimestamp = Convert.ToInt64(timestamp);
-                        _tk.Counters.CountLatency(sendTimestamp, receiveTimestamp);
-                    });
                 connections.Add(connection);
             }
 
