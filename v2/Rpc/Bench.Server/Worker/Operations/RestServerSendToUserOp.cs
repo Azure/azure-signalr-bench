@@ -31,11 +31,10 @@ namespace Bench.RpcSlave.Worker.Operations
             _tk = tk;
             var waitTime = 5 * 1000;
             Console.WriteLine($"wait time: {waitTime / 1000}s");
-
-            Setup();
-
             _tk.State = Stat.Types.State.SendReady;
-
+            Setup();
+            await Task.Delay(5000);
+            _tk.State = Stat.Types.State.SendRunning;
             await StartSendMsg();
 
             _tk.State = Stat.Types.State.SendComplete;
