@@ -25,25 +25,41 @@ namespace Bench.RpcSlave.Worker.Operations
 
             var beg = _tk.ConnectionRange.Begin;
             var end = _tk.ConnectionRange.End;
-
             for (var i = _tk.ConnectionRange.Begin; i < _tk.ConnectionRange.End; i++)
             {
                 var cfg = _tk.ConnectionConfigList.Configs[i];
                 var ids = GenerateId("SendGroup", i - _tk.ConnectionRange.Begin);
                 if (cfg.SendFlag)
                 {
-                    for (var j = 0; j < ids.Count; j++)
+                    var groupList = _tk.BenchmarkCellConfig.GroupNameList[i].Split(";").ToList();
+                    var isSend = true;
+                    foreach (var groupName in groupList)
                     {
-                        for (var k = 0; k < _tk.BenchmarkCellConfig.MessageCountPerInterval; k++)
+                        int.TryParse(Util.TrimAlphabeticPrefix(groupName), out int groupInd);
+                        if (!_tk.BenchmarkCellConfig.SendGroupList[groupInd])
                         {
-                            tasks.Add(StartSendingMessageAsync("SendGroup", _tk.Connections[i - _tk.ConnectionRange.Begin],
-                                i - _tk.ConnectionRange.Begin, messageBlob, ids[j], _tk.Connections.Count,
-                                _tk.JobConfig.Duration, _tk.JobConfig.Interval, _tk.Counters, _brokenConnectionInds));
+                            isSend = false;
+
                         }
                     }
+
+                    if (isSend)
+                    {
+                        for (var j = 0; j < ids.Count; j++)
+                        {
+                            for (var k = 0; k < _tk.BenchmarkCellConfig.MessageCountPerInterval; k++)
+                            {
+                                tasks.Add(StartSendingMessageAsync("SendGroup", _tk.Connections[i - _tk.ConnectionRange.Begin],
+                                    i - _tk.ConnectionRange.Begin, messageBlob, ids[j], _tk.Connections.Count,
+                                    _tk.JobConfig.Duration, _tk.JobConfig.Interval, _tk.Counters, _brokenConnectionInds));
+                            }
+                        }
+                    }
+
                 }
                 else if (_tk.BenchmarkCellConfig.EnableGroupJoinLeave && _tk.BenchmarkCellConfig.JoinLeaveGroupList[i])
                 {
+
                     tasks.Add(StartJoinLeaveGroupAsync(_tk.Connections.GetRange(i - _tk.ConnectionRange.Begin, 1),
                         i - _tk.ConnectionRange.Begin, _tk.BenchmarkCellConfig.GroupNameList.ToList().GetRange(i, 1),
                         _tk.Connections.Count, _tk.JobConfig.Duration, _tk.JobConfig.Interval, _tk.Counters, _brokenConnectionInds));

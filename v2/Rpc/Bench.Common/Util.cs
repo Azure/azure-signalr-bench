@@ -185,7 +185,8 @@ namespace Bench.Common
             return debug == "debug";
         }
 
-        public static string TrimPrefix(string input)
+        // trim alphabetic prefix
+        public static string TrimAlphabeticPrefix(string input)
         {
             var trimmed = Regex.Replace(input, @"^[A-Za-z]+", "");
             return trimmed;

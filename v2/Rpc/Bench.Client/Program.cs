@@ -258,7 +258,7 @@ namespace Bench.RpcMaster
             string serviceType, string transportType, string hubProtocol, string scenario,
             string MessageSizeStr, List<string> targetConnectionIds, List<string> groupNameList,
             List<bool> callbackList, int messageCountPerInterval, bool enableGroupJoinLeave,
-            List<bool> joinLeavePerGroupList)
+            List<bool> joinLeavePerGroupList, List<bool> sendGroupList)
         {
             var messageSize = ParseMessageSize(MessageSizeStr);
 
@@ -283,6 +283,7 @@ namespace Bench.RpcMaster
             benchmarkCellConfig.GroupNameList.AddRange(groupNameList);
             benchmarkCellConfig.CallbackList.AddRange(callbackList);
             benchmarkCellConfig.JoinLeaveGroupList.AddRange(joinLeavePerGroupList);
+            benchmarkCellConfig.SendGroupList.AddRange(sendGroupList);
 
             return benchmarkCellConfig;
         }
@@ -541,6 +542,7 @@ namespace Bench.RpcMaster
             var messageCountPerInterval = 1;
             var joinLeavePerGroupAdditionalCnt = 0;
             var joinLeavePerGroupList = Enumerable.Repeat(false, connections).ToList();
+            var sendGroupList = Enumerable.Repeat(false, groupNum).ToList();
 
             // var serverUrls = serverCount;
             for (var i = 0; i < pipeline.Count; i++)
@@ -554,20 +556,23 @@ namespace Bench.RpcMaster
                 // up op
                 HandleBasicUpOp(step, connectionConfigBuilder, connectionAllConfigList, connections, slaveList);
 
+                // handle up join/leave group per group
+                HandleUpSendGroupOp(step, sendGroupList, groupNum, overlap);
+
                 // handle up per group op
                 HandleUpPerGroupOp(step, connectionConfigBuilder, connectionAllConfigList, groupNameList);
 
                 // handle config message count per interval
                 var configMessageCountPerInterval = step.Contains("configMessageCountPerInterval") ? true : false;
-                if (configMessageCountPerInterval) int.TryParse(Util.TrimPrefix(step), out messageCountPerInterval);
+                if (configMessageCountPerInterval) int.TryParse(Util.TrimAlphabeticPrefix(step), out messageCountPerInterval);
 
-                // handle up join/leave group per group
                 var upJoinLeavePerGroup = step.Contains("upJoinLeavePerGroup") ? true : false;
                 if (upJoinLeavePerGroup)
                 {
-                    int.TryParse(Util.TrimPrefix(step), out joinLeavePerGroupAdditionalCnt);
+                    int.TryParse(Util.TrimAlphabeticPrefix(step), out joinLeavePerGroupAdditionalCnt);
                     joinLeavePerGroupList = UpdateJoinLeavePergroupList(joinLeavePerGroupList, connectionAllConfigList, groupNameList, joinLeavePerGroupAdditionalCnt);
                 }
+
                 // remove last one callback
                 RemoveExceptLastOneCallback(step, callbackList);
 
@@ -577,7 +582,8 @@ namespace Bench.RpcMaster
 
                     var benchmarkCellConfig = GenerateBenchmarkConfig(indClient, step,
                         serviceType, transportType, hubProtocol, scenario, messageSize,
-                        targetConnectionIds, groupNameList, callbackList, messageCountPerInterval, enableGroupJoinLeave, joinLeavePerGroupList);
+                        targetConnectionIds, groupNameList, callbackList, messageCountPerInterval,
+                        enableGroupJoinLeave, joinLeavePerGroupList, sendGroupList);
 
                     Util.Log($"service: {benchmarkCellConfig.ServiceType}; transport: {benchmarkCellConfig.TransportType}; hubprotocol: {benchmarkCellConfig.HubProtocol}; scenario: {benchmarkCellConfig.Scenario}; step: {step}");
 
@@ -615,6 +621,27 @@ namespace Bench.RpcMaster
                         targetConnectionIds = CollectConnectionIds(clients);
                         targetConnectionIds.Shuffle();
                     }
+                }
+            }
+        }
+
+        private static void HandleUpSendGroupOp(string step, List<bool> sendGroupList, int groupCnt, int groupOverlap)
+        {
+            if (step.Contains("upSendGroup"))
+            {
+                int.TryParse(Util.TrimAlphabeticPrefix(step), out int sendGroupCnt);
+
+                var indexList = Enumerable.Range(0, groupCnt).ToList();
+                indexList.Shuffle();
+
+                for (int i = 0; i < sendGroupList.Count; i++)
+                {
+                    sendGroupList[i] = false;
+                }
+
+                for (int i = 0; i < sendGroupCnt && i < sendGroupList.Count; i++)
+                {
+                    sendGroupList[indexList[i]] = true;
                 }
             }
         }

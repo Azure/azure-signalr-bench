@@ -35,6 +35,7 @@ message BenchmarkCellConfig {
 	repeated bool joinLeaveGroupList = 14;
 	int32 messageCountPerInterval = 15;
 	bool enableGroupJoinLeave = 16;
+	repeated bool sendGroupList = 17;
 }
 
 message ConnectionConfig {
