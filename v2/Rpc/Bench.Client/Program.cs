@@ -82,10 +82,15 @@ namespace Bench.RpcMaster
                 // collect counters
                 StartCollectCounters(clients, argsOption.OutputCounterFile);
 
+                int serverCount = 0;
+                if (argsOption.ServerUrl != null)
+                {
+                    serverCount = argsOption.ServerUrl.Split(";").ToList().Count;
+                }
                 // process jobs for each step
                 await ProcessPipeline(clients, argsOption.PipeLine, slaveList,
                     argsOption.Connections, argsOption.ServiceType, argsOption.TransportType, argsOption.HubProtocal, argsOption.Scenario, argsOption.MessageSize,
-                    argsOption.groupNum, argsOption.groupOverlap, argsOption.ServerUrl.Split(";").ToList().Count, argsOption.SendToFixedClient, argsOption.EnableGroupJoinLeave);
+                    argsOption.groupNum, argsOption.groupOverlap, serverCount, argsOption.SendToFixedClient, argsOption.EnableGroupJoinLeave);
             }
             catch (Exception ex)
             {
