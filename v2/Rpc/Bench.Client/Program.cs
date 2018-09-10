@@ -481,8 +481,13 @@ namespace Bench.RpcMaster
             var messageSizeStr = argsOption.MessageSize;
 
             var messageSize = ParseMessageSize(messageSizeStr);
-            var servers = serverUrl.Split(';');
+            string[] servers = null;
+            if (serverUrl != null)
+            {
+                servers = serverUrl.Split(';');
+            }
             var serverCount = servers.Length;
+            var connectionString = argsOption.ConnectionString;
 
             clients.ForEach(client =>
             {
@@ -504,13 +509,22 @@ namespace Bench.RpcMaster
                 state = client.CreateWorker(new Empty());
 
                 string server = null;
-                if (bool.Parse(argsOption.SendToFixedClient))
+                if (serverUrl != null)
                 {
-                    server = serverUrl;
+                    if (bool.Parse(argsOption.SendToFixedClient))
+                    {
+                        server = serverUrl;
+                    }
+                    else
+                    {
+                        server = servers[i % serverCount];
+                    }
                 }
-                else
+                else if (connectionString != null)
                 {
-                    server = servers[i % serverCount];
+                    // temporarily borrow the 'server' field to pass connection string,
+                    // because I do not want to modify RPC model.
+                    server = connectionString;
                 }
                 var config = new CellJobConfig
                 {
