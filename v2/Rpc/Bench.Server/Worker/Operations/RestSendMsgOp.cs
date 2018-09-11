@@ -124,7 +124,8 @@ namespace Bench.RpcSlave.Worker.Operations
                     {
                         var url = GenRestUrl(_serviceUtils, $"{index}");
                         var request = new HttpRequestMessage(HttpMethod.Post, GetUrl(url));
-
+                        // Corefx changed the default version and High Sierra curlhandler tries to upgrade request
+                        request.Version = new Version(1, 1);
                         request.Headers.Authorization =
                             new AuthenticationHeaderValue("Bearer",
                                 _serviceUtils.GenerateAccessToken(url, _serverName));
@@ -140,8 +141,14 @@ namespace Bench.RpcSlave.Worker.Operations
                             }
                         };
                         request.Content = new StringContent(JsonConvert.SerializeObject(payloadRequest), Encoding.UTF8, "application/json");
-                        var response = await _client.SendAsync(request);
-                        response.EnsureSuccessStatusCode();
+                        // ResponseHeadersRead instructs SendAsync to return once headers are read
+                        // rather than buffer the entire response. This gives a small perf boost.
+                        // Note that it is important to dispose of the response when doing this to
+                        // avoid leaving the connection open.
+                        using (var response = await _client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead))
+                        {
+                            response.EnsureSuccessStatusCode();
+                        }
                         counter.IncreaseSentMessageSize(messageSize);
                         counter.IncreseSentMsg();
                     }
