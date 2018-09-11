@@ -58,7 +58,8 @@ update_single_azure_signalr_bench_appserver() {
   local host=$1
   local ssh_user=$2
   local ssh_port=$3
-  ssh -o StrictHostKeyChecking=no -p ${ssh_port} ${ssh_user}@${host} "cd /home/${ssh_user}/azure-signalr-bench; git pull; cd v2/AppServer; /home/${ssh_user}/.dotnet/dotnet build"
+  ssh -o StrictHostKeyChecking=no -p ${ssh_port} ${ssh_user}@${host} "cd /home/${ssh_user}/azure-signalr-bench; git checkout master; git pull; git checkout wanl_init_service; cd v2/AppServer; /home/${ssh_user}/.dotnet/dotnet build"
+  #ssh -o StrictHostKeyChecking=no -p ${ssh_port} ${ssh_user}@${host} "cd /home/${ssh_user}/azure-signalr-bench; git pull; cd v2/AppServer; /home/${ssh_user}/.dotnet/dotnet build"
 }
 
 update_azure_signalr_bench_appserver() {
@@ -72,7 +73,10 @@ update_single_azure_signalr_bench_client() {
   local host=$1
   local ssh_user=$2
   local ssh_port=$3
-  ssh -o StrictHostKeyChecking=no -p ${ssh_port} ${ssh_user}@${host} "cd /home/${ssh_user}/azure-signalr-bench; git pull; git checkout fd874f0668; cd v2/Rpc/Bench.Server; /home/${ssh_user}/.dotnet/dotnet build"
+  ssh -o StrictHostKeyChecking=no -p ${ssh_port} ${ssh_user}@${host} "cd /home/${ssh_user}/azure-signalr-bench; git checkout master; git pull; git checkout honzhan_restapi;cd v2/Rpc/Bench.Server; /home/${ssh_user}/.dotnet/dotnet build"
+  #ssh -o StrictHostKeyChecking=no -p ${ssh_port} ${ssh_user}@${host} "cd /home/${ssh_user}/azure-signalr-bench; git pull; cd v2/Rpc/Bench.Server; /home/${ssh_user}/.dotnet/dotnet build"
+  #ssh -o StrictHostKeyChecking=no -p ${ssh_port} ${ssh_user}@${host} "cd /home/${ssh_user}/azure-signalr-bench; git checkout master; git pull; git checkout honzhan_fix_max_recv_msg_overflow; cd v2/Rpc/Bench.Server; /home/${ssh_user}/.dotnet/dotnet build"
+  #ssh -o StrictHostKeyChecking=no -p ${ssh_port} ${ssh_user}@${host} "cd /home/${ssh_user}/azure-signalr-bench; git pull; git checkout fd874f0668; cd v2/Rpc/Bench.Server; /home/${ssh_user}/.dotnet/dotnet build"
   #ssh -o StrictHostKeyChecking=no -p ${ssh_port} ${ssh_user}@${host} "cd /home/${ssh_user}/azure-signalr-bench; git checkout fd874f0668; cd v2/Rpc/Bench.Server; /home/${ssh_user}/.dotnet/dotnet build"
 }
 
@@ -80,7 +84,8 @@ check_single_bench_git_log() {
   local host=$1
   local ssh_user=$2
   local ssh_port=$3
-  local log=`ssh -o StrictHostKeyChecking=no -p ${ssh_port} ${ssh_user}@${host} "cd /home/${ssh_user}/azure-signalr-bench; git log | head -n 5"`
+  local log=`ssh -o StrictHostKeyChecking=no -p ${ssh_port} ${ssh_user}@${host} "cd /home/${ssh_user}/azure-signalr-bench; git branch"`
+  #local log=`ssh -o StrictHostKeyChecking=no -p ${ssh_port} ${ssh_user}@${host} "cd /home/${ssh_user}/azure-signalr-bench; git log | head -n 5"`
   echo "$host"
   echo "-----"
   echo "$log"

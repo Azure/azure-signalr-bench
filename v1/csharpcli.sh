@@ -110,7 +110,15 @@ connection_concurrent=$concurrent_num
 send="$send_num"
 send_interval=$send_interval
 EOF
-
+	local pipeline=""
+	local groupOption=""
+	if [ $bench_name == "SendGroup" ]
+	then
+		pipeline="createConn;startConn;joinGroup;${send_num}leaveGroup;stopConn;disposeConn"
+		groupOption="--groupNum ${group_number} --groupOverlap 1"
+	else
+		pipeline="createConn;startConn;${send_num}stopConn;disposeConn"
+	fi
 cat << EOF > ${cli_script_prefix}_${result_name}.sh
 #!/bin/bash
 if [ -e ${result_name} ]
@@ -130,12 +138,12 @@ then
 fi
 transport=${bench_transport}
 server="$server_endpoint"
-pipeline="createConn;startConn;${send_num}stopConn;disposeConn"
+pipeline="$pipeline"
 slaveList="${cli_agents_g}"
 sendSize="${send_size}"
 scenario="$secenario"
 
-/home/${bench_app_user}/.dotnet/dotnet run -- --rpcPort 7000 --duration $sigbench_run_duration --connections $connection_num --interval 1 --serverUrl "\${server}" --pipeLine "\${pipeline}" -v $bench_type -t "\${transport}" -p ${codec} -s "\${scenario}" --slaveList "\${slaveList}"	-o ${result_name}/counters.txt --pidFile /tmp/master.pid --concurrentConnection ${concurrent_num} --messageSize "\${sendSize}" ${sendToFixClient_option}
+/home/${bench_app_user}/.dotnet/dotnet run -- --rpcPort 7000 --duration $sigbench_run_duration --connections $connection_num --interval 1 --serverUrl "\${server}" --pipeLine "\${pipeline}" -v $bench_type -t "\${transport}" -p ${codec} -s "\${scenario}" --slaveList "\${slaveList}" -o ${result_name}/counters.txt --pidFile /tmp/master.pid --concurrentConnection ${concurrent_num} --messageSize "\${sendSize}" ${sendToFixClient_option} ${groupOption}
 EOF
 }
 

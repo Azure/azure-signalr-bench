@@ -5,6 +5,7 @@ connection_number=$ConnectionNumber
 connection_concurrent=$ConnectionConcurrent
 connection_string_list="$ConnectionStringList"
 send_number="$SendNumber"
+group_number="$GroupNumber"
 sigbench_run_duration=$Duration
 EOF
 
