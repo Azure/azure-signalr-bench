@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Bench.Common;
 using Bench.Common.Config;
+using Bench.RpcSlave.Worker.Serverless;
 using Microsoft.AspNetCore.SignalR.Client;
 
 namespace Bench.RpcSlave.Worker.Operations
@@ -55,6 +56,8 @@ namespace Bench.RpcSlave.Worker.Operations
                             {
                                 await connections[index].StartAsync();
                                 _tk.Counters.IncreaseConnectionSuccess();
+                                // record the userId as connectionId
+                                _tk.ConnectionIds[index] = $"{ServiceUtils.ClientUserIdPrefix}{index}";
                             }
                             catch (Exception ex)
                             {

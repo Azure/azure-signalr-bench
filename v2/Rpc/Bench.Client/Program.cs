@@ -626,7 +626,8 @@ namespace Bench.RpcMaster
                 await Task.Delay(1000);
 
                 // collect all connections' ids just after connections start
-                if (step.Contains("startConn"))
+                if (step.Contains("startConn", StringComparison.OrdinalIgnoreCase) ||
+                    step.Contains("RestSendToUser", StringComparison.OrdinalIgnoreCase))
                 {
                     // There are more than 1 server, we'd prefer to send message to target connection
                     // on different service, which means those message will go to Redis.

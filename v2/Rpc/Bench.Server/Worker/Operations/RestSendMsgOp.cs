@@ -104,7 +104,8 @@ namespace Bench.RpcSlave.Worker.Operations
                     var cfg = _tk.ConnectionConfigList.Configs[i];
                     if (cfg.SendFlag)
                     {
-                        tasks.Add(StartSendingMessageAsync(i, messageBlob,
+                        var targetUserId = _tk.BenchmarkCellConfig.TargetConnectionIds[i];
+                        tasks.Add(StartSendingMessageAsync(i, targetUserId, messageBlob,
                             _tk.JobConfig.Duration, _tk.JobConfig.Interval, _tk.Counters));
                     }   
                 }
@@ -112,7 +113,8 @@ namespace Bench.RpcSlave.Worker.Operations
             }
         }
 
-        protected async Task StartSendingMessageAsync(int index, byte[] messageBlob, int duration, int interval, Counter counter)
+        protected async Task StartSendingMessageAsync(int index, string targetUserId,
+            byte[] messageBlob, int duration, int interval, Counter counter)
         {
             var messageSize = (ulong)messageBlob.Length;
             await Task.Delay(StartTimeOffsetGenerator.Delay(TimeSpan.FromSeconds(interval)));
@@ -122,7 +124,7 @@ namespace Bench.RpcSlave.Worker.Operations
                 {
                     try
                     {
-                        var url = GenRestUrl(_serviceUtils, $"{index}");
+                        var url = GenRestUrl(_serviceUtils, targetUserId);
                         var request = new HttpRequestMessage(HttpMethod.Post, GetUrl(url));
                         // Corefx changed the default version and High Sierra curlhandler tries to upgrade request
                         request.Version = new Version(1, 1);
