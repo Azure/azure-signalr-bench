@@ -12,6 +12,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR.Client;
+using System.Net;
 
 namespace Bench.RpcSlave.Worker.Operations
 {
@@ -96,6 +97,7 @@ namespace Bench.RpcSlave.Worker.Operations
             else
             {
                 Util.Log($"send count: {sendCnt}");
+                ServicePointManager.DefaultConnectionLimit = sendCnt;
                 var tasks = new List<Task>();
                 for (var i = beg; i < end; i++)
                 {
