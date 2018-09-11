@@ -104,7 +104,7 @@ namespace Bench.RpcSlave.Worker.Operations
                     var cfg = _tk.ConnectionConfigList.Configs[i];
                     if (cfg.SendFlag)
                     {
-                        var targetUserId = _tk.BenchmarkCellConfig.TargetConnectionIds[i];
+                        var targetUserId = _tk.BenchmarkCellConfig.TargetConnectionIds[i - beg];
                         tasks.Add(StartSendingMessageAsync(i, targetUserId, messageBlob,
                             _tk.JobConfig.Duration, _tk.JobConfig.Interval, _tk.Counters));
                     }   
@@ -160,6 +160,8 @@ namespace Bench.RpcSlave.Worker.Operations
                         //counter.IncreaseConnectionError();
                         counter.IncreseNotSentFromClientMsg();
                     }
+                    // sleep for the fixed interval
+                    await Task.Delay(TimeSpan.FromSeconds(interval));
                 }
             }
         }
