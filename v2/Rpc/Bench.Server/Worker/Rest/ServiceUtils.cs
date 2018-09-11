@@ -46,6 +46,11 @@ namespace Bench.RpcSlave.Worker.Serverless
             return $"{endpoint}:5001/client/?hub={hubName}";
         }
 
+        public string GetBroadcastUrl()
+        {
+            return $"{GetBaseUrl(HubName)}";
+        }
+
         public string GetSendToUserUrl(string hubName, string userId)
         {
             return $"{GetBaseUrl(hubName)}/user/{userId}";

@@ -15,7 +15,7 @@ using Microsoft.AspNetCore.SignalR.Client;
 
 namespace Bench.RpcSlave.Worker.Operations
 {
-    class RestServerSendToUserOp : BaseSignalrOp, IOperation
+    abstract class RestSendMsgOp : BaseSignalrOp, IOperation
     {
         protected IStartTimeOffsetGenerator StartTimeOffsetGenerator;
         protected List<int> _sentMessages;
@@ -120,8 +120,7 @@ namespace Bench.RpcSlave.Worker.Operations
                 {
                     try
                     {
-                        var url = _serviceUtils.GetSendToUserUrl(ServiceUtils.HubName,
-                            $"{ServiceUtils.ClientUserIdPrefix}{index}");
+                        var url = GenRestUrl(_serviceUtils, $"{index}");
                         var request = new HttpRequestMessage(HttpMethod.Post, GetUrl(url));
 
                         request.Headers.Authorization =
@@ -165,5 +164,9 @@ namespace Bench.RpcSlave.Worker.Operations
 
             public object[] Arguments { get; set; }
         }
+
+        // Generate the REST URL according to connection string (ServiceUtils),
+        // HubName (ServiceUtils) and target (user/group/broadcast)
+        public abstract string GenRestUrl(ServiceUtils serviceUtils, string arg);
     }
 }
