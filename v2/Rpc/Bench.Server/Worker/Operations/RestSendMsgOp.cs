@@ -122,44 +122,48 @@ namespace Bench.RpcSlave.Worker.Operations
             {
                 while (!cts.IsCancellationRequested)
                 {
-                    try
+                    _ = Task.Run(async () =>
                     {
-                        var url = GenRestUrl(_serviceUtils, targetUserId);
-                        var request = new HttpRequestMessage(HttpMethod.Post, GetUrl(url));
-                        // Corefx changed the default version and High Sierra curlhandler tries to upgrade request
-                        request.Version = new Version(1, 1);
-                        request.Headers.Authorization =
-                            new AuthenticationHeaderValue("Bearer",
-                                _serviceUtils.GenerateAccessToken(url, _serverName));
-                        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-                        var payloadRequest = new PayloadMessage
+                        try
                         {
-                            Target = ServiceUtils.MethodName,
-                            Arguments = new[]
+                            var url = GenRestUrl(_serviceUtils, targetUserId);
+                            var request = new HttpRequestMessage(HttpMethod.Post, GetUrl(url));
+                            // Corefx changed the default version and High Sierra curlhandler tries to upgrade request
+                            request.Version = new Version(1, 1);
+                            request.Headers.Authorization =
+                                new AuthenticationHeaderValue("Bearer",
+                                    _serviceUtils.GenerateAccessToken(url, _serverName));
+                            request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                            var payloadRequest = new PayloadMessage
                             {
+                                Target = ServiceUtils.MethodName,
+                                Arguments = new[]
+                                {
                                 _serverName,
                                 $"{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}",
                                 _content
                             }
-                        };
-                        request.Content = new StringContent(JsonConvert.SerializeObject(payloadRequest), Encoding.UTF8, "application/json");
-                        // ResponseHeadersRead instructs SendAsync to return once headers are read
-                        // rather than buffer the entire response. This gives a small perf boost.
-                        // Note that it is important to dispose of the response when doing this to
-                        // avoid leaving the connection open.
-                        using (var response = await _tk.HttpClients[index].SendAsync(request, HttpCompletionOption.ResponseHeadersRead))
-                        {
-                            response.EnsureSuccessStatusCode();
+                            };
+                            request.Content = new StringContent(JsonConvert.SerializeObject(payloadRequest), Encoding.UTF8, "application/json");
+                            // ResponseHeadersRead instructs SendAsync to return once headers are read
+                            // rather than buffer the entire response. This gives a small perf boost.
+                            // Note that it is important to dispose of the response when doing this to
+                            // avoid leaving the connection open.
+                            using (var response = await _tk.HttpClients[index].SendAsync(request, HttpCompletionOption.ResponseHeadersRead))
+                            {
+                                response.EnsureSuccessStatusCode();
+                            }
+                            counter.IncreaseSentMessageSize(messageSize);
+                            counter.IncreseSentMsg();
                         }
-                        counter.IncreaseSentMessageSize(messageSize);
-                        counter.IncreseSentMsg();
-                    }
-                    catch (Exception ex)
-                    {
-                        Util.Log($"exception in sending message of {index}th connection: {ex}");
-                        //counter.IncreaseConnectionError();
-                        counter.IncreseNotSentFromClientMsg();
-                    }
+                        catch (Exception ex)
+                        {
+                            Util.Log($"exception in sending message of {index}th connection: {ex}");
+                            //counter.IncreaseConnectionError();
+                            counter.IncreseNotSentFromClientMsg();
+                        }
+                    });
+                    
                     // sleep for the fixed interval
                     await Task.Delay(TimeSpan.FromSeconds(interval));
                 }
