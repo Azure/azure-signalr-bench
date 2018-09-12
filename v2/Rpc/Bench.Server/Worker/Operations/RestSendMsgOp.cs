@@ -21,7 +21,6 @@ namespace Bench.RpcSlave.Worker.Operations
         protected IStartTimeOffsetGenerator StartTimeOffsetGenerator;
         protected List<int> _sentMessages;
         protected WorkerToolkit _tk;
-        protected HttpClient _client;
         protected string _serverName;
         protected ServiceUtils _serviceUtils;
         protected string _endpoint;
@@ -62,12 +61,7 @@ namespace Bench.RpcSlave.Worker.Operations
 
         public override void Setup()
         {
-            var httpClientHandler = new HttpClientHandler();
-            HttpMessageHandler httpMessageHandler = httpClientHandler;
-            httpClientHandler.CookieContainer = new CookieContainer();
-
-            _client = new HttpClient(httpMessageHandler);
-            _client.Timeout = TimeSpan.FromSeconds(120);
+            CreateHttpClients();
             _serverName = ServiceUtils.GenerateServerName();
             _serviceUtils = new ServiceUtils(_tk.ConnectionString);
             _endpoint = _serviceUtils.Endpoint;
@@ -102,6 +96,7 @@ namespace Bench.RpcSlave.Worker.Operations
             else
             {
                 Util.Log($"send count: {sendCnt}");
+                // Increase the limit
                 ServicePointManager.DefaultConnectionLimit = sendCnt;
                 var tasks = new List<Task>();
                 for (var i = beg; i < end; i++)
@@ -110,7 +105,7 @@ namespace Bench.RpcSlave.Worker.Operations
                     if (cfg.SendFlag)
                     {
                         var targetUserId = _tk.BenchmarkCellConfig.TargetConnectionIds[i - beg];
-                        tasks.Add(StartSendingMessageAsync(i, targetUserId, messageBlob,
+                        tasks.Add(StartSendingMessageAsync(i - beg, targetUserId, messageBlob,
                             _tk.JobConfig.Duration, _tk.JobConfig.Interval, _tk.Counters));
                     }   
                 }
@@ -152,7 +147,7 @@ namespace Bench.RpcSlave.Worker.Operations
                         // rather than buffer the entire response. This gives a small perf boost.
                         // Note that it is important to dispose of the response when doing this to
                         // avoid leaving the connection open.
-                        using (var response = await _client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead))
+                        using (var response = await _tk.HttpClients[index].SendAsync(request, HttpCompletionOption.ResponseHeadersRead))
                         {
                             response.EnsureSuccessStatusCode();
                         }
@@ -174,6 +169,25 @@ namespace Bench.RpcSlave.Worker.Operations
         private Uri GetUrl(string baseUrl)
         {
             return new UriBuilder(baseUrl).Uri;
+        }
+
+        private void CreateHttpClients()
+        {
+            var beg = _tk.ConnectionRange.Begin;
+            var end = _tk.ConnectionRange.End;
+            var httpClients = new List<HttpClient>(end - beg);
+            for (var i = beg; i < end; i++)
+            {
+                // Tips: Every httpclient should set CookieContainer, then the HttpClients
+                // request will be dispatched to every service pod in balanced way.
+                var httpClientHandler = new HttpClientHandler();
+                httpClientHandler.CookieContainer = new CookieContainer();
+
+                var client = new HttpClient(httpClientHandler);
+                client.Timeout = TimeSpan.FromSeconds(120);
+                httpClients.Add(client);
+            }
+            _tk.HttpClients = httpClients;
         }
 
         private class PayloadMessage

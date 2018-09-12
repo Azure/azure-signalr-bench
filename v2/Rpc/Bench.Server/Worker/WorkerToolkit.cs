@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Net.Http;
 using Bench.Common;
 using Bench.Common.Config;
 using Bench.RpcSlave.Worker.Counters;
@@ -27,5 +28,13 @@ namespace Bench.RpcSlave.Worker
 
         // serverless mode needs connection string
         public string ConnectionString { get; set; }
+        // Many HttpClient are used to post REST message to service.
+        // Why do we use many HttpClient instead of only one instance?
+        //   To solve unbalance issue on service side.
+        //   Otherwise, single httpclient sends quite a lot message to single
+        // service instance pod will overload that pod.
+        // Tips: Every httpclient should set CookieContainer, then the HttpClients
+        // request will be dispatched to every service pod in balanced way.
+        public List<HttpClient> HttpClients { get; set; }
     }
 }
