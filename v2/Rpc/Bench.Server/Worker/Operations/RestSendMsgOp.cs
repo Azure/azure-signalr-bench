@@ -62,7 +62,12 @@ namespace Bench.RpcSlave.Worker.Operations
 
         public override void Setup()
         {
-            _client = new HttpClient();
+            var httpClientHandler = new HttpClientHandler();
+            HttpMessageHandler httpMessageHandler = httpClientHandler;
+            httpClientHandler.CookieContainer = new CookieContainer();
+
+            _client = new HttpClient(httpMessageHandler);
+            _client.Timeout = TimeSpan.FromSeconds(120);
             _serverName = ServiceUtils.GenerateServerName();
             _serviceUtils = new ServiceUtils(_tk.ConnectionString);
             _endpoint = _serviceUtils.Endpoint;
