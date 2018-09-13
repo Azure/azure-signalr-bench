@@ -22,6 +22,6 @@ cd /d %~dp0
 set PROTOC=%UserProfile%\.nuget\packages\Google.Protobuf.Tools\3.6.0\tools\windows_x64\protoc.exe
 set PLUGIN=%UserProfile%\.nuget\packages\Grpc.Tools\1.13.1\tools\windows_x64\grpc_csharp_plugin.exe
 
-%PROTOC% -I./Bench.Common --csharp_out Bench.Common  ./Bench.Common/Bench.proto --grpc_out Bench.Common --plugin=protoc-gen-grpc=%PLUGIN%
+%PROTOC% -I./Bench.Common --csharp_out Bench.Common  ./Bench.Common/bench.proto --grpc_out Bench.Common --plugin=protoc-gen-grpc=%PLUGIN%
 
 endlocal

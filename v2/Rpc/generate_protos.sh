@@ -1,8 +1,9 @@
 #!/bin/bash
+
 OS=""
 if [ "$(uname)" == "Darwin" ]; then
    OS="macosx"
-elif [ "$(uname)" == "Linux" ]
+elif [ "$(uname)" == "Linux" ]; then
    OS="linux"
 else
    OS="windows"
@@ -17,6 +18,6 @@ fi
 
 PLATFORM=${OS}_${MACHINE}
 PROTOC=$HOME/.nuget/packages/google.protobuf.tools/3.6.0/tools/${PLATFORM}/protoc
-PLUGIN=$HOME/.nuget/packages/grpc.tools/1.13.1/${PLATFORM}/grpc_csharp_plugin
+PLUGIN=$HOME/.nuget/packages/grpc.tools/1.13.1/tools/${PLATFORM}/grpc_csharp_plugin
 
-$PROTOC -I./Bench.Common --csharp_out Bench.Common  ./Bench.Common/Bench.proto --grpc_out Bench.Common --plugin=protoc-gen-grpc=${PLUGIN}
+$PROTOC -I./Bench.Common --csharp_out Bench.Common  ./Bench.Common/bench.proto --grpc_out Bench.Common --plugin=protoc-gen-grpc=${PLUGIN}
