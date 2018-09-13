@@ -1,1 +1,22 @@
-/Users/albertxavier/workspace/signalr_auto_test_framework/signalr_bench/Rpc/Packages/Grpc.Tools.1.8.0/tools/macosx_x64/protoc -I./ --csharp_out .  ./Bench.proto --grpc_out . --plugin=protoc-gen-grpc=/Users/albertxavier/workspace/signalr_auto_test_framework/signalr_bench/Rpc/Packages/Grpc.Tools.1.8.0/tools/macosx_x64/grpc_csharp_plugin
+#!/bin/bash
+OS=""
+if [ "$(uname)" == "Darwin" ]; then
+   OS="macosx"
+elif [ "$(uname)" == "Linux" ]
+   OS="linux"
+else
+   OS="windows"
+fi
+
+MACHINE=""
+if [ "$(uname -m)" == "x86_64" ]; then
+   MACHINE="x64"
+else
+   MACHINE="x86"
+fi
+
+PLATFORM=${OS}_${MACHINE}
+PROTOC=$HOME/.nuget/packages/google.protobuf.tools/3.6.0/tools/${PLATFORM}/protoc
+PLUGIN=$HOME/.nuget/packages/grpc.tools/1.13.1/${PLATFORM}/grpc_csharp_plugin
+
+$PROTOC -I./ --csharp_out .  ./Bench.proto --grpc_out . --plugin=protoc-gen-grpc=${PLUGIN}
