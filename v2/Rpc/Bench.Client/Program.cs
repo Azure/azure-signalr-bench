@@ -533,6 +533,17 @@ namespace Bench.RpcMaster
             string serviceType, string transportType, string hubProtocol, string scenario, string messageSize,
             int groupNum, int overlap, int serverCount, string sendToFixedClient, bool enableGroupJoinLeave)
         {
+            // var connections = argsOption.Connections;
+            // var serviceType = argsOption.ServiceType;
+            // var transportType = argsOption.TransportType;
+            // var hubProtocol = argsOption.HubProtocal;
+            // var scenario = argsOption.Scenario;
+            // var messageSize = argsOption.MessageSize;
+            // var groupNum = argsOption.groupNum;
+            // var overlap = argsOption.groupOverlap;
+            // var serverCount = argsOption.ServerUrl.Split(";").ToList().Count;
+            // var sendToFixedClient = argsOption.sendToFixedClient;
+            // var pipeline = argsOption.PipeLine.Split(';').ToList();
             var pipeline = pipelineStr.Split(';').ToList();
             var connectionConfigBuilder = new ConnectionConfigBuilder();
             var connectionAllConfigList = connectionConfigBuilder.Build(connections);

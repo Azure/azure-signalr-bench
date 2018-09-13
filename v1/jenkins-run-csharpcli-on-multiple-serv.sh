@@ -41,7 +41,12 @@ echo "[AppServerLoginUser]: $bench_app_user"
 echo "[AppServerSSHPort]: $bench_app_port"
 . ./csharpcli.sh
 
-service_name=$(extract_servicename_from_connectionstring $connection_string)
+conn_str_len=$(array_len "$connection_string_list" "|")
+app_server_len=$(array_len "$bench_app_pub_server" "|")
+if [ "$conn_str_len" == 1 ]
+then
+  service_name=$(extract_servicename_from_connectionstring $connection_string_list)
+fi
 app_launch_log_dir=""
 k8s_result_dir=""
 if [ -d $result_root/$bench_type_list ]
@@ -53,7 +58,14 @@ else
   k8s_result_dir=$result_root
 fi
 
-start_multiple_app_server "$connection_string_list" "$bench_app_pub_server" $bench_app_user $bench_app_pub_port "$app_launch_log_dir"
+if [ "$conn_str_len" == 1 ]
+then
+  start_multiple_app_server_with_single_service "$connection_string_list" "$bench_app_pub_server" $bench_app_user $bench_app_pub_port "$app_launch_log_dir"
+else
+  start_multiple_app_server "$connection_string_list" "$bench_app_pub_server" $bench_app_user $bench_app_pub_port "$app_launch_log_dir"
+fi
+
+start_collect_top_on_app_server "$bench_app_pub_server" $bench_app_user $bench_app_pub_port "$app_launch_log_dir"
 
 err_check=`grep -i "error" ${app_launch_log_file}`
 if [ "$err_check" != "" ]
@@ -67,8 +79,16 @@ fi
 
 if [ "$service_name" != "" ]
 then
-   nohup sh collect_connections.sh $service_name $k8s_result_dir &
-   collect_conn_pid=$!
+   #nohup sh collect_connections.sh $service_name $k8s_result_dir &
+   #collect_conn_pid=$!
+   echo "nohup sh collect_pod_top.sh $service_name $k8s_result_dir &"
+   nohup sh collect_pod_top.sh $service_name $k8s_result_dir &
+   collect_pod_top_pid=$!
+   if [ "$g_nginx_ns" != "" ]
+   then
+      nohup sh collect_nginx_top.sh $service_name $g_nginx_ns $k8s_result_dir &
+      collect_nginx_top_pid=$!
+   fi
 else
    echo "It seems you are running a self-host SignalR service because the service name is not standard"
 fi
@@ -77,13 +97,23 @@ sh run_csharp_cli.sh
 
 echo "Stop app server"
 stop_multiple_app_server "$bench_app_pub_server" $bench_app_user $bench_app_pub_port
+stop_collect_top_on_app_server "$app_launch_log_dir"
 
 if [ "$service_name" != "" ]
 then
-   kill $collect_conn_pid
+   #kill $collect_conn_pid
+   kill $collect_pod_top_pid
+   if [ "$collect_nginx_top_pid" != "" ]
+   then
+     kill $collect_nginx_top_pid
+   fi
    if [ "$copy_syslog" == "true" ]
    then
      copy_syslog $service_name $k8s_result_dir
+   fi
+   if [ "$copy_nginx_log" == "true" ]
+   then
+     get_nginx_log $service_name "ingress-nginx" $k8s_result_dir
    fi
    get_k8s_pod_status $service_name $k8s_result_dir
 fi
