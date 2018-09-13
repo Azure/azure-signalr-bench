@@ -15,7 +15,7 @@ namespace Bench.RpcSlave.Worker.Operations
     class CreateConnOp : BaseOp, IOperation
     {
         private WorkerToolkit _tk;
-        public async Task Do(WorkerToolkit tk)
+        public Task Do(WorkerToolkit tk)
         {
             _tk = tk;
 
@@ -25,6 +25,7 @@ namespace Bench.RpcSlave.Worker.Operations
 
             if (tk.Connections == null) Util.Log("connections == null");
             Util.Log($"xxxconnections: {_tk.Connections.Count}");
+            return Task.CompletedTask;
         }
 
         private List<HubConnection> Create(int conn, string url,

@@ -19,7 +19,6 @@ namespace Bench.RpcSlave.Worker.Operations
     abstract class RestSendMsgOp : BaseSignalrOp, IOperation
     {
         protected IStartTimeOffsetGenerator StartTimeOffsetGenerator;
-        protected List<int> _sentMessages;
         protected WorkerToolkit _tk;
         protected string _serverName;
         protected ServiceUtils _serviceUtils;

@@ -4,9 +4,10 @@ namespace Bench.RpcSlave.Worker.Operations
 {
     class UpOp : BaseOp
     {
-        public async Task Do(WorkerToolkit tk)
+        public Task Do(WorkerToolkit tk)
         {
             tk.Counters.ResetCounters(withConnection: false, withGroup: false);
+            return Task.CompletedTask;
         }
     }
 

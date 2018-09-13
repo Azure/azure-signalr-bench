@@ -19,4 +19,4 @@ PLATFORM=${OS}_${MACHINE}
 PROTOC=$HOME/.nuget/packages/google.protobuf.tools/3.6.0/tools/${PLATFORM}/protoc
 PLUGIN=$HOME/.nuget/packages/grpc.tools/1.13.1/${PLATFORM}/grpc_csharp_plugin
 
-$PROTOC -I./ --csharp_out .  ./Bench.proto --grpc_out . --plugin=protoc-gen-grpc=${PLUGIN}
+$PROTOC -I./Bench.Common --csharp_out Bench.Common  ./Bench.Common/Bench.proto --grpc_out Bench.Common --plugin=protoc-gen-grpc=${PLUGIN}
