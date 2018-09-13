@@ -33,6 +33,10 @@ namespace Bench.RpcSlave.Worker.Operations
 
         private void DisposeHttpClient(List<HttpClient> httpClients)
         {
+            if (httpClients == null)
+            {
+                return;
+            }
             foreach (var conn in httpClients)
             {
                 conn.Dispose();
