@@ -186,7 +186,7 @@ namespace Bench.RpcSlave.Worker.Operations
                 // request will be dispatched to every service pod in balanced way.
                 var httpClientHandler = new HttpClientHandler();
                 httpClientHandler.CookieContainer = new CookieContainer();
-
+                // HttpClientHandler will be disposed when HttpClient is disposed.
                 var client = new HttpClient(httpClientHandler);
                 client.Timeout = TimeSpan.FromSeconds(120);
                 httpClients.Add(client);
