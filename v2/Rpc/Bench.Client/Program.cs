@@ -443,7 +443,11 @@ namespace Bench.RpcMaster
                 for (var i = 0; i < slaveList.Count; i++)
                 {
                     Util.Log($"add channel: {slaveList[i]}:{rpcPort}");
-                    channels.Add(new Channel($"{slaveList[i]}:{rpcPort}", ChannelCredentials.Insecure));
+                    channels.Add(new Channel($"{slaveList[i]}:{rpcPort}", ChannelCredentials.Insecure,
+                        new ChannelOption[] {
+                            // For Group, the received message size is very large, so here set 8000k
+                            new ChannelOption(ChannelOptions.MaxReceiveMessageLength, 8192000)
+                        }));
                 }
             }
             else
