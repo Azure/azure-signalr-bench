@@ -82,10 +82,15 @@ namespace Bench.RpcMaster
                 // collect counters
                 StartCollectCounters(clients, argsOption.OutputCounterFile);
 
+                int serverCount = 0;
+                if (argsOption.ServerUrl != null)
+                {
+                    serverCount = argsOption.ServerUrl.Split(";").ToList().Count;
+                }
                 // process jobs for each step
                 await ProcessPipeline(clients, argsOption.PipeLine, slaveList,
                     argsOption.Connections, argsOption.ServiceType, argsOption.TransportType, argsOption.HubProtocal, argsOption.Scenario, argsOption.MessageSize,
-                    argsOption.groupNum, argsOption.groupOverlap, argsOption.ServerUrl.Split(";").ToList().Count, argsOption.SendToFixedClient, argsOption.EnableGroupJoinLeave);
+                    argsOption.groupNum, argsOption.groupOverlap, serverCount, argsOption.SendToFixedClient, argsOption.EnableGroupJoinLeave);
             }
             catch (Exception ex)
             {
@@ -481,8 +486,14 @@ namespace Bench.RpcMaster
             var messageSizeStr = argsOption.MessageSize;
 
             var messageSize = ParseMessageSize(messageSizeStr);
-            var servers = serverUrl.Split(';');
-            var serverCount = servers.Length;
+            string[] servers = null;
+            int serverCount = 0;
+            if (serverUrl != null)
+            {
+                servers = serverUrl.Split(';');
+                serverCount = servers.Length;
+            } 
+            var connectionString = argsOption.ConnectionString;
 
             clients.ForEach(client =>
             {
@@ -504,13 +515,22 @@ namespace Bench.RpcMaster
                 state = client.CreateWorker(new Empty());
 
                 string server = null;
-                if (bool.Parse(argsOption.SendToFixedClient))
+                if (serverUrl != null)
                 {
-                    server = serverUrl;
+                    if (bool.Parse(argsOption.SendToFixedClient))
+                    {
+                        server = serverUrl;
+                    }
+                    else
+                    {
+                        server = servers[i % serverCount];
+                    }
                 }
-                else
+                else if (connectionString != null)
                 {
-                    server = servers[i % serverCount];
+                    // temporarily borrow the 'server' field to pass connection string,
+                    // because I do not want to modify RPC model.
+                    server = connectionString;
                 }
                 var config = new CellJobConfig
                 {
@@ -617,7 +637,8 @@ namespace Bench.RpcMaster
                 await Task.Delay(1000);
 
                 // collect all connections' ids just after connections start
-                if (step.Contains("startConn"))
+                if (step.Contains("startConn", StringComparison.OrdinalIgnoreCase) ||
+                    step.Contains("StartRestClientConn", StringComparison.OrdinalIgnoreCase))
                 {
                     // There are more than 1 server, we'd prefer to send message to target connection
                     // on different service, which means those message will go to Redis.
