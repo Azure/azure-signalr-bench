@@ -34,7 +34,6 @@ namespace Bench.RpcSlave.Worker.Operations
 
         }
 
-        private int beg = 0;
         private int cnt = 0;
         private ConcurrentQueue<HubConnection> connectionQueue;
         private async Task Start(List<HubConnection> connections)

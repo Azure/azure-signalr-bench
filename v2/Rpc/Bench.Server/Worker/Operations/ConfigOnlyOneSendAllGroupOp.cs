@@ -4,9 +4,9 @@ namespace Bench.RpcSlave.Worker.Operations
 {
     class ConfigOnlyOneSendAllGroupOp : BaseOp
     {
-        public async Task Do(WorkerToolkit tk)
+        public Task Do(WorkerToolkit tk)
         {
-            
+            return Task.CompletedTask;
         }
     }
 

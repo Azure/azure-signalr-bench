@@ -111,5 +111,8 @@ namespace Bench.Common
 
         [Option("enableGroupJoinLeave", Required = false, HelpText = "")]
         public bool EnableGroupJoinLeave { get; set; }
+
+        [Option("connectionString", Required = false, HelpText = "Specify SignalR service connection string")]
+        public string ConnectionString { get; set; }
     }
 }

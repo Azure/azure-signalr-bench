@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.SignalR.Client;
 using System;
 using System.Collections.Generic;
+using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -15,6 +16,7 @@ namespace Bench.RpcSlave.Worker.Operations
             _tk = tk;
             _tk.State = Common.Stat.Types.State.HubconnDisposing;
             await DisposeAsync(tk.Connections);
+            DisposeHttpClient(tk.HttpClients);
             _tk.State = Common.Stat.Types.State.HubconnDisposed;
             _tk.Init.Clear();
         }
@@ -27,6 +29,18 @@ namespace Bench.RpcSlave.Worker.Operations
                 tasks.Add(conn.DisposeAsync());
             }
             await Task.WhenAll(tasks);
+        }
+
+        private void DisposeHttpClient(List<HttpClient> httpClients)
+        {
+            if (httpClients == null)
+            {
+                return;
+            }
+            foreach (var conn in httpClients)
+            {
+                conn.Dispose();
+            }
         }
     }
 }
