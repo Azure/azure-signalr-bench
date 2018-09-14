@@ -52,7 +52,7 @@ namespace JenkinsScript
         {
             int errCode = 0;
             string result = "";
-            string cmd = $"sshpass -p {password} scp -r -o StrictHostKeyChecking=no LogLevel=ERROR {src} {user}@{host}:{dst}";
+            string cmd = $"sshpass -p {password} scp -r -o StrictHostKeyChecking=no -o LogLevel=ERROR {src} {user}@{host}:{dst}";
             Util.Log($"scp cmd: {cmd}");
             (errCode, result) = Bash(cmd, wait : true, handleRes : true);
             return (errCode, result);
@@ -62,7 +62,7 @@ namespace JenkinsScript
         {
             int errCode = 0;
             string result = "";
-            string cmd = $"sshpass -p {password} scp -o StrictHostKeyChecking=no  LogLevel=ERROR {srcFile} {user}@{host}:{dstDir}";
+            string cmd = $"sshpass -p {password} scp -o StrictHostKeyChecking=no  -o LogLevel=ERROR {srcFile} {user}@{host}:{dstDir}";
             Util.Log($"CMD: {user}@{host}: {cmd}");
             (errCode, result) = Bash(cmd, wait : true, handleRes : true);
             return (errCode, result);
@@ -72,7 +72,7 @@ namespace JenkinsScript
         {
             int errCode = 0;
             string result = "";
-            string cmd = $"sshpass -p {password} scp -r -o StrictHostKeyChecking=no  LogLevel=ERROR {user}@{host}:{src} {dst}";
+            string cmd = $"sshpass -p {password} scp -r -o StrictHostKeyChecking=no  -o LogLevel=ERROR {user}@{host}:{src} {dst}";
             Util.Log($"CMD: {user}@{host}: {cmd}");
             (errCode, result) = Bash(cmd, wait : true, handleRes : true);
             return (errCode, result);
@@ -86,7 +86,7 @@ namespace JenkinsScript
             for (var i = 0; i < retry; i++)
             {
                 if (host.IndexOf("localhost") >= 0 || host.IndexOf("127.0.0.1") >= 0) return Bash(cmd, wait);
-                string sshPassCmd = $"echo \"\" > /home/wanl/.ssh/known_hosts; sshpass -p {password} ssh -p {port} -o StrictHostKeyChecking=no  LogLevel=ERROR {user}@{host} \"{cmd}\"";
+                string sshPassCmd = $"echo \"\" > /home/wanl/.ssh/known_hosts; sshpass -p {password} ssh -p {port} -o StrictHostKeyChecking=no  -o LogLevel=ERROR {user}@{host} \"{cmd}\"";
                 (errCode, result) = Bash(sshPassCmd, wait : wait, handleRes : retry > 1 && i < retry - 1 ? false : handleRes);
                 if (errCode == 0) break;
                 Util.Log($"retry {i+1}th time");
