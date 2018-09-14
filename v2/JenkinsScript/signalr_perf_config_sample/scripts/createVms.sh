@@ -8,4 +8,6 @@ dotnet run -- --step=CreateAllVmsInSameVnet \
 --SubnetName=$SubnetName \
 --PidFile='./pid_'$result_root'.txt'  \
 --AgentConfigFile=$AgentConfig \
---DisableRandomSuffix
+--DisableRandomSuffix \
+--ServicePrincipal=$ServicePrincipal
+

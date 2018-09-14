@@ -6,5 +6,7 @@ dotnet run -- \
 --PidFile='./pid/pid_'$result_root'.txt' \
 --step=DeleteResourceGroupByConfig \
 --AgentConfigFile=$AgentConfig \
---DisableRandomSuffix
+--DisableRandomSuffix \
+--ServicePrincipal=$ServicePrincipal
+
 

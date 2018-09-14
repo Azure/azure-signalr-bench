@@ -710,6 +710,28 @@ function check_all_service_client_connection() {
   iterate_all_vms "$vm_list" $user $port check_single_service_client_connection
 }
 
+function check_single_vm_ssh() {
+  local vm_host=$1
+  local ssh_user=$2
+  local ssh_port=$3
+  #local client_conn=`ssh -o StrictHostKeyChecking=no -p ${ssh_port} ${ssh_user}@${vm_host} "curl http://localhost:5003/health/stat"`
+  nc -z -w5 $vm_host $ssh_port
+  if [ $? -ne 0 ]
+  then
+    echo "SSH on $vm_host is not ready"
+  else
+    ssh -o StrictHostKeyChecking=no -p ${ssh_port} ${ssh_user}@${vm_host} "exit"
+  fi
+  #local client_conn=`ssh -o StrictHostKeyChecking=no -p ${ssh_port} ${ssh_user}@${vm_host} "netstat -an|grep :5001|grep EST|wc -l"`
+}
+
+function check_all_vm_ssh() {
+  local vm_list="$1"
+  local user=$2
+  local port=$3
+  iterate_all_vms "$vm_list" $user $port check_single_vm_ssh
+}
+
 function get_ntpq_stat_on_single_vm() {
   local vm_host=$1
   local ssh_user=$2
@@ -729,7 +751,8 @@ function force_sync_time_on_single_vm() {
   local vm_host=$1
   local ssh_user=$2
   local ssh_port=$3
-  ssh -o StrictHostKeyChecking=no -p ${ssh_port} ${ssh_user}@${vm_host} "sudo service ntp stop;sudo ntpd -gq;sudo service ntp start;ntpq -np"
+  echo "=======================$vm_host================="
+  ssh -o StrictHostKeyChecking=no -p ${ssh_port} ${ssh_user}@${vm_host} "sudo service ntp stop;sudo ntpd -gq;sudo service ntp start;sudo ntpq -np"
 }
 
 function force_sync_time_on_all_vm() {

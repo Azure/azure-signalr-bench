@@ -2,7 +2,7 @@
 g_CPU_requests="1|2|3|4"
 g_CPU_limits="1|2|3|4"
 g_Memory_limits="4000|4000|4000|4000"
-g_k8s_config_list="kvsignalrdevseasia.config|srdevacsrpd.config|kubeconfig.southeastasia.json"
+g_k8s_config_list="srdevacsrpd.config|kubeconfig.southeastasia.json"
 
 ## Bourne shell does not support array, so a string is used
 ## to work around with the hep of awk array
@@ -40,11 +40,16 @@ function find_target_by_iterate_all_k8slist()
   local config
   local result
   local i=1
+  local ns=""
+  if [ $# -eq 3 ]
+  then
+    ns=$3
+  fi
   local len=$(array_len "$g_k8s_config_list" "|")
   while [ $i -le $len ]
   do
      config=$(array_get $g_k8s_config_list $i "|")
-     result=$($callback $resName $config)
+     result=$($callback $resName $config "$ns")
      if [ "$result" != "" ]
      then
         g_config=$config
@@ -191,8 +196,17 @@ function k8s_get_pod_number() {
 function k8s_query() {
   local config_file=$2
   local resName=$1
-  local kubeId=`kubectl get deploy -o=json --selector resourceName=$resName --kubeconfig=${config_file}|jq '.items[0].metadata.labels.resourceKubeId'|tr -d '"'`
-  local len=`kubectl get pod -o=json --selector resourceKubeId=$kubeId --kubeconfig=${config_file}|jq '.items|length'`
+  local kubeId len
+  local ns=""
+  if [ $# -eq 3 ]
+  then
+    ns=$3
+    kubeId=`kubectl get deploy -o=json --namespace=$ns --selector resourceName=$resName --kubeconfig=${config_file}|jq '.items[0].metadata.labels.resourceKubeId'|tr -d '"'`
+    len=`kubectl get pod -o=json --namespace=$ns --selector resourceKubeId=$kubeId --kubeconfig=${config_file}|jq '.items|length'`
+  else
+    kubeId=`kubectl get deploy -o=json --selector resourceName=$resName --kubeconfig=${config_file}|jq '.items[0].metadata.labels.resourceKubeId'|tr -d '"'`
+    len=`kubectl get pod -o=json --selector resourceKubeId=$kubeId --kubeconfig=${config_file}|jq '.items|length'`
+  fi
   if [ "$len" == "0" ]
   then
      return
@@ -200,7 +214,12 @@ function k8s_query() {
   local i=0
   while [ $i -lt $len ]
   do
-     kubectl get pod -o=json --selector resourceKubeId=$kubeId --kubeconfig=${config_file}|jq ".items[$i].metadata.name"|tr -d '"'
+     if [ "$ns" == "" ]
+     then
+       kubectl get pod -o=json --selector resourceKubeId=$kubeId --kubeconfig=${config_file}|jq ".items[$i].metadata.name"|tr -d '"'
+     else
+       kubectl get pod -o=json --namespace=$ns --selector resourceKubeId=$kubeId --kubeconfig=${config_file}|jq ".items[$i].metadata.name"|tr -d '"'
+     fi
      i=`expr $i + 1`
   done
 }
@@ -237,6 +256,38 @@ function install_nettools() {
   local pod_name=$1
   local config_file=$2
   kubectl exec --kubeconfig=${config_file} ${pod_name} apt-get install net-tools
+}
+
+function start_top_tracking() {
+  local i
+  local resName=$1
+  local output_dir=$2
+  local ns=""
+  g_config=""
+  g_result=""
+  if [ $# -eq 3 ]
+  then
+    ns=$3
+  fi
+  find_target_by_iterate_all_k8slist $resName k8s_query $ns
+  local config_file=$g_config
+  local result=$g_result
+  echo "'$result'"
+  while [ 1 ]
+  do
+     for i in $result
+     do
+       local date_time=`date --iso-8601='seconds'`
+       echo "${date_time} " >> $output_dir/${i}_top.txt
+       kubectl exec $i --kubeconfig=$config_file -- bash -c "top -b -n 1" >> $output_dir/${i}_top.txt
+     done
+     sleep 1
+  done
+}
+
+function stop_top_tracking() {
+  local top_start_pid=$1
+  kill $top_start_pid
 }
 
 function start_connection_tracking() {
@@ -287,12 +338,12 @@ function copy_syslog() {
 
   for i in $result
   do
-     kubectl cp default/${i}:/var/log/syslog $outdir/${i}_syslog.txt --kubeconfig=$config_file
-     if [ -e $outdir/${i}_syslog.txt ]
+     kubectl cp default/${i}:/var/log/ASRS/ASRS.log $outdir/${i}_ASRS.txt --kubeconfig=$config_file
+     if [ -e $outdir/${i}_ASRS.txt ]
      then
         cd $outdir
-        tar zcvf ${i}_syslog.tgz ${i}_syslog.txt
-        rm ${i}_syslog.txt
+        tar zcvf ${i}_ASRS.tgz ${i}_ASRS.txt
+        rm ${i}_ASRS.txt
         cd -
      fi
   done
@@ -450,4 +501,60 @@ function patch_and_wait() {
   local mem_limit=$(array_get $g_Memory_limits $index "|")
   patch ${name} $replica $cpu_limit $cpu_req $mem_limit 500000
   #patch_liveprobe_timeout ${name} 2
+}
+
+function get_nginx_pod() {
+  local res=$1
+  local ns=$2
+  local config=kubeconfig.southeastasia.json
+  local appId=`kubectl get deploy -o=json --namespace=${ns} --selector resourceName=${res} --kubeconfig=${config}|jq '.items[0].spec.selector.matchLabels.app'|tr -d '"'`
+  local len=`kubectl get pod -o=json --namespace=${ns} --selector app=${appId} --kubeconfig=${config}|jq '.items|length'`
+  local i=0
+  while [ $i -lt $len ]
+  do
+    kubectl get pod -o=json --namespace=$ns --selector app=${appId} --kubeconfig=${config}|jq ".items[$i].metadata.name"|tr -d '"'
+    i=`expr $i + 1`
+  done
+}
+
+function track_nginx_top() {
+  local res=$1
+  local ns=$2
+  local output_dir=$3
+  local config_file=kubeconfig.southeastasia.json
+  local result=$(get_nginx_pod $res $ns)
+  while [ 1 ]
+  do
+     for i in $result
+     do
+       local date_time=`date --iso-8601='seconds'`
+       echo "${date_time} " >> $output_dir/${i}_top.txt
+       kubectl exec $i --namespace=$ns --kubeconfig=$config_file -- bash -c "top -b -n 1" >> $output_dir/${i}_top.txt
+     done
+     sleep 1
+  done
+}
+
+function get_nginx_log() {
+  local res=$1
+  local ns=$2
+  local outdir=$3
+  local config_file=kubeconfig.southeastasia.json
+  local result=$(get_nginx_pod $res $ns)
+  for i in $result
+  do
+    kubectl logs $i --namespace=$ns --kubeconfig=$config_file > $outdir/${i}.log
+  done
+}
+
+function delete_all_nginx_pods() {
+  local res=$1
+  local ns=$2
+  local config_file=kubeconfig.southeastasia.json
+  local result=$(get_nginx_pod $res $ns)
+  for i in $result
+  do
+    kubectl delete pods $i --namespace=$ns --kubeconfig=$config_file
+  done
+
 }

@@ -4,16 +4,17 @@ namespace Bench.RpcSlave.Worker.Operations
 {
     class UtilOp : BaseOp
     {
-        public async Task Do(WorkerToolkit tk) { }
+        public virtual Task Do(WorkerToolkit tk) { return Task.CompletedTask; }
     }
 
     class RemoveExceptLastOneCallbackOp : UtilOp { }
 
     class ClearJoinLeaveCountersOp : UtilOp
     {
-        public async Task Do(WorkerToolkit tk)
+        public override Task Do(WorkerToolkit tk)
         {
             tk.Counters.ResetCounters(withConnection: false, withGroup: true);
+            return Task.CompletedTask;
         }
     }
 

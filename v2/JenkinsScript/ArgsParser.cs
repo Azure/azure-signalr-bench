@@ -100,5 +100,8 @@ namespace JenkinsScript
         [Option("DisableRandomSuffix", Required = false, HelpText = "")]
         public bool DisableRandomSuffix { get; set; }
 
+        [Option("ServicePrincipal", Default = "", Required = false, HelpText = "")]
+        public string ServicePrincipal { get; set; }
+
     }
 }

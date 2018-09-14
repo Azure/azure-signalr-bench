@@ -20,8 +20,9 @@ namespace Bench.RpcSlave.Worker.Operations
 
         public void Do(WorkerToolkit tk)
         {
+            _tk = tk;
             throw new NotImplementedException();
-            
+            /*
             var waitTime = 5 * 1000;
             Console.WriteLine($"wait time: {waitTime / 1000}s");
             Task.Delay(waitTime).Wait();
@@ -62,7 +63,7 @@ namespace Bench.RpcSlave.Worker.Operations
 
             _tk.State = Stat.Types.State.SendComplete;
             Util.Log($"Sending Complete");
-
+            */
         }
 
         private void Setup()

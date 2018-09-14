@@ -149,7 +149,7 @@ namespace Bench.RpcSlave.Worker.Operations
                     if (!brokenConnectionInds[ind])
                     {
 
-                        Task.Run(async() =>
+                        _ = Task.Run(async() =>
                         {
                             try
                             {
@@ -186,7 +186,7 @@ namespace Bench.RpcSlave.Worker.Operations
                 {
                     var mode = isJoin ? "JoinGroup" : "LeaveGroup";
                     isJoin = !isJoin;
-                    JoinLeaveGroupOp.JoinLeaveGroup(mode, connection, groupNameMatrix, counter);
+                    await JoinLeaveGroupOp.JoinLeaveGroup(mode, connection, groupNameMatrix, counter);
                     await Task.Delay(TimeSpan.FromSeconds(interval));
                 }
             }

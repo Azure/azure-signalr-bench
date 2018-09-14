@@ -13,5 +13,6 @@ dotnet run -- --PidFile='./pid/pid_'$result_root'.txt' --step=AllInSameVnet \
 --JobConfigFileV2=$JobConfig \
 --sendToFixedClient=$SendToFixedClient \
 --StatisticsSuffix=$ResultFolderSuffix \
+--ServicePrincipal=$ServicePrincipal \
 --AzureSignalrConnectionString=$AzureSignalrConnectionString > ~/signalr-bench-statistics-$ResultFolderSuffix/logs/${result_root}/log_bench.txt
 

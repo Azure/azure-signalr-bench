@@ -1,9 +1,4 @@
 
-export AzureStorageConnectionString='xxx'
-export ConfigBlobContainerName='xxx'
-export SignalrConfigFileName='xxx.yaml'
-export ServicePrincipalFileName='xxx.yaml'
-
 export ConfigRoot='xxx/'
 export RootFolder='xxx/'
 export ScenarioRoot='xxx/'
@@ -11,6 +6,7 @@ export ScenarioRoot='xxx/'
 export JobConfig=$ScenarioRoot'echo/job.yaml'
 export AgentConfig=$ConfigRoot'agent.yaml'
 export BenchConfig=$ConfigRoot'bench.yaml'
+export ServicePrincipal=$ConfigRoot'servicePrincipal.yaml'
 
 export PrivateIps=$RootFolder'privateIps.yaml'
 export PublicIps=$RootFolder'publicIps.yaml'
