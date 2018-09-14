@@ -1,0 +1,22 @@
+serviceType: selfhost
+transportType: Websockets
+hubProtocol: json
+scenario: SendGroup
+connection: 100000
+concurrentConnection: 1000
+duration: 60
+interval: 4
+groupNum: 10000
+overlap: 1
+messageSize: 2k
+enableGroupJoinLeave: true
+
+#pipeline: [createConn,startConn,joinGroup,configMessageCountPerInterval1,upPerGroup1,   clearJoinLeaveCounters,freqJoinLeaveGroup,   stopConn,disposeConn]
+
+pipeline: [createConn,startConn,joinGroup,upPerGroup1,   configMessageCountPerInterval1,clearJoinLeaveCounters,freqJoinLeaveGroup, configMessageCountPerInterval2,clearJoinLeaveCounters,freqJoinLeaveGroup, configMessageCountPerInterval3,clearJoinLeaveCounters,freqJoinLeaveGroup, configMessageCountPerInterval4,clearJoinLeaveCounters,freqJoinLeaveGroup, upJoinLeavePerGroup1,clearJoinLeaveCounters,freqJoinLeaveGroup, upJoinLeavePerGroup1,clearJoinLeaveCounters,freqJoinLeaveGroup, upJoinLeavePerGroup1,clearJoinLeaveCounters,freqJoinLeaveGroup, upJoinLeavePerGroup1,clearJoinLeaveCounters,freqJoinLeaveGroup,upJoinLeavePerGroup1,clearJoinLeaveCounters,freqJoinLeaveGroup, upJoinLeavePerGroup1,clearJoinLeaveCounters,freqJoinLeaveGroup, upJoinLeavePerGroup1,clearJoinLeaveCounters,freqJoinLeaveGroup, upJoinLeavePerGroup1,clearJoinLeaveCounters,freqJoinLeaveGroup, upJoinLeavePerGroup1,clearJoinLeaveCounters,freqJoinLeaveGroup,   stopConn,disposeConn]
+
+serverUrl: http://xxxappsvrdns0.eastus.cloudapp.azure.com:5050/signalrbench;http://xxxappsvrdns1.eastus.cloudapp.azure.com:5050/signalrbench;http://xxxappsvrdns2.eastus.cloudapp.azure.com:5050/signalrbench;http://xxxappsvrdns3.eastus.cloudapp.azure.com:5050/signalrbench;http://xxxappsvrdns4.eastus.cloudapp.azure.com:5050/signalrbench;http://xxxappsvrdns5.eastus.cloudapp.azure.com:5050/signalrbench;http://xxxappsvrdns6.eastus.cloudapp.azure.com:5050/signalrbench;http://xxxappsvrdns7.eastus.cloudapp.azure.com:5050/signalrbench
+
+
+
+

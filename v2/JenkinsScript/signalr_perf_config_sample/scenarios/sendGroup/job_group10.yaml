@@ -1,0 +1,18 @@
+serviceType: selfhost
+transportType: Websockets
+hubProtocol: json
+scenario: SendGroup
+connection: 100000
+concurrentConnection: 1000
+duration: 60
+interval: 1
+groupNum: 10
+overlap: 1
+messageSize: 2k
+enableGroupJoinLeave: true
+pipeline: [createConn,startConn,joinGroup,up10,scenario,up10,scenario,up10,scenario,up10,scenario,up10,scenario,up10,scenario,leaveGroup,stopConn,disposeConn]
+serverUrl: http://xxxAppSvrDNS0.southeastasia.cloudapp.azure.com:5050/signalrbench;http://xxxAppSvrDNS1.southeastasia.cloudapp.azure.com:5050/signalrbench;http://xxxAppSvrDNS2.southeastasia.cloudapp.azure.com:5050/signalrbench;http://xxxAppSvrDNS3.southeastasia.cloudapp.azure.com:5050/signalrbench;http://xxxAppSvrDNS4.southeastasia.cloudapp.azure.com:5050/signalrbench;http://xxxAppSvrDNS5.southeastasia.cloudapp.azure.com:5050/signalrbench;http://xxxAppSvrDNS6.southeastasia.cloudapp.azure.com:5050/signalrbench;http://xxxAppSvrDNS7.southeastasia.cloudapp.azure.com:5050/signalrbench
+
+
+
+

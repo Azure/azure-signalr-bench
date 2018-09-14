@@ -1,0 +1,18 @@
+repo: https://github.com/xxx/xxx.git
+
+rpcPort: 0000
+sshPort: 22
+
+imageId: /subscriptions/xxx/resourceGroups/xxx/providers/Microsoft.Compute/images/xxx
+
+
+user: xxx
+password: xxx
+
+# config for creating VMs
+prefix: xxx
+location: xxx
+
+# bench 
+benchVmSize: xxx
+
