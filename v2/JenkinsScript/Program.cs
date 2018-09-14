@@ -139,7 +139,7 @@ namespace JenkinsScript
                     {
                         var configLoader = new ConfigLoader();
                         var publicIps = configLoader.Load<PublicIpConfig>(argsOption.PublicIps);
-                        var serverUrl = publicIps.AppServerPublicIp.Split(";").ToList().Select(ip => ip + ":5050/signalrbench").ToList();
+                        var serverUrl = publicIps.AppServerPublicIp.Split(";").ToList().Select(ip => "http://" + ip + ":5050/signalrbench").ToList();
                         var serverUrlStr = String.Join(";", serverUrl);
 
                         var jobConfigV2 = configLoader.Load<JobConfigV2>(argsOption.JobConfigFileV2);
