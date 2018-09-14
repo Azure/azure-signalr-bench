@@ -1,7 +1,6 @@
 
 export AzureStorageConnectionString='xxx'
 export ConfigBlobContainerName='xxx'
-export SignalrConfigFileName='xxx.yaml'
 export ServicePrincipalFileName='xxx.yaml'
 
 export ConfigRoot='xxx/'
