@@ -25,11 +25,11 @@ namespace JenkinsScript
         private string _rndNum;
 
         private AzureCredentials _credentials;
-        public BenchmarkVmBuilder(AgentConfig agentConfig, bool disableRandomSuffix = false)
+        public BenchmarkVmBuilder(AgentConfig agentConfig, string servicePrincipal, bool disableRandomSuffix = false)
         {
             try
             {
-                LoginAzure();
+                LoginAzure(servicePrincipal);
             }
             catch (Exception ex)
             {
@@ -254,10 +254,13 @@ namespace JenkinsScript
             Util.Log($"create vm time: {sw.Elapsed.TotalMinutes} min");
         }
 
-        public void LoginAzure()
+        public void LoginAzure(string servicePrincipal)
         {
-            var content = AzureBlobReader.ReadBlob("ServicePrincipalFileName");
-            _servicePrincipal = AzureBlobReader.ParseYaml<ServicePrincipalConfig>(content);
+            // var content = AzureBlobReader.ReadBlob("ServicePrincipalFileName");
+            // _servicePrincipal = AzureBlobReader.ParseYaml<ServicePrincipalConfig>(content);
+
+            var configLoader = new ConfigLoader();
+            _servicePrincipal = configLoader.Load<ServicePrincipalConfig>(servicePrincipal);
 
             // auth
             _credentials = SdkContext.AzureCredentialsFactory

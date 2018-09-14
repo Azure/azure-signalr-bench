@@ -5,4 +5,5 @@ cd $RootFolder
 dotnet run -- --step=CreateBenchServer \
 --PidFile='./pid/pid_'$result_root'.txt' \
 --AgentConfigFile=$BenchConfig \
---DisableRandomSuffix
+--DisableRandomSuffix \
+--ServicePrincipal=$ServicePrincipal

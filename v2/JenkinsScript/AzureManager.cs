@@ -1,9 +1,9 @@
-using Microsoft.Azure.Management.Fluent;
-using Microsoft.Azure.Management.ResourceManager.Fluent;
-using Microsoft.Azure.Management.ResourceManager.Fluent.Core;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using Microsoft.Azure.Management.Fluent;
+using Microsoft.Azure.Management.ResourceManager.Fluent;
+using Microsoft.Azure.Management.ResourceManager.Fluent.Core;
 
 namespace JenkinsScript
 {
@@ -12,11 +12,11 @@ namespace JenkinsScript
 
         private IAzure _azure;
 
-        public AzureManager()
+        public AzureManager(string servicePrincipal)
         {
             try
             {
-                LoginAzure();
+                LoginAzure(servicePrincipal);
             }
             catch (Exception ex)
             {
@@ -24,10 +24,13 @@ namespace JenkinsScript
             }
         }
 
-        public void LoginAzure()
+        public void LoginAzure(string servicePrincipal)
         {
-            var content = AzureBlobReader.ReadBlob("ServicePrincipalFileName");
-            var sp = AzureBlobReader.ParseYaml<ServicePrincipalConfig>(content);
+            var configLoader = new ConfigLoader();
+            var sp = configLoader.Load<ServicePrincipalConfig>(servicePrincipal);
+
+            // var content = AzureBlobReader.ReadBlob("ServicePrincipalFileName");
+            // var sp = AzureBlobReader.ParseYaml<ServicePrincipalConfig>(content);
 
             // auth
             var credentials = SdkContext.AzureCredentialsFactory
@@ -46,7 +49,8 @@ namespace JenkinsScript
             {
                 _azure.ResourceGroups.DeleteByName(name);
             }
-            else{
+            else
+            {
                 Util.Log($"Resource group {name} doesn't exist");
             }
         }

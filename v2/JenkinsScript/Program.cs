@@ -124,14 +124,14 @@ namespace JenkinsScript
                         AgentConfig agentConfig = new AgentConfig();
                         var configLoader = new ConfigLoader();
                         agentConfig = configLoader.Load<AgentConfig>(argsOption.AgentConfigFile);
-                        var azureManager = new AzureManager();
-                        var vmBuilder = new BenchmarkVmBuilder(agentConfig, argsOption.DisableRandomSuffix);
+                        var azureManager = new AzureManager(argsOption.ServicePrincipal);
+                        var vmBuilder = new BenchmarkVmBuilder(agentConfig, argsOption.ServicePrincipal, argsOption.DisableRandomSuffix);
                         azureManager.DeleteResourceGroup(vmBuilder.GroupName);
                         break;
                     }
                 case "DeleteResourceGroup":
                     {
-                        var azureManager = new AzureManager();
+                        var azureManager = new AzureManager(argsOption.ServicePrincipal);
                         azureManager.DeleteResourceGroup(argsOption.ResourceGroup);
                         break;
                     }
@@ -162,8 +162,8 @@ namespace JenkinsScript
                         BenchmarkVmBuilder vmBuilder = null;
                         if (argsOption.ExtensionScriptDir == null)
                         {
-                            azureManager = new AzureManager();
-                            vmBuilder = new BenchmarkVmBuilder(agentConfig, argsOption.DisableRandomSuffix);
+                            azureManager = new AzureManager(argsOption.ServicePrincipal);
+                            vmBuilder = new BenchmarkVmBuilder(agentConfig, argsOption.ServicePrincipal, argsOption.DisableRandomSuffix);
                         }
 
                         while (true)
@@ -200,8 +200,8 @@ namespace JenkinsScript
                         BenchmarkVmBuilder vmBuilder = null;
                         if (argsOption.ExtensionScriptDir == null)
                         {
-                            azureManager = new AzureManager();
-                            vmBuilder = new BenchmarkVmBuilder(agentConfig, argsOption.DisableRandomSuffix);
+                            azureManager = new AzureManager(argsOption.ServicePrincipal);
+                            vmBuilder = new BenchmarkVmBuilder(agentConfig, argsOption.ServicePrincipal, argsOption.DisableRandomSuffix);
                         }
 
                         while (true)
