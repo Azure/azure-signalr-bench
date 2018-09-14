@@ -1,12 +1,39 @@
-## Folder Structure
+## Structure
+```
+/config
+  agent.yaml
+  bench.yaml
+  servicePrincipal.yaml
+  environments.sh
 
+/scenarios
+  echo/job.yaml
+  ...
+
+/scripts
+  createBenchVm.sh
+  createVms.sh
+  updateServerUrl.sh
+  runBenchMark.sh
+  deleteResourceGroup.sh
+```
 ### /config
+* agent.yaml: configuration for creating app server and agents VMs
+* bench.yaml: configuration for creating bench server VM
+* servicePrincipal.yaml: service principal for managing azure resource
+* environments.sh: defination of environment variables to run scripts
 Config for running scripts. More details in config/README.MD
 
 ### /scenarios
+* echo/job.yaml: configuration for benchmark
 Scenarios for benchmark. More delete in scenarios/README.MD
 
 ### /scripts
+* createBenchVm.sh: script for creating bench server VM
+* createVms.sh: script for creating app server and agents VMs
+* updateServerUrl.sh: script for updating server url in configuration for benchmark(e.g. /scenarios/echo/job.yaml)
+* runBenchMark.sh: script for running benchmark
+* deleteResourceGroup.sh: script for deleting resource group of app server and agents VMs
 Script to create/delete VMs, run benchmarks. More details in scripts/README.MD
 
 
@@ -54,15 +81,20 @@ Install packages in bench server
 
 `sudo apt-get install sshpass`
 
+Set environment variable `ResultFolderSuffix` to change the result folder to store benchmark results.
+
+`export ResultFolderSuffix='suffix'`
+
 Set environment variable `JobConfig` to the benchmark configuration you want to run.
 
 `export JobConfig='PATH_TO_JOB_CONFIG'`
+
 
 Run Benchmark
 
 `sh scripts/runBenchMark.sh`
 
-All data will be stored in `~/signalr-statistics-<suffix>` folder, all logs will be stored in `logs` subfolder, all cpu usage will be stored in `machine` subfolder and counters' records in `results` subfolder.
+All data will be stored in `~/signalr-statistics-$ResultFolderSuffix` folder (`$ResultFolderSuffix` is defined in config/environments.sh), all logs will be stored in `logs` subfolder, all cpu usage will be stored in `machine` subfolder and counters' records in `results` subfolder.
 
 ### Delete App Server And Client VMs.
 
