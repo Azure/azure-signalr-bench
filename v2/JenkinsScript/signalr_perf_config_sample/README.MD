@@ -50,8 +50,15 @@ Set environment variable `JobConfig` to the benchmark configuration you want to 
 
 ### Run Benchmark
 
+Install packages in bench server
+
+`sudo apt-get install sshpass`
+
 Set environment variable `JobConfig` to the benchmark configuration you want to run.
+
 `export JobConfig='PATH_TO_JOB_CONFIG'`
+
+Run Benchmark
 
 `sh scripts/runBenchMark.sh`
 
