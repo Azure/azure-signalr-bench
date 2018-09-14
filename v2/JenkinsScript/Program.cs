@@ -119,6 +119,16 @@ namespace JenkinsScript
                         DogfoodSignalROps.UnregisterDogfoodCloud(argsOption.ExtensionScriptDir);
                     }
                     break;
+                case "DeleteResourceGroupByConfig":
+                    {
+                        AgentConfig agentConfig = new AgentConfig();
+                        var configLoader = new ConfigLoader();
+                        agentConfig = configLoader.Load<AgentConfig>(argsOption.AgentConfigFile);
+                        var azureManager = new AzureManager();
+                        var vmBuilder = new BenchmarkVmBuilder(agentConfig, argsOption.DisableRandomSuffix);
+                        azureManager.DeleteResourceGroup(vmBuilder.GroupName);
+                        break;
+                    }
                 case "DeleteResourceGroup":
                     {
                         var azureManager = new AzureManager();
