@@ -55,6 +55,8 @@ Set environment variable `JobConfig` to the benchmark configuration you want to 
 
 `sh scripts/runBenchMark.sh`
 
+All data will be stored in `~/signalr-statistics-<suffix>` folder, all logs will be stored in `logs` subfolder, all cpu usage will be stored in `machine` subfolder and counters' records in `results` subfolder.
+
 ### Delete App Server And Client VMs.
 
 `sh scripts/deleteResourceGroup.sh`
