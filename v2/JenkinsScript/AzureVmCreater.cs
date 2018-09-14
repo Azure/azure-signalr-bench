@@ -25,7 +25,7 @@ namespace JenkinsScript
         private string _rndNum;
 
         private AzureCredentials _credentials;
-        public BenchmarkVmBuilder(AgentConfig agentConfig)
+        public BenchmarkVmBuilder(AgentConfig agentConfig, bool disableRandomSuffix = false)
         {
             try
             {
@@ -39,7 +39,8 @@ namespace JenkinsScript
             _agentConfig = agentConfig;
 
             var rnd = new Random();
-            _rndNum = Convert.ToString(rnd.Next(0, 100000) * rnd.Next(0, 10000));
+            if (disableRandomSuffix) _rndNum = "";
+            else _rndNum = Convert.ToString(rnd.Next(0, 100000) * rnd.Next(0, 10000));
 
         }
 

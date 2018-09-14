@@ -97,5 +97,8 @@ namespace JenkinsScript
         [Option("KubeConfigFile", Default = "", Required = false, HelpText = "")]
         public string KubeConfigFile { get; set; }
 
+        [Option("DisableRandomSuffix", Required = false, HelpText = "")]
+        public bool DisableRandomSuffix { get; set; }
+
     }
 }

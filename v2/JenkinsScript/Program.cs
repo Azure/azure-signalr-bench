@@ -153,7 +153,7 @@ namespace JenkinsScript
                         if (argsOption.ExtensionScriptDir == null)
                         {
                             azureManager = new AzureManager();
-                            vmBuilder = new BenchmarkVmBuilder(agentConfig);
+                            vmBuilder = new BenchmarkVmBuilder(agentConfig, argsOption.DisableRandomSuffix);
                         }
 
                         while (true)
@@ -191,7 +191,7 @@ namespace JenkinsScript
                         if (argsOption.ExtensionScriptDir == null)
                         {
                             azureManager = new AzureManager();
-                            vmBuilder = new BenchmarkVmBuilder(agentConfig);
+                            vmBuilder = new BenchmarkVmBuilder(agentConfig, argsOption.DisableRandomSuffix);
                         }
 
                         while (true)
@@ -297,7 +297,8 @@ namespace JenkinsScript
                         // var kubeConfigFile = 
 
                         var hosts = new List<string>();
-                        hosts.AddRange(privateIps.ServicePrivateIp.Split(";").ToList());
+                        if (privateIps.ServicePrivateIp != null && privateIps.ServicePrivateIp.Length > 0)
+                            hosts.AddRange(privateIps.ServicePrivateIp.Split(";").ToList());
                         hosts.AddRange(privateIps.AppServerPrivateIp.Split(";").ToList());
                         hosts.Add(privateIps.MasterPrivateIp);
                         hosts.AddRange(privateIps.SlavePrivateIp.Split(";").ToList());
@@ -305,13 +306,16 @@ namespace JenkinsScript
                         // prepare log dirs
                         var suffix = "";
                         var logPathService = new List<string>();
-                        foreach (var ip in privateIps.ServicePrivateIp.Split(";").ToList())
+                        if (privateIps.ServicePrivateIp != null && privateIps.ServicePrivateIp.Length > 0)
                         {
-                            suffix = GenerateSuffix($"service{ip}", serviceType, transportType, hubProtocol, scenario, connection, concurrentConnection, groupNum, overlap, enableGroupJoinLeave, messageSize);
-                            (errCode, result) = ShellHelper.PrepareLogPath(ip, user, password, sshPort, logRoot, resultRoot, suffix);
-                            logPathService.Add(result);
+                            foreach (var ip in privateIps.ServicePrivateIp.Split(";").ToList())
+                            {
+                                suffix = GenerateSuffix($"service{ip}", serviceType, transportType, hubProtocol, scenario, connection, concurrentConnection, groupNum, overlap, enableGroupJoinLeave, messageSize);
+                                (errCode, result) = ShellHelper.PrepareLogPath(ip, user, password, sshPort, logRoot, resultRoot, suffix);
+                                logPathService.Add(result);
+                            }
                         }
-
+                        
                         var logPathAppServer = new List<string>();
                         foreach (var ip in privateIps.AppServerPrivateIp.Split(";").ToList())
                         {
