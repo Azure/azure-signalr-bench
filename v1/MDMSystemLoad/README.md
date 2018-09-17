@@ -13,10 +13,12 @@ Execute this exe, which will listen on 5353 port.
 Please specify where your external executable binary is and where the output can be saved to in appsettings.json. The following is an example setting.
 
 
-`{
+```json
+{
   "MDMExePath": "E:\\home\\Work\\signalr-bench\\MDMSystemLoad\\MDMetricsClientSampleCode\\bin\\Debug\\MDMetricsClientSampleCode.exe",
   "ResultFilePath": "E:\\home\\Work\\signalr-bench\\MDMSystemLoad\\MDMSystemLoadQueryService\\mdm_result.json"
-}`
+}
+```
 
 Use [nssm](https://nssm.cc/) to setup a windows service.
 
