@@ -2,7 +2,7 @@
 
 This project wants to setup a MDM service for non-windows platform query.
 
-Two projects are created: one is the REST service, which calls an external exe to query MDM. The another is an executable binary which is modified based on MDM sample code(https://microsoft.sharepoint.com/teams/WAG/EngSys/Monitor/SiteAssets/AmdWiki/Home/MDMetricsClientSampleCode.zip).
+Two projects are created: one is the REST service, which calls an external exe to query MDM. The another is an executable binary which is modified based on [MDM sample code](https://microsoft.sharepoint.com/teams/WAG/EngSys/Monitor/SiteAssets/AmdWiki/Home/MDMetricsClientSampleCode.zip).
 
 ## Install MDMQuery Service on Windows
 
@@ -18,7 +18,7 @@ Please specify where your external executable binary is and where the output can
   "ResultFilePath": "E:\\home\\Work\\signalr-bench\\MDMSystemLoad\\MDMSystemLoadQueryService\\mdm_result.json"
 }`
 
-Use nssm(https://nssm.cc/) to setup a windows service.
+Use [nssm](https://nssm.cc/) to setup a windows service.
 
 ## REST API to query
 
