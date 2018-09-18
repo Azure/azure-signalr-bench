@@ -243,40 +243,38 @@ namespace JenkinsScript
             {
                 var targetLog = logPath[i];
                 var applogFolder = $"log{i}";
-                hosts.ForEach(host =>
+                var host = hosts[i];
+                var recheckTimeout = 120;
+                var recheck = 0;
+                while (recheck < recheckTimeout)
                 {
-                    var recheckTimeout = 120;
-                    var recheck = 0;
-                    while (recheck < recheckTimeout)
+                    Util.Log($"remote copy from {targetLog} to {applogFolder}");
+                    (errCode, result) = ScpDirecotryRemoteToLocal(user,
+                        host, password, targetLog, applogFolder);
+                    if (errCode != 0)
                     {
-                        Util.Log($"remote copy from {targetLog} to {applogFolder}");
-                        (errCode, result) = ScpDirecotryRemoteToLocal(user,
-                            host, password, targetLog, applogFolder);
-                        if (errCode != 0)
-                        {
-                            Util.Log($"ERR {errCode}: {result}");
-                            Environment.Exit(1);
-                        }
-                        // check whether contains 'HttpConnection Started'
-                        using (StreamReader sr = new StreamReader(applogFolder))
-                        {
-                            var content = sr.ReadToEnd();
-                            if (content.Contains(keywords))
-                            {
-                                Util.Log($"{host} started!");
-                                break;
-                            }
-                        }
-                        Util.Log($"starting server {host}");
-                        recheck++;
-                        Task.Delay(TimeSpan.FromSeconds(1)).Wait();
-                    }
-                    if (recheck == recheckTimeout)
-                    {
-                        Util.Log($"Fail to start server {host}!!!");
+                        Util.Log($"ERR {errCode}: {result}");
                         Environment.Exit(1);
                     }
-                });
+                    // check whether contains 'HttpConnection Started'
+                    using (StreamReader sr = new StreamReader(applogFolder))
+                    {
+                        var content = sr.ReadToEnd();
+                        if (content.Contains(keywords))
+                        {
+                            Util.Log($"{host} started!");
+                            break;
+                        }
+                    }
+                    Util.Log($"starting server {host}");
+                    recheck++;
+                    Task.Delay(TimeSpan.FromSeconds(1)).Wait();
+                }
+                if (recheck == recheckTimeout)
+                {
+                    Util.Log($"Fail to start server {host}!!!");
+                    Environment.Exit(1);
+                }
             }
         }
         public static(int, string) StartAppServer(List<string> hosts, string user, string password, int sshPort, List<string> azureSignalrConnectionStrings,
