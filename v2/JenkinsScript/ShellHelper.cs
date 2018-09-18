@@ -18,7 +18,7 @@ namespace JenkinsScript
             return;
         }
 
-        public static(int, string) Bash(string cmd, bool wait = true, bool handleRes = false)
+        public static(int, string) Bash(string cmd, bool wait = true, bool handleRes = false, bool captureConsole = false)
         {
             var escapedArgs = cmd.Replace("\"", "\\\"");
 
@@ -36,9 +36,22 @@ namespace JenkinsScript
             process.Start();
             var result = "";
             var errCode = 0;
-            if (wait == true) result = process.StandardOutput.ReadToEnd();
-            if (wait == true) process.WaitForExit();
-            if (wait == true) errCode = process.ExitCode;
+            if (wait == true)
+            {
+                if (captureConsole)
+                {
+                    while (!process.StandardOutput.EndOfStream)
+                    {
+                        Console.WriteLine(process.StandardOutput.ReadLine());
+                    }
+                }
+                else
+                {
+                    result = process.StandardOutput.ReadToEnd();
+                }
+                process.WaitForExit();
+                errCode = process.ExitCode;
+            }
 
             if (handleRes == true)
             {
@@ -78,7 +91,7 @@ namespace JenkinsScript
             return (errCode, result);
         }
 
-        public static(int, string) RemoteBash(string user, string host, int port, string password, string cmd, bool wait = true, bool handleRes = false, int retry = 1)
+        public static(int, string) RemoteBash(string user, string host, int port, string password, string cmd, bool wait = true, bool handleRes = false, int retry = 1, bool captureConsole = false)
         {
 
             int errCode = 0;
@@ -87,7 +100,7 @@ namespace JenkinsScript
             {
                 if (host.IndexOf("localhost") >= 0 || host.IndexOf("127.0.0.1") >= 0) return Bash(cmd, wait);
                 string sshPassCmd = $"echo \"\" > /home/{user}/.ssh/known_hosts; sshpass -p {password} ssh -p {port} -o StrictHostKeyChecking=no  -o LogLevel=ERROR {user}@{host} \"{cmd}\"";
-                (errCode, result) = Bash(sshPassCmd, wait : wait, handleRes : retry > 1 && i < retry - 1 ? false : handleRes);
+                (errCode, result) = Bash(sshPassCmd, wait : wait, handleRes : retry > 1 && i < retry - 1 ? false : handleRes, captureConsole: captureConsole);
                 if (errCode == 0) break;
                 Util.Log($"retry {i+1}th time");
                 Task.Delay(TimeSpan.FromSeconds(1)).Wait();
@@ -316,10 +329,10 @@ namespace JenkinsScript
                 $"--messageSize {messageSize} " +
                 $"--sendToFixedClient {sendToFixedClient} " +
                 $"--enableGroupJoinLeave {enableGroupJoinLeave} " +
-                $" -o '{outputCounterFile}' > {logPath}";
+                $" -o '{outputCounterFile}' |tee {logPath}";
 
             Util.Log($"CMD: {user}@{host}: {cmd}");
-            (errCode, result) = ShellHelper.RemoteBash(user, host, sshPort, password, cmd);
+            (errCode, result) = ShellHelper.RemoteBash(user, host, sshPort, password, cmd, captureConsole : true);
 
             if (errCode != 0)
             {
