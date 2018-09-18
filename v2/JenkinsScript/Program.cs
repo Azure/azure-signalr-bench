@@ -309,7 +309,7 @@ namespace JenkinsScript
                         var statisticCustomizedFolder = Environment.GetEnvironmentVariable("env_statistic_folder");
                         if (!string.IsNullOrEmpty(statisticCustomizedFolder))
                         {
-                            statisticFolder = $"{statisticCustomizedFolder}/{scenario}";
+                            statisticFolder = $"{statisticCustomizedFolder}";
                             logFolder = statisticFolder;
                             resultFolder = statisticFolder;
                         }
