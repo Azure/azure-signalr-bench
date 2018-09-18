@@ -240,15 +240,16 @@ namespace JenkinsScript
             // Check whether server started or not in 120 seconds
             for (var i = 0; i < hosts.Count; i++)
             {
+                var targetLog = logPath[i];
+                var applogFolder = $"log{i}";
                 hosts.ForEach(host =>
                 {
                     var recheckTimeout = 120;
                     var recheck = 0;
                     while (recheck < recheckTimeout)
                     {
-                        var applogFolder = $"log{i}";
                         (errCode, result) = ScpDirecotryRemoteToLocal(user,
-                            host, password, logPath[i], applogFolder);
+                            host, password, targetLog, applogFolder);
                         if (errCode != 0)
                         {
                             Util.Log($"ERR {errCode}: {result}");
