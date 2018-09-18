@@ -242,22 +242,20 @@ namespace JenkinsScript
             {
                 hosts.ForEach(host =>
                 {
-                    var applogFolder = $"log{i}";
-                    (errCode, result) = ShellHelper.ScpDirecotryRemoteToLocal(user, host, password, logPath[i], applogFolder);
-                    if (errCode != 0)
-                    {
-                        Util.Log($"ERR {errCode}: {result}");
-                        Environment.Exit(1);
-                    }
                     var recheckTimeout = 120;
                     var recheck = 0;
                     while (recheck < recheckTimeout)
                     {
+                        var applogFolder = $"log{i}";
+                        (errCode, result) = ScpDirecotryRemoteToLocal(user,
+                            host, password, logPath[i], applogFolder);
+                        if (errCode != 0)
+                        {
+                            Util.Log($"ERR {errCode}: {result}");
+                            Environment.Exit(1);
+                        }
                         // check whether contains 'HttpConnection Started'
-                        var findLogPathCmd = $"find {applogFolder} -iname 'log*.txt'";
-                        (errCode, result) = Bash(findLogPathCmd);
-                        Util.Log($"log: {result}");
-                        using (StreamReader sr = new StreamReader(result))
+                        using (StreamReader sr = new StreamReader(applogFolder))
                         {
                             var content = sr.ReadToEnd();
                             if (content.Contains(keywords))
