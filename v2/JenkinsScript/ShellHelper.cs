@@ -232,6 +232,52 @@ namespace JenkinsScript
 
             return (errCode, result);
         }
+
+        public static void WaitServerStarted(List<string> hosts, string user, string password, int sshPort, List<string> logPath, string keywords)
+        {
+            var errCode = 0;
+            var result = "";
+            // Check whether server started or not in 120 seconds
+            for (var i = 0; i < hosts.Count; i++)
+            {
+                hosts.ForEach(host =>
+                {
+                    var applogFolder = $"log{i}";
+                    (errCode, result) = ShellHelper.ScpDirecotryRemoteToLocal(user, host, password, logPath[i], applogFolder);
+                    if (errCode != 0)
+                    {
+                        Util.Log($"ERR {errCode}: {result}");
+                        Environment.Exit(1);
+                    }
+                    var recheckTimeout = 120;
+                    var recheck = 0;
+                    while (recheck < recheckTimeout)
+                    {
+                        // check whether contains 'HttpConnection Started'
+                        var findLogPathCmd = $"find {applogFolder} -iname 'log*.txt'";
+                        (errCode, result) = Bash(findLogPathCmd);
+                        Util.Log($"log: {result}");
+                        using (StreamReader sr = new StreamReader(result))
+                        {
+                            var content = sr.ReadToEnd();
+                            if (content.Contains(keywords))
+                            {
+                                Util.Log($"{host} started!");
+                                break;
+                            }
+                        }
+                        Util.Log($"starting server {host}");
+                        recheck++;
+                        Task.Delay(TimeSpan.FromSeconds(1)).Wait();
+                    }
+                    if (recheck == recheckTimeout)
+                    {
+                        Util.Log($"Fail to start server {host}!!!");
+                        Environment.Exit(1);
+                    }
+                });
+            }
+        }
         public static(int, string) StartAppServer(List<string> hosts, string user, string password, int sshPort, List<string> azureSignalrConnectionStrings,
             List<string> logPath, string useLocalSingalR = "false", string appSvrRoot = "/home/wanl/signalr_auto_test_framework")
         {
@@ -254,9 +300,8 @@ namespace JenkinsScript
                     Environment.Exit(1);
                 }
             }
-
+            WaitServerStarted(hosts, user, password, sshPort, logPath, "HttpConnection Started");
             return (errCode, result);
-
         }
 
         public static(int, string) StartRpcSlaves(List<string> slaves, string user, string password, int sshPort, int rpcPort,
@@ -278,7 +323,7 @@ namespace JenkinsScript
                 Util.Log($"ERR {errCode}: {result}");
                 Environment.Exit(1);
             }
-
+            WaitServerStarted(slaves, user, password, sshPort, logPath, "[0.0.0.0:5555] started");
             return (errCode, result);
 
         }
