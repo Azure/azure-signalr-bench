@@ -307,11 +307,15 @@ namespace JenkinsScript
                         var logFolder = $"/home/{user}/signalr-bench-statistics-{statisticsSuffix}/logs/";
                         var resultFolder = $"/home/{user}/signalr-bench-statistics-{statisticsSuffix}/results/";
                         var statisticCustomizedFolder = Environment.GetEnvironmentVariable("env_statistic_folder");
+                        var resultCustomizedFolder = Environment.GetEnvironmentVariable("env_result_folder");
                         if (!string.IsNullOrEmpty(statisticCustomizedFolder))
                         {
                             statisticFolder = $"{statisticCustomizedFolder}";
                             logFolder = statisticFolder;
-                            resultFolder = statisticFolder;
+                        }
+                        if (!string.IsNullOrEmpty(resultCustomizedFolder))
+                        {
+                            resultFolder = resultCustomizedFolder;
                         }
                         // 
                         // var kubeConfigFile = 
