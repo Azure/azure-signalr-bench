@@ -233,7 +233,8 @@ namespace JenkinsScript
             return (errCode, result);
         }
 
-        public static void WaitServerStarted(List<string> hosts, string user, string password, int sshPort, List<string> logPath, string keywords)
+        public static void WaitServerStarted(List<string> hosts, string user, string password,
+            int sshPort, List<string> logPath, string keywords)
         {
             var errCode = 0;
             var result = "";
@@ -248,6 +249,7 @@ namespace JenkinsScript
                     var recheck = 0;
                     while (recheck < recheckTimeout)
                     {
+                        Util.Log($"remote copy from {targetLog} to {applogFolder}");
                         (errCode, result) = ScpDirecotryRemoteToLocal(user,
                             host, password, targetLog, applogFolder);
                         if (errCode != 0)
