@@ -254,16 +254,18 @@ namespace JenkinsScript
                     if (errCode != 0)
                     {
                         Util.Log($"ERR {errCode}: {result}");
-                        Environment.Exit(1);
                     }
-                    // check whether contains 'HttpConnection Started'
-                    using (StreamReader sr = new StreamReader(applogFolder))
+                    else
                     {
-                        var content = sr.ReadToEnd();
-                        if (content.Contains(keywords))
+                        // check whether contains the keywords
+                        using (StreamReader sr = new StreamReader(applogFolder))
                         {
-                            Util.Log($"{host} started!");
-                            break;
+                            var content = sr.ReadToEnd();
+                            if (content.Contains(keywords))
+                            {
+                                Util.Log($"{host} started!");
+                                break;
+                            }
                         }
                     }
                     Util.Log($"starting server {host}");
