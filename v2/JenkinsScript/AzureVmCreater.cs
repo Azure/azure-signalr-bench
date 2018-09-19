@@ -459,32 +459,41 @@ namespace JenkinsScript
         public Task<INetworkInterface> CreateNetworkInterfaceAsync(string nicBase, Region location, string groupName, string subNet, INetwork network, IPublicIPAddress publicIPAddress, INetworkSecurityGroup nsg, int i = 0)
         {
             Console.WriteLine($"Creating {i}th network interface in resource group {groupName}");
-            return Task.Run(async() =>
+            var j = 0;
+            var maxRetry = 5; // 5 times retry is enough
+            while (j < maxRetry)
             {
-                while (true)
+                try
                 {
-                    try
-                    {
-                        var newNic = await _azure.NetworkInterfaces.Define(nicBase + Convert.ToString(i))
-                            .WithRegion(location)
-                            .WithExistingResourceGroup(groupName)
-                            .WithExistingPrimaryNetwork(network)
-                            .WithSubnet(subNet)
-                            .WithPrimaryPrivateIPAddressDynamic()
-                            .WithExistingPrimaryPublicIPAddress(publicIPAddress)
-                            .WithExistingNetworkSecurityGroup(nsg)
-                            .CreateAsync();
-                        return newNic;
-                    }
-                    catch (System.Exception)
-                    {
-                        await Task.Delay(2000);
-                        Util.Log($"retry create {i}th nic");
-                        continue;
-                    }
+                    var newNic = _azure.NetworkInterfaces.Define(nicBase + Convert.ToString(i))
+                        .WithRegion(location)
+                        .WithExistingResourceGroup(groupName)
+                        .WithExistingPrimaryNetwork(network)
+                        .WithSubnet(subNet)
+                        .WithPrimaryPrivateIPAddressDynamic()
+                        .WithExistingPrimaryPublicIPAddress(publicIPAddress)
+                        .WithExistingNetworkSecurityGroup(nsg)
+                        .CreateAsync();
+                    return newNic;
                 }
-            });
+                catch (Exception e)
+                {
+                    // clear the uncompleted data
+                    var allNICs = _azure.NetworkInterfaces.ListByResourceGroup(groupName);
+                    var ids = new List<string>();
+                    var enumerator = allNICs.GetEnumerator();
+                    while (enumerator.MoveNext())
+                    {
+                        ids.Add(enumerator.Current.Id);
+                    }
+                    _azure.NetworkInterfaces.DeleteByIds(ids);
 
+                    Task.Delay(2000);
+                    Util.Log($"error: {e.Message} retry create {i}th nic");
+                }
+                j++;
+            }
+            return null;
         }
 
         public Task<IWithCreate> GenerateVmTemplateAsync(string vmNameBase, Region location, string groupName, string imageId, string user, string password, string ssh, VirtualMachineSizeTypes vmSize, INetworkInterface networkInterface, IAvailabilitySet availabilitySet = null, int i = 0)
