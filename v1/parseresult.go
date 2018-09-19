@@ -360,7 +360,12 @@ func main() {
 		fmt.Printf("%s\n", chartfunc)
 		for i, j := 0, 1; j < len(monitors); i, j = i+1, j+1 {
 			t1, _ := time.Parse(time.RFC3339, monitors[j].Timestamp)
-			fmt.Printf("\t [[%d, %d, %d], %d, %d],\n", t1.Hour(), t1.Minute(), t1.Second(), monitors[j].Counters.Send-monitors[i].Counters.Send, monitors[j].Counters.Recv-monitors[i].Counters.Recv)
+			// ignore invalid negative values
+			sdiff := monitors[j].Counters.Send-monitors[i].Counters.Send
+			rdiff := monitors[j].Counters.Recv-monitors[i].Counters.Recv
+			if (sdiff > 0 && rdiff > 0) {
+				fmt.Printf("\t [[%d, %d, %d], %d, %d],\n", t1.Hour(), t1.Minute(), t1.Second(), sdiff, rdiff)
+			}
 		}
 			chartfunc = `
         ]);
@@ -404,7 +409,12 @@ func main() {
 		fmt.Printf("%s\n", chartfunc)
 		for i, j := 0, 1; j < len(monitors); i, j = i+1, j+1 {
 			t1, _ := time.Parse(time.RFC3339, monitors[j].Timestamp)
-			fmt.Printf("\t [[%d, %d, %d], %d, %d],\n", t1.Hour(), t1.Minute(), t1.Second(), monitors[j].Counters.SendSize-monitors[i].Counters.SendSize, monitors[j].Counters.RecvSize-monitors[i].Counters.RecvSize)
+			// ignore invalid (negative values) SendSizeDiff and RecvSizeDiff
+			sszdiff := monitors[j].Counters.SendSize-monitors[i].Counters.SendSize
+			rszdiff := monitors[j].Counters.RecvSize-monitors[i].Counters.RecvSize
+			if (sszdiff > 0 && rszdiff > 0) {
+				fmt.Printf("\t [[%d, %d, %d], %d, %d],\n", t1.Hour(), t1.Minute(), t1.Second(), sszdiff, rszdiff)
+			}
 		}
 			chartfunc = `
         ]);
