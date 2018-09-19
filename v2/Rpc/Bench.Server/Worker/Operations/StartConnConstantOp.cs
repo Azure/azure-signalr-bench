@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Timers;
 using Bench.Common;
@@ -49,39 +50,7 @@ namespace Bench.RpcSlave.Worker.Operations
 
             Util.Log($"concurrent conn: {_tk.JobConfig.ConcurrentConnections} conn count: {connections.Count}");
 
-            connectionQueue = new ConcurrentQueue<HubConnection>(connections);
-            var tasks = new List<Task>();
-
-            var startTimeOffsetGenerator = new RandomGenerator(new LocalFileSaver());
-
-            for (var i = 0; i < _tk.JobConfig.ConcurrentConnections; i++)
-            {
-                // if (connectionQueue.Count > 0)
-                // {
-                // Util.Log($"beg: {beg++}");
-                if (connectionQueue.TryDequeue(out var connection))
-                {
-                    await Task.Delay(startTimeOffsetGenerator.Delay(TimeSpan.FromMilliseconds(100)));
-                    tasks.Add(StartConnect(connection));
-                }
-                // }
-            }
-
-            // while (connectionQueue.Count > 0)
-            // {
-            //     await Task.WhenAny(tasks);
-            //     Util.Log("deque");
-            //     Util.Log($"beg: {beg++} left: {connectionQueue.Count}");
-            //     if (connectionQueue.TryDequeue(out var connection)) tasks.Add(StartConnect(connection));
-            // }
-
-            // var tasks = new List<Task>();
-            // for (var i = 0; i < connections.Count; i++)
-            // {
-            //     await StartConnect(connections[i]);
-            // }
-
-            await Task.WhenAll(tasks);
+            await ConcurrentConnectService(connections, StartConnect, _tk.JobConfig.ConcurrentConnections);
 
             swConn.Stop();
             Util.Log($"connection time: {swConn.Elapsed.TotalSeconds} s");
@@ -89,23 +58,40 @@ namespace Bench.RpcSlave.Worker.Operations
             _tk.State = Stat.Types.State.HubconnConnected;
         }
 
+        public static Task ConcurrentConnectService<T>(IEnumerable<T> sourse, Func<T, Task> f, int max)
+        {
+            var initial = (max >> 1);
+            var s = new SemaphoreSlim(initial, max);
+            _ = Task.Run(async () => {
+                for (int i = initial; i < max; i++)
+                {
+                    await Task.Delay(100);
+                    s.Release();
+                }
+            });
+            return Task.WhenAll(from item in sourse
+                                select Task.Run(async () =>
+                                {
+                                    await s.WaitAsync();
+                                    try
+                                    {
+                                        await f(item);
+                                    }
+                                    finally
+                                    {
+                                        s.Release();
+                                    }
+                                }));
+        }
+
         private async Task StartConnect(HubConnection connection)
         {
             if (connection == null) return;
             try
             {
-                // if (Environment.GetEnvironmentVariable("connect") == "true") File.AppendAllText("connect.txt", $"{Util.Timestamp()} (\n");
                 Interlocked.Increment(ref cnt);
                 await connection.StartAsync();
                 Interlocked.Decrement(ref cnt);
-                // if (Environment.GetEnvironmentVariable("connect") == "true") File.AppendAllText("connect.txt", $"{Util.Timestamp()} )\n");
-
-                _tk.Counters.IncreaseConnectionSuccess();
-                if (connectionQueue.TryDequeue(out var newConnection))
-                {
-                    // Util.Log($"beg: {beg++}");
-                    await StartConnect(newConnection);
-                }
             }
             catch (Exception ex)
             {
@@ -114,6 +100,7 @@ namespace Bench.RpcSlave.Worker.Operations
                 _tk.Counters.IncreaseConnectionError();
             }
         }
+
         private async Task GetConnectionId(HubConnection connection, List<string> targetConnectionIds, int index)
         {
             connection.On("connectionId", (string connectionId) => _tk.ConnectionIds[index] = connectionId);
