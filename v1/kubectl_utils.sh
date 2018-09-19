@@ -2,7 +2,7 @@
 g_CPU_requests="1|2|3|4"
 g_CPU_limits="1|2|3|4"
 g_Memory_limits="4000|4000|4000|4000"
-g_k8s_config_list="srdevacsrpd.config|kubeconfig.southeastasia.json"
+g_k8s_config_list="srdevacsrpe.json|kubeconfig_srdevacsseasiac.json"
 
 ## Bourne shell does not support array, so a string is used
 ## to work around with the hep of awk array
