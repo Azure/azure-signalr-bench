@@ -5,7 +5,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
 using System.Timers;
 using Bench.Common;
@@ -36,7 +35,6 @@ namespace Bench.RpcSlave.Worker.Operations
         }
 
         private int cnt = 0;
-        private ConcurrentQueue<HubConnection> connectionQueue;
         private async Task Start(List<HubConnection> connections)
         {
             // if (Environment.GetEnvironmentVariable("connect") == "true") File.WriteAllText("connect.txt", "");
@@ -61,7 +59,7 @@ namespace Bench.RpcSlave.Worker.Operations
         public static Task ConcurrentConnectService<T>(IEnumerable<T> sourse, Func<T, Task> f, int max)
         {
             var initial = (max >> 1);
-            var s = new SemaphoreSlim(initial, max);
+            var s = new System.Threading.SemaphoreSlim(initial, max);
             _ = Task.Run(async () => {
                 for (int i = initial; i < max; i++)
                 {
