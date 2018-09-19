@@ -299,6 +299,8 @@ namespace JenkinsScript
                     Environment.Exit(1);
                 }
             }
+            // wait the starting of AppServer, sometimes the log file has not yet generated when we want to read it.
+            Task.Delay(TimeSpan.FromSeconds(1)).Wait();
             WaitServerStarted(hosts, user, password, sshPort, logPath, "HttpConnection Started");
             return (errCode, result);
         }
@@ -322,6 +324,8 @@ namespace JenkinsScript
                 Util.Log($"ERR {errCode}: {result}");
                 Environment.Exit(1);
             }
+            // wait the starting of slave VM.
+            Task.Delay(TimeSpan.FromSeconds(1)).Wait();
             WaitServerStarted(slaves, user, password, sshPort, logPath, "[0.0.0.0:5555] started");
             return (errCode, result);
 

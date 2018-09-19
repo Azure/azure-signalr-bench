@@ -177,7 +177,6 @@ namespace JenkinsScript
                                 Util.Log($"creating VMs Exception: {ex}");
                                 Util.Log($"delete all vms");
                                 azureManager.DeleteResourceGroup(vmBuilder.GroupName);
-                                azureManager.DeleteResourceGroup(vmBuilder.AppSvrGroupName);
                                 Util.Log($"going to retry creating vms in 1s");
                                 Task.Delay(1000).Wait();
                                 continue;
@@ -203,8 +202,9 @@ namespace JenkinsScript
                             azureManager = new AzureManager(argsOption.ServicePrincipal);
                             vmBuilder = new BenchmarkVmBuilder(agentConfig, argsOption.ServicePrincipal, argsOption.DisableRandomSuffix);
                         }
-
-                        while (true)
+                        var i = 0;
+                        var retryMax = 5;
+                        while (i < retryMax)
                         {
                             try
                             {
@@ -215,9 +215,9 @@ namespace JenkinsScript
                                 Util.Log($"creating VMs Exception: {ex}");
                                 Util.Log($"delete all vms");
                                 azureManager.DeleteResourceGroup(vmBuilder.GroupName);
-                                azureManager.DeleteResourceGroup(vmBuilder.AppSvrGroupName);
                                 Util.Log($"going to retry creating vms in 1s");
                                 Task.Delay(1000).Wait();
+                                i++;
                                 continue;
                             }
                             break;

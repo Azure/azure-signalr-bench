@@ -906,14 +906,6 @@ namespace JenkinsScript
             }
         }
 
-        public string AppSvrGroupName
-        {
-            get
-            {
-                return _agentConfig.Prefix + "AppSvrResourceGroup" + _rndNum;
-
-            }
-        }
         public string GroupName
         {
             get
