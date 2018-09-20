@@ -44,14 +44,23 @@ namespace Bench.RpcSlave.Worker.Operations
     class Up900Op : UpOp { }
 
     class Up1000Op : UpOp { }
+    class Up1500Op : UpOp { }
     class Up2000Op : UpOp { }
+    class Up2500Op : UpOp { }
     class Up3000Op : UpOp { }
+    class Up3500Op : UpOp { }
     class Up4000Op : UpOp { }
+    class Up4500Op : UpOp { }
     class Up5000Op : UpOp { }
+    class Up5500Op : UpOp { }
     class Up6000Op : UpOp { }
+    class Up6500Op : UpOp { }
     class Up7000Op : UpOp { }
+    class Up7500Op : UpOp { }
     class Up8000Op : UpOp { }
+    class Up8500Op : UpOp { }
     class Up9000Op : UpOp { }
+    class Up9500Op : UpOp { }
 
     class Up10000Op : UpOp { }
     class Up20000Op : UpOp { }
