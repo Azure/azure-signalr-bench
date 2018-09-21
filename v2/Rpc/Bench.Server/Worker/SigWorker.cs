@@ -39,7 +39,7 @@ namespace Bench.RpcSlave.Worker
             //GetPipeline().ForEach(opName =>
             //{
             var newOp = opName;
-            if (opName.Substring(2).ToLower() == "up")
+            if (opName.Substring(0, 2).ToLower() == "up")
             {
                 var isNumeric = int.TryParse(opName.Substring(2), out int n);
                 if (isNumeric)
