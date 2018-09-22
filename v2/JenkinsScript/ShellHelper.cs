@@ -149,17 +149,59 @@ namespace JenkinsScript
                 {
                     var errCodeInner = 0;
                     var resultInner = "";
-                    var cmdInner = $"rm -rf {repoRoot}  || true; git clone {repoUrl} {repoRoot}; "; //TODO
-                    cmdInner += $"cd {repoRoot};";
-                    cmdInner += $"git checkout {branch};";
-                    if (commit != null && commit != "") cmdInner += $"git reset --hard {commit};";
-                    cmdInner += $" cd ~ ;";
-                    Util.Log($"CMD: {user}@{host}: {cmdInner}");
-                    (errCodeInner, resultInner) = ShellHelper.RemoteBash(user, host, sshPort, password, cmdInner);
-                    if (errCodeInner != 0)
+                    var remoteScriptContent = $@"
+#!/bin/bash
+if [ -d {repoRoot} ]
+then
+   rm -rf {repoRoot}
+fi
+git clone {repoUrl} {repoRoot}
+rtn=$?
+## re-check whether repo was cloned successfully
+v=0
+while [ $rtn -ne 0 ] && [ $v -lt 3 ]
+do
+   if [ -d {repoRoot} ]
+   then
+      rm -rf {repoRoot}
+   fi
+   git clone {repoUrl} {repoRoot}
+   rtn=$?
+   if [ $rtn -eq 0 ]
+   then
+      break
+   fi
+   v=$(($v+1))
+done
+cd {repoRoot}
+git checkout {branch}
+";
+                    var scriptFile = "remoteScript.sh";
+                    using (StreamWriter sw = new StreamWriter(scriptFile))
                     {
-                        errCode = errCodeInner;
-                        result = resultInner;
+                        sw.Write(remoteScriptContent);
+                    }
+                    var innerCmd = $"chmod +x {scriptFile}; ./{scriptFile}";
+                    var i = 0;
+                    var retry = 3;
+                    while (i < retry)
+                    {
+                        (errCode, result) = ShellHelper.ScpFileLocalToRemote(user, host, password, scriptFile, "~/");
+                        if (errCode != 0)
+                        {
+                            Console.WriteLine("Fail to copy script from local to remote: {errCode}");
+                        }
+                        (errCodeInner, resultInner) = ShellHelper.RemoteBash(user, host, sshPort, password, innerCmd);
+                        if (errCodeInner != 0)
+                        {
+                            errCode = errCodeInner;
+                            result = resultInner;
+                        }
+                        else
+                        {
+                            break;
+                        }
+                        i++;
                     }
                 }));
             });
