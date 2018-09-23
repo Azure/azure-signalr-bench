@@ -114,5 +114,8 @@ namespace Bench.Common
 
         [Option("connectionString", Required = false, HelpText = "Specify SignalR service connection string")]
         public string ConnectionString { get; set; }
+
+        [Option("stopSendIfLatencyBig", Default = "false", Required = false, HelpText = "Stop sending steps if there are more than 1% message whose latency greater than 1000ms")]
+        public string StopSendIfLatencyBig { get; set; }
     }
 }

@@ -35,6 +35,8 @@ namespace Bench.RpcMaster
         private static string _jobResultFile = "./jobResult.txt";
         // protect the file writing
         private static readonly SemaphoreSlim _writeLock = new SemaphoreSlim(1);
+        // if there is > 1% message whose latency is greater than 1s, we may inform slaves to stop
+        private static bool _ge1000msGT1Percent = false;
 
         public static async Task Main(string[] args)
         {
@@ -90,7 +92,7 @@ namespace Bench.RpcMaster
                 // process jobs for each step
                 await ProcessPipeline(clients, argsOption.PipeLine, slaveList,
                     argsOption.Connections, argsOption.ServiceType, argsOption.TransportType, argsOption.HubProtocal, argsOption.Scenario, argsOption.MessageSize,
-                    argsOption.groupNum, argsOption.groupOverlap, serverCount, argsOption.SendToFixedClient, argsOption.EnableGroupJoinLeave);
+                    argsOption.groupNum, argsOption.groupOverlap, serverCount, argsOption.SendToFixedClient, argsOption.EnableGroupJoinLeave, argsOption.StopSendIfLatencyBig);
             }
             catch (Exception ex)
             {
@@ -354,7 +356,7 @@ namespace Bench.RpcMaster
                 }
 
                 var jobj = new JObject();
-                var received = (ulong) 0;
+                var received = (ulong)0;
                 foreach (var item in allClientCounters)
                 {
                     jobj.Add(item.Key, item.Value);
@@ -363,7 +365,8 @@ namespace Bench.RpcMaster
                         received += item.Value;
                     }
                 }
-
+                allClientCounters.TryGetValue("message:ge:1000", out var ge1000ms);
+                _ge1000msGT1Percent = (ge1000ms * 100 > received);
                 jobj.Add("message:received", received);
                 _counters = Util.Sort(jobj);
                 var finalRec = new JObject
@@ -555,7 +558,8 @@ namespace Bench.RpcMaster
 
         private static async Task ProcessPipeline(List<RpcService.RpcServiceClient> clients, string pipelineStr, List<string> slaveList, int connections,
             string serviceType, string transportType, string hubProtocol, string scenario, string messageSize,
-            int groupNum, int overlap, int serverCount, string sendToFixedClient, bool enableGroupJoinLeave)
+            int groupNum, int overlap, int serverCount, string sendToFixedClient, bool enableGroupJoinLeave,
+            string stopIfLatencyIsBig)
         {
             // var connections = argsOption.Connections;
             // var serviceType = argsOption.ServiceType;
@@ -578,7 +582,7 @@ namespace Bench.RpcMaster
             var joinLeavePerGroupAdditionalCnt = 0;
             var joinLeavePerGroupList = Enumerable.Repeat(false, connections).ToList();
             var sendGroupList = Enumerable.Repeat(false, groupNum).ToList();
-
+            var stopIfLatencyBig = bool.Parse(stopIfLatencyIsBig);
             // var serverUrls = serverCount;
             for (var i = 0; i < pipeline.Count; i++)
             {
@@ -588,6 +592,15 @@ namespace Bench.RpcMaster
                 int indClient = -1;
                 Util.Log($"current step: {step}");
 
+                if (stopIfLatencyBig && _ge1000msGT1Percent)
+                {
+                    if (step.Substring(0, 2) == "up")
+                    {
+                        // stop all "upxxxx"
+                        Util.Log($"Stop the sending steps since there are too many messages whose latency is larger than 1s!");
+                        continue;
+                    }
+                }
                 // up op
                 HandleBasicUpOp(step, connectionConfigBuilder, connectionAllConfigList, connections, slaveList);
 

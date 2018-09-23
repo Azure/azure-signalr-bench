@@ -879,6 +879,10 @@ namespace JenkinsScript
                     return VirtualMachineSizeTypes.StandardDS1;
                 case "StandardDS1V2":
                     return VirtualMachineSizeTypes.StandardDS1V2;
+                case "StandardDS2V2":
+                    return VirtualMachineSizeTypes.StandardDS2V2;
+                case "StandardDS3V2":
+                    return VirtualMachineSizeTypes.StandardDS3V2;
                 case "StandardDS4":
                     return VirtualMachineSizeTypes.StandardDS4;
                 case "StandardDS4V2":

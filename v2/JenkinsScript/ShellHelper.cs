@@ -375,11 +375,12 @@ git checkout {branch}
 
         }
 
-        public static(int, string) StartRpcMaster(string host, List<string> slaves, string user, string password, int sshPort,
-            string logPath,
+        public static(int, string) StartRpcMaster(
+            string host, List<string> slaves, string user, string password, int sshPort, string logPath,
             string serviceType, string transportType, string hubProtocol, string scenario,
             int connection, int concurrentConnection, int duration, int interval, List<string> pipeLine,
-            int groupNum, int groupOverlap, string messageSize, string serverUrl, string suffix, string masterRoot, string sendToFixedClient, bool enableGroupJoinLeave)
+            int groupNum, int groupOverlap, string messageSize, string serverUrl, string suffix,
+            string masterRoot, string sendToFixedClient, bool enableGroupJoinLeave, bool stopSendIfLatencyBig)
         {
 
             Util.Log($"service type: {serviceType}, transport type: {transportType}, hub protocol: {hubProtocol}, scenario: {scenario}");
@@ -421,6 +422,7 @@ git checkout {branch}
                 $"--messageSize {messageSize} " +
                 $"--sendToFixedClient {sendToFixedClient} " +
                 $"--enableGroupJoinLeave {enableGroupJoinLeave} " +
+                $"--stopSendIfLatencyBig {stopSendIfLatencyBig} " +
                 $" -o '{outputCounterFile}' |tee {logPath}";
 
             Util.Log($"CMD: {user}@{host}: {cmd}");
