@@ -96,6 +96,11 @@ namespace Bench.RpcSlave.Worker.Counters
 
         }
 
+        public void RecordSendingStep(ulong sending)
+        {
+            InnerCounters.AddOrUpdate($"sendingStep", sending, (k, v) => sending);
+        }
+
         public void CountLatency(long sendTimestamp, long receiveTimestamp)
         {
             long dTime = receiveTimestamp - sendTimestamp;

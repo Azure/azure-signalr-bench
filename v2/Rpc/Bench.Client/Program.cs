@@ -340,6 +340,10 @@ namespace Bench.RpcMaster
                             {
                                 allClientCounters.AddOrUpdate(key, value, (k, v) => Math.Max(v, value));
                             }
+                            else if (string.Equals(key, "sendingStep", StringComparison.OrdinalIgnoreCase))
+                            {
+                                allClientCounters.AddOrUpdate(key, value, (k, v) => value);
+                            }
                             else
                                 allClientCounters.AddOrUpdate(key, value, (k, v) => v + value);
                         }
