@@ -70,6 +70,8 @@ namespace Bench.RpcSlave.Worker.Counters
             // message size
             InnerCounters.AddOrUpdate("message:sendSize", 0, (k, v) => 0);
             InnerCounters.AddOrUpdate("message:recvSize", 0, (k, v) => 0);
+            // sending step
+            InnerCounters.AddOrUpdate("sendingStep", 0, (k, v) => 0);
         }
 
         public void IncreaseJoinGroupFail()
