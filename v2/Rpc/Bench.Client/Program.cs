@@ -596,8 +596,11 @@ namespace Bench.RpcMaster
                 {
                     if (step.Substring(0, 2) == "up")
                     {
-                        // stop all "upxxxx"
                         Util.Log($"Stop the sending steps since there are too many messages whose latency is larger than 1s!");
+                        // skip "upxxxx" step
+                        i++;
+                        // skip the immediate following "scenario" step,
+                        // as a result, all "upxxx;scenario" steps were skipped.
                         continue;
                     }
                 }
