@@ -260,6 +260,7 @@ func main() {
         data.addColumn('number', 'GE1000ms(%)');
 		`
 		fmt.Printf("%s\n", chartfunc)
+                fmt.Printf("\tdata.addRows([\n")
                 var curSendingStep int64
                 for i, v := range monitors {
                     curSendingStep = v.Counters.Sending
@@ -270,7 +271,6 @@ func main() {
                               v.Counters.LT_1000 + v.Counters.GE_1000
                         var sumfloat float64
                         sumfloat = float64(sum)
-                        fmt.Printf("\tdata.addRows([\n")
                         fmt.Printf("\t [%d, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f],\n", curSendingStep, float64(v.Counters.LT_100)/sumfloat*100, float64(v.Counters.LT_200)/sumfloat*100,
                                 float64(v.Counters.LT_300)/sumfloat*100, float64(v.Counters.LT_400)/sumfloat*100,
                                 float64(v.Counters.LT_500)/sumfloat*100, float64(v.Counters.LT_600)/sumfloat*100,
@@ -282,7 +282,6 @@ func main() {
                 if v.Counters.Sending != 0 {
                         var sumfloat float64
                         sumfloat = float64(sum)
-                        fmt.Printf("\tdata.addRows([\n")
                         fmt.Printf("\t [%d, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f],\n", curSendingStep, float64(v.Counters.LT_100)/sumfloat*100, float64(v.Counters.LT_200)/sumfloat*100,
                                 float64(v.Counters.LT_300)/sumfloat*100, float64(v.Counters.LT_400)/sumfloat*100,
                                 float64(v.Counters.LT_500)/sumfloat*100, float64(v.Counters.LT_600)/sumfloat*100,
