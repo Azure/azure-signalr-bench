@@ -18,7 +18,7 @@ namespace JenkinsScript
             return;
         }
 
-        public static(int, string) Bash(string cmd, bool wait = true, bool handleRes = false)
+        public static(int, string) Bash(string cmd, bool wait = true, bool handleRes = false, bool captureConsole = false)
         {
             var escapedArgs = cmd.Replace("\"", "\\\"");
 
@@ -36,9 +36,22 @@ namespace JenkinsScript
             process.Start();
             var result = "";
             var errCode = 0;
-            if (wait == true) result = process.StandardOutput.ReadToEnd();
-            if (wait == true) process.WaitForExit();
-            if (wait == true) errCode = process.ExitCode;
+            if (wait == true)
+            {
+                if (captureConsole)
+                {
+                    while (!process.StandardOutput.EndOfStream)
+                    {
+                        Console.WriteLine(process.StandardOutput.ReadLine());
+                    }
+                }
+                else
+                {
+                    result = process.StandardOutput.ReadToEnd();
+                }
+                process.WaitForExit();
+                errCode = process.ExitCode;
+            }
 
             if (handleRes == true)
             {
@@ -78,7 +91,7 @@ namespace JenkinsScript
             return (errCode, result);
         }
 
-        public static(int, string) RemoteBash(string user, string host, int port, string password, string cmd, bool wait = true, bool handleRes = false, int retry = 1)
+        public static(int, string) RemoteBash(string user, string host, int port, string password, string cmd, bool wait = true, bool handleRes = false, int retry = 1, bool captureConsole = false)
         {
 
             int errCode = 0;
@@ -87,7 +100,7 @@ namespace JenkinsScript
             {
                 if (host.IndexOf("localhost") >= 0 || host.IndexOf("127.0.0.1") >= 0) return Bash(cmd, wait);
                 string sshPassCmd = $"echo \"\" > /home/{user}/.ssh/known_hosts; sshpass -p {password} ssh -p {port} -o StrictHostKeyChecking=no  -o LogLevel=ERROR {user}@{host} \"{cmd}\"";
-                (errCode, result) = Bash(sshPassCmd, wait : wait, handleRes : retry > 1 && i < retry - 1 ? false : handleRes);
+                (errCode, result) = Bash(sshPassCmd, wait : wait, handleRes : retry > 1 && i < retry - 1 ? false : handleRes, captureConsole: captureConsole);
                 if (errCode == 0) break;
                 Util.Log($"retry {i+1}th time");
                 Task.Delay(TimeSpan.FromSeconds(1)).Wait();
@@ -136,17 +149,59 @@ namespace JenkinsScript
                 {
                     var errCodeInner = 0;
                     var resultInner = "";
-                    var cmdInner = $"rm -rf {repoRoot}  || true; git clone {repoUrl} {repoRoot}; "; //TODO
-                    cmdInner += $"cd {repoRoot};";
-                    cmdInner += $"git checkout {branch};";
-                    if (commit != null && commit != "") cmdInner += $"git reset --hard {commit};";
-                    cmdInner += $" cd ~ ;";
-                    Util.Log($"CMD: {user}@{host}: {cmdInner}");
-                    (errCodeInner, resultInner) = ShellHelper.RemoteBash(user, host, sshPort, password, cmdInner);
-                    if (errCodeInner != 0)
+                    var remoteScriptContent = $@"
+#!/bin/bash
+if [ -d {repoRoot} ]
+then
+   rm -rf {repoRoot}
+fi
+git clone {repoUrl} {repoRoot}
+rtn=$?
+## re-check whether repo was cloned successfully
+v=0
+while [ $rtn -ne 0 ] && [ $v -lt 3 ]
+do
+   if [ -d {repoRoot} ]
+   then
+      rm -rf {repoRoot}
+   fi
+   git clone {repoUrl} {repoRoot}
+   rtn=$?
+   if [ $rtn -eq 0 ]
+   then
+      break
+   fi
+   v=$(($v+1))
+done
+cd {repoRoot}
+git checkout {branch}
+";
+                    var scriptFile = "remoteScript.sh";
+                    using (StreamWriter sw = new StreamWriter(scriptFile))
                     {
-                        errCode = errCodeInner;
-                        result = resultInner;
+                        sw.Write(remoteScriptContent);
+                    }
+                    var innerCmd = $"chmod +x {scriptFile}; ./{scriptFile}";
+                    var i = 0;
+                    var retry = 3;
+                    while (i < retry)
+                    {
+                        (errCode, result) = ShellHelper.ScpFileLocalToRemote(user, host, password, scriptFile, "~/");
+                        if (errCode != 0)
+                        {
+                            Console.WriteLine("Fail to copy script from local to remote: {errCode}");
+                        }
+                        (errCodeInner, resultInner) = ShellHelper.RemoteBash(user, host, sshPort, password, innerCmd);
+                        if (errCodeInner != 0)
+                        {
+                            errCode = errCodeInner;
+                            result = resultInner;
+                        }
+                        else
+                        {
+                            break;
+                        }
+                        i++;
                     }
                 }));
             });
@@ -219,6 +274,53 @@ namespace JenkinsScript
 
             return (errCode, result);
         }
+
+        public static void WaitServerStarted(List<string> hosts, string user, string password,
+            int sshPort, List<string> logPath, string keywords)
+        {
+            var errCode = 0;
+            var result = "";
+            // Check whether server started or not in 120 seconds
+            for (var i = 0; i < hosts.Count; i++)
+            {
+                var targetLog = logPath[i];
+                var applogFolder = $"log{i}";
+                var host = hosts[i];
+                var recheckTimeout = 120;
+                var recheck = 0;
+                while (recheck < recheckTimeout)
+                {
+                    Util.Log($"remote copy from {targetLog} to {applogFolder}");
+                    (errCode, result) = ScpDirecotryRemoteToLocal(user,
+                        host, password, targetLog, applogFolder);
+                    if (errCode != 0)
+                    {
+                        Util.Log($"ERR {errCode}: {result}");
+                    }
+                    else
+                    {
+                        // check whether contains the keywords
+                        using (StreamReader sr = new StreamReader(applogFolder))
+                        {
+                            var content = sr.ReadToEnd();
+                            if (content.Contains(keywords))
+                            {
+                                Util.Log($"{host} started!");
+                                break;
+                            }
+                        }
+                    }
+                    Util.Log($"starting server {host}");
+                    recheck++;
+                    Task.Delay(TimeSpan.FromSeconds(1)).Wait();
+                }
+                if (recheck == recheckTimeout)
+                {
+                    Util.Log($"Fail to start server {host}!!!");
+                    Environment.Exit(1);
+                }
+            }
+        }
         public static(int, string) StartAppServer(List<string> hosts, string user, string password, int sshPort, List<string> azureSignalrConnectionStrings,
             List<string> logPath, string useLocalSingalR = "false", string appSvrRoot = "/home/wanl/signalr_auto_test_framework")
         {
@@ -241,9 +343,10 @@ namespace JenkinsScript
                     Environment.Exit(1);
                 }
             }
-
+            // wait the starting of AppServer, sometimes the log file has not yet generated when we want to read it.
+            Task.Delay(TimeSpan.FromSeconds(1)).Wait();
+            WaitServerStarted(hosts, user, password, sshPort, logPath, "HttpConnection Started");
             return (errCode, result);
-
         }
 
         public static(int, string) StartRpcSlaves(List<string> slaves, string user, string password, int sshPort, int rpcPort,
@@ -265,16 +368,19 @@ namespace JenkinsScript
                 Util.Log($"ERR {errCode}: {result}");
                 Environment.Exit(1);
             }
-
+            // wait the starting of slave VM.
+            Task.Delay(TimeSpan.FromSeconds(1)).Wait();
+            WaitServerStarted(slaves, user, password, sshPort, logPath, "[0.0.0.0:5555] started");
             return (errCode, result);
 
         }
 
-        public static(int, string) StartRpcMaster(string host, List<string> slaves, string user, string password, int sshPort,
-            string logPath,
+        public static(int, string) StartRpcMaster(
+            string host, List<string> slaves, string user, string password, int sshPort, string logPath,
             string serviceType, string transportType, string hubProtocol, string scenario,
             int connection, int concurrentConnection, int duration, int interval, List<string> pipeLine,
-            int groupNum, int groupOverlap, string messageSize, string serverUrl, string suffix, string masterRoot, string sendToFixedClient, bool enableGroupJoinLeave)
+            int groupNum, int groupOverlap, string messageSize, string serverUrl, string suffix,
+            string masterRoot, string sendToFixedClient, bool enableGroupJoinLeave, bool stopSendIfLatencyBig)
         {
 
             Util.Log($"service type: {serviceType}, transport type: {transportType}, hub protocol: {hubProtocol}, scenario: {scenario}");
@@ -316,10 +422,11 @@ namespace JenkinsScript
                 $"--messageSize {messageSize} " +
                 $"--sendToFixedClient {sendToFixedClient} " +
                 $"--enableGroupJoinLeave {enableGroupJoinLeave} " +
-                $" -o '{outputCounterFile}' > {logPath}";
+                $"--stopSendIfLatencyBig {stopSendIfLatencyBig} " +
+                $" -o '{outputCounterFile}' |tee {logPath}";
 
             Util.Log($"CMD: {user}@{host}: {cmd}");
-            (errCode, result) = ShellHelper.RemoteBash(user, host, sshPort, password, cmd);
+            (errCode, result) = ShellHelper.RemoteBash(user, host, sshPort, password, cmd, captureConsole : true);
 
             if (errCode != 0)
             {

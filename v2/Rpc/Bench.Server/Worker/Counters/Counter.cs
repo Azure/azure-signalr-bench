@@ -70,6 +70,8 @@ namespace Bench.RpcSlave.Worker.Counters
             // message size
             InnerCounters.AddOrUpdate("message:sendSize", 0, (k, v) => 0);
             InnerCounters.AddOrUpdate("message:recvSize", 0, (k, v) => 0);
+            // sending step
+            InnerCounters.AddOrUpdate("sendingStep", 0, (k, v) => 0);
         }
 
         public void IncreaseJoinGroupFail()
@@ -94,6 +96,11 @@ namespace Bench.RpcSlave.Worker.Counters
         {
             InnerCounters.AddOrUpdate("group:leave:success", 0, (k, v) => v + 1);
 
+        }
+
+        public void RecordSendingStep(ulong sending)
+        {
+            InnerCounters.AddOrUpdate($"sendingStep", sending, (k, v) => sending);
         }
 
         public void CountLatency(long sendTimestamp, long receiveTimestamp)

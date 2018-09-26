@@ -91,7 +91,7 @@ namespace JenkinsScript
         [Option("sendToFixedClient", Default = "", Required = false, HelpText = "")]
         public string SendToFixedClient { get; set; }
 
-        [Option("StatisticsSuffix", Default = "", Required = false, HelpText = "")]
+        [Option("StatisticsSuffix", Default = "suffic", Required = false, HelpText = "")]
         public string StatisticsSuffix { get; set; }
 
         [Option("KubeConfigFile", Default = "", Required = false, HelpText = "")]
@@ -103,5 +103,7 @@ namespace JenkinsScript
         [Option("ServicePrincipal", Default = "", Required = false, HelpText = "")]
         public string ServicePrincipal { get; set; }
 
+        [Option("stopSendIfLatencyBig", Default = "false", Required = false, HelpText = "Stop sending steps if there are more than 1% message whose latency greater than 1000ms")]
+        public string StopSendIfLatencyBig { get; set; }
     }
 }

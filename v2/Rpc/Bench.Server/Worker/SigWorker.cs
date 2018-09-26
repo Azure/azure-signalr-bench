@@ -38,7 +38,18 @@ namespace Bench.RpcSlave.Worker
             // process operations
             //GetPipeline().ForEach(opName =>
             //{
-            var tuple = OperationFactory.CreateOp(opName, _tk);
+            var newOp = opName;
+            if (opName.Substring(0, 2).ToLower() == "up")
+            {
+                var isNumeric = int.TryParse(opName.Substring(2), out int n);
+                if (isNumeric)
+                {
+                    // filter the following number after "up"
+                    newOp = "up";
+                    _tk.CurSending = _tk.CurSending + Convert.ToUInt64(opName.Substring(2));
+                }
+            }
+            var tuple = OperationFactory.CreateOp(newOp, _tk);
             var obj = tuple.Item1;
             var type = tuple.Item2;
             dynamic op = Convert.ChangeType(obj, type);

@@ -47,7 +47,10 @@ function gen_single_html
 	fi
 
 	local cmd_prefix=$cmd_config_prefix
+	if [ -e $sigbench_config_dir/${cmd_prefix}_${bench_codec}_${bench_name}_${bench_type} ]
+	then
 	. $sigbench_config_dir/${cmd_prefix}_${bench_codec}_${bench_name}_${bench_type}
+	fi
 	export OnlineConnections=$connection
 	export ActiveConnections=$send
 	export ConcurrentConnection=$connection_concurrent
