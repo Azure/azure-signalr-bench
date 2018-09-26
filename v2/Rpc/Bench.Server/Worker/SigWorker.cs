@@ -46,6 +46,7 @@ namespace Bench.RpcSlave.Worker
                 {
                     // filter the following number after "up"
                     newOp = "up";
+                    _tk.CurSending = _tk.CurSending + Convert.ToUInt64(opName.Substring(2));
                 }
             }
             var tuple = OperationFactory.CreateOp(newOp, _tk);

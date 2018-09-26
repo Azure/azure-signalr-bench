@@ -72,6 +72,7 @@ namespace Bench.RpcSlave.Worker.Operations
                         var sendTimestamp = Convert.ToInt64(time);
                         var receiveSize = messageBlob != null ? messageBlob.Length * sizeof(byte) : 0;
                         _tk.Counters.CountLatency(sendTimestamp, receiveTimestamp);
+                        _tk.Counters.RecordSendingStep(_tk.CurSending);
                         _tk.Counters.SetServerCounter(((ulong) count));
                         _tk.Counters.IncreaseReceivedMessageSize((ulong) receiveSize);
                     }));

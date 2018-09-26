@@ -36,5 +36,7 @@ namespace Bench.RpcSlave.Worker
         // Tips: Every httpclient should set CookieContainer, then the HttpClients
         // request will be dispatched to every service pod in balanced way.
         public List<HttpClient> HttpClients { get; set; }
+        // accumulate "upXX" step's "XX" to help record "sendingStep"
+        public ulong CurSending { get; set; }
     }
 }
