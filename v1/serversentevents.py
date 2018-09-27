@@ -6,6 +6,10 @@ def ServerSentEventsEchoUnit1():
 pipeline:
 - createConn
 - startConn
+- up{baseline}
+- scenario
+- up{send}
+- scenario
 - up{send}
 - scenario
 - up{send}
@@ -13,7 +17,7 @@ pipeline:
 - up{send}
 - scenario
 - stopConn
-- disposeConn'''.format(send=80)
+- disposeConn'''.format(baseline=150,send=50)
    print(pipeline)
 
 def ServerSentEventsEchoUnit2():
@@ -22,7 +26,7 @@ def ServerSentEventsEchoUnit2():
 pipeline:
 - createConn
 - startConn
-- up{send}
+- up{baseline}
 - scenario
 - up{send}
 - scenario
@@ -33,7 +37,7 @@ pipeline:
 - up{send}
 - scenario
 - stopConn
-- disposeConn'''.format(send=80)
+- disposeConn'''.format(baseline=200,send=50)
    print(pipeline)
 
 def ServerSentEventsEchoUnit3():
@@ -42,7 +46,7 @@ def ServerSentEventsEchoUnit3():
 pipeline:
 - createConn
 - startConn
-- up{send}
+- up{baseline}
 - scenario
 - up{send}
 - scenario
@@ -53,7 +57,7 @@ pipeline:
 - up{send}
 - scenario
 - stopConn
-- disposeConn'''.format(send=80)
+- disposeConn'''.format(baseline=200,send=50)
    print(pipeline)
 
 def ServerSentEventsEchoUnit4():
@@ -62,7 +66,7 @@ def ServerSentEventsEchoUnit4():
 pipeline:
 - createConn
 - startConn
-- up{send}
+- up{baseline}
 - scenario
 - up{send}
 - scenario
@@ -73,7 +77,7 @@ pipeline:
 - up{send}
 - scenario
 - stopConn
-- disposeConn'''.format(send=80)
+- disposeConn'''.format(baseline=200,send=50)
    print(pipeline)
 
 def ServerSentEventsEchoUnit5():
@@ -82,7 +86,7 @@ def ServerSentEventsEchoUnit5():
 pipeline:
 - createConn
 - startConn
-- up{send}
+- up{baseline}
 - scenario
 - up{send}
 - scenario
@@ -93,7 +97,7 @@ pipeline:
 - up{send}
 - scenario
 - stopConn
-- disposeConn'''.format(send=80)
+- disposeConn'''.format(baseline=350,send=50)
    print(pipeline)
 
 def ServerSentEventsEchoUnit6():
@@ -102,7 +106,7 @@ def ServerSentEventsEchoUnit6():
 pipeline:
 - createConn
 - startConn
-- up{send}
+- up{baseline}
 - scenario
 - up{send}
 - scenario
@@ -119,7 +123,7 @@ pipeline:
 - up{send}
 - scenario
 - stopConn
-- disposeConn'''.format(send=160)
+- disposeConn'''.format(baseline=350,send=50)
    print(pipeline)
 
 def ServerSentEventsEchoUnit7():
@@ -128,7 +132,7 @@ def ServerSentEventsEchoUnit7():
 pipeline:
 - createConn
 - startConn
-- up{send}
+- up{baseline}
 - scenario
 - up{send}
 - scenario
@@ -145,7 +149,7 @@ pipeline:
 - up{send}
 - scenario
 - stopConn
-- disposeConn'''.format(send=160)
+- disposeConn'''.format(baseline=400,send=50)
    print(pipeline)
 
 def ServerSentEventsEchoUnit8():
@@ -154,7 +158,7 @@ def ServerSentEventsEchoUnit8():
 pipeline:
 - createConn
 - startConn
-- up{send}
+- up{baseline}
 - scenario
 - up{send}
 - scenario
@@ -171,7 +175,7 @@ pipeline:
 - up{send}
 - scenario
 - stopConn
-- disposeConn'''.format(send=160)
+- disposeConn'''.format(baseline=400,send=50)
    print(pipeline)
 
 def ServerSentEventsEchoUnit9():
@@ -180,7 +184,7 @@ def ServerSentEventsEchoUnit9():
 pipeline:
 - createConn
 - startConn
-- up{send}
+- up{baseline}
 - scenario
 - up{send}
 - scenario
@@ -197,7 +201,7 @@ pipeline:
 - up{send}
 - scenario
 - stopConn
-- disposeConn'''.format(send=160)
+- disposeConn'''.format(baseline=500,send=50)
    print(pipeline)
 
 def ServerSentEventsEchoUnit10():
@@ -206,7 +210,7 @@ def ServerSentEventsEchoUnit10():
 pipeline:
 - createConn
 - startConn
-- up{send}
+- up{baseline}
 - scenario
 - up{send}
 - scenario
@@ -223,5 +227,5 @@ pipeline:
 - up{send}
 - scenario
 - stopConn
-- disposeConn'''.format(send=160)
+- disposeConn'''.format(baseline=700,send=50)
    print(pipeline)

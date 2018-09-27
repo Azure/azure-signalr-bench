@@ -281,6 +281,10 @@ func main() {
                 v = monitors[len(monitors)-1]
                 if v.Counters.Sending != 0 {
                         var sumfloat float64
+                        sum = v.Counters.LT_100 + v.Counters.LT_200 + v.Counters.LT_300 +
+                              v.Counters.LT_400 + v.Counters.LT_500 + v.Counters.LT_600 +
+                              v.Counters.LT_700 + v.Counters.LT_800 + v.Counters.LT_900 +
+                              v.Counters.LT_1000 + v.Counters.GE_1000
                         sumfloat = float64(sum)
                         fmt.Printf("\t [%d, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f],\n", v.Counters.Sending, float64(v.Counters.LT_100)/sumfloat*100, float64(v.Counters.LT_200)/sumfloat*100,
                                 float64(v.Counters.LT_300)/sumfloat*100, float64(v.Counters.LT_400)/sumfloat*100,
@@ -386,6 +390,10 @@ func main() {
                 }
                 v = monitors[len(monitors)-1]
                 if v.Counters.Sending != 0 {
+                        sum = v.Counters.LT_100 + v.Counters.LT_200 + v.Counters.LT_300 +
+                              v.Counters.LT_400 + v.Counters.LT_500 + v.Counters.LT_600 +
+                              v.Counters.LT_700 + v.Counters.LT_800 + v.Counters.LT_900 +
+                              v.Counters.LT_1000 + v.Counters.GE_1000
                         var sumfloat float64
                         sumfloat = float64(sum)
 		        lt500 = v.Counters.LT_100 + v.Counters.LT_200 + v.Counters.LT_300 + v.Counters.LT_400 + v.Counters.LT_500

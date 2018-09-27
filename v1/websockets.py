@@ -6,6 +6,10 @@ def WebsocketsEchoUnit1():
 pipeline:
 - createConn
 - startConn
+- up{baseline}
+- scenario
+- up{send}
+- scenario
 - up{send}
 - scenario
 - up{send}
@@ -13,7 +17,7 @@ pipeline:
 - up{send}
 - scenario
 - stopConn
-- disposeConn'''.format(send=500)
+- disposeConn'''.format(baseline=1000,send=500)
    print(pipeline)
 
 def WebsocketsEchoUnit2():
@@ -22,6 +26,8 @@ def WebsocketsEchoUnit2():
 pipeline:
 - createConn
 - startConn
+- up{baseline}
+- scenario
 - up{send}
 - scenario
 - up{send}
@@ -31,7 +37,7 @@ pipeline:
 - up{send}
 - scenario
 - stopConn
-- disposeConn'''.format(send=500)
+- disposeConn'''.format(baseline=2000,send=500)
    print(pipeline)
 
 def WebsocketsEchoUnit3():
@@ -82,6 +88,10 @@ def WebsocketsEchoUnit5():
 pipeline:
 - createConn
 - startConn
+- up{baseline}
+- scenario
+- up{send}
+- scenario
 - up{send}
 - scenario
 - up{send}
@@ -91,7 +101,7 @@ pipeline:
 - up{send}
 - scenario
 - stopConn
-- disposeConn'''.format(send=2000)
+- disposeConn'''.format(baseline=5000,send=1000)
    print(pipeline)
 
 def WebsocketsEchoUnit6():
@@ -180,6 +190,8 @@ def WebsocketsEchoUnit10():
 pipeline:
 - createConn
 - startConn
+- up{baseline}
+- scenario
 - up{send}
 - scenario
 - up{send}
@@ -193,5 +205,29 @@ pipeline:
 - up{send}
 - scenario
 - stopConn
-- disposeConn'''.format(send=4000)
+- disposeConn'''.format(baseline=10000,send=2000)
+   print(pipeline)
+
+def WebsocketsEchoUnit20():
+   #print sys._getframe().f_code.co_name
+   pipeline = '''\
+pipeline:
+- createConn
+- startConn
+- up{baseline}
+- scenario
+- up{send}
+- scenario
+- up{send}
+- scenario
+- up{send}
+- scenario
+- up{send}
+- scenario
+- up{send}
+- scenario
+- up{send}
+- scenario
+- stopConn
+- disposeConn'''.format(baseline=20000,send=2000)
    print(pipeline)

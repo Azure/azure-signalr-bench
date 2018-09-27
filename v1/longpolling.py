@@ -13,7 +13,7 @@ pipeline:
 - up{send}
 - scenario
 - stopConn
-- disposeConn'''.format(send=80)
+- disposeConn'''.format(send=50)
    print(pipeline)
 
 def LongpollingEchoUnit2():
@@ -31,7 +31,7 @@ pipeline:
 - up{send}
 - scenario
 - stopConn
-- disposeConn'''.format(send=80)
+- disposeConn'''.format(send=50)
    print(pipeline)
 
 def LongpollingEchoUnit3():
@@ -51,7 +51,7 @@ pipeline:
 - up{send}
 - scenario
 - stopConn
-- disposeConn'''.format(send=80)
+- disposeConn'''.format(send=50)
    print(pipeline)
 
 def LongpollingEchoUnit4():
@@ -70,10 +70,8 @@ pipeline:
 - scenario
 - up{send}
 - scenario
-- up{send}
-- scenario
 - stopConn
-- disposeConn'''.format(send=80)
+- disposeConn'''.format(send=50)
    print(pipeline)
 
 def LongpollingEchoUnit5():
@@ -93,7 +91,7 @@ pipeline:
 - up{send}
 - scenario
 - stopConn
-- disposeConn'''.format(send=80)
+- disposeConn'''.format(send=50)
    print(pipeline)
 
 def LongpollingEchoUnit6():
@@ -115,7 +113,7 @@ pipeline:
 - up{send}
 - scenario
 - stopConn
-- disposeConn'''.format(send=80)
+- disposeConn'''.format(send=50)
    print(pipeline)
 
 def LongpollingEchoUnit7():
@@ -134,8 +132,10 @@ pipeline:
 - scenario
 - up{send}
 - scenario
+- up{send}
+- scenario
 - stopConn
-- disposeConn'''.format(send=80)
+- disposeConn'''.format(send=50)
    print(pipeline)
 
 def LongpollingEchoUnit8():
@@ -158,10 +158,8 @@ pipeline:
 - scenario
 - up{send}
 - scenario
-- up{send}
-- scenario
 - stopConn
-- disposeConn'''.format(send=80)
+- disposeConn'''.format(send=50)
    print(pipeline)
 
 def LongpollingEchoUnit9():
@@ -189,7 +187,7 @@ pipeline:
 - up{send}
 - scenario
 - stopConn
-- disposeConn'''.format(send=80)
+- disposeConn'''.format(send=50)
    print(pipeline)
 
 def LongpollingEchoUnit10():
@@ -211,5 +209,5 @@ pipeline:
 - up{send}
 - scenario
 - stopConn
-- disposeConn'''.format(send=80)
+- disposeConn'''.format(send=50)
    print(pipeline)

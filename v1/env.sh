@@ -1,5 +1,4 @@
 #!/bin/bash
-. ./config_env.sh # customized parameters
 
 bench_start_file=auto_start_sigbench.sh
 bench_stop_file=auto_stop_sigbench.sh
@@ -40,3 +39,5 @@ cmd_config_prefix="cmd_4"
 websocket_script_prefix=autorun_websocket
 cli_script_prefix=autorun_sigcli
 error_mark_file=error.mark
+
+. ./config_env.sh # customized parameters
