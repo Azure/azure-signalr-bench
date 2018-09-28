@@ -29,6 +29,7 @@ type Counters struct {
 	LT_1000     int64 `json:"message:lt:1000"`
 	GE_1000     int64 `json:"message:ge:1000"`
 	Sending     int64 `json:"sendingStep"`
+        ConnError   int64 `json:"connection:error"`
 }
 
 type Monitor struct {

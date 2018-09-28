@@ -1,6 +1,6 @@
 import sys
 
-def WebsocketsEchoUnit1():
+def websocketsechounit1():
    #print sys._getframe().f_code.co_name
    pipeline = '''\
 pipeline:
@@ -20,7 +20,7 @@ pipeline:
 - disposeConn'''.format(baseline=1000,send=500)
    print(pipeline)
 
-def WebsocketsEchoUnit2():
+def websocketsechounit2():
    #print sys._getframe().f_code.co_name
    pipeline = '''\
 pipeline:
@@ -40,7 +40,7 @@ pipeline:
 - disposeConn'''.format(baseline=2000,send=500)
    print(pipeline)
 
-def WebsocketsEchoUnit3():
+def websocketsechounit3():
    #print sys._getframe().f_code.co_name
    pipeline = '''\
 pipeline:
@@ -60,7 +60,7 @@ pipeline:
 - disposeConn'''.format(send=500)
    print(pipeline)
 
-def WebsocketsEchoUnit4():
+def websocketsechounit4():
    #print sys._getframe().f_code.co_name
    pipeline = '''\
 pipeline:
@@ -82,7 +82,7 @@ pipeline:
 - disposeConn'''.format(send=1000)
    print(pipeline)
 
-def WebsocketsEchoUnit5():
+def websocketsechounit5():
    #print sys._getframe().f_code.co_name
    pipeline = '''\
 pipeline:
@@ -104,7 +104,7 @@ pipeline:
 - disposeConn'''.format(baseline=5000,send=1000)
    print(pipeline)
 
-def WebsocketsEchoUnit6():
+def websocketsechounit6():
    #print sys._getframe().f_code.co_name
    pipeline = '''\
 pipeline:
@@ -122,7 +122,7 @@ pipeline:
 - disposeConn'''.format(send=2000)
    print(pipeline)
 
-def WebsocketsEchoUnit7():
+def websocketsechounit7():
    #print sys._getframe().f_code.co_name
    pipeline = '''\
 pipeline:
@@ -142,7 +142,7 @@ pipeline:
 - disposeConn'''.format(send=2000)
    print(pipeline)
 
-def WebsocketsEchoUnit8():
+def websocketsechounit8():
    #print sys._getframe().f_code.co_name
    pipeline = '''\
 pipeline:
@@ -164,7 +164,7 @@ pipeline:
 - disposeConn'''.format(send=2000)
    print(pipeline)
 
-def WebsocketsEchoUnit9():
+def websocketsechounit9():
    #print sys._getframe().f_code.co_name
    pipeline = '''\
 pipeline:
@@ -184,7 +184,7 @@ pipeline:
 - disposeConn'''.format(send=4000)
    print(pipeline)
 
-def WebsocketsEchoUnit10():
+def websocketsechounit10():
    #print sys._getframe().f_code.co_name
    pipeline = '''\
 pipeline:
@@ -208,7 +208,7 @@ pipeline:
 - disposeConn'''.format(baseline=10000,send=2000)
    print(pipeline)
 
-def WebsocketsEchoUnit20():
+def websocketsechounit20():
    #print sys._getframe().f_code.co_name
    pipeline = '''\
 pipeline:
