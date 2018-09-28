@@ -119,8 +119,5 @@ namespace JenkinsScript
 
         [Option("Regular", Required = false, HelpText = "")]
         public bool Regular { get; set; }
-
-        [Option("Timestamp", Default = "", Required = false, HelpText = "")]
-        public string Timestamp { get; set; }
     }
 }

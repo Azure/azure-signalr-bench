@@ -308,7 +308,6 @@ namespace JenkinsScript
                         var resultFolder = $"/home/{user}/signalr-bench-statistics-{statisticsSuffix}/results/";
                         var statisticCustomizedFolder = Environment.GetEnvironmentVariable("env_statistic_folder");
                         var resultCustomizedFolder = Environment.GetEnvironmentVariable("env_result_folder");
-                        var timestamp = argsOption.Timestamp;
 
                         // prepare result directory for regular test
                         var collector = new StatisticsCollector(argsOption.Parent, argsOption.Root, argsOption.Scenario);
