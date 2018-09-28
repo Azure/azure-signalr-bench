@@ -1,6 +1,6 @@
 import sys
 
-def ServerSentEventsEchoUnit1():
+def serversenteventsechounit1():
    #print sys._getframe().f_code.co_name
    pipeline = '''\
 pipeline:
@@ -20,7 +20,7 @@ pipeline:
 - disposeConn'''.format(baseline=150,send=50)
    print(pipeline)
 
-def ServerSentEventsEchoUnit2():
+def serversenteventsechounit2():
    #print sys._getframe().f_code.co_name
    pipeline = '''\
 pipeline:
@@ -40,7 +40,7 @@ pipeline:
 - disposeConn'''.format(baseline=200,send=50)
    print(pipeline)
 
-def ServerSentEventsEchoUnit3():
+def serversenteventsechounit3():
    #print sys._getframe().f_code.co_name
    pipeline = '''\
 pipeline:
@@ -60,7 +60,7 @@ pipeline:
 - disposeConn'''.format(baseline=200,send=50)
    print(pipeline)
 
-def ServerSentEventsEchoUnit4():
+def serversenteventsechounit4():
    #print sys._getframe().f_code.co_name
    pipeline = '''\
 pipeline:
@@ -80,7 +80,7 @@ pipeline:
 - disposeConn'''.format(baseline=200,send=50)
    print(pipeline)
 
-def ServerSentEventsEchoUnit5():
+def serversenteventsechounit5():
    #print sys._getframe().f_code.co_name
    pipeline = '''\
 pipeline:
@@ -100,7 +100,7 @@ pipeline:
 - disposeConn'''.format(baseline=350,send=50)
    print(pipeline)
 
-def ServerSentEventsEchoUnit6():
+def serversenteventsechounit6():
    #print sys._getframe().f_code.co_name
    pipeline = '''\
 pipeline:
@@ -126,7 +126,7 @@ pipeline:
 - disposeConn'''.format(baseline=350,send=50)
    print(pipeline)
 
-def ServerSentEventsEchoUnit7():
+def serversenteventsechounit7():
    #print sys._getframe().f_code.co_name
    pipeline = '''\
 pipeline:
@@ -152,7 +152,7 @@ pipeline:
 - disposeConn'''.format(baseline=400,send=50)
    print(pipeline)
 
-def ServerSentEventsEchoUnit8():
+def serversenteventsechounit8():
    #print sys._getframe().f_code.co_name
    pipeline = '''\
 pipeline:
@@ -178,7 +178,7 @@ pipeline:
 - disposeConn'''.format(baseline=400,send=50)
    print(pipeline)
 
-def ServerSentEventsEchoUnit9():
+def serversenteventsechounit9():
    #print sys._getframe().f_code.co_name
    pipeline = '''\
 pipeline:
@@ -204,7 +204,7 @@ pipeline:
 - disposeConn'''.format(baseline=500,send=50)
    print(pipeline)
 
-def ServerSentEventsEchoUnit10():
+def serversenteventsechounit10():
    #print sys._getframe().f_code.co_name
    pipeline = '''\
 pipeline:
