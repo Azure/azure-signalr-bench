@@ -411,9 +411,9 @@ namespace JenkinsScript
                         if (argsOption.Regular)
                         {
                             // collect all logs
-                            ShellHelper.CollectStatistics(hosts, user, password, sshPort, $"/home/{user}/logs/{resultRoot}/{timestamp}/*.txt", Util.MakeSureDirectoryExist(logFolder));
+                            ShellHelper.CollectStatistics(hosts, user, password, sshPort, $"/home/{user}/logs/{resultRoot}/*.txt", Util.MakeSureDirectoryExist(logFolder));
                             // collect results from master
-                            ShellHelper.CollectStatistics(privateIps.MasterPrivateIp.Split(";").ToList(), user, password, sshPort, $"/home/{user}/results/{resultRoot}/{timestamp}/*.txt", Util.MakeSureDirectoryExist(resultFolder));
+                            ShellHelper.CollectStatistics(privateIps.MasterPrivateIp.Split(";").ToList(), user, password, sshPort, $"/home/{user}/results/{resultRoot}/*.txt", Util.MakeSureDirectoryExist(resultFolder));
                         }
                         else
                         {
