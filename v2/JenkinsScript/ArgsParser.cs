@@ -105,5 +105,22 @@ namespace JenkinsScript
 
         [Option("stopSendIfLatencyBig", Default = "false", Required = false, HelpText = "Stop sending steps if there are more than 1% message whose latency greater than 1000ms")]
         public string StopSendIfLatencyBig { get; set; }
+
+        // result folder
+
+        [Option("Parent", Default = "", Required = false, HelpText = "")]
+        public string Parent { get; set; }
+
+        [Option("Root", Default = "", Required = false, HelpText = "")]
+        public string Root { get; set; }
+
+        [Option("Scenario", Default = "", Required = false, HelpText = "")]
+        public string Scenario { get; set; }
+
+        [Option("Regular", Required = false, HelpText = "")]
+        public bool Regular { get; set; }
+
+        [Option("Timestamp", Default = "", Required = false, HelpText = "")]
+        public string Timestamp { get; set; }
     }
 }
