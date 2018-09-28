@@ -37,6 +37,8 @@ namespace Bench.RpcMaster
         private static readonly SemaphoreSlim _writeLock = new SemaphoreSlim(1);
         // if there is > 1% message whose latency is greater than 1s, we may inform slaves to stop
         private static bool _ge1000msGT1Percent = false;
+        // if there is > 0.1% error, we may stop sending
+        private static bool _errRateGTPoint1Percent = false;
 
         public static async Task Main(string[] args)
         {
@@ -91,8 +93,10 @@ namespace Bench.RpcMaster
                 }
                 // process jobs for each step
                 await ProcessPipeline(clients, argsOption.PipeLine, slaveList,
-                    argsOption.Connections, argsOption.ServiceType, argsOption.TransportType, argsOption.HubProtocal, argsOption.Scenario, argsOption.MessageSize,
-                    argsOption.groupNum, argsOption.groupOverlap, serverCount, argsOption.SendToFixedClient, argsOption.EnableGroupJoinLeave, argsOption.StopSendIfLatencyBig);
+                    argsOption.Connections, argsOption.ServiceType, argsOption.TransportType,
+                    argsOption.HubProtocal, argsOption.Scenario, argsOption.MessageSize,
+                    argsOption.groupNum, argsOption.groupOverlap, serverCount, argsOption.SendToFixedClient,
+                    argsOption.EnableGroupJoinLeave, argsOption.StopSendIfLatencyBig, argsOption.StopSendIfErrorBig);
             }
             catch (Exception ex)
             {
@@ -371,6 +375,8 @@ namespace Bench.RpcMaster
                 }
                 allClientCounters.TryGetValue("message:ge:1000", out var ge1000ms);
                 _ge1000msGT1Percent = (ge1000ms * 100 > received);
+                allClientCounters.TryGetValue("connection:error", out var connectionError);
+                _errRateGTPoint1Percent = (connectionError * 1000 > received);
                 jobj.Add("message:received", received);
                 _counters = Util.Sort(jobj);
                 var finalRec = new JObject
@@ -563,7 +569,7 @@ namespace Bench.RpcMaster
         private static async Task ProcessPipeline(List<RpcService.RpcServiceClient> clients, string pipelineStr, List<string> slaveList, int connections,
             string serviceType, string transportType, string hubProtocol, string scenario, string messageSize,
             int groupNum, int overlap, int serverCount, string sendToFixedClient, bool enableGroupJoinLeave,
-            string stopIfLatencyIsBig)
+            string stopIfLatencyIsBig, string stopSendIfErrorBig)
         {
             // var connections = argsOption.Connections;
             // var serviceType = argsOption.ServiceType;
@@ -587,6 +593,7 @@ namespace Bench.RpcMaster
             var joinLeavePerGroupList = Enumerable.Repeat(false, connections).ToList();
             var sendGroupList = Enumerable.Repeat(false, groupNum).ToList();
             var stopIfLatencyBig = bool.Parse(stopIfLatencyIsBig);
+            var stopIfErrorBig = bool.Parse(stopSendIfErrorBig);
             // var serverUrls = serverCount;
             for (var i = 0; i < pipeline.Count; i++)
             {
@@ -601,6 +608,18 @@ namespace Bench.RpcMaster
                     if (step.Substring(0, 2) == "up")
                     {
                         Util.Log($"Stop the sending steps since there are too many messages whose latency is larger than 1s!");
+                        // skip "upxxxx" step
+                        i++;
+                        // skip the immediate following "scenario" step,
+                        // as a result, all "upxxx;scenario" steps were skipped.
+                        continue;
+                    }
+                }
+                if (stopIfErrorBig && _errRateGTPoint1Percent)
+                {
+                    if (step.Substring(0, 2) == "up")
+                    {
+                        Util.Log($"Stop the sending steps since there are too many errors (error rate > 0.1%)!");
                         // skip "upxxxx" step
                         i++;
                         // skip the immediate following "scenario" step,
