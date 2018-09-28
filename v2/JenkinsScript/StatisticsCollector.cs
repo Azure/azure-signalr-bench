@@ -10,12 +10,21 @@ namespace JenkinsScript
         private string _logDirName = Constants.ResultDirectoryLog;
         private string _machineDirName = Constants.ResultDirectoryMachine;
         private string _configDirName = Constants.ResultDirectoryConfig;
+        private string _resultDirName = Constants.ResultDirectoryResult;
 
         public string LogDirPath
         {
             get
             {
                 return Path.Combine(_parent, _root, _scenario, _logDirName);
+            }
+        }
+
+        public string ResultDirPath
+        {
+            get
+            {
+                return Path.Combine(_parent, _root, _scenario, _resultDirName);
             }
         }
 
@@ -67,6 +76,11 @@ namespace JenkinsScript
             ShellHelper.ScpDirecotryRemoteToLocal(username, hostname, password, remote, local);
         }
 
+        public void CollectConfig(string src)
+        {
+            CreateDirectory(ConfigDirPath);
+            File.Copy(src, ConfigDirPath, true);
+        }
     }
 
 }

@@ -5,6 +5,7 @@ namespace JenkinsScript
         public const string ResultDirectoryLog = "log";
         public const string ResultDirectoryConfig = "config";
         public const string ResultDirectoryMachine = "machine";
+        public const string ResultDirectoryResult = "result";
     }
 
 }

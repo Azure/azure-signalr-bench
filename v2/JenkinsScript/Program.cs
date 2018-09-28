@@ -317,7 +317,7 @@ namespace JenkinsScript
                             collector.PrepareDirectory();
                             statisticFolder = collector.MachineDirPath;
                             logFolder = collector.LogDirPath;
-                            resultFolder = collector.ConfigDirPath;
+                            resultFolder = collector.ResultDirPath;
                         }
 
                         if (!string.IsNullOrEmpty(statisticCustomizedFolder))
@@ -409,6 +409,8 @@ namespace JenkinsScript
                             ShellHelper.CollectStatistics(hosts, user, password, sshPort, $"/home/{user}/logs/{resultRoot}/*.txt", Util.MakeSureDirectoryExist(logFolder));
                             // collect results from master
                             ShellHelper.CollectStatistics(privateIps.MasterPrivateIp.Split(";").ToList(), user, password, sshPort, $"/home/{user}/results/{resultRoot}/{masterSuffix}/*.txt", Util.MakeSureDirectoryExist(resultFolder));
+                            // copy job config file
+                            collector.CollectConfig(argsOption.JobConfigFileV2);
                         }
                         else
                         {
