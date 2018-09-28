@@ -396,7 +396,7 @@ namespace JenkinsScript
                             user, password, sshPort, logPathMaster, serviceType, transportType, hubProtocol, scenario,
                             connection, concurrentConnection, duration, interval, pipeline, groupNum, overlap, messageSize,
                             serverUrl, suffix, masterRoot, sendToFixedClient, enableGroupJoinLeave,
-                            bool.Parse(argsOption.StopSendIfLatencyBig), bool.Parse(argsOption.StopSendIfErrorBig));
+                            bool.Parse(argsOption.StopSendIfLatencyBig), bool.Parse(argsOption.StopSendIfConnectionErrorBig));
 
                         // collect all logs
                         ShellHelper.CollectStatistics(hosts, user, password, sshPort, $"/home/{user}/logs/{resultRoot}/", Util.MakeSureDirectoryExist(logFolder));
