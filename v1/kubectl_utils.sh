@@ -506,7 +506,7 @@ function patch_and_wait() {
 function get_nginx_pod() {
   local res=$1
   local ns=$2
-  local config=kubeconfig.southeastasia.json
+  local config=kubeconfig_srdevacsseasiac.json
   local appId=`kubectl get deploy -o=json --namespace=${ns} --selector resourceName=${res} --kubeconfig=${config}|jq '.items[0].spec.selector.matchLabels.app'|tr -d '"'`
   local len=`kubectl get pod -o=json --namespace=${ns} --selector app=${appId} --kubeconfig=${config}|jq '.items|length'`
   local i=0
@@ -521,7 +521,7 @@ function track_nginx_top() {
   local res=$1
   local ns=$2
   local output_dir=$3
-  local config_file=kubeconfig.southeastasia.json
+  local config_file=kubeconfig_srdevacsseasiac.json
   local result=$(get_nginx_pod $res $ns)
   while [ 1 ]
   do
@@ -539,7 +539,7 @@ function get_nginx_log() {
   local res=$1
   local ns=$2
   local outdir=$3
-  local config_file=kubeconfig.southeastasia.json
+  local config_file=kubeconfig_srdevacsseasiac.json
   local result=$(get_nginx_pod $res $ns)
   for i in $result
   do
@@ -550,7 +550,7 @@ function get_nginx_log() {
 function delete_all_nginx_pods() {
   local res=$1
   local ns=$2
-  local config_file=kubeconfig.southeastasia.json
+  local config_file=kubeconfig_srdevacsseasiac.json
   local result=$(get_nginx_pod $res $ns)
   for i in $result
   do

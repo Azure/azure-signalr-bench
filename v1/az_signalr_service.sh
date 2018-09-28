@@ -87,7 +87,7 @@ function check_signalr_service_dns()
   local end=$((SECONDS + 120))
   while [ $SECONDS -lt $end ]
   do
-    dig $hostname # check the detail reason if nslookup fails
+    #dig $hostname # check the detail reason if nslookup fails
     nslookupdata=`nslookup $hostname|grep "Address:"|grep "$externalIp"`
     if [ "$nslookupdata" != "" ]
     then
