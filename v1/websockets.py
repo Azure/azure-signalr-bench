@@ -1,116 +1,79 @@
 import sys
 
-def websocketsechounit1():
+def websocketsechounit1(duration):
    #print sys._getframe().f_code.co_name
+   connection=1500
+   concurrentConnection=500
+   baseSend=1000
+   stepSend=500
    pipeline = '''\
+connection: {connection}
+concurrentConnection: {concurrentConnection}
+duration: {duration}
+interval: 1
 pipeline:
 - createConn
 - startConn
-- up{baseline}
-- scenario
-- up{send}
-- scenario
-- up{send}
-- scenario
-- up{send}
+- up{baseSend}
 - scenario
 - up{send}
 - scenario
 - stopConn
-- disposeConn'''.format(baseline=1000,send=500)
-   print(pipeline)
+- disposeConn'''.format(connection=connection,
+	concurrentConnection=concurrentConnection,
+	duration=duration,baseSend=baseSend,send=stepSend)
+   return pipeline
 
-def websocketsechounit2():
+def websocketsechounit2(duration):
    #print sys._getframe().f_code.co_name
+   connection=3000
+   concurrentConnection=500
+   baseSend=2000
+   stepSend=500
    pipeline = '''\
+connection: {connection}
+concurrentConnection: {concurrentConnection}
+duration: {duration}
+interval: 1
 pipeline:
 - createConn
 - startConn
-- up{baseline}
-- scenario
-- up{send}
-- scenario
-- up{send}
+- up{baseSend}
 - scenario
 - up{send}
 - scenario
 - up{send}
 - scenario
 - stopConn
-- disposeConn'''.format(baseline=2000,send=500)
-   print(pipeline)
+- disposeConn'''.format(connection=connection,
+	concurrentConnection=concurrentConnection,
+	duration=duration,baseSend=baseSend,send=stepSend)
+   return(pipeline)
 
-def websocketsechounit3():
+def websocketsechounit3(duration):
    #print sys._getframe().f_code.co_name
-   pipeline = '''\
-pipeline:
-- createConn
-- startConn
-- up{send}
-- scenario
-- up{send}
-- scenario
-- up{send}
-- scenario
-- up{send}
-- scenario
-- up{send}
-- scenario
-- stopConn
-- disposeConn'''.format(send=500)
-   print(pipeline)
+   raise ValueError('function {func} has not implemented'.format(func=sys._getframe().f_code.co_name))
 
-def websocketsechounit4():
+def websocketsechounit4(duration):
    #print sys._getframe().f_code.co_name
-   pipeline = '''\
-pipeline:
-- createConn
-- startConn
-- up{send}
-- scenario
-- up{send}
-- scenario
-- up{send}
-- scenario
-- up{send}
-- scenario
-- up{send}
-- scenario
-- up{send}
-- scenario
-- stopConn
-- disposeConn'''.format(send=1000)
-   print(pipeline)
+   raise ValueError('function {func} has not implemented'.format(func=sys._getframe().f_code.co_name))
 
-def websocketsechounit5():
-   #print sys._getframe().f_code.co_name
-   pipeline = '''\
-pipeline:
-- createConn
-- startConn
-- up{baseline}
-- scenario
-- up{send}
-- scenario
-- up{send}
-- scenario
-- up{send}
-- scenario
-- up{send}
-- scenario
-- up{send}
-- scenario
-- stopConn
-- disposeConn'''.format(baseline=5000,send=1000)
-   print(pipeline)
 
-def websocketsechounit6():
+def websocketsechounit5(duration):
    #print sys._getframe().f_code.co_name
+   connection=7500
+   concurrentConnection=500
+   baseSend=4500
+   stepSend=1000
    pipeline = '''\
+connection: {connection}
+concurrentConnection: {concurrentConnection}
+duration: {duration}
+interval: 1
 pipeline:
 - createConn
 - startConn
-- up{send}
+- up{baseSend}
 - scenario
 - up{send}
 - scenario
@@ -119,104 +82,69 @@ pipeline:
 - up{send}
 - scenario
 - stopConn
-- disposeConn'''.format(send=2000)
-   print(pipeline)
+- disposeConn'''.format(connection=connection,
+	concurrentConnection=concurrentConnection,
+	duration=duration,baseSend=baseSend,send=stepSend)
+   return(pipeline)
+   
 
-def websocketsechounit7():
+def websocketsechounit6(duration):
    #print sys._getframe().f_code.co_name
-   pipeline = '''\
-pipeline:
-- createConn
-- startConn
-- up{send}
-- scenario
-- up{send}
-- scenario
-- up{send}
-- scenario
-- up{send}
-- scenario
-- up{send}
-- scenario
-- stopConn
-- disposeConn'''.format(send=2000)
-   print(pipeline)
+   raise ValueError('function {func} has not implemented'.format(func=sys._getframe().f_code.co_name))
 
-def websocketsechounit8():
+def websocketsechounit7(duration):
    #print sys._getframe().f_code.co_name
-   pipeline = '''\
-pipeline:
-- createConn
-- startConn
-- up{send}
-- scenario
-- up{send}
-- scenario
-- up{send}
-- scenario
-- up{send}
-- scenario
-- up{send}
-- scenario
-- up{send}
-- scenario
-- stopConn
-- disposeConn'''.format(send=2000)
-   print(pipeline)
+   raise ValueError('function {func} has not implemented'.format(func=sys._getframe().f_code.co_name))
 
-def websocketsechounit9():
+def websocketsechounit8(duration):
    #print sys._getframe().f_code.co_name
-   pipeline = '''\
-pipeline:
-- createConn
-- startConn
-- up{send}
-- scenario
-- up{send}
-- scenario
-- up{send}
-- scenario
-- up{send}
-- scenario
-- up{send}
-- scenario
-- stopConn
-- disposeConn'''.format(send=4000)
-   print(pipeline)
+   raise ValueError('function {func} has not implemented'.format(func=sys._getframe().f_code.co_name))
 
-def websocketsechounit10():
+def websocketsechounit9(duration):
    #print sys._getframe().f_code.co_name
-   pipeline = '''\
-pipeline:
-- createConn
-- startConn
-- up{baseline}
-- scenario
-- up{send}
-- scenario
-- up{send}
-- scenario
-- up{send}
-- scenario
-- up{send}
-- scenario
-- up{send}
-- scenario
-- up{send}
-- scenario
-- stopConn
-- disposeConn'''.format(baseline=10000,send=2000)
-   print(pipeline)
+   raise ValueError('function {func} has not implemented'.format(func=sys._getframe().f_code.co_name))
 
-def websocketsechounit20():
+def websocketsechounit10(duration):
    #print sys._getframe().f_code.co_name
+   connection=15000
+   concurrentConnection=500
+   baseSend=5000
+   stepSend=5000
    pipeline = '''\
+connection: {connection}
+concurrentConnection: {concurrentConnection}
+duration: {duration}
+interval: 1
 pipeline:
 - createConn
 - startConn
-- up{baseline}
+- up{baseSend}
 - scenario
 - up{send}
+- scenario
+- up{send}
+- scenario
+- stopConn
+- disposeConn'''.format(connection=connection,
+	concurrentConnection=concurrentConnection,
+	duration=duration,baseSend=baseSend,send=stepSend)
+   return(pipeline)
+
+def websocketsechounit20(duration):
+   #print sys._getframe().f_code.co_name
+   connection=30000
+   concurrentConnection=500
+   baseSend=5000
+   stepSend=5000
+   pipeline = '''\
+connection: {connection}
+concurrentConnection: {concurrentConnection}
+duration: {duration}
+interval: 1
+pipeline:
+- createConn
+- startConn
+- up{baseSend}
 - scenario
 - up{send}
 - scenario
@@ -229,5 +157,7 @@ pipeline:
 - up{send}
 - scenario
 - stopConn
-- disposeConn'''.format(baseline=20000,send=2000)
-   print(pipeline)
+- disposeConn'''.format(connection=connection,
+	concurrentConnection=concurrentConnection,
+	duration=duration,baseSend=baseSend,send=stepSend)
+   return(pipeline)
