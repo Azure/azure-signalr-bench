@@ -1,8 +1,25 @@
 import sys
 
+longpolling_connection={1:500, 2:1000, 5:2500, 10:5000, 20:10000}
+
+def longpollingechounit1_connection():
+   return longpolling_connection[1]
+
+def longpollingechounit2_connection():
+   return longpolling_connection[2]
+
+def longpollingechounit5_connection():
+   return longpolling_connection[5]
+
+def longpollingechounit10_connection():
+   return longpolling_connection[10]
+
+def longpollingechounit20_connection():
+   return longpolling_connection[20]
+
 def longpollingechounit1(duration):
    #print sys._getframe().f_code.co_name
-   connection=500
+   connection=longpolling_connection[1]
    concurrentConnection=100
    baseSend=100
    stepSend=50
@@ -34,7 +51,7 @@ pipeline:
 
 def longpollingechounit2(duration):
    #print sys._getframe().f_code.co_name
-   connection=1000
+   connection=longpolling_connection[2]
    concurrentConnection=100
    baseSend=100
    stepSend=50
@@ -73,7 +90,7 @@ def longpollingechounit4(duration):
    raise ValueError('function {func} has not implemented'.format(func=sys._getframe().f_code.co_name))
 
 def longpollingechounit5(duration):
-   connection=2500
+   connection=longpolling_connection[5]
    concurrentConnection=500
    baseSend=100
    stepSend=100
@@ -121,7 +138,7 @@ def longpollingechounit9(duration):
 
 def longpollingechounit10(duration):
    #print sys._getframe().f_code.co_name
-   connection=5000
+   connection=longpolling_connection[10]
    concurrentConnection=500
    baseSend=100
    stepSend=100
@@ -153,7 +170,7 @@ pipeline:
 
 def longpollingechounit20(duration):
    #print sys._getframe().f_code.co_name
-   connection=10000
+   connection=longpolling_connection[20]
    concurrentConnection=500
    baseSend=100
    stepSend=100
