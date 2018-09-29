@@ -9,9 +9,9 @@ if __name__=="__main__":
       print("<transport> <scenario> <unit> <duration> or")
       print("<transport> <scenario> <unit>")
       exit(0)
-   transport=sys.argv[1]
-   scenario=sys.argv[2]
-   unit=sys.argv[3]
+   transport=sys.argv[1].lower()
+   scenario=sys.argv[2].lower()
+   unit=sys.argv[3].lower()
    func = transport+scenario+unit
    if (len(sys.argv) == 5):
       duration=sys.argv[4]
