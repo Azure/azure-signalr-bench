@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package Microsoft.Azure.SignalR.Benchmark.Rpc;
+
+service MessageBroker {
+	rpc Test(String) returns (String) {}
+}
+
+message String {
+	string _ = 1;
+}
