@@ -1,6 +1,7 @@
 import sys
 
-websockets_connection={1:1500, 2:3000, 5:7500, 10:15000, 20:30000}
+websockets_connection={1:1000, 2:2000, 5:5000, 10:10000, 20:20000, 50:50000, 100:100000}
+websockets_concurrentConnection={1:200, 2:200, 5:200, 10:200, 20:200, 50:200, 100:200}
 
 def websocketsechounit1_connection():
    return websockets_connection[1]
@@ -17,11 +18,17 @@ def websocketsechounit10_connection():
 def websocketsechounit20_connection():
    return websockets_connection[20]
 
+def websocketsechounit50_connection():
+   return websockets_connection[50]
+
+def websocketsechounit100_connection():
+   return websockets_connection[100]
+
 def websocketsechounit1(duration):
    #print sys._getframe().f_code.co_name
    connection=websockets_connection[1]
-   concurrentConnection=500
-   baseSend=1000
+   concurrentConnection=websockets_concurrentConnection[1]
+   baseSend=websockets_connection[1]
    stepSend=500
    pipeline = '''\
 connection: {connection}
@@ -32,8 +39,6 @@ pipeline:
 - createConn
 - startConn
 - up{baseSend}
-- scenario
-- up{send}
 - scenario
 - stopConn
 - disposeConn'''.format(connection=connection,
@@ -44,8 +49,8 @@ pipeline:
 def websocketsechounit2(duration):
    #print sys._getframe().f_code.co_name
    connection=websockets_connection[2]
-   concurrentConnection=500
-   baseSend=2000
+   concurrentConnection=websockets_concurrentConnection[2]
+   baseSend=websockets_connection[2]
    stepSend=500
    pipeline = '''\
 connection: {connection}
@@ -56,10 +61,6 @@ pipeline:
 - createConn
 - startConn
 - up{baseSend}
-- scenario
-- up{send}
-- scenario
-- up{send}
 - scenario
 - stopConn
 - disposeConn'''.format(connection=connection,
@@ -79,8 +80,8 @@ def websocketsechounit4(duration):
 def websocketsechounit5(duration):
    #print sys._getframe().f_code.co_name
    connection=websockets_connection[5]
-   concurrentConnection=500
-   baseSend=4500
+   concurrentConnection=websockets_concurrentConnection[5]
+   baseSend=websockets_connection[5]
    stepSend=1000
    pipeline = '''\
 connection: {connection}
@@ -91,12 +92,6 @@ pipeline:
 - createConn
 - startConn
 - up{baseSend}
-- scenario
-- up{send}
-- scenario
-- up{send}
-- scenario
-- up{send}
 - scenario
 - stopConn
 - disposeConn'''.format(connection=connection,
@@ -124,9 +119,9 @@ def websocketsechounit9(duration):
 def websocketsechounit10(duration):
    #print sys._getframe().f_code.co_name
    connection=websockets_connection[10]
-   concurrentConnection=500
-   baseSend=5000
-   stepSend=5000
+   concurrentConnection=websockets_concurrentConnection[10]
+   baseSend=websockets_connection[10] / 2
+   stepSend=websockets_connection[10] / 2
    pipeline = '''\
 connection: {connection}
 concurrentConnection: {concurrentConnection}
@@ -136,8 +131,6 @@ pipeline:
 - createConn
 - startConn
 - up{baseSend}
-- scenario
-- up{send}
 - scenario
 - up{send}
 - scenario
@@ -150,9 +143,9 @@ pipeline:
 def websocketsechounit20(duration):
    #print sys._getframe().f_code.co_name
    connection=websockets_connection[20]
-   concurrentConnection=500
-   baseSend=5000
-   stepSend=5000
+   concurrentConnection=websockets_concurrentConnection[20]
+   baseSend=websockets_connection[20] / 4
+   stepSend=websockets_connection[20] / 4
    pipeline = '''\
 connection: {connection}
 concurrentConnection: {concurrentConnection}
@@ -162,10 +155,6 @@ pipeline:
 - createConn
 - startConn
 - up{baseSend}
-- scenario
-- up{send}
-- scenario
-- up{send}
 - scenario
 - up{send}
 - scenario
