@@ -1,6 +1,7 @@
 import sys
 import websocketsecho
 import websocketsbroadcast
+import websocketssendgroup
 import longpollingecho
 import serversenteventsecho
 
