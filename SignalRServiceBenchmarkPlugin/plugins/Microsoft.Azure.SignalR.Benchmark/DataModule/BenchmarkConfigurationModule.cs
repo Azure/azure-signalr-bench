@@ -8,14 +8,19 @@ namespace Microsoft.Azure.SignalR.Benchmark.DataModule
 {
     public class BenchmarkConfigurationModule
     {
-        private static readonly string ModuleName = "ModuleName";
-        private static readonly string Pipeline = "Pipeline";
-        private static readonly string Types = "Types";
+        private static readonly string ModuleNameKey = "ModuleName";
+        private static readonly string PipelineKey = "Pipeline";
+        private static readonly string TypesKey = "Types";
 
         private IValidator _validator;
 
-        private string _moduleName;
+        public string ModuleName { get; set; }
         private IList<string> _types;
+
+        public BenchmarkConfigurationModule()
+        {
+        }
+
         //List<StepConfigurationModule> _pipeline;
 
         public BenchmarkConfigurationModule(IValidator validator)
@@ -37,7 +42,7 @@ namespace Microsoft.Azure.SignalR.Benchmark.DataModule
             var success = _validator.Validate(mapping);
 
             // Parse the stream
-            _moduleName = (mapping.Children[new YamlScalarNode(ModuleName)] as YamlScalarNode).Value;
+            ModuleName = (mapping.Children[new YamlScalarNode(ModuleNameKey)] as YamlScalarNode).Value;
             //var pipeline = (YamlSequenceNode)mapping.Children[new YamlSequenceNode(Pipeline)];
 
         }
