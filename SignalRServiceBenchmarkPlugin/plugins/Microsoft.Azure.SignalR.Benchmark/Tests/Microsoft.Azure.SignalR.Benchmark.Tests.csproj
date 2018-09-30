@@ -13,4 +13,11 @@
     <DotNetCliToolReference Include="dotnet-xunit" Version="2.3.1" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Common\Microsoft.Azure.SignalR.Benchmark.Common.csproj" />
+    <ProjectReference Include="..\Master\Microsoft.Azure.SignalR.Benchmark.Master.csproj" />
+    <ProjectReference Include="..\DataModule\Microsoft.Azure.SignalR.Benchmark.DataModule.csproj" />
+    <ProjectReference Include="..\Slave\Microsoft.Azure.SignalR.Benchmark.Slave.csproj" />
+  </ItemGroup>
+
 </Project>
