@@ -167,3 +167,107 @@ pipeline:
 	concurrentConnection=concurrentConnection,
 	duration=duration,baseSend=baseSend,send=stepSend)
    return(pipeline)
+
+def websocketsechounit50(duration):
+   #print sys._getframe().f_code.co_name
+   connection=websockets_connection[50]
+   concurrentConnection=websockets_concurrentConnection[50]
+   baseSend=websockets_connection[50] / 10
+   stepSend=websockets_connection[50] / 10
+   pipeline = '''\
+connection: {connection}
+concurrentConnection: {concurrentConnection}
+duration: {duration}
+interval: 1
+pipeline:
+- createConn
+- startConn
+- up{baseSend}
+- scenario
+- up{send}
+- scenario
+- up{send}
+- scenario
+- up{send}
+- scenario
+- up{send}
+- scenario
+- up{send}
+- scenario
+- up{send}
+- scenario
+- up{send}
+- scenario
+- up{send}
+- scenario
+- up{send}
+- scenario
+- up{send}
+- scenario
+- stopConn
+- disposeConn'''.format(connection=connection,
+	concurrentConnection=concurrentConnection,
+	duration=duration,baseSend=baseSend,send=stepSend)
+   return(pipeline)
+
+def websocketsechounit100(duration):
+   #print sys._getframe().f_code.co_name
+   connection=websockets_connection[100]
+   concurrentConnection=websockets_concurrentConnection[100]
+   baseSend=websockets_connection[100] / 20
+   stepSend=websockets_connection[100] / 20
+   pipeline = '''\
+connection: {connection}
+concurrentConnection: {concurrentConnection}
+duration: {duration}
+interval: 1
+pipeline:
+- createConn
+- startConn
+- up{baseSend}
+- scenario
+- up{send}
+- scenario
+- up{send}
+- scenario
+- up{send}
+- scenario
+- up{send}
+- scenario
+- up{send}
+- scenario
+- up{send}
+- scenario
+- up{send}
+- scenario
+- up{send}
+- scenario
+- up{send}
+- scenario
+- up{send}
+- scenario
+- up{send}
+- scenario
+- up{send}
+- scenario
+- up{send}
+- scenario
+- up{send}
+- scenario
+- up{send}
+- scenario
+- up{send}
+- scenario
+- up{send}
+- scenario
+- up{send}
+- scenario
+- up{send}
+- scenario
+- up{send}
+- scenario
+- stopConn
+- disposeConn'''.format(connection=connection,
+	concurrentConnection=concurrentConnection,
+	duration=duration,baseSend=baseSend,send=stepSend)
+   return(pipeline)
