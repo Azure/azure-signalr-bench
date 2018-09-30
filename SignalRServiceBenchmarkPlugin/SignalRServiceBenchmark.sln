@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.27703.2000
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "framework", "framework", "{CDBF9EB3-6160-44BE-87D0-3147FC15AF9D}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "plugins", "plugins", "{66BE8163-E0A5-4328-B2BF-09D18EE54128}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Microsoft.Azure.SignalR.Benchmark", "Microsoft.Azure.SignalR.Benchmark", "{9506790C-32F6-4858-9BD0-03A0800E01B4}"
+	ProjectSection(SolutionItems) = preProject
+		plugins\Microsoft.Azure.SignalR.Benchmark\Microsoft.Azure.SignalR.Benchmark.Common\Microsoft.Azure.SignalR.Benchmark.Common.csproj = plugins\Microsoft.Azure.SignalR.Benchmark\Microsoft.Azure.SignalR.Benchmark.Common\Microsoft.Azure.SignalR.Benchmark.Common.csproj
+		plugins\Microsoft.Azure.SignalR.Benchmark\Microsoft.Azure.SignalR.Benchmark.Master\Microsoft.Azure.SignalR.Benchmark.Master.csproj = plugins\Microsoft.Azure.SignalR.Benchmark\Microsoft.Azure.SignalR.Benchmark.Master\Microsoft.Azure.SignalR.Benchmark.Master.csproj
+		plugins\Microsoft.Azure.SignalR.Benchmark\Microsoft.Azure.SignalR.Benchmark.Slave\Microsoft.Azure.SignalR.Benchmark.Slave.csproj = plugins\Microsoft.Azure.SignalR.Benchmark\Microsoft.Azure.SignalR.Benchmark.Slave\Microsoft.Azure.SignalR.Benchmark.Slave.csproj
+		plugins\Microsoft.Azure.SignalR.Benchmark\Microsoft.Azure.SignalR.Benchmark.Tests\Microsoft.Azure.SignalR.Benchmark.Tests.csproj = plugins\Microsoft.Azure.SignalR.Benchmark\Microsoft.Azure.SignalR.Benchmark.Tests\Microsoft.Azure.SignalR.Benchmark.Tests.csproj
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{9506790C-32F6-4858-9BD0-03A0800E01B4} = {66BE8163-E0A5-4328-B2BF-09D18EE54128}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {74F85124-663D-4290-9699-7FB524E07A8C}
+	EndGlobalSection
+EndGlobal
