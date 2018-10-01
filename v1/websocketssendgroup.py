@@ -53,7 +53,8 @@ pipeline:
 - stopConn
 - disposeConn'''.format(connection=connection,
 	concurrentConnection=concurrentConnection,
-	duration=duration,baseSend=baseSend,send=stepSend)
+	duration=duration,groupNum=group_number[1],
+	baseSend=baseSend,send=stepSend)
    return pipeline
 
 def websocketssendgroupunit2(duration):
@@ -67,15 +68,25 @@ connection: {connection}
 concurrentConnection: {concurrentConnection}
 duration: {duration}
 interval: 1
+groupNum: {groupNum}
+overlap: 1
+enableGroupJoinLeave: false
 pipeline:
 - createConn
 - startConn
+- joinGroup
 - up{baseSend}
 - scenario
+- up{stepSend}
+- scenario
+- up{stepSend}
+- scenario
+- leaveGroup
 - stopConn
 - disposeConn'''.format(connection=connection,
 	concurrentConnection=concurrentConnection,
-	duration=duration,baseSend=baseSend,send=stepSend)
+	duration=duration,groupNum=group_number[2],
+	baseSend=baseSend,send=stepSend)
    return(pipeline)
 
 def websocketssendgroupunit3(duration):
@@ -98,19 +109,25 @@ connection: {connection}
 concurrentConnection: {concurrentConnection}
 duration: {duration}
 interval: 1
+groupNum: {groupNum}
+overlap: 1
+enableGroupJoinLeave: false
 pipeline:
 - createConn
 - startConn
+- joinGroup
 - up{baseSend}
 - scenario
 - up{stepSend}
 - scenario
 - up{stepSend}
 - scenario
+- leaveGroup
 - stopConn
 - disposeConn'''.format(connection=connection,
 	concurrentConnection=concurrentConnection,
-	duration=duration,baseSend=baseSend,send=stepSend)
+	duration=duration,groupNum=group_number[5],
+	baseSend=baseSend,send=stepSend)
    return(pipeline)
    
 
@@ -141,15 +158,20 @@ connection: {connection}
 concurrentConnection: {concurrentConnection}
 duration: {duration}
 interval: 1
+groupNum: {groupNum}
+overlap: 1
+enableGroupJoinLeave: false
 pipeline:
 - createConn
 - startConn
+- joinGroup
 - up{baseSend}
 - scenario
 - up{send}
 - scenario
 - up{send}
 - scenario
+- leaveGroup
 - stopConn
 - disposeConn'''.format(connection=connection,
 	concurrentConnection=concurrentConnection,
