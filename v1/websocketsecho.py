@@ -24,6 +24,27 @@ def websocketsechounit50_connection():
 def websocketsechounit100_connection():
    return websockets_connection[100]
 
+def websocketsechounit1_concurrentConnection():
+   return websockets_concurrentConnection[1]
+
+def websocketsechounit2_concurrentConnection():
+   return websockets_concurrentConnection[2]
+
+def websocketsechounit5_concurrentConnection():
+   return websockets_concurrentConnection[5]
+
+def websocketsechounit10_concurrentConnection():
+   return websockets_concurrentConnection[10]
+
+def websocketsechounit20_concurrentConnection():
+   return websockets_concurrentConnection[20]
+
+def websocketsechounit50_concurrentConnection():
+   return websockets_concurrentConnection[50]
+
+def websocketsechounit100_concurrentConnection():
+   return websockets_concurrentConnection[100]
+
 def websocketsechounit1(duration):
    #print sys._getframe().f_code.co_name
    connection=websockets_connection[1]
