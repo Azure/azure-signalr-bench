@@ -24,7 +24,7 @@ def serversenteventsechounit50_connection():
 def serversenteventsechounit100_connection():
    return serversentevent_connection[100]
 
-def serversenteventsechounit1():
+def serversenteventsechounit1(duration):
    #print sys._getframe().f_code.co_name
    connection=serversentevent_connection[1]
    concurrentConnection=serversentevent_concurrentConnection[1]
@@ -56,7 +56,7 @@ pipeline:
 	duration=duration,baseSend=baseSend,send=stepSend)
    return(pipeline)
 
-def serversenteventsechounit2():
+def serversenteventsechounit2(duration):
    #print sys._getframe().f_code.co_name
    connection=serversentevent_connection[2]
    concurrentConnection=serversentevent_concurrentConnection[2]
@@ -88,11 +88,11 @@ pipeline:
 	duration=duration,baseSend=baseSend,send=stepSend)
    return(pipeline)
 
-def serversenteventsechounit3():
+def serversenteventsechounit3(duration):
    #print sys._getframe().f_code.co_name
    raise ValueError('function {func} has not implemented'.format(func=sys._getframe().f_code.co_name))
 
-def serversenteventsechounit4():
+def serversenteventsechounit4(duration):
    #print sys._getframe().f_code.co_name
    raise ValueError('function {func} has not implemented'.format(func=sys._getframe().f_code.co_name))
 
