@@ -595,6 +595,7 @@ namespace Bench.RpcMaster
             var sendGroupList = Enumerable.Repeat(false, groupNum).ToList();
             var stopIfLatencyBig = bool.Parse(stopIfLatencyIsBig);
             var stopIfConnectionErrorBig = bool.Parse(stopSendIfConnectionErrorBig);
+            int curTotalSending = 0;
             // var serverUrls = serverCount;
             for (var i = 0; i < pipeline.Count; i++)
             {
@@ -626,6 +627,21 @@ namespace Bench.RpcMaster
                         // skip the immediate following "scenario" step,
                         // as a result, all "upxxx;scenario" steps were skipped.
                         continue;
+                    }
+                }
+                // Sending number should not be larger than total connection number
+                var upNo = ExtractUpNumber(step);
+                if (upNo != 0)
+                {
+                    if (curTotalSending + upNo >= connections)
+                    {
+                        Util.Log($"Stop the sending steps since sending number {curTotalSending + upNo} is larger than {connections}");
+                        i++;
+                        continue;
+                    }
+                    else
+                    {
+                        curTotalSending += upNo;
                     }
                 }
                 // up op
@@ -766,6 +782,18 @@ namespace Bench.RpcMaster
                 if (!isNumeric) throw new Exception();
                 connectionConfigBuilder.UpdateSendConnPerGroup(connectionAllConfigList, groupNameMat, upNum);
             }
+        }
+
+        private static int ExtractUpNumber(string step)
+        {
+            int upNo = 0;
+            var isNumeric = int.TryParse(step.Substring(2), out int n);
+
+            if (step.Substring(0, 2) == "up" && isNumeric)
+            {
+                upNo = Convert.ToInt32(step.Substring(2));
+            }
+            return upNo;
         }
 
         private static void HandleBasicUpOp(string step, ConnectionConfigBuilder connectionConfigBuilder,
