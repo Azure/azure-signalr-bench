@@ -40,9 +40,9 @@ pipeline:
 - startConn
 - up{baseSend}
 - scenario
-- up{stepSend}
+- up{send}
 - scenario
-- up{stepSend}
+- up{send}
 - scenario
 - stopConn
 - disposeConn'''.format(connection=connection,
@@ -97,9 +97,9 @@ pipeline:
 - startConn
 - up{baseSend}
 - scenario
-- up{stepSend}
+- up{send}
 - scenario
-- up{stepSend}
+- up{send}
 - scenario
 - stopConn
 - disposeConn'''.format(connection=connection,
