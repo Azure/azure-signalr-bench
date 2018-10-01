@@ -64,7 +64,7 @@ function create_signalr_service()
   local unitCount=$4
   local signalrHostName
   # add extension
-  add_signalr_extension
+  #add_signalr_extension
 
   signalrHostName=$(az signalr create \
      --name $name                     \
