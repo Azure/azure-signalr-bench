@@ -633,7 +633,7 @@ namespace Bench.RpcMaster
                 var upNo = ExtractUpNumber(step);
                 if (upNo != 0)
                 {
-                    if (curTotalSending + upNo >= connections)
+                    if (curTotalSending + upNo > connections)
                     {
                         Util.Log($"Stop the sending steps since sending number {curTotalSending + upNo} is larger than {connections}");
                         i++;
