@@ -126,7 +126,7 @@ namespace JenkinsScript
                         agentConfig = configLoader.Load<AgentConfig>(argsOption.AgentConfigFile);
                         var azureManager = new AzureManager(argsOption.ServicePrincipal);
                         var vmBuilder = new BenchmarkVmBuilder(agentConfig, argsOption.ServicePrincipal, argsOption.DisableRandomSuffix);
-                        _ = azureManager.DeleteResourceGroupAsync(vmBuilder.GroupName);
+                        azureManager.DeleteResourceGroup(vmBuilder.GroupName);
                         break;
                     }
                 case "DeleteResourceGroup":
