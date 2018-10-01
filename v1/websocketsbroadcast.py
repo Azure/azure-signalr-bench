@@ -28,8 +28,8 @@ def websocketsbroadcastunit1(duration):
    #print sys._getframe().f_code.co_name
    connection=websockets_connection[1]
    concurrentConnection=websockets_concurrentConnection[1]
-   baseSend=10
-   stepSend=10
+   baseSend=2
+   stepSend=2
    pipeline = '''\
 connection: {connection}
 concurrentConnection: {concurrentConnection}
@@ -39,6 +39,10 @@ pipeline:
 - createConn
 - startConn
 - up{baseSend}
+- scenario
+- up{send}
+- scenario
+- up{send}
 - scenario
 - up{send}
 - scenario
@@ -54,8 +58,8 @@ def websocketsbroadcastunit2(duration):
    #print sys._getframe().f_code.co_name
    connection=websockets_connection[2]
    concurrentConnection=websockets_concurrentConnection[2]
-   baseSend=10
-   stepSend=10
+   baseSend=2
+   stepSend=2
    pipeline = '''\
 connection: {connection}
 concurrentConnection: {concurrentConnection}
@@ -65,6 +69,14 @@ pipeline:
 - createConn
 - startConn
 - up{baseSend}
+- scenario
+- up{send}
+- scenario
+- up{send}
+- scenario
+- up{send}
+- scenario
+- up{send}
 - scenario
 - stopConn
 - disposeConn'''.format(connection=connection,
@@ -85,8 +97,8 @@ def websocketsbroadcastunit5(duration):
    #print sys._getframe().f_code.co_name
    connection=websockets_connection[5]
    concurrentConnection=websockets_concurrentConnection[5]
-   baseSend=10
-   stepSend=10
+   baseSend=2
+   stepSend=2
    pipeline = '''\
 connection: {connection}
 concurrentConnection: {concurrentConnection}
@@ -96,6 +108,10 @@ pipeline:
 - createConn
 - startConn
 - up{baseSend}
+- scenario
+- up{send}
+- scenario
+- up{send}
 - scenario
 - up{send}
 - scenario
@@ -128,8 +144,8 @@ def websocketsbroadcastunit10(duration):
    #print sys._getframe().f_code.co_name
    connection=websockets_connection[10]
    concurrentConnection=websockets_concurrentConnection[10]
-   baseSend=10
-   stepSend=10
+   baseSend=2
+   stepSend=2
    pipeline = '''\
 connection: {connection}
 concurrentConnection: {concurrentConnection}
@@ -139,6 +155,10 @@ pipeline:
 - createConn
 - startConn
 - up{baseSend}
+- scenario
+- up{send}
+- scenario
+- up{send}
 - scenario
 - up{send}
 - scenario
@@ -154,8 +174,8 @@ def websocketsbroadcastunit20(duration):
    #print sys._getframe().f_code.co_name
    connection=websockets_connection[20]
    concurrentConnection=websockets_concurrentConnection[20]
-   baseSend=10
-   stepSend=5
+   baseSend=2
+   stepSend=2
    pipeline = '''\
 connection: {connection}
 concurrentConnection: {concurrentConnection}
@@ -165,6 +185,12 @@ pipeline:
 - createConn
 - startConn
 - up{baseSend}
+- scenario
+- up{send}
+- scenario
+- up{send}
+- scenario
+- up{send}
 - scenario
 - up{send}
 - scenario
@@ -182,7 +208,7 @@ def websocketsbroadcastunit50(duration):
    #print sys._getframe().f_code.co_name
    connection=websockets_connection[50]
    concurrentConnection=websockets_concurrentConnection[50]
-   baseSend=5
+   baseSend=2
    stepSend=1
    pipeline = '''\
 connection: {connection}
@@ -193,6 +219,10 @@ pipeline:
 - createConn
 - startConn
 - up{baseSend}
+- scenario
+- up{send}
+- scenario
+- up{send}
 - scenario
 - up{send}
 - scenario
