@@ -5,6 +5,24 @@ import websocketsbroadcast
 import websocketssendgroup
 import longpollingecho
 import serversenteventsecho
+import yaml
+
+def extractAllSends(pipeline):
+  sum=0
+  content=""
+  try:
+     y = yaml.load(pipeline)
+     for pipe in y['pipeline']:
+         if (pipe.startswith('up')):
+            if content is "":
+               content=pipe[2:]
+            else:
+               content=content + "_" + pipe[2:]
+            sum+=int(pipe[2:])
+     #print(sum)
+     print(content)
+  except yaml.YAMLError as exc:
+     print(exc)
 
 def handleArgs(args):
    transport=args.transport.lower()
@@ -15,7 +33,7 @@ def handleArgs(args):
    bigGroup=args.bigGroup
    connections=args.connections
    concurrentConnections=args.concurrentConnections
-   
+   sendSteps=args.sendSteps
    func = transport+scenario+unit
    if duration != None:
       # special handle 'sendgroup'
@@ -35,13 +53,17 @@ def handleArgs(args):
       callfunc="{transport}.{func}_concurrentConnection()".format(transport=transport+scenario, func=func)
    #print(callfunc)
    r = eval(callfunc)
-   print(r)
+   if sendSteps == False:
+      print(r)
+   else:
+      extractAllSends(r)
 
 if __name__=="__main__":
    parser = argparse.ArgumentParser()
    parser.add_argument("-t", "--transport", help="specify the transport type: <websockets>|<serversentevents>|<longpolling>")
    parser.add_argument("-s", "--scenario", help="specify the scenario type: <echo>|<broadcast>|<sendGroup>|<sendToClient>|<sendToFixedClient>|<restSendToUser>|<restBroadcast>")
    parser.add_argument("-u", "--unit", help="specify the unit type: <unit1>|<unit2>|<unit5>|<unit10>|<unit20>|<unit50>|<unit100>")
+   parser.add_argument("-S", "--sendSteps", help="query the sendSteps for given unit", action="store_true")
    stepGroup = parser.add_mutually_exclusive_group()
    stepGroup.add_argument("-d", "--duration", help="specify the duration to run (second)")
    stepGroup.add_argument("-c", "--connections", help="query the connections for given unit", action="store_true")
