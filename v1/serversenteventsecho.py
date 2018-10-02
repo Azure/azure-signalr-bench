@@ -205,7 +205,7 @@ def serversenteventsechounit20(duration):
    #print sys._getframe().f_code.co_name
    connection=serversentevent_connection[20]
    concurrentConnection=serversentevent_concurrentConnection[20]
-   baseSend=500
+   baseSend=800
    stepSend=50
    pipeline = '''\
 connection: {connection}

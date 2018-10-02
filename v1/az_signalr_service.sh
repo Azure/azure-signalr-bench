@@ -123,7 +123,7 @@ function query_connection_string()
   #fi
   local signalrHostName=${signarl_service_name}.servicedev.signalr.net
   local accessKey=`az signalr key list --name $signarl_service_name --resource-group $rsg --query primaryKey -o tsv`
-  echo "Endpoint=https://${signalrHostName};AccessKey=${accessKey}"
+  echo "Endpoint=https://${signalrHostName};AccessKey=${accessKey};Version=1.0"
 }
 
 function delete_signalr_service()
