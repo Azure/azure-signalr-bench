@@ -24,25 +24,25 @@ def websocketsbroadcastunit50_connection():
 def websocketsbroadcastunit100_connection():
    return websockets_connection[100]
 
-def websocketsechounit1_concurrentConnection():
+def websocketsbroadcastunit1_concurrentConnection():
    return websockets_concurrentConnection[1]
 
-def websocketsechounit2_concurrentConnection():
+def websocketsbroadcastunit2_concurrentConnection():
    return websockets_concurrentConnection[2]
 
-def websocketsechounit5_concurrentConnection():
+def websocketsbroadcastunit5_concurrentConnection():
    return websockets_concurrentConnection[5]
 
-def websocketsechounit10_concurrentConnection():
+def websocketsbroadcastunit10_concurrentConnection():
    return websockets_concurrentConnection[10]
 
-def websocketsechounit20_concurrentConnection():
+def websocketsbroadcastunit20_concurrentConnection():
    return websockets_concurrentConnection[20]
 
-def websocketsechounit50_concurrentConnection():
+def websocketsbroadcastunit50_concurrentConnection():
    return websockets_concurrentConnection[50]
 
-def websocketsechounit100_concurrentConnection():
+def websocketsbroadcastunit100_concurrentConnection():
    return websockets_concurrentConnection[100]
 
 def websocketsbroadcastunit1(duration):
