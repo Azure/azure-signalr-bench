@@ -100,6 +100,24 @@ function read_k8s_deploy_env() {
   done
 }
 
+function update_k8s_deploy_env_unit_per_pod() {
+  local env_name
+  local deploy_name=$1
+  local unit_per_pod=$2
+  local config_file=$3
+  local i=0
+  local env_len=`kubectl get deployment $deploy_name -o=json --kubeconfig=${config_file}|jq '.spec.template.spec.containers[0].env|length'`
+  while [ $i -lt $env_len ]
+  do
+    env_name=`kubectl get deployment $deploy_name -o=json --kubeconfig=${config_file}|jq ".spec.template.spec.containers[0].env[$i].name"|tr -d '"'`
+    if [ "$env_name" == "UNIT_PER_POD" ]
+    then
+      kubectl patch deployment $deploy_name --type=json -p="[{'op': 'replace', 'path': "/spec/template/spec/containers/0/env/$i/value", 'value': '$unit_per_pod'}]" --kubeconfig=$config_file
+    fi
+    i=$(($i+1))
+  done
+}
+
 function update_k8s_deploy_env_connections() {
   local env_name
   local deploy_name=$1
@@ -498,6 +516,22 @@ function patch() {
   wait_deploy_ready $result $config_file
 
   wait_replica_ready $config_file $resName $replicas
+}
+
+function patch_deployment_for_no_tc_and_wait() {
+  local resName=$1
+  local tcLimit=$2
+  g_config=""
+  g_result=""
+  find_target_by_iterate_all_k8slist $resName get_k8s_deploy_name
+  local config_file=$g_config
+  local result=$g_result
+  local pods=$(k8s_get_pod_number $config_file $resName)
+  update_k8s_deploy_env_unit_per_pod $result $tcLimit $config_file
+
+  wait_deploy_ready $result $config_file
+
+  wait_replica_ready $config_file $resName $pods
 }
 
 function patch_and_wait() {
