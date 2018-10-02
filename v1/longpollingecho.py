@@ -1,6 +1,7 @@
 import sys
 
 longpolling_connection={1:500, 2:1000, 5:2500, 10:5000, 20:10000}
+longpolling_concurrentConnection={1:100, 2:100, 5:100, 10:100, 20:100}
 
 def longpollingechounit1_connection():
    return longpolling_connection[1]
@@ -16,6 +17,27 @@ def longpollingechounit10_connection():
 
 def longpollingechounit20_connection():
    return longpolling_connection[20]
+
+def longpollingechounit50_connection():
+   return longpolling_connection[50]
+
+def longpollingechounit1_concurrentConnection():
+   return longpolling_concurrentConnection[1]
+
+def longpollingechounit2_concurrentConnection():
+   return longpolling_concurrentConnection[2]
+
+def longpollingechounit5_concurrentConnection():
+   return longpolling_concurrentConnection[5]
+
+def longpollingechounit10_concurrentConnection():
+   return longpolling_concurrentConnection[10]
+
+def longpollingechounit20_concurrentConnection():
+   return longpolling_concurrentConnection[20]
+
+def longpollingechounit50_concurrentConnection():
+   return longpolling_concurrentConnection[50]
 
 def longpollingechounit1(duration):
    #print sys._getframe().f_code.co_name

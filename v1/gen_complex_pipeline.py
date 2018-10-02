@@ -24,6 +24,9 @@ def extractAllSends(pipeline):
   except yaml.YAMLError as exc:
      print(exc)
 
+def illegalArgs():
+   raise ValueError('illegal arguments')
+
 def handleArgs(args):
    transport=args.transport.lower()
    scenario=args.scenario.lower()
@@ -51,6 +54,9 @@ def handleArgs(args):
       callfunc="{transport}.{func}_connection()".format(transport=transport+scenario, func=func)
    elif concurrentConnections == True:
       callfunc="{transport}.{func}_concurrentConnection()".format(transport=transport+scenario, func=func)
+   else:
+      print("illegal arguments")
+      return
    #print(callfunc)
    r = eval(callfunc)
    if sendSteps == False:
