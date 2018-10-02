@@ -63,12 +63,17 @@ function find_target_by_iterate_all_k8slist()
 function get_k8s_deploy_name() {
   local resName=$1
   local config_file=$2
-  local len=`kubectl get deploy -o=json --selector resourceName=$resName --kubeconfig=${config_file}|jq '.items|length'`
+  local ns="default"
+  if [ $# -eq 3 ]
+  then
+    ns=$3
+  fi
+  local len=`kubectl get deploy -o=json --selector resourceName=$resName --namespace=${ns} --kubeconfig=${config_file}|jq '.items|length'`
   if [ $len -eq 0 ]
   then
     return
   fi
-  local deployName=`kubectl get deploy -o=json --selector resourceName=$resName --kubeconfig=${config_file}|jq '.items[0].metadata.name'|tr -d '"'`
+  local deployName=`kubectl get deploy -o=json --selector resourceName=$resName --namespace=${ns} --kubeconfig=${config_file}|jq '.items[0].metadata.name'|tr -d '"'`
   echo $deployName
   #kubectl get deploy $deployName -o=json  --kubeconfig=$config_file
 }
@@ -126,10 +131,14 @@ function update_k8s_deploy_env_connections() {
 function get_pod() {
   local resName=$1
   local output=$2
-
+  local ns="default"
+  if [ $# -eq 3 ]
+  then
+     ns="$3"
+  fi
   g_config=""
   g_result=""
-  find_target_by_iterate_all_k8slist $resName get_k8s_deploy_name
+  find_target_by_iterate_all_k8slist $resName get_k8s_deploy_name "$ns"
   local config_file=$g_config
   local result=$g_result
   echo "$result"
@@ -503,10 +512,10 @@ function patch_and_wait() {
   #patch_liveprobe_timeout ${name} 2
 }
 
-function get_nginx_pod() {
+function get_nginx_pod_internal() {
   local res=$1
-  local ns=$2
-  local config=kubeconfig_srdevacsseasiac.json
+  local config=$2
+  local ns=$3
   local appId=`kubectl get deploy -o=json --namespace=${ns} --selector resourceName=${res} --kubeconfig=${config}|jq '.items[0].spec.selector.matchLabels.app'|tr -d '"'`
   local len=`kubectl get pod -o=json --namespace=${ns} --selector app=${appId} --kubeconfig=${config}|jq '.items|length'`
   local i=0
@@ -517,12 +526,25 @@ function get_nginx_pod() {
   done
 }
 
+function get_nginx_pod() {
+  local res=$1
+  local ns=$2
+  g_config=""
+  g_result=""
+  find_target_by_iterate_all_k8slist $res get_nginx_pod_internal "$ns"
+  echo "$g_result"
+}
+
 function track_nginx_top() {
   local res=$1
   local ns=$2
   local output_dir=$3
-  local config_file=kubeconfig_srdevacsseasiac.json
-  local result=$(get_nginx_pod $res $ns)
+  g_config=""
+  g_result=""
+  find_target_by_iterate_all_k8slist $res get_nginx_pod_internal $ns
+  local config_file=$g_config
+  local result=$g_result
+
   while [ 1 ]
   do
      for i in $result
@@ -539,8 +561,11 @@ function get_nginx_log() {
   local res=$1
   local ns=$2
   local outdir=$3
-  local config_file=kubeconfig_srdevacsseasiac.json
-  local result=$(get_nginx_pod $res $ns)
+  g_config=""
+  g_result=""
+  find_target_by_iterate_all_k8slist $res get_nginx_pod_internal $ns
+  local config_file=$g_config
+  local result=$g_result
   for i in $result
   do
     kubectl logs $i --namespace=$ns --kubeconfig=$config_file > $outdir/${i}.log
@@ -550,8 +575,11 @@ function get_nginx_log() {
 function delete_all_nginx_pods() {
   local res=$1
   local ns=$2
-  local config_file=kubeconfig_srdevacsseasiac.json
-  local result=$(get_nginx_pod $res $ns)
+  g_config=""
+  g_result=""
+  find_target_by_iterate_all_k8slist $res get_nginx_pod_internal $ns
+  local config_file=$g_config
+  local result=$g_result
   for i in $result
   do
     kubectl delete pods $i --namespace=$ns --kubeconfig=$config_file

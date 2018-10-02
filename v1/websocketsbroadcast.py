@@ -80,7 +80,7 @@ def websocketsbroadcastunit2(duration):
    connection=websockets_connection[2]
    concurrentConnection=websockets_concurrentConnection[2]
    baseSend=2
-   stepSend=2
+   stepSend=1
    pipeline = '''\
 connection: {connection}
 concurrentConnection: {concurrentConnection}
@@ -119,7 +119,7 @@ def websocketsbroadcastunit5(duration):
    connection=websockets_connection[5]
    concurrentConnection=websockets_concurrentConnection[5]
    baseSend=2
-   stepSend=2
+   stepSend=1
    pipeline = '''\
 connection: {connection}
 concurrentConnection: {concurrentConnection}
@@ -166,7 +166,7 @@ def websocketsbroadcastunit10(duration):
    connection=websockets_connection[10]
    concurrentConnection=websockets_concurrentConnection[10]
    baseSend=2
-   stepSend=2
+   stepSend=1
    pipeline = '''\
 connection: {connection}
 concurrentConnection: {concurrentConnection}
@@ -196,7 +196,7 @@ def websocketsbroadcastunit20(duration):
    connection=websockets_connection[20]
    concurrentConnection=websockets_concurrentConnection[20]
    baseSend=2
-   stepSend=2
+   stepSend=1
    pipeline = '''\
 connection: {connection}
 concurrentConnection: {concurrentConnection}
