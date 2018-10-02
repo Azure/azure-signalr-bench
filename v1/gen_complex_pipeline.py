@@ -15,7 +15,7 @@ def handleArgs(args):
    bigGroup=args.bigGroup
    connections=args.connections
    concurrentConnections=args.concurrentConnections
-
+   
    func = transport+scenario+unit
    if duration != None:
       # special handle 'sendgroup'
@@ -29,9 +29,9 @@ def handleArgs(args):
             return
       else:
          callfunc="{transport}.{func}({duration})".format(transport=transport+scenario, func=func, duration=duration)
-   elif connections != None:
+   elif connections == True:
       callfunc="{transport}.{func}_connection()".format(transport=transport+scenario, func=func)
-   elif concurrentConnections != None:
+   elif concurrentConnections == True:
       callfunc="{transport}.{func}_concurrentConnection()".format(transport=transport+scenario, func=func)
    #print(callfunc)
    r = eval(callfunc)
