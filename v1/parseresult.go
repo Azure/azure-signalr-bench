@@ -30,6 +30,7 @@ type Counters struct {
 	GE_1000     int64 `json:"message:ge:1000"`
 	Sending     int64 `json:"sendingStep"`
         ConnError   int64 `json:"connection:error"`
+        ConnSucc    int64 `json:"connection:success"`
 }
 
 type Monitor struct {
@@ -231,6 +232,7 @@ func main() {
 	}
 	if lastLatabPercent {
             var sum int64
+            var totalConnection int64
             var v Monitor
             var hasSendingStep bool
             for _, v := range monitors {
@@ -259,6 +261,7 @@ func main() {
         data.addColumn('number', 'LT900ms(%)');
         data.addColumn('number', 'LT1000ms(%)');
         data.addColumn('number', 'GE1000ms(%)');
+        data.addColumn('number', 'ConnectionDropped(%)');
 		`
 		fmt.Printf("%s\n", chartfunc)
                 fmt.Printf("\tdata.addRows([\n")
@@ -270,28 +273,37 @@ func main() {
                               v.Counters.LT_400 + v.Counters.LT_500 + v.Counters.LT_600 +
                               v.Counters.LT_700 + v.Counters.LT_800 + v.Counters.LT_900 +
                               v.Counters.LT_1000 + v.Counters.GE_1000
-                        var sumfloat float64
+                        totalConnection = v.Counters.ConnError + v.Counters.ConnSucc
+                        var sumfloat, totalConnFloat float64
                         sumfloat = float64(sum)
-                        fmt.Printf("\t [%d, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f],\n", curSendingStep, float64(v.Counters.LT_100)/sumfloat*100, float64(v.Counters.LT_200)/sumfloat*100,
+                        totalConnFloat = float64(totalConnection)
+                        fmt.Printf("\t [%d, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f],\n",
+                                curSendingStep, float64(v.Counters.LT_100)/sumfloat*100,
+                                float64(v.Counters.LT_200)/sumfloat*100,
                                 float64(v.Counters.LT_300)/sumfloat*100, float64(v.Counters.LT_400)/sumfloat*100,
                                 float64(v.Counters.LT_500)/sumfloat*100, float64(v.Counters.LT_600)/sumfloat*100,
                                 float64(v.Counters.LT_700)/sumfloat*100, float64(v.Counters.LT_800)/sumfloat*100,
-                                float64(v.Counters.LT_900)/sumfloat*100, float64(v.Counters.LT_1000)/sumfloat*100, float64(v.Counters.GE_1000)/sumfloat*100)
+                                float64(v.Counters.LT_900)/sumfloat*100, float64(v.Counters.LT_1000)/sumfloat*100,
+                                float64(v.Counters.GE_1000)/sumfloat*100, float64(v.Counters.ConnError)/totalConnFloat*100)
                     }
                 }
                 v = monitors[len(monitors)-1]
                 if v.Counters.Sending != 0 {
-                        var sumfloat float64
+                        var sumfloat, totalConnFloat float64
                         sum = v.Counters.LT_100 + v.Counters.LT_200 + v.Counters.LT_300 +
                               v.Counters.LT_400 + v.Counters.LT_500 + v.Counters.LT_600 +
                               v.Counters.LT_700 + v.Counters.LT_800 + v.Counters.LT_900 +
                               v.Counters.LT_1000 + v.Counters.GE_1000
+                        totalConnection = v.Counters.ConnError + v.Counters.ConnSucc
                         sumfloat = float64(sum)
-                        fmt.Printf("\t [%d, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f],\n", v.Counters.Sending, float64(v.Counters.LT_100)/sumfloat*100, float64(v.Counters.LT_200)/sumfloat*100,
+                        totalConnFloat = float64(totalConnection)
+                        fmt.Printf("\t [%d, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f],\n", v.Counters.Sending,
+                                float64(v.Counters.LT_100)/sumfloat*100, float64(v.Counters.LT_200)/sumfloat*100,
                                 float64(v.Counters.LT_300)/sumfloat*100, float64(v.Counters.LT_400)/sumfloat*100,
                                 float64(v.Counters.LT_500)/sumfloat*100, float64(v.Counters.LT_600)/sumfloat*100,
                                 float64(v.Counters.LT_700)/sumfloat*100, float64(v.Counters.LT_800)/sumfloat*100,
-                                float64(v.Counters.LT_900)/sumfloat*100, float64(v.Counters.LT_1000)/sumfloat*100, float64(v.Counters.GE_1000)/sumfloat*100)
+                                float64(v.Counters.LT_900)/sumfloat*100, float64(v.Counters.LT_1000)/sumfloat*100,
+                                float64(v.Counters.GE_1000)/sumfloat*100, float64(v.Counters.ConnError)/totalConnFloat*100)
                 }
 		chartfunc = `
         ]);
@@ -349,7 +361,7 @@ func main() {
             }
 	}
 	if category500ms {
-	    var sum, lt500, ge500 int64
+	    var sum, totalConnection, lt500, ge500 int64
 	    var v Monitor
             var hasSendingStep bool
             for _, v := range monitors {
@@ -369,6 +381,7 @@ func main() {
         data.addColumn('number', 'Sending');
         data.addColumn('number', 'LT500ms(%)');
         data.addColumn('number', 'GE500ms(%)');
+        data.addColumn('number', 'ConnectionDropped(%)');
 			`
 		fmt.Printf("%s\n", chartfunc)
 		fmt.Printf("\tdata.addRows([\n")
@@ -381,12 +394,14 @@ func main() {
                               v.Counters.LT_400 + v.Counters.LT_500 + v.Counters.LT_600 +
                               v.Counters.LT_700 + v.Counters.LT_800 + v.Counters.LT_900 +
                               v.Counters.LT_1000 + v.Counters.GE_1000
-                        var sumfloat float64
+                        totalConnection = v.Counters.ConnError + v.Counters.ConnSucc
+                        var sumfloat, totalConnFloat float64
                         sumfloat = float64(sum)
+                        totalConnFloat = float64(totalConnection)
 		        lt500 = v.Counters.LT_100 + v.Counters.LT_200 + v.Counters.LT_300 + v.Counters.LT_400 + v.Counters.LT_500
 		        ge500 = v.Counters.LT_600 + v.Counters.LT_700 + v.Counters.LT_800 + v.Counters.LT_900 + v.Counters.LT_1000 + v.Counters.GE_1000
 
-			fmt.Printf("\t [%d, %.2f, %.2f],\n", curSendingStep, float64(lt500)/sumfloat*100, float64(ge500)/sumfloat*100)
+			fmt.Printf("\t [%d, %.2f, %.2f, %.2f],\n", curSendingStep, float64(lt500)/sumfloat*100, float64(ge500)/sumfloat*100, float64(v.Counters.ConnError)/totalConnFloat*100)
                     }
                 }
                 v = monitors[len(monitors)-1]
@@ -395,11 +410,13 @@ func main() {
                               v.Counters.LT_400 + v.Counters.LT_500 + v.Counters.LT_600 +
                               v.Counters.LT_700 + v.Counters.LT_800 + v.Counters.LT_900 +
                               v.Counters.LT_1000 + v.Counters.GE_1000
-                        var sumfloat float64
+                        totalConnection = v.Counters.ConnError + v.Counters.ConnSucc
+                        var sumfloat, totalConnFloat float64
                         sumfloat = float64(sum)
+                        totalConnFloat = float64(totalConnection)
 		        lt500 = v.Counters.LT_100 + v.Counters.LT_200 + v.Counters.LT_300 + v.Counters.LT_400 + v.Counters.LT_500
 		        ge500 = v.Counters.LT_600 + v.Counters.LT_700 + v.Counters.LT_800 + v.Counters.LT_900 + v.Counters.LT_1000 + v.Counters.GE_1000
-                        fmt.Printf("\t [%d, %.2f, %.2f],\n", v.Counters.Sending, float64(lt500)/sumfloat*100, float64(ge500)/sumfloat*100)
+                        fmt.Printf("\t [%d, %.2f, %.2f, %.2f],\n", v.Counters.Sending, float64(lt500)/sumfloat*100, float64(ge500)/sumfloat*100, float64(v.Counters.ConnError)/totalConnFloat*100)
                 }
 			chartfunc = `
         ]);
@@ -444,7 +461,7 @@ func main() {
             }
 	}
 	if category1s {
-            var sum, lt1, ge1 int64
+            var sum, totalConnection, lt1, ge1 int64
             var v Monitor
             var hasSendingStep bool
             for _, v := range monitors {
@@ -464,6 +481,7 @@ func main() {
         data.addColumn('number', 'Sending');
         data.addColumn('number', 'LT1s(%)');
         data.addColumn('number', 'GE1s(%)');
+        data.addColumn('number', 'ConnectionDropped(%)');
 			`
 		fmt.Printf("%s\n", chartfunc)
 		fmt.Printf("\tdata.addRows([\n")
@@ -476,11 +494,13 @@ func main() {
                               v.Counters.LT_400 + v.Counters.LT_500 + v.Counters.LT_600 +
                               v.Counters.LT_700 + v.Counters.LT_800 + v.Counters.LT_900 +
                               v.Counters.LT_1000 + v.Counters.GE_1000
-                        var sumfloat float64
+                        totalConnection = v.Counters.ConnError + v.Counters.ConnSucc
+                        var sumfloat, totalConnFloat float64
                         sumfloat = float64(sum)
+                        totalConnFloat = float64(totalConnection)
                         lt1 = v.Counters.LT_100 + v.Counters.LT_200 + v.Counters.LT_300 + v.Counters.LT_400 + v.Counters.LT_500 + v.Counters.LT_600 + v.Counters.LT_700 + v.Counters.LT_800 + v.Counters.LT_900 + v.Counters.LT_1000
                         ge1 = v.Counters.GE_1000
-                        fmt.Printf("\t [%d, %.2f, %.2f],\n", curSendingStep, float64(lt1)/sumfloat*100, float64(ge1)/sumfloat*100)
+                        fmt.Printf("\t [%d, %.2f, %.2f, %.2f],\n", curSendingStep, float64(lt1)/sumfloat*100, float64(ge1)/sumfloat*100, float64(v.Counters.ConnError)/totalConnFloat*100)
                     }
                 }
                 v = monitors[len(monitors)-1]
@@ -489,11 +509,13 @@ func main() {
                               v.Counters.LT_400 + v.Counters.LT_500 + v.Counters.LT_600 +
                               v.Counters.LT_700 + v.Counters.LT_800 + v.Counters.LT_900 +
                               v.Counters.LT_1000 + v.Counters.GE_1000
-                        var sumfloat float64
+                        totalConnection = v.Counters.ConnError + v.Counters.ConnSucc
+                        var sumfloat, totalConnFloat float64
                         sumfloat = float64(sum)
+                        totalConnFloat = float64(totalConnection)
                         lt1 = v.Counters.LT_100 + v.Counters.LT_200 + v.Counters.LT_300 + v.Counters.LT_400 + v.Counters.LT_500 + v.Counters.LT_600 + v.Counters.LT_700 + v.Counters.LT_800 + v.Counters.LT_900 + v.Counters.LT_1000
                         ge1 = v.Counters.GE_1000
-                        fmt.Printf("\t [%d, %.2f, %.2f],\n", v.Counters.Sending, float64(lt1)/sumfloat*100, float64(ge1)/sumfloat*100)
+                        fmt.Printf("\t [%d, %.2f, %.2f, %.2f],\n", v.Counters.Sending, float64(lt1)/sumfloat*100, float64(ge1)/sumfloat*100, float64(v.Counters.ConnError)/totalConnFloat*100)
                 }
 			chartfunc = `
         ]);
