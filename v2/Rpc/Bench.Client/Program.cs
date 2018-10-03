@@ -644,6 +644,13 @@ namespace Bench.RpcMaster
                         curTotalSending += upNo;
                     }
                 }
+                else
+                {
+                    // skip up0
+                    Util.Log($"Skip up0");
+                    i++;
+                    continue;
+                }
                 // up op
                 HandleBasicUpOp(step, connectionConfigBuilder, connectionAllConfigList, connections, slaveList);
 
