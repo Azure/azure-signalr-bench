@@ -1,10 +1,6 @@
 import argparse
+from settings import *
 import sys
-import websocketsecho
-import websocketsbroadcast
-import websocketssendgroup
-import longpollingecho
-import serversenteventsecho
 import yaml
 
 def extractAllSends(pipeline):
@@ -57,7 +53,6 @@ def handleArgs(args):
    else:
       print("illegal arguments")
       return
-   #print(callfunc)
    r = eval(callfunc)
    if sendSteps == False:
       print(r)
@@ -70,6 +65,7 @@ if __name__=="__main__":
    parser.add_argument("-s", "--scenario", help="specify the scenario type: <echo>|<broadcast>|<sendGroup>|<sendToClient>|<sendToFixedClient>|<restSendToUser>|<restBroadcast>")
    parser.add_argument("-u", "--unit", help="specify the unit type: <unit1>|<unit2>|<unit5>|<unit10>|<unit20>|<unit50>|<unit100>")
    parser.add_argument("-S", "--sendSteps", help="query the sendSteps for given unit", action="store_true")
+   parser.add_argument("-M", "--useMaxConnection", help="apply 1.5x on normal connections", action="store_true")
    stepGroup = parser.add_mutually_exclusive_group()
    stepGroup.add_argument("-d", "--duration", help="specify the duration to run (second)")
    stepGroup.add_argument("-c", "--connections", help="query the connections for given unit", action="store_true")
@@ -78,6 +74,16 @@ if __name__=="__main__":
    sendToGroup.add_argument("-g", "--smallGroup", help="create small group (10 clients)", action="store_true")
    sendToGroup.add_argument("-G", "--bigGroup", help="create big group (1/10 of all of the whole active clients)", action="store_true")
    args = parser.parse_args()
+
+   init()
+   if args.useMaxConnection == True:
+      setMaxConnections()
+   import websocketsecho
+   import websocketsbroadcast
+   import websocketssendgroup
+   import longpollingecho
+   import serversenteventsecho
+   import serversenteventsbroadcast
 
    if args.transport is None or args.scenario is None or args.unit is None:
       print("transport, scenario, and unit must be specified")
