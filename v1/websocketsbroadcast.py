@@ -1,7 +1,12 @@
 import sys
+import settings
 
 websockets_connection={1:1000, 2:2000, 5:5000, 10:10000, 20:20000, 50:50000, 100:100000}
 websockets_concurrentConnection={1:200, 2:200, 5:200, 10:200, 20:200, 50:200, 100:200}
+websockets_baseStep={1:2, 2:2, 5:2, 10:2, 20:1, 50:1, 100:1}
+websockets_step={1:2, 2:2, 5:2, 10:2, 20:1, 50:1, 100:1}
+if settings.gPerfType == settings.gConstMax:
+  websockets_connection={1:1500, 2:3000, 5:7500, 10:15000, 20:30000, 50:75000, 100:150000}
 
 def websocketsbroadcastunit1_connection():
    return websockets_connection[1]
@@ -49,8 +54,8 @@ def websocketsbroadcastunit1(duration):
    #print sys._getframe().f_code.co_name
    connection=websockets_connection[1]
    concurrentConnection=websockets_concurrentConnection[1]
-   baseSend=2
-   stepSend=2
+   baseSend=websockets_baseStep[1]
+   stepSend=websockets_step[1]
    pipeline = '''\
 connection: {connection}
 concurrentConnection: {concurrentConnection}
@@ -79,8 +84,8 @@ def websocketsbroadcastunit2(duration):
    #print sys._getframe().f_code.co_name
    connection=websockets_connection[2]
    concurrentConnection=websockets_concurrentConnection[2]
-   baseSend=2
-   stepSend=1
+   baseSend=websockets_baseStep[2]
+   stepSend=websockets_step[2]
    pipeline = '''\
 connection: {connection}
 concurrentConnection: {concurrentConnection}
@@ -118,8 +123,8 @@ def websocketsbroadcastunit5(duration):
    #print sys._getframe().f_code.co_name
    connection=websockets_connection[5]
    concurrentConnection=websockets_concurrentConnection[5]
-   baseSend=2
-   stepSend=1
+   baseSend=websockets_baseStep[5]
+   stepSend=websockets_step[5]
    pipeline = '''\
 connection: {connection}
 concurrentConnection: {concurrentConnection}
@@ -165,8 +170,8 @@ def websocketsbroadcastunit10(duration):
    #print sys._getframe().f_code.co_name
    connection=websockets_connection[10]
    concurrentConnection=websockets_concurrentConnection[10]
-   baseSend=2
-   stepSend=1
+   baseSend=websockets_baseStep[10]
+   stepSend=websockets_step[10]
    pipeline = '''\
 connection: {connection}
 concurrentConnection: {concurrentConnection}
@@ -195,8 +200,8 @@ def websocketsbroadcastunit20(duration):
    #print sys._getframe().f_code.co_name
    connection=websockets_connection[20]
    concurrentConnection=websockets_concurrentConnection[20]
-   baseSend=2
-   stepSend=1
+   baseSend=websockets_baseStep[20]
+   stepSend=websockets_step[20]
    pipeline = '''\
 connection: {connection}
 concurrentConnection: {concurrentConnection}
@@ -229,8 +234,8 @@ def websocketsbroadcastunit50(duration):
    #print sys._getframe().f_code.co_name
    connection=websockets_connection[50]
    concurrentConnection=websockets_concurrentConnection[50]
-   baseSend=2
-   stepSend=1
+   baseSend=websockets_baseStep[50]
+   stepSend=websockets_step[50]
    pipeline = '''\
 connection: {connection}
 concurrentConnection: {concurrentConnection}
@@ -261,8 +266,8 @@ def websocketsbroadcastunit100(duration):
    #print sys._getframe().f_code.co_name
    connection=websockets_connection[100]
    concurrentConnection=websockets_concurrentConnection[100]
-   baseSend=1
-   stepSend=1
+   baseSend=websockets_baseStep[100]
+   stepSend=websockets_step[100]
    pipeline = '''\
 connection: {connection}
 concurrentConnection: {concurrentConnection}
