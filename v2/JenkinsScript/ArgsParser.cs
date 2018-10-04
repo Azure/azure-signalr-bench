@@ -108,5 +108,8 @@ namespace JenkinsScript
 
         [Option("stopSendIfConnectionErrorBig", Default = "false", Required = false, HelpText = "Stop sending steps if there are too many errors")]
         public string StopSendIfConnectionErrorBig { get; set; }
+
+        [Option("connectionString", Default = null, Required = false, HelpText = "Specify SignalR service connection string")]
+        public string ConnectionString { get; set; }
     }
 }
