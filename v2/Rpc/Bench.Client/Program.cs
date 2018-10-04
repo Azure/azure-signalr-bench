@@ -604,10 +604,9 @@ namespace Bench.RpcMaster
                 var step = pipeline[i];
                 int indClient = -1;
                 Util.Log($"current step: {step}");
-
-                if (stopIfLatencyBig && _ge1000msGT1Percent)
+                if (step.Substring(0, 2) == "up")
                 {
-                    if (step.Substring(0, 2) == "up")
+                    if (stopIfLatencyBig && _ge1000msGT1Percent)
                     {
                         Util.Log($"Stop the sending steps since there are too many messages whose latency is larger than 1s!");
                         // skip "upxxxx" step
@@ -616,10 +615,7 @@ namespace Bench.RpcMaster
                         // as a result, all "upxxx;scenario" steps were skipped.
                         continue;
                     }
-                }
-                if (stopIfConnectionErrorBig && _connectionErrorGT1Percent)
-                {
-                    if (step.Substring(0, 2) == "up")
+                    if (stopIfConnectionErrorBig && _connectionErrorGT1Percent)
                     {
                         Util.Log($"Stop the sending steps since there are too many connections drops (dropped connection > 1%)!");
                         // skip "upxxxx" step
@@ -628,28 +624,28 @@ namespace Bench.RpcMaster
                         // as a result, all "upxxx;scenario" steps were skipped.
                         continue;
                     }
-                }
-                // Sending number should not be larger than total connection number
-                var upNo = ExtractUpNumber(step);
-                if (upNo != 0)
-                {
-                    if (curTotalSending + upNo > connections)
+                    // Sending number should not be larger than total connection number
+                    var upNo = ExtractUpNumber(step);
+                    if (upNo != 0)
                     {
-                        Util.Log($"Stop the sending steps since sending number {curTotalSending + upNo} is larger than {connections}");
-                        i++;
-                        continue;
+                        if (curTotalSending + upNo > connections)
+                        {
+                            Util.Log($"Stop the sending steps since sending number {curTotalSending + upNo} is larger than {connections}");
+                            i++;
+                            continue;
+                        }
+                        else
+                        {
+                            curTotalSending += upNo;
+                        }
                     }
                     else
                     {
-                        curTotalSending += upNo;
+                        // skip up0
+                        Util.Log($"Skip up0");
+                        i++;
+                        continue;
                     }
-                }
-                else
-                {
-                    // skip up0
-                    Util.Log($"Skip up0");
-                    i++;
-                    continue;
                 }
                 // up op
                 HandleBasicUpOp(step, connectionConfigBuilder, connectionAllConfigList, connections, slaveList);
