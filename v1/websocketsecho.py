@@ -73,6 +73,10 @@ pipeline:
 - scenario
 - up{send}
 - scenario
+- up{send}
+- scenario
+- up{send}
+- scenario
 - stopConn
 - disposeConn'''.format(connection=connection, concurrentConnection=concurrentConnection,
           duration=duration,baseSend=baseSend,send=stepSend)
@@ -93,6 +97,10 @@ pipeline:
 - createConn
 - startConn
 - up{baseSend}
+- scenario
+- up{send}
+- scenario
+- up{send}
 - scenario
 - up{send}
 - scenario
@@ -128,6 +136,14 @@ pipeline:
 - createConn
 - startConn
 - up{baseSend}
+- scenario
+- up{send}
+- scenario
+- up{send}
+- scenario
+- up{send}
+- scenario
+- up{send}
 - scenario
 - stopConn
 - disposeConn'''.format(connection=connection,
@@ -170,6 +186,14 @@ pipeline:
 - scenario
 - up{send}
 - scenario
+- up{send}
+- scenario
+- up{send}
+- scenario
+- up{send}
+- scenario
+- up{send}
+- scenario
 - stopConn
 - disposeConn'''.format(connection=connection,
 	concurrentConnection=concurrentConnection,
@@ -191,6 +215,10 @@ pipeline:
 - createConn
 - startConn
 - up{baseSend}
+- scenario
+- up{send}
+- scenario
+- up{send}
 - scenario
 - up{send}
 - scenario
