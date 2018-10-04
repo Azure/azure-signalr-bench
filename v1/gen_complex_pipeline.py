@@ -81,6 +81,7 @@ if __name__=="__main__":
    import websocketsecho
    import websocketsbroadcast
    import websocketssendgroup
+   import websocketssendtoclient
    import longpollingecho
    import serversenteventsecho
    import serversenteventsbroadcast
