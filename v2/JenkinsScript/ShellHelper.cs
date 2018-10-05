@@ -435,7 +435,7 @@ git checkout {branch}
                 $"--enableGroupJoinLeave {enableGroupJoinLeave} " +
                 $"--stopSendIfLatencyBig {stopSendIfLatencyBig} " +
                 $"--stopSendIfConnectionErrorBig {stopSendIfConnectionErrorBig} " +
-                $"{connectionStringOpt}" + // this option is only for RestAPI scenario test
+                $"{connectionStringOpt} " + // this option is only for RestAPI scenario test
                 $" -o '{outputCounterFile}' | tee {logPath}";
 
             Util.Log($"CMD: {user}@{host}: {cmd}");

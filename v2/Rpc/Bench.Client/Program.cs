@@ -549,6 +549,7 @@ namespace Bench.RpcMaster
                     // temporarily borrow the 'server' field to pass connection string,
                     // because I do not want to modify RPC model.
                     server = connectionString;
+                    Util.Log($"connection string: {server}");
                 }
                 var config = new CellJobConfig
                 {
