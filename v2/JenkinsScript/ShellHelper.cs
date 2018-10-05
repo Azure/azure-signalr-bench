@@ -381,7 +381,7 @@ git checkout {branch}
             int connection, int concurrentConnection, int duration, int interval, List<string> pipeLine,
             int groupNum, int groupOverlap, string messageSize, string serverUrl, string suffix,
             string masterRoot, string sendToFixedClient, bool enableGroupJoinLeave, bool stopSendIfLatencyBig,
-            bool stopSendIfConnectionErrorBig)
+            bool stopSendIfConnectionErrorBig, string connectionString)
         {
 
             Util.Log($"service type: {serviceType}, transport type: {transportType}, hub protocol: {hubProtocol}, scenario: {scenario}");
@@ -407,7 +407,11 @@ git checkout {branch}
             // todo
             var outputCounterDir = Path.Join(userRoot, $"results/{Environment.GetEnvironmentVariable("result_root")}/{suffix}/");
             outputCounterFile = outputCounterDir + $"counters.txt";
-
+            var connectionStringOpt = "";
+            if (connectionString != null)
+            {
+                connectionStringOpt = $"--connectionString \"{connectionString}\"";
+            }
             cmd = $"cd {masterRoot}; ";
             cmd += $"mkdir -p {outputCounterDir} || true;";
             cmd += $"dotnet run -- " +
@@ -425,7 +429,8 @@ git checkout {branch}
                 $"--enableGroupJoinLeave {enableGroupJoinLeave} " +
                 $"--stopSendIfLatencyBig {stopSendIfLatencyBig} " +
                 $"--stopSendIfConnectionErrorBig {stopSendIfConnectionErrorBig} " +
-                $" -o '{outputCounterFile}' |tee {logPath}";
+                $"{connectionStringOpt}" + // this option is only for RestAPI scenario test
+                $" -o '{outputCounterFile}' | tee {logPath}";
 
             Util.Log($"CMD: {user}@{host}: {cmd}");
             (errCode, result) = ShellHelper.RemoteBash(user, host, sshPort, password, cmd, captureConsole : true);

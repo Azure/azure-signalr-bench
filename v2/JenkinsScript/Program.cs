@@ -252,6 +252,7 @@ namespace JenkinsScript
                         // app server
                         var useLocalSignalR = debug && argsOption.AzureSignalrConnectionString == "" ? "true" : "false";
                         var azureSignalrConnectionStrings = argsOption.AzureSignalrConnectionString.Split("^").ToList();
+                        var connectionString = argsOption.ConnectionString;
 
                         // load private ips
                         var privateIps = configLoader.Load<PrivateIpConfig>(argsOption.PrivateIps);
@@ -284,7 +285,6 @@ namespace JenkinsScript
                         var branch = argsOption.Branch;
                         var serviceVmCnt = agentConfig.SvcVmCount;
                         var appserverVmCount = agentConfig.AppSvrVmCount;
-
                         // benchmark config
                         var serviceType = jobConfigV2.ServiceType;
                         var transportType = jobConfigV2.TransportType;
@@ -396,7 +396,8 @@ namespace JenkinsScript
                             user, password, sshPort, logPathMaster, serviceType, transportType, hubProtocol, scenario,
                             connection, concurrentConnection, duration, interval, pipeline, groupNum, overlap, messageSize,
                             serverUrl, suffix, masterRoot, sendToFixedClient, enableGroupJoinLeave,
-                            bool.Parse(argsOption.StopSendIfLatencyBig), bool.Parse(argsOption.StopSendIfConnectionErrorBig));
+                            bool.Parse(argsOption.StopSendIfLatencyBig), bool.Parse(argsOption.StopSendIfConnectionErrorBig),
+                            connectionString);
 
                         // collect all logs
                         ShellHelper.CollectStatistics(hosts, user, password, sshPort, $"/home/{user}/logs/{resultRoot}/", Util.MakeSureDirectoryExist(logFolder));
