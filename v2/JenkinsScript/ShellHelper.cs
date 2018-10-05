@@ -408,15 +408,21 @@ git checkout {branch}
             var outputCounterDir = Path.Join(userRoot, $"results/{Environment.GetEnvironmentVariable("result_root")}/{suffix}/");
             outputCounterFile = outputCounterDir + $"counters.txt";
             var connectionStringOpt = "";
+            var serverOption = "";
             if (connectionString != null)
             {
                 connectionStringOpt = $"--connectionString \"{connectionString}\"";
             }
+            else
+            {
+                serverOption = $"--serverUrl '{serverUrl}'";
+            }
+
             cmd = $"cd {masterRoot}; ";
             cmd += $"mkdir -p {outputCounterDir} || true;";
             cmd += $"dotnet run -- " +
                 $"--rpcPort 5555 " +
-                $"--duration {duration} --connections {connection} --interval {interval} --slaves {slaves.Count} --serverUrl '{serverUrl}' --pipeLine '{string.Join(";", pipeLine)}' " +
+                $"--duration {duration} --connections {connection} --interval {interval} --slaves {slaves.Count} {serverOption} --pipeLine '{string.Join(";", pipeLine)}' " +
                 $"-v {serviceType} -t {transportType} -p {hubProtocol} -s {scenario} " +
                 $" --slaveList '{slaveList}' " +
                 $" --retry {0} " +
