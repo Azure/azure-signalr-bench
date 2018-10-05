@@ -411,7 +411,7 @@ git checkout {branch}
             var serverOption = "";
             if (connectionString != null)
             {
-                connectionStringOpt = $"--connectionString \"{connectionString}\"";
+                connectionStringOpt = $"--connectionString '{connectionString}'";
             }
             else
             {
