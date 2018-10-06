@@ -82,8 +82,8 @@ function check_signalr_service_dns()
   local name=$2
   local nslookupData
   local externalIp=`az signalr show -n $name -g $rsg -o=json|jq ".externalIp"|tr -d '"'`
-  #local hostname=`az signalr list --query [*].hostName --output table|grep "$name"`
-  local hostname=${name}.servicedev.signalr.net
+  local hostname=`az signalr list --query [*].hostName --output table|grep "$name"`
+  #local hostname=${name}.servicedev.signalr.net
   local end=$((SECONDS + 120))
   while [ $SECONDS -lt $end ]
   do
@@ -115,13 +115,13 @@ function query_connection_string()
 {
   local signarl_service_name=$1
   local rsg=$2
-  #local signalrHostName=`az signalr list --query [*].hostName --output table|grep "$signarl_service_name"`
-  #if [ "$signalrHostName" == "" ]
-  #then
-  #   echo ""
-  #   return
-  #fi
-  local signalrHostName=${signarl_service_name}.servicedev.signalr.net
+  local signalrHostName=`az signalr list --query [*].hostName --output table|grep "$signarl_service_name"`
+  if [ "$signalrHostName" == "" ]
+  then
+     echo ""
+     return
+  fi
+  #local signalrHostName=${signarl_service_name}.servicedev.signalr.net
   local accessKey=`az signalr key list --name $signarl_service_name --resource-group $rsg --query primaryKey -o tsv`
   echo "Endpoint=https://${signalrHostName};AccessKey=${accessKey};Version=1.0"
 }
