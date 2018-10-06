@@ -411,7 +411,14 @@ git checkout {branch}
             var serverOption = "";
             if (connectionString != null)
             {
-                connectionStringOpt = $"--connectionString '{connectionString}'";
+                if (!connectionString.StartsWith('\'') && !connectionString.StartsWith('"'))
+                {
+                    connectionStringOpt = $"--connectionString '{connectionString}'";
+                }
+                else
+                {
+                    connectionStringOpt = $"--connectionString {connectionString}";
+                }
             }
             else
             {
