@@ -418,36 +418,37 @@ git checkout {branch}
                 serverOption = $"--serverUrl '{serverUrl}'";
             }
 
-            cmd = $"cd {masterRoot}; ";
-            cmd += $"mkdir -p {outputCounterDir} || true;";
-            cmd += $"dotnet run -- " +
-                $"--rpcPort 5555 " +
-                $"--duration {duration} --connections {connection} --interval {interval} --slaves {slaves.Count} {serverOption} --pipeLine '{string.Join(";", pipeLine)}' " +
-                $"-v {serviceType} -t {transportType} -p {hubProtocol} -s {scenario} " +
-                $" --slaveList '{slaveList}' " +
-                $" --retry {0} " +
-                $" --clear {clear} " +
-                $" --concurrentConnection {concurrentConnection} " +
-                $" --groupNum {groupNum} " +
-                $" --groupOverlap {groupOverlap} " +
-                $"--messageSize {messageSize} " +
-                $"--sendToFixedClient {sendToFixedClient} " +
-                $"--enableGroupJoinLeave {enableGroupJoinLeave} " +
-                $"--stopSendIfLatencyBig {stopSendIfLatencyBig} " +
-                $"--stopSendIfConnectionErrorBig {stopSendIfConnectionErrorBig} " +
-                $"{connectionStringOpt} " + // this option is only for RestAPI scenario test
-                $" -o '{outputCounterFile}' | tee {logPath}";
+            var concatPipeline = string.Join(";", pipeLine);
+            var remoteScriptContent = $@"
+#!/bin/bash
 
-            Util.Log($"CMD: {user}@{host}: {cmd}");
-            (errCode, result) = ShellHelper.RemoteBash(user, host, sshPort, password, cmd, captureConsole : true);
-
+cd {masterRoot}
+mkdir -p {outputCounterDir}
+dotnet run -- --rpcPort 5555 \
+--duration {duration} --connections {connection} --interval {interval} --slaves {slaves.Count} {serverOption} \
+--pipeLine '{concatPipeline}' -v {serviceType} -t {transportType} -p {hubProtocol} -s {scenario} \
+--slaveList '{slaveList}' --retry {0} --clear {clear} --concurrentConnection {concurrentConnection} \
+--groupNum {groupNum} --groupOverlap {groupOverlap} --messageSize {messageSize} \
+--sendToFixedClient {sendToFixedClient} --enableGroupJoinLeave {enableGroupJoinLeave} \
+--stopSendIfLatencyBig {stopSendIfLatencyBig} --stopSendIfConnectionErrorBig {stopSendIfConnectionErrorBig} \
+{connectionStringOpt} -o '{outputCounterFile}'
+";
+            Util.Log($"{remoteScriptContent}");
+            var scriptFile = "remoteMasterScript.sh";
+            using (StreamWriter sw = new StreamWriter(scriptFile))
+            {
+                sw.Write(remoteScriptContent);
+            }
+            var innerCmd = $"chmod +x {scriptFile}; ./{scriptFile} | tee {logPath}";
+            Util.Log($"{innerCmd}");
+            (errCode, result) = ShellHelper.ScpFileLocalToRemote(user, host, password, scriptFile, "~/");
             if (errCode != 0)
             {
-                Util.Log($"ERR {errCode}: {result}");
+                Console.WriteLine("Fail to copy script from local to remote: {errCode}");
             }
+            (errCode, result) = ShellHelper.RemoteBash(user, host, sshPort, password, innerCmd);
 
             return (errCode, result);
-
         }
 
         public static(int, string) StartSignalrService(List<string> hosts, string user, string password, int sshPort, string serviceDir, List<string> logPath)
