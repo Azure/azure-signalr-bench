@@ -28,7 +28,7 @@ namespace Bench.Common
         [Option('o', "outputcounterfile", Required = false, HelpText = "Specify Output File For Counters")]
         public string OutputCounterFile { get; set; }
 
-        [Option('v', "servicetype", Required = false, HelpText = "Specify BenchMark Service Type")]
+        [Option('v', "servicetype", Default = "ASRS", Required = false, HelpText = "Specify BenchMark Service Type")]
         public string ServiceType { get; set; }
 
         [Option('t', "transporttype", Required = false, HelpText = "Specify TransportType")]
@@ -52,7 +52,7 @@ namespace Bench.Common
         [Option("duration", Required = false, HelpText = "Specify Connection Increase Step")]
         public int Duration { get; set; }
 
-        [Option("interval", Required = false, HelpText = "Specify Connection Increase Step")]
+        [Option("interval", Default = 1, Required = false, HelpText = "Specify Connection Increase Step")]
         public int Interval { get; set; }
 
         [Option("slaves", Required = false, HelpText = "Specify Connection Increase Step")]
