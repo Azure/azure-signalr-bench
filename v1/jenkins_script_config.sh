@@ -231,7 +231,7 @@ function create_asrs()
     delete_signalr_service $name $rsg
     return
   fi
-  if [ "$Disable_UNIT_PER_POD" == "true" ]
+  if [ "$Disable_UNIT_PER_POD" == "true" ] && [ "$ASRSEnv" == "dogfood" ]
   then
     patch_deployment_for_no_tc_and_wait $name 100
   fi
