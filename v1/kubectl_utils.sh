@@ -40,7 +40,7 @@ function find_target_by_iterate_all_k8slist()
   local config
   local result
   local i=1
-  local ns=""
+  local ns="default"
   if [ $# -eq 3 ]
   then
     ns=$3
