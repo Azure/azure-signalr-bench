@@ -105,7 +105,7 @@ namespace JenkinsScript
                 str += "\n";
             }
             var privateIpFile = Environment.GetEnvironmentVariable("PrivateIps");
-            if (!string.IsNullOrEmpty(privateIpFile))
+            if (string.IsNullOrEmpty(privateIpFile))
             {
                 privateIpFile = "privateIps.yaml";
             }
@@ -130,7 +130,7 @@ namespace JenkinsScript
             }
             str += "\n";
             var publicIpFile = Environment.GetEnvironmentVariable("PublicIps");
-            if (!string.IsNullOrEmpty(publicIpFile))
+            if (string.IsNullOrEmpty(publicIpFile))
             {
                 publicIpFile = "publicIps.yaml";
             }
