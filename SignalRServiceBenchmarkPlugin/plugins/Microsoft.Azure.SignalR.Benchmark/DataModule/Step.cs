@@ -7,7 +7,7 @@ using YamlDotNet.RepresentationModel;
 
 namespace Microsoft.Azure.SignalR.Benchmark.DataModule
 {
-    class Step : BaseStep
+    public class Step : BaseStep
     {
         public override bool Deserialize(IList<string> input)
         {
@@ -26,6 +26,7 @@ namespace Microsoft.Azure.SignalR.Benchmark.DataModule
         {
             var json = JsonConvert.SerializeObject(IntegerDictionary);
             var list = new List<string>();
+            list.Add(json);
             return list;
         }
 
