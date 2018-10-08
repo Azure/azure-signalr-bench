@@ -3,32 +3,20 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using YamlDotNet.RepresentationModel;
+using BasePlugin;
 
 namespace Microsoft.Azure.SignalR.Benchmark.DataModule
 {
-    public class BenchmarkConfigurationModule
+    public class BenchmarkConfigurationModule: BaseBenchmarkConfiguration
     {
-        private static readonly string ModuleNameKey = "ModuleName";
-        private static readonly string PipelineKey = "Pipeline";
-        private static readonly string TypesKey = "Types";
-
-        private IValidator _validator;
-
-        public string ModuleName { get; set; }
-        private IList<string> _types;
-
         public BenchmarkConfigurationModule()
         {
+            Types = new List<string>();
+            Pipeline = new List<IList<BaseStep>>();
         }
 
-        //List<StepConfigurationModule> _pipeline;
 
-        public BenchmarkConfigurationModule(IValidator validator)
-        {
-            _validator = validator;
-        }
-
-        public void Parse(string content)
+        public override bool Parse(string content)
         {
             // Setup input
             var input = new StringReader(content);
@@ -39,29 +27,41 @@ namespace Microsoft.Azure.SignalR.Benchmark.DataModule
 
             // validate the stream
             var mapping = (YamlMappingNode)yaml.Documents[0].RootNode;
-            var success = _validator.Validate(mapping);
+            var success = Validate(mapping);
 
             // Parse the stream
+            // Parse module name
             ModuleName = (mapping.Children[new YamlScalarNode(ModuleNameKey)] as YamlScalarNode).Value;
-            //var pipeline = (YamlSequenceNode)mapping.Children[new YamlSequenceNode(Pipeline)];
 
-        }
-
-
-        /* TODO: Make interface and move to other file*/
-
-        // validator
-        public interface IValidator
-        {
-            bool Validate(YamlMappingNode root);
-        }
-
-        public class Validator
-        {
-            public bool Validate()
+            // Parse types
+            var types = mapping.Children[new YamlScalarNode(TypesKey)] as YamlSequenceNode;
+            foreach (var type in types)
             {
-                throw new NotImplementedException();
+                Types.Add(type.ToString());
             }
+
+            // Parse pipeline
+            var pipelineNode = (YamlSequenceNode)mapping.Children[new YamlScalarNode(PipelineKey)] as YamlSequenceNode;
+            foreach(var parallelStepNode in pipelineNode)
+            {
+                var parallelSteps = new List<BaseStep>();
+                foreach(var stepNode in (YamlSequenceNode)parallelStepNode)
+                {
+                    var step = new Step();
+                    step.Parse((YamlMappingNode)stepNode);
+                    parallelSteps.Add(step);
+                }
+                Pipeline.Add(parallelSteps);
+
+            }
+
+            return success;
         }
+
+        protected override bool ValidateCore(YamlMappingNode mapping)
+        {
+            return true;
+        }
+
     }
 }

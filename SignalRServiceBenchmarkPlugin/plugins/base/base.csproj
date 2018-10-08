@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp2.1</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="DataModule\BenchmarkConfiguration\IStep.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="YamlDotNet" Version="5.1.0" />
+  </ItemGroup>
+  
+</Project>
