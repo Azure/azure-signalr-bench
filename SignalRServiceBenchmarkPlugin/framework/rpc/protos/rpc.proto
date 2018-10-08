@@ -3,9 +3,13 @@ syntax = "proto3";
 package Microsoft.Azure.SignalR.Benchmark.Rpc;
 
 service MessageBroker {
-	rpc Test(String) returns (String) {}
+	rpc Query(Data) returns (Json) {}
+	rpc Update(Data) returns (Empty) {}
 }
 
-message String {
-	string _ = 1;
+message Data {
+	string json = 1;
+}
+
+message Empty {
 }
