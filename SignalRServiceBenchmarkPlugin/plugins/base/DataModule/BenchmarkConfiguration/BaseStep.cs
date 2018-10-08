@@ -7,41 +7,47 @@ namespace BasePlugin
 {
     public abstract class BaseStep
     {
-        public IDictionary<string, int> IntegerDictionary { get; set; } = new Dictionary<string, int>();
-        public IDictionary<string, string> StringDictionary { get; set; } = new Dictionary<string, string>();
-        public IDictionary<string, Tuple<int, int>> IntegerPairDictionary { get; set; } = new Dictionary<string, Tuple<int, int>>();
-        public IDictionary<string, double> doubleDictionary { get; set; } = new Dictionary<string, double>();
+        public IDictionary<string, object> Parameters { get; set; } = new Dictionary<string, object>();
         public string Type { get; set; }
         public string Method { get; set; }
         protected readonly string TypeKey = "Type";
         protected readonly string MethodKey = "Method";
-        protected readonly string ParameterKey = "Parameter";
 
         public abstract bool Deserialize(IList<string> input);
 
         public abstract IList<string> Serialize();
 
-        public bool Parse(YamlMappingNode stepNode)
+        protected bool Parse(YamlMappingNode stepNode)
         {
             var success = true;
 
-            success = Validate(stepNode);
+            success = InternalValidate(stepNode);
             if (!success) return success;
 
-            // Get step type
-            Type = stepNode.Children[new YamlScalarNode(TypeKey)].ToString();
+            foreach (var entry in stepNode)
+            {
+                var parameterName = ((YamlScalarNode)entry.Key).Value;
 
-            // Get step method
-            Method = stepNode.Children[new YamlScalarNode(MethodKey)].ToString();
-
-            // Get step pamameters
-            ParseParameter((YamlMappingNode)stepNode.Children[new YamlScalarNode(ParameterKey)]);
-
+                if (parameterName == TypeKey)
+                {
+                    Type = parameterName;
+                    continue;
+                }
+                var parameterValue = Convert.ToInt32(entry.Value.ToString());
+                success = Parameters.TryAdd(parameterName, parameterValue);
+                if (!success) return success;
+            }
             return success;
-            
         }
 
-        protected abstract bool ParseParameter(YamlMappingNode input);
+        protected bool InternalValidate(YamlMappingNode stepNode)
+        {
+            var keys = stepNode.Children.Keys;
+            if (!keys.Contains(new YamlScalarNode(TypeKey))) return false;
+            if (!keys.Contains(new YamlScalarNode(MethodKey))) return false;
+            return Validate(stepNode);
+        }
+
         protected abstract bool Validate(YamlNode stepNode);
     }
 }

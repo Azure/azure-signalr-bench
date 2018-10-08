@@ -11,14 +11,14 @@ namespace Microsoft.Azure.SignalR.Benchmark.DataModule
 
         public int GetTotalConnetion()
         {
-            IntegerDictionary.TryGetValue(TotalKey, out int total);
-            return total;
+            Parameters.TryGetValue(TotalKey, out object total);
+            return (int)(long)total;
         }
 
         public int GetIdleConnetion()
         {
-            IntegerDictionary.TryGetValue(IdleKey, out int idle);
-            return idle;
+            Parameters.TryGetValue(IdleKey, out object idle);
+            return (int)(long)idle;
         }
     }
 }

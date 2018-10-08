@@ -17,30 +17,26 @@ Types:
 - P2
 
 Pipeline:
- # first step
+# first step
 -
   - Type: P1
-    Method: echo
-    Parameter:
-      Total: 1000
-      Idle: 200
+    Method: Echo
+    Parameter.Total: 1000
+    Parameter.Idle: 200
   - Type: P2
     Method: Create
-    Parameter:
-      Total: 999
-      Idle: 200
+    Parameter.Total: 999
+    Parameter.Idle: 200
 # second step
 - 
   - Type: P1
     Method: Echo
-    Parameter:
-      Total: 1000
-      Idle: 200
+    Parameter.Total: 1000
+    Parameter.Idle: 200
   - Type: P2
     Method: Create
-    Parameter:
-      Total: 2000
-      Idle: 333
+    Parameter.Total: 2000
+    Parameter.Idle: 333
 ";
             var benchmarkConfiguration = new BenchmarkConfigurationModule();
             benchmarkConfiguration.Parse(input);
@@ -55,14 +51,14 @@ Pipeline:
             Assert.True(benchmarkConfiguration.Pipeline[0][0].Method == "echo", $"method != Echo");
             Assert.True(benchmarkConfiguration.Pipeline[0][1].Type == "P2", $"type != P2");
             Assert.True(benchmarkConfiguration.Pipeline[0][1].Method == "Create", $"method != Create");
-            Assert.True(benchmarkConfiguration.Pipeline[0][1].IntegerDictionary["Total"] == 999, $"total != 999");
+            Assert.True((int)benchmarkConfiguration.Pipeline[0][1].Parameters["Total"] == 999, $"total != 999");
 
             // Step 2
             Assert.True(benchmarkConfiguration.Pipeline[1][0].Type == "P1", $"type != P1");
             Assert.True(benchmarkConfiguration.Pipeline[1][0].Method == "Echo", $"method != Echo");
             Assert.True(benchmarkConfiguration.Pipeline[1][1].Type == "P2", $"type != P2");
             Assert.True(benchmarkConfiguration.Pipeline[1][1].Method == "Create", $"method != Create");
-            Assert.True(benchmarkConfiguration.Pipeline[1][1].IntegerDictionary["Idle"] == 333, $"Idle != 333");
+            Assert.True((int)benchmarkConfiguration.Pipeline[1][1].Parameters["Idle"] == 333, $"Idle != 333");
 
             // Test serialization and deserialization
             var jsonList = benchmarkConfiguration.Pipeline[0][1].Serialize();
