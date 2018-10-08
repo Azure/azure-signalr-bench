@@ -136,6 +136,7 @@ function run_benchmark()
              fi
              connection=`python gen_complex_pipeline.py -t $Transport -s $Scenario -u unit${unit} -c ${maxConnectionOption}`
              concurrentConnection=`python gen_complex_pipeline.py -t $Transport -s $Scenario -u unit${unit} -C ${maxConnectionOption}`
+             tag="unit"${unit}
              ## special handle SendGroup
              if [ "$Scenario" == "SendGroup" ]
              then
