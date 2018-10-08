@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Microsoft.Azure.SignalR.Benchmark.DataModule
 {
-    public class EchoSampleStep: Step
+    public class EchoSampleStep: SampleStep
     {
         private readonly string TotalKey = "Total";
         private readonly string IdleKey = "Idle";

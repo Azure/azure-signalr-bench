@@ -7,7 +7,7 @@ using YamlDotNet.RepresentationModel;
 
 namespace Microsoft.Azure.SignalR.Benchmark.DataModule
 {
-    public class Step : BaseStep
+    public class SampleStep : BaseStep
     {
         public override bool Deserialize(IList<string> input)
         {

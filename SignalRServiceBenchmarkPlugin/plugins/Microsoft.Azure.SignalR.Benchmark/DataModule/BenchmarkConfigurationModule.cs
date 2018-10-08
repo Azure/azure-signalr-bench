@@ -47,7 +47,7 @@ namespace Microsoft.Azure.SignalR.Benchmark.DataModule
                 var parallelSteps = new List<BaseStep>();
                 foreach(var stepNode in (YamlSequenceNode)parallelStepNode)
                 {
-                    var step = new Step();
+                    var step = new SampleStep();
                     step.Parse((YamlMappingNode)stepNode);
                     parallelSteps.Add(step);
                 }
