@@ -30,8 +30,6 @@ namespace Microsoft.Azure.SignalR.Benchmark.DataModule
             return list;
         }
 
-
-
         protected override bool ParseParameter(YamlMappingNode stepNode)
         {
             var success = true;
