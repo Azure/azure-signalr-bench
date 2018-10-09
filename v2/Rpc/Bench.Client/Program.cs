@@ -39,6 +39,8 @@ namespace Bench.RpcMaster
         private static bool _ge1000msGT1Percent = false;
         // if there is > 1% connection errors, we may stop sending
         private static bool _connectionErrorGT1Percent = false;
+        // Recording the sending step on Master side to fix randomly zero received from slaves
+        private static int _currentSendingStep = 0;
 
         public static async Task Main(string[] args)
         {
@@ -346,6 +348,12 @@ namespace Bench.RpcMaster
                             }
                             else if (string.Equals(key, "sendingStep", StringComparison.OrdinalIgnoreCase))
                             {
+                                if (value == 0)
+                                {
+                                    // sometimes, the received value from slave is zero,
+                                    // we have to correct it.
+                                    value = (ulong)_currentSendingStep;
+                                }
                                 allClientCounters.AddOrUpdate(key, value, (k, v) => value);
                             }
                             else
@@ -647,6 +655,7 @@ namespace Bench.RpcMaster
                         i++;
                         continue;
                     }
+                    _currentSendingStep = curTotalSending;
                 }
                 // up op
                 HandleBasicUpOp(step, connectionConfigBuilder, connectionAllConfigList, connections, slaveList);

@@ -3,6 +3,7 @@
 - [Why do we need to develop this benchmark framework](#Why)
 - [Overview](#Overview)
 - [How to use it](#How)
+- [Typical use case](#TypicalCase)
 
 <a name="Why"></a>
 ## Why do we need to develop this benchmark framework
@@ -31,13 +32,25 @@ This benchmark essentially includes a bunch of SignalR clients, which connects t
 
 Setup 3 VMs for App server, master node, and slave node. You can use the same VM for all of them for a quick try.
 
-Launch the App server first which requires Azure SignalR service connection string. Let us assume the app server hub URL is "http://appserver:5050/signalrbench"
+- Launch the App server
 
-Launch the slave node under Rpc/Bench.Server folder, and specify the listening port. Here uses 7000 as an example. Let us assume the slave node IP is "10.0.0.10"
+Go to `AppServer` folder, set connection string and start it.
+
+`dotnet user-secrets set Azure:SignalR:ConnectionString "Endpoint=https://XXX;AccessKey=YYY;Version=1.0"`
+
+`dotnet run`
+
+Let us assume the app server hub URL is "http://appserver:5050/signalrbench"
+
+- Launch the slave node under Rpc/Bench.Server folder
+
+Specify the listening port. Here uses 7000 as an example. Let us assume the slave node IP is "10.0.0.10"
 
 `dotnet run -- --rpcPort 7000`
 
-Launch the master node under Rpc/Bench.Client folder for Websockets transport, json protocol, with 2k message for echo scenario. The concurrent connection build rate is 100 connections every second. The pipeline here specifies the test running step: first create 1000 client objects, secondly start connections, then sending 500 message every second, after running for 300 seconds, sending more 500 + 500 messages per second for another 300 seconds. The latency distribution is saved to counters.txt
+- Launch the master node under Rpc/Bench.Client folder
+
+Here we take Websockets transport, json protocol, with 2k message for echo scenario as an example. The concurrent connection build rate is 100 connections every second. The pipeline here specifies the test running step: first create 1000 client objects, secondly start connections, then sending 500 message every second, after running for 300 seconds, sending more 500 + 500 messages per second for another 300 seconds. The latency distribution is saved to counters.txt
 
 `dotnet run -- --rpcPort 7000 --duration 300 --connections 1000 --serverUrl "http://appserver:5050/signalrbench" -t Websockets -p json -s echo --messageSize 2k --concurrentConnection 100 --slaveList "10.0.0.10" --pipeLine "createConn;startConn;up500;scenario;up500;scenario;stopConn;disposeConn" -o counters.txt`
 
@@ -54,3 +67,18 @@ Launch the slave node
 Launch the master node:
 
 `dotnet run -- --rpcPort 7000 --duration 300 --connections 1000 -t Websockets -p json -s RestSendToUser --messageSize 2k --concurrentConnection 100 --slaveList "10.0.0.10" --pipeLine "createRestClientConn;startRestClientConn;up500;scenario;up500;scenario;stopConn;disposeConn" -o counters.txt`
+
+<a name="TypicalCase"></a>
+## Typical case
+
+### Group
+
+For sending message to group, we want to know how many groups and how big groups can we support. This scenario can be benchmarked by specifying a pipeline for group scenario and group numbers.
+
+The steps are as follows:
+
+Launch the App server and slave node, those two steps are the same as above.
+
+Launch master node to support 1000 connections, with 100 groups and every group has 10 connections. In every second, there are 500 connections sending message to its own group. The tool evaluates the latency of every message.
+
+`dotnet run -- --rpcPort 7000 --duration 300 --connections 1000 -t Websockets -p json -s SendGroup --messageSize 2k --concurrentConnection 100 --slaveList "10.0.0.10" --pipeLine "createConn;startConn;joinGroup;up500;scenario;up500;stopConn;disposeConn" --groupOverlap 1 --groupNum 100 -o counters.txt`
