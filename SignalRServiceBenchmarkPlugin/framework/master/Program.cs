@@ -38,7 +38,11 @@ namespace Rpc.Master
             var argsOption = new ArgsOption();
             var result = Parser.Default.ParseArguments<ArgsOption>(args)
                 .WithParsed(options => argsOption = options)
-                .WithNotParsed(error => { });
+                .WithNotParsed(error => 
+                {
+                    Log.Information($"Parse arguments...");
+                    Environment.Exit(128);
+                });
             return argsOption;
         }
 

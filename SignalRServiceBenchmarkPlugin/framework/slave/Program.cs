@@ -39,7 +39,11 @@ namespace Rpc.Slave
             var argsOption = new ArgsOption();
             var result = Parser.Default.ParseArguments<ArgsOption>(args)
                 .WithParsed(options => argsOption = options)
-                .WithNotParsed(error => { });
+                .WithNotParsed(error => 
+                {
+                    Log.Error($"Error in parsing arguments: {error}");
+                    Environment.Exit(128);
+                });
             return argsOption;
         }
 
