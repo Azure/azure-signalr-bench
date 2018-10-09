@@ -9,11 +9,11 @@ namespace Microsoft.Azure.SignalR.Benchmark.DataModule
 {
     public class SampleStep : BaseStep
     {
-        public override bool Deserialize(IList<string> input)
+        public override bool Deserialize(string input)
         {
             try
             {
-                Parameters = JsonConvert.DeserializeObject<Dictionary<string, object>>(input[0]);
+                Parameters = JsonConvert.DeserializeObject<Dictionary<string, object>>(input);
             }
             catch(Exception ex)
             {
@@ -22,12 +22,10 @@ namespace Microsoft.Azure.SignalR.Benchmark.DataModule
             return true;
         }
 
-        public override IList<string> Serialize()
+        public override string Serialize()
         {
             var json = JsonConvert.SerializeObject(Parameters);
-            var list = new List<string>();
-            list.Add(json);
-            return list;
+            return json;
         }
 
         protected override bool Validate(YamlNode stepNode)
