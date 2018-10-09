@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Microsoft.Azure.SignalR.Benchmark.Common
+namespace Common
 {
     class Constants
     {
