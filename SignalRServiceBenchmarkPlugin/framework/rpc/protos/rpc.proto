@@ -5,6 +5,7 @@ package Rpc.Service;
 service RpcService{
 	rpc Query(Data) returns (Data) {}
 	rpc Update(Data) returns (Empty) {}
+	rpc TestConnection(Empty) returns (Empty) {}
 }
 
 message Data {
