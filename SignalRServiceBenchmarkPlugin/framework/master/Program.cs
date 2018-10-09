@@ -20,7 +20,7 @@ namespace Rpc.Master
             var argsOption = ParseArgs(args);
 
             // Create Logger
-            Util.CreateLogger(argsOption.LogDirectory, argsOption.LogName);
+            Util.CreateLogger(argsOption.LogDirectory, argsOption.LogName, argsOption.LogTarget);
 
             // Generate rpc channels
             var channels = CreateRpcChannels(argsOption.SlaveList, argsOption.RpcPort);

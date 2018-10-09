@@ -1,4 +1,5 @@
 ﻿using CommandLine;
+using Common;
 using System.Collections.Generic;
 
 namespace Rpc.Master
@@ -18,5 +19,10 @@ namespace Rpc.Master
 
         [Option("LogDirectory", Required = false, Default = ".", HelpText = "Directory in which the log will be stored. Default directory is '.'.")]
         public string LogDirectory { get; set; }
+
+        [Option("LogTarget", Required = false, Default = LogTargetEnum.All, HelpText = "Log target. " +
+            "Options: All/File/Console. " + "  All: Output to file and console;" +
+            " Console: Output to console;" + " File: Output to file.")]
+        public LogTargetEnum LogTarget { get; set; }
     }
 }

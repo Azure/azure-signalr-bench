@@ -17,7 +17,7 @@ namespace Rpc.Slave
             var argsOption = ParseArgs(args);
 
             // Create Logger
-            Util.CreateLogger(argsOption.LogDirectory, argsOption.LogName);
+            Util.CreateLogger(argsOption.LogDirectory, argsOption.LogName, argsOption.LogTarget);
 
             // Create Rpc server
             var server = CreateRpcServer(argsOption.HostName, argsOption.RpcPort);
@@ -62,6 +62,5 @@ namespace Rpc.Slave
 
             return server;
         }
-
     }
 }
