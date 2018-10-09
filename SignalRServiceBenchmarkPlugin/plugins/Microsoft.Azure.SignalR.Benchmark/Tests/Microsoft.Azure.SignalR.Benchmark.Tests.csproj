@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp2.1</TargetFramework>
+
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.7.0" />
+    <PackageReference Include="xunit" Version="2.3.1" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.3.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Common\Microsoft.Azure.SignalR.Benchmark.Common.csproj" />
+    <ProjectReference Include="..\Master\Microsoft.Azure.SignalR.Benchmark.Master.csproj" />
+    <ProjectReference Include="..\DataModule\Microsoft.Azure.SignalR.Benchmark.DataModule.csproj" />
+    <ProjectReference Include="..\Slave\Microsoft.Azure.SignalR.Benchmark.Slave.csproj" />
+    <ProjectReference Include="..\..\base\base.csproj" />
+  </ItemGroup>
+
+</Project>
