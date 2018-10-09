@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 using Grpc.Core;
+using Serilog;
 
 namespace Rpc.Service
 {
@@ -18,5 +19,10 @@ namespace Rpc.Service
             throw new NotImplementedException();
         }
 
+        public override Task<Empty> TestConnection(Empty empty, ServerCallContext context)
+        {
+            Log.Information($"Host {context.Host} connected");
+            return Task.FromResult(new Empty());
+        }
     }
 }

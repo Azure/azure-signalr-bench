@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Rpc.Service;
 using Serilog;
 using System.IO;
+using Common;
 
 namespace Rpc.Master
 {
@@ -19,7 +20,7 @@ namespace Rpc.Master
             var argsOption = ParseArgs(args);
 
             // Create Logger
-            CreateLogger(argsOption.LogDirectory, argsOption.LogName);
+            Util.CreateLogger(argsOption.LogDirectory, argsOption.LogName);
 
             // Generate rpc channels
             var channels = CreateRpcChannels(argsOption.SlaveList, argsOption.RpcPort);
@@ -33,6 +34,7 @@ namespace Rpc.Master
 
         private static ArgsOption ParseArgs(string[] args)
         {
+            Log.Information($"Parse arguments...");
             var argsOption = new ArgsOption();
             var result = Parser.Default.ParseArguments<ArgsOption>(args)
                 .WithParsed(options => argsOption = options)
@@ -42,7 +44,7 @@ namespace Rpc.Master
 
         private static List<Channel> CreateRpcChannels(IList<string> slaveList, int rpcPort)
         {
-            // open channel to rpc servers
+            Log.Information("Open channel to rpc servers...");
             var channels = new List<Channel>(slaveList.Count);
             for (var i = 0; i < slaveList.Count; i++)
             {
@@ -58,6 +60,7 @@ namespace Rpc.Master
 
         private static List<RpcService.RpcServiceClient> CreateRpcClients(List<Channel> channels)
         {
+            Log.Information($"Create Rpc clients...");
             var clients = new List<RpcService.RpcServiceClient>();
             for (var i = 0; i < channels.Count; i++)
             {
@@ -68,6 +71,7 @@ namespace Rpc.Master
 
         private static void WaitRpcConnectSuccess(List<RpcService.RpcServiceClient> clients)
         {
+            Log.Information("Connect Rpc slaves...");
             for (var i = 0; i < _maxRertryConnect; i++)
             {
                 try
@@ -86,20 +90,11 @@ namespace Rpc.Master
                 }
                 catch (Exception ex)
                 {
-                    Log.Information($"Fail to connect slaves, retry {i}th time");
+                    Log.Warning($"Fail to connect slaves, retry {i}th time");
                     continue;
                 }
                 break;
             }
-        }
-
-        private static void CreateLogger(string directory, string name)
-        {
-            Log.Logger = new LoggerConfiguration()
-                .MinimumLevel.Debug()
-                .WriteTo.Console()
-                .WriteTo.File(Path.Combine(directory, name), rollingInterval: RollingInterval.Day)
-                .CreateLogger();
         }
     }
 }

@@ -9,8 +9,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "plugins", "plugins", "{66BE
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Microsoft.Azure.SignalR.Benchmark", "Microsoft.Azure.SignalR.Benchmark", "{9506790C-32F6-4858-9BD0-03A0800E01B4}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Azure.SignalR.Benchmark.Common", "plugins\Microsoft.Azure.SignalR.Benchmark\Common\Microsoft.Azure.SignalR.Benchmark.Common.csproj", "{BB74356F-76B5-4DB6-B2C3-C1B04BA6F28B}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Azure.SignalR.Benchmark.Master", "plugins\Microsoft.Azure.SignalR.Benchmark\Master\Microsoft.Azure.SignalR.Benchmark.Master.csproj", "{7F3E25CE-D461-4CA6-B6C2-BDB480BC8226}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Azure.SignalR.Benchmark.Slave", "plugins\Microsoft.Azure.SignalR.Benchmark\Slave\Microsoft.Azure.SignalR.Benchmark.Slave.csproj", "{EB3F425D-8F99-40A4-B88A-EC8965A3EB54}"
@@ -27,16 +25,14 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "rpc", "framework\rpc\rpc.cs
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "master", "framework\master\master.csproj", "{D5A41D15-BC95-4B0A-AAA7-4223152125EA}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "common", "common\common.csproj", "{4E83D30E-0FBC-451E-BA7A-A6533A03C50E}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{BB74356F-76B5-4DB6-B2C3-C1B04BA6F28B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{BB74356F-76B5-4DB6-B2C3-C1B04BA6F28B}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{BB74356F-76B5-4DB6-B2C3-C1B04BA6F28B}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{BB74356F-76B5-4DB6-B2C3-C1B04BA6F28B}.Release|Any CPU.Build.0 = Release|Any CPU
 		{7F3E25CE-D461-4CA6-B6C2-BDB480BC8226}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{7F3E25CE-D461-4CA6-B6C2-BDB480BC8226}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7F3E25CE-D461-4CA6-B6C2-BDB480BC8226}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -69,13 +65,16 @@ Global
 		{D5A41D15-BC95-4B0A-AAA7-4223152125EA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D5A41D15-BC95-4B0A-AAA7-4223152125EA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D5A41D15-BC95-4B0A-AAA7-4223152125EA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4E83D30E-0FBC-451E-BA7A-A6533A03C50E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4E83D30E-0FBC-451E-BA7A-A6533A03C50E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4E83D30E-0FBC-451E-BA7A-A6533A03C50E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4E83D30E-0FBC-451E-BA7A-A6533A03C50E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{9506790C-32F6-4858-9BD0-03A0800E01B4} = {66BE8163-E0A5-4328-B2BF-09D18EE54128}
-		{BB74356F-76B5-4DB6-B2C3-C1B04BA6F28B} = {9506790C-32F6-4858-9BD0-03A0800E01B4}
 		{7F3E25CE-D461-4CA6-B6C2-BDB480BC8226} = {9506790C-32F6-4858-9BD0-03A0800E01B4}
 		{EB3F425D-8F99-40A4-B88A-EC8965A3EB54} = {9506790C-32F6-4858-9BD0-03A0800E01B4}
 		{5CCC1B73-1AD3-4C0A-9DF0-DE2B194B3A42} = {9506790C-32F6-4858-9BD0-03A0800E01B4}
