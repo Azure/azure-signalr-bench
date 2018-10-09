@@ -252,6 +252,69 @@ EOF
 # global env:
 # bench_serviceunit_list, ScriptWorkingDir, result_root
 # copy_syslog, copy_nginx_log
+# specify connection string as input parameter
+function run_unit() {
+   local ConnectionString="$1"
+   local service
+   local signalrServiceName
+for service in $bench_serviceunit_list
+do
+   cd $ScriptWorkingDir
+   if [ "$ConnectionString" == "" ]
+   then
+     echo "Skip the running on SignalR service unit'$service' since it was failed to create"
+     continue
+   fi
+
+   cd $ScriptWorkingDir
+   . ./func_env.sh
+   . ./kubectl_utils.sh
+
+   ## service folder to save
+   local k8s_result_dir=${ScriptWorkingDir}/${result_root}/"unit"$service
+   mkdir -p $k8s_result_dir
+
+   ## start collecting top information
+   local service_name=$(extract_servicename_from_connectionstring $ConnectionString)
+   if [ "$service_name" != "" ]
+   then
+     nohup sh collect_pod_top.sh $service_name $k8s_result_dir &
+     collect_pod_top_pid=$!
+     if [ "$g_nginx_ns" != "" ]
+     then
+        nohup sh collect_nginx_top.sh $service_name $g_nginx_ns $k8s_result_dir &
+        collect_nginx_top_pid=$!
+     fi
+   fi
+   #############
+   run_benchmark $service
+   ############# copy pod log ############
+   ## stop collecting top
+   if [ "$service_name" != "" ]
+   then
+      kill $collect_pod_top_pid
+      if [ "$collect_nginx_top_pid" != "" ]
+      then
+         kill $collect_nginx_top_pid
+      fi
+   ############# copy pod log ############
+      if [ "$copy_syslog" == "true" ]
+      then
+         copy_syslog $service_name $k8s_result_dir
+      fi
+      if [ "$copy_nginx_log" == "true" ]
+      then
+         get_nginx_log $service_name "$g_nginx_ns" $k8s_result_dir
+      fi
+      get_k8s_pod_status $service_name $k8s_result_dir
+   fi
+done
+
+}
+
+# global env:
+# bench_serviceunit_list, ScriptWorkingDir, result_root
+# copy_syslog, copy_nginx_log
 function run_all_units() {
 local service
 local signalrServiceName
