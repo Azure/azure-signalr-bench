@@ -3,13 +3,13 @@ using CommandLine;
 using Grpc.Core;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Azure.SignalR.Benchmark.Rpc;
+using Rpc.Service;
 
 namespace Rpc.Slave
 {
     class Program
     {
-        static async Task Main(string[] args)
+        public static async Task Main(string[] args)
         {
             // Parse args
             var argsOption = ParseArgs(args);
@@ -31,7 +31,7 @@ namespace Rpc.Slave
             return argsOption;
         }
 
-        private static CreateRpcServer(string hostname, string port)
+        private static Server CreateRpcServer(string hostname, int port)
         {
             Grpc.Core.Server server = new Grpc.Core.Server(new ChannelOption[]
             {
@@ -39,7 +39,7 @@ namespace Rpc.Slave
                 new ChannelOption(ChannelOptions.MaxReceiveMessageLength, 8192000)
             })
             {
-                Services = { MessageBroker.BindService(new MessageBrokerImpl()) },
+                Services = { RpcService.BindService(new RpcServiceImpl()) },
                 Ports = { new ServerPort(hostname, port, ServerCredentials.Insecure) }
             };
 

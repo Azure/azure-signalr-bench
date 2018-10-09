@@ -1,9 +1,9 @@
 syntax = "proto3";
 
-package Microsoft.Azure.SignalR.Benchmark.Rpc;
+package Rpc.Service;
 
-service MessageBroker {
-	rpc Query(Data) returns (Json) {}
+service RpcService{
+	rpc Query(Data) returns (Data) {}
 	rpc Update(Data) returns (Empty) {}
 }
 

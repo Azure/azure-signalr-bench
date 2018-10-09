@@ -5,11 +5,8 @@ namespace Rpc.Slave
 {
     class ArgsOption
     {
-        [Option("RpcPort", Required = true, HelpText = "")]
+        [Option("RpcPort", Required = true, Default = 5050, HelpText = "")]
         public int RpcPort { get; set; }
-
-        [Option("SlaveList", Required = true, HelpText = "")]
-        public string SlaveList { get; set; }
 
         [Option("HostName", Required = true, HelpText = "")]
         public string HostName{ get; set; }
