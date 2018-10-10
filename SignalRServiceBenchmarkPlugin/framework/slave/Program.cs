@@ -1,7 +1,5 @@
 ﻿using System;
 using CommandLine;
-using Grpc.Core;
-using System.Threading;
 using System.Threading.Tasks;
 using Rpc.Service;
 using Common;

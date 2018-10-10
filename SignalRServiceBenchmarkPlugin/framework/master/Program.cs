@@ -1,11 +1,9 @@
 ﻿using CommandLine;
-using Grpc.Core;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Rpc.Service;
 using Serilog;
-using System.IO;
 using Common;
 using Plugin.Base;
 
@@ -14,7 +12,7 @@ namespace Rpc.Master
     class Program
     {
         private static readonly int _maxRertryConnect = 100;
-        private static IPugin _plugin;
+        private static IPlugin _plugin;
 
         static async Task Main(string[] args)
         {
@@ -62,7 +60,7 @@ namespace Rpc.Master
         private static void InstallPluginInMaster(string moduleName)
         {
             var type = Type.GetType(moduleName);
-            _plugin = (IPugin)Activator.CreateInstance(type);
+            _plugin = (IPlugin)Activator.CreateInstance(type);
         }
 
         private static async Task InstallPluginInSlaves(IList<IRpcClient> clients, string moduleName)
@@ -82,7 +80,7 @@ namespace Rpc.Master
             var success = true;
             foreach (var task in tasks)
             {
-                if (!task.GetAwaiter().GetResult()) success = false;
+                if (!task.Result) success = false;
                 break;
             }
 

@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Plugin.Microsoft.Azure.SignalR.Benchmark
 {
-    public class SignalRBenchmarkPlugin : IPugin
+    public class SignalRBenchmarkPlugin : IPlugin
     {
         // TODO: not finish
         public async Task HandleMasterStep(MasterStep step, IList<IRpcClient> rpcClients)
