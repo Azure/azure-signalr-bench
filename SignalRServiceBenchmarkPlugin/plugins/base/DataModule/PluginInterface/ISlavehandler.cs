@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace BasePlugin
+namespace Plugin.Base
 {
-    public class Pipeline
+    public interface ISlavehandler
     {
     }
 }

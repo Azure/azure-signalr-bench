@@ -1,25 +1,23 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using YamlDotNet.RepresentationModel;
 
-namespace BasePlugin
+namespace Plugin.Base
 {
-    public abstract class BaseStep
+    public class MasterStep
     {
         public IDictionary<string, object> Parameters { get; set; } = new Dictionary<string, object>();
+
         protected readonly string TypeKey = "Type";
         protected readonly string MethodKey = "Method";
-
-        public abstract bool Deserialize(string input);
-
-        public abstract string Serialize();
 
         public bool Parse(YamlMappingNode stepNode)
         {
             var success = true;
 
-            success = InternalValidate(stepNode);
+            success = Validate(stepNode);
             if (!success) return success;
 
             foreach (var entry in stepNode)
@@ -32,14 +30,33 @@ namespace BasePlugin
             return success;
         }
 
-        protected bool InternalValidate(YamlMappingNode stepNode)
+        // TODO: validate more on Step
+        protected bool Validate(YamlMappingNode stepNode)
         {
             var keys = stepNode.Children.Keys;
             if (!keys.Contains(new YamlScalarNode(TypeKey))) return false;
             if (!keys.Contains(new YamlScalarNode(MethodKey))) return false;
-            return Validate(stepNode);
+            return true;
         }
 
-        protected abstract bool Validate(YamlNode stepNode);
+        // TODO: Deserialize should be in SlaveStep
+        //public bool Deserialize(string input)
+        //{
+        //    try
+        //    {
+        //        Parameters = JsonConvert.DeserializeObject<Dictionary<string, object>>(input);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return false;
+        //    }
+        //    return true;
+        //}
+
+        public string Serialize()
+        {
+            var json = JsonConvert.SerializeObject(Parameters);
+            return json;
+        }
     }
 }

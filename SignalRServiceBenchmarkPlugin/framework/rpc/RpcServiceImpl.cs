@@ -19,10 +19,15 @@ namespace Rpc.Service
             throw new NotImplementedException();
         }
 
-        public override Task<Empty> TestConnection(Empty empty, ServerCallContext context)
+        public override Task<Result> TestConnection(Empty empty, ServerCallContext context)
         {
             Log.Information($"Host {context.Host} connected");
-            return Task.FromResult(new Empty());
+            return Task.FromResult(new Result { Success = true, Message = "" });
+        }
+
+        public override Task<Result> InstallPlugin(Data data, ServerCallContext context)
+        {
+            return Task.FromResult(new Result { Success = true, Message = "" });
         }
     }
 }

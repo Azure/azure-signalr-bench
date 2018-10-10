@@ -16,6 +16,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\common\common.csproj" />
+    <ProjectReference Include="..\..\plugins\base\base.csproj" />
+    <ProjectReference Include="..\..\plugins\Microsoft.Azure.SignalR.Benchmark\DataModule\Plugin.Microsoft.Azure.SignalR.Benchmark.csproj" />
     <ProjectReference Include="..\rpc\rpc.csproj" />
   </ItemGroup>
 
