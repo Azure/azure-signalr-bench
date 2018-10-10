@@ -1,4 +1,4 @@
-ModuleName: Plugin.Microsoft.Azure.SignalR.Benchmark.SignalRBenchmarkPlugin, Microsoft.Azure.SignalR.Benchmark.DataModule
+ModuleName: Plugin.Microsoft.Azure.SignalR.Benchmark.SignalRBenchmarkPlugin, Plugin.Microsoft.Azure.SignalR.Benchmark
 
 Types:
 - P1

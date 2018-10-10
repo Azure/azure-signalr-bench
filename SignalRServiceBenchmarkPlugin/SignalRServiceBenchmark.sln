@@ -7,11 +7,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "framework", "framework", "{
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "plugins", "plugins", "{66BE8163-E0A5-4328-B2BF-09D18EE54128}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Microsoft.Azure.SignalR.Benchmark", "Microsoft.Azure.SignalR.Benchmark", "{9506790C-32F6-4858-9BD0-03A0800E01B4}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Azure.SignalR.Benchmark.Tests", "plugins\Microsoft.Azure.SignalR.Benchmark\Tests\Microsoft.Azure.SignalR.Benchmark.Tests.csproj", "{5CCC1B73-1AD3-4C0A-9DF0-DE2B194B3A42}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Plugin.Microsoft.Azure.SignalR.Benchmark", "plugins\Microsoft.Azure.SignalR.Benchmark\DataModule\Plugin.Microsoft.Azure.SignalR.Benchmark.csproj", "{4ADA2E62-7D9F-4E2F-A108-37ADFC1FA04C}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Plugin.Microsoft.Azure.SignalR.Benchmark", "Plugin.Microsoft.Azure.SignalR.Benchmark", "{9506790C-32F6-4858-9BD0-03A0800E01B4}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "base", "plugins\base\base.csproj", "{42E17EE0-8420-4D44-B865-312C2AAF954C}"
 EndProject
@@ -23,20 +19,16 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "master", "framework\master\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "common", "common\common.csproj", "{4E83D30E-0FBC-451E-BA7A-A6533A03C50E}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Plugin.Microsoft.Azure.SignalR.Benchmark", "plugins\Plugin.Microsoft.Azure.SignalR.Benchmark\SignalRPlugin\Plugin.Microsoft.Azure.SignalR.Benchmark.csproj", "{CBB45C9A-F4C8-4854-8E69-4A93413E516E}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microsoft.Azure.SignalR.Benchmark.Tests", "plugins\Plugin.Microsoft.Azure.SignalR.Benchmark\Tests\Microsoft.Azure.SignalR.Benchmark.Tests.csproj", "{EF4C8712-C6DA-49CA-96F0-822D953D7202}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{5CCC1B73-1AD3-4C0A-9DF0-DE2B194B3A42}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{5CCC1B73-1AD3-4C0A-9DF0-DE2B194B3A42}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{5CCC1B73-1AD3-4C0A-9DF0-DE2B194B3A42}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{5CCC1B73-1AD3-4C0A-9DF0-DE2B194B3A42}.Release|Any CPU.Build.0 = Release|Any CPU
-		{4ADA2E62-7D9F-4E2F-A108-37ADFC1FA04C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{4ADA2E62-7D9F-4E2F-A108-37ADFC1FA04C}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{4ADA2E62-7D9F-4E2F-A108-37ADFC1FA04C}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{4ADA2E62-7D9F-4E2F-A108-37ADFC1FA04C}.Release|Any CPU.Build.0 = Release|Any CPU
 		{42E17EE0-8420-4D44-B865-312C2AAF954C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{42E17EE0-8420-4D44-B865-312C2AAF954C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{42E17EE0-8420-4D44-B865-312C2AAF954C}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -57,18 +49,26 @@ Global
 		{4E83D30E-0FBC-451E-BA7A-A6533A03C50E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4E83D30E-0FBC-451E-BA7A-A6533A03C50E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4E83D30E-0FBC-451E-BA7A-A6533A03C50E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CBB45C9A-F4C8-4854-8E69-4A93413E516E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CBB45C9A-F4C8-4854-8E69-4A93413E516E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CBB45C9A-F4C8-4854-8E69-4A93413E516E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CBB45C9A-F4C8-4854-8E69-4A93413E516E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{EF4C8712-C6DA-49CA-96F0-822D953D7202}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EF4C8712-C6DA-49CA-96F0-822D953D7202}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EF4C8712-C6DA-49CA-96F0-822D953D7202}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EF4C8712-C6DA-49CA-96F0-822D953D7202}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{9506790C-32F6-4858-9BD0-03A0800E01B4} = {66BE8163-E0A5-4328-B2BF-09D18EE54128}
-		{5CCC1B73-1AD3-4C0A-9DF0-DE2B194B3A42} = {9506790C-32F6-4858-9BD0-03A0800E01B4}
-		{4ADA2E62-7D9F-4E2F-A108-37ADFC1FA04C} = {9506790C-32F6-4858-9BD0-03A0800E01B4}
 		{42E17EE0-8420-4D44-B865-312C2AAF954C} = {66BE8163-E0A5-4328-B2BF-09D18EE54128}
 		{3F065D76-6957-4462-8735-6C100A013A16} = {CDBF9EB3-6160-44BE-87D0-3147FC15AF9D}
 		{9C85C9D3-558C-4AE4-8A2B-666BC4A5106B} = {CDBF9EB3-6160-44BE-87D0-3147FC15AF9D}
 		{D5A41D15-BC95-4B0A-AAA7-4223152125EA} = {CDBF9EB3-6160-44BE-87D0-3147FC15AF9D}
+		{CBB45C9A-F4C8-4854-8E69-4A93413E516E} = {9506790C-32F6-4858-9BD0-03A0800E01B4}
+		{EF4C8712-C6DA-49CA-96F0-822D953D7202} = {9506790C-32F6-4858-9BD0-03A0800E01B4}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {74F85124-663D-4290-9699-7FB524E07A8C}
