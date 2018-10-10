@@ -286,7 +286,7 @@ git checkout {branch}
                 var targetLog = logPath[i];
                 var applogFolder = $"log{i}";
                 var host = hosts[i];
-                var recheckTimeout = 180;
+                var recheckTimeout = 240;
                 var recheck = 0;
                 while (recheck < recheckTimeout)
                 {
@@ -408,15 +408,30 @@ git checkout {branch}
             var outputCounterDir = Path.Join(userRoot, $"results/{Environment.GetEnvironmentVariable("result_root")}/{suffix}/");
             outputCounterFile = outputCounterDir + $"counters.txt";
             var connectionStringOpt = "";
+            var serverOption = "";
             if (connectionString != null)
             {
-                connectionStringOpt = $"--connectionString \"{connectionString}\"";
+                if (!connectionString.StartsWith('\'') && !connectionString.StartsWith('"'))
+                {
+                    connectionStringOpt = $"--connectionString '{connectionString}'";
+                }
+                else
+                {
+                    connectionStringOpt = $"--connectionString {connectionString}";
+                }
             }
+            else
+            {
+                serverOption = $"--serverUrl '{serverUrl}'";
+            }
+
+            var concatPipeline = string.Join(";", pipeLine);
+
             cmd = $"cd {masterRoot}; ";
             cmd += $"mkdir -p {outputCounterDir} || true;";
             cmd += $"dotnet run -- " +
                 $"--rpcPort 5555 " +
-                $"--duration {duration} --connections {connection} --interval {interval} --slaves {slaves.Count} --serverUrl '{serverUrl}' --pipeLine '{string.Join(";", pipeLine)}' " +
+                $"--duration {duration} --connections {connection} --interval {interval} --slaves {slaves.Count} {serverOption} --pipeLine '{string.Join(";", pipeLine)}' " +
                 $"-v {serviceType} -t {transportType} -p {hubProtocol} -s {scenario} " +
                 $" --slaveList '{slaveList}' " +
                 $" --retry {0} " +
@@ -429,11 +444,11 @@ git checkout {branch}
                 $"--enableGroupJoinLeave {enableGroupJoinLeave} " +
                 $"--stopSendIfLatencyBig {stopSendIfLatencyBig} " +
                 $"--stopSendIfConnectionErrorBig {stopSendIfConnectionErrorBig} " +
-                $"{connectionStringOpt}" + // this option is only for RestAPI scenario test
+                $"{connectionStringOpt} " + // this option is only for RestAPI scenario test
                 $" -o '{outputCounterFile}' | tee {logPath}";
 
             Util.Log($"CMD: {user}@{host}: {cmd}");
-            (errCode, result) = ShellHelper.RemoteBash(user, host, sshPort, password, cmd, captureConsole : true);
+            (errCode, result) = ShellHelper.RemoteBash(user, host, sshPort, password, cmd, captureConsole: true);
 
             if (errCode != 0)
             {
@@ -441,7 +456,6 @@ git checkout {branch}
             }
 
             return (errCode, result);
-
         }
 
         public static(int, string) StartSignalrService(List<string> hosts, string user, string password, int sshPort, string serviceDir, List<string> logPath)

@@ -39,6 +39,9 @@ namespace Bench.RpcMaster
         private static bool _ge1000msGT1Percent = false;
         // if there is > 1% connection errors, we may stop sending
         private static bool _connectionErrorGT1Percent = false;
+        // Recording the sending step on Master side to fix randomly zero received from slaves
+        private static int _currentSendingStep = 0;
+        private static System.Timers.Timer _counterCollectorTimer = null;
 
         public static async Task Main(string[] args)
         {
@@ -105,7 +108,8 @@ namespace Bench.RpcMaster
                 throw;
             }
             SaveJobResult(_jobResultFile, _counters, argsOption.Connections, argsOption.ServiceType, argsOption.TransportType, argsOption.HubProtocal, argsOption.Scenario);
-
+            _counterCollectorTimer.Stop();
+            Console.WriteLine("Wait channles to shutdown...");
             WaitChannelsShutDown(channels);
             Console.WriteLine("Exit client...");
         }
@@ -302,6 +306,7 @@ namespace Bench.RpcMaster
         private static void StartCollectCounters(List<RpcService.RpcServiceClient> clients, string outputSaveFile)
         {
             var collectTimer = new System.Timers.Timer(1000);
+            _counterCollectorTimer = collectTimer;
             collectTimer.AutoReset = true;
             collectTimer.Elapsed += async(sender, e) =>
             {
@@ -346,6 +351,12 @@ namespace Bench.RpcMaster
                             }
                             else if (string.Equals(key, "sendingStep", StringComparison.OrdinalIgnoreCase))
                             {
+                                if (value == 0)
+                                {
+                                    // sometimes, the received value from slave is zero,
+                                    // we have to correct it.
+                                    value = (ulong)_currentSendingStep;
+                                }
                                 allClientCounters.AddOrUpdate(key, value, (k, v) => value);
                             }
                             else
@@ -549,6 +560,7 @@ namespace Bench.RpcMaster
                     // temporarily borrow the 'server' field to pass connection string,
                     // because I do not want to modify RPC model.
                     server = connectionString;
+                    Util.Log($"connection string: {server}");
                 }
                 var config = new CellJobConfig
                 {
@@ -646,6 +658,7 @@ namespace Bench.RpcMaster
                         i++;
                         continue;
                     }
+                    _currentSendingStep = curTotalSending;
                 }
                 // up op
                 HandleBasicUpOp(step, connectionConfigBuilder, connectionAllConfigList, connections, slaveList);

@@ -268,7 +268,7 @@ func main() {
                 var curSendingStep int64
                 for i, v := range monitors {
                     curSendingStep = v.Counters.Sending
-                    if curSendingStep != 0 && i + 1 < len(monitors)-1 && monitors[i+1].Counters.Sending == 0 {
+                    if curSendingStep != 0 && i + 1 < len(monitors)-1 && monitors[i+1].Counters.Sending != curSendingStep {
                         sum = v.Counters.LT_100 + v.Counters.LT_200 + v.Counters.LT_300 +
                               v.Counters.LT_400 + v.Counters.LT_500 + v.Counters.LT_600 +
                               v.Counters.LT_700 + v.Counters.LT_800 + v.Counters.LT_900 +
@@ -389,7 +389,7 @@ func main() {
                 var curSendingStep int64
                 for i, v := range monitors {
                     curSendingStep = v.Counters.Sending
-                    if curSendingStep != 0 && i + 1 < len(monitors)-1 && monitors[i+1].Counters.Sending == 0 {
+                    if curSendingStep != 0 && i + 1 < len(monitors)-1 && monitors[i+1].Counters.Sending != curSendingStep {
                         sum = v.Counters.LT_100 + v.Counters.LT_200 + v.Counters.LT_300 +
                               v.Counters.LT_400 + v.Counters.LT_500 + v.Counters.LT_600 +
                               v.Counters.LT_700 + v.Counters.LT_800 + v.Counters.LT_900 +
@@ -489,7 +489,7 @@ func main() {
                 var curSendingStep int64
                 for i, v := range monitors {
                     curSendingStep = v.Counters.Sending
-                    if curSendingStep != 0 && i + 1 < len(monitors)-1 && monitors[i+1].Counters.Sending == 0 {
+                    if curSendingStep != 0 && i + 1 < len(monitors)-1 && monitors[i+1].Counters.Sending != curSendingStep {
                         sum = v.Counters.LT_100 + v.Counters.LT_200 + v.Counters.LT_300 +
                               v.Counters.LT_400 + v.Counters.LT_500 + v.Counters.LT_600 +
                               v.Counters.LT_700 + v.Counters.LT_800 + v.Counters.LT_900 +

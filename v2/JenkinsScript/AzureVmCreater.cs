@@ -104,7 +104,12 @@ namespace JenkinsScript
                 }
                 str += "\n";
             }
-            File.WriteAllText("privateIps.yaml", str);
+            var privateIpFile = Environment.GetEnvironmentVariable("PrivateIps");
+            if (string.IsNullOrEmpty(privateIpFile))
+            {
+                privateIpFile = "privateIps.yaml";
+            }
+            File.WriteAllText(privateIpFile, str);
 
             // save public IP of service and appserver
             str = "";
@@ -124,9 +129,12 @@ namespace JenkinsScript
                 if (i < appSvrVmCount - 1) str += ";";
             }
             str += "\n";
-
-            File.WriteAllText("publicIps.yaml", str);
-
+            var publicIpFile = Environment.GetEnvironmentVariable("PublicIps");
+            if (string.IsNullOrEmpty(publicIpFile))
+            {
+                publicIpFile = "publicIps.yaml";
+            }
+            File.WriteAllText(publicIpFile, str);
         }
 
         public Task CreateAppServerVm()

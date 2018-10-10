@@ -381,9 +381,13 @@ namespace JenkinsScript
                         Task.Delay(waitTime).Wait();
 
                         // start app server
-                        privateIps.AppServerPrivateIp.Split(";").ToList().ForEach(host => StartCollectMachineStatisticsTimer(host, user, password, sshPort, Util.MakeSureDirectoryExist(statisticFolder) + $"appserver{host}.txt", TimeSpan.FromSeconds(1)));
-                        ShellHelper.StartAppServer(privateIps.AppServerPrivateIp.Split(";").ToList(), user, password, sshPort, azureSignalrConnectionStrings, logPathAppServer, useLocalSignalR, appSvrRoot);
-                        Task.Delay(waitTime).Wait();
+                        if (connectionString == null)
+                        {
+                            // serverless mode (connectionString != null) does not need to start app server
+                            privateIps.AppServerPrivateIp.Split(";").ToList().ForEach(host => StartCollectMachineStatisticsTimer(host, user, password, sshPort, Util.MakeSureDirectoryExist(statisticFolder) + $"appserver{host}.txt", TimeSpan.FromSeconds(1)));
+                            ShellHelper.StartAppServer(privateIps.AppServerPrivateIp.Split(";").ToList(), user, password, sshPort, azureSignalrConnectionStrings, logPathAppServer, useLocalSignalR, appSvrRoot);
+                            Task.Delay(waitTime).Wait();
+                        }
 
                         // start slaves
                         privateIps.SlavePrivateIp.Split(";").ToList().ForEach(host => StartCollectMachineStatisticsTimer(host, user, password, sshPort, Util.MakeSureDirectoryExist(statisticFolder) + $"slave{host}.txt", TimeSpan.FromSeconds(1)));
