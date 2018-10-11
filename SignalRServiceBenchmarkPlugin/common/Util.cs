@@ -33,9 +33,20 @@ namespace Common
                     break;
 
             }
-            
+        }
 
-            
+        public static string ReadFile(string path)
+        {
+            try
+            {
+                var content = File.ReadAllText(path);
+                return content;
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"Fail to load benchmark configuration: {ex}");
+                throw ex;
+            }
         }
     }
 }

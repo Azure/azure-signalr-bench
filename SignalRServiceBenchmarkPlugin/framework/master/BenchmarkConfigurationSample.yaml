@@ -1,0 +1,17 @@
+ModuleName: Plugin.Microsoft.Azure.SignalR.Benchmark.SignalRBenchmarkPlugin, Plugin.Microsoft.Azure.SignalR.Benchmark
+
+Types:
+- P1
+- P2
+
+Pipeline:
+# first step
+-
+  - Type: P1
+    Method: Echo
+    Parameter.Total: 1000
+    Parameter.Idle: 200
+  - Type: P2
+    Method: Create
+    Parameter.Total: 999
+    Parameter.Idle: 200

@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netcoreapp2.1</TargetFramework>
@@ -13,10 +13,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Master\Microsoft.Azure.SignalR.Benchmark.Master.csproj" />
-    <ProjectReference Include="..\DataModule\Microsoft.Azure.SignalR.Benchmark.DataModule.csproj" />
-    <ProjectReference Include="..\Slave\Microsoft.Azure.SignalR.Benchmark.Slave.csproj" />
     <ProjectReference Include="..\..\base\base.csproj" />
+    <ProjectReference Include="..\SignalRPlugin\Plugin.Microsoft.Azure.SignalR.Benchmark.csproj" />
   </ItemGroup>
 
 </Project>

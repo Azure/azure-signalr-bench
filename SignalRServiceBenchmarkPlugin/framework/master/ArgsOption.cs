@@ -24,5 +24,9 @@ namespace Rpc.Master
             "Options: All/File/Console." + " All: Output to file and console;" +
             " Console: Output to console;" + " File: Output to file.")]
         public LogTargetEnum LogTarget { get; set; }
+
+        // Benchmark configuration
+        [Option("BenchmarkConfiguration", Required = true,  HelpText = "Benchmark configuration Path.")]
+        public string BenchmarkConfiguration { get; set; }
     }
 }

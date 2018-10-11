@@ -1,7 +1,5 @@
 ﻿using System;
 using CommandLine;
-using Grpc.Core;
-using System.Threading;
 using System.Threading.Tasks;
 using Rpc.Service;
 using Common;
@@ -20,17 +18,10 @@ namespace Rpc.Slave
             Util.CreateLogger(argsOption.LogDirectory, argsOption.LogName, argsOption.LogTarget);
 
             // Create Rpc server
-            var server = CreateRpcServer(argsOption.HostName, argsOption.RpcPort);
+            var server = new RpcServer().Create(argsOption.HostName, argsOption.RpcPort);
 
             // Start Rpc server
-            await StartRpcServer(server);
-        }
-
-        private static async Task StartRpcServer(Server server)
-        {
-            Log.Information("Start server...");
-            server.Start();
-            await Task.Delay(Timeout.Infinite);
+            await server.Start();
         }
 
         private static ArgsOption ParseArgs(string[] args)
@@ -42,25 +33,9 @@ namespace Rpc.Slave
                 .WithNotParsed(error => 
                 {
                     Log.Error($"Error in parsing arguments: {error}");
-                    Environment.Exit(128);
+                    throw new ArgumentException("Error in parsing arguments");
                 });
             return argsOption;
-        }
-
-        private static Server CreateRpcServer(string hostname, int port)
-        {
-            Log.Information("Create Rpc Server...");
-            Grpc.Core.Server server = new Grpc.Core.Server(new ChannelOption[]
-            {
-                // For Group, the received message size is very large, so here set 8000k
-                new ChannelOption(ChannelOptions.MaxReceiveMessageLength, 8192000)
-            })
-            {
-                Services = { RpcService.BindService(new RpcServiceImpl()) },
-                Ports = { new ServerPort(hostname, port, ServerCredentials.Insecure) }
-            };
-
-            return server;
         }
     }
 }

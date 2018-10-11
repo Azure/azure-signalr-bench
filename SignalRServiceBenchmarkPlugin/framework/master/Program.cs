@@ -1,18 +1,18 @@
 ﻿using CommandLine;
-using Grpc.Core;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Rpc.Service;
 using Serilog;
-using System.IO;
 using Common;
+using Plugin.Base;
 
 namespace Rpc.Master
 {
     class Program
     {
         private static readonly int _maxRertryConnect = 100;
+        private static IPlugin _plugin;
 
         static async Task Main(string[] args)
         {
@@ -22,14 +22,82 @@ namespace Rpc.Master
             // Create Logger
             Util.CreateLogger(argsOption.LogDirectory, argsOption.LogName, argsOption.LogTarget);
 
-            // Generate rpc channels
-            var channels = CreateRpcChannels(argsOption.SlaveList, argsOption.RpcPort);
-
             // Create rpc clients
-            var clients = CreateRpcClients(channels);
+            var clients = CreateRpcClients(argsOption.SlaveList, argsOption.RpcPort);
 
             // Check rpc connections
             WaitRpcConnectSuccess(clients);
+
+            // Load benchmark configuration
+            var configuration = Util.ReadFile(argsOption.BenchmarkConfiguration);
+            var benchmarkConfiguration = new BenchmarkConfiguration(configuration);
+
+            // Install plugin in master and slaves
+            await InstallPlugin(clients, benchmarkConfiguration.ModuleName);
+
+            // Process pipeline
+            await ProcessPipeline(benchmarkConfiguration.Pipeline, clients);
+        }
+        
+        private static IList<IRpcClient> CreateRpcClients(IList<string> slaveList, int rpcPort)
+        {
+            var clients = new List<IRpcClient>();
+            foreach(var slave in slaveList)
+            {
+                var client = new RpcClient().Create(slave, rpcPort);
+                clients.Add(client);
+            }
+            return clients;
+        }
+
+        private static async Task InstallPlugin(IList<IRpcClient> clients, string moduleName)
+        {
+            Log.Information($"Install plugin...");
+            InstallPluginInMaster(moduleName);
+            await InstallPluginInSlaves(clients, moduleName);
+        }
+
+        private static void InstallPluginInMaster(string moduleName)
+        {
+            var type = Type.GetType(moduleName);
+            _plugin = (IPlugin)Activator.CreateInstance(type);
+        }
+
+        private static async Task InstallPluginInSlaves(IList<IRpcClient> clients, string moduleName)
+        {
+            Log.Information($"Install plugin in slaves...");
+
+            var tasks = new List<Task<bool>>();
+
+            // Try to install plugin
+            foreach (var client in clients)
+            {
+                tasks.Add(client.InstallPluginAsync(moduleName));
+            }
+            await Task.WhenAll(tasks);
+
+            // Check whether the plugin installed
+            var success = true;
+            foreach (var task in tasks)
+            {
+                if (!task.Result) success = false;
+                break;
+            }
+
+            if (!success) throw new Exception("Fail to install plugin in slaves.");
+        }
+
+        private static async Task ProcessPipeline(IList<IList<MasterStep>> pipeline, IList<IRpcClient> clients)
+        {
+            foreach(var parallelStep in pipeline)
+            {
+                foreach(var step in parallelStep)
+                {
+                    var tasks = new List<Task>();
+                    tasks.Add(_plugin.HandleMasterStep(step, clients));
+                    await Task.WhenAll(tasks);
+                }
+            }
         }
 
         private static ArgsOption ParseArgs(string[] args)
@@ -40,40 +108,13 @@ namespace Rpc.Master
                 .WithParsed(options => argsOption = options)
                 .WithNotParsed(error => 
                 {
-                    Log.Information($"Parse arguments...");
-                    Environment.Exit(128);
+                    Log.Error($"Error in parsing arguments: {error}");
+                    throw new ArgumentException("Error in parsing arguments.");
                 });
             return argsOption;
         }
 
-        private static List<Channel> CreateRpcChannels(IList<string> slaveList, int rpcPort)
-        {
-            Log.Information("Open channel to rpc servers...");
-            var channels = new List<Channel>(slaveList.Count);
-            for (var i = 0; i < slaveList.Count; i++)
-            {
-                channels.Add(new Channel($"{slaveList[i]}:{rpcPort}", ChannelCredentials.Insecure,
-                    new ChannelOption[] {
-                        // For Group, the received message size is very large, so here set 8000k
-                        new ChannelOption(ChannelOptions.MaxReceiveMessageLength, 8192000)
-                    }));
-            }
-
-            return channels;
-        }
-
-        private static List<RpcService.RpcServiceClient> CreateRpcClients(List<Channel> channels)
-        {
-            Log.Information($"Create Rpc clients...");
-            var clients = new List<RpcService.RpcServiceClient>();
-            for (var i = 0; i < channels.Count; i++)
-            {
-                clients.Add(new RpcService.RpcServiceClient(channels[i]));
-            }
-            return clients;
-        }
-
-        private static void WaitRpcConnectSuccess(List<RpcService.RpcServiceClient> clients)
+        private static void WaitRpcConnectSuccess(IList<IRpcClient> clients)
         {
             Log.Information("Connect Rpc slaves...");
             for (var i = 0; i < _maxRertryConnect; i++)
@@ -84,7 +125,7 @@ namespace Rpc.Master
                     {
                         try
                         {
-                            client.TestConnection(new Empty());
+                            client.TestConnection();
                         }
                         catch (Exception)
                         {
