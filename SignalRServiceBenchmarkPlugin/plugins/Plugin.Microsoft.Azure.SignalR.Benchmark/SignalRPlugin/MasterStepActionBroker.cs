@@ -18,11 +18,19 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             var datas = clients.Select((client, i) => {
                 (int beg, int end) = GetConnectionRange(connectionTotal, i, clients.Count);
                 var data = new Dictionary<string, object> { { SignalRConstants.ConnectionBegin, beg }, { SignalRConstants.ConnectionEnd, end } };
+                // Add method and type
+                AddMethodAndType(data, parameters);
                 return data;
             });
 
             var results = from client in clients from data in datas select client.QueryAsync(data);
             return Task.WhenAll(results);
+        }
+
+        private void AddMethodAndType(IDictionary<string, object> data, IDictionary<string, object> parameters)
+        {
+            data[Constants.Method] = parameters[Constants.Method];
+            data[Constants.Type] = parameters[Constants.Type];
         }
 
         private int SplitNumber(int total, int index, int agents)

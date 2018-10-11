@@ -1,8 +1,10 @@
 ﻿using Grpc.Core;
 using Newtonsoft.Json;
+using Plugin.Base;
 using Serilog;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -12,9 +14,31 @@ namespace Rpc.Service
     {
         private RpcService.RpcServiceClient _client;
 
-        public Task<IDictionary<string, object>> QueryAsync(IDictionary<string, object> data)
+        public async Task<IDictionary<string, object>> QueryAsync(IDictionary<string, object> data)
         {
-            throw new NotImplementedException();
+            if (!CheckTypeAndMethod(data))
+            {
+                var message = $"Do not contain {Constants.Type} and {Constants.Method}.";
+                Log.Error(message);
+                throw new Exception(message);
+            }
+            var result = await _client.QueryAsync(new Data { Json = Serialize(data) }).ResponseAsync;
+            var returnData = Deserialize(result.Json);
+            return returnData;
+        }
+
+        // TODO: remove another Deserialize
+        public Dictionary<string, object> Deserialize(string input)
+        {
+            try
+            {
+                var parameters = JsonConvert.DeserializeObject<Dictionary<string, object>>(input);
+                return parameters;
+            }
+            catch (Exception ex)
+            {
+                return null;
+            }
         }
 
         public string Serialize(IDictionary<string, object> data)
@@ -25,6 +49,12 @@ namespace Rpc.Service
 
         public Task UpdateAsync(IDictionary<string, object> data)
         {
+            if (!CheckTypeAndMethod(data))
+            {
+                var message = $"Do not contain {Constants.Type} and {Constants.Method}.";
+                Log.Error(message);
+                throw new Exception(message);
+            }
             return _client.UpdateAsync(new Data { Json = Serialize(data) }).ResponseAsync;
         }
 
@@ -66,6 +96,12 @@ namespace Rpc.Service
             var result = await _client.InstallPluginAsync(new Data { Json = pluginName }).ResponseAsync;
             if (!result.Success) Log.Error($"Fail to install plugin in slave: {result.Message}");
             return result.Success;
+        }
+
+        public bool CheckTypeAndMethod(IDictionary<string, object> data)
+        {
+            if (data.ContainsKey(Constants.Type) && data.ContainsKey(Constants.Method)) return true;
+            return false;
         }
     }
 }

@@ -14,6 +14,7 @@ namespace Rpc.Service
         bool TestConnection();
         Task<bool> InstallPluginAsync(string pluginName);
         string Serialize(IDictionary<string, object> data);
+        bool CheckTypeAndMethod(IDictionary<string, object> data);
 
     }
 }

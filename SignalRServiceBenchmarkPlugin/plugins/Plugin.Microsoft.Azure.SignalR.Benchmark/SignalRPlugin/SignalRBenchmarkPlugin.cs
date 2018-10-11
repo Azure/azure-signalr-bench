@@ -27,7 +27,24 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
 
         public async Task HandleSlaveStep(IDictionary<string, object> parameters)
         {
+            // Send to master
+            await SendToSlaves(parameters);
+        }
 
+        private Task SendToSlaves(IDictionary<string, object> parameters)
+        {
+            var method = parameters[Constants.Method];
+            var type = parameters[Constants.Type];
+
+            switch(method)
+            {
+                case "CreateConnection":
+                    // TODO: reflection
+                    return _masterActionBroker.CreateConnection(parameters);
+                default:
+                    break;
+            }
+            return Task.CompletedTask;
         }
 
         private Task SendToSlaves(MasterStep step, IList<IRpcClient> clients)
@@ -37,6 +54,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             switch (method)
             {
                 case "CreateConnection":
+                    // TODO: reflection
                     return _masterActionBroker.CreateConnection(parameters, clients);
                 default:
                     break;

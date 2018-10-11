@@ -9,15 +9,12 @@ namespace Plugin.Base
     public class MasterStep
     {
         public IDictionary<string, object> Parameters { get; set; } = new Dictionary<string, object>();
-
-        protected readonly string TypeKey = "Type";
-        protected readonly string MethodKey = "Method";
-
+        
         public string GetMethod()
         {
             try
             {
-                Parameters.TryGetValue(MethodKey, out object method);
+                Parameters.TryGetValue(Constants.Method, out object method);
                 return (string)method;
             }
             catch (Exception ex)
@@ -49,29 +46,9 @@ namespace Plugin.Base
         protected bool Validate(YamlMappingNode stepNode)
         {
             var keys = stepNode.Children.Keys;
-            if (!keys.Contains(new YamlScalarNode(TypeKey))) return false;
-            if (!keys.Contains(new YamlScalarNode(MethodKey))) return false;
+            if (!keys.Contains(new YamlScalarNode(Constants.Type))) return false;
+            if (!keys.Contains(new YamlScalarNode(Constants.Method))) return false;
             return true;
         }
-
-        // TODO: Deserialize should be in SlaveStep
-        //public bool Deserialize(string input)
-        //{
-        //    try
-        //    {
-        //        Parameters = JsonConvert.DeserializeObject<Dictionary<string, object>>(input);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return false;
-        //    }
-        //    return true;
-        //}
-
-        //public string Serialize()
-        //{
-        //    var json = JsonConvert.SerializeObject(Parameters);
-        //    return json;
-        //}
     }
 }
