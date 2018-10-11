@@ -232,9 +232,20 @@ function create_asrs()
     delete_signalr_service $name $rsg
     return
   fi
-  if [ "$Disable_UNIT_PER_POD" == "true" ] && [ "$ASRSEnv" == "dogfood" ]
+  if [ "$ASRSEnv" == "dogfood" ]
   then
-    patch_deployment_for_no_tc_and_wait $name 100
+    if [ "$Disable_UNIT_PER_POD" == "true" ]
+    then
+      patch_deployment_for_no_tc_and_wait $name 100
+    fi
+    if [ "$Disable_Connection_Throttling" == "true" ]
+    then
+      local limit=`python gen_connection_throttling.py -u "unit"$unit`
+      if [ $limit -ne 0 ]
+      then
+         patch_connection_throttling_env $name $limit
+      fi
+    fi
   fi
   local connectionStr=$(query_connection_string $name $rsg)
   echo "[ConnectionString]: $connectionStr"
