@@ -8,10 +8,12 @@ namespace Rpc.Service
     // Decouple concrete Rpc client from plugin
     public interface IRpcClient
     {
-        Task UpdateAsync(string data);
-        Task<string> QueryAsync(string data);
+        Task UpdateAsync(IDictionary<string, object> data);
+        Task<IDictionary<string, object>> QueryAsync(IDictionary<string, object> data);
         IRpcClient Create(string hostname, int port);
         bool TestConnection();
         Task<bool> InstallPluginAsync(string pluginName);
+        string Serialize(IDictionary<string, object> data);
+
     }
 }

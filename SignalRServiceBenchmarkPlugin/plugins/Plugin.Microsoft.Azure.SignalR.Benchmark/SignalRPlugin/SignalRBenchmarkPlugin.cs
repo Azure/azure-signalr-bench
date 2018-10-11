@@ -5,16 +5,49 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
+using Common;
+using System.Linq;
+using Newtonsoft.Json;
 
 namespace Plugin.Microsoft.Azure.SignalR.Benchmark
 {
+    // Sample plugin: SignalR benchmark
     public class SignalRBenchmarkPlugin : IPlugin
     {
-        // TODO: not finish
-        public async Task HandleMasterStep(MasterStep step, IList<IRpcClient> rpcClients)
+        private MasterStepActionBroker _masterActionBroker = new MasterStepActionBroker();
+            
+        public async Task HandleMasterStep(MasterStep step, IList<IRpcClient> clients)
+        {
+            // Show step configuration
+            ShowConfiguration(step);
+
+            // Send to slaves
+            await SendToSlaves(step, clients);
+        }
+
+        public async Task HandleSlaveStep(IDictionary<string, object> parameters)
+        {
+
+        }
+
+        private Task SendToSlaves(MasterStep step, IList<IRpcClient> clients)
+        {
+            var method = step.GetMethod();
+            var parameters = step.Parameters;
+            switch (method)
+            {
+                case "CreateConnection":
+                    return _masterActionBroker.CreateConnection(parameters, clients);
+                default:
+                    break;
+            }
+            return Task.CompletedTask;
+        }
+
+        private void ShowConfiguration(MasterStep step)
         {
             var configuration = "\n";
-            foreach(var entry in step.Parameters)
+            foreach (var entry in step.Parameters)
             {
                 configuration += $"  {entry.Key}: {entry.Value}\n";
             }

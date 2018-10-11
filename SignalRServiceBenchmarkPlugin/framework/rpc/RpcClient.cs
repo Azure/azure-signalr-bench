@@ -1,4 +1,5 @@
 ﻿using Grpc.Core;
+using Newtonsoft.Json;
 using Serilog;
 using System;
 using System.Collections.Generic;
@@ -11,14 +12,20 @@ namespace Rpc.Service
     {
         private RpcService.RpcServiceClient _client;
 
-        public Task<string> QueryAsync(string data)
+        public Task<IDictionary<string, object>> QueryAsync(IDictionary<string, object> data)
         {
             throw new NotImplementedException();
         }
 
-        public Task UpdateAsync(string data)
+        public string Serialize(IDictionary<string, object> data)
         {
-            return _client.UpdateAsync(new Data { Json = data }).ResponseAsync;
+            var json = JsonConvert.SerializeObject(data);
+            return json;
+        }
+
+        public Task UpdateAsync(IDictionary<string, object> data)
+        {
+            return _client.UpdateAsync(new Data { Json = Serialize(data) }).ResponseAsync;
         }
 
         private static Channel CreateRpcChannel(string hostname, int port)
@@ -55,6 +62,7 @@ namespace Rpc.Service
 
         public async Task<bool> InstallPluginAsync(string pluginName)
         {
+            Log.Information($"Install plugin '{pluginName}' in slave...");
             var result = await _client.InstallPluginAsync(new Data { Json = pluginName }).ResponseAsync;
             if (!result.Success) Log.Error($"Fail to install plugin in slave: {result.Message}");
             return result.Success;

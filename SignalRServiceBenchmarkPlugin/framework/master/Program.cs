@@ -6,6 +6,7 @@ using Rpc.Service;
 using Serilog;
 using Common;
 using Plugin.Base;
+using System.Linq;
 
 namespace Rpc.Master
 {
@@ -52,7 +53,7 @@ namespace Rpc.Master
 
         private static async Task InstallPlugin(IList<IRpcClient> clients, string moduleName)
         {
-            Log.Information($"Install plugin...");
+            Log.Information($"Install plugin '{moduleName}' in master...");
             InstallPluginInMaster(moduleName);
             await InstallPluginInSlaves(clients, moduleName);
         }
@@ -70,19 +71,8 @@ namespace Rpc.Master
             var tasks = new List<Task<bool>>();
 
             // Try to install plugin
-            foreach (var client in clients)
-            {
-                tasks.Add(client.InstallPluginAsync(moduleName));
-            }
-            await Task.WhenAll(tasks);
-
-            // Check whether the plugin installed
-            var success = true;
-            foreach (var task in tasks)
-            {
-                if (!task.Result) success = false;
-                break;
-            }
+            var installResults = await Task.WhenAll(from client in clients select client.InstallPluginAsync(moduleName));
+            var success = installResults.All(result => result == true);
 
             if (!success) throw new Exception("Fail to install plugin in slaves.");
         }

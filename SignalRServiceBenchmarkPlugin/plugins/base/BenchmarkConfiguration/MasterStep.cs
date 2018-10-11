@@ -1,4 +1,6 @@
 ﻿using Newtonsoft.Json;
+using Serilog;
+using System;
 using System.Collections.Generic;
 using YamlDotNet.RepresentationModel;
 
@@ -10,6 +12,21 @@ namespace Plugin.Base
 
         protected readonly string TypeKey = "Type";
         protected readonly string MethodKey = "Method";
+
+        public string GetMethod()
+        {
+            try
+            {
+                Parameters.TryGetValue(MethodKey, out object method);
+                return (string)method;
+            }
+            catch (Exception ex)
+            {
+                var message = $"Method name does not exists.";
+                Log.Error(message);
+                throw new Exception(message);
+            }
+        }
 
         public bool Parse(YamlMappingNode stepNode)
         {
@@ -51,10 +68,10 @@ namespace Plugin.Base
         //    return true;
         //}
 
-        public string Serialize()
-        {
-            var json = JsonConvert.SerializeObject(Parameters);
-            return json;
-        }
+        //public string Serialize()
+        //{
+        //    var json = JsonConvert.SerializeObject(Parameters);
+        //    return json;
+        //}
     }
 }

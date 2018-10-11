@@ -8,9 +8,8 @@ Pipeline:
 # first step
 -
   - Type: P1
-    Method: Echo
+    Method: CreateConnection
     Parameter.Total: 1000
-    Parameter.Idle: 200
   - Type: P2
     Method: Create
     Parameter.Total: 999
