@@ -15,7 +15,6 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
     // Sample plugin: SignalR benchmark
     public class SignalRBenchmarkPlugin : IPlugin
     {
-        private MasterStepActionBroker _masterActionBroker = new MasterStepActionBroker();
         private string _masterNamespaceSuffix = "MasterMethod";
         private string _slaveNamespaceSuffix = "SlaveMethod";
         public IDictionary<string, object> PluginMasterParameters { get; set; } = new Dictionary<string, object>();

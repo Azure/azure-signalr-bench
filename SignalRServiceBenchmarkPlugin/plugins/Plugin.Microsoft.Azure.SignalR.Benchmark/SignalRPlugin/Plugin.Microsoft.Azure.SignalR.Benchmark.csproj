@@ -28,8 +28,4 @@
     <ProjectReference Include="..\..\base\base.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="SlaveActions\" />
-  </ItemGroup>
-
 </Project>

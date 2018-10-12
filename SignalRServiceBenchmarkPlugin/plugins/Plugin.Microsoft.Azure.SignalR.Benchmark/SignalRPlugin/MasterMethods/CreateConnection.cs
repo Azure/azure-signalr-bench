@@ -28,7 +28,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethod
             success = stepParameters.TryGetTypedValue(SignalRConstants.HubProtocol, out string hubProtocol, Convert.ToString);
             PluginUtils.HandleGetValueResult(success, SignalRConstants.HubProtocol);
 
-            var datas = clients.Select((client, i) => {
+            var packages = clients.Select((client, i) => {
                 (int beg, int end) = Util.GetConnectionRange(connectionTotal, i, clients.Count);
                 var data = new Dictionary<string, object>
                 {
@@ -40,10 +40,10 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethod
                 };
                 // Add method and type
                 PluginUtils.AddMethodAndType(data, stepParameters);
-                return data;
+                return new { Client = client, Data = data};
             });
 
-            var results = from client in clients from data in datas select client.QueryAsync(data);
+            var results = from package in packages select package.Client.QueryAsync(package.Data);
             return Task.WhenAll(results);
         }
     }
