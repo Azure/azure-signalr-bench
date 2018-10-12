@@ -22,9 +22,18 @@ namespace Rpc.Service
                 Log.Error(message);
                 throw new Exception(message);
             }
-            var result = await _client.QueryAsync(new Data { Json = Serialize(data) }).ResponseAsync;
-            var returnData = Deserialize(result.Json);
-            return returnData;
+            try
+            {
+                var result = await _client.QueryAsync(new Data { Json = Serialize(data) }).ResponseAsync;
+                var returnData = Deserialize(result.Json);
+                return returnData;
+            }
+            catch (Exception ex)
+            {
+                var message = $"Rpc error: {ex}";
+                Log.Error(message);
+                throw new Exception(message);
+            }
         }
 
         // TODO: remove another Deserialize

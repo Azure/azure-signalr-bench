@@ -8,6 +8,7 @@ namespace Plugin.Base
 {
     public interface ISlavehandler
     {
-        Task HandleSlaveStep(IDictionary<string, object> parameters);
+        IDictionary<string, object> PluginSlaveParamaters { get; set; }
+        ISlaveMethod CreateSlaveMethodInstance(string methodName);
     }
 }

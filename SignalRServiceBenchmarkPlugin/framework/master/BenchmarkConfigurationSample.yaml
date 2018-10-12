@@ -9,8 +9,11 @@ Pipeline:
 -
   - Type: P1
     Method: CreateConnection
-    Parameter.Total: 1000
+    Parameter.ConnectionTotal: 1000
+    Parameter.HubUrl: http://localhost:5000/signalrbench
+    Parameter.Protocol: json
+    Parameter.TransportType: WebSockets
   - Type: P2
     Method: Create
-    Parameter.Total: 999
+    Parameter.ConnectionTotal: 999
     Parameter.Idle: 200

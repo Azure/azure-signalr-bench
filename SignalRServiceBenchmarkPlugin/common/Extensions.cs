@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace Common
@@ -29,6 +30,12 @@ namespace Common
             }
             value = default(TActual);
             return false;
+        }
+
+        public static string GetContents<TKey, TValue>(this IDictionary<TKey, TValue> dict)
+        {
+            var list = dict.Select(entry => $"{entry.Key} : {entry.Value}");
+            return string.Join(Environment.NewLine, list);
         }
     }
 }

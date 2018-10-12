@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Rpc.Service;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using YamlDotNet.RepresentationModel;

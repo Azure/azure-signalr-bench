@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Common;
 using System.Linq;
 using Newtonsoft.Json;
+using System.Reflection;
 
 namespace Plugin.Microsoft.Azure.SignalR.Benchmark
 {
@@ -15,61 +16,27 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
     public class SignalRBenchmarkPlugin : IPlugin
     {
         private MasterStepActionBroker _masterActionBroker = new MasterStepActionBroker();
-            
-        public async Task HandleMasterStep(MasterStep step, IList<IRpcClient> clients)
-        {
-            // Show step configuration
-            ShowConfiguration(step);
+        private string _masterNamespaceSuffix = "MasterMethod";
+        private string _slaveNamespaceSuffix = "SlaveMethod";
+        public IDictionary<string, object> PluginMasterParameters { get; set; } = new Dictionary<string, object>();
+        public IDictionary<string, object> PluginSlaveParamaters { get; set; } = new Dictionary<string, object>();
 
-            // Send to slaves
-            await SendToSlaves(step, clients);
+        public IMasterMethod CreateMasterMethodInstance(string methodName)
+        {
+            var currentNamespace = GetType().Namespace;
+            var fullMethodName = $"{currentNamespace}.{_masterNamespaceSuffix}.{methodName}, {currentNamespace}";
+            var type = Type.GetType(fullMethodName);
+            IMasterMethod methodInstance = (IMasterMethod)Activator.CreateInstance(type);
+            return methodInstance;
         }
 
-        public async Task HandleSlaveStep(IDictionary<string, object> parameters)
+        public ISlaveMethod CreateSlaveMethodInstance(string methodName)
         {
-            // Send to master
-            await SendToSlaves(parameters);
-        }
-
-        private Task SendToSlaves(IDictionary<string, object> parameters)
-        {
-            var method = parameters[Constants.Method];
-            var type = parameters[Constants.Type];
-
-            switch(method)
-            {
-                case "CreateConnection":
-                    // TODO: reflection
-                    return _masterActionBroker.CreateConnection(parameters);
-                default:
-                    break;
-            }
-            return Task.CompletedTask;
-        }
-
-        private Task SendToSlaves(MasterStep step, IList<IRpcClient> clients)
-        {
-            var method = step.GetMethod();
-            var parameters = step.Parameters;
-            switch (method)
-            {
-                case "CreateConnection":
-                    // TODO: reflection
-                    return _masterActionBroker.CreateConnection(parameters, clients);
-                default:
-                    break;
-            }
-            return Task.CompletedTask;
-        }
-
-        private void ShowConfiguration(MasterStep step)
-        {
-            var configuration = "\n";
-            foreach (var entry in step.Parameters)
-            {
-                configuration += $"  {entry.Key}: {entry.Value}\n";
-            }
-            Log.Information($"Handle step...\nConfiguration: {configuration}");
+            var currentNamespace = GetType().Namespace;
+            var fullMethodName = $"{currentNamespace}.{_slaveNamespaceSuffix}.{methodName}, {currentNamespace}";
+            var type = Type.GetType(fullMethodName);
+            ISlaveMethod methodInstance = (ISlaveMethod)Activator.CreateInstance(type);
+            return methodInstance;
         }
     }
 }

@@ -7,6 +7,7 @@ using Grpc.Core;
 using Newtonsoft.Json;
 using Plugin.Base;
 using Serilog;
+using Common;
 
 namespace Rpc.Service
 {
@@ -32,7 +33,7 @@ namespace Rpc.Service
             throw new NotImplementedException();
         }
 
-        public override Task<Data> Query(Data data, ServerCallContext context)
+        public override async Task<Data> Query(Data data, ServerCallContext context)
         {
             var parameters = Deserialize(data.Json);
 
@@ -40,10 +41,22 @@ namespace Rpc.Service
             var configuration = (from entry in parameters select $"  {entry.Key} : {entry.Value}").Aggregate((a, b) => a + "\n" + b);
             Log.Information($"Update...\n{configuration}");
 
-            // Handle slave step
-            _plugin.HandleSlaveStep(parameters);
+            // Extract method name
+            var success = parameters.TryGetTypedValue(Constants.Method, out string method, Convert.ToString);
+            if (!success)
+            {
+                var message = $"Parameter {Constants.Method} does not exists.";
+                Log.Error(message);
+                throw new Exception(message);
+            }
 
-            return Task.FromResult(new Data());
+            // Create Instance
+            ISlaveMethod methodInstance = _plugin.CreateSlaveMethodInstance(method);
+
+            // Do action
+            await methodInstance.Do(parameters, _plugin.PluginSlaveParamaters);
+
+            return new Data();
         }
 
         public override Task<Result> TestConnection(Empty empty, ServerCallContext context)

@@ -14,6 +14,8 @@ namespace Rpc.Master
     {
         private static readonly int _maxRertryConnect = 100;
         private static IPlugin _plugin;
+        private static StepHandler _stepHandler;
+        private static TimeSpan _retryInterval = TimeSpan.FromSeconds(1);
 
         static async Task Main(string[] args)
         {
@@ -27,7 +29,7 @@ namespace Rpc.Master
             var clients = CreateRpcClients(argsOption.SlaveList, argsOption.RpcPort);
 
             // Check rpc connections
-            WaitRpcConnectSuccess(clients);
+            await WaitRpcConnectSuccess(clients);
 
             // Load benchmark configuration
             var configuration = Util.ReadFile(argsOption.BenchmarkConfiguration);
@@ -62,6 +64,7 @@ namespace Rpc.Master
         {
             var type = Type.GetType(moduleName);
             _plugin = (IPlugin)Activator.CreateInstance(type);
+            _stepHandler = new StepHandler(_plugin);
         }
 
         private static async Task InstallPluginInSlaves(IList<IRpcClient> clients, string moduleName)
@@ -84,7 +87,7 @@ namespace Rpc.Master
                 foreach(var step in parallelStep)
                 {
                     var tasks = new List<Task>();
-                    tasks.Add(_plugin.HandleMasterStep(step, clients));
+                    tasks.Add(_stepHandler.HandleStep(step, clients));
                     await Task.WhenAll(tasks);
                 }
             }
@@ -104,7 +107,7 @@ namespace Rpc.Master
             return argsOption;
         }
 
-        private static void WaitRpcConnectSuccess(IList<IRpcClient> clients)
+        private static async Task WaitRpcConnectSuccess(IList<IRpcClient> clients)
         {
             Log.Information("Connect Rpc slaves...");
             for (var i = 0; i < _maxRertryConnect; i++)
@@ -126,10 +129,15 @@ namespace Rpc.Master
                 catch (Exception ex)
                 {
                     Log.Warning($"Fail to connect slaves, retry {i}th time");
+                    await Task.Delay(_retryInterval);
                     continue;
                 }
-                break;
+                return;
             }
+
+            var message = $"Cannot connect to all slaves.";
+            Log.Error(message);
+            throw new Exception(message);
         }
     }
 }
