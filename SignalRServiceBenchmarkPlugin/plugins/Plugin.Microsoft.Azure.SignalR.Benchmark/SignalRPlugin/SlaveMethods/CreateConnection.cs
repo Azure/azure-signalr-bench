@@ -85,7 +85,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethod
                     httpConnectionOptions.Cookies = cookies;
                 })
             select
-            protocolString == "json" ? hubConnectionBuilder.Build() : hubConnectionBuilder.AddMessagePackProtocol().Build();
+            protocolString.ToLower() == "messagepack" ? hubConnectionBuilder.AddMessagePackProtocol().Build() : hubConnectionBuilder.Build();
 
             return connections.ToList();
         }
