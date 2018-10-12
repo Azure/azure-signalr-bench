@@ -24,25 +24,12 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethod
                 Log.Information($"Create connections...");
 
                 // Get parameters
-                var success = true;
-
-                success = stepParameters.TryGetTypedValue(SignalRConstants.ConnectionBegin, out int connectionBegin, Convert.ToInt32);
-                PluginUtils.HandleGetValueResult(success, SignalRConstants.ConnectionBegin);
-
-                success = stepParameters.TryGetTypedValue(SignalRConstants.ConnectionEnd, out int connectionEnd, Convert.ToInt32);
-                PluginUtils.HandleGetValueResult(success, SignalRConstants.ConnectionBegin);
-
-                success = stepParameters.TryGetTypedValue(SignalRConstants.HubUrl, out string url, Convert.ToString);
-                PluginUtils.HandleGetValueResult(success, SignalRConstants.HubUrl);
-
-                success = stepParameters.TryGetTypedValue(SignalRConstants.HubProtocol, out string protocol, Convert.ToString);
-                PluginUtils.HandleGetValueResult(success, SignalRConstants.HubProtocol);
-
-                success = stepParameters.TryGetTypedValue(SignalRConstants.TransportType, out string transportType, Convert.ToString);
-                PluginUtils.HandleGetValueResult(success, SignalRConstants.TransportType);
-
-                success = stepParameters.TryGetTypedValue(SignalRConstants.Type, out string type, Convert.ToString);
-                PluginUtils.HandleGetValueResult(success, SignalRConstants.Type);
+                PluginUtils.TryGetTypedValue(stepParameters, SignalRConstants.ConnectionBegin, out int connectionBegin, Convert.ToInt32);
+                PluginUtils.TryGetTypedValue(stepParameters, SignalRConstants.ConnectionEnd, out int connectionEnd, Convert.ToInt32);
+                PluginUtils.TryGetTypedValue(stepParameters, SignalRConstants.HubUrl, out string url, Convert.ToString);
+                PluginUtils.TryGetTypedValue(stepParameters, SignalRConstants.HubProtocol, out string protocol, Convert.ToString);
+                PluginUtils.TryGetTypedValue(stepParameters, SignalRConstants.TransportType, out string transportType, Convert.ToString);
+                PluginUtils.TryGetTypedValue(stepParameters, SignalRConstants.Type, out string type, Convert.ToString);
 
                 // Create Connections
                 var connections = CreateConnections(connectionEnd - connectionBegin, url, transportType, protocol);

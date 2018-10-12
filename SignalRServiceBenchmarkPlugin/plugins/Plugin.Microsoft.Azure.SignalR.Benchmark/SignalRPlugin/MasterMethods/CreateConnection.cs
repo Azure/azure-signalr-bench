@@ -14,19 +14,14 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethod
     {
         public Task Do(IDictionary<string, object> stepParameters, IDictionary<string, object> pluginParameters, IList<IRpcClient> clients)
         {
-            var success = true;
 
-            success = stepParameters.TryGetTypedValue(SignalRConstants.ConnectionTotal, out int connectionTotal, Convert.ToInt32);
-            PluginUtils.HandleGetValueResult(success, SignalRConstants.ConnectionTotal);
+            Log.Information($"Create connections...");
 
-            success = stepParameters.TryGetTypedValue(SignalRConstants.HubUrl, out string hubUrl, Convert.ToString);
-            PluginUtils.HandleGetValueResult(success, SignalRConstants.HubUrl);
-
-            success = stepParameters.TryGetTypedValue(SignalRConstants.TransportType, out string transportType, Convert.ToString);
-            PluginUtils.HandleGetValueResult(success, SignalRConstants.TransportType);
-
-            success = stepParameters.TryGetTypedValue(SignalRConstants.HubProtocol, out string hubProtocol, Convert.ToString);
-            PluginUtils.HandleGetValueResult(success, SignalRConstants.HubProtocol);
+            // Get parameters
+            PluginUtils.TryGetTypedValue(stepParameters, SignalRConstants.ConnectionTotal, out int connectionTotal, Convert.ToInt32);
+            PluginUtils.TryGetTypedValue(stepParameters, SignalRConstants.HubUrl, out string hubUrl, Convert.ToString);
+            PluginUtils.TryGetTypedValue(stepParameters, SignalRConstants.TransportType, out string transportType, Convert.ToString);
+            PluginUtils.TryGetTypedValue(stepParameters, SignalRConstants.HubProtocol, out string hubProtocol, Convert.ToString);
 
             var packages = clients.Select((client, i) => {
                 (int beg, int end) = Util.GetConnectionRange(connectionTotal, i, clients.Count);
