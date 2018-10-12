@@ -41,6 +41,7 @@ namespace Bench.RpcMaster
         private static bool _connectionErrorGT1Percent = false;
         // Recording the sending step on Master side to fix randomly zero received from slaves
         private static int _currentSendingStep = 0;
+        private static System.Timers.Timer _counterCollectorTimer = null;
 
         public static async Task Main(string[] args)
         {
@@ -107,7 +108,8 @@ namespace Bench.RpcMaster
                 throw;
             }
             SaveJobResult(_jobResultFile, _counters, argsOption.Connections, argsOption.ServiceType, argsOption.TransportType, argsOption.HubProtocal, argsOption.Scenario);
-
+            _counterCollectorTimer.Stop();
+            Console.WriteLine("Wait channles to shutdown...");
             WaitChannelsShutDown(channels);
             Console.WriteLine("Exit client...");
         }
@@ -304,6 +306,7 @@ namespace Bench.RpcMaster
         private static void StartCollectCounters(List<RpcService.RpcServiceClient> clients, string outputSaveFile)
         {
             var collectTimer = new System.Timers.Timer(1000);
+            _counterCollectorTimer = collectTimer;
             collectTimer.AutoReset = true;
             collectTimer.Elapsed += async(sender, e) =>
             {
