@@ -33,7 +33,7 @@ namespace Rpc.Service
             throw new NotImplementedException();
         }
 
-        public override async Task<Data> Query(Data data, ServerCallContext context)
+        public override async Task<Result> Query(Data data, ServerCallContext context)
         {
             var parameters = Deserialize(data.Json);
 
@@ -54,9 +54,17 @@ namespace Rpc.Service
             ISlaveMethod methodInstance = _plugin.CreateSlaveMethodInstance(method);
 
             // Do action
-            await methodInstance.Do(parameters, _plugin.PluginSlaveParamaters);
+            try
+            {
+                await methodInstance.Do(parameters, _plugin.PluginSlaveParamaters);
+            }
+            catch (Exception ex)
+            {
+                var message = $"Perform method '{method}' fail: {ex}";
+                return new Result { Success = false, Message = message };
+            }
 
-            return new Data();
+            return new Result { Success = true, Message = "" };
         }
 
         public override Task<Result> TestConnection(Empty empty, ServerCallContext context)

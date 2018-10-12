@@ -25,6 +25,7 @@ namespace Rpc.Service
             try
             {
                 var result = await _client.QueryAsync(new Data { Json = Serialize(data) }).ResponseAsync;
+                if (!result.Success) throw new Exception(result.Message);
                 var returnData = Deserialize(result.Json);
                 return returnData;
             }

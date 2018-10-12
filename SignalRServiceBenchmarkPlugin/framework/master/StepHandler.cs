@@ -29,14 +29,24 @@ namespace Rpc.Master
 
         private Task SendToSlaves(MasterStep step, IList<IRpcClient> clients)
         {
-            var method = step.GetMethod();
-            var parameters = step.Parameters;
+            try
+            {
+                var method = step.GetMethod();
+                var parameters = step.Parameters;
 
-            // Create instance
-            IMasterMethod methodInstance = _plugin.CreateMasterMethodInstance(method);
+                // Create instance
+                IMasterMethod methodInstance = _plugin.CreateMasterMethodInstance(method);
 
-            // Do action
-            return methodInstance.Do(parameters, _plugin.PluginMasterParameters, clients);
+                // Do action
+                return methodInstance.Do(parameters, _plugin.PluginMasterParameters, clients);
+            }
+            catch (Exception ex)
+            {
+                var message = $"Fail to handle step: {ex}";
+                Log.Error(message);
+                throw new Exception(message);
+            }
+            
         }
     }
 }
