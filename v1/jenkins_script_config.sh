@@ -76,7 +76,7 @@ cat << EOF > configs/cmd_4_${MessageEncoding}_${Scenario}_${tag}_${Transport}
 connection=${connection}
 connection_concurrent=${concurrentConnection}
 send=${send}
-bench_config_endpoint=$serverUrl
+bench_config_endpoint="$serverUrl"
 EOF
 
      ## gen_html.sh requires bench_name_list, bench_codec_list, and bench_type_list
