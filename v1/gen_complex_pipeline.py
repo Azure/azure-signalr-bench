@@ -28,6 +28,7 @@ def handleArgs(args):
    scenario=args.scenario.lower()
    unit=args.unit.lower()
    duration=args.duration
+   tinyGroup=args.tinyGroup
    smallGroup=args.smallGroup
    bigGroup=args.bigGroup
    connections=args.connections
@@ -41,6 +42,8 @@ def handleArgs(args):
             callfunc="{transport}.{func}({duration},\"{groupType}\")".format(transport=transport+scenario, func=func, duration=duration, groupType="s")
          elif bigGroup == True:
             callfunc="{transport}.{func}({duration},\"{groupType}\")".format(transport=transport+scenario, func=func, duration=duration, groupType="b")
+         elif tinyGroup == True:
+            callfunc="{transport}.{func}({duration},\"{groupType}\")".format(transport=transport+scenario, func=func, duration=duration, groupType="t")
          else:
             print("You must specify <smallGroup> or <bigGroup>")
             return
@@ -73,6 +76,7 @@ if __name__=="__main__":
    sendToGroup = parser.add_mutually_exclusive_group()
    sendToGroup.add_argument("-g", "--smallGroup", help="create small group (10 clients)", action="store_true")
    sendToGroup.add_argument("-G", "--bigGroup", help="create big group (1/10 of all of the whole active clients)", action="store_true")
+   sendToGroup.add_argument("-y", "--tinyGroup", help="create tiny group (1 client in every group)", action="store_true")
    args = parser.parse_args()
 
    init()

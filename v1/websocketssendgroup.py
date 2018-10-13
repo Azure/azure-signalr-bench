@@ -3,10 +3,13 @@ import settings
 
 websockets_connection={1:1000, 2:2000, 5:5000, 10:10000, 20:20000, 50:50000, 100:100000}
 websockets_concurrentConnection={1:200, 2:200, 5:200, 10:200, 20:200, 50:200, 100:200}
+tiny_group_baseStep={1:800, 2:1800, 5:3000, 10:3000, 20:3000, 50:3000, 100:3000}
+tiny_group_step={1:100, 2:100, 5:500, 10:1000, 20:1000, 50:1000, 100:1000}
 small_group_baseStep={1:800, 2:1800, 5:3000, 10:3000, 20:3000, 50:3000, 100:3000}
 small_group_step={1:100, 2:100, 5:500, 10:1000, 20:1000, 50:1000, 100:1000}
 big_group_baseStep={1:100, 2:50, 5:10, 10:10, 20:10, 50:10, 100:10}
 big_group_step={1:100, 2:10, 5:10, 10:10, 20:10, 50:10, 100:10}
+tiny_group_number={1:1000, 2:2000, 5:5000, 10:10000, 20:20000, 50:50000, 100:100000}
 small_group_number={1:100, 2:200, 5:500, 10:1000, 20:2000, 50:5000, 100:10000}
 big_group_number={1:10, 2:10, 5:10, 10:10, 20:10, 50:10, 100:10}
 if settings.gPerfType == settings.gConstMax:
@@ -16,8 +19,39 @@ if settings.gPerfType == settings.gConstMax:
   small_group_step={1:100, 2:100, 5:500, 10:1000, 20:1000, 50:1000, 100:1000}
   big_group_baseStep={1:100, 2:50, 5:10, 10:10, 20:10, 50:10, 100:10}
   big_group_step={1:100, 2:10, 5:10, 10:10, 20:10, 50:10, 100:10}
+  tiny_group_number={1:1500, 2:3000, 5:7500, 10:15000, 20:30000, 50:75000, 100:150000}
   small_group_number={1:150, 2:300, 5:750, 10:1500, 20:3000, 50:7500, 100:15000}
   big_group_number={1:10, 2:10, 5:10, 10:10, 20:10, 50:10, 100:10}
+
+def get_group_step(groupType, index):
+   if groupType == "s":
+      return small_group_step[index]
+   elif groupType == "b":
+      return big_group_step[index]
+   elif groupType == "t":
+      return tiny_group_step[index]
+   else:
+      return None
+
+def get_group_baseStep(groupType, index):
+   if groupType == "s":
+      return small_group_baseStep[index]
+   elif groupType == "b":
+      return big_group_baseStep[index]
+   elif groupType == "t":
+      return tiny_group_baseStep[index]
+   else:
+      return None
+
+def get_group_number(groupType, index):
+   if groupType == "s":
+      return small_group_number[index]
+   elif groupType == "b":
+      return big_group_number[index]
+   elif groupType == "t":
+      return tiny_group_number[index]
+   else:
+      return None
 
 def websocketssendgroupunit1_connection():
    return websockets_connection[1]
@@ -65,9 +99,9 @@ def websocketssendgroupunit1(duration, groupType):
    #print sys._getframe().f_code.co_name
    connection=websockets_connection[1]
    concurrentConnection=websockets_concurrentConnection[1]
-   baseSend=(small_group_baseStep[1] if groupType == "s" else (big_group_baseStep[1] if groupType == "b" else None))
-   stepSend=(small_group_step[1] if groupType == "s" else (big_group_step[1] if groupType == "b" else None))
-   groupNum=(small_group_number[1] if groupType == "s" else (big_group_number[1] if groupType == "b" else None))
+   baseSend=get_group_baseStep(groupType, 1)
+   stepSend=get_group_step(groupType, 1)
+   groupNum=get_group_number(groupType, 1)
    pipeline = '''\
 connection: {connection}
 concurrentConnection: {concurrentConnection}
@@ -108,9 +142,9 @@ def websocketssendgroupunit2(duration, groupType):
    #print sys._getframe().f_code.co_name
    connection=websockets_connection[2]
    concurrentConnection=websockets_concurrentConnection[2]
-   baseSend=(small_group_baseStep[2] if groupType == "s" else (big_group_baseStep[2] if groupType == "b" else None))
-   stepSend=(small_group_step[2] if groupType == "s" else (big_group_step[2] if groupType == "b" else None))
-   groupNum=(small_group_number[2] if groupType == "s" else (big_group_number[2] if groupType == "b" else None))
+   baseSend=get_group_baseStep(groupType, 2)
+   stepSend=get_group_step(groupType, 2)
+   groupNum=get_group_number(groupType, 2)
    pipeline = '''\
 connection: {connection}
 concurrentConnection: {concurrentConnection}
@@ -160,9 +194,9 @@ def websocketssendgroupunit5(duration, groupType):
    #print sys._getframe().f_code.co_name
    connection=websockets_connection[5]
    concurrentConnection=websockets_concurrentConnection[5]
-   baseSend=(small_group_baseStep[5] if groupType == "s" else (big_group_baseStep[5] if groupType == "b" else None))
-   stepSend=(small_group_step[5] if groupType == "s" else (big_group_step[5] if groupType == "b" else None))
-   groupNum=(small_group_number[5] if groupType == "s" else (big_group_number[5] if groupType == "b" else None))
+   baseSend=get_group_baseStep(groupType, 5)
+   stepSend=get_group_step(groupType, 5)
+   groupNum=get_group_number(groupType, 5)
    pipeline = '''\
 connection: {connection}
 concurrentConnection: {concurrentConnection}
@@ -220,9 +254,9 @@ def websocketssendgroupunit10(duration, groupType):
    #print sys._getframe().f_code.co_name
    connection=websockets_connection[10]
    concurrentConnection=websockets_concurrentConnection[10]
-   baseSend=(small_group_baseStep[10] if groupType == "s" else (big_group_baseStep[10] if groupType == "b" else None))
-   stepSend=(small_group_step[10] if groupType == "s" else (big_group_step[10] if groupType == "b" else None))
-   groupNum=(small_group_number[10] if groupType == "s" else (big_group_number[10] if groupType == "b" else None))
+   baseSend=get_group_baseStep(groupType, 10)
+   stepSend=get_group_step(groupType, 10)
+   groupNum=get_group_number(groupType, 10)
    pipeline = '''\
 connection: {connection}
 concurrentConnection: {concurrentConnection}
@@ -263,9 +297,9 @@ def websocketssendgroupunit20(duration, groupType):
    #print sys._getframe().f_code.co_name
    connection=websockets_connection[20]
    concurrentConnection=websockets_concurrentConnection[20]
-   baseSend=(small_group_baseStep[20] if groupType == "s" else (big_group_baseStep[20] if groupType == "b" else None))
-   stepSend=(small_group_step[20] if groupType == "s" else (big_group_step[20] if groupType == "b" else None))
-   groupNum=(small_group_number[20] if groupType == "s" else (big_group_number[20] if groupType == "b" else None))
+   baseSend=get_group_baseStep(groupType, 20)
+   stepSend=get_group_step(groupType, 20)
+   groupNum=get_group_number(groupType, 20)
    pipeline = '''\
 connection: {connection}
 concurrentConnection: {concurrentConnection}
@@ -304,9 +338,9 @@ def websocketssendgroupunit50(duration, groupType):
    #print sys._getframe().f_code.co_name
    connection=websockets_connection[50]
    concurrentConnection=websockets_concurrentConnection[50]
-   baseSend=(small_group_baseStep[50] if groupType == "s" else (big_group_baseStep[50] if groupType == "b" else None))
-   stepSend=(small_group_step[50] if groupType == "s" else (big_group_step[50] if groupType == "b" else None))
-   groupNum=(small_group_number[50] if groupType == "s" else (big_group_number[50] if groupType == "b" else None))
+   baseSend=get_group_baseStep(groupType, 50)
+   stepSend=get_group_step(groupType, 50)
+   groupNum=get_group_number(groupType, 50)
    pipeline = '''\
 connection: {connection}
 concurrentConnection: {concurrentConnection}
@@ -345,9 +379,9 @@ def websocketssendgroupunit100(duration, groupType):
    #print sys._getframe().f_code.co_name
    connection=websockets_connection[100]
    concurrentConnection=websockets_concurrentConnection[100]
-   baseSend=(small_group_baseStep[100] if groupType == "s" else (big_group_baseStep[100] if groupType == "b" else None))
-   stepSend=(small_group_step[100] if groupType == "s" else (big_group_step[100] if groupType == "b" else None))
-   groupNum=(small_group_number[100] if groupType == "s" else (big_group_number[100] if groupType == "b" else None))
+   baseSend=get_group_baseStep(groupType, 100)
+   stepSend=get_group_step(groupType, 100)
+   groupNum=get_group_number(groupType, 100)
    pipeline = '''\
 connection: {connection}
 concurrentConnection: {concurrentConnection}
