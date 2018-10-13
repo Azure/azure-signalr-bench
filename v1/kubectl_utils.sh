@@ -400,8 +400,8 @@ function wait_deploy_ready() {
   local end=$((SECONDS + 120))
   while [ $SECONDS -lt $end ]
   do
-    echo kubectl rollout status deployment/$result --kubeconfig=$config_file
-    kubectl rollout status deployment/$result --kubeconfig=$config_file
+    echo kubectl rollout status deployment/$deploy --kubeconfig=$config_file
+    kubectl rollout status deployment/$deploy --kubeconfig=$config_file
     if [ $? -eq 0 ]
     then
       break
