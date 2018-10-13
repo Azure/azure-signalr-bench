@@ -443,6 +443,23 @@ function patch_connection_throttling_env() {
   wait_replica_ready $config_file $resName $pods
 }
 
+function restart_all_pods() {
+  local resName=$1
+  g_config=""
+  g_result=""
+  find_target_by_iterate_all_k8slist $resName k8s_query
+  local config_file=$g_config
+  local result=$g_result
+  local pods=$(k8s_get_pod_number $config_file $resName)
+  for i in $result
+  do
+    echo "kubectl delete pods ${i} --kubeconfig=${config_file}"
+    kubectl delete pods ${i} --kubeconfig=${config_file}
+  done
+  wait_deploy_ready $result $config_file
+  wait_replica_ready $config_file $resName $pods
+}
+
 function read_connection_throttling_env() {
   local resName=$1
   local connection_limit=$2
