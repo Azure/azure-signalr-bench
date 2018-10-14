@@ -400,8 +400,8 @@ function wait_deploy_ready() {
   local end=$((SECONDS + 120))
   while [ $SECONDS -lt $end ]
   do
-    echo kubectl rollout status deployment/$result --kubeconfig=$config_file
-    kubectl rollout status deployment/$result --kubeconfig=$config_file
+    echo kubectl rollout status deployment/$deploy --kubeconfig=$config_file
+    kubectl rollout status deployment/$deploy --kubeconfig=$config_file
     if [ $? -eq 0 ]
     then
       break
@@ -440,6 +440,29 @@ function patch_connection_throttling_env() {
 
   wait_deploy_ready $result $config_file
 
+  wait_replica_ready $config_file $resName $pods
+}
+
+function restart_all_pods() {
+  local resName=$1
+  g_config=""
+  g_result=""
+  find_target_by_iterate_all_k8slist $resName k8s_query
+  local config_file=$g_config
+  local result=$g_result
+  local pods=$(k8s_get_pod_number $config_file $resName)
+  for i in $result
+  do
+    echo "kubectl delete pods ${i} --kubeconfig=${config_file}"
+    kubectl delete pods ${i} --kubeconfig=${config_file}
+  done
+
+  g_config=""
+  g_result=""
+  find_target_by_iterate_all_k8slist $resName get_k8s_deploy_name
+  local config_file=$g_config
+  local result=$g_result
+  wait_deploy_ready $result $config_file
   wait_replica_ready $config_file $resName $pods
 }
 

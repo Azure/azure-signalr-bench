@@ -155,6 +155,10 @@ function run_benchmark()
                  else if [ "$j" == "bigGroup" ]
                       then
                         send=`python gen_complex_pipeline.py -t $Transport -s $Scenario -u unit${unit} -d 120 -S -G ${maxConnectionOption}`
+                      else if [ "$j" == "tinyGroup" ]
+                           then
+                              send=`python gen_complex_pipeline.py -t $Transport -s $Scenario -u unit${unit} -d 120 -S -y ${maxConnectionOption}`
+                           fi
                       fi
                  fi
 cat << EOF > $JobConfig
@@ -170,6 +174,10 @@ EOF
                  else if [ "$j" == "bigGroup" ]
                       then
                         python gen_complex_pipeline.py -t $Transport -s $Scenario -u unit${unit} -G -d ${sigbench_run_duration} ${maxConnectionOption}>>$JobConfig
+                      else if [ "$j" == "tinyGroup" ]
+                           then
+                             python gen_complex_pipeline.py -t $Transport -s $Scenario -u unit${unit} -y -d ${sigbench_run_duration} ${maxConnectionOption}>>$JobConfig
+                           fi
                       fi
                  fi
                  cat << EOF >> $JobConfig
