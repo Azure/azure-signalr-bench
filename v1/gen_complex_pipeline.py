@@ -28,6 +28,7 @@ def handleArgs(args):
    scenario=args.scenario.lower()
    unit=args.unit.lower()
    duration=args.duration
+   overlapGroup=args.overlapGroup
    tinyGroup=args.tinyGroup
    smallGroup=args.smallGroup
    bigGroup=args.bigGroup
@@ -39,14 +40,17 @@ def handleArgs(args):
       # special handle 'sendgroup'
       if scenario == "sendgroup":
          if smallGroup == True:
-            callfunc="{transport}.{func}({duration},\"{groupType}\")".format(transport=transport+scenario, func=func, duration=duration, groupType="s")
+            gt="s"
          elif bigGroup == True:
-            callfunc="{transport}.{func}({duration},\"{groupType}\")".format(transport=transport+scenario, func=func, duration=duration, groupType="b")
+            gt="b"
          elif tinyGroup == True:
-            callfunc="{transport}.{func}({duration},\"{groupType}\")".format(transport=transport+scenario, func=func, duration=duration, groupType="t")
+            gt="t"
+         elif overlapGroup == True:
+            gt="o"
          else:
             print("You must specify <smallGroup> or <bigGroup>")
             return
+         callfunc="{transport}.{func}({duration},\"{groupType}\")".format(transport=transport+scenario, func=func, duration=duration, groupType=gt)
       else:
          callfunc="{transport}.{func}({duration})".format(transport=transport+scenario, func=func, duration=duration)
    elif connections == True:
@@ -77,6 +81,7 @@ if __name__=="__main__":
    sendToGroup.add_argument("-g", "--smallGroup", help="create small group (10 clients)", action="store_true")
    sendToGroup.add_argument("-G", "--bigGroup", help="create big group (1/10 of all of the whole active clients)", action="store_true")
    sendToGroup.add_argument("-y", "--tinyGroup", help="create tiny group (1 client in every group)", action="store_true")
+   sendToGroup.add_argument("-p", "--overlapGroup", help="create overlap group (1 client belongs to many groups)", action="store_true")
    args = parser.parse_args()
 
    init()

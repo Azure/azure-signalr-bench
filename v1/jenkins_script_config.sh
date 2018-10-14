@@ -104,37 +104,32 @@ function gen_sendgroup_job_config()
     then
        maxConnectionOption="-M"
     fi
+    local groupOption=""
     cd $ScriptWorkingDir
     if [ "$j" == "smallGroup" ]
     then
-      send=`python gen_complex_pipeline.py -t $Transport -s $Scenario -u unit${unit} -d 0 -S -g ${maxConnectionOption}`
+      groupOption="-g"
     else if [ "$j" == "bigGroup" ]
          then
-           send=`python gen_complex_pipeline.py -t $Transport -s $Scenario -u unit${unit} -d 0 -S -G ${maxConnectionOption}`
+           groupOption="-G"
          else if [ "$j" == "tinyGroup" ]
               then
-                 send=`python gen_complex_pipeline.py -t $Transport -s $Scenario -u unit${unit} -d 0 -S -y ${maxConnectionOption}`
+                 groupOption="-y"
+              else if [ "$j" == "overlapGroup" ]
+                   then
+                      groupOption="-p"
+                   fi
               fi
          fi
     fi
+    send=`python gen_complex_pipeline.py -t $Transport -s $Scenario -u unit${unit} -d 0 -S $groupOption ${maxConnectionOption}`
 cat << EOF > $JobConfig
 serviceType: $tag
 transportType: ${Transport}
 hubProtocol: ${MessageEncoding}
 scenario: ${Scenario}
 EOF
-    if [ "$j" == "smallGroup" ]
-    then
-      python gen_complex_pipeline.py -t $Transport -s $Scenario -u unit${unit} -g -d ${sigbench_run_duration} ${maxConnectionOption}>>$JobConfig
-    else if [ "$j" == "bigGroup" ]
-         then
-           python gen_complex_pipeline.py -t $Transport -s $Scenario -u unit${unit} -G -d ${sigbench_run_duration} ${maxConnectionOption}>>$JobConfig
-         else if [ "$j" == "tinyGroup" ]
-              then
-                python gen_complex_pipeline.py -t $Transport -s $Scenario -u unit${unit} -y -d ${sigbench_run_duration} ${maxConnectionOption}>>$JobConfig
-              fi
-         fi
-    fi
+    python gen_complex_pipeline.py -t $Transport -s $Scenario -u unit${unit} $groupOption -d ${sigbench_run_duration} ${maxConnectionOption}>>$JobConfig
     cat << EOF >> $JobConfig
 serverUrl: ${serverUrl}
 messageSize: ${messageSize}
