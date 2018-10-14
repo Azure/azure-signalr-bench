@@ -143,6 +143,16 @@ pipeline:
 - scenario
 - up{send}
 - scenario
+- up{send}
+- scenario
+- up{send}
+- scenario
+- up{send}
+- scenario
+- up{send}
+- scenario
+- up{send}
+- scenario
 - stopConn
 - disposeConn'''.format(connection=connection,
 	concurrentConnection=concurrentConnection,
@@ -190,6 +200,12 @@ pipeline:
 - scenario
 - up{send}
 - scenario
+- up{send}
+- scenario
+- up{send}
+- scenario
+- up{send}
+- scenario
 - stopConn
 - disposeConn'''.format(connection=connection,
 	concurrentConnection=concurrentConnection,
@@ -211,6 +227,12 @@ pipeline:
 - createConn
 - startConn
 - up{baseSend}
+- scenario
+- up{send}
+- scenario
+- up{send}
+- scenario
+- up{send}
 - scenario
 - up{send}
 - scenario
