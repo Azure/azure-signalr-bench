@@ -73,6 +73,8 @@ Launch the master node:
 
 ### Group
 
+The benchmark automatically assigns the connections to be groups. If connection number is larger than group number, every group has more than 1 connection. Otherwise, if group number is larger than connection number, it means 1 connection joins more than 1 group.
+
 For sending message to group, we want to know how many groups and how big groups can we support. This scenario can be benchmarked by specifying a pipeline for group scenario and group numbers.
 
 The steps are as follows:
@@ -81,4 +83,6 @@ Launch the App server and slave node, those two steps are the same as above.
 
 Launch master node to support 1000 connections, with 100 groups and every group has 10 connections. In every second, there are 500 connections sending message to its own group. The tool evaluates the latency of every message.
 
-`dotnet run -- --rpcPort 7000 --duration 300 --connections 1000 -t Websockets -p json -s SendGroup --messageSize 2k --concurrentConnection 100 --slaveList "10.0.0.10" --pipeLine "createConn;startConn;joinGroup;up500;scenario;up500;stopConn;disposeConn" --groupOverlap 1 --groupNum 100 -o counters.txt`
+`dotnet run -- --rpcPort 7000 --duration 300 --connections 1000 -t Websockets -p json -s SendGroup --messageSize 2k --concurrentConnection 100 --slaveList "10.0.0.10" --pipeLine "createConn;startConn;joinGroup;up500;scenario;up500;stopConn;disposeConn" --groupNum 100 -o counters.txt`
+
+
