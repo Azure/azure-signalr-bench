@@ -98,7 +98,7 @@ namespace Bench.RpcMaster
                 await ProcessPipeline(clients, argsOption.PipeLine, slaveList,
                     argsOption.Connections, argsOption.ServiceType, argsOption.TransportType,
                     argsOption.HubProtocal, argsOption.Scenario, argsOption.MessageSize,
-                    argsOption.groupNum, argsOption.groupOverlap, serverCount, argsOption.SendToFixedClient,
+                    argsOption.groupNum, serverCount, argsOption.SendToFixedClient,
                     argsOption.EnableGroupJoinLeave, argsOption.StopSendIfLatencyBig, argsOption.StopSendIfConnectionErrorBig);
             }
             catch (Exception ex)
@@ -151,15 +151,23 @@ namespace Bench.RpcMaster
             return connectionIds;
         }
 
-        private static List<string> GenerateGroupNameList(int connCnt, int groupNum, int overlap)
+        private static List<string> GenerateGroupNameList(int connCnt, int groupNum)
         {
             var groupNameList = Enumerable.Repeat("", connCnt).ToList();
-            for (var j = 0; j < overlap; j++)
+            if (groupNum > connCnt)
             {
-                for (var i = 0; i < groupNameList.Count; i++)
+                for (var j = 0; j < groupNum; j++)
                 {
+                    var i = j % connCnt;
                     if (groupNameList[i].Length > 0) groupNameList[i] += ";";
-                    groupNameList[i] += $"gp{(i + j) % groupNum}";
+                    groupNameList[i] += $"g{j}";
+                }
+            }
+            else
+            {
+                for (var j = 0; j < connCnt; j++)
+                {
+                    groupNameList[j] = $"g{j % groupNum}";
                 }
             }
             groupNameList.Shuffle();
@@ -581,7 +589,7 @@ namespace Bench.RpcMaster
 
         private static async Task ProcessPipeline(List<RpcService.RpcServiceClient> clients, string pipelineStr, List<string> slaveList, int connections,
             string serviceType, string transportType, string hubProtocol, string scenario, string messageSize,
-            int groupNum, int overlap, int serverCount, string sendToFixedClient, bool enableGroupJoinLeave,
+            int groupNum, int serverCount, string sendToFixedClient, bool enableGroupJoinLeave,
             string stopIfLatencyIsBig, string stopSendIfConnectionErrorBig)
         {
             // var connections = argsOption.Connections;
@@ -599,7 +607,7 @@ namespace Bench.RpcMaster
             var connectionConfigBuilder = new ConnectionConfigBuilder();
             var connectionAllConfigList = connectionConfigBuilder.Build(connections);
             var targetConnectionIds = new List<string>();
-            var groupNameList = GenerateGroupNameList(connections, groupNum, overlap);
+            var groupNameList = GenerateGroupNameList(connections, groupNum);
             var callbackList = Enumerable.Repeat(true, connections).ToList();
             var messageCountPerInterval = 1;
             var joinLeavePerGroupAdditionalCnt = 0;
@@ -664,7 +672,7 @@ namespace Bench.RpcMaster
                 HandleBasicUpOp(step, connectionConfigBuilder, connectionAllConfigList, connections, slaveList);
 
                 // handle up join/leave group per group
-                HandleUpSendGroupOp(step, sendGroupList, groupNum, overlap);
+                HandleUpSendGroupOp(step, sendGroupList, groupNum);
 
                 // handle up per group op
                 HandleUpPerGroupOp(step, connectionConfigBuilder, connectionAllConfigList, groupNameList);
@@ -733,7 +741,7 @@ namespace Bench.RpcMaster
             }
         }
 
-        private static void HandleUpSendGroupOp(string step, List<bool> sendGroupList, int groupCnt, int groupOverlap)
+        private static void HandleUpSendGroupOp(string step, List<bool> sendGroupList, int groupCnt)
         {
             if (step.Contains("upSendGroup"))
             {

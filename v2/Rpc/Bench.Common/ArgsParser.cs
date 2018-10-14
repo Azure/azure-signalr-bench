@@ -97,7 +97,7 @@ namespace Bench.Common
         [Option("groupNum", Required = false, HelpText = "")]
         public int groupNum { get; set; }
 
-        [Option("groupOverlap", Required = false, HelpText = "Number of group(s) a connection belongs to")]
+        [Option("groupOverlap", Default= 1, Required = false, HelpText = "Number of group(s) a connection belongs to, default is 1")]
         public int groupOverlap { get; set; }
 
         [Option("debug", Required = false, HelpText = "")]
