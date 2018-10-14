@@ -88,12 +88,106 @@ EOF
 }
 
 #####################################################
+# depends on global env:
+# useMaxConnection
+function gen_sendgroup_job_config()
+{
+    local tag=$1
+    local Transport=$2
+    local MessageEncoding=$3
+    local Scenario=$4
+    local unit=$5
+    local j=$6
+    local messageSize=$7
+    local maxConnectionOption=""
+    if [ "$useMaxConnection" == "true" ]
+    then
+       maxConnectionOption="-M"
+    fi
+    cd $ScriptWorkingDir
+    if [ "$j" == "smallGroup" ]
+    then
+      send=`python gen_complex_pipeline.py -t $Transport -s $Scenario -u unit${unit} -d 0 -S -g ${maxConnectionOption}`
+    else if [ "$j" == "bigGroup" ]
+         then
+           send=`python gen_complex_pipeline.py -t $Transport -s $Scenario -u unit${unit} -d 0 -S -G ${maxConnectionOption}`
+         else if [ "$j" == "tinyGroup" ]
+              then
+                 send=`python gen_complex_pipeline.py -t $Transport -s $Scenario -u unit${unit} -d 0 -S -y ${maxConnectionOption}`
+              fi
+         fi
+    fi
+cat << EOF > $JobConfig
+serviceType: $tag
+transportType: ${Transport}
+hubProtocol: ${MessageEncoding}
+scenario: ${Scenario}
+EOF
+    if [ "$j" == "smallGroup" ]
+    then
+      python gen_complex_pipeline.py -t $Transport -s $Scenario -u unit${unit} -g -d ${sigbench_run_duration} ${maxConnectionOption}>>$JobConfig
+    else if [ "$j" == "bigGroup" ]
+         then
+           python gen_complex_pipeline.py -t $Transport -s $Scenario -u unit${unit} -G -d ${sigbench_run_duration} ${maxConnectionOption}>>$JobConfig
+         else if [ "$j" == "tinyGroup" ]
+              then
+                python gen_complex_pipeline.py -t $Transport -s $Scenario -u unit${unit} -y -d ${sigbench_run_duration} ${maxConnectionOption}>>$JobConfig
+              fi
+         fi
+    fi
+    cat << EOF >> $JobConfig
+serverUrl: ${serverUrl}
+messageSize: ${messageSize}
+EOF
+}
+
+function gen_job_config()
+{
+     local tag=$1
+     local Transport=$2
+     local MessageEncoding=$3
+     local Scenario=$4
+     local unit=$5
+     local messageSize=$6
+     local maxConnectionOption=""
+     if [ "$useMaxConnection" == "true" ]
+     then
+        maxConnectionOption="-M"
+     fi
+     cat << EOF > $JobConfig
+serviceType: $tag
+transportType: ${Transport}
+hubProtocol: ${MessageEncoding}
+scenario: ${Scenario}
+EOF
+     cd $ScriptWorkingDir
+     python gen_complex_pipeline.py -t $Transport -s $Scenario -u unit${unit} -d ${sigbench_run_duration} ${maxConnectionOption}>>$JobConfig
+     cat << EOF >> $JobConfig
+serverUrl: ${serverUrl}
+messageSize: ${messageSize}
+EOF
+}
+
+function prepare_result_folder_4_scenario()
+{
+     local tag=$1
+     local Transport=$2
+     local MessageEncoding=$3
+     local Scenario=$4
+     ## take care of the gen of this folder which is also required by gen_html.sh
+     local scenario_folder=${tag}_${Transport}_${MessageEncoding}_${Scenario}
+     # do not forget the tailing '/'
+     export env_statistic_folder="${ScriptWorkingDir}/${result_root}/${scenario_folder}/"
+     export env_result_folder=$env_statistic_folder                                         # tell the dotnet program where to save counters.txt
+     mkdir -p ${env_statistic_folder}
+}
+#####################################################
 ## This step run benchmark per different scenarios ##
 #####################################################
 # depends on global env:
 #   serverVmCount, bench_scenario_list, bench_scenario_list,
 #   bench_encoding_list, ScenarioRoot, ScriptWorkingDir, GroupTypeList,
-#   bench_send_size
+#   bench_send_size, serverUrl
 function run_benchmark()
 {
    local unit=$1
@@ -143,73 +237,22 @@ function run_benchmark()
                for j in $GroupTypeList
                do
                  tag="unit"${unit}"_${j}"
-                 local scenario_folder=${tag}_${Transport}_${MessageEncoding}_${Scenario}   ## take care of the gen of this folder which is also required by gen_html.sh
-                 # do not forget the tailing '/'
-                 export env_statistic_folder="${ScriptWorkingDir}/${result_root}/${scenario_folder}/"
-                 export env_result_folder=$env_statistic_folder                                         # tell the dotnet program where to save counters.txt
-                 mkdir -p ${env_statistic_folder}
+                 prepare_result_folder_4_scenario ${tag} ${Transport} ${MessageEncoding} ${Scenario}
              ############## configure scenario ############
-                 if [ "$j" == "smallGroup" ]
-                 then
-                   send=`python gen_complex_pipeline.py -t $Transport -s $Scenario -u unit${unit} -d 120 -S -g ${maxConnectionOption}`
-                 else if [ "$j" == "bigGroup" ]
-                      then
-                        send=`python gen_complex_pipeline.py -t $Transport -s $Scenario -u unit${unit} -d 120 -S -G ${maxConnectionOption}`
-                      else if [ "$j" == "tinyGroup" ]
-                           then
-                              send=`python gen_complex_pipeline.py -t $Transport -s $Scenario -u unit${unit} -d 120 -S -y ${maxConnectionOption}`
-                           fi
-                      fi
-                 fi
-cat << EOF > $JobConfig
-serviceType: $tag
-transportType: ${Transport}
-hubProtocol: ${MessageEncoding}
-scenario: ${Scenario}
-EOF
-                 cd $ScriptWorkingDir
-                 if [ "$j" == "smallGroup" ]
-                 then
-                   python gen_complex_pipeline.py -t $Transport -s $Scenario -u unit${unit} -g -d ${sigbench_run_duration} ${maxConnectionOption}>>$JobConfig
-                 else if [ "$j" == "bigGroup" ]
-                      then
-                        python gen_complex_pipeline.py -t $Transport -s $Scenario -u unit${unit} -G -d ${sigbench_run_duration} ${maxConnectionOption}>>$JobConfig
-                      else if [ "$j" == "tinyGroup" ]
-                           then
-                             python gen_complex_pipeline.py -t $Transport -s $Scenario -u unit${unit} -y -d ${sigbench_run_duration} ${maxConnectionOption}>>$JobConfig
-                           fi
-                      fi
-                 fi
-                 cat << EOF >> $JobConfig
-serverUrl: ${serverUrl}
-messageSize: ${bench_send_size}
-EOF
+                 gen_sendgroup_job_config ${tag} ${Transport} ${MessageEncoding} ${Scenario} ${unit} ${j} ${bench_send_size}
                  ############## run bench #####################
                  run_and_gen_report $connectStr $tag $Scenario $Transport $MessageEncoding $connection $concurrentConnection $send $ConnectionString
                done
-             else 
-               scenario_folder=${tag}_${Transport}_${MessageEncoding}_${Scenario}   ## take care of the gen of this folder which is also required by gen_html.sh
-               # do not forget the tailing '/'
-               export env_statistic_folder="${ScriptWorkingDir}/${result_root}/${scenario_folder}/"
-               export env_result_folder=$env_statistic_folder                                         # tell the dotnet program where to save counters.txt
-               mkdir -p ${env_statistic_folder}
+             else
+               prepare_result_folder_4_scenario ${tag} ${Transport} ${MessageEncoding} ${Scenario}
                ############## configure scenario ############
-               send=`python gen_complex_pipeline.py -t $Transport -s $Scenario -u unit${unit} -d 120 -S ${maxConnectionOption}`
-               cat << EOF > $JobConfig
-serviceType: $tag
-transportType: ${Transport}
-hubProtocol: ${MessageEncoding}
-scenario: ${Scenario}
-EOF
-               cd $ScriptWorkingDir
-               python gen_complex_pipeline.py -t $Transport -s $Scenario -u unit${unit} -d ${sigbench_run_duration} ${maxConnectionOption}>>$JobConfig
-               cat << EOF >> $JobConfig
-serverUrl: ${serverUrl}
-messageSize: ${bench_send_size}
-EOF
+               send=`python gen_complex_pipeline.py -t $Transport -s $Scenario -u unit${unit} -d 0 -S ${maxConnectionOption}`
+               gen_job_config $tag ${Transport} ${MessageEncoding} ${Scenario} ${unit} ${bench_send_size}
              ############## run bench #####################
                run_and_gen_report $connectStr $tag $Scenario $Transport $MessageEncoding $connection $concurrentConnection $send $ConnectionString
              fi
+             ## restart the pod to fresh run next scenario
+
           done  
        done
    done

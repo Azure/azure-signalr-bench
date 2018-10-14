@@ -3,8 +3,8 @@ import settings
 
 websockets_connection={1:1000, 2:2000, 5:5000, 10:10000, 20:20000, 50:50000, 100:100000}
 websockets_concurrentConnection={1:200, 2:200, 5:200, 10:200, 20:200, 50:200, 100:200}
-websockets_baseStep={1:4, 2:2, 5:2, 10:2, 20:1, 50:1, 100:1}
-websockets_step={1:2, 2:2, 5:2, 10:2, 20:1, 50:1, 100:1}
+websockets_baseStep={1:2, 2:2, 5:1, 10:1, 20:1, 50:1, 100:1}
+websockets_step={1:2, 2:2, 5:1, 10:1, 20:1, 50:1, 100:1}
 if settings.gPerfType == settings.gConstMax:
   websockets_connection={1:1500, 2:3000, 5:7500, 10:15000, 20:30000, 50:75000, 100:150000}
 
@@ -143,6 +143,16 @@ pipeline:
 - scenario
 - up{send}
 - scenario
+- up{send}
+- scenario
+- up{send}
+- scenario
+- up{send}
+- scenario
+- up{send}
+- scenario
+- up{send}
+- scenario
 - stopConn
 - disposeConn'''.format(connection=connection,
 	concurrentConnection=concurrentConnection,
@@ -190,6 +200,12 @@ pipeline:
 - scenario
 - up{send}
 - scenario
+- up{send}
+- scenario
+- up{send}
+- scenario
+- up{send}
+- scenario
 - stopConn
 - disposeConn'''.format(connection=connection,
 	concurrentConnection=concurrentConnection,
@@ -211,6 +227,12 @@ pipeline:
 - createConn
 - startConn
 - up{baseSend}
+- scenario
+- up{send}
+- scenario
+- up{send}
+- scenario
+- up{send}
 - scenario
 - up{send}
 - scenario
