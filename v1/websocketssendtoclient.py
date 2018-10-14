@@ -3,12 +3,12 @@ import settings
 
 websockets_connection={1:1000, 2:2000, 5:5000, 10:10000, 20:20000, 50:50000, 100:100000}
 websockets_concurrentConnection={1:200, 2:200, 5:200, 10:200, 20:200, 50:200, 100:200}
-websockets_baseStep={1:100, 2:200, 5:1000, 10:1000, 20:2000, 50:4000, 100:5000}
-websockets_step={1:100, 2:100, 5:100, 10:100, 20:1000, 50:1000, 100:1000}
+websockets_baseStep={1:500, 2:500, 5:2000, 10:5000, 20:5000, 50:5000, 100:5000}
+websockets_step={1:100, 2:100, 5:500, 10:1000, 20:1000, 50:1000, 100:1000}
 if settings.gPerfType == settings.gConstMax:
   websockets_connection={1:1500, 2:3000, 5:7500, 10:15000, 20:30000, 50:75000, 100:150000}
   websockets_concurrentConnection={1:100, 2:100, 5:100, 10:200, 20:200, 50:200, 100:200}
-  websockets_baseStep={1:100, 2:200, 5:1000, 10:1000, 20:2000, 50:4000, 100:5000}
+  websockets_baseStep={1:500, 2:500, 5:2000, 10:5000, 20:5000, 50:5000, 100:5000}
   websockets_step={1:100, 2:100, 5:100, 10:100, 20:1000, 50:1000, 100:1000}
 
 def websocketssendtoclientunit1_connection():
@@ -77,6 +77,10 @@ pipeline:
 - scenario
 - up{send}
 - scenario
+- up{send}
+- scenario
+- up{send}
+- scenario
 - stopConn
 - disposeConn'''.format(connection=connection, concurrentConnection=concurrentConnection,
           duration=duration,baseSend=baseSend,send=stepSend)
@@ -97,6 +101,10 @@ pipeline:
 - createConn
 - startConn
 - up{baseSend}
+- scenario
+- up{send}
+- scenario
+- up{send}
 - scenario
 - up{send}
 - scenario
@@ -136,6 +144,12 @@ pipeline:
 - createConn
 - startConn
 - up{baseSend}
+- scenario
+- up{send}
+- scenario
+- up{send}
+- scenario
+- up{send}
 - scenario
 - up{send}
 - scenario
@@ -190,6 +204,12 @@ pipeline:
 - scenario
 - up{send}
 - scenario
+- up{send}
+- scenario
+- up{send}
+- scenario
+- up{send}
+- scenario
 - stopConn
 - disposeConn'''.format(connection=connection,
 	concurrentConnection=concurrentConnection,
@@ -222,6 +242,12 @@ pipeline:
 - scenario
 - up{send}
 - scenario
+- up{send}
+- scenario
+- up{send}
+- scenario
+- up{send}
+- scenario
 - stopConn
 - disposeConn'''.format(connection=connection,
 	concurrentConnection=concurrentConnection,
@@ -243,6 +269,14 @@ pipeline:
 - createConn
 - startConn
 - up{baseSend}
+- scenario
+- up{send}
+- scenario
+- up{send}
+- scenario
+- up{send}
+- scenario
+- up{send}
 - scenario
 - up{send}
 - scenario
