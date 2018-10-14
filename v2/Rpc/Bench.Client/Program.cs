@@ -163,7 +163,7 @@ namespace Bench.RpcMaster
                     groupNameList[i] += $"g{j}";
                 }
             }
-            else
+            else if (groupNum > 0)
             {
                 for (var j = 0; j < connCnt; j++)
                 {
