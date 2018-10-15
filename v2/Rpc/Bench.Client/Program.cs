@@ -98,7 +98,7 @@ namespace Bench.RpcMaster
                 await ProcessPipeline(clients, argsOption.PipeLine, slaveList,
                     argsOption.Connections, argsOption.ServiceType, argsOption.TransportType,
                     argsOption.HubProtocal, argsOption.Scenario, argsOption.MessageSize,
-                    argsOption.groupNum, serverCount, argsOption.SendToFixedClient,
+                    argsOption.groupNum, argsOption.groupOverlap, argsOption.combineFactor, serverCount, argsOption.SendToFixedClient,
                     argsOption.EnableGroupJoinLeave, argsOption.StopSendIfLatencyBig, argsOption.StopSendIfConnectionErrorBig);
             }
             catch (Exception ex)
@@ -151,11 +151,14 @@ namespace Bench.RpcMaster
             return connectionIds;
         }
 
-        private static List<string> GenerateGroupNameList(int connCnt, int groupNum)
+        private static List<string> GenerateGroupNameList(int connCnt, int groupNum, int groupOverlap)
         {
+            // groupNameList for group join operation
             var groupNameList = Enumerable.Repeat("", connCnt).ToList();
             if (groupNum > connCnt)
             {
+                // For example: 
+                // groupNum: 10, connCnt: 5, then every connection joins 2 groups
                 for (var j = 0; j < groupNum; j++)
                 {
                     var i = j % connCnt;
@@ -170,9 +173,60 @@ namespace Bench.RpcMaster
                     groupNameList[j] = $"g{j % groupNum}";
                 }
             }
+            // After automatically group assignment, typcially, if group number > connection count,
+            // we will see only 1 connection belongs to a group. We hope to see many connections in a group,
+            // that is done by specifying groupOverlap, which re-assigned groups to every connection.
+            if (groupOverlap > 1)
+            {
+                var newGroupNameList = "";
+                for (var j = 0; j < connCnt; j++)
+                {
+                    if (newGroupNameList.Length > 0) newGroupNameList += ";";
+                    newGroupNameList += groupNameList[j];
+                    if ((j + 1) % groupOverlap == 0)
+                    {
+                        for (var i = 0; i < groupOverlap; i++)
+                        {
+                            groupNameList[j - i] = newGroupNameList;
+                        }
+                        newGroupNameList = "";
+                    }
+                }
+            }
             groupNameList.Shuffle();
 
             return groupNameList;
+        }
+
+        // Create sending groups which contains more connections.
+        // For example, if every original connection belongs to 2 groups, the combineFactor is 3,
+        // then, the new connection's sending group contains 2x3 connections.
+        private static List<string> CombineConnectionSendGroups(List<string> sendGroupNameList, int combineFactor)
+        {   
+            if (combineFactor > 1)
+            {
+                var connCnt = sendGroupNameList.Count;
+                var groupNameSendList = Enumerable.Repeat("", connCnt).ToList();
+                var newGroupNameList = "";
+                for (var j = 0; j < connCnt; j++)
+                {
+                    if (newGroupNameList.Length > 0) newGroupNameList += ";";
+                    newGroupNameList += sendGroupNameList[j];
+                    if ((j + 1) % combineFactor == 0)
+                    {
+                        for (var i = 0; i < combineFactor; i++)
+                        {
+                            groupNameSendList[j - i] = newGroupNameList;
+                        }
+                        newGroupNameList = "";
+                    }
+                }
+                return groupNameSendList;
+            }
+            else
+            {
+                return sendGroupNameList;
+            }
         }
 
         private static void SaveConfig(string path, int connection, string serviceType, string transportType, string protocol, string scenario)
@@ -280,8 +334,8 @@ namespace Bench.RpcMaster
         private static BenchmarkCellConfig GenerateBenchmarkConfig(int indClient, string step,
             string serviceType, string transportType, string hubProtocol, string scenario,
             string MessageSizeStr, List<string> targetConnectionIds, List<string> groupNameList,
-            List<bool> callbackList, int messageCountPerInterval, bool enableGroupJoinLeave,
-            List<bool> joinLeavePerGroupList, List<bool> sendGroupList)
+            List<string> sendGroupNameList, List<bool> callbackList, int messageCountPerInterval,
+            bool enableGroupJoinLeave, List<bool> joinLeavePerGroupList, List<bool> sendGroupList)
         {
             var messageSize = ParseMessageSize(MessageSizeStr);
 
@@ -304,6 +358,7 @@ namespace Bench.RpcMaster
             // add lists
             benchmarkCellConfig.TargetConnectionIds.AddRange(targetConnectionIds);
             benchmarkCellConfig.GroupNameList.AddRange(groupNameList);
+            benchmarkCellConfig.SendGroupNameList.AddRange(sendGroupNameList);
             benchmarkCellConfig.CallbackList.AddRange(callbackList);
             benchmarkCellConfig.JoinLeaveGroupList.AddRange(joinLeavePerGroupList);
             benchmarkCellConfig.SendGroupList.AddRange(sendGroupList);
@@ -589,7 +644,7 @@ namespace Bench.RpcMaster
 
         private static async Task ProcessPipeline(List<RpcService.RpcServiceClient> clients, string pipelineStr, List<string> slaveList, int connections,
             string serviceType, string transportType, string hubProtocol, string scenario, string messageSize,
-            int groupNum, int serverCount, string sendToFixedClient, bool enableGroupJoinLeave,
+            int groupNum, int groupOverlap, int combineFactor, int serverCount, string sendToFixedClient, bool enableGroupJoinLeave,
             string stopIfLatencyIsBig, string stopSendIfConnectionErrorBig)
         {
             // var connections = argsOption.Connections;
@@ -607,7 +662,8 @@ namespace Bench.RpcMaster
             var connectionConfigBuilder = new ConnectionConfigBuilder();
             var connectionAllConfigList = connectionConfigBuilder.Build(connections);
             var targetConnectionIds = new List<string>();
-            var groupNameList = GenerateGroupNameList(connections, groupNum);
+            var groupNameList = GenerateGroupNameList(connections, groupNum, groupOverlap);
+            var sendGroupNameList = CombineConnectionSendGroups(groupNameList, combineFactor);
             var callbackList = Enumerable.Repeat(true, connections).ToList();
             var messageCountPerInterval = 1;
             var joinLeavePerGroupAdditionalCnt = 0;
@@ -697,7 +753,7 @@ namespace Bench.RpcMaster
 
                     var benchmarkCellConfig = GenerateBenchmarkConfig(indClient, step,
                         serviceType, transportType, hubProtocol, scenario, messageSize,
-                        targetConnectionIds, groupNameList, callbackList, messageCountPerInterval,
+                        targetConnectionIds, groupNameList, sendGroupNameList, callbackList, messageCountPerInterval,
                         enableGroupJoinLeave, joinLeavePerGroupList, sendGroupList);
 
                     Util.Log($"service: {benchmarkCellConfig.ServiceType}; transport: {benchmarkCellConfig.TransportType}; hubprotocol: {benchmarkCellConfig.HubProtocol}; scenario: {benchmarkCellConfig.Scenario}; step: {step}");
