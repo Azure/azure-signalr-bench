@@ -14,7 +14,6 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethod
     {
         public Task Do(IDictionary<string, object> stepParameters, IDictionary<string, object> pluginParameters, IList<IRpcClient> clients)
         {
-
             Log.Information($"Create connections...");
 
             // Get parameters
