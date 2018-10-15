@@ -7,6 +7,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
     public static class SignalRConstants
     {
         // Configuration parameters
+        public static readonly string ConcurrentConnection = "Parameter.ConcurrentConnetion";
         public static readonly string ConnectionTotal = "Parameter.ConnectionTotal";
         public static readonly string ConnectionBegin = "Parameter.ConnectionBegin";
         public static readonly string ConnectionEnd = "Parameter.ConnectionEnd";
