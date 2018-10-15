@@ -8,7 +8,7 @@ namespace Plugin.Base
 {
     public interface IMasterStepHandler
     {
-        // In a master step, the Rpc operations may be Query, Update, etc. 
-        Task HandleMasterStep(MasterStep step, IList<IRpcClient> rpcClients);
+        IDictionary<string, object> PluginMasterParameters { get; set; }
+        IMasterMethod CreateMasterMethodInstance(string methodName);
     }
 }

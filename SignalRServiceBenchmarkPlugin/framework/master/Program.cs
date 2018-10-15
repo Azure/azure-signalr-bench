@@ -6,6 +6,7 @@ using Rpc.Service;
 using Serilog;
 using Common;
 using Plugin.Base;
+using System.Linq;
 
 namespace Rpc.Master
 {
@@ -13,6 +14,8 @@ namespace Rpc.Master
     {
         private static readonly int _maxRertryConnect = 100;
         private static IPlugin _plugin;
+        private static StepHandler _stepHandler;
+        private static TimeSpan _retryInterval = TimeSpan.FromSeconds(1);
 
         static async Task Main(string[] args)
         {
@@ -26,7 +29,7 @@ namespace Rpc.Master
             var clients = CreateRpcClients(argsOption.SlaveList, argsOption.RpcPort);
 
             // Check rpc connections
-            WaitRpcConnectSuccess(clients);
+            await WaitRpcConnectSuccess(clients);
 
             // Load benchmark configuration
             var configuration = Util.ReadFile(argsOption.BenchmarkConfiguration);
@@ -52,7 +55,7 @@ namespace Rpc.Master
 
         private static async Task InstallPlugin(IList<IRpcClient> clients, string moduleName)
         {
-            Log.Information($"Install plugin...");
+            Log.Information($"Install plugin '{moduleName}' in master...");
             InstallPluginInMaster(moduleName);
             await InstallPluginInSlaves(clients, moduleName);
         }
@@ -61,6 +64,7 @@ namespace Rpc.Master
         {
             var type = Type.GetType(moduleName);
             _plugin = (IPlugin)Activator.CreateInstance(type);
+            _stepHandler = new StepHandler(_plugin);
         }
 
         private static async Task InstallPluginInSlaves(IList<IRpcClient> clients, string moduleName)
@@ -70,19 +74,8 @@ namespace Rpc.Master
             var tasks = new List<Task<bool>>();
 
             // Try to install plugin
-            foreach (var client in clients)
-            {
-                tasks.Add(client.InstallPluginAsync(moduleName));
-            }
-            await Task.WhenAll(tasks);
-
-            // Check whether the plugin installed
-            var success = true;
-            foreach (var task in tasks)
-            {
-                if (!task.Result) success = false;
-                break;
-            }
+            var installResults = await Task.WhenAll(from client in clients select client.InstallPluginAsync(moduleName));
+            var success = installResults.All(result => result == true);
 
             if (!success) throw new Exception("Fail to install plugin in slaves.");
         }
@@ -94,7 +87,7 @@ namespace Rpc.Master
                 foreach(var step in parallelStep)
                 {
                     var tasks = new List<Task>();
-                    tasks.Add(_plugin.HandleMasterStep(step, clients));
+                    tasks.Add(_stepHandler.HandleStep(step, clients));
                     await Task.WhenAll(tasks);
                 }
             }
@@ -114,7 +107,7 @@ namespace Rpc.Master
             return argsOption;
         }
 
-        private static void WaitRpcConnectSuccess(IList<IRpcClient> clients)
+        private static async Task WaitRpcConnectSuccess(IList<IRpcClient> clients)
         {
             Log.Information("Connect Rpc slaves...");
             for (var i = 0; i < _maxRertryConnect; i++)
@@ -136,10 +129,15 @@ namespace Rpc.Master
                 catch (Exception ex)
                 {
                     Log.Warning($"Fail to connect slaves, retry {i}th time");
+                    await Task.Delay(_retryInterval);
                     continue;
                 }
-                break;
+                return;
             }
+
+            var message = $"Cannot connect to all slaves.";
+            Log.Error(message);
+            throw new Exception(message);
         }
     }
 }

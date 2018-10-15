@@ -1,7 +1,10 @@
 ﻿using Grpc.Core;
+using Newtonsoft.Json;
+using Plugin.Base;
 using Serilog;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -11,14 +14,58 @@ namespace Rpc.Service
     {
         private RpcService.RpcServiceClient _client;
 
-        public Task<string> QueryAsync(string data)
+        public async Task<IDictionary<string, object>> QueryAsync(IDictionary<string, object> data)
         {
-            throw new NotImplementedException();
+            if (!CheckTypeAndMethod(data))
+            {
+                var message = $"Do not contain {Constants.Type} and {Constants.Method}.";
+                Log.Error(message);
+                throw new Exception(message);
+            }
+            try
+            {
+                var result = await _client.QueryAsync(new Data { Json = Serialize(data) }).ResponseAsync;
+                if (!result.Success) throw new Exception(result.Message);
+                var returnData = Deserialize(result.Json);
+                return returnData;
+            }
+            catch (Exception ex)
+            {
+                var message = $"Rpc error: {ex}";
+                Log.Error(message);
+                throw new Exception(message);
+            }
         }
 
-        public Task UpdateAsync(string data)
+        // TODO: remove another Deserialize
+        public Dictionary<string, object> Deserialize(string input)
         {
-            return _client.UpdateAsync(new Data { Json = data }).ResponseAsync;
+            try
+            {
+                var parameters = JsonConvert.DeserializeObject<Dictionary<string, object>>(input);
+                return parameters;
+            }
+            catch (Exception ex)
+            {
+                return null;
+            }
+        }
+
+        public string Serialize(IDictionary<string, object> data)
+        {
+            var json = JsonConvert.SerializeObject(data);
+            return json;
+        }
+
+        public Task UpdateAsync(IDictionary<string, object> data)
+        {
+            if (!CheckTypeAndMethod(data))
+            {
+                var message = $"Do not contain {Constants.Type} and {Constants.Method}.";
+                Log.Error(message);
+                throw new Exception(message);
+            }
+            return _client.UpdateAsync(new Data { Json = Serialize(data) }).ResponseAsync;
         }
 
         private static Channel CreateRpcChannel(string hostname, int port)
@@ -55,9 +102,16 @@ namespace Rpc.Service
 
         public async Task<bool> InstallPluginAsync(string pluginName)
         {
+            Log.Information($"Install plugin '{pluginName}' in slave...");
             var result = await _client.InstallPluginAsync(new Data { Json = pluginName }).ResponseAsync;
             if (!result.Success) Log.Error($"Fail to install plugin in slave: {result.Message}");
             return result.Success;
+        }
+
+        public bool CheckTypeAndMethod(IDictionary<string, object> data)
+        {
+            if (data.ContainsKey(Constants.Type) && data.ContainsKey(Constants.Method)) return true;
+            return false;
         }
     }
 }

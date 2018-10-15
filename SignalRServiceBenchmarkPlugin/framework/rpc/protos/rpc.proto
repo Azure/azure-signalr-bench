@@ -3,7 +3,7 @@ syntax = "proto3";
 package Rpc.Service;
 
 service RpcService{
-	rpc Query(Data) returns (Data) {}
+	rpc Query(Data) returns (Result) {}
 	rpc Update(Data) returns (Empty) {}
 	rpc TestConnection(Empty) returns (Result) {}
 	rpc InstallPlugin(Data) returns (Result) {}
@@ -19,4 +19,5 @@ message Empty {
 message Result {
 	bool success = 1;
 	string message = 2;
+	string json = 3;
 }

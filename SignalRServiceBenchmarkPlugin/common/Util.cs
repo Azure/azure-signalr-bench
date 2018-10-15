@@ -48,5 +48,28 @@ namespace Common
                 throw ex;
             }
         }
+
+        public static int SplitNumber(int total, int index, int agents)
+        {
+            int baseNumber = total / agents;
+            if (index < total % agents)
+            {
+                baseNumber++;
+            }
+            return baseNumber;
+        }
+
+        public static (int, int) GetConnectionRange(int total, int index, int agents)
+        {
+            var begin = 0;
+            for (var i = 0; i < index; i++)
+            {
+                begin += SplitNumber(total, i, agents);
+            }
+
+            var end = begin + SplitNumber(total, index, agents);
+
+            return (begin, end);
+        }
     }
 }
