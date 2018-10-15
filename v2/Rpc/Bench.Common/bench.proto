@@ -31,11 +31,12 @@ message BenchmarkCellConfig {
 	repeated string targetConnectionIds = 10;
 	int64 messageSize = 11;
 	repeated string groupNameList = 12;
-	repeated bool callbackList = 13;
-	repeated bool joinLeaveGroupList = 14;
-	int32 messageCountPerInterval = 15;
-	bool enableGroupJoinLeave = 16;
-	repeated bool sendGroupList = 17;
+	repeated string sendGroupNameList = 13;
+	repeated bool callbackList = 14;
+	repeated bool joinLeaveGroupList = 15;
+	int32 messageCountPerInterval = 16;
+	bool enableGroupJoinLeave = 17;
+	repeated bool sendGroupList = 18;
 }
 
 message ConnectionConfig {

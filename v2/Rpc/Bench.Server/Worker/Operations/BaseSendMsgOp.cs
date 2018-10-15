@@ -130,7 +130,7 @@ namespace Bench.RpcSlave.Worker.Operations
             }
             else if (_tk.BenchmarkCellConfig.Scenario.Contains("SendGroup"))
             {
-                ids.AddRange(_tk.BenchmarkCellConfig.GroupNameList[ind + _tk.ConnectionRange.Begin].Split(";").ToList());
+                ids.AddRange(_tk.BenchmarkCellConfig.SendGroupNameList[ind + _tk.ConnectionRange.Begin].Split(";").ToList());
             }
             else
             {
@@ -138,6 +138,7 @@ namespace Bench.RpcSlave.Worker.Operations
             }
             return ids;
         }
+
         protected async Task StartSendingMessageAsync(string mode, HubConnection connection, int ind, byte[] messageBlob, string id,
             int connectionCnt, int duration, int interval, Counter counter, List<bool> brokenConnectionInds)
         {

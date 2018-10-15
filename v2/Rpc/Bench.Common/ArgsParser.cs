@@ -100,6 +100,9 @@ namespace Bench.Common
         [Option("groupOverlap", Default= 1, Required = false, HelpText = "Number of group(s) a connection belongs to, default is 1")]
         public int groupOverlap { get; set; }
 
+        [Option("combineFactor", Default = 1, Required = false, HelpText = "Factor for combining the sendGroup of client connections, default is 1")]
+        public int combineFactor { get; set; }
+
         [Option("debug", Required = false, HelpText = "")]
         public string Debug { get; set; }
 
