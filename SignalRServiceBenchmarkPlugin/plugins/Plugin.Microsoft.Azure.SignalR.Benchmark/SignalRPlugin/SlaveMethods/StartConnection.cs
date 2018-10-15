@@ -11,7 +11,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
 {
     public class StartConnection : ISlaveMethod
     {
-        public async Task Do(IDictionary<string, object> stepParameters, IDictionary<string, object> pluginParameters)
+        public Task Do(IDictionary<string, object> stepParameters, IDictionary<string, object> pluginParameters)
         {
             try
             {
@@ -20,9 +20,9 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 // Get parameters
                 PluginUtils.TryGetTypedValue(stepParameters, SignalRConstants.ConcurrentConnection, out int concurrentConnection, Convert.ToInt32);
                 PluginUtils.TryGetTypedValue(stepParameters, SignalRConstants.Type, out string type, Convert.ToString);
-                PluginUtils.TryGetTypedValue(pluginParameters, SignalRConstants.ConnectionStore, out IList<HubConnection> connections, (obj) => (IList<HubConnection>)obj);
+                PluginUtils.TryGetTypedValue(pluginParameters, $"{SignalRConstants.ConnectionStore}.{type}", out IList<HubConnection> connections, (obj) => (IList<HubConnection>)obj);
 
-                await StartConnections(connections, StartConnect, concurrentConnection);
+                return Task.WhenAll(StartConnections(connections, StartConnect, concurrentConnection));
             }
             catch (Exception ex)
             {
@@ -57,7 +57,6 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                                     {
                                         s.Release();
                                     }
-                                    
                                 }));
         }
 

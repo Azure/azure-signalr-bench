@@ -30,8 +30,6 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
 
             var results = from package in packages select package.Client.QueryAsync(package.Data);
 
-            Log.Information($"Finish");
-
             return Task.WhenAll(results);
         }
     }

@@ -71,5 +71,11 @@ namespace Common
 
             return (begin, end);
         }
+
+        public static long Timestamp()
+        {
+            var unixDateTime = (long)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalMilliseconds;
+            return unixDateTime;
+        }
     }
 }

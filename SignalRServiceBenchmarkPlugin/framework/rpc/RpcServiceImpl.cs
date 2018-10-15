@@ -39,7 +39,7 @@ namespace Rpc.Service
 
             // Display configurations
             var configuration = (from entry in parameters select $"  {entry.Key} : {entry.Value}").Aggregate((a, b) => a + "\n" + b);
-            Log.Information($"Update...\n{configuration}");
+            Log.Information($"Configuration:\n{configuration}");
 
             // Extract method name
             var success = parameters.TryGetTypedValue(Constants.Method, out string method, Convert.ToString);

@@ -13,7 +13,7 @@ using System.Net.Http;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethod
+namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
 {
     public class CreateConnection : ISlaveMethod
     {
@@ -57,11 +57,11 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethod
             var connections = Enumerable.Repeat<HubConnection>(null, total);
             connections =
             from connection in connections
-            let cookies = new CookieContainer()
+                //let cookies = new CookieContainer()
             let httpClientHandler = new HttpClientHandler
             {
                 ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator,
-                CookieContainer = cookies,
+                //CookieContainer = cookies,
             }
             let hubConnectionBuilder = new HubConnectionBuilder()
                 .WithUrl(url, httpConnectionOptions =>
@@ -69,7 +69,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethod
                     httpConnectionOptions.HttpMessageHandlerFactory = _ => httpClientHandler;
                     httpConnectionOptions.Transports = transportType;
                     httpConnectionOptions.CloseTimeout = TimeSpan.FromMinutes(100);
-                    httpConnectionOptions.Cookies = cookies;
+                    //httpConnectionOptions.Cookies = cookies;
                 })
             select
             protocolString.ToLower() == "messagepack" ? hubConnectionBuilder.AddMessagePackProtocol().Build() : hubConnectionBuilder.Build();
