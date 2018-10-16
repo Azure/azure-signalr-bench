@@ -31,7 +31,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         public static readonly string EchoCallbackName = "Echo";
 
         // Message payload
-        public static readonly string Timestamp = "Payload.Timestamp";
-        public static readonly string MessageBlob = "Payload.MessageBlob";
+        public static readonly string Timestamp = "payload.Timestamp";
+        public static readonly string MessageBlob = "payload.MessageBlob";
     }
 }
