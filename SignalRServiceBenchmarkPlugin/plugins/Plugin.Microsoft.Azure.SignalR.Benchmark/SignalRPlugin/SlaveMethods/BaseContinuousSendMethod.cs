@@ -16,7 +16,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
         {
             // Random delay in [1, interval) ms
             var rand = new Random(DateTime.Now.Millisecond);
-            var randomDelay = TimeSpan.FromMilliseconds(rand.Next((int)(duration.TotalMilliseconds - 1)) + 1);
+            var randomDelay = TimeSpan.FromMilliseconds(rand.Next((int)(interval.TotalMilliseconds - 1)) + 1);
             await Task.Delay(randomDelay);
 
             // Send message continuously
@@ -24,7 +24,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
             {
                 while (!cts.IsCancellationRequested)
                 {
-                    await f(connection, data);
+                    await f(connection, data); // TODO: await may cause bad send rate
+                    await Task.Delay(interval);
                 }
             }
         }
