@@ -76,7 +76,7 @@ namespace Rpc.Master
 
             // Try to install plugin
             var installResults = await Task.WhenAll(from client in clients select client.InstallPluginAsync(moduleName));
-            var success = installResults.All(result => result == true);
+            var success = installResults.All(result => result);
 
             if (!success) throw new Exception("Fail to install plugin in slaves.");
         }

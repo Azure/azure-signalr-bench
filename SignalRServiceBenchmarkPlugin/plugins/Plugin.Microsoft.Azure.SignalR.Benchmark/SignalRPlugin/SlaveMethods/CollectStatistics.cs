@@ -18,8 +18,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 Log.Information($"Collect statistics...");
 
                 // Get parameters
-                PluginUtils.TryGetTypedValue(stepParameters, SignalRConstants.Type, out string type, Convert.ToString);
-                PluginUtils.TryGetTypedValue(pluginParameters, $"{SignalRConstants.StatisticsStore}.{type}", out ConcurrentDictionary<string, object> statistics, (obj) => (ConcurrentDictionary<string, object>)obj);
+                stepParameters.TryGetTypedValue(SignalRConstants.Type, out string type, Convert.ToString);
+                pluginParameters.TryGetTypedValue($"{SignalRConstants.StatisticsStore}.{type}", out ConcurrentDictionary<string, object> statistics, (obj) => (ConcurrentDictionary<string, object>)obj);
 
                 // Return statistics
                 return statistics;

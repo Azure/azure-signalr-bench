@@ -17,6 +17,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
 {
     public class CreateConnection : ISlaveMethod
     {
+        private int _closeTimeout = 100;
+
         public async Task<IDictionary<string, object>> Do(IDictionary<string, object> stepParameters, IDictionary<string, object> pluginParameters)
         {
             try
@@ -24,12 +26,12 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 Log.Information($"Create connections...");
 
                 // Get parameters
-                PluginUtils.TryGetTypedValue(stepParameters, SignalRConstants.ConnectionBegin, out int connectionBegin, Convert.ToInt32);
-                PluginUtils.TryGetTypedValue(stepParameters, SignalRConstants.ConnectionEnd, out int connectionEnd, Convert.ToInt32);
-                PluginUtils.TryGetTypedValue(stepParameters, SignalRConstants.HubUrl, out string url, Convert.ToString);
-                PluginUtils.TryGetTypedValue(stepParameters, SignalRConstants.HubProtocol, out string protocol, Convert.ToString);
-                PluginUtils.TryGetTypedValue(stepParameters, SignalRConstants.TransportType, out string transportType, Convert.ToString);
-                PluginUtils.TryGetTypedValue(stepParameters, SignalRConstants.Type, out string type, Convert.ToString);
+                stepParameters.TryGetTypedValue(SignalRConstants.ConnectionBegin, out int connectionBegin, Convert.ToInt32);
+                stepParameters.TryGetTypedValue(SignalRConstants.ConnectionEnd, out int connectionEnd, Convert.ToInt32);
+                stepParameters.TryGetTypedValue(SignalRConstants.HubUrl, out string url, Convert.ToString);
+                stepParameters.TryGetTypedValue(SignalRConstants.HubProtocol, out string protocol, Convert.ToString);
+                stepParameters.TryGetTypedValue(SignalRConstants.TransportType, out string transportType, Convert.ToString);
+                stepParameters.TryGetTypedValue(SignalRConstants.Type, out string type, Convert.ToString);
 
                 // Create Connections
                 var connections = CreateConnections(connectionEnd - connectionBegin, url, transportType, protocol);
@@ -55,25 +57,23 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
             success = Enum.TryParse<HttpTransportType>(transportTypeString, true, out var transportType);
             PluginUtils.HandleParseEnumResult(success, transportTypeString);
 
-            var connections = Enumerable.Repeat<HubConnection>(null, total);
-            connections =
-            from connection in connections
-                //let cookies = new CookieContainer()
-            let httpClientHandler = new HttpClientHandler
-            {
-                ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator,
-                //CookieContainer = cookies,
-            }
-            let hubConnectionBuilder = new HubConnectionBuilder()
-                .WithUrl(url, httpConnectionOptions =>
-                {
-                    httpConnectionOptions.HttpMessageHandlerFactory = _ => httpClientHandler;
-                    httpConnectionOptions.Transports = transportType;
-                    httpConnectionOptions.CloseTimeout = TimeSpan.FromMinutes(100);
-                    //httpConnectionOptions.Cookies = cookies;
-                })
-            select
-            protocolString.ToLower() == "messagepack" ? hubConnectionBuilder.AddMessagePackProtocol().Build() : hubConnectionBuilder.Build();
+            var connections = from i in Enumerable.Range(0, total)
+                              let cookies = new CookieContainer()
+                              let httpClientHandler = new HttpClientHandler
+                              {
+                                  ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator,
+                                  CookieContainer = cookies,
+                              }
+                              let hubConnectionBuilder = new HubConnectionBuilder()
+                                  .WithUrl(url, httpConnectionOptions =>
+                                  {
+                                      httpConnectionOptions.HttpMessageHandlerFactory = _ => httpClientHandler;
+                                      httpConnectionOptions.Transports = transportType;
+                                      httpConnectionOptions.CloseTimeout = TimeSpan.FromMinutes(_closeTimeout);
+                                      httpConnectionOptions.Cookies = cookies;
+                                  })
+                              select
+                              protocolString.ToLower() == "messagepack" ? hubConnectionBuilder.AddMessagePackProtocol().Build() : hubConnectionBuilder.Build();
 
             return connections.ToList();
         }

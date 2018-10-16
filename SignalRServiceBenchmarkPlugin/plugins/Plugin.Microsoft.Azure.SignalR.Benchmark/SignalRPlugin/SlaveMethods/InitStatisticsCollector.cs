@@ -1,4 +1,5 @@
-﻿using Plugin.Base;
+﻿using Common;
+using Plugin.Base;
 using Serilog;
 using System;
 using System.Collections.Concurrent;
@@ -17,7 +18,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 Log.Information($"Init statistic collector...");
 
                 // Get parameters
-                PluginUtils.TryGetTypedValue(stepParameters, SignalRConstants.Type, out string type, Convert.ToString);
+                stepParameters.TryGetTypedValue(SignalRConstants.Type, out string type, Convert.ToString);
 
                 // Init statistic collector
                 pluginParameters[$"{SignalRConstants.StatisticsStore}.{type}"] = new ConcurrentDictionary<string, object>();
