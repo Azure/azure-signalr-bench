@@ -87,6 +87,33 @@ EOF
    fi
 }
 
+function gen_sendtoclient_job_config()
+{
+    local tag=$1
+    local Transport=$2
+    local MessageEncoding=$3
+    local Scenario=$4
+    local unit=$5
+    local msgSize=$6
+    local maxConnectionOption=""
+    if [ "$useMaxConnection" == "true" ]
+    then
+       maxConnectionOption="-M"
+    fi
+    send=`python gen_complex_pipeline.py -t $Transport -s $Scenario -u unit${unit} -d 0 -S --sendToClientSz $msgSize ${maxConnectionOption}`
+cat << EOF > $JobConfig
+serviceType: $tag
+transportType: ${Transport}
+hubProtocol: ${MessageEncoding}
+scenario: ${Scenario}
+EOF
+    python gen_complex_pipeline.py -t $Transport -s $Scenario -u unit${unit} --sendToClientSz $msgSize -d ${sigbench_run_duration} ${maxConnectionOption}>>$JobConfig
+    cat << EOF >> $JobConfig
+serverUrl: ${serverUrl}
+messageSize: ${msgSize}
+EOF
+}
+
 #####################################################
 # depends on global env:
 # useMaxConnection
@@ -238,13 +265,26 @@ function run_benchmark()
                  ############## run bench #####################
                  run_and_gen_report $connectStr $tag $Scenario $Transport $MessageEncoding $connection $concurrentConnection $send $ConnectionString
                done
-             else
-               prepare_result_folder_4_scenario ${tag} ${Transport} ${MessageEncoding} ${Scenario}
-               ############## configure scenario ############
-               send=`python gen_complex_pipeline.py -t $Transport -s $Scenario -u unit${unit} -d 0 -S ${maxConnectionOption}`
-               gen_job_config $tag ${Transport} ${MessageEncoding} ${Scenario} ${unit} ${bench_send_size}
-             ############## run bench #####################
-               run_and_gen_report $connectStr $tag $Scenario $Transport $MessageEncoding $connection $concurrentConnection $send $ConnectionString
+             else if [ "$Scenario" == "sendToClient" ]
+                  then
+                    for j in $sendToClientMsgSize
+                    do
+                      tag="unit"${unit}"_${j}"
+                      prepare_result_folder_4_scenario ${tag} ${Transport} ${MessageEncoding} ${Scenario}
+                      ############## configure scenario ############
+                      send=`python gen_complex_pipeline.py -t $Transport -s $Scenario -u unit${unit} -d 0 --sendToClientSz $j -S ${maxConnectionOption}`
+                      gen_sendtoclient_job_config $tag ${Transport} ${MessageEncoding} ${Scenario} ${unit} ${j}
+                      ############## run bench #####################
+                      run_and_gen_report $connectStr $tag $Scenario $Transport $MessageEncoding $connection $concurrentConnection $send $ConnectionString
+                    done
+                  else
+                    prepare_result_folder_4_scenario ${tag} ${Transport} ${MessageEncoding} ${Scenario}
+                    ############## configure scenario ############
+                    send=`python gen_complex_pipeline.py -t $Transport -s $Scenario -u unit${unit} -d 0 -S ${maxConnectionOption}`
+                    gen_job_config $tag ${Transport} ${MessageEncoding} ${Scenario} ${unit} ${bench_send_size}
+                    ############## run bench #####################
+                    run_and_gen_report $connectStr $tag $Scenario $Transport $MessageEncoding $connection $concurrentConnection $send $ConnectionString
+                  fi
              fi
              ## restart the pod to fresh run next scenario
 
