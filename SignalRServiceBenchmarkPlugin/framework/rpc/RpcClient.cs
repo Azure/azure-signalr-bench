@@ -25,9 +25,9 @@ namespace Rpc.Service
             }
             try
             {
-                var result = await _client.QueryAsync(new Data { Json = Serialize(data) }).ResponseAsync;
+                var result = await _client.QueryAsync(new Data { Json = RpcUtil.Serialize(data) }).ResponseAsync;
                 if (!result.Success) throw new Exception(result.Message);
-                var returnData = Deserialize(result.Json);
+                var returnData = RpcUtil.Deserialize(result.Json);
                 return returnData;
             }
             catch (Exception ex)
@@ -38,27 +38,6 @@ namespace Rpc.Service
             }
         }
 
-        // TODO: remove another Deserialize
-        public Dictionary<string, object> Deserialize(string input)
-        {
-            try
-            {
-                var parameters = JsonConvert.DeserializeObject<Dictionary<string, object>>(input);
-                return parameters;
-            }
-            catch (Exception ex)
-            {
-                return null;
-            }
-        }
-
-        // TODO: remove another Serialize
-        public string Serialize(IDictionary<string, object> data)
-        {
-            var json = JsonConvert.SerializeObject(data);
-            return json;
-        }
-
         public Task UpdateAsync(IDictionary<string, object> data)
         {
             if (!CheckTypeAndMethod(data))
@@ -67,7 +46,7 @@ namespace Rpc.Service
                 Log.Error(message);
                 throw new Exception(message);
             }
-            return _client.UpdateAsync(new Data { Json = Serialize(data) }).ResponseAsync;
+            return _client.UpdateAsync(new Data { Json = RpcUtil.Serialize(data) }).ResponseAsync;
         }
 
         private static Channel CreateRpcChannel(string hostname, int port)
