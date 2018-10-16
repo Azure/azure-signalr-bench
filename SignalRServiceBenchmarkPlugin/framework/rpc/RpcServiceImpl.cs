@@ -15,25 +15,6 @@ namespace Rpc.Service
     {
         private IPlugin _plugin;
 
-        public Dictionary<string, object> Deserialize(string input)
-        {
-            try
-            {
-                var parameters = JsonConvert.DeserializeObject<Dictionary<string, object>>(input);
-                return parameters;
-            }
-            catch (Exception ex)
-            {
-                return null;
-            }
-        }
-
-        public string Serialize(IDictionary<string, object> data)
-        {
-            var json = JsonConvert.SerializeObject(data);
-            return json;
-        }
-
         public override Task<Empty> Update(Data data, ServerCallContext context)
         {
             throw new NotImplementedException();
@@ -41,7 +22,7 @@ namespace Rpc.Service
 
         public override async Task<Result> Query(Data data, ServerCallContext context)
         {
-            var parameters = Deserialize(data.Json);
+            var parameters = RpcUtil.Deserialize(data.Json);
 
             // Display configurations
             var configuration = (from entry in parameters select $"  {entry.Key} : {entry.Value}").Aggregate((a, b) => a + "\n" + b);
@@ -57,7 +38,7 @@ namespace Rpc.Service
             try
             {
                 var result = await methodInstance.Do(parameters, _plugin.PluginSlaveParamaters);
-                return new Result { Success = true, Message = "", Json = Serialize(result)};
+                return new Result { Success = true, Message = "", Json = RpcUtil.Serialize(result)};
             }
             catch (Exception ex)
             {
