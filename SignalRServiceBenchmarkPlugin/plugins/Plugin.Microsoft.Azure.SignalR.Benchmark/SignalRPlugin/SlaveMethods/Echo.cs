@@ -27,6 +27,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 PluginUtils.TryGetTypedValue(stepParameters, SignalRConstants.Interval, out double interval, Convert.ToDouble);
                 PluginUtils.TryGetTypedValue(stepParameters, SignalRConstants.MessageSize, out int messageSize, Convert.ToInt32);
                 PluginUtils.TryGetTypedValue(pluginParameters, $"{SignalRConstants.ConnectionStore}.{type}", out IList<HubConnection> connections, (obj) => (IList<HubConnection>)obj);
+                PluginUtils.TryGetTypedValue(pluginParameters, $"{SignalRConstants.ConnectionOffset}.{type}", out int offset, Convert.ToInt32);
 
                 // Set callback
                 SetCallback(connections);
@@ -38,8 +39,9 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 };
 
                 // Send messages
-                return Task.WhenAll(from connection in connections
-                                    select ContinuousSend(connection, data, SendEcho, 
+                return Task.WhenAll(from i in Enumerable.Range(0, connections.Count)
+                                    where i % modulo >= remainderBegin && i % modulo < remainderEnd
+                                    select ContinuousSend(connections[i], data, SendEcho,
                                             TimeSpan.FromMilliseconds(duration), TimeSpan.FromMilliseconds(interval)));
             }
             catch (Exception ex)
@@ -52,20 +54,35 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
 
         public void SetCallback(IList<HubConnection> connections)
         {
-            _ = from connection in connections
-                select connection.On(SignalRConstants.EchoCallbackName, (IDictionary<string, object> data) => 
+            foreach (var connection in connections)
+            {
+                connection.On(SignalRConstants.EchoCallbackName, (IDictionary<string, object> data) =>
                 {
+                    Log.Information($"data: \n{data.GetContents()}");
                     var receiveTimestamp = Util.Timestamp();
                     PluginUtils.TryGetTypedValue(data, SignalRConstants.Timestamp, out long sendTimestamp, Convert.ToInt64);
-                    Log.Information($"{receiveTimestamp - sendTimestamp}");
+                    Log.Information($"Latency: {receiveTimestamp - sendTimestamp}");
                 });
+            }
         }
 
-        public Task SendEcho(HubConnection connection, IDictionary<string, object> data)
+        public async Task SendEcho(HubConnection connection, IDictionary<string, object> data)
         {
-            var timestamp = Util.Timestamp();
-            data[SignalRConstants.Timestamp] = timestamp;
-            return connection.SendAsync(SignalRConstants.EchoCallbackName, data);
+            try
+            {
+                var timestamp = Util.Timestamp();
+                var payload = new Dictionary<string, object>();
+                data.TryGetValue(SignalRConstants.MessageBlob, out var tmp);
+                payload.Add(SignalRConstants.MessageBlob, tmp);
+                payload.Add(SignalRConstants.Timestamp, Util.Timestamp());
+                await connection.SendAsync(SignalRConstants.EchoCallbackName, payload);
+            }
+            catch (Exception ex)
+            {
+                var message = $"Error in Echo: {ex}";
+                Log.Error(message);
+                throw new Exception(message);
+            }
         }
     }
 }
