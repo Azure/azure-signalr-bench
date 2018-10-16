@@ -17,7 +17,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
 {
     public class CreateConnection : ISlaveMethod
     {
-        public async Task Do(IDictionary<string, object> stepParameters, IDictionary<string, object> pluginParameters)
+        public async Task<IDictionary<string, object>> Do(IDictionary<string, object> stepParameters, IDictionary<string, object> pluginParameters)
         {
             try
             {
@@ -38,6 +38,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 pluginParameters[$"{SignalRConstants.ConnectionStore}.{type}"] = connections;
                 pluginParameters[$"{SignalRConstants.ConnectionOffset}.{type}"] = connectionBegin;
 
+                return null;
             }
             catch (Exception ex)
             {

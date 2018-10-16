@@ -1,4 +1,5 @@
-﻿using Grpc.Core;
+﻿using Common;
+using Grpc.Core;
 using Newtonsoft.Json;
 using Plugin.Base;
 using Serilog;
@@ -51,6 +52,7 @@ namespace Rpc.Service
             }
         }
 
+        // TODO: remove another Serialize
         public string Serialize(IDictionary<string, object> data)
         {
             var json = JsonConvert.SerializeObject(data);

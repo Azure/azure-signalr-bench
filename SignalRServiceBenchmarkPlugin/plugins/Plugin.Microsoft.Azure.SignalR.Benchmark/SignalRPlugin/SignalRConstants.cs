@@ -26,6 +26,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         // Plugin parameters
         public static readonly string ConnectionStore = "Plugin.ConnectionStore";
         public static readonly string ConnectionOffset = "Plugin.ConnectionOffset";
+        public static readonly string StatisticsStore = "Plugin.StatisticsStore";
 
         // Callback Name
         public static readonly string EchoCallbackName = "Echo";
@@ -33,5 +34,12 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         // Message payload
         public static readonly string Timestamp = "payload.Timestamp";
         public static readonly string MessageBlob = "payload.MessageBlob";
+
+        // Timer
+        public static readonly string Timer = "Timer";
+
+        // Statistics
+        public static readonly string StatisticsMessageSent = "message:sent";
+
     }
 }

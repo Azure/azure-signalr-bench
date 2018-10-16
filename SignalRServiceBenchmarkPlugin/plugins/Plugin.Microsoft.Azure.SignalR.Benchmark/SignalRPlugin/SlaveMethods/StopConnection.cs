@@ -11,7 +11,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
 {
     public class StopConnection: ISlaveMethod
     {
-        public Task Do(IDictionary<string, object> stepParameters, IDictionary<string, object> pluginParameters)
+        public async Task<IDictionary<string, object>> Do(IDictionary<string, object> stepParameters, IDictionary<string, object> pluginParameters)
         {
             try
             {
@@ -22,8 +22,10 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 PluginUtils.TryGetTypedValue(pluginParameters, $"{SignalRConstants.ConnectionStore}.{type}", out IList<HubConnection> connections, (obj) => (IList<HubConnection>) obj);
 
                 // Stop connections
-                return Task.WhenAll(from connection in connections
+                await Task.WhenAll(from connection in connections
                                     select connection.StopAsync());
+
+                return null;
             }
             catch (Exception ex)
             {

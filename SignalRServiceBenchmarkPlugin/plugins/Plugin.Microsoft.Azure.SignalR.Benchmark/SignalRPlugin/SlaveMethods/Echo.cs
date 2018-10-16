@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.SignalR.Client;
 using Plugin.Base;
 using Serilog;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -10,9 +11,10 @@ using System.Threading.Tasks;
 
 namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
 {
-    class Echo : BaseContinuousSendMethod, ISlaveMethod
+    public class Echo : BaseContinuousSendMethod, ISlaveMethod
     {
-        public Task Do(IDictionary<string, object> stepParameters, IDictionary<string, object> pluginParameters)
+        private ConcurrentDictionary<string, object> _statistics;
+        public async Task<IDictionary<string, object>> Do(IDictionary<string, object> stepParameters, IDictionary<string, object> pluginParameters)
         {
             try
             {
@@ -28,21 +30,24 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 PluginUtils.TryGetTypedValue(stepParameters, SignalRConstants.MessageSize, out int messageSize, Convert.ToInt32);
                 PluginUtils.TryGetTypedValue(pluginParameters, $"{SignalRConstants.ConnectionStore}.{type}", out IList<HubConnection> connections, (obj) => (IList<HubConnection>)obj);
                 PluginUtils.TryGetTypedValue(pluginParameters, $"{SignalRConstants.ConnectionOffset}.{type}", out int offset, Convert.ToInt32);
+                PluginUtils.TryGetTypedValue(pluginParameters, $"{SignalRConstants.StatisticsStore}.{type}", out _statistics, obj => (ConcurrentDictionary<string, object>) obj);
 
                 // Set callback
                 SetCallback(connections);
                 
-                // Generate message payload
+                // Generate necessary data
                 var data = new Dictionary<string, object>
                 {
-                    { SignalRConstants.MessageBlob, new byte[messageSize] }
+                    { SignalRConstants.MessageBlob, new byte[messageSize] } // message payload
                 };
 
                 // Send messages
-                return Task.WhenAll(from i in Enumerable.Range(0, connections.Count)
-                                    where i % modulo >= remainderBegin && i % modulo < remainderEnd
+                await Task.WhenAll(from i in Enumerable.Range(0, connections.Count)
+                                    where (i + offset) % modulo >= remainderBegin && (i + offset) % modulo < remainderEnd
                                     select ContinuousSend(connections[i], data, SendEcho,
                                             TimeSpan.FromMilliseconds(duration), TimeSpan.FromMilliseconds(interval)));
+
+                return null;
             }
             catch (Exception ex)
             {
@@ -61,7 +66,9 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                     Log.Information($"data: \n{data.GetContents()}");
                     var receiveTimestamp = Util.Timestamp();
                     PluginUtils.TryGetTypedValue(data, SignalRConstants.Timestamp, out long sendTimestamp, Convert.ToInt64);
-                    Log.Information($"Latency: {receiveTimestamp - sendTimestamp}");
+                    var latency = receiveTimestamp - sendTimestamp;
+                    Log.Information($"Latency: {latency}");
+                    StatisticsHelper.RecordLatency(_statistics, latency);
                 });
             }
         }
@@ -70,12 +77,18 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
         {
             try
             {
+                // Prepare payload
                 var timestamp = Util.Timestamp();
                 var payload = new Dictionary<string, object>();
                 data.TryGetValue(SignalRConstants.MessageBlob, out var tmp);
                 payload.Add(SignalRConstants.MessageBlob, tmp);
                 payload.Add(SignalRConstants.Timestamp, Util.Timestamp());
+
+                // Send message
                 await connection.SendAsync(SignalRConstants.EchoCallbackName, payload);
+
+                // Update statistics
+                StatisticsHelper.IncreaseSentMessage(_statistics);
             }
             catch (Exception ex)
             {
