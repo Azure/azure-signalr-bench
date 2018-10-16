@@ -25,8 +25,6 @@ namespace JenkinsScript
         public List<string> Pipeline { get; set; }
         public string ServerUrl { get; set; }
         public string MessageSize { get; set; }
-
-        [DefaultValue(1)]
         public int CombineFactor { get; set; }
     }
 }
