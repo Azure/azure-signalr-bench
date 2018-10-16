@@ -203,6 +203,62 @@ function prepare_result_folder_4_scenario()
      export env_result_folder=$env_statistic_folder                                         # tell the dotnet program where to save counters.txt
      mkdir -p ${env_statistic_folder}
 }
+
+###
+## depends on global env:
+##   customerList, serverUrl
+function run_customer_bench()
+{
+   local unit=$1
+   local connection
+   local send
+   local concurrentConnection
+   local tag="unit"$unit
+   local Scenario
+   local Transport
+   local MessageEncoding
+   local connectStr
+   local i=0 j k
+   while [ $i -lt $serverVmCount ]
+   do
+     if [ $i -eq 0 ]
+     then
+       connectStr=${ConnectionString}
+     else
+       connectStr="${connectStr}^${ConnectionString}"
+     fi
+     i=$(($i + 1))
+   done
+
+   for k in $customerList
+   do
+     Transport=`python query_customer.py -c $k -i Transport`
+     Scenario=`python query_customer.py -c $k -i Scenario`
+     MessageEncoding==`python query_customer.py -c $k -i Protocol`
+     send=`python query_customer.py -c $k -i Send`
+     connection=`python query_customer.py -c $k -i Connection`
+     concurrentConnection=`python query_customer.py -c $k -i ConcurrentConnection`
+     bench_send_size=`python query_customer.py -c $k -i MessageSize`
+     if [ ! -d $ScenarioRoot"/${Scenario}" ]
+     then
+        mkdir $ScenarioRoot"/${Scenario}"
+     fi
+     export JobConfig=$ScenarioRoot"/${Scenario}/job.yaml"
+     cd $ScriptWorkingDir
+     tag=${tag}_${k}
+     prepare_result_folder_4_scenario ${tag} ${Transport} ${MessageEncoding} ${Scenario}
+     ############## configure scenario ############
+     send=`python gen_complex_pipeline.py -t $Transport -s $Scenario -u unit${unit} -d 0 -S`
+     python query_customer.py -c $k -i JobConfig > $JobConfig
+     cat << EOF >> $JobConfig
+serverUrl: ${serverUrl}
+EOF
+#gen_job_config $tag ${Transport} ${MessageEncoding} ${Scenario} ${unit} ${bench_send_size}
+     ############## run bench #####################
+     run_and_gen_report $connectStr $tag $Scenario $Transport $MessageEncoding $connection $concurrentConnection $send $ConnectionString  
+   done
+}
+
 #####################################################
 ## This step run benchmark per different scenarios ##
 #####################################################
