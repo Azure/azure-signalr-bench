@@ -8,6 +8,7 @@ namespace Common
 {
     public static class Extensions
     {
+        // TODO: consider edge cases
         private static bool TryGetTypedValueInternal<TKey, TValue, TActual>(
         this IDictionary<TKey, TValue> data,
         TKey key,
