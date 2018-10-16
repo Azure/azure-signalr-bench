@@ -24,6 +24,7 @@ using System.Threading.Tasks;
 using Bench.Common;
 using Bench.Common.Config;
 using CommandLine;
+using Google.Protobuf;
 using Grpc.Core;
 using Newtonsoft.Json.Linq;
 
@@ -533,8 +534,8 @@ namespace Bench.RpcMaster
                     Util.Log($"add channel: {slaveList[i]}:{rpcPort}");
                     channels.Add(new Channel($"{slaveList[i]}:{rpcPort}", ChannelCredentials.Insecure,
                         new ChannelOption[] {
-                            // For Group, the received message size is very large, so here set 8000k
-                            new ChannelOption(ChannelOptions.MaxReceiveMessageLength, 8192000)
+                            // For Group, the received message size is very large, so here set 16000k
+                            new ChannelOption(ChannelOptions.MaxReceiveMessageLength, 16384000)
                         }));
                 }
             }
@@ -770,6 +771,11 @@ namespace Bench.RpcMaster
 
                         client.LoadConnectionRange(new Range { Begin = beg, End = beg + currConnSliceCnt });
                         client.LoadConnectionConfig(connectionAllConfigList);
+                        using (var memStream = new MemoryStream())
+                        {
+                            benchmarkCellConfig.WriteTo(memStream);
+                            Util.Log($"RunJob parameter size: {memStream.Length}");
+                        }
                         client.RunJob(benchmarkCellConfig);
                     }));
                 });
