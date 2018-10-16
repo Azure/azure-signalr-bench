@@ -1,34 +1,32 @@
-﻿using Microsoft.AspNetCore.SignalR.Client;
-using Plugin.Base;
+﻿using Plugin.Base;
 using Serilog;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
 {
-    public class DisposeConnection : ISlaveMethod
+    public class InitStatisticsCollector : ISlaveMethod
     {
         public async Task<IDictionary<string, object>> Do(IDictionary<string, object> stepParameters, IDictionary<string, object> pluginParameters)
         {
             try
             {
-                Log.Information($"Dispose connections...");
+                Log.Information($"Init statistic collector...");
 
                 // Get parameters
                 PluginUtils.TryGetTypedValue(stepParameters, SignalRConstants.Type, out string type, Convert.ToString);
-                PluginUtils.TryGetTypedValue(pluginParameters, $"{SignalRConstants.ConnectionStore}.{type}", out IList<HubConnection> connections, (obj) => (IList<HubConnection>)obj);
 
-                // Dispose connections
-                await Task.WhenAll(from connection in connections
-                                    select connection.DisposeAsync());
+                // Init statistic collector
+                pluginParameters[$"{SignalRConstants.StatisticsStore}.{type}"] = new ConcurrentDictionary<string, object>();
+
                 return null;
             }
             catch (Exception ex)
             {
-                var message = $"Fail to dispose connections: {ex}";
+                var message = $"Fail to init statistic collector: {ex}";
                 Log.Error(message);
                 throw new Exception(message);
             }

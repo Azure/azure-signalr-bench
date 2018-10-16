@@ -16,6 +16,7 @@ namespace Rpc.Master
         private static IPlugin _plugin;
         private static StepHandler _stepHandler;
         private static TimeSpan _retryInterval = TimeSpan.FromSeconds(1);
+        private static TimeSpan _statisticsCollectInterval = TimeSpan.FromSeconds(1);
 
         static async Task Main(string[] args)
         {
@@ -41,7 +42,7 @@ namespace Rpc.Master
             // Process pipeline
             await ProcessPipeline(benchmarkConfiguration.Pipeline, clients);
         }
-        
+
         private static IList<IRpcClient> CreateRpcClients(IList<string> slaveList, int rpcPort)
         {
             var clients = new List<IRpcClient>();

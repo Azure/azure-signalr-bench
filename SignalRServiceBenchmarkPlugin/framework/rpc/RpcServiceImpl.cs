@@ -28,6 +28,12 @@ namespace Rpc.Service
             }
         }
 
+        public string Serialize(IDictionary<string, object> data)
+        {
+            var json = JsonConvert.SerializeObject(data);
+            return json;
+        }
+
         public override Task<Empty> Update(Data data, ServerCallContext context)
         {
             throw new NotImplementedException();
@@ -56,15 +62,14 @@ namespace Rpc.Service
             // Do action
             try
             {
-                await methodInstance.Do(parameters, _plugin.PluginSlaveParamaters);
+                var result = await methodInstance.Do(parameters, _plugin.PluginSlaveParamaters);
+                return new Result { Success = true, Message = "", Json = Serialize(result)};
             }
             catch (Exception ex)
             {
                 var message = $"Perform method '{method}' fail: {ex}";
                 return new Result { Success = false, Message = message };
             }
-
-            return new Result { Success = true, Message = "" };
         }
 
         public override Task<Result> TestConnection(Empty empty, ServerCallContext context)
