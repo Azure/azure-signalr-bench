@@ -1,4 +1,5 @@
-﻿using Plugin.Base;
+﻿using Common;
+using Plugin.Base;
 using Rpc.Service;
 using Serilog;
 using System;
@@ -15,8 +16,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
             Log.Information($"Stop collecting...");
 
             // Get parameters
-            PluginUtils.TryGetTypedValue(stepParameters, SignalRConstants.Type, out string type, Convert.ToString);
-            PluginUtils.TryGetTypedValue(pluginParameters, $"{SignalRConstants.Timer}.{type}", out System.Timers.Timer timer, obj => (System.Timers.Timer) obj);
+            stepParameters.TryGetTypedValue(SignalRConstants.Type, out string type, Convert.ToString);
+            pluginParameters.TryGetTypedValue($"{SignalRConstants.Timer}.{type}", out System.Timers.Timer timer, obj => (System.Timers.Timer) obj);
 
             // Stop and dispose timer
             timer.Stop();

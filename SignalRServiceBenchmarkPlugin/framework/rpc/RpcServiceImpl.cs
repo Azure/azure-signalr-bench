@@ -48,13 +48,7 @@ namespace Rpc.Service
             Log.Information($"Configuration:\n{configuration}");
 
             // Extract method name
-            var success = parameters.TryGetTypedValue(Constants.Method, out string method, Convert.ToString);
-            if (!success)
-            {
-                var message = $"Parameter {Constants.Method} does not exists.";
-                Log.Error(message);
-                throw new Exception(message);
-            }
+            parameters.TryGetTypedValue(Constants.Method, out string method, Convert.ToString);
 
             // Create Instance
             ISlaveMethod methodInstance = _plugin.CreateSlaveMethodInstance(method);

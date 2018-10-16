@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.SignalR.Client;
+﻿using Common;
+using Microsoft.AspNetCore.SignalR.Client;
 using Plugin.Base;
 using Serilog;
 using System;
@@ -16,10 +17,10 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
             try
             {
                 Log.Information($"Stop connections...");
-            
+
                 // Get parameters
-                PluginUtils.TryGetTypedValue(stepParameters, SignalRConstants.Type, out string type, Convert.ToString);
-                PluginUtils.TryGetTypedValue(pluginParameters, $"{SignalRConstants.ConnectionStore}.{type}", out IList<HubConnection> connections, (obj) => (IList<HubConnection>) obj);
+                stepParameters.TryGetTypedValue(SignalRConstants.Type, out string type, Convert.ToString);
+                pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionStore}.{type}", out IList<HubConnection> connections, (obj) => (IList<HubConnection>) obj);
 
                 // Stop connections
                 await Task.WhenAll(from connection in connections

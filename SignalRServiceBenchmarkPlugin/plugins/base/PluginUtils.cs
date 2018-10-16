@@ -20,22 +20,6 @@ namespace Plugin.Base
             Log.Information($"Handle step...\nConfiguration: \n{dict.GetContents()}");
         }
 
-        public static void HandleGetValueResult(bool success, string key)
-        {
-            if (!success)
-            {
-                var message = $"Parameter {key} does not exists.";
-                Log.Error(message);
-                throw new Exception(message);
-            }
-        }
-
-        public static void TryGetTypedValue<TKey, TValue, TActual>(IDictionary<TKey, TValue> dict, TKey key, out TActual val, Func<TValue, TActual> converter = null) where TActual : TValue
-        {
-            var success = dict.TryGetTypedValue(key, out val, converter);
-            HandleGetValueResult(success, key.ToString());
-        }
-
         public static void HandleParseEnumResult(bool success, string key)
         {
             if (!success)

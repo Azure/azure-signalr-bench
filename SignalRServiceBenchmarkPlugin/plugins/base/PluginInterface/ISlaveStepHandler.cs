@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Plugin.Base
 {
-    public interface ISlavehandler
+    public interface ISlaveStepHandler
     {
         IDictionary<string, object> PluginSlaveParamaters { get; set; }
         ISlaveMethod CreateSlaveMethodInstance(string methodName);

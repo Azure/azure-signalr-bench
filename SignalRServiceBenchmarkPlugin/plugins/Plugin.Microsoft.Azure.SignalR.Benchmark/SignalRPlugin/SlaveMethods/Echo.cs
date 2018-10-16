@@ -21,16 +21,16 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 Log.Information($"Echo...");
 
                 // Get parameters
-                PluginUtils.TryGetTypedValue(stepParameters, SignalRConstants.Type, out string type, Convert.ToString);
-                PluginUtils.TryGetTypedValue(stepParameters, SignalRConstants.RemainderBegin, out int remainderBegin, Convert.ToInt32);
-                PluginUtils.TryGetTypedValue(stepParameters, SignalRConstants.RemainderEnd, out int remainderEnd, Convert.ToInt32);
-                PluginUtils.TryGetTypedValue(stepParameters, SignalRConstants.Modulo, out int modulo, Convert.ToInt32);
-                PluginUtils.TryGetTypedValue(stepParameters, SignalRConstants.Duration, out double duration, Convert.ToDouble);
-                PluginUtils.TryGetTypedValue(stepParameters, SignalRConstants.Interval, out double interval, Convert.ToDouble);
-                PluginUtils.TryGetTypedValue(stepParameters, SignalRConstants.MessageSize, out int messageSize, Convert.ToInt32);
-                PluginUtils.TryGetTypedValue(pluginParameters, $"{SignalRConstants.ConnectionStore}.{type}", out IList<HubConnection> connections, (obj) => (IList<HubConnection>)obj);
-                PluginUtils.TryGetTypedValue(pluginParameters, $"{SignalRConstants.ConnectionOffset}.{type}", out int offset, Convert.ToInt32);
-                PluginUtils.TryGetTypedValue(pluginParameters, $"{SignalRConstants.StatisticsStore}.{type}", out _statistics, obj => (ConcurrentDictionary<string, object>) obj);
+                stepParameters.TryGetTypedValue(SignalRConstants.Type, out string type, Convert.ToString);
+                stepParameters.TryGetTypedValue(SignalRConstants.RemainderBegin, out int remainderBegin, Convert.ToInt32);
+                stepParameters.TryGetTypedValue(SignalRConstants.RemainderEnd, out int remainderEnd, Convert.ToInt32);
+                stepParameters.TryGetTypedValue(SignalRConstants.Modulo, out int modulo, Convert.ToInt32);
+                stepParameters.TryGetTypedValue(SignalRConstants.Duration, out double duration, Convert.ToDouble);
+                stepParameters.TryGetTypedValue(SignalRConstants.Interval, out double interval, Convert.ToDouble);
+                stepParameters.TryGetTypedValue(SignalRConstants.MessageSize, out int messageSize, Convert.ToInt32);
+                pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionStore}.{type}", out IList<HubConnection> connections, (obj) => (IList<HubConnection>)obj);
+                pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionOffset}.{type}", out int offset, Convert.ToInt32);
+                pluginParameters.TryGetTypedValue($"{SignalRConstants.StatisticsStore}.{type}", out _statistics, obj => (ConcurrentDictionary<string, object>) obj);
 
                 // Set callback
                 SetCallback(connections);
@@ -63,11 +63,9 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
             {
                 connection.On(SignalRConstants.EchoCallbackName, (IDictionary<string, object> data) =>
                 {
-                    Log.Information($"data: \n{data.GetContents()}");
                     var receiveTimestamp = Util.Timestamp();
-                    PluginUtils.TryGetTypedValue(data, SignalRConstants.Timestamp, out long sendTimestamp, Convert.ToInt64);
+                    data.TryGetTypedValue(SignalRConstants.Timestamp, out long sendTimestamp, Convert.ToInt64);
                     var latency = receiveTimestamp - sendTimestamp;
-                    Log.Information($"Latency: {latency}");
                     StatisticsHelper.RecordLatency(_statistics, latency);
                 });
             }

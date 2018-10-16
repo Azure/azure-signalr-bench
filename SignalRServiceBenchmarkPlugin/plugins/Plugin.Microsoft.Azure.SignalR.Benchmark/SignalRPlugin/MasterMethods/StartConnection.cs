@@ -17,7 +17,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
             Log.Information($"Start connections...");
 
             // Get parameters
-            PluginUtils.TryGetTypedValue(stepParameters, SignalRConstants.ConcurrentConnection, out int concurrentConnection, Convert.ToInt32);
+            stepParameters.TryGetTypedValue(SignalRConstants.ConcurrentConnection, out int concurrentConnection, Convert.ToInt32);
 
             var packages = clients.Select((client, i) =>
             {

@@ -18,8 +18,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
             Log.Information($"Start to collect statistics...");
 
             // Get parameters
-            PluginUtils.TryGetTypedValue(stepParameters, SignalRConstants.Interval, out double interval, Convert.ToDouble);
-            PluginUtils.TryGetTypedValue(stepParameters, SignalRConstants.Type, out string type, Convert.ToString);
+            stepParameters.TryGetTypedValue(SignalRConstants.Interval, out double interval, Convert.ToDouble);
+            stepParameters.TryGetTypedValue(SignalRConstants.Type, out string type, Convert.ToString);
 
             // Start timer
             var timer = new System.Timers.Timer(interval);
@@ -29,7 +29,6 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
                 var results = await Task.WhenAll(from client in clients
                                                  select client.QueryAsync(stepParameters));
 
-                // Debug
                 foreach (var result in results) Log.Information($"statistics\n{result.GetContents()}");
             };
             timer.Start();
