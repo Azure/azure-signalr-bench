@@ -7,10 +7,7 @@ namespace Rpc.Master
     public class ArgsOption
     {
         // Rpc 
-        [Option("RpcPort", Required = false, Default = 5050, HelpText = "Port to connect to the remote host.")]
-        public int RpcPort { get; set; }
-        
-        [Option("SlaveList", Required = false, Separator = ',', Default = new string[]{"localhost"}, HelpText = "Target hosts to connect.")]
+        [Option("SlaveList", Required = false, Separator = ',', Default = new string[]{"localhost:5050", "localhost:6060"}, HelpText = "Target hosts to connect.")]
         public IList<string> SlaveList { get; set; }
 
         // Log
