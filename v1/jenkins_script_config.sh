@@ -234,7 +234,7 @@ function run_customer_bench()
    do
      Transport=`python query_customer.py -c $k -i Transport`
      Scenario=`python query_customer.py -c $k -i Scenario`
-     MessageEncoding==`python query_customer.py -c $k -i Protocol`
+     MessageEncoding=`python query_customer.py -c $k -i Protocol`
      send=`python query_customer.py -c $k -i Send`
      connection=`python query_customer.py -c $k -i Connection`
      concurrentConnection=`python query_customer.py -c $k -i ConcurrentConnection`
@@ -402,6 +402,9 @@ sigbench_run_duration=$sigbench_run_duration
 EOF
 }
 
+## run perf test against existing connection string, no creation of ASRS.
+# the bench_serviceunit_list should contain only one element
+#
 # global env:
 # bench_serviceunit_list, ScriptWorkingDir, result_root
 # copy_syslog, copy_nginx_log

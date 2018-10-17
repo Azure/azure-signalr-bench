@@ -18,7 +18,6 @@ namespace Bench.RpcSlave.Worker.Rest
             var serverUrls = tk.JobConfig.ServerUrl.Split(';');
             var transportTypeName = tk.BenchmarkCellConfig.TransportType;
             var hubProtocol = tk.BenchmarkCellConfig.HubProtocol;
-            Util.Log($"transport type: {transportTypeName}");
             var transportType = HttpTransportType.WebSockets;
             switch (transportTypeName)
             {

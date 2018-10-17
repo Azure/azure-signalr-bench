@@ -88,7 +88,8 @@ namespace Bench.RpcSlave.Worker.Operations
             var droppedConn = from i in _brokenConnectionInds where i != -1 select i;
             var droppedCount = droppedConn.Count();
             // Only try to reconnect for a small portion of dropped connections.
-            if (droppedCount * 100 < _tk.ConnectionRange.End - _tk.ConnectionRange.Begin && droppedCount <= 20)
+            if (droppedCount > 0 && droppedCount <= 20 &&
+                droppedCount * 100 < _tk.ConnectionRange.End - _tk.ConnectionRange.Begin)
             {
                 Util.Log($"Try to repair the {droppedCount} dropped connections");
                 droppedConn.ForEach(droppedIndex =>
