@@ -23,13 +23,12 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
 
             // Start timer
             var timer = new System.Timers.Timer(interval);
-            timer.AutoReset = true;
             timer.Elapsed += async (sender, e) =>
             {
                 var results = await Task.WhenAll(from client in clients
                                                  select client.QueryAsync(stepParameters));
 
-                foreach (var result in results) Log.Information($"statistics\n{result.GetContents()}");
+                foreach (var result in results) Log.Information($"statistics{Environment.NewLine}{result.GetContents()}");
             };
             timer.Start();
 

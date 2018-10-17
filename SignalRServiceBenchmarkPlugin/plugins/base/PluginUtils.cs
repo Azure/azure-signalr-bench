@@ -17,7 +17,7 @@ namespace Plugin.Base
 
         public static void ShowConfiguration(IDictionary<string, object> dict)
         {
-            Log.Information($"Handle step...\nConfiguration: \n{dict.GetContents()}");
+            Log.Information($"Handle step...{Environment.NewLine}Configuration: {Environment.NewLine}{dict.GetContents()}");
         }
 
         public static void HandleParseEnumResult(bool success, string key)

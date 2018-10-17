@@ -32,7 +32,7 @@ namespace Rpc.Service
             }
             catch (Exception ex)
             {
-                var message = $"Rpc error:\n {ex}";
+                var message = $"Rpc error:{Environment.NewLine} {ex}";
                 Log.Error(message);
                 throw;
             }
