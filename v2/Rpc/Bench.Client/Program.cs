@@ -376,8 +376,6 @@ namespace Bench.RpcMaster
             {
                 var allClientCounters = new ConcurrentDictionary<string, ulong>();
                 var collectCountersTasks = new List<Task>(clients.Count);
-                var isSend = false;
-                var isComplete = false;
                 var swCollect = new Stopwatch();
                 // Util.Log("\n\nstart collecting");
                 swCollect.Start();
@@ -388,16 +386,11 @@ namespace Bench.RpcMaster
                     {
                         var state = clients[ind].GetState(new Empty { });
 
-                        if ((int) state.State >= (int) Stat.Types.State.SendComplete) isComplete = true;
-
-                        // if (false)
                         if ((int) state.State < (int) Stat.Types.State.SendRunning ||
                             (int) state.State > (int) Stat.Types.State.SendComplete && (int) state.State < (int) Stat.Types.State.HubconnDisconnecting)
                         {
                             return;
                         }
-                        isSend = true;
-                        isComplete = false;
 
                         var swRpc = new Stopwatch();
                         swRpc.Start();
@@ -433,11 +426,6 @@ namespace Bench.RpcMaster
                 await Task.WhenAll(collectCountersTasks);
                 swCollect.Stop();
                 Util.Log($"collecting counters time: {swCollect.Elapsed.TotalMilliseconds} ms");
-                if (isSend == false || isComplete == true)
-                {
-                    return;
-                }
-
                 var jobj = new JObject();
                 var received = (ulong)0;
                 foreach (var item in allClientCounters)

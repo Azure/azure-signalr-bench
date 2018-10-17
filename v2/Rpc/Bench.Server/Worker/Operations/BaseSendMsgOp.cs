@@ -8,8 +8,10 @@ using System.Threading;
 using System.Threading.Tasks;
 using Bench.Common;
 using Bench.RpcSlave.Worker.Counters;
+using Bench.RpcSlave.Worker.Rest;
 using Bench.RpcSlave.Worker.Savers;
 using Bench.RpcSlave.Worker.StartTimeOffsetGenerator;
+using CSharpx;
 using Microsoft.AspNetCore.SignalR.Client;
 
 namespace Bench.RpcSlave.Worker.Operations
@@ -42,7 +44,7 @@ namespace Bench.RpcSlave.Worker.Operations
 
             // send message
             await StartSendMsg();
-
+            TryReconnect();
             _tk.State = Stat.Types.State.SendComplete;
             Util.Log($"Sending Complete");
         }
@@ -81,12 +83,24 @@ namespace Bench.RpcSlave.Worker.Operations
             }
         }
 
-        private void CheckConnections()
+        private void TryReconnect()
         {
             var droppedConn = from i in _brokenConnectionInds where i != -1 select i;
-            if (droppedConn.Count() * 100 < _tk.ConnectionRange.End - _tk.ConnectionRange.Begin)
+            var droppedCount = droppedConn.Count();
+            // Only try to reconnect for a small portion of dropped connections.
+            if (droppedCount * 100 < _tk.ConnectionRange.End - _tk.ConnectionRange.Begin && droppedCount <= 20)
             {
-                // reconnect
+                Util.Log($"Try to repair the {droppedCount} dropped connections");
+                droppedConn.ForEach(droppedIndex =>
+                {
+                    var connection = ConnectionUtils.CreateSingleConnection(_tk, droppedIndex);
+                    _tk.Connections[droppedIndex] = connection;
+                    var connStatus = ConnectionUtils.StartConnection(_tk, droppedIndex).GetAwaiter().GetResult();
+                    if (connStatus)
+                    {
+                        _tk.Counters.DecreaseConnectionError();
+                    }
+                });
             }
         }
 

@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Bench.Common;
 using Bench.Common.Config;
+using Bench.RpcSlave.Worker.Rest;
 using Microsoft.AspNetCore.SignalR.Client;
 
 namespace Bench.RpcSlave.Worker.Operations
@@ -51,17 +52,10 @@ namespace Bench.RpcSlave.Worker.Operations
                         var index = i + j;
                         tasks.Add(Task.Run(async() =>
                         {
-                            try
+                            var result = ConnectionUtils.StartConnection(_tk, index).GetAwaiter().GetResult();
+                            if (result)
                             {
-                                await connections[index].StartAsync();
-                                _tk.Counters.IncreaseConnectionSuccess();
-                                await GetConnectionId(connections[index], _tk.ConnectionIds, index);
-
-                            }
-                            catch (Exception ex)
-                            {
-                                Util.Log($"start connection exception: {ex}");
-                                _tk.Counters.IncreaseConnectionError();
+                                await GetConnectionId(connections[index], index);
                             }
                         }));
                     }
@@ -85,7 +79,7 @@ namespace Bench.RpcSlave.Worker.Operations
             _tk.State = Stat.Types.State.HubconnConnected;
         }
 
-        private async Task GetConnectionId(HubConnection connection, List<string> targetConnectionIds, int index)
+        private async Task GetConnectionId(HubConnection connection, int index)
         {
             connection.On("connectionId", (string connectionId) => _tk.ConnectionIds[index] = connectionId);
             await connection.SendAsync("connectionId");
