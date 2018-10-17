@@ -268,11 +268,8 @@ func main() {
                 var curSendingStep int64
                 for i, v := range monitors {
                     curSendingStep = v.Counters.Sending
-                    if curSendingStep != 0 && i + 1 < len(monitors)-1 && monitors[i+1].Counters.Sending != curSendingStep {
-                        sum = v.Counters.LT_100 + v.Counters.LT_200 + v.Counters.LT_300 +
-                              v.Counters.LT_400 + v.Counters.LT_500 + v.Counters.LT_600 +
-                              v.Counters.LT_700 + v.Counters.LT_800 + v.Counters.LT_900 +
-                              v.Counters.LT_1000 + v.Counters.GE_1000
+                    if curSendingStep != 0 && v.Counters.Recv > 0 && i + 1 < len(monitors)-1 && monitors[i+1].Counters.Sending != curSendingStep {
+                        sum = v.Counters.Recv
                         totalConnection = v.Counters.ConnError + v.Counters.ConnSucc
                         var sumfloat, totalConnFloat float64
                         sumfloat = float64(sum)
@@ -290,10 +287,7 @@ func main() {
                 v = monitors[len(monitors)-1]
                 if v.Counters.Sending != 0 {
                         var sumfloat, totalConnFloat float64
-                        sum = v.Counters.LT_100 + v.Counters.LT_200 + v.Counters.LT_300 +
-                              v.Counters.LT_400 + v.Counters.LT_500 + v.Counters.LT_600 +
-                              v.Counters.LT_700 + v.Counters.LT_800 + v.Counters.LT_900 +
-                              v.Counters.LT_1000 + v.Counters.GE_1000
+                        sum = v.Counters.Recv
                         totalConnection = v.Counters.ConnError + v.Counters.ConnSucc
                         sumfloat = float64(sum)
                         totalConnFloat = float64(totalConnection)
@@ -389,11 +383,8 @@ func main() {
                 var curSendingStep int64
                 for i, v := range monitors {
                     curSendingStep = v.Counters.Sending
-                    if curSendingStep != 0 && i + 1 < len(monitors)-1 && monitors[i+1].Counters.Sending != curSendingStep {
-                        sum = v.Counters.LT_100 + v.Counters.LT_200 + v.Counters.LT_300 +
-                              v.Counters.LT_400 + v.Counters.LT_500 + v.Counters.LT_600 +
-                              v.Counters.LT_700 + v.Counters.LT_800 + v.Counters.LT_900 +
-                              v.Counters.LT_1000 + v.Counters.GE_1000
+                    if curSendingStep != 0 && v.Counters.Recv > 0 && i + 1 < len(monitors)-1 && monitors[i+1].Counters.Sending != curSendingStep {
+                        sum = v.Counters.Recv
                         totalConnection = v.Counters.ConnError + v.Counters.ConnSucc
                         var sumfloat, totalConnFloat float64
                         sumfloat = float64(sum)
@@ -405,11 +396,8 @@ func main() {
                     }
                 }
                 v = monitors[len(monitors)-1]
-                if v.Counters.Sending != 0 {
-                        sum = v.Counters.LT_100 + v.Counters.LT_200 + v.Counters.LT_300 +
-                              v.Counters.LT_400 + v.Counters.LT_500 + v.Counters.LT_600 +
-                              v.Counters.LT_700 + v.Counters.LT_800 + v.Counters.LT_900 +
-                              v.Counters.LT_1000 + v.Counters.GE_1000
+                if v.Counters.Sending != 0 && v.Counters.Recv > 0 {
+                        sum = v.Counters.Recv
                         totalConnection = v.Counters.ConnError + v.Counters.ConnSucc
                         var sumfloat, totalConnFloat float64
                         sumfloat = float64(sum)
@@ -489,11 +477,8 @@ func main() {
                 var curSendingStep int64
                 for i, v := range monitors {
                     curSendingStep = v.Counters.Sending
-                    if curSendingStep != 0 && i + 1 < len(monitors)-1 && monitors[i+1].Counters.Sending != curSendingStep {
-                        sum = v.Counters.LT_100 + v.Counters.LT_200 + v.Counters.LT_300 +
-                              v.Counters.LT_400 + v.Counters.LT_500 + v.Counters.LT_600 +
-                              v.Counters.LT_700 + v.Counters.LT_800 + v.Counters.LT_900 +
-                              v.Counters.LT_1000 + v.Counters.GE_1000
+                    if curSendingStep != 0 && v.Counters.Recv > 0 && i + 1 < len(monitors)-1 && monitors[i+1].Counters.Sending != curSendingStep {
+                        sum = v.Counters.Recv
                         totalConnection = v.Counters.ConnError + v.Counters.ConnSucc
                         var sumfloat, totalConnFloat float64
                         sumfloat = float64(sum)
@@ -504,11 +489,8 @@ func main() {
                     }
                 }
                 v = monitors[len(monitors)-1]
-                if v.Counters.Sending != 0 {
-			sum = v.Counters.LT_100 + v.Counters.LT_200 + v.Counters.LT_300 +
-                              v.Counters.LT_400 + v.Counters.LT_500 + v.Counters.LT_600 +
-                              v.Counters.LT_700 + v.Counters.LT_800 + v.Counters.LT_900 +
-                              v.Counters.LT_1000 + v.Counters.GE_1000
+                if v.Counters.Sending != 0 && v.Counters.Recv > 0 {
+                        sum = v.Counters.Recv
                         totalConnection = v.Counters.ConnError + v.Counters.ConnSucc
                         var sumfloat, totalConnFloat float64
                         sumfloat = float64(sum)
@@ -527,8 +509,7 @@ func main() {
 			fmt.Printf("%s\n", chartfunc)
             } else {
 		v = monitors[len(monitors)-1]
-		sum = v.Counters.LT_100 + v.Counters.LT_200 + v.Counters.LT_300 + v.Counters.LT_400 + v.Counters.LT_500 + v.Counters.LT_600 +
-			v.Counters.LT_700 + v.Counters.LT_800 + v.Counters.LT_900 + v.Counters.LT_1000 + v.Counters.GE_1000
+                sum = v.Counters.Recv
 		lt1 = v.Counters.LT_100 + v.Counters.LT_200 + v.Counters.LT_300 + v.Counters.LT_400 + v.Counters.LT_500 + v.Counters.LT_600 + v.Counters.LT_700 + v.Counters.LT_800 + v.Counters.LT_900 + v.Counters.LT_1000
 		ge1 = v.Counters.GE_1000
 		var sumfloat float64
