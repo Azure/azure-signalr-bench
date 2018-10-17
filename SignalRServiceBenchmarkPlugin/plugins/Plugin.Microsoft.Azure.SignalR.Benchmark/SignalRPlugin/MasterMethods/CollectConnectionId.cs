@@ -18,8 +18,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
             // Process on clients
             var results = await Task.WhenAll(from client in clients select client.QueryAsync(stepParameters));
 
-            var connectionIds = new Dictionary<string, int>();
-            foreach (Dictionary<string, int> result in results) connectionIds.Union(result);
+            // Collect all connection Ids
+            var allConnectionIds = results.SelectMany(dict => dict).ToDictionary(entry => entry.Key, entry => entry.Value);
         }
     }
 }
