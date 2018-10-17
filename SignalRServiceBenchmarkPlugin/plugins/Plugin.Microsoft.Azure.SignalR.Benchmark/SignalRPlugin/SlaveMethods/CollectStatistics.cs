@@ -1,5 +1,6 @@
 ﻿using Common;
 using Plugin.Base;
+using Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods.Statistics;
 using Serilog;
 using System;
 using System.Collections.Concurrent;
@@ -19,10 +20,10 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
 
                 // Get parameters
                 stepParameters.TryGetTypedValue(SignalRConstants.Type, out string type, Convert.ToString);
-                pluginParameters.TryGetTypedValue($"{SignalRConstants.StatisticsStore}.{type}", out ConcurrentDictionary<string, object> statistics, (obj) => (ConcurrentDictionary<string, object>)obj);
+                pluginParameters.TryGetTypedValue($"{SignalRConstants.StatisticsStore}.{type}", out StatisticsCollector statistics, (obj) => (StatisticsCollector) obj);
 
                 // Return statistics
-                return statistics;
+                return statistics.GetData();
             }
             catch (Exception ex)
             {
