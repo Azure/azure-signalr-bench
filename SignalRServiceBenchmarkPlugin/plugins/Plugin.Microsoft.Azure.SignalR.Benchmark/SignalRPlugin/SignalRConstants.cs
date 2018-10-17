@@ -22,6 +22,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         public static readonly string Modulo = "Parameter.Modulo";
         public static readonly string MessageSize = "Parameter.MessageSize";
 
+        // Connection information
+        public static readonly string ConnectionId = "Information.ConnectionId";
 
         // Plugin parameters
         public static readonly string ConnectionStore = "Plugin.ConnectionStore";
@@ -30,6 +32,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
 
         // Callback Name
         public static readonly string EchoCallbackName = "Echo";
+        public static readonly string BroadcastCallbackName = "Broadcast";
 
         // Message payload
         public static readonly string Timestamp = "payload.Timestamp";
