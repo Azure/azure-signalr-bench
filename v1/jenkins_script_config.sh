@@ -234,7 +234,7 @@ function run_customer_bench()
    do
      Transport=`python query_customer.py -c $k -i Transport`
      Scenario=`python query_customer.py -c $k -i Scenario`
-     MessageEncoding==`python query_customer.py -c $k -i Protocol`
+     MessageEncoding=`python query_customer.py -c $k -i Protocol`
      send=`python query_customer.py -c $k -i Send`
      connection=`python query_customer.py -c $k -i Connection`
      concurrentConnection=`python query_customer.py -c $k -i ConcurrentConnection`
