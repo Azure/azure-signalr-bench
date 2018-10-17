@@ -18,7 +18,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
             Log.Information($"Start to collect statistics...");
 
             // Get parameters
-            stepParameters.TryGetTypedValue(SignalRConstants.Interval, out double interval, Convert.ToDouble);
+            stepParameters.TryGetTypedValue(SignalRConstants.Interval, out long interval, Convert.ToInt64);
             stepParameters.TryGetTypedValue(SignalRConstants.Type, out string type, Convert.ToString);
 
             // Start timer

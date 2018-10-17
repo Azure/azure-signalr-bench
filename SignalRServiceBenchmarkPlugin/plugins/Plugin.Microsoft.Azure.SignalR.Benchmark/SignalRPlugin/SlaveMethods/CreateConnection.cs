@@ -32,6 +32,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 stepParameters.TryGetTypedValue(SignalRConstants.HubProtocol, out string protocol, Convert.ToString);
                 stepParameters.TryGetTypedValue(SignalRConstants.TransportType, out string transportType, Convert.ToString);
                 stepParameters.TryGetTypedValue(SignalRConstants.Type, out string type, Convert.ToString);
+                // DEBUG
+                stepParameters.TryGetTypedValue("ccc", out string xxx, Convert.ToString);
 
                 // Create Connections
                 var connections = CreateConnections(connectionEnd - connectionBegin, url, transportType, protocol);
@@ -46,7 +48,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
             {
                 var message = $"Fail to create connections: {ex}";
                 Log.Error(message);
-                throw new Exception(message);
+                throw;
             }
         }
 

@@ -42,7 +42,7 @@ namespace Rpc.Service
             }
             catch (Exception ex)
             {
-                var message = $"Perform method '{method}' fail: {ex}";
+                var message = $"Perform method '{method}' fail:\n {ex}";
                 return new Result { Success = false, Message = message };
             }
         }

@@ -20,8 +20,15 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
         {
             var index = latency / _latencyStep;
             var upperBound = (index + 1) * _latencyStep;
-            if (upperBound <= _latencyMax) statistics.AddOrUpdate($"message:lt:{upperBound}", (long)1, (k, v) => (long)v + 1);
-            else statistics.AddOrUpdate($"message:ge:{_latencyMax}", (long)1, (k, v) => (long)v + 1);
+
+            if (upperBound <= _latencyMax)
+            {
+                statistics.AddOrUpdate($"message:lt:{upperBound}", (long)1, (k, v) => (long)v + 1);
+            }
+            else
+            {
+                statistics.AddOrUpdate($"message:ge:{_latencyMax}", (long)1, (k, v) => (long)v + 1);
+            }
         }
     }
 }

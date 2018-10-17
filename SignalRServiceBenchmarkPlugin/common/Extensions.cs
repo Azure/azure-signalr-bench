@@ -37,11 +37,6 @@ namespace Common
         public static void TryGetTypedValue<TKey, TValue, TActual>(this IDictionary<TKey, TValue> dict, TKey key, out TActual val, Func<TValue, TActual> converter = null) where TActual : TValue
         {
             var success = dict.TryGetTypedValueInternal(key, out val, converter);
-            HandleGetValueResult(success, key.ToString());
-        }
-
-        private static void HandleGetValueResult(bool success, string key)
-        {
             if (!success)
             {
                 var message = $"Parameter {key} does not exist.";
