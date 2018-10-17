@@ -1,4 +1,5 @@
-﻿using Plugin.Base;
+﻿using Common;
+using Plugin.Base;
 using Rpc.Service;
 using Serilog;
 using System;
@@ -15,11 +16,18 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
         {
             Log.Information($"Collect connection ID...");
 
+            // Get parameters
+            stepParameters.TryGetTypedValue(SignalRConstants.Type, out string type, Convert.ToString);
+            
             // Process on clients
             var results = await Task.WhenAll(from client in clients select client.QueryAsync(stepParameters));
 
             // Collect all connection Ids
-            var allConnectionIds = results.SelectMany(dict => dict).ToDictionary(entry => entry.Key, entry => entry.Value);
+            // TODO: test on multiple salves
+            var allConnectionIds = results.SelectMany(dict => dict.Keys).ToHashSet();
+
+            // Store connection Ids
+            pluginParameters[$"{SignalRConstants.ConnectionIdStore}.{type}"] = allConnectionIds;
         }
     }
 }
