@@ -711,6 +711,7 @@ namespace Bench.RpcMaster
                         i++;
                         continue;
                     }
+                    Util.Log($"Master's sendingStep: {_currentSendingStep}");
                     _currentSendingStep = curTotalSending;
                 }
                 // up op
