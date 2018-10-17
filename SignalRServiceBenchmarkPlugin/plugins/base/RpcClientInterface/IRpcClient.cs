@@ -13,7 +13,6 @@ namespace Rpc.Service
         IRpcClient Create(string hostname, int port);
         bool TestConnection();
         Task<bool> InstallPluginAsync(string pluginName);
-        string Serialize(IDictionary<string, object> data);
         bool CheckTypeAndMethod(IDictionary<string, object> data);
 
     }

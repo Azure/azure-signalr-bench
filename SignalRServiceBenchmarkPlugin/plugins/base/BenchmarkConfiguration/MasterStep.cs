@@ -19,9 +19,9 @@ namespace Plugin.Base
             }
             catch (Exception ex)
             {
-                var message = $"Method name does not exists.";
+                var message = $"Method name does not exists: {ex}";
                 Log.Error(message);
-                throw new Exception(message);
+                throw;
             }
         }
 

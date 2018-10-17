@@ -15,8 +15,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
     // Sample plugin: SignalR benchmark
     public class SignalRBenchmarkPlugin : IPlugin
     {
-        private string _masterNamespaceSuffix = "MasterMethod";
-        private string _slaveNamespaceSuffix = "SlaveMethod";
+        private string _masterNamespaceSuffix = "MasterMethods";
+        private string _slaveNamespaceSuffix = "SlaveMethods";
         public IDictionary<string, object> PluginMasterParameters { get; set; } = new Dictionary<string, object>();
         public IDictionary<string, object> PluginSlaveParamaters { get; set; } = new Dictionary<string, object>();
 

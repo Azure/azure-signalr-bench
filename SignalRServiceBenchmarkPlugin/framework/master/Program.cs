@@ -16,6 +16,7 @@ namespace Rpc.Master
         private static IPlugin _plugin;
         private static StepHandler _stepHandler;
         private static TimeSpan _retryInterval = TimeSpan.FromSeconds(1);
+        private static TimeSpan _statisticsCollectInterval = TimeSpan.FromSeconds(1);
 
         static async Task Main(string[] args)
         {
@@ -41,7 +42,7 @@ namespace Rpc.Master
             // Process pipeline
             await ProcessPipeline(benchmarkConfiguration.Pipeline, clients);
         }
-        
+
         private static IList<IRpcClient> CreateRpcClients(IList<string> slaveList, int rpcPort)
         {
             var clients = new List<IRpcClient>();
@@ -75,7 +76,7 @@ namespace Rpc.Master
 
             // Try to install plugin
             var installResults = await Task.WhenAll(from client in clients select client.InstallPluginAsync(moduleName));
-            var success = installResults.All(result => result == true);
+            var success = installResults.All(result => result);
 
             if (!success) throw new Exception("Fail to install plugin in slaves.");
         }

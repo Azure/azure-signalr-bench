@@ -7,7 +7,7 @@ namespace Plugin.Base
 {
     public interface ISlaveMethod
     {
-        Task Do(IDictionary<string, object> stepParameters, IDictionary<string, object> pluginParameters);
+        Task<IDictionary<string, object>> Do(IDictionary<string, object> stepParameters, IDictionary<string, object> pluginParameters);
 
     }
 }
