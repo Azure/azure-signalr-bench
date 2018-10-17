@@ -87,6 +87,33 @@ EOF
    fi
 }
 
+function gen_sendtoclient_job_config()
+{
+    local tag=$1
+    local Transport=$2
+    local MessageEncoding=$3
+    local Scenario=$4
+    local unit=$5
+    local msgSize=$6
+    local maxConnectionOption=""
+    if [ "$useMaxConnection" == "true" ]
+    then
+       maxConnectionOption="-M"
+    fi
+    send=`python gen_complex_pipeline.py -t $Transport -s $Scenario -u unit${unit} -d 0 -S --sendToClientSz $msgSize ${maxConnectionOption}`
+cat << EOF > $JobConfig
+serviceType: $tag
+transportType: ${Transport}
+hubProtocol: ${MessageEncoding}
+scenario: ${Scenario}
+EOF
+    python gen_complex_pipeline.py -t $Transport -s $Scenario -u unit${unit} --sendToClientSz $msgSize -d ${sigbench_run_duration} ${maxConnectionOption}>>$JobConfig
+    cat << EOF >> $JobConfig
+serverUrl: ${serverUrl}
+messageSize: ${msgSize}
+EOF
+}
+
 #####################################################
 # depends on global env:
 # useMaxConnection
@@ -176,6 +203,62 @@ function prepare_result_folder_4_scenario()
      export env_result_folder=$env_statistic_folder                                         # tell the dotnet program where to save counters.txt
      mkdir -p ${env_statistic_folder}
 }
+
+###
+## depends on global env:
+##   customerList, serverUrl
+function run_customer_bench()
+{
+   local unit=$1
+   local connection
+   local send
+   local concurrentConnection
+   local tag="unit"$unit
+   local Scenario
+   local Transport
+   local MessageEncoding
+   local connectStr
+   local i=0 j k
+   while [ $i -lt $serverVmCount ]
+   do
+     if [ $i -eq 0 ]
+     then
+       connectStr=${ConnectionString}
+     else
+       connectStr="${connectStr}^${ConnectionString}"
+     fi
+     i=$(($i + 1))
+   done
+
+   for k in $customerList
+   do
+     Transport=`python query_customer.py -c $k -i Transport`
+     Scenario=`python query_customer.py -c $k -i Scenario`
+     MessageEncoding==`python query_customer.py -c $k -i Protocol`
+     send=`python query_customer.py -c $k -i Send`
+     connection=`python query_customer.py -c $k -i Connection`
+     concurrentConnection=`python query_customer.py -c $k -i ConcurrentConnection`
+     bench_send_size=`python query_customer.py -c $k -i MessageSize`
+     if [ ! -d $ScenarioRoot"/${Scenario}" ]
+     then
+        mkdir $ScenarioRoot"/${Scenario}"
+     fi
+     export JobConfig=$ScenarioRoot"/${Scenario}/job.yaml"
+     cd $ScriptWorkingDir
+     tag=${tag}_${k}
+     prepare_result_folder_4_scenario ${tag} ${Transport} ${MessageEncoding} ${Scenario}
+     ############## configure scenario ############
+     send=`python gen_complex_pipeline.py -t $Transport -s $Scenario -u unit${unit} -d 0 -S`
+     python query_customer.py -c $k -i JobConfig > $JobConfig
+     cat << EOF >> $JobConfig
+serverUrl: ${serverUrl}
+EOF
+#gen_job_config $tag ${Transport} ${MessageEncoding} ${Scenario} ${unit} ${bench_send_size}
+     ############## run bench #####################
+     run_and_gen_report $connectStr $tag $Scenario $Transport $MessageEncoding $connection $concurrentConnection $send $ConnectionString  
+   done
+}
+
 #####################################################
 ## This step run benchmark per different scenarios ##
 #####################################################
@@ -238,13 +321,26 @@ function run_benchmark()
                  ############## run bench #####################
                  run_and_gen_report $connectStr $tag $Scenario $Transport $MessageEncoding $connection $concurrentConnection $send $ConnectionString
                done
-             else
-               prepare_result_folder_4_scenario ${tag} ${Transport} ${MessageEncoding} ${Scenario}
-               ############## configure scenario ############
-               send=`python gen_complex_pipeline.py -t $Transport -s $Scenario -u unit${unit} -d 0 -S ${maxConnectionOption}`
-               gen_job_config $tag ${Transport} ${MessageEncoding} ${Scenario} ${unit} ${bench_send_size}
-             ############## run bench #####################
-               run_and_gen_report $connectStr $tag $Scenario $Transport $MessageEncoding $connection $concurrentConnection $send $ConnectionString
+             else if [ "$Scenario" == "sendToClient" ]
+                  then
+                    for j in $sendToClientMsgSize
+                    do
+                      tag="unit"${unit}"_${j}"
+                      prepare_result_folder_4_scenario ${tag} ${Transport} ${MessageEncoding} ${Scenario}
+                      ############## configure scenario ############
+                      send=`python gen_complex_pipeline.py -t $Transport -s $Scenario -u unit${unit} -d 0 --sendToClientSz $j -S ${maxConnectionOption}`
+                      gen_sendtoclient_job_config $tag ${Transport} ${MessageEncoding} ${Scenario} ${unit} ${j}
+                      ############## run bench #####################
+                      run_and_gen_report $connectStr $tag $Scenario $Transport $MessageEncoding $connection $concurrentConnection $send $ConnectionString
+                    done
+                  else
+                    prepare_result_folder_4_scenario ${tag} ${Transport} ${MessageEncoding} ${Scenario}
+                    ############## configure scenario ############
+                    send=`python gen_complex_pipeline.py -t $Transport -s $Scenario -u unit${unit} -d 0 -S ${maxConnectionOption}`
+                    gen_job_config $tag ${Transport} ${MessageEncoding} ${Scenario} ${unit} ${bench_send_size}
+                    ############## run bench #####################
+                    run_and_gen_report $connectStr $tag $Scenario $Transport $MessageEncoding $connection $concurrentConnection $send $ConnectionString
+                  fi
              fi
              ## restart the pod to fresh run next scenario
 

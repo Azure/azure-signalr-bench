@@ -51,6 +51,11 @@ def handleArgs(args):
             print("You must specify <smallGroup> or <bigGroup>")
             return
          callfunc="{transport}.{func}({duration},\"{groupType}\")".format(transport=transport+scenario, func=func, duration=duration, groupType=gt)
+      elif scenario == "sendtoclient":
+         sendToClientSz="2k"
+         if args.sendToClientSz != None:
+            sendToClientSz=args.sendToClientSz
+         callfunc="{transport}.{func}({duration},'{sz}')".format(transport=transport+scenario, func=func, duration=duration, sz=sendToClientSz)
       else:
          callfunc="{transport}.{func}({duration})".format(transport=transport+scenario, func=func, duration=duration)
    elif connections == True:
@@ -70,6 +75,7 @@ if __name__=="__main__":
    parser = argparse.ArgumentParser()
    parser.add_argument("-t", "--transport", help="specify the transport type: <websockets>|<serversentevents>|<longpolling>")
    parser.add_argument("-s", "--scenario", help="specify the scenario type: <echo>|<broadcast>|<sendGroup>|<sendToClient>|<sendToFixedClient>|<restSendToUser>|<restBroadcast>")
+   parser.add_argument("--sendToClientSz", choices=["256","2k","16k","128k"], type=str, help="specify the message size:")
    parser.add_argument("-u", "--unit", help="specify the unit type: <unit1>|<unit2>|<unit5>|<unit10>|<unit20>|<unit50>|<unit100>")
    parser.add_argument("-S", "--sendSteps", help="query the sendSteps for given unit", action="store_true")
    parser.add_argument("-M", "--useMaxConnection", help="apply 1.5x on normal connections", action="store_true")
