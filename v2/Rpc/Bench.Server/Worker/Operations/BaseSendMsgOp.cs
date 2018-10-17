@@ -189,7 +189,7 @@ namespace Bench.RpcSlave.Worker.Operations
         }
 
         protected async Task StartJoinLeaveGroupAsync(List<HubConnection> connection, int ind, List<string> groupNameMatrix,
-            int connectionCnt, int duration, int interval, Counter counter, List<bool> brokenConnectionInds)
+            int connectionCnt, int duration, int interval, Counter counter, List<int> brokenConnectionInds)
         {
             var isJoin = true;
             await Task.Delay(StartTimeOffsetGenerator.Delay(TimeSpan.FromSeconds(interval)));
