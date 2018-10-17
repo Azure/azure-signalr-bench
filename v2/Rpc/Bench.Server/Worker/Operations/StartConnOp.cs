@@ -52,7 +52,7 @@ namespace Bench.RpcSlave.Worker.Operations
                         var index = i + j;
                         tasks.Add(Task.Run(async() =>
                         {
-                            var result = ConnectionUtils.StartConnection(_tk, index).GetAwaiter().GetResult();
+                            var result = await ConnectionUtils.StartConnection(_tk, index);
                             if (result)
                             {
                                 await GetConnectionId(connections[index], index);

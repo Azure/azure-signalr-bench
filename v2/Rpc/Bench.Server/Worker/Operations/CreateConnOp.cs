@@ -34,6 +34,7 @@ namespace Bench.RpcSlave.Worker.Operations
             string hubProtocol = "json")
         {
             //_tk.State = Stat.Types.State.HubconnCreating;
+            Util.Log($"transport type: {transportTypeName}");
             var connections = new List<HubConnection>(conn);
             for (var i = 0; i < conn; i++)
             {
