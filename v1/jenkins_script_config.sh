@@ -402,6 +402,9 @@ sigbench_run_duration=$sigbench_run_duration
 EOF
 }
 
+## run perf test against existing connection string, no creation of ASRS.
+# the bench_serviceunit_list should contain only one element
+#
 # global env:
 # bench_serviceunit_list, ScriptWorkingDir, result_root
 # copy_syslog, copy_nginx_log
