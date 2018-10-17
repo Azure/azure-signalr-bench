@@ -32,7 +32,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
             {
                 var message = $"Fail to stop connections: {ex}";
                 Log.Error(message);
-                throw new Exception(message);
+                throw;
             }
         }
     }

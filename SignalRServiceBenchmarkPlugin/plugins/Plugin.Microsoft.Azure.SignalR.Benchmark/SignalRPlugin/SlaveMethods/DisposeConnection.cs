@@ -31,7 +31,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
             {
                 var message = $"Fail to dispose connections: {ex}";
                 Log.Error(message);
-                throw new Exception(message);
+                throw;
             }
         }
     }

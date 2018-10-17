@@ -1,5 +1,6 @@
 ﻿using Common;
 using Plugin.Base;
+using Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods.Statistics;
 using Serilog;
 using System;
 using System.Collections.Concurrent;
@@ -21,7 +22,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 stepParameters.TryGetTypedValue(SignalRConstants.Type, out string type, Convert.ToString);
 
                 // Init statistic collector
-                pluginParameters[$"{SignalRConstants.StatisticsStore}.{type}"] = new ConcurrentDictionary<string, object>();
+                pluginParameters[$"{SignalRConstants.StatisticsStore}.{type}"] = new StatisticsCollector();
 
                 return null;
             }
@@ -29,7 +30,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
             {
                 var message = $"Fail to init statistic collector: {ex}";
                 Log.Error(message);
-                throw new Exception(message);
+                throw;
             }
         }
     }

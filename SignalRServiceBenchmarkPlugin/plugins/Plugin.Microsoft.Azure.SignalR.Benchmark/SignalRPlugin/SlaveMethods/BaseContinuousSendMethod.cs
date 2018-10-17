@@ -15,7 +15,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
         TimeSpan duration, TimeSpan interval)
         {
             // Random delay in [1, interval) ms
-            var rand = new Random(DateTime.Now.Millisecond);
+            var rand = new Random();
             var randomDelay = TimeSpan.FromMilliseconds(rand.Next((int)(interval.TotalMilliseconds - 1)) + 1);
             await Task.Delay(randomDelay);
 

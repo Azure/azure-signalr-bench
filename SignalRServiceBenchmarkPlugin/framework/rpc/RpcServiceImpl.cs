@@ -25,8 +25,8 @@ namespace Rpc.Service
             var parameters = RpcUtil.Deserialize(data.Json);
 
             // Display configurations
-            var configuration = (from entry in parameters select $"  {entry.Key} : {entry.Value}").Aggregate((a, b) => a + "\n" + b);
-            Log.Information($"Configuration:\n{configuration}");
+            var configuration = (from entry in parameters select $"  {entry.Key} : {entry.Value}").Aggregate((a, b) => a + Environment.NewLine + b);
+            Log.Information($"Configuration:{Environment.NewLine}{configuration}");
 
             // Extract method name
             parameters.TryGetTypedValue(Constants.Method, out string method, Convert.ToString);
@@ -42,7 +42,7 @@ namespace Rpc.Service
             }
             catch (Exception ex)
             {
-                var message = $"Perform method '{method}' fail: {ex}";
+                var message = $"Perform method '{method}' fail:{Environment.NewLine} {ex}";
                 return new Result { Success = false, Message = message };
             }
         }

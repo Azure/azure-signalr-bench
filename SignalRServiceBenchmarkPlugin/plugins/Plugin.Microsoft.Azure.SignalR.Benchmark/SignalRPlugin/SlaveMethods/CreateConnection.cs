@@ -46,7 +46,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
             {
                 var message = $"Fail to create connections: {ex}";
                 Log.Error(message);
-                throw new Exception(message);
+                throw;
             }
         }
 
@@ -58,22 +58,21 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
             PluginUtils.HandleParseEnumResult(success, transportTypeString);
 
             var connections = from i in Enumerable.Range(0, total)
-                              let cookies = new CookieContainer()
-                              let httpClientHandler = new HttpClientHandler
+                              select new CookieContainer() into cookies
+                              let handler = new HttpClientHandler
                               {
                                   ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator,
                                   CookieContainer = cookies,
                               }
-                              let hubConnectionBuilder = new HubConnectionBuilder()
-                                  .WithUrl(url, httpConnectionOptions =>
-                                  {
-                                      httpConnectionOptions.HttpMessageHandlerFactory = _ => httpClientHandler;
-                                      httpConnectionOptions.Transports = transportType;
-                                      httpConnectionOptions.CloseTimeout = TimeSpan.FromMinutes(_closeTimeout);
-                                      httpConnectionOptions.Cookies = cookies;
-                                  })
-                              select
-                              protocolString.ToLower() == "messagepack" ? hubConnectionBuilder.AddMessagePackProtocol().Build() : hubConnectionBuilder.Build();
+                              select new HubConnectionBuilder()
+                              .WithUrl(url, httpConnectionOptions =>
+                              {
+                                  httpConnectionOptions.HttpMessageHandlerFactory = _ => handler;
+                                  httpConnectionOptions.Transports = transportType;
+                                  httpConnectionOptions.CloseTimeout = TimeSpan.FromMinutes(_closeTimeout);
+                                  httpConnectionOptions.Cookies = cookies;
+                              }) into builder
+                              select protocolString.ToLower() == "messagepack" ? builder.AddMessagePackProtocol().Build() : builder.Build();
 
             return connections.ToList();
         }
