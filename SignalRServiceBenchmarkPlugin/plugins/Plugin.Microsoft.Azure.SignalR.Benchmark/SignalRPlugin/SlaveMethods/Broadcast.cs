@@ -57,7 +57,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
             }
         }
 
-        public void SetCallback(IList<HubConnection> connections)
+        private void SetCallback(IList<HubConnection> connections)
         {
             foreach (var connection in connections)
             {
@@ -71,7 +71,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
             }
         }
 
-        public async Task SendBroadcast(HubConnection connection, IDictionary<string, object> data)
+        private async Task SendBroadcast(HubConnection connection, IDictionary<string, object> data)
         {
             try
             {
