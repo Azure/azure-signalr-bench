@@ -24,6 +24,7 @@ using System.Threading.Tasks;
 using Bench.Common;
 using Bench.Common.Config;
 using CommandLine;
+using Google.Protobuf;
 using Grpc.Core;
 using Newtonsoft.Json.Linq;
 
@@ -375,8 +376,6 @@ namespace Bench.RpcMaster
             {
                 var allClientCounters = new ConcurrentDictionary<string, ulong>();
                 var collectCountersTasks = new List<Task>(clients.Count);
-                var isSend = false;
-                var isComplete = false;
                 var swCollect = new Stopwatch();
                 // Util.Log("\n\nstart collecting");
                 swCollect.Start();
@@ -387,16 +386,11 @@ namespace Bench.RpcMaster
                     {
                         var state = clients[ind].GetState(new Empty { });
 
-                        if ((int) state.State >= (int) Stat.Types.State.SendComplete) isComplete = true;
-
-                        // if (false)
                         if ((int) state.State < (int) Stat.Types.State.SendRunning ||
                             (int) state.State > (int) Stat.Types.State.SendComplete && (int) state.State < (int) Stat.Types.State.HubconnDisconnecting)
                         {
                             return;
                         }
-                        isSend = true;
-                        isComplete = false;
 
                         var swRpc = new Stopwatch();
                         swRpc.Start();
@@ -432,11 +426,6 @@ namespace Bench.RpcMaster
                 await Task.WhenAll(collectCountersTasks);
                 swCollect.Stop();
                 Util.Log($"collecting counters time: {swCollect.Elapsed.TotalMilliseconds} ms");
-                if (isSend == false || isComplete == true)
-                {
-                    return;
-                }
-
                 var jobj = new JObject();
                 var received = (ulong)0;
                 foreach (var item in allClientCounters)
@@ -533,8 +522,8 @@ namespace Bench.RpcMaster
                     Util.Log($"add channel: {slaveList[i]}:{rpcPort}");
                     channels.Add(new Channel($"{slaveList[i]}:{rpcPort}", ChannelCredentials.Insecure,
                         new ChannelOption[] {
-                            // For Group, the received message size is very large, so here set 8000k
-                            new ChannelOption(ChannelOptions.MaxReceiveMessageLength, 8192000)
+                            // For Group, the received message size is very large, so here set 16000k
+                            new ChannelOption(ChannelOptions.MaxReceiveMessageLength, 16384000)
                         }));
                 }
             }
@@ -722,6 +711,7 @@ namespace Bench.RpcMaster
                         i++;
                         continue;
                     }
+                    Util.Log($"Master's sendingStep: {_currentSendingStep}");
                     _currentSendingStep = curTotalSending;
                 }
                 // up op
@@ -770,6 +760,11 @@ namespace Bench.RpcMaster
 
                         client.LoadConnectionRange(new Range { Begin = beg, End = beg + currConnSliceCnt });
                         client.LoadConnectionConfig(connectionAllConfigList);
+                        using (var memStream = new MemoryStream())
+                        {
+                            benchmarkCellConfig.WriteTo(memStream);
+                            Util.Log($"RunJob parameter size: {memStream.Length}");
+                        }
                         client.RunJob(benchmarkCellConfig);
                     }));
                 });

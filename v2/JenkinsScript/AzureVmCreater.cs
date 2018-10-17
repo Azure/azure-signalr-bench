@@ -214,6 +214,7 @@ namespace JenkinsScript
             return Task.Run(() => CreateAgentVmsCore());
         }
 
+        // Agent VMs do not have public IPs since we only access them through private IP
         public void CreateAgentVmsCore(INetwork vNet = null, ISubnet subnet = null)
         {
             var sw = new Stopwatch();
@@ -224,32 +225,27 @@ namespace JenkinsScript
             if (vNet == null) vNet = CreateVirtualNetwork(VNet, Location, GroupName, SubNet);
 
             List<ICreatable<IVirtualMachine>> creatableVirtualMachines = new List<ICreatable<IVirtualMachine>>();
-
-            var publicIpTasks = new List<Task<IPublicIPAddress>>();
-            for (var i = 0; i < _agentConfig.SlaveVmCount; i++)
-            {
-                publicIpTasks.Add(CreatePublicIpAsync(PublicIpBase, Location, GroupName, PublicDnsBase, i));
-            }
-            var publicIps = Task.WhenAll(publicIpTasks).GetAwaiter().GetResult();
-
+            /*
             var nsgTasks = new List<Task<INetworkSecurityGroup>>();
             for (var i = 0; i < _agentConfig.SlaveVmCount; i++)
             {
                 nsgTasks.Add(CreateNetworkSecurityGroupAsync(NsgBase, Location, GroupName, _agentConfig.SshPort, i));
             }
             var nsgs = Task.WhenAll(nsgTasks).GetAwaiter().GetResult();
-
+            */
             var nicTasks = new List<Task<INetworkInterface>>();
             for (var i = 0; i < _agentConfig.SlaveVmCount; i++)
             {
-                nicTasks.Add(CreateNetworkInterfaceAsync(NicBase, Location, GroupName, subnet == null? SubNet : subnet.Name, vNet, publicIps[i], nsgs[i], i));
+                nicTasks.Add(CreateNetworkInterfaceAsync(NicBase, Location, GroupName,
+                    subnet == null? SubNet : subnet.Name, vNet, null, null, i));
             }
             var nics = Task.WhenAll(nicTasks).GetAwaiter().GetResult();
 
             var vmTasks = new List<Task<IWithCreate>>();
             for (var i = 0; i < _agentConfig.SlaveVmCount; i++)
             {
-                vmTasks.Add(GenerateVmTemplateAsync(VmNameBase, Location, GroupName, _agentConfig.ImageId, _agentConfig.User, _agentConfig.Password, _agentConfig.Ssh, SlaveVmSize, nics[i], avSet, i));
+                vmTasks.Add(GenerateVmTemplateAsync(VmNameBase, Location, GroupName, _agentConfig.ImageId,
+                    _agentConfig.User, _agentConfig.Password, _agentConfig.Ssh, SlaveVmSize, nics[i], avSet, i));
             }
 
             var vms = Task.WhenAll(vmTasks).GetAwaiter().GetResult();
@@ -331,14 +327,12 @@ namespace JenkinsScript
                             .CreateAsync();
                         return newIp;
                     }
-                    catch (System.Exception)
+                    catch (System.Exception e)
                     {
                         await Task.Delay(2000);
-                        Util.Log($"retry create {i}th public th ip");
-
+                        Util.Log($"error {e.Message}, retry create {i}th public ip");
                         continue;
                     }
-
                 }
 
             });
@@ -350,7 +344,9 @@ namespace JenkinsScript
 
             return Task.Run(async() =>
             {
-
+                var azureRegionIP =
+                "167.220.148.0/23,131.107.147.0/24,131.107.159.0/24,131.107.160.0/24,131.107.174.0/24,167.220.24.0/24,167.220.26.0/24,167.220.238.0/27,167.220.238.128/27,167.220.238.192/27,167.220.238.64/27,167.220.232.0/23,167.220.255.0/25,167.220.242.0/27,167.220.242.128/27,167.220.242.192/27,167.220.242.64/27,94.245.87.0/24,167.220.196.0/23,194.69.104.0/25,191.234.97.0/26,167.220.0.0/23,167.220.2.0/24,207.68.190.32/27,13.106.78.32/27,10.254.32.0/20,10.97.136.0/22,13.106.174.32/27,13.106.4.96/27,168.61.37.236";
+                var allowedIpRange = azureRegionIP.Split(',');
                 while (true)
                 {
                     try
@@ -361,21 +357,12 @@ namespace JenkinsScript
                             .WithExistingResourceGroup(groupName)
                             .DefineRule("SSH-PORT")
                             .AllowInbound()
-                            .FromAnyAddress()
+                            .FromAddresses(allowedIpRange)
                             .FromAnyPort()
                             .ToAnyAddress()
                             .ToPort(22)
                             .WithAnyProtocol()
                             .WithPriority(100)
-                            .Attach()
-                            .DefineRule("NEW-SSH-PORT")
-                            .AllowInbound()
-                            .FromAnyAddress()
-                            .FromAnyPort()
-                            .ToAnyAddress()
-                            .ToPort(sshPort)
-                            .WithAnyProtocol()
-                            .WithPriority(101)
                             .Attach()
                             .DefineRule("BENCHMARK-PORT")
                             .AllowInbound()
@@ -452,10 +439,10 @@ namespace JenkinsScript
                             .CreateAsync();
                         return newNsg;
                     }
-                    catch (System.Exception)
+                    catch (System.Exception e)
                     {
                         await Task.Delay(2000);
-                        Util.Log($"retry create {i}th nsg");
+                        Util.Log($"error {e.Message}, retry create {i}th nsg");
                         continue;
                     }
                 }
@@ -464,7 +451,9 @@ namespace JenkinsScript
 
         }
 
-        public Task<INetworkInterface> CreateNetworkInterfaceAsync(string nicBase, Region location, string groupName, string subNet, INetwork network, IPublicIPAddress publicIPAddress, INetworkSecurityGroup nsg, int i = 0)
+        public Task<INetworkInterface> CreateNetworkInterfaceAsync(string nicBase, Region location,
+            string groupName, string subNet, INetwork network,
+            IPublicIPAddress publicIPAddress, INetworkSecurityGroup nsg, int i = 0)
         {
             Console.WriteLine($"Creating {i}th network interface in resource group {groupName}");
             var j = 0;
@@ -473,16 +462,30 @@ namespace JenkinsScript
             {
                 try
                 {
-                    var newNic = _azure.NetworkInterfaces.Define(nicBase + Convert.ToString(i))
-                        .WithRegion(location)
-                        .WithExistingResourceGroup(groupName)
-                        .WithExistingPrimaryNetwork(network)
-                        .WithSubnet(subNet)
-                        .WithPrimaryPrivateIPAddressDynamic()
-                        .WithExistingPrimaryPublicIPAddress(publicIPAddress)
-                        .WithExistingNetworkSecurityGroup(nsg)
-                        .CreateAsync();
-                    return newNic;
+                    if (publicIPAddress != null && nsg != null)
+                    {
+                        var newNic = _azure.NetworkInterfaces.Define(nicBase + Convert.ToString(i))
+                            .WithRegion(location)
+                            .WithExistingResourceGroup(groupName)
+                            .WithExistingPrimaryNetwork(network)
+                            .WithSubnet(subNet)
+                            .WithPrimaryPrivateIPAddressDynamic()
+                            .WithExistingPrimaryPublicIPAddress(publicIPAddress)
+                            .WithExistingNetworkSecurityGroup(nsg)
+                            .CreateAsync();
+                        return newNic;
+                    }
+                    else
+                    {
+                        var newNic = _azure.NetworkInterfaces.Define(nicBase + Convert.ToString(i))
+                            .WithRegion(location)
+                            .WithExistingResourceGroup(groupName)
+                            .WithExistingPrimaryNetwork(network)
+                            .WithSubnet(subNet)
+                            .WithPrimaryPrivateIPAddressDynamic()
+                            .CreateAsync();
+                        return newNic;
+                    }
                 }
                 catch (Exception e)
                 {

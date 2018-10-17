@@ -379,7 +379,7 @@ git checkout {branch}
             string host, List<string> slaves, string user, string password, int sshPort, string logPath,
             string serviceType, string transportType, string hubProtocol, string scenario,
             int connection, int concurrentConnection, int duration, int interval, List<string> pipeLine,
-            int groupNum, int groupOverlap, string messageSize, string serverUrl, string suffix,
+            int groupNum, int groupOverlap, int combineFactor, string messageSize, string serverUrl, string suffix,
             string masterRoot, string sendToFixedClient, bool enableGroupJoinLeave, bool stopSendIfLatencyBig,
             bool stopSendIfConnectionErrorBig, string connectionString)
         {
@@ -439,6 +439,7 @@ git checkout {branch}
                 $" --concurrentConnection {concurrentConnection} " +
                 $" --groupNum {groupNum} " +
                 $" --groupOverlap {groupOverlap} " +
+                $" --combineFactor {combineFactor} " +
                 $"--messageSize {messageSize} " +
                 $"--sendToFixedClient {sendToFixedClient} " +
                 $"--enableGroupJoinLeave {enableGroupJoinLeave} " +

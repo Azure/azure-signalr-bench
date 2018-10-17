@@ -296,6 +296,7 @@ namespace JenkinsScript
                         var interval = jobConfigV2.Interval;
                         var groupNum = jobConfigV2.GroupNum;
                         var overlap = jobConfigV2.Overlap;
+                        var combineFactor = jobConfigV2.CombineFactor;
                         var enableGroupJoinLeave = jobConfigV2.EnableGroupJoinLeave;
                         var pipeline = jobConfigV2.Pipeline;
                         var serverUrl = jobConfigV2.ServerUrl;
@@ -398,7 +399,7 @@ namespace JenkinsScript
                         privateIps.MasterPrivateIp.Split(";").ToList().ForEach(host => StartCollectMachineStatisticsTimer(host, user, password, sshPort, Util.MakeSureDirectoryExist(statisticFolder) + $"master{host}.txt", TimeSpan.FromSeconds(1)));
                         ShellHelper.StartRpcMaster(privateIps.MasterPrivateIp, privateIps.SlavePrivateIp.Split(";").ToList(),
                             user, password, sshPort, logPathMaster, serviceType, transportType, hubProtocol, scenario,
-                            connection, concurrentConnection, duration, interval, pipeline, groupNum, overlap, messageSize,
+                            connection, concurrentConnection, duration, interval, pipeline, groupNum, overlap, combineFactor, messageSize,
                             serverUrl, suffix, masterRoot, sendToFixedClient, enableGroupJoinLeave,
                             bool.Parse(argsOption.StopSendIfLatencyBig), bool.Parse(argsOption.StopSendIfConnectionErrorBig),
                             connectionString);
