@@ -1,6 +1,7 @@
 ﻿using Common;
 using Microsoft.AspNetCore.SignalR.Client;
 using Plugin.Base;
+using Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods.Statistics;
 using Serilog;
 using System;
 using System.Collections.Concurrent;
@@ -13,7 +14,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
 {
     public class Broadcast : BaseContinuousSendMethod, ISlaveMethod
     {
-        private ConcurrentDictionary<string, object> _statistics;
+        private StatisticsCollector _statistics;
         public async Task<IDictionary<string, object>> Do(IDictionary<string, object> stepParameters, IDictionary<string, object> pluginParameters)
         {
             try
@@ -30,7 +31,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 stepParameters.TryGetTypedValue(SignalRConstants.MessageSize, out int messageSize, Convert.ToInt32);
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionStore}.{type}", out IList<HubConnection> connections, (obj) => (IList<HubConnection>)obj);
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionOffset}.{type}", out int offset, Convert.ToInt32);
-                pluginParameters.TryGetTypedValue($"{SignalRConstants.StatisticsStore}.{type}", out _statistics, obj => (ConcurrentDictionary<string, object>) obj);
+                pluginParameters.TryGetTypedValue($"{SignalRConstants.StatisticsStore}.{type}", out _statistics, obj => (StatisticsCollector) obj);
 
                 // Set callback
                 SetCallback(connections);
@@ -66,7 +67,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                     var receiveTimestamp = Util.Timestamp();
                     data.TryGetTypedValue(SignalRConstants.Timestamp, out long sendTimestamp, Convert.ToInt64);
                     var latency = receiveTimestamp - sendTimestamp;
-                    StatisticsHelper.RecordLatency(_statistics, latency);
+                    _statistics.RecordLatency(latency);
                 });
             }
         }
@@ -86,7 +87,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 await connection.SendAsync(SignalRConstants.BroadcastCallbackName, payload);
 
                 // Update statistics
-                StatisticsHelper.IncreaseSentMessage(_statistics);
+                _statistics.IncreaseSentMessage();
             }
             catch (Exception ex)
             {

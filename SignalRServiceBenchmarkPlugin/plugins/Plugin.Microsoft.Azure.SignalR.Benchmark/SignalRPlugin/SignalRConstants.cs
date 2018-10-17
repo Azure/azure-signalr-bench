@@ -29,6 +29,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         public static readonly string ConnectionStore = "Plugin.ConnectionStore";
         public static readonly string ConnectionOffset = "Plugin.ConnectionOffset";
         public static readonly string StatisticsStore = "Plugin.StatisticsStore";
+        public static readonly string ConnectionIdStore = "Plugin.ConnectionId";
 
         // Callback Name
         public static readonly string EchoCallbackName = "Echo";
