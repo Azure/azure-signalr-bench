@@ -21,7 +21,7 @@ namespace Plugin.Base
             {
                 var message = $"Method name does not exists: {ex}";
                 Log.Error(message);
-                throw new Exception(message);
+                throw;
             }
         }
 

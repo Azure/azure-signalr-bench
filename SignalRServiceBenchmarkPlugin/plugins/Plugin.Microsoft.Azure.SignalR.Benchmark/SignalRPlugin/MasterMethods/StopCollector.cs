@@ -13,15 +13,26 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
     {
         public Task Do(IDictionary<string, object> stepParameters, IDictionary<string, object> pluginParameters, IList<IRpcClient> clients)
         {
-            Log.Information($"Stop collecting...");
+            System.Timers.Timer timer = null;
 
-            // Get parameters
-            stepParameters.TryGetTypedValue(SignalRConstants.Type, out string type, Convert.ToString);
-            pluginParameters.TryGetTypedValue($"{SignalRConstants.Timer}.{type}", out System.Timers.Timer timer, obj => (System.Timers.Timer) obj);
+            try
+            {
+                Log.Information($"Stop collecting...");
 
-            // Stop and dispose timer
-            timer.Stop();
-            timer.Dispose();
+                // Get parameters
+                stepParameters.TryGetTypedValue(SignalRConstants.Type, out string type, Convert.ToString);
+                pluginParameters.TryGetTypedValue($"{SignalRConstants.Timer}.{type}", out timer, obj => (System.Timers.Timer)obj);
+            }
+            finally
+            {
+                // Stop and dispose timer
+                if (timer != null)
+                {
+                    timer.Stop();
+                    timer.Dispose();
+                }
+            }
+
 
             return Task.CompletedTask;
         }

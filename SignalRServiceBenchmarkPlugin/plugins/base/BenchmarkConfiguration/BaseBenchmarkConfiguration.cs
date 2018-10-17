@@ -40,8 +40,7 @@ namespace Plugin.Base
             catch (Exception ex)
             {
                 Log.Error($"Benchmark configuration is invalid: {ex}");
-                throw new Exception("Benchmark configuration is invalid.");
-
+                throw;
             }
 
             // Parse the stream

@@ -23,18 +23,18 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 stepParameters.TryGetTypedValue(SignalRConstants.Type, out string type, Convert.ToString);
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionStore}.{type}", out IList<HubConnection> connections, (obj) => (IList<HubConnection>)obj);
 
-                await Task.WhenAll(StartConnections(connections, StartConnect, concurrentConnection));
+                await Task.WhenAll(BatchProcess(connections, StartConnect, concurrentConnection));
                 return null;
             }
             catch (Exception ex)
             {
                 var message = $"Fail to start connections: {ex}";
                 Log.Error(message);
-                throw new Exception(message);
+                throw;
             }
         }
 
-        private Task StartConnections<T>(IList<T> source, Func<T, Task> f, int max)
+        private Task BatchProcess<T>(IList<T> source, Func<T, Task> f, int max)
         {
             var initial = (max >> 1);
             var s = new System.Threading.SemaphoreSlim(initial, max);
@@ -73,7 +73,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
             {
                 var message = $"Fail to start connection: {ex}";
                 Log.Error(message);
-                throw new Exception(message);
+                throw;
             }
         }
     }

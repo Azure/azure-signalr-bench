@@ -44,7 +44,7 @@ namespace Rpc.Master
             {
                 var message = $"Fail to handle step: {ex}";
                 Log.Error(message);
-                throw new Exception(message);
+                throw;
             }
             
         }
