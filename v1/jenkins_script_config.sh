@@ -408,6 +408,7 @@ EOF
 # specify connection string as input parameter
 function run_unit() {
    local ConnectionString="$1"
+   local callback=$2
    local service
    local signalrServiceName
 for service in $bench_serviceunit_list
@@ -440,7 +441,7 @@ do
      fi
    fi
    #############
-   run_benchmark $service
+   $callback $service
    ############# copy pod log ############
    ## stop collecting top
    if [ "$service_name" != "" ]
