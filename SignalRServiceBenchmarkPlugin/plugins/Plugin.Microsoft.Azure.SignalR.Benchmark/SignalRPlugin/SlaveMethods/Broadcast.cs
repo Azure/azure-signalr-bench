@@ -55,7 +55,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
             {
                 var message = $"Fail to broadcast: {ex}";
                 Log.Error(message);
-                throw new Exception(message);
+                throw;
             }
         }
 
@@ -97,7 +97,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
             {
                 var message = $"Error in broadcast: {ex}";
                 Log.Error(message);
-                throw new Exception(message);
+                throw;
             }
         }
     }
