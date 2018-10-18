@@ -46,7 +46,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 await Task.WhenAll(from i in Enumerable.Range(0, connections.Count)
                                     where (i + offset) % modulo >= remainderBegin && (i + offset) % modulo < remainderEnd
                                     select ContinuousSend(connections[i], data, SendBroadcast,
-                                            TimeSpan.FromMilliseconds(duration), TimeSpan.FromMilliseconds(interval)));
+                                            TimeSpan.FromMilliseconds(duration), TimeSpan.FromMilliseconds(interval), 
+                                            TimeSpan.FromMilliseconds(1), TimeSpan.FromMilliseconds(interval)));
 
                 return null;
             }
@@ -76,12 +77,15 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
         {
             try
             {
+                // Extract data
+                data.TryGetValue(SignalRConstants.MessageBlob, out var messageBlob);
+
                 // Prepare payload
-                var timestamp = Util.Timestamp();
-                var payload = new Dictionary<string, object>();
-                data.TryGetValue(SignalRConstants.MessageBlob, out var tmp);
-                payload.Add(SignalRConstants.MessageBlob, tmp);
-                payload.Add(SignalRConstants.Timestamp, Util.Timestamp());
+                var payload = new Dictionary<string, object>
+                {
+                    { SignalRConstants.MessageBlob, messageBlob },
+                    { SignalRConstants.Timestamp, Util.Timestamp() }
+                };
 
                 // Send message
                 await connection.SendAsync(SignalRConstants.BroadcastCallbackName, payload);

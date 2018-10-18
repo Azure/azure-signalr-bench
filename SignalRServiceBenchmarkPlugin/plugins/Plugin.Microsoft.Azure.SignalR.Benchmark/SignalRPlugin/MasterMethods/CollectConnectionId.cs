@@ -23,8 +23,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
             var results = await Task.WhenAll(from client in clients select client.QueryAsync(stepParameters));
 
             // Collect all connection Ids
-            // TODO: test on multiple salves
-            var allConnectionIds = results.SelectMany(dict => dict.Keys).ToHashSet();
+            var allConnectionIds = results.SelectMany(dict => dict.Keys).ToList();
 
             // Store connection Ids
             pluginParameters[$"{SignalRConstants.ConnectionIdStore}.{type}"] = allConnectionIds;

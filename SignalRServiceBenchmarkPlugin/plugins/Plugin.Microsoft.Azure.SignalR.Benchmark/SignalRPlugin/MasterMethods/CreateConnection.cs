@@ -23,7 +23,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
             stepParameters.TryGetTypedValue(SignalRConstants.HubProtocol, out string hubProtocol, Convert.ToString);
 
             // Prepare configuration for each clients
-            var packages = clients.Select((client, i) => {
+            var packages = clients.Select((client, i) => 
+            {
                 (int beg, int end) = Util.GetConnectionRange(connectionTotal, i, clients.Count);
                 var data = new Dictionary<string, object>
                 {
