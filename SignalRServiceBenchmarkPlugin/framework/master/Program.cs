@@ -86,12 +86,12 @@ namespace Rpc.Master
         {
             foreach(var parallelStep in pipeline)
             {
+                var tasks = new List<Task>();
                 foreach(var step in parallelStep)
                 {
-                    var tasks = new List<Task>();
                     tasks.Add(_stepHandler.HandleStep(step, clients));
-                    await Task.WhenAll(tasks);
                 }
+                await Task.WhenAll(tasks);
             }
         }
 
