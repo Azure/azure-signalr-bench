@@ -14,10 +14,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
         Func<T, IDictionary<TKey, TValue>, Task> f, 
         TimeSpan duration, TimeSpan interval, TimeSpan delayMin, TimeSpan delayMax)
         {
-            // TODO
-            // Random delay in [1, interval) ms
+            // Random delay in [delayMin, delayMax) ms
             var rand = new Random();
-            //var randomDelay = TimeSpan.FromMilliseconds(rand.Next((int)(interval.TotalMilliseconds - 1)) + 1);
             var randomDelay = TimeSpan.FromMilliseconds(rand.Next((int)delayMin.TotalMilliseconds, (int)delayMax.TotalMilliseconds));
             await Task.Delay(randomDelay);
 

@@ -33,6 +33,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
 
         // Callback Name
         public static readonly string EchoCallbackName = "Echo";
+        public static readonly string SendToClientCallbackName = "SendToClient";
         public static readonly string BroadcastCallbackName = "Broadcast";
         public static readonly string GetConnectionIdCallback = "GetConnectionId";
 
