@@ -21,6 +21,12 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         public static readonly string RemainderEnd = "Parameter.RemainderEnd";
         public static readonly string Modulo = "Parameter.Modulo";
         public static readonly string MessageSize = "Parameter.MessageSize";
+        public static readonly string GroupCount = "Parameter.GroupCount";
+        public static readonly string GroupLevelRemainderBegin = "Parameter.GroupLevelRemainderBegin";
+        public static readonly string GroupLevelRemainderEnd = "Parameter.GroupLevelRemainderEnd";
+        public static readonly string GroupInternalRemainderBegin = "Parameter.GroupInternalRemainderBegin";
+        public static readonly string GroupInternalRemainderEnd = "Parameter.GroupInternalRemainderEnd";
+        public static readonly string GroupInternalModulo = "Parameter.GroupInternalModulo";
 
         // Connection information
         public static readonly string ConnectionId = "information.ConnectionId";
