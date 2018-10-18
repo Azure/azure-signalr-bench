@@ -53,14 +53,13 @@ namespace Common
 
         public static void Shuffle<T>(this IList<T> list)
         {
-            int n = list.Count;
-            while (n > 1)
+            var rand = new Random();
+            for (var i = list.Count - 1; i > 0; i--)
             {
-                n--;
-                int k = ThreadSafeRandom.ThisThreadsRandom.Next(n + 1);
+                int k = rand.Next(i + 1); 
                 T value = list[k];
-                list[k] = list[n];
-                list[n] = value;
+                list[k] = list[i];
+                list[i] = value;
             }
         }
     }
