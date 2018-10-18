@@ -37,8 +37,6 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
                 (int beg, int end) = Util.GetConnectionRange(connectionTotal, i, clients.Count);
                 var data = new Dictionary<string, object>
                 {
-                    { SignalRConstants.ConnectionBegin, beg },
-                    { SignalRConstants.ConnectionEnd, end },
                     { SignalRConstants.RemainderBegin, remainderBegin},
                     { SignalRConstants.RemainderEnd, remainderEnd},
                     { SignalRConstants.Modulo, modulo},
