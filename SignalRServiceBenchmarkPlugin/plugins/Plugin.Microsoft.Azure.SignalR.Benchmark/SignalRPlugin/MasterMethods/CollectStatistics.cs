@@ -32,7 +32,6 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
                 for (var i = 0; i < results.Count(); i++)
                 {
                     Log.Information($"Type: {type} Client: {i}th statistics{Environment.NewLine}{results[i].GetContents()}");
-                    i++;
                 }
             };
             timer.Start();
