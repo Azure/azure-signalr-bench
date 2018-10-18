@@ -286,7 +286,7 @@ git checkout {branch}
                 var targetLog = logPath[i];
                 var applogFolder = $"log{i}";
                 var host = hosts[i];
-                var recheckTimeout = 240;
+                var recheckTimeout = 600;
                 var recheck = 0;
                 string content = null;
                 while (recheck < recheckTimeout)

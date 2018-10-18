@@ -24,12 +24,10 @@ namespace Bench.RpcSlave.Worker.Operations
         protected ServiceUtils _serviceUtils;
         protected string _endpoint;
         protected string _content;
-        protected ulong _sendingStep;
 
         public async Task Do(WorkerToolkit tk)
         {
             _tk = tk;
-            _sendingStep = _tk.CurSending;
             var waitTime = 5 * 1000;
             Console.WriteLine($"wait time: {waitTime / 1000}s");
             _tk.State = Stat.Types.State.SendReady;
@@ -55,7 +53,7 @@ namespace Bench.RpcSlave.Worker.Operations
                         var receiveTimestamp = Util.Timestamp();
                         var sendTimestamp = Convert.ToInt64(timestamp);
                         _tk.Counters.CountLatency(sendTimestamp, receiveTimestamp);
-                        _tk.Counters.RecordSendingStep(_sendingStep);
+                        _tk.Counters.RecordSendingStep(_tk.CurSending);
                         _tk.Counters.IncreaseReceivedMessageSize((ulong)content.Length);
                     }));
             }
