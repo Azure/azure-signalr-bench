@@ -53,7 +53,7 @@ function create_group_if_not_exist() {
 
 function delete_group() {
   local rsg=$1
-  az group delete --name $rsg -y
+  az group delete --name $rsg -y --no-wait
 }
 
 function create_signalr_service()
