@@ -28,8 +28,9 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         public static readonly string GroupInternalRemainderEnd = "Parameter.GroupInternalRemainderEnd";
         public static readonly string GroupInternalModulo = "Parameter.GroupInternalModulo";
 
-        // Connection information
+        // Connection/group information
         public static readonly string ConnectionId = "information.ConnectionId";
+        public static readonly string GroupName = "information.GroupName";
 
         // Plugin parameters
         public static readonly string ConnectionStore = "Plugin.ConnectionStore";
@@ -39,8 +40,9 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
 
         // Callback Name
         public static readonly string EchoCallbackName = "Echo";
-        public static readonly string SendToClientCallbackName = "SendToClient";
         public static readonly string BroadcastCallbackName = "Broadcast";
+        public static readonly string SendToClientCallbackName = "SendToClient";
+        public static readonly string SendToGroupCallbackName = "SendToGroup";
         public static readonly string GetConnectionIdCallback = "GetConnectionId";
 
         // Message payload
@@ -52,5 +54,6 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
 
         // Statistics
         public static readonly string StatisticsMessageSent = "message:sent";
+
     }
 }
