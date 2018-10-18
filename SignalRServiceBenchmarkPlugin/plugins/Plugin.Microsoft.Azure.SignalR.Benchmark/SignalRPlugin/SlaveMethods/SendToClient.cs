@@ -93,6 +93,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
         {
             try
             {
+                // Extract data
                 data.TryGetTypedValue(SignalRConstants.ConnectionId, out string targetId, Convert.ToString);
                 data.TryGetValue(SignalRConstants.MessageBlob, out var messageBlob);
 
@@ -112,7 +113,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
             }
             catch (Exception ex)
             {
-                var message = $"Error in Echo: {ex}";
+                var message = $"Error in send to client: {ex}";
                 Log.Error(message);
                 throw;
             }
