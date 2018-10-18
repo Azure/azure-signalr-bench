@@ -30,9 +30,9 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
             }
             catch (Exception ex)
             {
-                var message = $"Fail to echo: {ex}";
+                var message = $"Fail to collect connection ID: {ex}";
                 Log.Error(message);
-                throw new Exception(message);
+                throw;
             }
         }
 
@@ -50,6 +50,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 });
             }
 
+            // TODO: batch query
             // Query connection Id
             foreach (var connection in connections) await connection.InvokeAsync(SignalRConstants.GetConnectionIdCallback);
 
