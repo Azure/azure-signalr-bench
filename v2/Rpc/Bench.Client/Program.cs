@@ -408,8 +408,9 @@ namespace Bench.RpcMaster
                             }
                             else if (string.Equals(key, "sendingStep", StringComparison.OrdinalIgnoreCase))
                             {
-                                if (value == 0)
+                                if (value < (ulong)_currentSendingStep)
                                 {
+                                    Util.Log($"slave uses small sending step, we reset it {value} {_currentSendingStep}");
                                     // sometimes, the received value from slave is zero,
                                     // we have to correct it.
                                     value = (ulong)_currentSendingStep;
