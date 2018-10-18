@@ -48,7 +48,20 @@ namespace JenkinsScript
         {
             if (_azure.ResourceGroups.Contain(name))
             {
-                _azure.ResourceGroups.DeleteByName(name);
+                int maxTry = 5, i = 0;
+                while (i < maxTry)
+                {
+                    try
+                    {
+                        _azure.ResourceGroups.DeleteByName(name);
+                        return;
+                    }
+                    catch (Exception e)
+                    {
+                        Util.Log($"Fail to remove resource group {name} for {e.Message}");
+                    }
+                    i++;
+                }
             }
             else
             {

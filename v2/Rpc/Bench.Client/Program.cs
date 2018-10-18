@@ -711,8 +711,8 @@ namespace Bench.RpcMaster
                         i++;
                         continue;
                     }
-                    Util.Log($"Master's sendingStep: {_currentSendingStep}");
                     _currentSendingStep = curTotalSending;
+                    Util.Log($"Master's sendingStep: {_currentSendingStep}");
                 }
                 // up op
                 HandleBasicUpOp(step, connectionConfigBuilder, connectionAllConfigList, connections, slaveList);
