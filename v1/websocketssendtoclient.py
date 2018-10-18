@@ -3,14 +3,14 @@ import settings
 
 websockets_connection={1:1000, 2:2000, 5:5000, 10:10000, 20:20000, 50:50000, 100:100000}
 websockets_concurrentConnection={1:200, 2:200, 5:200, 10:200, 20:200, 50:200, 100:200}
-websockets_baseStep_256={1:1000, 2:2000, 5:5000, 10:10000, 20:10000, 50:10000, 100:10000}
+websockets_baseStep_256={1:1200, 2:2000, 5:5000, 10:10000, 20:10000, 50:10000, 100:10000}
 websockets_step_256={1:100, 2:100, 5:1000, 10:1000, 20:1000, 50:1000, 100:1000}
 websockets_baseStep_2k={1:800, 2:800, 5:3000, 10:5000, 20:5000, 50:5000, 100:5000}
 websockets_step_2k={1:100, 2:100, 5:1000, 10:1000, 20:1000, 50:1000, 100:1000}
-websockets_baseStep_16k={1:200, 2:200, 5:1000, 10:1000, 20:1000, 50:1000, 100:1000}
+websockets_baseStep_16k={1:800, 2:200, 5:1000, 10:1000, 20:1000, 50:1000, 100:1000}
 websockets_step_16k={1:100, 2:100, 5:1000, 10:1000, 20:1000, 50:1000, 100:1000}
-websockets_baseStep_128k={1:10, 2:10, 5:50, 10:50, 20:200, 50:200, 100:500}
-websockets_step_128k={1:10, 2:10, 5:50, 10:50, 20:100, 50:100, 100:100}
+websockets_baseStep_128k={1:5, 2:5, 5:10, 10:50, 20:200, 50:200, 100:500}
+websockets_step_128k={1:5, 2:5, 5:10, 10:50, 20:100, 50:100, 100:100}
 if settings.gPerfType == settings.gConstMax:
   websockets_connection={1:1500, 2:3000, 5:7500, 10:15000, 20:30000, 50:75000, 100:150000}
   websockets_concurrentConnection={1:100, 2:100, 5:100, 10:200, 20:200, 50:200, 100:200}
@@ -246,8 +246,8 @@ def websocketssendtoclientunit20(duration,sz):
    #print sys._getframe().f_code.co_name
    connection=websockets_connection[20]
    concurrentConnection=websockets_concurrentConnection[20]
-   baseSend=websockets_baseStep[20]
-   stepSend=websockets_step[20]
+   baseSend=get_baseStep(sz, 20)
+   stepSend=get_step(sz, 20)
    pipeline = '''\
 connection: {connection}
 concurrentConnection: {concurrentConnection}
