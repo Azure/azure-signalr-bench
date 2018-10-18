@@ -27,7 +27,7 @@ function set_global_env() {
 # depends on set_global_env
 function set_job_env() {
    export result_root=`date +%Y%m%d%H%M%S`
-   export DogFoodResouceGroup="honzhanatpf"`date +%M%S`
+   export DogFoodResourceGroup="honzhanatpf"`date +%M%S`
    export serverUrl=`awk '{print $2}' $JenkinsRootPath/JobConfig.yaml`
 }
 
@@ -480,7 +480,7 @@ do
    cd $ScriptWorkingDir
    ConnectionString="" # set it to be invalid first
    signalrServiceName="atpf"`date +%H%M%S`
-   create_asrs $DogFoodResouceGroup $signalrServiceName $Sku $service
+   create_asrs $DogFoodResourceGroup $signalrServiceName $Sku $service
    if [ "$ConnectionString" == "" ]
    then
      echo "Skip the running on SignalR service unit'$service' since it was failed to create"
@@ -531,12 +531,12 @@ do
    fi
    ######
    
-   delete_signalr_service $signalrServiceName $DogFoodResouceGroup
+   delete_signalr_service $signalrServiceName $DogFoodResourceGroup
 done
 
 }
 # require global env:
-# ASRSEnv, DogFoodResouceGroup, ASRSLocation
+# ASRSEnv, DogFoodResourceGroup, ASRSLocation
 function prepare_ASRS_creation() {
 cd $ScriptWorkingDir
 . ./az_signalr_service.sh
@@ -548,14 +548,14 @@ then
 else
   az_login_signalr_dev_sub
 fi
-create_group_if_not_exist $DogFoodResouceGroup $ASRSLocation
+create_group_if_not_exist $DogFoodResourceGroup $ASRSLocation
 }
 
-# global env: ScriptWorkingDir, DogFoodResouceGroup, ASRSEnv
+# global env: ScriptWorkingDir, DogFoodResourceGroup, ASRSEnv
 function clean_ASRS_group() {
 ############# remove SignalR Service Resource Group #########
 cd $ScriptWorkingDir
-delete_group $DogFoodResouceGroup
+delete_group $DogFoodResourceGroup
 if [ "$ASRSEnv" == "dogfood" ]
 then
   unregister_signalr_service_dogfood
@@ -567,10 +567,20 @@ fi
 # CurrentWorkingDir, ServicePrincipal, AgentConfig, VMMgrDir
 function remove_resource_group() {
   echo "!!Received EXIT!! and remove all created VMs"
-  
-  cd $CurrentWorkingDir
 
+  cd $CurrentWorkingDir
   nohup ${VMMgrDir}/JenkinsScript --PidFile='./pid/pid_remove_rsg.txt' --step=DeleteResourceGroupByConfig --AgentConfigFile=$AgentConfig --DisableRandomSuffix --ServicePrincipal=$ServicePrincipal &
+
+cat << EOF > /tmp/clean_asrs.sh
+cd $ScriptWorkingDir
+. ./az_signalr_service.sh
+delete_group $DogFoodResourceGroup
+if [ "$ASRSEnv" == "dogfood" ]
+then
+  unregister_signalr_service_dogfood
+fi
+EOF
+  nohup sh /tmp/clean_asrs.sh &
 }
 
 ## register exit handler to remove resource group ##
