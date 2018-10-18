@@ -23,7 +23,20 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 Log.Information($"Send to group...");
 
                 // Get parameters
-                
+                stepParameters.TryGetTypedValue(SignalRConstants.Type, out string type, Convert.ToString);
+                stepParameters.TryGetTypedValue(SignalRConstants.Duration, out long duration, Convert.ToInt64);
+                stepParameters.TryGetTypedValue(SignalRConstants.Interval, out long interval, Convert.ToInt64);
+                stepParameters.TryGetTypedValue(SignalRConstants.MessageSize, out int messageSize, Convert.ToInt32);
+                stepParameters.TryGetTypedValue(SignalRConstants.ConnectionTotal, out int totalConnection, Convert.ToInt32);
+                stepParameters.TryGetTypedValue(SignalRConstants.GroupCount, out int groupCount, Convert.ToInt32);
+                stepParameters.TryGetTypedValue(SignalRConstants.GroupLevelRemainderBegin, out int GroupLevelRemainderBegin, Convert.ToInt32);
+                stepParameters.TryGetTypedValue(SignalRConstants.GroupLevelRemainderEnd, out int GroupLevelRemainderEnd, Convert.ToInt32);
+                stepParameters.TryGetTypedValue(SignalRConstants.GroupInternalRemainderBegin, out int GroupInternalRemainderBegin, Convert.ToInt32);
+                stepParameters.TryGetTypedValue(SignalRConstants.GroupInternalRemainderEnd, out int GroupInternalRemainderEnd, Convert.ToInt32);
+                stepParameters.TryGetTypedValue(SignalRConstants.GroupInternalModulo, out int GroupInternalModulo, Convert.ToInt32);
+
+                if (totalConnection % groupCount != 0) throw new Exception("Not supported: Total connections cannot divided by group count");
+
                 // Get context
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionStore}.{type}", out IList<HubConnection> connections, (obj) => (IList<HubConnection>)obj);
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionOffset}.{type}", out int offset, Convert.ToInt32);
@@ -35,10 +48,35 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 // Generate necessary data
                 var messageBlob = new byte[messageSize];
 
-                
+                var packages = from i in Enumerable.Range(0, connections.Count)
+                               let groupName = $"{type}:{i % groupCount}"
+                               select new
+                               {
+                                   Index = i,
+                                   Connection = connections[i],
+                                   GroupName = groupName,
+                                   Data = new Dictionary<string, object>
+                                   {
+                                       { SignalRConstants.MessageBlob, messageBlob }, // message payload
+                                       { SignalRConstants.GroupName, groupName}
+                                   }
+                               };
+
+                Func<int, int, int, int, bool> IsSending = (index, modulo, beg, end) => (index % modulo) >= beg && (index % modulo) < end;
 
                 // Send messages
-                
+                await Task.WhenAll(from package in packages
+                                   let connectionIndex = package.Index
+                                   let groupSize = totalConnection / groupCount
+                                   let groupIndex = connectionIndex % groupCount
+                                   let indexInGroup = connectionIndex / groupCount
+                                   let connection = package.Connection
+                                   let data = package.Data
+                                   where IsSending(indexInGroup, GroupInternalModulo, GroupInternalRemainderBegin, GroupInternalRemainderEnd) &&
+                                         IsSending(groupIndex, groupCount, GroupLevelRemainderBegin, GroupLevelRemainderEnd)
+                                   select ContinuousSend(connection, data, SendGroup,
+                                        TimeSpan.FromMilliseconds(duration), TimeSpan.FromMilliseconds(interval),
+                                        TimeSpan.FromMilliseconds(1), TimeSpan.FromMilliseconds(interval)));
 
                 return null;
             }
@@ -54,7 +92,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
         {
             foreach (var connection in connections)
             {
-                connection.On(SignalRConstants.SendToClientCallbackName, (IDictionary<string, object> data) =>
+                connection.On(SignalRConstants.SendToGroupCallbackName, (IDictionary<string, object> data) =>
                 {
                     var receiveTimestamp = Util.Timestamp();
                     data.TryGetTypedValue(SignalRConstants.Timestamp, out long sendTimestamp, Convert.ToInt64);
@@ -64,14 +102,20 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
             }
         }
 
-        private async Task SendClient(HubConnection connection, IDictionary<string, object> data)
+        private async Task SendGroup(HubConnection connection, IDictionary<string, object> data)
         {
             try
             {
+                // Extract data
+                data.TryGetTypedValue(SignalRConstants.GroupName, out string groupName, Convert.ToString);
+                data.TryGetValue(SignalRConstants.MessageBlob, out var messageBlob);
 
                 // Generate payload
                 var payload = new Dictionary<string, object>
                 {
+                    { SignalRConstants.MessageBlob, messageBlob },
+                    { SignalRConstants.Timestamp, Util.Timestamp() },
+                    { SignalRConstants.GroupName, groupName }
                 };
 
                 // Send message
