@@ -288,6 +288,7 @@ git checkout {branch}
                 var host = hosts[i];
                 var recheckTimeout = 240;
                 var recheck = 0;
+                string content = null;
                 while (recheck < recheckTimeout)
                 {
                     Util.Log($"remote copy from {targetLog} to {applogFolder}");
@@ -302,7 +303,7 @@ git checkout {branch}
                         // check whether contains the keywords
                         using (StreamReader sr = new StreamReader(applogFolder))
                         {
-                            var content = sr.ReadToEnd();
+                            content = sr.ReadToEnd();
                             if (content.Contains(keywords))
                             {
                                 Util.Log($"{host} started!");
@@ -317,6 +318,10 @@ git checkout {branch}
                 if (recheck == recheckTimeout)
                 {
                     Util.Log($"Fail to start server {host}!!!");
+                    if (content != null)
+                    {
+                        Util.Log($"log content: {content}");
+                    }
                     Environment.Exit(1);
                 }
             }
