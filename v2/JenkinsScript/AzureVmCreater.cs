@@ -1071,7 +1071,7 @@ namespace JenkinsScript
             }
             catch (Exception e)
             {
-                Util.Log($"Fail to connect to {ip}:{port} for " + e);
+                Util.Log($"{ip}:{port} is unaccessible for {e.Message}");
                 return false;
             }
         }
