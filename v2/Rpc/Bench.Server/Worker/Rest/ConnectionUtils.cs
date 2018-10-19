@@ -38,10 +38,7 @@ namespace Bench.RpcSlave.Worker.Rest
 
         public static void ResetBrokenConnectionTrackList(WorkerToolkit tk)
         {
-            if (tk.BrokenConnectionTrackList != null)
-            {
-                tk.BrokenConnectionTrackList.ForEach(i => i = -1);
-            }
+            tk.BrokenConnectionTrackList?.ForEach(i => i = -1);
         }
 
         public static HubConnection CreateSingleDirectConnection(WorkerToolkit tk, string connectionString, int i)
