@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 
 namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
 {
+    // TODO: test
     public class SendToGroup : BaseContinuousSendMethod, ISlaveMethod
     {
         private StatisticsCollector _statisticsCollector;
@@ -47,9 +48,9 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
 
                 // Generate necessary data
                 var messageBlob = new byte[messageSize];
-
+                
                 var packages = from i in Enumerable.Range(0, connections.Count)
-                               let groupName = $"{type}:{i % groupCount}"
+                               let groupName = SignalRUtils.GroupName(type, i % groupCount)
                                select new
                                {
                                    Index = i,
@@ -66,7 +67,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
 
                 // Send messages
                 await Task.WhenAll(from package in packages
-                                   let connectionIndex = package.Index
+                                   let connectionIndex = package.Index + offset
                                    let groupSize = totalConnection / groupCount
                                    let groupIndex = connectionIndex % groupCount
                                    let indexInGroup = connectionIndex / groupCount
@@ -119,7 +120,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 };
 
                 // Send message
-                await connection.SendAsync(SignalRConstants., payload);
+                await connection.SendAsync(SignalRConstants.SendToGroupCallbackName, payload);
 
                 // Update statistics
                 _statisticsCollector.IncreaseSentMessage();

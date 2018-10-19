@@ -43,6 +43,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         public static readonly string BroadcastCallbackName = "Broadcast";
         public static readonly string SendToClientCallbackName = "SendToClient";
         public static readonly string SendToGroupCallbackName = "SendToGroup";
+        public static readonly string JoinGroupCallbackName = "JoinGroup";
         public static readonly string GetConnectionIdCallback = "GetConnectionId";
 
         // Message payload
@@ -54,6 +55,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
 
         // Statistics
         public static readonly string StatisticsMessageSent = "message:sent";
+        public static readonly string StatisticsGroupJoinSuccess = "group:success";
+        public static readonly string StatisticsGroupJoinFail = "group:fail";
 
     }
 }
