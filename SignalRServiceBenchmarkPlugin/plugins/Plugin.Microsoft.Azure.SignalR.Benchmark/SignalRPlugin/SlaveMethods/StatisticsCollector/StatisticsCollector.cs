@@ -38,5 +38,15 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods.Statistics
         {
             return _statistics.ToDictionary(entry => entry.Key, entry => (object)entry.Value);
         }
+
+        public void IncreaseJoinGroupSuccess()
+        {
+            _statistics.AddOrUpdate(SignalRConstants.StatisticsGroupJoinSuccess, 1, (k, v) => v + 1);
+        }
+
+        public void IncreaseJoinGroupFail()
+        {
+            _statistics.AddOrUpdate(SignalRConstants.StatisticsGroupJoinFail, 1, (k, v) => v + 1);
+        }
     }
 }
