@@ -193,6 +193,7 @@ namespace Bench.RpcSlave.Worker.Rest
                     var error = $"Connection closed early: {e}";
                     Util.Log(error);
                     tk.BrokenConnectionTrackList[i] = i;
+                    tk.Counters.DropOneConnection();
                 }
 
                 return Task.CompletedTask;
@@ -200,19 +201,31 @@ namespace Bench.RpcSlave.Worker.Rest
             return connection;
         }
 
-        public static async Task<bool> StartConnection(WorkerToolkit tk, int i)
+        // For reconnect, if it fails, we do not increase the ConnectionError since it has already been dropped
+        public static async Task<bool> StartConnection(WorkerToolkit tk, int i, bool reconnect = false)
         {
             var connection = tk.Connections[i];
             try
             {
                 await connection.StartAsync();
                 tk.Counters.IncreaseConnectionSuccess();
+                if (reconnect)
+                {
+                    tk.Counters.DecreaseConnectionError();
+                }
                 return true;
             }
             catch (Exception ex)
             {
-                Util.Log($"start connection exception: {ex}");
-                tk.Counters.IncreaseConnectionError();
+                if (reconnect)
+                {
+                    Util.Log($"reconnection fails: {ex}");
+                }
+                else
+                {
+                    Util.Log($"start connection exception: {ex}");
+                    tk.Counters.IncreaseConnectionError();
+                }
             }
             return false;
         }

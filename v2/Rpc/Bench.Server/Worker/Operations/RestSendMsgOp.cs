@@ -79,23 +79,27 @@ namespace Bench.RpcSlave.Worker.Operations
         private void TryReconnect()
         {
             var brokenConnectionInds = _tk.BrokenConnectionTrackList;
+            var totalCount = _tk.ConnectionRange.End - _tk.ConnectionRange.Begin;
             var droppedConn = from i in brokenConnectionInds where i != -1 select i;
             var droppedCount = droppedConn.Count();
             // Only try to reconnect for a small portion of dropped connections.
-            if (droppedCount > 0 && droppedCount <= 20 &&
-                droppedCount * 100 < _tk.ConnectionRange.End - _tk.ConnectionRange.Begin)
+            if (droppedCount > 0)
             {
-                Util.Log($"Try to repair the {droppedCount} dropped connections");
-                droppedConn.ForEach(droppedIndex =>
+                Util.Log($"There are {droppedCount} connections dropped");
+                if (droppedCount <= 20 && droppedCount * 100 < totalCount)
                 {
-                    var connection = ConnectionUtils.CreateSingleDirectConnection(_tk, _tk.ConnectionString, droppedIndex);
-                    _tk.Connections[droppedIndex] = connection;
-                    var connStatus = ConnectionUtils.StartConnection(_tk, droppedIndex).GetAwaiter().GetResult();
-                    if (connStatus)
+                    Util.Log($"Try to repair the {droppedCount} dropped connections");
+                    droppedConn.ForEach(async (droppedIndex) =>
                     {
-                        _tk.Counters.DecreaseConnectionError();
-                    }
-                });
+                        var connection = ConnectionUtils.CreateSingleDirectConnection(_tk, _tk.ConnectionString, droppedIndex);
+                        _tk.Connections[droppedIndex] = connection;
+                        await ConnectionUtils.StartConnection(_tk, droppedIndex, true);
+                    });
+                }
+                else
+                {
+                    Util.Log($"We will not repair the dropped connections.");
+                }
             }
         }
 

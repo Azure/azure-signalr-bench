@@ -154,10 +154,23 @@ namespace Bench.RpcSlave.Worker.Counters
             InnerCounters.AddOrUpdate("connection:error", 0, (k, v) => v >= 1 ? v - 1 : 0);
         }
 
+        public void DropOneConnection()
+        {
+            lock (InnerCounters)
+            {
+                DecreaseConnectionSuccess();
+                IncreaseConnectionError();
+            }
+        }
+
         public void IncreaseConnectionSuccess()
         {
             InnerCounters.AddOrUpdate("connection:success", 0, (k, v) => v + 1);
+        }
 
+        public void DecreaseConnectionSuccess()
+        {
+            InnerCounters.AddOrUpdate("connection:success", 0, (k, v) => v >= 1 ? v - 1 : v);
         }
 
         public void UpdateConnectionSuccess(ulong totalConn)

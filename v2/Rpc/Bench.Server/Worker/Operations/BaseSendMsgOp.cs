@@ -92,15 +92,11 @@ namespace Bench.RpcSlave.Worker.Operations
                 droppedCount * 100 < _tk.ConnectionRange.End - _tk.ConnectionRange.Begin)
             {
                 Util.Log($"Try to repair the {droppedCount} dropped connections");
-                droppedConn.ForEach(droppedIndex =>
+                droppedConn.ForEach(async (droppedIndex) =>
                 {
                     var connection = ConnectionUtils.CreateSingleConnection(_tk, droppedIndex);
                     _tk.Connections[droppedIndex] = connection;
-                    var connStatus = ConnectionUtils.StartConnection(_tk, droppedIndex).GetAwaiter().GetResult();
-                    if (connStatus)
-                    {
-                        _tk.Counters.DecreaseConnectionError();
-                    }
+                    await ConnectionUtils.StartConnection(_tk, droppedIndex, true);
                 });
             }
         }
