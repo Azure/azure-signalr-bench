@@ -163,7 +163,8 @@ namespace Bench.RpcSlave.Worker.Operations
             {
                 while (!cts.IsCancellationRequested)
                 {
-                    if (_tk.BrokenConnectionTracker.TryGetValue(ind, out var value) && value == -1)
+                    var chk = _tk.BrokenConnectionTracker.TryGetValue(ind, out var value);
+                    if (chk && value == -1)
                     {
                         _ = Task.Run(async() =>
                         {
@@ -186,6 +187,10 @@ namespace Bench.RpcSlave.Worker.Operations
                                 }
                             }
                         });
+                    }
+                    else
+                    {
+                        Util.Log($"Not sending {chk} {value}");
                     }
 
                     await Task.Delay(TimeSpan.FromSeconds(interval));
