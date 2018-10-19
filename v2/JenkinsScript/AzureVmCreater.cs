@@ -78,7 +78,7 @@ namespace JenkinsScript
                 portCheckTaskList.Add(Task.Run(() => WaitPortOpen(privateIp, 22)));
             }
 
-            if (Task.WaitAll(portCheckTaskList.ToArray(), TimeSpan.FromSeconds(120)))
+            if (Task.WaitAll(portCheckTaskList.ToArray(), TimeSpan.FromSeconds(300)))
             {
                 Util.Log("All ports are ready");
                 return true;
