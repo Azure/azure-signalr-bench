@@ -666,7 +666,6 @@ git checkout {branch}
         {
             var errCode = 0;
             var result = "";
-            var cmd = "";
 
             Util.Log($"modify service appsettings");
 

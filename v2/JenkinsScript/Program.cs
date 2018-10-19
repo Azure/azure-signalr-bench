@@ -438,7 +438,7 @@ namespace JenkinsScript
         {
             var timer = new Timer(interval.TotalMilliseconds);
             timer.AutoReset = true;
-            timer.Elapsed += async(sender, e) =>
+            timer.Elapsed += (sender, e) =>
             {
                 ShellHelper.CollectMachineStatistics(host, user, password, sshPort, path);
             };

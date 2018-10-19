@@ -214,8 +214,7 @@ namespace JenkinsScript
             return Task.Run(() => CreateAgentVmsCore());
         }
 
-        // Agent VMs do not have public IPs since we only access them through private IP
-        public void CreateAgentVmsCore(INetwork vNet = null, ISubnet subnet = null)
+        public async void CreateAgentVmsCore(INetwork vNet = null, ISubnet subnet = null)
         {
             var sw = new Stopwatch();
             sw.Start();
@@ -225,21 +224,23 @@ namespace JenkinsScript
             if (vNet == null) vNet = CreateVirtualNetwork(VNet, Location, GroupName, SubNet);
 
             List<ICreatable<IVirtualMachine>> creatableVirtualMachines = new List<ICreatable<IVirtualMachine>>();
-            /*
+
+            var publicIpTasks = await CreatePublicIPAddrListWithRetry(_azure, _agentConfig.SlaveVmCount, PublicIpBase, Location, GroupName, PublicDnsBase);
+
             var nsgTasks = new List<Task<INetworkSecurityGroup>>();
             for (var i = 0; i < _agentConfig.SlaveVmCount; i++)
             {
                 nsgTasks.Add(CreateNetworkSecurityGroupAsync(NsgBase, Location, GroupName, _agentConfig.SshPort, i));
             }
-            var nsgs = Task.WhenAll(nsgTasks).GetAwaiter().GetResult();
-            */
+            var nsgs = await Task.WhenAll(nsgTasks);
+
             var nicTasks = new List<Task<INetworkInterface>>();
             for (var i = 0; i < _agentConfig.SlaveVmCount; i++)
             {
                 nicTasks.Add(CreateNetworkInterfaceAsync(NicBase, Location, GroupName,
-                    subnet == null? SubNet : subnet.Name, vNet, null, null, i));
+                    subnet == null? SubNet : subnet.Name, vNet, publicIpTasks[i].Result, nsgs[i], i));
             }
-            var nics = Task.WhenAll(nicTasks).GetAwaiter().GetResult();
+            var nics = await Task.WhenAll(nicTasks);
 
             var vmTasks = new List<Task<IWithCreate>>();
             for (var i = 0; i < _agentConfig.SlaveVmCount; i++)
@@ -248,7 +249,7 @@ namespace JenkinsScript
                     _agentConfig.User, _agentConfig.Password, _agentConfig.Ssh, SlaveVmSize, nics[i], avSet, i));
             }
 
-            var vms = Task.WhenAll(vmTasks).GetAwaiter().GetResult();
+            var vms = await Task.WhenAll(vmTasks);
             creatableVirtualMachines.AddRange(vms);
 
             Console.WriteLine($"creating vms");
@@ -311,7 +312,8 @@ namespace JenkinsScript
                 .Create();
         }
 
-        public Task<IPublicIPAddress> CreatePublicIpAsync(string publicIpBase, Region location, string groupName, string publicDnsBase, int i = 0)
+        public Task<IPublicIPAddress> CreatePublicIpAsync(
+            string publicIpBase, Region location, string groupName, string publicDnsBase, int i = 0)
         {
             return Task.Run(async() =>
             {
@@ -337,6 +339,59 @@ namespace JenkinsScript
 
             });
 
+        }
+
+        private static async Task<List<Task<IPublicIPAddress>>> CreatePublicIPAddrListWithRetry(
+            IAzure azure, int count, string publicIpBase, Region region,
+            string resourceGroupName, string publicDnsBase, int maxTry = 3)
+        {
+            var publicIpTaskList = new List<Task<IPublicIPAddress>>();
+            var j = 0;
+            var i = 0;
+            while (j < maxTry)
+            {
+                try
+                {
+                    for (i = 0; i < count; i++)
+                    {
+                        // create public ip
+                        var publicIPAddress = azure.PublicIPAddresses.Define(publicIpBase + Convert.ToString(i) + "PubIP")
+                            .WithRegion(region)
+                            .WithExistingResourceGroup(resourceGroupName)
+                            .WithLeafDomainLabel(publicDnsBase + Convert.ToString(i))
+                            .WithDynamicIP()
+                            .CreateAsync();
+                        publicIpTaskList.Add(publicIPAddress);
+                    }
+                    await Task.WhenAll(publicIpTaskList.ToArray());
+                    return publicIpTaskList;
+                }
+                catch (Exception e)
+                {
+                    Util.Log(e.ToString());
+                    publicIpTaskList.Clear();
+
+                    var allPubIPs = azure.PublicIPAddresses.ListByResourceGroupAsync(resourceGroupName);
+                    await allPubIPs;
+                    var ids = new List<string>();
+                    var enumerator = allPubIPs.Result.GetEnumerator();
+                    while (enumerator.MoveNext())
+                    {
+                        ids.Add(enumerator.Current.Id);
+                    }
+                    await azure.PublicIPAddresses.DeleteByIdsAsync(ids);
+                    if (j + 1 < maxTry)
+                    {
+                        Util.Log($"Fail to create public IP for {e.Message} and will retry");
+                    }
+                    else
+                    {
+                        Util.Log($"Fail to create public IP for {e.Message} and retry has reached max limit, will return with failure");
+                    }
+                }
+                j++;
+            }
+            return null;
         }
 
         public Task<INetworkSecurityGroup> CreateNetworkSecurityGroupAsync(string nsgBase, Region location, string groupName, int sshPort, int i = 0)
