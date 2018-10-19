@@ -78,29 +78,12 @@ namespace Bench.RpcSlave.Worker.Operations
 
         private void TryReconnect()
         {
-            var brokenConnectionInds = _tk.BrokenConnectionTrackList;
-            var totalCount = _tk.ConnectionRange.End - _tk.ConnectionRange.Begin;
-            var droppedConn = from i in brokenConnectionInds where i != -1 select i;
-            var droppedCount = droppedConn.Count();
-            // Only try to reconnect for a small portion of dropped connections.
-            if (droppedCount > 0)
+            ConnectionUtils.TryReconnect(_tk, async (tk, index) =>
             {
-                Util.Log($"There are {droppedCount} connections dropped");
-                if (droppedCount <= 20 && droppedCount * 100 < totalCount)
-                {
-                    Util.Log($"Try to repair the {droppedCount} dropped connections");
-                    droppedConn.ForEach(async (droppedIndex) =>
-                    {
-                        var connection = ConnectionUtils.CreateSingleDirectConnection(_tk, _tk.ConnectionString, droppedIndex);
-                        _tk.Connections[droppedIndex] = connection;
-                        await ConnectionUtils.StartConnection(_tk, droppedIndex, true);
-                    });
-                }
-                else
-                {
-                    Util.Log($"We will not repair the dropped connections.");
-                }
-            }
+                var connection = ConnectionUtils.CreateSingleDirectConnection(tk, tk.ConnectionString, index);
+                tk.Connections[index] = connection;
+                await ConnectionUtils.StartConnection(tk, index, true);
+            });
         }
 
         public override async Task StartSendMsg()

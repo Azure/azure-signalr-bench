@@ -1,9 +1,11 @@
 ﻿using Bench.Common;
 using Bench.RpcSlave.Worker.Serverless;
+using CSharpx;
 using Microsoft.AspNetCore.Http.Connections;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.DependencyInjection;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -15,6 +17,28 @@ namespace Bench.RpcSlave.Worker.Rest
 {
     public class ConnectionUtils
     {
+        public static void TryReconnect(WorkerToolkit tk, Action<WorkerToolkit, int> reconnectFunc)
+        {
+            var totalCount = tk.ConnectionRange.End - tk.ConnectionRange.Begin;
+            var brokenConnectionInds = tk.BrokenConnectionTracker;
+            var droppedConn = brokenConnectionInds.Where(x => x.Value != -1).Select(x => x.Value);
+            var droppedCount = droppedConn.Count();
+            // Only try to reconnect for a small portion of dropped connections.
+            if (droppedCount > 0)
+            {
+                Util.Log($"There are {droppedCount} dropped connections");
+                if (droppedCount <= 20 && droppedCount * 100 < droppedCount)
+                {
+                    Util.Log($"Try to repair the {droppedCount} dropped connections");
+                    droppedConn.ForEach((droppedIndex) => reconnectFunc(tk, droppedIndex));
+                }
+                else
+                {
+                    Util.Log($"Too many dropped connections to handle");
+                }
+            }
+        }
+
         public static string ComposeRestUserId(int index)
         {
             return $"{ServiceUtils.ClientUserIdPrefix}{index}";
@@ -26,19 +50,26 @@ namespace Bench.RpcSlave.Worker.Rest
             var isNumeric = int.TryParse(userId.Substring(prefix), out int n);
             if (isNumeric)
             {
-                return tk.BrokenConnectionTrackList[n] != -1;
+                if (tk.BrokenConnectionTracker.TryGetValue(n, out var v))
+                {
+                    return v != -1;
+                }
             }
             return false;
         }
 
         public static void CreateBrokenConnectionTrackList(WorkerToolkit tk, int count)
         {
-            tk.BrokenConnectionTrackList = Enumerable.Repeat(-1, count).ToList();
+            tk.BrokenConnectionTracker =
+                new ConcurrentDictionary<int, int>(2, count); // It is supposed ok to consider 2 threads
         }
 
         public static void ResetBrokenConnectionTrackList(WorkerToolkit tk)
         {
-            tk.BrokenConnectionTrackList?.ForEach(i => i = -1);
+            foreach (var key in tk.BrokenConnectionTracker.Keys.ToList())
+            {
+                tk.BrokenConnectionTracker[key] = -1;
+            }
         }
 
         public static HubConnection CreateSingleDirectConnection(WorkerToolkit tk, string connectionString, int i)
@@ -116,7 +147,10 @@ namespace Bench.RpcSlave.Worker.Rest
                 {
                     var error = $"Connection closed early: {e}";
                     Util.Log(error);
-                    tk.BrokenConnectionTrackList[i] = i;
+                    if (tk.BrokenConnectionTracker.TryUpdate(i, i, -1))
+                    {
+                        tk.Counters.DropOneConnection();
+                    }
                 }
 
                 return Task.CompletedTask;
@@ -192,8 +226,10 @@ namespace Bench.RpcSlave.Worker.Rest
                 {
                     var error = $"Connection closed early: {e}";
                     Util.Log(error);
-                    tk.BrokenConnectionTrackList[i] = i;
-                    tk.Counters.DropOneConnection();
+                    if (tk.BrokenConnectionTracker.TryUpdate(i, i, -1))
+                    {
+                        tk.Counters.DropOneConnection();
+                    }
                 }
 
                 return Task.CompletedTask;

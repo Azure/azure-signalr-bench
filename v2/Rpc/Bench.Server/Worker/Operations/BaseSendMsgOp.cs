@@ -84,21 +84,12 @@ namespace Bench.RpcSlave.Worker.Operations
 
         private void TryReconnect()
         {
-            var brokenConnectionInds = _tk.BrokenConnectionTrackList;
-            var droppedConn = from i in brokenConnectionInds where i != -1 select i;
-            var droppedCount = droppedConn.Count();
-            // Only try to reconnect for a small portion of dropped connections.
-            if (droppedCount > 0 && droppedCount <= 20 &&
-                droppedCount * 100 < _tk.ConnectionRange.End - _tk.ConnectionRange.Begin)
+            ConnectionUtils.TryReconnect(_tk, async (tk, index) =>
             {
-                Util.Log($"Try to repair the {droppedCount} dropped connections");
-                droppedConn.ForEach(async (droppedIndex) =>
-                {
-                    var connection = ConnectionUtils.CreateSingleConnection(_tk, droppedIndex);
-                    _tk.Connections[droppedIndex] = connection;
-                    await ConnectionUtils.StartConnection(_tk, droppedIndex, true);
-                });
-            }
+                var connection = ConnectionUtils.CreateSingleConnection(tk, index);
+                _tk.Connections[index] = connection;
+                await ConnectionUtils.StartConnection(_tk, index, true);
+            });
         }
 
         public override async Task StartSendMsg()
@@ -135,7 +126,7 @@ namespace Bench.RpcSlave.Worker.Operations
                         {
                             tasks.Add(StartSendingMessageAsync(_tk.BenchmarkCellConfig.Scenario, _tk.Connections[i - _tk.ConnectionRange.Begin],
                                 i - _tk.ConnectionRange.Begin, messageBlob, id, _tk.Connections.Count,
-                                _tk.JobConfig.Duration, _tk.JobConfig.Interval, _tk.Counters, _tk.BrokenConnectionTrackList));
+                                _tk.JobConfig.Duration, _tk.JobConfig.Interval, _tk.Counters));
                         }
                     }
                 }
@@ -164,7 +155,7 @@ namespace Bench.RpcSlave.Worker.Operations
         }
 
         protected async Task StartSendingMessageAsync(string mode, HubConnection connection, int ind, byte[] messageBlob, string id,
-            int connectionCnt, int duration, int interval, Counter counter, List<int> brokenConnectionInds)
+            int connectionCnt, int duration, int interval, Counter counter)
         {
             var messageSize = (ulong) messageBlob.Length;
             await Task.Delay(StartTimeOffsetGenerator.Delay(TimeSpan.FromSeconds(interval)));
@@ -172,7 +163,7 @@ namespace Bench.RpcSlave.Worker.Operations
             {
                 while (!cts.IsCancellationRequested)
                 {
-                    if (brokenConnectionInds[ind] == -1)
+                    if (_tk.BrokenConnectionTracker.TryGetValue(ind, out var value) && value == -1)
                     {
                         _ = Task.Run(async() =>
                         {
@@ -187,9 +178,12 @@ namespace Bench.RpcSlave.Worker.Operations
                             catch (Exception ex)
                             {
                                 Util.Log($"exception in sending message of {ind}th connection: {ex}");
-                                counter.IncreaseConnectionError();
-                                counter.UpdateConnectionSuccess((ulong) connectionCnt);
-                                // counter.IncreseNotSentFromClientMsg();
+                                // sometimes the connection.Close will not be invoked,
+                                // we have to set the flag here to avoid missing the chance.
+                                if (_tk.BrokenConnectionTracker.TryUpdate(ind, ind, -1))
+                                {
+                                    _tk.Counters.DropOneConnection();
+                                }
                             }
                         });
                     }
@@ -200,7 +194,7 @@ namespace Bench.RpcSlave.Worker.Operations
         }
 
         protected async Task StartJoinLeaveGroupAsync(List<HubConnection> connection, int ind, List<string> groupNameMatrix,
-            int connectionCnt, int duration, int interval, Counter counter, List<int> brokenConnectionInds)
+            int connectionCnt, int duration, int interval, Counter counter)
         {
             var isJoin = true;
             await Task.Delay(StartTimeOffsetGenerator.Delay(TimeSpan.FromSeconds(interval)));

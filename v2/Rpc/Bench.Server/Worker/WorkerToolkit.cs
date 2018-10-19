@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Net.Http;
 using Bench.Common;
@@ -39,6 +40,6 @@ namespace Bench.RpcSlave.Worker
         // accumulate "upXX" step's "XX" to help record "sendingStep"
         public ulong CurSending { get; set; }
 
-        public List<int> BrokenConnectionTrackList { get; set; }
+        public ConcurrentDictionary<int, int> BrokenConnectionTracker { get; set; }
     }
 }
