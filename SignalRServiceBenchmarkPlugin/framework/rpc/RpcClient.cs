@@ -15,6 +15,9 @@ namespace Rpc.Service
     {
         private RpcService.RpcServiceClient _client;
 
+        public Func<IDictionary<string, object>, string> Serialize { get; set; } = null;
+        public Func<string, IDictionary<string, object>> Deserialize { get; set; } = null;
+
         public async Task<IDictionary<string, object>> QueryAsync(IDictionary<string, object> data)
         {
             if (!CheckTypeAndMethod(data))
@@ -25,9 +28,9 @@ namespace Rpc.Service
             }
             try
             {
-                var result = await _client.QueryAsync(new Data { Json = RpcUtil.Serialize(data) }).ResponseAsync;
+                var result = await _client.QueryAsync(new Data { Json = Serialize(data) }).ResponseAsync;
                 if (!result.Success) throw new Exception(result.Message);
-                var returnData = RpcUtil.Deserialize(result.Json);
+                var returnData = Deserialize(result.Json);
                 return returnData;
             }
             catch (Exception ex)
@@ -46,7 +49,7 @@ namespace Rpc.Service
                 Log.Error(message);
                 throw new Exception(message);
             }
-            return _client.UpdateAsync(new Data { Json = RpcUtil.Serialize(data) }).ResponseAsync;
+            return _client.UpdateAsync(new Data { Json = Serialize(data) }).ResponseAsync;
         }
 
         private static Channel CreateRpcChannel(string hostname, int port)
@@ -93,6 +96,12 @@ namespace Rpc.Service
         {
             if (data.ContainsKey(Constants.Type) && data.ContainsKey(Constants.Method)) return true;
             return false;
+        }
+
+        public void InstallSerializerAndDeserializer(Func<IDictionary<string, object>, string> serialize, Func<string, IDictionary<string, object>> deserialize)
+        {
+            Serialize = serialize;
+            Deserialize = deserialize;
         }
     }
 }

@@ -37,5 +37,24 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             ISlaveMethod methodInstance = (ISlaveMethod)Activator.CreateInstance(type);
             return methodInstance;
         }
+
+        public Dictionary<string, object> Deserialize(string input)
+        {
+            try
+            {
+                var parameters = JsonConvert.DeserializeObject<Dictionary<string, object>>(input);
+                return parameters;
+            }
+            catch (Exception ex)
+            {
+                return null;
+            }
+        }
+
+        public string Serialize(IDictionary<string, object> data)
+        {
+            var json = JsonConvert.SerializeObject(data);
+            return json;
+        }
     }
 }

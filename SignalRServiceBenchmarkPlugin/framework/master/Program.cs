@@ -39,8 +39,19 @@ namespace Rpc.Master
             // Install plugin in master and slaves
             await InstallPlugin(clients, benchmarkConfiguration.ModuleName);
 
+            // Install serializer and deserializer from plugin
+            InstallSerializerAndDeserializer(_plugin, clients);
+
             // Process pipeline
             await ProcessPipeline(benchmarkConfiguration.Pipeline, clients);
+        }
+
+        private static void InstallSerializerAndDeserializer(IPlugin plugin, IList<IRpcClient> clients)
+        {
+            foreach(var client in clients)
+            {
+                client.InstallSerializerAndDeserializer(_plugin.Serialize, _plugin.Deserialize);
+            }
         }
 
         private static IList<IRpcClient> CreateRpcClients(IList<string> slaveList)

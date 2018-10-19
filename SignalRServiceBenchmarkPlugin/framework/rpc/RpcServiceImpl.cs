@@ -22,7 +22,7 @@ namespace Rpc.Service
 
         public override async Task<Result> Query(Data data, ServerCallContext context)
         {
-            var parameters = RpcUtil.Deserialize(data.Json);
+            var parameters = _plugin.Deserialize(data.Json);
 
             // Display configurations
             var configuration = (from entry in parameters select $"  {entry.Key} : {entry.Value}").Aggregate((a, b) => a + Environment.NewLine + b);
@@ -38,7 +38,7 @@ namespace Rpc.Service
             try
             {
                 var result = await methodInstance.Do(parameters, _plugin.PluginSlaveParamaters);
-                return new Result { Success = true, Message = "", Json = RpcUtil.Serialize(result)};
+                return new Result { Success = true, Message = "", Json = _plugin.Serialize(result)};
             }
             catch (Exception ex)
             {
