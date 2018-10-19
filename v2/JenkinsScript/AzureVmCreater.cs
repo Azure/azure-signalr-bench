@@ -267,8 +267,16 @@ namespace JenkinsScript
 
             List<ICreatable<IVirtualMachine>> creatableVirtualMachines = new List<ICreatable<IVirtualMachine>>();
 
+            /*
             var publicIpTasks = CreatePublicIPAddrListWithRetry(_azure, _agentConfig.SlaveVmCount,
                 PublicIpBase, Location, GroupName, PublicDnsBase).GetAwaiter().GetResult();
+            */
+            var publicIpTasks = new List<Task<IPublicIPAddress>>();
+            for (var i = 0; i < _agentConfig.SlaveVmCount; i++)
+            {
+                publicIpTasks.Add(CreatePublicIpAsync(PublicIpBase, Location, GroupName, PublicDnsBase, i));
+            }
+            var publicIps = Task.WhenAll(publicIpTasks).GetAwaiter().GetResult();
 
             var nsgTasks = new List<Task<INetworkSecurityGroup>>();
             for (var i = 0; i < _agentConfig.SlaveVmCount; i++)
@@ -281,7 +289,7 @@ namespace JenkinsScript
             for (var i = 0; i < _agentConfig.SlaveVmCount; i++)
             {
                 nicTasks.Add(CreateNetworkInterfaceAsync(NicBase, Location, GroupName,
-                    subnet == null? SubNet : subnet.Name, vNet, publicIpTasks[i].Result, nsgs[i], i));
+                    subnet == null? SubNet : subnet.Name, vNet, publicIps[i], nsgs[i], i));
             }
             var nics = Task.WhenAll(nicTasks).GetAwaiter().GetResult();
 
