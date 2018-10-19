@@ -25,6 +25,8 @@ namespace Bench.RpcSlave.Worker.Operations
             Util.Log($"server url: {_tk.JobConfig.ServerUrl}; conn: {_tk.JobConfig.Connections};  _tk.BenchmarkCellConfig.TransportType: { _tk.BenchmarkCellConfig.TransportType}; _tk.BenchmarkCellConfig.HubProtocol: {_tk.BenchmarkCellConfig.HubProtocol}");
             _tk.State = Stat.Types.State.HubconnUnconnected;
             _tk.ConnectionString = _tk.JobConfig.ServerUrl;
+            var count = _tk.ConnectionRange.End - _tk.ConnectionRange.Begin;
+            ConnectionUtils.CreateBrokenConnectionTrackList(_tk, count);
             _tk.Connections = Create(_tk.ConnectionRange.Begin, _tk.ConnectionRange.End,
                 _tk.ConnectionString, _tk.BenchmarkCellConfig.TransportType,
                 _tk.BenchmarkCellConfig.HubProtocol);
