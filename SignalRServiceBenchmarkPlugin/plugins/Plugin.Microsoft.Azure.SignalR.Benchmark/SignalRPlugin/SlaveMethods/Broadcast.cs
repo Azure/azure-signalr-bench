@@ -12,27 +12,26 @@ using System.Threading.Tasks;
 
 namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
 {
-    public class Echo : BaseContinuousSendMethod, ISlaveMethod
+    public class Broadcast : BaseContinuousSendMethod, ISlaveMethod
     {
-        private StatisticsCollector _statisticsCollector;
-
+        private StatisticsCollector _statistics;
         public async Task<IDictionary<string, object>> Do(IDictionary<string, object> stepParameters, IDictionary<string, object> pluginParameters)
         {
             try
             {
-                Log.Information($"Echo...");
+                Log.Information($"Broadcast...");
 
                 // Get parameters
                 stepParameters.TryGetTypedValue(SignalRConstants.Type, out string type, Convert.ToString);
                 stepParameters.TryGetTypedValue(SignalRConstants.RemainderBegin, out int remainderBegin, Convert.ToInt32);
                 stepParameters.TryGetTypedValue(SignalRConstants.RemainderEnd, out int remainderEnd, Convert.ToInt32);
                 stepParameters.TryGetTypedValue(SignalRConstants.Modulo, out int modulo, Convert.ToInt32);
-                stepParameters.TryGetTypedValue(SignalRConstants.Duration, out long duration, Convert.ToInt64);
-                stepParameters.TryGetTypedValue(SignalRConstants.Interval, out long interval, Convert.ToInt64);
+                stepParameters.TryGetTypedValue(SignalRConstants.Duration, out double duration, Convert.ToDouble);
+                stepParameters.TryGetTypedValue(SignalRConstants.Interval, out double interval, Convert.ToDouble);
                 stepParameters.TryGetTypedValue(SignalRConstants.MessageSize, out int messageSize, Convert.ToInt32);
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionStore}.{type}", out IList<HubConnection> connections, (obj) => (IList<HubConnection>)obj);
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionOffset}.{type}", out int offset, Convert.ToInt32);
-                pluginParameters.TryGetTypedValue($"{SignalRConstants.StatisticsStore}.{type}", out _statisticsCollector, obj => (StatisticsCollector) obj);
+                pluginParameters.TryGetTypedValue($"{SignalRConstants.StatisticsStore}.{type}", out _statistics, obj => (StatisticsCollector) obj);
 
                 // Set callback
                 SetCallback(connections);
@@ -46,15 +45,15 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 // Send messages
                 await Task.WhenAll(from i in Enumerable.Range(0, connections.Count)
                                     where (i + offset) % modulo >= remainderBegin && (i + offset) % modulo < remainderEnd
-                                    select ContinuousSend(connections[i], data, SendEcho,
-                                            TimeSpan.FromMilliseconds(duration), TimeSpan.FromMilliseconds(interval),
+                                    select ContinuousSend(connections[i], data, SendBroadcast,
+                                            TimeSpan.FromMilliseconds(duration), TimeSpan.FromMilliseconds(interval), 
                                             TimeSpan.FromMilliseconds(1), TimeSpan.FromMilliseconds(interval)));
 
                 return null;
             }
             catch (Exception ex)
             {
-                var message = $"Fail to echo: {ex}";
+                var message = $"Fail to broadcast: {ex}";
                 Log.Error(message);
                 throw;
             }
@@ -64,17 +63,17 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
         {
             foreach (var connection in connections)
             {
-                connection.On(SignalRConstants.EchoCallbackName, (IDictionary<string, object> data) =>
+                connection.On(SignalRConstants.BroadcastCallbackName, (IDictionary<string, object> data) =>
                 {
                     var receiveTimestamp = Util.Timestamp();
                     data.TryGetTypedValue(SignalRConstants.Timestamp, out long sendTimestamp, Convert.ToInt64);
                     var latency = receiveTimestamp - sendTimestamp;
-                    _statisticsCollector.RecordLatency(latency);
+                    _statistics.RecordLatency(latency);
                 });
             }
         }
 
-        private async Task SendEcho(HubConnection connection, IDictionary<string, object> data)
+        private async Task SendBroadcast(HubConnection connection, IDictionary<string, object> data)
         {
             try
             {
@@ -89,14 +88,14 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 };
 
                 // Send message
-                await connection.SendAsync(SignalRConstants.EchoCallbackName, payload);
+                await connection.SendAsync(SignalRConstants.BroadcastCallbackName, payload);
 
                 // Update statistics
-                _statisticsCollector.IncreaseSentMessage();
+                _statistics.IncreaseSentMessage();
             }
             catch (Exception ex)
             {
-                var message = $"Error in Echo: {ex}";
+                var message = $"Error in broadcast: {ex}";
                 Log.Error(message);
                 throw;
             }

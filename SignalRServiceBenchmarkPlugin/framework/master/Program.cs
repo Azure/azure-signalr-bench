@@ -27,7 +27,7 @@ namespace Rpc.Master
             Util.CreateLogger(argsOption.LogDirectory, argsOption.LogName, argsOption.LogTarget);
 
             // Create rpc clients
-            var clients = CreateRpcClients(argsOption.SlaveList, argsOption.RpcPort);
+            var clients = CreateRpcClients(argsOption.SlaveList);
 
             // Check rpc connections
             await WaitRpcConnectSuccess(clients);
@@ -43,15 +43,16 @@ namespace Rpc.Master
             await ProcessPipeline(benchmarkConfiguration.Pipeline, clients);
         }
 
-        private static IList<IRpcClient> CreateRpcClients(IList<string> slaveList, int rpcPort)
+        private static IList<IRpcClient> CreateRpcClients(IList<string> slaveList)
         {
-            var clients = new List<IRpcClient>();
-            foreach(var slave in slaveList)
-            {
-                var client = new RpcClient().Create(slave, rpcPort);
-                clients.Add(client);
-            }
-            return clients;
+            var hostnamePortList = (from slave in slaveList
+                                    select slave.Split(':') into parts
+                                    select (Hostname: parts[0], Port: Convert.ToInt32(parts[1])));
+
+            var clients = from item in hostnamePortList
+                          select new RpcClient().Create(item.Hostname, item.Port);
+
+            return clients.ToList();
         }
 
         private static async Task InstallPlugin(IList<IRpcClient> clients, string moduleName)
@@ -85,12 +86,12 @@ namespace Rpc.Master
         {
             foreach(var parallelStep in pipeline)
             {
+                var tasks = new List<Task>();
                 foreach(var step in parallelStep)
                 {
-                    var tasks = new List<Task>();
                     tasks.Add(_stepHandler.HandleStep(step, clients));
-                    await Task.WhenAll(tasks);
                 }
+                await Task.WhenAll(tasks);
             }
         }
 

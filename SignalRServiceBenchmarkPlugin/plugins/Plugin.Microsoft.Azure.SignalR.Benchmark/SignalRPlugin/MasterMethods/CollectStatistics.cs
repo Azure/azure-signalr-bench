@@ -28,7 +28,11 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
                 var results = await Task.WhenAll(from client in clients
                                                  select client.QueryAsync(stepParameters));
 
-                foreach (var result in results) Log.Information($"statistics{Environment.NewLine}{result.GetContents()}");
+                // DEBUG
+                for (var i = 0; i < results.Count(); i++)
+                {
+                    Log.Information($"Type: {type} Client: {i}th statistics{Environment.NewLine}{results[i].GetContents()}");
+                }
             };
             timer.Start();
 

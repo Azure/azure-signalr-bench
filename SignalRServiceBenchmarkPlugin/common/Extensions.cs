@@ -50,5 +50,17 @@ namespace Common
             var list = dict.Select(entry => $"{entry.Key} : {entry.Value}");
             return string.Join(Environment.NewLine, list);
         }
+
+        public static void Shuffle<T>(this IList<T> list)
+        {
+            var rand = new Random();
+            for (var i = list.Count - 1; i > 0; i--)
+            {
+                int k = rand.Next(i + 1); 
+                T value = list[k];
+                list[k] = list[i];
+                list[i] = value;
+            }
+        }
     }
 }
