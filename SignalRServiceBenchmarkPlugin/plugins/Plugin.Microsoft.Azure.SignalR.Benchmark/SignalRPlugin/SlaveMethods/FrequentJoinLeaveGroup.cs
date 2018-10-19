@@ -12,15 +12,16 @@ using System.Threading.Tasks;
 
 namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
 {
-    public class SendToGroup : BaseContinuousSendMethod, ISlaveMethod
+    public class FrequentJoinLeaveGroup : BaseContinuousSendMethod, ISlaveMethod
     {
         private StatisticsCollector _statisticsCollector;
+        private static readonly string _isIngroup = "IsInGroup"; 
 
         public async Task<IDictionary<string, object>> Do(IDictionary<string, object> stepParameters, IDictionary<string, object> pluginParameters)
         {
             try
             {
-                Log.Information($"Send to group...");
+                Log.Information($"Frequently join and leave group...");
 
                 // Get parameters
                 stepParameters.TryGetTypedValue(SignalRConstants.Type, out string type, Convert.ToString);
@@ -58,11 +59,29 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                                    Data = new Dictionary<string, object>
                                    {
                                        { SignalRConstants.MessageBlob, messageBlob }, // message payload
-                                       { SignalRConstants.GroupName, groupName}
+                                       { SignalRConstants.GroupName, groupName},
+                                       { _isIngroup, false}
                                    }
                                };
 
-                Func<int, int, int, int, bool> IsSending = (index, modulo, beg, end) => (index % modulo) >= beg && (index % modulo) < end;
+                Func<int, int, int, int, bool> isSending = (index, modulo, beg, end) => (index % modulo) >= beg && (index % modulo) < end;
+
+                Func<HubConnection, IDictionary<string, object>, bool, bool, Task> generateTask = (connection, data, isSendGroupLevel, isSendGroupInternal) =>
+                {
+                    if (isSendGroupLevel && isSendGroupInternal)
+                    {
+                        return ContinuousSend(connection, data, SendGroup,
+                                        TimeSpan.FromMilliseconds(duration), TimeSpan.FromMilliseconds(interval),
+                                        TimeSpan.FromMilliseconds(1), TimeSpan.FromMilliseconds(interval));
+                    }
+                    else if (isSendGroupLevel && !isSendGroupInternal)
+                    {
+                        return ContinuousSend(connection, data, JoinLeaveGroup,
+                                        TimeSpan.FromMilliseconds(duration), TimeSpan.FromMilliseconds(interval),
+                                        TimeSpan.FromMilliseconds(1), TimeSpan.FromMilliseconds(interval));
+                    }
+                    return Task.CompletedTask;
+                };
 
                 // Send messages
                 await Task.WhenAll(from package in packages
@@ -72,17 +91,15 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                                    let indexInGroup = connectionIndex / groupCount
                                    let connection = package.Connection
                                    let data = package.Data
-                                   where IsSending(indexInGroup, GroupInternalModulo, GroupInternalRemainderBegin, GroupInternalRemainderEnd) &&
-                                         IsSending(groupIndex, groupCount, GroupLevelRemainderBegin, GroupLevelRemainderEnd)
-                                   select ContinuousSend(connection, data, SendGroup,
-                                        TimeSpan.FromMilliseconds(duration), TimeSpan.FromMilliseconds(interval),
-                                        TimeSpan.FromMilliseconds(1), TimeSpan.FromMilliseconds(interval)));
+                                   let isSendGroupLevel = isSending(groupIndex, groupCount, GroupLevelRemainderBegin, GroupLevelRemainderEnd)
+                                   let isSendGroupInternal = isSending(indexInGroup, GroupInternalModulo, GroupInternalRemainderBegin, GroupInternalRemainderEnd)
+                                   select generateTask(connection, data, isSendGroupLevel, isSendGroupInternal));
 
                 return null;
             }
             catch (Exception ex)
             {
-                var message = $"Fail to send to group: {ex}";
+                var message = $"Fail to frequently join and leave group: {ex}";
                 Log.Error(message);
                 throw;
             }
@@ -92,6 +109,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
         {
             foreach (var connection in connections)
             {
+                // Callback of sending message
                 connection.On(SignalRConstants.SendToGroupCallbackName, (IDictionary<string, object> data) =>
                 {
                     var receiveTimestamp = Util.Timestamp();
@@ -99,6 +117,20 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                     var latency = receiveTimestamp - sendTimestamp;
                     _statisticsCollector.RecordLatency(latency);
                 });
+
+                // Callback of leaving group
+                connection.On(SignalRConstants.LeaveGroupCallbackName, () =>
+                {
+                    _statisticsCollector.IncreaseLeaveGroupSuccess();
+                });
+
+                // Callback of joining group
+                connection.On(SignalRConstants.JoinGroupCallbackName, () =>
+                {
+                    _statisticsCollector.IncreaseJoinGroupSuccess();
+                });
+
+
             }
         }
 
@@ -130,6 +162,43 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 Log.Error(message);
                 throw;
             }
+        }
+
+        private async Task JoinLeaveGroup(HubConnection connection, IDictionary<string, object> data)
+        {
+            // Extract data
+            data.TryGetTypedValue(SignalRConstants.GroupName, out string groupName, Convert.ToString);
+            data.TryGetTypedValue(_isIngroup, out bool isInGroup, Convert.ToBoolean);
+
+            // Join or leave groups
+
+            // DEBUG
+            Log.Warning($"is in group: {isInGroup}");
+
+            if (isInGroup)
+            {
+                try
+                {
+                    await connection.SendAsync(SignalRConstants.LeaveGroupCallbackName, groupName);
+                }
+                catch
+                {
+                    _statisticsCollector.IncreaseLeaveGroupFail();
+                }
+            }
+            else
+            {
+                try
+                {
+                    await connection.SendAsync(SignalRConstants.JoinGroupCallbackName, groupName);
+                }
+                catch
+                {
+                    _statisticsCollector.IncreaseJoinGroupFail();
+                }
+            }
+
+            data[_isIngroup] = !isInGroup;
         }
     }
 }
