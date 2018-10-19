@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
 {
-    public class JoinGroup : ISlaveMethod
+    public class LeaveGroup : ISlaveMethod
     {
         private StatisticsCollector _statisticsCollector;
 
@@ -19,7 +19,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
         {
             try
             {
-                Log.Information($"Join groups...");
+                Log.Information($"Leave groups...");
 
                 // Get parameters
                 stepParameters.TryGetTypedValue(SignalRConstants.Type, out string type, Convert.ToString);
@@ -38,13 +38,13 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
 
                 // Join group
                 await Task.WhenAll(from i in Enumerable.Range(0, connections.Count)
-                                   select JoinIntoGroup(connections[i], SignalRUtils.GroupName(type, (i + offset) % groupCount)));
+                                   select LeaveFromGroup(connections[i], SignalRUtils.GroupName(type, (i + offset) % groupCount)));
 
                 return null;
             }
             catch (Exception ex)
             {
-                var message = $"Fail to join group: {ex}";
+                var message = $"Fail to leave group: {ex}";
                 Log.Error(message);
                 throw;
             }
@@ -54,22 +54,22 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
         {
             foreach (var connection in connections)
             {
-                connection.On(SignalRConstants.JoinGroupCallbackName, () =>
+                connection.On(SignalRConstants.LeaveGroupCallbackName, () =>
                 {
-                    _statisticsCollector.IncreaseJoinGroupSuccess();
+                    _statisticsCollector.IncreaseLeaveGroupSuccess();
                 });
             }
         }
 
-        private async Task JoinIntoGroup(HubConnection connection, string groupName)
+        private async Task LeaveFromGroup(HubConnection connection, string groupName)
         {
             try
             {
-                await connection.SendAsync(SignalRConstants.JoinGroupCallbackName, groupName);
+                await connection.SendAsync(SignalRConstants.LeaveGroupCallbackName, groupName);
             }
             catch
             {
-                _statisticsCollector.IncreaseJoinGroupFail();
+                _statisticsCollector.IncreaseLeaveGroupFail();
             }
         }
 
