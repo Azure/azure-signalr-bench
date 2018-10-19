@@ -78,7 +78,7 @@ namespace JenkinsScript
                 portCheckTaskList.Add(Task.Run(() => WaitPortOpen(privateIp, 22)));
             }
 
-            if (Task.WaitAll(portCheckTaskList.ToArray(), TimeSpan.FromSeconds(120)))
+            if (Task.WaitAll(portCheckTaskList.ToArray(), TimeSpan.FromSeconds(300)))
             {
                 Util.Log("All ports are ready");
                 return true;
@@ -256,7 +256,7 @@ namespace JenkinsScript
             return Task.Run(() => CreateAgentVmsCore());
         }
 
-        public async void CreateAgentVmsCore(INetwork vNet = null, ISubnet subnet = null)
+        public void CreateAgentVmsCore(INetwork vNet = null, ISubnet subnet = null)
         {
             var sw = new Stopwatch();
             sw.Start();
@@ -267,22 +267,31 @@ namespace JenkinsScript
 
             List<ICreatable<IVirtualMachine>> creatableVirtualMachines = new List<ICreatable<IVirtualMachine>>();
 
-            var publicIpTasks = await CreatePublicIPAddrListWithRetry(_azure, _agentConfig.SlaveVmCount, PublicIpBase, Location, GroupName, PublicDnsBase);
+            /*
+            var publicIpTasks = CreatePublicIPAddrListWithRetry(_azure, _agentConfig.SlaveVmCount,
+                PublicIpBase, Location, GroupName, PublicDnsBase).GetAwaiter().GetResult();
+            */
+            var publicIpTasks = new List<Task<IPublicIPAddress>>();
+            for (var i = 0; i < _agentConfig.SlaveVmCount; i++)
+            {
+                publicIpTasks.Add(CreatePublicIpAsync(PublicIpBase, Location, GroupName, PublicDnsBase, i));
+            }
+            var publicIps = Task.WhenAll(publicIpTasks).GetAwaiter().GetResult();
 
             var nsgTasks = new List<Task<INetworkSecurityGroup>>();
             for (var i = 0; i < _agentConfig.SlaveVmCount; i++)
             {
                 nsgTasks.Add(CreateNetworkSecurityGroupAsync(NsgBase, Location, GroupName, _agentConfig.SshPort, i));
             }
-            var nsgs = await Task.WhenAll(nsgTasks);
+            var nsgs = Task.WhenAll(nsgTasks).GetAwaiter().GetResult();
 
             var nicTasks = new List<Task<INetworkInterface>>();
             for (var i = 0; i < _agentConfig.SlaveVmCount; i++)
             {
                 nicTasks.Add(CreateNetworkInterfaceAsync(NicBase, Location, GroupName,
-                    subnet == null? SubNet : subnet.Name, vNet, publicIpTasks[i].Result, nsgs[i], i));
+                    subnet == null? SubNet : subnet.Name, vNet, publicIps[i], nsgs[i], i));
             }
-            var nics = await Task.WhenAll(nicTasks);
+            var nics = Task.WhenAll(nicTasks).GetAwaiter().GetResult();
 
             var vmTasks = new List<Task<IWithCreate>>();
             for (var i = 0; i < _agentConfig.SlaveVmCount; i++)
@@ -291,7 +300,7 @@ namespace JenkinsScript
                     _agentConfig.User, _agentConfig.Password, _agentConfig.Ssh, SlaveVmSize, nics[i], avSet, i));
             }
 
-            var vms = await Task.WhenAll(vmTasks);
+            var vms = Task.WhenAll(vmTasks).GetAwaiter().GetResult();
             creatableVirtualMachines.AddRange(vms);
 
             Console.WriteLine($"creating vms");
@@ -1071,7 +1080,7 @@ namespace JenkinsScript
             }
             catch (Exception e)
             {
-                Util.Log($"Fail to connect to {ip}:{port} for " + e);
+                Util.Log($"{ip}:{port} is unaccessible for {e.Message}");
                 return false;
             }
         }

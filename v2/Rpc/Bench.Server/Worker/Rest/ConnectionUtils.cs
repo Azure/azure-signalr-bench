@@ -27,7 +27,7 @@ namespace Bench.RpcSlave.Worker.Rest
             if (droppedCount > 0)
             {
                 Util.Log($"There are {droppedCount} dropped connections");
-                if (droppedCount <= 20 && droppedCount * 100 < droppedCount)
+                if (droppedCount <= 20 && droppedCount * 100 < totalCount)
                 {
                     Util.Log($"Try to repair the {droppedCount} dropped connections");
                     droppedConn.ForEach((droppedIndex) => reconnectFunc(tk, droppedIndex));
