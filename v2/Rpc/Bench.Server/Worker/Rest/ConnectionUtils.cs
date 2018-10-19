@@ -60,8 +60,11 @@ namespace Bench.RpcSlave.Worker.Rest
 
         public static void CreateBrokenConnectionTrackList(WorkerToolkit tk, int count)
         {
-            tk.BrokenConnectionTracker =
-                new ConcurrentDictionary<int, int>(2, count); // It is supposed ok to consider 2 threads
+            tk.BrokenConnectionTracker = new ConcurrentDictionary<int, int>();
+            for (var i = 0; i < count; i++)
+            {
+                tk.BrokenConnectionTracker[i] = -1;
+            }
         }
 
         public static void ResetBrokenConnectionTrackList(WorkerToolkit tk)
