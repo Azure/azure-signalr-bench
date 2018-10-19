@@ -48,5 +48,15 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods.Statistics
         {
             _statistics.AddOrUpdate(SignalRConstants.StatisticsGroupJoinFail, 1, (k, v) => v + 1);
         }
+
+        public void IncreaseLeaveGroupSuccess()
+        {
+            _statistics.AddOrUpdate(SignalRConstants.StatisticsGroupLeaveSuccess, 1, (k, v) => v + 1);
+        }
+
+        public void IncreaseLeaveGroupFail()
+        {
+            _statistics.AddOrUpdate(SignalRConstants.StatisticsGroupLeaveFail, 1, (k, v) => v + 1);
+        }
     }
 }
