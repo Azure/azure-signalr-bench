@@ -1,4 +1,5 @@
 ﻿using Common;
+using Newtonsoft.Json.Linq;
 using Plugin.Base;
 using Rpc.Service;
 using Serilog;
@@ -23,7 +24,12 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
             var results = await Task.WhenAll(from client in clients select client.QueryAsync(stepParameters));
 
             // Collect all connection Ids
-            var allConnectionIds = results.SelectMany(dict => dict.Keys).ToList();
+            var allConnectionIds = new List<string>();
+            foreach (var result in results)
+            {
+                result.TryGetTypedValue(SignalRConstants.ConnectionId, out List<string> connectionIds, obj => ((JArray)obj).ToObject<List<string>>());
+                allConnectionIds.AddRange(connectionIds);
+            }
 
             // Store connection Ids
             pluginParameters[$"{SignalRConstants.ConnectionIdStore}.{type}"] = allConnectionIds;

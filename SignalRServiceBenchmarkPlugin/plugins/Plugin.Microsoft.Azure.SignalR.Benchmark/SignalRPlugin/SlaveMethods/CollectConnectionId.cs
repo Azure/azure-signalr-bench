@@ -38,7 +38,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
 
         private async Task<IDictionary<string, object>> GetConnectionIds(IList<HubConnection> connections)
         {
-            var connectionIds = new HashSet<string>();
+            var connectionIds = new List<string>();
 
             // Set callback
             foreach (var connection in connections)
@@ -53,7 +53,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
             // Query connection Id
             foreach (var connection in connections) await connection.InvokeAsync(SignalRConstants.GetConnectionIdCallback);
 
-            return connectionIds.ToDictionary(entry => entry, entry => default(object));
+            return new Dictionary<string, object> { { SignalRConstants.ConnectionId, connectionIds} };
         }
 
 
