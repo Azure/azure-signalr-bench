@@ -21,7 +21,6 @@ namespace Bench.RpcSlave.Worker.Operations
         protected IStartTimeOffsetGenerator StartTimeOffsetGenerator;
         protected List<int> _sentMessages;
         protected WorkerToolkit _tk;
-        protected List<int> _brokenConnectionInds;
 
         public async Task Do(WorkerToolkit tk)
         {
@@ -54,7 +53,7 @@ namespace Bench.RpcSlave.Worker.Operations
             StartTimeOffsetGenerator = new RandomGenerator(new LocalFileSaver());
 
             _sentMessages = Enumerable.Repeat(0, _tk.JobConfig.Connections).ToList();
-            _brokenConnectionInds = Enumerable.Repeat(-1, _tk.JobConfig.Connections).ToList();
+            ConnectionUtils.ResetBrokenConnectionTrackList(_tk);
             if (!_tk.Init.ContainsKey(_tk.BenchmarkCellConfig.Step))
             {
                 SetCallbacks();
@@ -85,7 +84,8 @@ namespace Bench.RpcSlave.Worker.Operations
 
         private void TryReconnect()
         {
-            var droppedConn = from i in _brokenConnectionInds where i != -1 select i;
+            var brokenConnectionInds = _tk.BrokenConnectionTrackList;
+            var droppedConn = from i in brokenConnectionInds where i != -1 select i;
             var droppedCount = droppedConn.Count();
             // Only try to reconnect for a small portion of dropped connections.
             if (droppedCount > 0 && droppedCount <= 20 &&
@@ -138,7 +138,8 @@ namespace Bench.RpcSlave.Worker.Operations
                         foreach (var id in ids)
                         {
                             tasks.Add(StartSendingMessageAsync(_tk.BenchmarkCellConfig.Scenario, _tk.Connections[i - _tk.ConnectionRange.Begin],
-                                i - _tk.ConnectionRange.Begin, messageBlob, id, _tk.Connections.Count, _tk.JobConfig.Duration, _tk.JobConfig.Interval, _tk.Counters, _brokenConnectionInds));
+                                i - _tk.ConnectionRange.Begin, messageBlob, id, _tk.Connections.Count,
+                                _tk.JobConfig.Duration, _tk.JobConfig.Interval, _tk.Counters, _tk.BrokenConnectionTrackList));
                         }
                     }
                 }
@@ -193,7 +194,6 @@ namespace Bench.RpcSlave.Worker.Operations
                                 counter.IncreaseConnectionError();
                                 counter.UpdateConnectionSuccess((ulong) connectionCnt);
                                 // counter.IncreseNotSentFromClientMsg();
-                                brokenConnectionInds[ind] = ind;
                             }
                         });
                     }

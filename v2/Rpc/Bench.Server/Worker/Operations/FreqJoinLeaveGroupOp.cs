@@ -51,7 +51,7 @@ namespace Bench.RpcSlave.Worker.Operations
                             {
                                 tasks.Add(StartSendingMessageAsync("SendGroup", _tk.Connections[i - _tk.ConnectionRange.Begin],
                                     i - _tk.ConnectionRange.Begin, messageBlob, ids[j], _tk.Connections.Count,
-                                    _tk.JobConfig.Duration, _tk.JobConfig.Interval, _tk.Counters, _brokenConnectionInds));
+                                    _tk.JobConfig.Duration, _tk.JobConfig.Interval, _tk.Counters, _tk.BrokenConnectionTrackList));
                             }
                         }
                     }
@@ -62,7 +62,7 @@ namespace Bench.RpcSlave.Worker.Operations
 
                     tasks.Add(StartJoinLeaveGroupAsync(_tk.Connections.GetRange(i - _tk.ConnectionRange.Begin, 1),
                         i - _tk.ConnectionRange.Begin, _tk.BenchmarkCellConfig.GroupNameList.ToList().GetRange(i, 1),
-                        _tk.Connections.Count, _tk.JobConfig.Duration, _tk.JobConfig.Interval, _tk.Counters, _brokenConnectionInds));
+                        _tk.Connections.Count, _tk.JobConfig.Duration, _tk.JobConfig.Interval, _tk.Counters, _tk.BrokenConnectionTrackList));
                 }
             }
 

@@ -22,7 +22,9 @@ namespace Bench.RpcSlave.Worker.Operations
 
             Util.Log($"server url: {_tk.JobConfig.ServerUrl}; conn: {_tk.JobConfig.Connections};  _tk.BenchmarkCellConfig.TransportType: { _tk.BenchmarkCellConfig.TransportType}; _tk.BenchmarkCellConfig.HubProtocol: {_tk.BenchmarkCellConfig.HubProtocol}");
             _tk.State = Stat.Types.State.HubconnUnconnected;
-            _tk.Connections = Create(_tk.ConnectionRange.End - _tk.ConnectionRange.Begin, _tk.JobConfig.ServerUrl, _tk.BenchmarkCellConfig.TransportType, _tk.BenchmarkCellConfig.HubProtocol);
+            var count = _tk.ConnectionRange.End - _tk.ConnectionRange.Begin;
+            ConnectionUtils.CreateBrokenConnectionTrackList(_tk, count);
+            _tk.Connections = Create(count, _tk.JobConfig.ServerUrl, _tk.BenchmarkCellConfig.TransportType, _tk.BenchmarkCellConfig.HubProtocol);
 
             if (tk.Connections == null) Util.Log("connections == null");
             Util.Log($"xxxconnections: {_tk.Connections.Count}");

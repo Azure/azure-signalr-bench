@@ -38,5 +38,7 @@ namespace Bench.RpcSlave.Worker
         public List<HttpClient> HttpClients { get; set; }
         // accumulate "upXX" step's "XX" to help record "sendingStep"
         public ulong CurSending { get; set; }
+
+        public List<int> BrokenConnectionTrackList { get; set; }
     }
 }
