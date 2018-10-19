@@ -171,10 +171,6 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
             data.TryGetTypedValue(_isIngroup, out bool isInGroup, Convert.ToBoolean);
 
             // Join or leave groups
-
-            // DEBUG
-            Log.Warning($"is in group: {isInGroup}");
-
             if (isInGroup)
             {
                 try
