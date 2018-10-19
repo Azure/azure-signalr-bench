@@ -26,7 +26,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 stepParameters.TryGetTypedValue(SignalRConstants.GroupCount, out int groupCount, Convert.ToInt32);
                 stepParameters.TryGetTypedValue(SignalRConstants.ConnectionTotal, out int totalConnection, Convert.ToInt32);
 
-                if (totalConnection % groupCount != 0) throw new Exception("Not supported: Total connections cannot divided by group count");
+                if (totalConnection % groupCount != 0) throw new Exception("Not supported: Total connections cannot be divided by group count");
 
                 // Get context
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionStore}.{type}", out IList<HubConnection> connections, (obj) => (IList<HubConnection>)obj);
