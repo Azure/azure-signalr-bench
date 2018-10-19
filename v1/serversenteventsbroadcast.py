@@ -3,8 +3,8 @@ import settings
 
 serversentevent_connection={1:1000, 2:2000, 5:5000, 10:10000, 20:20000, 50:50000, 100:100000}
 serversentevent_concurrentConnection={1:200, 2:200, 5:200, 10:200, 20:200, 50:200, 100:200}
-serversentevent_baseStep={1:2, 2:2, 5:2, 10:2, 20:1, 50:1, 100:1}
-serversentevent_step={1:2, 2:2, 5:2, 10:2, 20:1, 50:1, 100:1}
+serversentevent_baseStep={1:1, 2:1, 5:1, 10:2, 20:1, 50:1, 100:1}
+serversentevent_step={1:1, 2:1, 5:1, 10:2, 20:1, 50:1, 100:1}
 if settings.gPerfType == settings.gConstMax:
   serversentevent_connection={1:1500, 2:3000, 5:7500, 10:15000, 20:30000, 50:75000, 100:150000}
 
