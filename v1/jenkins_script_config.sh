@@ -574,10 +574,15 @@ function remove_resource_group() {
 cat << EOF > /tmp/clean_asrs.sh
 cd $ScriptWorkingDir
 . ./az_signalr_service.sh
-delete_group $DogFoodResourceGroup
+
 if [ "$ASRSEnv" == "dogfood" ]
 then
+  az_login_ASRS_dogfood
+  delete_group $DogFoodResourceGroup
   unregister_signalr_service_dogfood
+else
+  az_login_signalr_dev_sub
+  delete_group $DogFoodResourceGroup
 fi
 EOF
   nohup sh /tmp/clean_asrs.sh &
