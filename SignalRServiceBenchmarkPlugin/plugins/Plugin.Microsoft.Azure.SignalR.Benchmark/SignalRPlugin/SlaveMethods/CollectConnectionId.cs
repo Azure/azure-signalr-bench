@@ -43,9 +43,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
             // Set callback
             foreach (var connection in connections)
             {
-                connection.On(SignalRConstants.GetConnectionIdCallback, (IDictionary<string, object> data) =>
+                connection.On(SignalRConstants.GetConnectionIdCallback, (string connectionId) =>
                 {
-                    data.TryGetTypedValue(SignalRConstants.ConnectionId, out string connectionId, Convert.ToString);
                     connectionIds.Add(connectionId);
                 });
             }
