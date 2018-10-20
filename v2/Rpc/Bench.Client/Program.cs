@@ -43,6 +43,8 @@ namespace Bench.RpcMaster
         // Recording the sending step on Master side to fix randomly zero received from slaves
         private static int _currentSendingStep = 0;
         private static System.Timers.Timer _counterCollectorTimer = null;
+        // Each job step at most waits for 2 hours
+        private static int _defaultWaiting = 1000 * 7200;
 
         public static async Task Main(string[] args)
         {
@@ -752,6 +754,7 @@ namespace Bench.RpcMaster
                     var indClientInLoop = indClient;
                     tasks.Add(Task.Run(() =>
                     {
+                        Util.Log($"{DateTime.Now.ToString("hh:mm:ss.fff")}: Assign job to slave {slaveList[indClient]}");
                         var beg = 0;
                         for (var indStart = 0; indStart < indClientInLoop; indStart++)
                         {
@@ -767,11 +770,21 @@ namespace Bench.RpcMaster
                             Util.Log($"RunJob parameter size: {memStream.Length}");
                         }
                         client.RunJob(benchmarkCellConfig);
+                        Util.Log($"{DateTime.Now.ToString("hh:mm:ss.fff")}: Slave {slaveList[indClient]} finished the step job");
                     }));
                 });
-                await Task.WhenAll(tasks);
+                var waitingTask = Task.WhenAll(tasks);
+                try
+                {
+                    await TimedOutTask.TimeoutAfter(waitingTask, TimeSpan.FromSeconds(_defaultWaiting));
+                    Util.Log($"Step {step} finished.");
+                }
+                catch (TimeoutException)
+                {
+                    Util.Log($"The step {step} timedout ({_defaultWaiting} seconds).");
+                    throw;
+                }
                 await Task.Delay(1000);
-
                 // collect all connections' ids just after connections start
                 if (step.Contains("startConn", StringComparison.OrdinalIgnoreCase) ||
                     step.Contains("StartRestClientConn", StringComparison.OrdinalIgnoreCase))
