@@ -10,19 +10,19 @@ namespace Commander
     public class ArgsOption
     {
         // Remote
-        [Option("SlaveList", Required = false, Separator = ',', Default = new string[] { "localhost:5050", "localhost:6060" }, HelpText = "Target hosts to connect.")]
+        [Option("SlaveList", Required = true, Separator = ',',  HelpText = "Target hosts to connect.")]
         public IList<string> SlaveList { get; set; }
 
-        [Option("MasterHostname", Required = true, Default = ".", HelpText = "Hostname of master.")]
+        [Option("MasterHostname", Required = true, HelpText = "Hostname of master.")]
         public string MasterHostname { get; set; }
 
-        [Option("AppServerHostname", Required = true, Default = ".", HelpText = "Hostname of app server.")]
+        [Option("AppServerHostname", Required = true, HelpText = "Hostname of app server.")]
         public string AppServerHostname { get; set; }
 
-        [Option("Username", Required = true, Default = ".", HelpText = "Username of slaves.")]
+        [Option("Username", Required = true, HelpText = "Username of slaves.")]
         public string Username { get; set; }
 
-        [Option("Password", Required = true, Default = ".", HelpText = "Password of slaves.")]
+        [Option("Password", Required = true, HelpText = "Password of slaves.")]
         public string Password { get; set; }
 
         // Log
@@ -38,22 +38,22 @@ namespace Commander
         public LogTargetEnum LogTarget { get; set; }
 
         // Project 
-        [Option("AppserverProject", Required = false, Default = ".", HelpText = "App server project.")]
+        [Option("AppserverProject", Required = true, HelpText = "App server project.")]
         public string AppserverProject { get; set; }
 
-        [Option("MasterProject", Required = false, Default = ".", HelpText = "Master project.")]
+        [Option("MasterProject", Required = true, HelpText = "Master project.")]
         public string MasterProject { get; set; }
 
-        [Option("SlaveProject", Required = false, Default = ".", HelpText = "Slave project.")]
+        [Option("SlaveProject", Required = true, HelpText = "Slave project.")]
         public string SlaveProject { get; set; }
 
-        [Option("AppserverTargetPath", Required = false, Default = ".", HelpText = "")]
+        [Option("AppserverTargetPath", Required = true, HelpText = "")]
         public string AppserverTargetPath { get; set; }
 
-        [Option("MasterTargetPath", Required = false, Default = ".", HelpText = "")]
+        [Option("MasterTargetPath", Required = true, HelpText = "")]
         public string MasterTargetPath { get; set; }
 
-        [Option("SlaveTargetPath", Required = false, Default = ".", HelpText = "")]
+        [Option("SlaveTargetPath", Required = true, HelpText = "")]
         public string SlaveTargetPath { get; set; }
     }
 }
