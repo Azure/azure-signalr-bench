@@ -285,7 +285,7 @@ func main() {
                     }
                 }
                 v = monitors[len(monitors)-1]
-                if v.Counters.Sending != 0 {
+                if v.Counters.Sending != 0 && v.Counters.Recv > 0 && v.Counters.Recv != sum {
                         var sumfloat, totalConnFloat float64
                         sum = v.Counters.Recv
                         totalConnection = v.Counters.ConnError + v.Counters.ConnSucc
@@ -396,7 +396,7 @@ func main() {
                     }
                 }
                 v = monitors[len(monitors)-1]
-                if v.Counters.Sending != 0 && v.Counters.Recv > 0 {
+                if v.Counters.Sending != 0 && v.Counters.Recv > 0 && v.Counters.Recv != sum {
                         sum = v.Counters.Recv
                         totalConnection = v.Counters.ConnError + v.Counters.ConnSucc
                         var sumfloat, totalConnFloat float64
@@ -489,7 +489,7 @@ func main() {
                     }
                 }
                 v = monitors[len(monitors)-1]
-                if v.Counters.Sending != 0 && v.Counters.Recv > 0 {
+                if v.Counters.Sending != 0 && v.Counters.Recv > 0 && sum != v.Counters.Recv {
                         sum = v.Counters.Recv
                         totalConnection = v.Counters.ConnError + v.Counters.ConnSucc
                         var sumfloat, totalConnFloat float64
