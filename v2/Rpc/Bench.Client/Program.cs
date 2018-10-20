@@ -44,7 +44,7 @@ namespace Bench.RpcMaster
         private static int _currentSendingStep = 0;
         private static System.Timers.Timer _counterCollectorTimer = null;
         // Each job step at most waits for 2 hours
-        private static int _defaultWaiting = 1000 * 7200;
+        private static long _defaultWaiting = 2;
 
         public static async Task Main(string[] args)
         {
@@ -776,12 +776,12 @@ namespace Bench.RpcMaster
                 var waitingTask = Task.WhenAll(tasks);
                 try
                 {
-                    await TimedOutTask.TimeoutAfter(waitingTask, TimeSpan.FromSeconds(_defaultWaiting));
+                    await TimedOutTask.TimeoutAfter(waitingTask, TimeSpan.FromHours(_defaultWaiting));
                     Util.Log($"Step {step} finished.");
                 }
                 catch (TimeoutException)
                 {
-                    Util.Log($"The step {step} timedout ({_defaultWaiting} seconds).");
+                    Util.Log($"The step {step} timedout ({_defaultWaiting} hours).");
                     throw;
                 }
                 await Task.Delay(1000);
