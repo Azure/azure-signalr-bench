@@ -764,6 +764,13 @@ namespace Bench.RpcMaster
                     var indClientInLoop = indClient;
                     tasks.Add(Task.Run(() =>
                     {
+                        Stopwatch stopwatch = new Stopwatch();
+
+                        // Begin timing.
+                        stopwatch.Start();
+
+                        // Write result.
+                        Console.WriteLine("Time elapsed: {0}", stopwatch.Elapsed);
                         Util.Log($"{DateTime.Now.ToString("hh:mm:ss.fff")}: Assign {displayStep} job to slave {slaveList[indClientInLoop]}");
                         var beg = 0;
                         for (var indStart = 0; indStart < indClientInLoop; indStart++)
@@ -780,7 +787,10 @@ namespace Bench.RpcMaster
                             Util.Log($"RunJob parameter size: {memStream.Length}");
                         }
                         client.RunJob(benchmarkCellConfig);
-                        Util.Log($"{DateTime.Now.ToString("hh:mm:ss.fff")}: Slave {slaveList[indClientInLoop]} finished the {displayStep} job");
+                        // Stop timing.
+                        stopwatch.Stop();
+
+                        Util.Log($"{DateTime.Now.ToString("hh:mm:ss.fff")}: Slave {slaveList[indClientInLoop]} finished the {displayStep} job with time elapsed {stopwatch.Elapsed}");
                     }));
                 });
                 var waitingTask = Task.WhenAll(tasks);
