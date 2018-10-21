@@ -740,6 +740,16 @@ namespace Bench.RpcMaster
                 // remove last one callback
                 RemoveExceptLastOneCallback(step, callbackList);
 
+                var displayStep = step;
+                if (step.Substring(0, 2) == "up")
+                {
+                    displayStep = $"up{_currentSendingStep}";
+                }
+                else if (step == "scenario")
+                {
+                    displayStep = scenario;
+                }
+
                 clients.ForEach(client =>
                 {
                     indClient++;
@@ -754,7 +764,7 @@ namespace Bench.RpcMaster
                     var indClientInLoop = indClient;
                     tasks.Add(Task.Run(() =>
                     {
-                        Util.Log($"{DateTime.Now.ToString("hh:mm:ss.fff")}: Assign job to slave {slaveList[indClientInLoop]}");
+                        Util.Log($"{DateTime.Now.ToString("hh:mm:ss.fff")}: Assign {displayStep} job to slave {slaveList[indClientInLoop]}");
                         var beg = 0;
                         for (var indStart = 0; indStart < indClientInLoop; indStart++)
                         {
@@ -770,18 +780,18 @@ namespace Bench.RpcMaster
                             Util.Log($"RunJob parameter size: {memStream.Length}");
                         }
                         client.RunJob(benchmarkCellConfig);
-                        Util.Log($"{DateTime.Now.ToString("hh:mm:ss.fff")}: Slave {slaveList[indClientInLoop]} finished the {step} job");
+                        Util.Log($"{DateTime.Now.ToString("hh:mm:ss.fff")}: Slave {slaveList[indClientInLoop]} finished the {displayStep} job");
                     }));
                 });
                 var waitingTask = Task.WhenAll(tasks);
                 try
                 {
                     await TimedOutTask.TimeoutAfter(waitingTask, TimeSpan.FromHours(_defaultWaiting));
-                    Util.Log($"Step {step} finished.");
+                    Util.Log($"Step {displayStep} finished.");
                 }
                 catch (TimeoutException)
                 {
-                    Util.Log($"The step {step} timedout ({_defaultWaiting} hours).");
+                    Util.Log($"The step {displayStep} timedout ({_defaultWaiting} hours).");
                     throw;
                 }
                 await Task.Delay(1000);
