@@ -174,9 +174,6 @@ namespace Bench.RpcSlave.Worker.Operations
                             catch (Exception ex)
                             {
                                 Util.Log($"exception in sending message of {index}th connection: {ex}");
-                                //counter.IncreaseConnectionError();
-                                counter.IncreaseConnectionError();
-                                counter.UpdateConnectionSuccess((ulong)totalConnectionCount);
                             }
                         });
                     }
