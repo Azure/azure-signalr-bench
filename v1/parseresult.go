@@ -268,7 +268,10 @@ func main() {
                 var curSendingStep int64
                 for i, v := range monitors {
                     curSendingStep = v.Counters.Sending
-                    if curSendingStep != 0 && v.Counters.Recv > 0 && i + 1 < len(monitors)-1 && monitors[i+1].Counters.Sending != curSendingStep {
+                    if curSendingStep != 0 &&
+                       v.Counters.Recv > 0 && // fitler counters of zero
+                       i > 0 && v.Counters.Recv >= monitors[i-1].Counters.Recv && // make sure it is a complete message
+                       i + 1 < len(monitors)-1 && monitors[i+1].Counters.Sending != curSendingStep { // a boundary of send step
                         sum = v.Counters.Recv
                         totalConnection = v.Counters.ConnError + v.Counters.ConnSucc
                         var sumfloat, totalConnFloat float64
@@ -309,10 +312,7 @@ func main() {
 		fmt.Printf("%s\n", chartfunc)
 	    } else {
 		v = monitors[len(monitors)-1]
-		sum = v.Counters.LT_100 + v.Counters.LT_200 + v.Counters.LT_300 +
-                      v.Counters.LT_400 + v.Counters.LT_500 + v.Counters.LT_600 +
-		      v.Counters.LT_700 + v.Counters.LT_800 + v.Counters.LT_900 +
-                      v.Counters.LT_1000 + v.Counters.GE_1000
+                sum = v.Counters.Recv
 		var sumfloat float64
 		sumfloat = float64(sum)
 		if googlechart {
@@ -383,7 +383,10 @@ func main() {
                 var curSendingStep int64
                 for i, v := range monitors {
                     curSendingStep = v.Counters.Sending
-                    if curSendingStep != 0 && v.Counters.Recv > 0 && i + 1 < len(monitors)-1 && monitors[i+1].Counters.Sending != curSendingStep {
+                    if curSendingStep != 0 &&
+                       v.Counters.Recv > 0 && // fitler counters of zero
+                       i > 0 && v.Counters.Recv >= monitors[i-1].Counters.Recv && // make sure it is a complete message
+                       i + 1 < len(monitors)-1 && monitors[i+1].Counters.Sending != curSendingStep { // a boundary of send step
                         sum = v.Counters.Recv
                         totalConnection = v.Counters.ConnError + v.Counters.ConnSucc
                         var sumfloat, totalConnFloat float64
@@ -416,8 +419,7 @@ func main() {
 			fmt.Printf("%s\n", chartfunc)
             } else {
 		v = monitors[len(monitors)-1]
-		sum = v.Counters.LT_100 + v.Counters.LT_200 + v.Counters.LT_300 + v.Counters.LT_400 + v.Counters.LT_500 + v.Counters.LT_600 +
-			v.Counters.LT_700 + v.Counters.LT_800 + v.Counters.LT_900 + v.Counters.LT_1000 + v.Counters.GE_1000
+                sum = v.Counters.Recv
 		lt500 = v.Counters.LT_100 + v.Counters.LT_200 + v.Counters.LT_300 + v.Counters.LT_400 + v.Counters.LT_500
 		ge500 = v.Counters.LT_600 + v.Counters.LT_700 + v.Counters.LT_800 + v.Counters.LT_900 + v.Counters.LT_1000 + v.Counters.GE_1000
 		var sumfloat float64
@@ -477,7 +479,10 @@ func main() {
                 var curSendingStep int64
                 for i, v := range monitors {
                     curSendingStep = v.Counters.Sending
-                    if curSendingStep != 0 && v.Counters.Recv > 0 && i + 1 < len(monitors)-1 && monitors[i+1].Counters.Sending != curSendingStep {
+                    if curSendingStep != 0 &&
+                       v.Counters.Recv > 0 && // fitler counters of zero
+                       i > 0 && v.Counters.Recv >= monitors[i-1].Counters.Recv && // make sure it is a complete message
+                       i + 1 < len(monitors)-1 && monitors[i+1].Counters.Sending != curSendingStep { // a boundary of send step
                         sum = v.Counters.Recv
                         totalConnection = v.Counters.ConnError + v.Counters.ConnSucc
                         var sumfloat, totalConnFloat float64
