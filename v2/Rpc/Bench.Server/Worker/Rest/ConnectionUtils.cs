@@ -251,6 +251,7 @@ namespace Bench.RpcSlave.Worker.Rest
                 if (reconnect)
                 {
                     tk.Counters.DecreaseConnectionError();
+                    tk.Counters.IncreaseReconnect();
                 }
                 return true;
             }

@@ -154,6 +154,11 @@ namespace Bench.RpcSlave.Worker.Counters
             InnerCounters.AddOrUpdate("connection:error", 0, (k, v) => v >= 1 ? v - 1 : 0);
         }
 
+        public void IncreaseReconnect()
+        {
+            InnerCounters.AddOrUpdate("connection:reconnect", 0, (k, v) => v + 1);
+        }
+
         public void DropOneConnection()
         {
             lock (InnerCounters)
