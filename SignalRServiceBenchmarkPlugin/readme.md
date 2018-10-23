@@ -98,7 +98,7 @@ Full configuration is in [BenchmarkConfigurationSample](https://github.com/Azure
 
 P.S. The commander is in [Commander branch](https://github.com/Azure/azure-signalr-bench/tree/Commander/SignalRServiceBenchmarkPlugin) for now.
 
-In [utils/Commander/](https://github.com/Azure/azure-signalr-bench/tree/Commander/SignalRServiceBenchmarkPlugin/utils/Commander), the commander is to controll the app server, master and slaves to start/stop via SSH, copy executables and benchmark configurations vis SCP.
+In [utils/Commander/](https://github.com/Azure/azure-signalr-bench/tree/Commander/SignalRServiceBenchmarkPlugin/utils/Commander), the commander is the automation tool for the framework to controll the app server, master and slaves to start/stop via SSH, copy executables and benchmark configurations vis SCP.
 
 To execute the `Microsoft.Azure.SignalR.Benchmark` plugin
 
