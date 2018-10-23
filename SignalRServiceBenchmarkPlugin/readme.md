@@ -14,14 +14,14 @@ master - slave
          ...
 ```
 ### Master
-Master is responsible for loading and parsing benchmark configuration and allocating to slaves to run benchmark.
+Master is responsible for loading and parsing benchmark configuration and allocating to slaves to execute benchmark.
 
 ### Slave
-All slaves run benchmark at the same time to evaluate the performance.
+All slaves execute benchmark at the same time to evaluate the performance.
 
 ## Benchmark Plugin
 
-Benchmark plugin can be anything only if it implements the interface in `plugins/base/PluginInterface/`. A sample plugin is `plugins/Plugin.Microsoft.Azure.SignalR.Benchmark/`.
+Benchmark plugin can be anything only if it implements the interface in [plugins/base/PluginInterface/](https://github.com/Azure/azure-signalr-bench/tree/SignalRServiceBenchmarkPlugin_wanl/SignalRServiceBenchmarkPlugin/plugins/base/PluginInterface). A sample plugin is [plugins/Plugin.Microsoft.Azure.SignalR.Benchmark/](https://github.com/Azure/azure-signalr-bench/tree/SignalRServiceBenchmarkPlugin_wanl/SignalRServiceBenchmarkPlugin/plugins/Plugin.Microsoft.Azure.SignalR.Benchmark).
 
 ### Microsoft.Azure.SignalR.Benchmark
 
@@ -92,9 +92,17 @@ Pipeline:
 ...
 ```
 
+Full configuration is in [BenchmarkConfigurationSample](https://github.com/Azure/azure-signalr-bench/blob/SignalRServiceBenchmarkPlugin_wanl/SignalRServiceBenchmarkPlugin/plugins/Plugin.Microsoft.Azure.SignalR.Benchmark/SignalRPlugin/BenchmarkConfigurationSample.yaml).
+
 ## Usage [TODO]
 
 P.S. The commander is in [Commander branch](https://github.com/Azure/azure-signalr-bench/tree/Commander/SignalRServiceBenchmarkPlugin) for now
 
-In `utils/Commander/`, the commander is to controll the app server, master and slaves to start/stop via SSH, copy executables and benchmark configurations vis SCP.
+In [utils/Commander/](https://github.com/Azure/azure-signalr-bench/tree/Commander/SignalRServiceBenchmarkPlugin/utils/Commander), the commander is to controll the app server, master and slaves to start/stop via SSH, copy executables and benchmark configurations vis SCP.
+
+To execute the `Microsoft.Azure.SignalR.Benchmark` plugin
+
+```
+todo: full commands here to execute the benchmark
+```
 
