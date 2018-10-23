@@ -121,14 +121,19 @@ namespace JenkinsScript
                 if (host.Contains("localhost") || host.Contains("127.0.0.1")) return;
 
                 Util.Log($"CMD: {user}@{host}: {cmd}");
-                (errCode, result) = ShellHelper.RemoteBash(user, host, sshPort, password, cmd);
-                if (errCode != 0) return;
+                var i = 0;
+                // retry if error occurs
+                while (i < 3)
+                {
+                    (errCode, result) = ShellHelper.RemoteBash(user, host, sshPort, password, cmd);
+                    if (errCode == 0) return;
+                    i++;
+                }
             });
 
             if (errCode != 0)
             {
                 Util.Log($"ERR {errCode}: {result}");
-                Environment.Exit(1);
             }
 
             return (errCode, result);
@@ -182,84 +187,45 @@ git checkout {branch}
                         sw.Write(remoteScriptContent);
                     }
                     var innerCmd = $"chmod +x {scriptFile}; ./{scriptFile}";
+                    // execute script on remote machine can be retried if failed
                     var i = 0;
-                    var retry = 3;
-                    while (i < retry)
+                    var retry = 5;
+                    for (; i < retry; i++)
                     {
-                        (errCode, result) = ShellHelper.ScpFileLocalToRemote(user, host, password, scriptFile, "~/");
+                        (errCode, result) = ScpFileLocalToRemote(user, host, password, scriptFile, "~/");
                         if (errCode != 0)
                         {
+                            // handle error
                             Console.WriteLine("Fail to copy script from local to remote: {errCode}");
+                            if (i < retry)
+                            {
+                                Console.WriteLine("We will retry");
+                                continue;
+                            }
+                            else
+                            {
+                                Console.WriteLine("Retry limit reaches, fail finally!");
+                            }
                         }
-                        (errCodeInner, resultInner) = ShellHelper.RemoteBash(user, host, sshPort, password, innerCmd);
+                        (errCodeInner, resultInner) = RemoteBash(user, host, sshPort, password, innerCmd);
+                        errCode = errCodeInner;
+                        result = resultInner;
                         if (errCodeInner != 0)
                         {
-                            errCode = errCodeInner;
-                            result = resultInner;
+                            // handle error
+                            if (i < retry)
+                            {
+                                Console.WriteLine($"Retry remote bash for {innerCmd}");
+                            }
+                            else
+                            {
+                                Console.WriteLine($"Retry limit reaches, fail finally!");
+                            }
                         }
                         else
                         {
                             break;
                         }
-                        i++;
-                    }
-                }));
-            });
-
-            Task.WhenAll(tasks).Wait();
-
-            if (errCode != 0)
-            {
-                Util.Log($"ERR {errCode}: {result}");
-                Environment.Exit(1);
-            }
-
-            return (errCode, result);
-        }
-
-        public static(int, string) ScpRepo(List<string> hosts, string repoUrl, string user, string password, int sshPort,
-            string commit = "", string branch = "origin/master", string repoRoot = "/home/wanl/signalr_auto_test_framework")
-        {
-            var errCode = 0;
-            var result = "";
-
-            var tasks = new List<Task>();
-
-            hosts.ForEach(host =>
-            {
-                tasks.Add(Task.Run(() =>
-                {
-                    var errCodeInner = 0;
-                    var resultInner = "";
-
-                    if (host.Contains("localhost") || host.Contains("127.0.0.1")) return;
-
-                    // clear old repo
-                    var cmdInner = $"rm -rf {repoRoot};"; //TODO
-                    Util.Log($"CMD: {user}@{host}: {cmdInner}");
-                    (errCodeInner, resultInner) = ShellHelper.RemoteBash(user, host, sshPort, password, cmdInner);
-
-                    if (errCodeInner != 0)
-                    {
-                        errCode = errCodeInner;
-                        result = resultInner;
-                    }
-
-                    // scp local repo to remote
-                    ScpDirecotryLocalToRemote(user, host, password, repoRoot, repoRoot);
-
-                    // // set node on git
-                    // cmdInner = $"cd {repoRoot};";
-                    // cmdInner += $"git checkout {branch};";
-                    // cmdInner += $"git reset --hard {commit};";
-                    // cmdInner += $" cd ~ ;";
-                    // Util.Log($"CMD: {user}@{host}: {cmdInner}");
-                    // (errCodeInner, resultInner) = ShellHelper.RemoteBash(user, host, sshPort, password, cmdInner);
-
-                    if (errCodeInner != 0)
-                    {
-                        errCode = errCodeInner;
-                        result = resultInner;
                     }
                 }));
             });
@@ -322,6 +288,8 @@ git checkout {branch}
                     {
                         Util.Log($"log content: {content}");
                     }
+
+                    // Any server fails to start is a fatal error, so exit.
                     Environment.Exit(1);
                 }
             }
