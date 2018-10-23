@@ -14,7 +14,7 @@ namespace Commander
         public int AppserverPort { get; set; }
 
         // Remote
-        [Option("RpcPort", Required = false, Default = 5050, HelpText = "Port to be conencted from remote hosts.")]
+        [Option("RpcPort", Required = false, Default = 5555, HelpText = "Port to be conencted from remote hosts.")]
         public int RpcPort { get; set; }
 
         [Option("SlaveList", Required = true, Separator = ',',  HelpText = "Target hosts to connect.")]
