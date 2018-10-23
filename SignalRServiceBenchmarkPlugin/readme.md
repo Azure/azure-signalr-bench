@@ -14,7 +14,7 @@ master - slave
          ...
 ```
 ### Master
-Master is responsible for loading and parsing benchmark configuration and allocating to slaves to execute benchmark.
+Master is responsible for loading and parsing benchmark configuration and allocating jobs to slaves to execute the benchmark.
 
 ### Slave
 All slaves execute benchmark at the same time to evaluate the performance.
@@ -96,7 +96,7 @@ Full configuration is in [BenchmarkConfigurationSample](https://github.com/Azure
 
 ## Usage [TODO]
 
-P.S. The commander is in [Commander branch](https://github.com/Azure/azure-signalr-bench/tree/Commander/SignalRServiceBenchmarkPlugin) for now
+P.S. The commander is in [Commander branch](https://github.com/Azure/azure-signalr-bench/tree/Commander/SignalRServiceBenchmarkPlugin) for now.
 
 In [utils/Commander/](https://github.com/Azure/azure-signalr-bench/tree/Commander/SignalRServiceBenchmarkPlugin/utils/Commander), the commander is to controll the app server, master and slaves to start/stop via SSH, copy executables and benchmark configurations vis SCP.
 
