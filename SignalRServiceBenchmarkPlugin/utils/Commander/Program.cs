@@ -23,16 +23,10 @@ namespace Commander
 
             Util.CreateLogger(argsOption.LogDirectory, argsOption.LogName, argsOption.LogTarget);
 
-            //// Publish dlls
-            //var appserverExecutable = PubishExcutable(argsOption.AppserverProject, _baseName);
-            //var masterExecutable = PubishExcutable(argsOption.MasterProject, _baseName);
-            //var slaveExecutable = PubishExcutable(argsOption.SlaveProject, _baseName);
-
-            // DEBUG
-            var baseName = "publish";
-            var appserverExecutable = new FileInfo(Path.Combine(argsOption.AppserverProject, $"{baseName}.zip"));
-            var masterExecutable = new FileInfo(Path.Combine(argsOption.MasterProject, $"{baseName}.zip"));
-            var slaveExecutable = new FileInfo(Path.Combine(argsOption.SlaveProject, $"{baseName}.zip"));
+            // Publish dlls
+            var appserverExecutable = PubishExcutable(argsOption.AppserverProject, _baseName);
+            var masterExecutable = PubishExcutable(argsOption.MasterProject, _baseName);
+            var slaveExecutable = PubishExcutable(argsOption.SlaveProject, _baseName);
 
             // Copy executables and configurations
             CopyExcutables(argsOption.Username, argsOption.Password,
