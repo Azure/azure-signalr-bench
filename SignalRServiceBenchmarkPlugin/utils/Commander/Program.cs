@@ -28,6 +28,12 @@ namespace Commander
             var masterExecutable = PubishExcutable(argsOption.MasterProject, _baseName);
             var slaveExecutable = PubishExcutable(argsOption.SlaveProject, _baseName);
 
+            //// DEBUG
+            //var baseName = "publish";
+            //var appserverExecutable = new FileInfo(Path.Combine(argsOption.AppserverProject, $"{baseName}.zip"));
+            //var masterExecutable = new FileInfo(Path.Combine(argsOption.MasterProject, $"{baseName}.zip"));
+            //var slaveExecutable = new FileInfo(Path.Combine(argsOption.SlaveProject, $"{baseName}.zip"));
+
             // Copy executables and configurations
             CopyExcutables(argsOption.Username, argsOption.Password,
                 argsOption.AppServerHostname, argsOption.MasterHostname, argsOption.SlaveList,

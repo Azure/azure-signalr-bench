@@ -10,7 +10,6 @@ namespace Commander
     public class ArgsOption
     {
         // App server
-        // App server
         [Option("AppserverPort", Required = false, Default = 5050, HelpText = "Port of app server.")]
         public int AppserverPort { get; set; }
 
