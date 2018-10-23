@@ -9,7 +9,15 @@ namespace Commander
     // TODO: edit descriptions and default values
     public class ArgsOption
     {
+        // App server
+        // App server
+        [Option("AppserverPort", Required = false, Default = 5050, HelpText = "Port of app server.")]
+        public int AppserverPort { get; set; }
+
         // Remote
+        [Option("RpcPort", Required = false, Default = 5050, HelpText = "Port to be conencted from remote hosts.")]
+        public int RpcPort { get; set; }
+
         [Option("SlaveList", Required = true, Separator = ',',  HelpText = "Target hosts to connect.")]
         public IList<string> SlaveList { get; set; }
 
@@ -55,5 +63,13 @@ namespace Commander
 
         [Option("SlaveTargetPath", Required = true, HelpText = "")]
         public string SlaveTargetPath { get; set; }
+
+        [Option("BenchmarkConfiguration", Required = true, HelpText = "")]
+        public string BenchmarkConfiguration { get; set; }
+
+        [Option("BenchmarkConfigurationTargetPath", Required = true, HelpText = "")]
+        public string BenchmarkConfigurationTargetPath { get; set; }
+
+
     }
 }
