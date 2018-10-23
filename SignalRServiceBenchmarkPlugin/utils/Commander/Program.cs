@@ -10,7 +10,6 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
-// TODO: dispose commands
 namespace Commander
 {
     class Program
