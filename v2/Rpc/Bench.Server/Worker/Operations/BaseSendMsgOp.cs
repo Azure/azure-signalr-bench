@@ -188,10 +188,6 @@ namespace Bench.RpcSlave.Worker.Operations
                             }
                         });
                     }
-                    else
-                    {
-                        Util.Log($"Not sending {chk} {value}");
-                    }
 
                     await Task.Delay(TimeSpan.FromSeconds(interval));
                 }
