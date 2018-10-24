@@ -24,6 +24,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionStore}.{type}", out IList<HubConnection> connections, (obj) => (IList<HubConnection>)obj);
 
                 await Task.WhenAll(Util.BatchProcess(connections, StartConnect, concurrentConnection));
+
                 return null;
             }
             catch (Exception ex)
@@ -33,7 +34,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 throw;
             }
         }
-        
+
         private async Task StartConnect(HubConnection connection)
         {
             if (connection == null) return;
