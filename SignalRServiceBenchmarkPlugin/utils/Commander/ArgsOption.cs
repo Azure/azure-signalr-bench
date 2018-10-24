@@ -26,10 +26,10 @@ namespace Commander
         [Option("AppServerHostname", Required = true, HelpText = "Hostname of app server.")]
         public string AppServerHostname { get; set; }
 
-        [Option("Username", Required = true, HelpText = "Username of slaves.")]
+        [Option("Username", Required = true, HelpText = "Username of VMs.")]
         public string Username { get; set; }
 
-        [Option("Password", Required = true, HelpText = "Password of slaves.")]
+        [Option("Password", Required = true, HelpText = "Password of VMs.")]
         public string Password { get; set; }
 
         // Log
@@ -54,19 +54,19 @@ namespace Commander
         [Option("SlaveProject", Required = true, HelpText = "Slave project.")]
         public string SlaveProject { get; set; }
 
-        [Option("AppserverTargetPath", Required = true, HelpText = "")]
+        [Option("AppserverTargetPath", Required = true, HelpText = "Target path for app server executable.")]
         public string AppserverTargetPath { get; set; }
 
-        [Option("MasterTargetPath", Required = true, HelpText = "")]
+        [Option("MasterTargetPath", Required = true, HelpText = "Target path for master executable.")]
         public string MasterTargetPath { get; set; }
 
-        [Option("SlaveTargetPath", Required = true, HelpText = "")]
+        [Option("SlaveTargetPath", Required = true, HelpText = "Target path for slave executables.")]
         public string SlaveTargetPath { get; set; }
 
-        [Option("BenchmarkConfiguration", Required = true, HelpText = "")]
+        [Option("BenchmarkConfiguration", Required = true, HelpText = "Benchmark configurations.")]
         public string BenchmarkConfiguration { get; set; }
 
-        [Option("BenchmarkConfigurationTargetPath", Required = true, HelpText = "")]
+        [Option("BenchmarkConfigurationTargetPath", Required = true, HelpText = "Benchmark configurations target path.")]
         public string BenchmarkConfigurationTargetPath { get; set; }
 
 
