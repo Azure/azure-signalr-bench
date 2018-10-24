@@ -6,7 +6,6 @@ using System.Text;
 
 namespace Commander
 {
-    // TODO: edit descriptions and default values
     public class ArgsOption
     {
         // App server
