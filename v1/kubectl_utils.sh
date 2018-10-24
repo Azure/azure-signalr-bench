@@ -2,7 +2,7 @@
 g_CPU_requests="1|2|3|4"
 g_CPU_limits="1|2|3|4"
 g_Memory_limits="4000|4000|4000|4000"
-g_k8s_config_list="srdevacsrpe.json|kubeconfig_srdevacsseasiac.json"
+g_k8s_config_list="srdevacsrpe.json|kubeconfig_srdevacsseasiac.json|kubeconfig_srprodacswestus2a.json|kubeconfig_srprodacswestus2b.json|kubeconfig_srprodacswestus2c.json|kubeconfig_srprodacswestus2d.json|kubeconfig_srprodacswestus2e.json|kubeconfig_srprodacswestus2f.json"
 
 ## Bourne shell does not support array, so a string is used
 ## to work around with the hep of awk array
@@ -49,12 +49,15 @@ function find_target_by_iterate_all_k8slist()
   while [ $i -le $len ]
   do
      config=$(array_get $g_k8s_config_list $i "|")
-     result=$($callback $resName $config "$ns")
-     if [ "$result" != "" ]
+     if [ -e $config ]
      then
-        g_config=$config
-        g_result=$result
-        break
+        result=$($callback $resName $config "$ns")
+        if [ "$result" != "" ]
+        then
+           g_config=$config
+           g_result=$result
+           break
+        fi
      fi
      i=$(($i + 1))
   done
@@ -300,8 +303,10 @@ function start_top_tracking() {
   local config_file=$g_config
   local result=$g_result
   echo "'$result'"
-  while [ 1 ]
-  do
+  if [ "$config_file" != "" ] && [ "$result" != "" ]
+  then
+    while [ 1 ]
+    do
      for i in $result
      do
        local date_time=`date --iso-8601='seconds'`
@@ -309,7 +314,8 @@ function start_top_tracking() {
        kubectl exec $i --kubeconfig=$config_file -- bash -c "top -b -n 1" >> $output_dir/${i}_top.txt
      done
      sleep 1
-  done
+    done
+  fi
 }
 
 function stop_top_tracking() {
@@ -601,9 +607,10 @@ function track_nginx_top() {
   find_target_by_iterate_all_k8slist $res get_nginx_pod_internal $ns
   local config_file=$g_config
   local result=$g_result
-
-  while [ 1 ]
-  do
+  if [ "$config_file" != "" ] && [ "$result" != "" ]
+  then
+    while [ 1 ]
+    do
      for i in $result
      do
        local date_time=`date --iso-8601='seconds'`
@@ -611,7 +618,8 @@ function track_nginx_top() {
        kubectl exec $i --namespace=$ns --kubeconfig=$config_file -- bash -c "top -b -n 1" >> $output_dir/${i}_top.txt
      done
      sleep 1
-  done
+    done
+  fi
 }
 
 function get_nginx_log() {

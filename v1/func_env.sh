@@ -615,7 +615,8 @@ function stop_sdk_server()
 function extract_servicename_from_connectionstring() {
 	local connectionString=$1
 	local is_dogfood=`echo "$connectionString"|grep "servicedev.signalr.net"`
-	if [ "$is_dogfood" != "" ]
+        local is_prod=`echo "$connectionString"|grep "service.signalr.net"`
+	if [ "$is_dogfood" != "" ] || [ "$is_prod" != "" ]
 	then
 		local serviceName=`echo "$connectionString"|awk -F = '{print $2}'|awk -F ";" '{print $1}'|awk -F '//' '{print $2}'|awk -F . '{print $1}'`
 		if [ "$serviceName" != "" ]

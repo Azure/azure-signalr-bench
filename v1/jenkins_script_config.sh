@@ -513,10 +513,22 @@ do
    ## stop collecting top
    if [ "$service_name" != "" ]
    then
-      kill $collect_pod_top_pid
+      if [ "$collect_pod_top_pid" != "" ]
+      then
+         # kill the process if it is alive
+         local a=`ps -o pid= -p $collect_pod_top_pid`
+         if [ "$a" != "" ]
+         then
+            kill $collect_pod_top_pid
+         fi
+      fi
       if [ "$collect_nginx_top_pid" != "" ]
       then
-         kill $collect_nginx_top_pid
+         local a=`ps -o pid= -p $collect_nginx_top_pid`
+         if [ "$a" != "" ]
+         then
+            kill $collect_nginx_top_pid
+         fi
       fi
    ############# copy pod log ############
       if [ "$copy_syslog" == "true" ]
