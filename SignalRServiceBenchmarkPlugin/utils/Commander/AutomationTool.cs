@@ -60,16 +60,15 @@ namespace Commander
             _remoteClients = new RemoteClients();
             _remoteClients.CreateAll(argOption.Username, argOption.Password, 
                 argOption.AppServerHostname, argOption.MasterHostname, slaveHostnames);
-
-            // Clients connect to host
-            _remoteClients.ConnectAll();
-
         }
 
         public void Start()
         {
             try
             {
+                // Clients connect to host
+                _remoteClients.ConnectAll();
+
                 // Publish dlls
                 var (appserverExecutable, masterExecutable, slaveExecutable) = PubishExcutables();
 
@@ -94,6 +93,9 @@ namespace Commander
         {
             try
             {
+                // Clients connect to host
+                _remoteClients.ConnectAll();
+
                 var appserverExecutable = new FileInfo($"{_appserverProject}/{_baseName}.zip");
                 var masterExecutable = new FileInfo($"{_masterProject}/{_baseName}.zip");
                 var slaveExecutable = new FileInfo($"{_slaveProject}/{_baseName}.zip");

@@ -37,39 +37,87 @@ namespace Commander
                                 select new SshClient(hostname, username, password)).ToList();
         }
 
+        private Task Connect(BaseClient client) =>
+                Task.Run(() =>
+                {
+                    try
+                    {
+                        client.Connect();
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Error($"Connect to {client.ConnectionInfo.Host} error: {ex}");
+                        throw;
+                    }
+                });
+
+        private Task Disconnect(BaseClient client) =>
+                Task.Run(() =>
+                {
+                    try
+                    {
+                        client.Disconnect();
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Error($"Disconnect to {client.ConnectionInfo.Host} error: {ex}");
+                        throw;
+                    }
+                });
+
         public void ConnectAll()
         {
             Log.Information($"Connect all remote clients...");
             var tasks = new List<Task>();
-            tasks.Add(Task.Run(() => AppserverScpClient.Connect()));
-            tasks.Add(Task.Run(() => MasterScpClient.Connect()));
-            tasks.AddRange(from client in SlaveScpClients select Task.Run(() => client.Connect()));
-            tasks.Add(Task.Run(() => AppserverSshClient.Connect()));
-            tasks.Add(Task.Run(() => MasterSshClient.Connect()));
-            tasks.AddRange(from client in SlaveSshClients select Task.Run(() => client.Connect()));
+            tasks.Add(Connect(AppserverScpClient));
+            tasks.Add(Connect(MasterScpClient));
+            tasks.AddRange(from client in SlaveScpClients select Connect(client));
+            tasks.Add(Connect(AppserverSshClient));
+            tasks.Add(Connect(MasterSshClient));
+            tasks.AddRange(from client in SlaveSshClients select Connect(client));
             Task.WhenAll(tasks).Wait();
         }
+
+        private Task Dispose(BaseClient client) =>
+                Task.Run(() =>
+                {
+                    try
+                    {
+                        client.Disconnect();
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.Error($"Dispose to {client.ConnectionInfo.Host} error: {ex}");
+                        throw;
+                    }
+                });
 
         public void DestroyAll()
         {
             Log.Information($"Destroy all remote clients...");
-            var disconnectTasks = new List<Task>();
-            disconnectTasks.Add(Task.Run(() => AppserverScpClient.Disconnect()));
-            disconnectTasks.Add(Task.Run(() => MasterScpClient.Disconnect()));
-            disconnectTasks.AddRange(from client in SlaveScpClients select Task.Run(() => client.Disconnect()));
-            disconnectTasks.Add(Task.Run(() => AppserverSshClient.Disconnect()));
-            disconnectTasks.Add(Task.Run(() => MasterSshClient.Disconnect()));
-            disconnectTasks.AddRange(from client in SlaveSshClients select Task.Run(() => client.Disconnect()));
-            Task.WhenAll(disconnectTasks).Wait();
 
-            var disposeTasks = new List<Task>();
-            disposeTasks.Add(Task.Run(() => AppserverScpClient.Dispose()));
-            disposeTasks.Add(Task.Run(() => MasterScpClient.Dispose()));
-            disposeTasks.AddRange(from client in SlaveScpClients select Task.Run(() => client.Dispose()));
-            disposeTasks.Add(Task.Run(() => AppserverSshClient.Dispose()));
-            disposeTasks.Add(Task.Run(() => MasterSshClient.Dispose()));
-            disposeTasks.AddRange(from client in SlaveSshClients select Task.Run(() => client.Dispose()));
-            Task.WhenAll(disposeTasks).Wait();
+            try
+            {
+                var disconnectTasks = new List<Task>();
+                disconnectTasks.Add(Disconnect(AppserverScpClient));
+                disconnectTasks.Add(Disconnect(MasterScpClient));
+                disconnectTasks.AddRange(from client in SlaveScpClients select Disconnect(client));
+                disconnectTasks.Add(Disconnect(AppserverSshClient));
+                disconnectTasks.Add(Disconnect(MasterSshClient));
+                disconnectTasks.AddRange(from client in SlaveSshClients select Disconnect(client));
+                Task.WhenAll(disconnectTasks).Wait();
+            }
+            finally
+            {
+                var disposeTasks = new List<Task>();
+                disposeTasks.Add(Dispose(AppserverScpClient));
+                disposeTasks.Add(Dispose(MasterScpClient));
+                disposeTasks.AddRange(from client in SlaveScpClients select Dispose(client));
+                disposeTasks.Add(Dispose(AppserverSshClient));
+                disposeTasks.Add(Dispose(MasterSshClient));
+                disposeTasks.AddRange(from client in SlaveSshClients select Dispose(client));
+                Task.WhenAll(disposeTasks).Wait();
+            }
         }
     }
 }
