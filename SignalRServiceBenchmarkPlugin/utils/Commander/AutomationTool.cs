@@ -40,7 +40,7 @@ namespace Commander
         // Scp/Ssh clients
         private RemoteClients _remoteClients;
 
-        AutomationTool(ArgsOption argOption)
+        public AutomationTool(ArgsOption argOption)
         {
             // Initialize
             _appserverProject = argOption.AppserverProject;
