@@ -68,14 +68,16 @@ namespace Commander
         public void ConnectAll()
         {
             Log.Information($"Connect all remote clients...");
+
             var tasks = new List<Task>();
             tasks.Add(Connect(AppserverScpClient));
             tasks.Add(Connect(MasterScpClient));
-            tasks.AddRange(from client in SlaveScpClients select Connect(client));
             tasks.Add(Connect(AppserverSshClient));
             tasks.Add(Connect(MasterSshClient));
-            tasks.AddRange(from client in SlaveSshClients select Connect(client));
             Task.WhenAll(tasks).Wait();
+
+            Util.BatchProcess(SlaveScpClients, Connect, 100).Wait();
+            Util.BatchProcess(SlaveSshClients, Connect, 100).Wait();
         }
 
         private Task Dispose(BaseClient client) =>

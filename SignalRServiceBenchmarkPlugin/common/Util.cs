@@ -1,6 +1,9 @@
 ﻿using Serilog;
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace Common
 {
@@ -76,6 +79,34 @@ namespace Common
         {
             var unixDateTime = (long)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalMilliseconds;
             return unixDateTime;
+        }
+
+        public static Task BatchProcess<T>(IList<T> source, Func<T, Task> f, int max)
+        {
+            var initial = (max >> 1);
+            var s = new System.Threading.SemaphoreSlim(initial, max);
+            _ = Task.Run(async () =>
+            {
+                for (int i = initial; i < max; i++)
+                {
+                    await Task.Delay(100);
+                    s.Release();
+                }
+            });
+
+            return Task.WhenAll(from item in source
+                                select Task.Run(async () =>
+                                {
+                                    await s.WaitAsync();
+                                    try
+                                    {
+                                        await f(item);
+                                    }
+                                    finally
+                                    {
+                                        s.Release();
+                                    }
+                                }));
         }
     }
 }
