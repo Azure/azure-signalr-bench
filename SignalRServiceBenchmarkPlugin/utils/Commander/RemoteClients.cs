@@ -24,6 +24,8 @@ namespace Commander
 
         public void CreateAll(string username, string password, string appserverHostname, string masterHostname, IList<string> slaveHostnames)
         {
+            Log.Information($"Create all remote clients...");
+
             AppserverScpClient = new ScpClient(appserverHostname, username, password);
             MasterScpClient = new ScpClient(masterHostname, username, password);
             SlaveScpClients = (from hostname in slaveHostnames
@@ -37,18 +39,20 @@ namespace Commander
 
         public void ConnectAll()
         {
+            Log.Information($"Connect all remote clients...");
             var tasks = new List<Task>();
             tasks.Add(Task.Run(() => AppserverScpClient.Connect()));
             tasks.Add(Task.Run(() => MasterScpClient.Connect()));
-            tasks.AddRange(from client in SlaveScpClients select Task.Run( () => client.Connect()));
+            tasks.AddRange(from client in SlaveScpClients select Task.Run(() => client.Connect()));
             tasks.Add(Task.Run(() => AppserverSshClient.Connect()));
             tasks.Add(Task.Run(() => MasterSshClient.Connect()));
-            tasks.AddRange(from client in SlaveSshClients select Task.Run( () => client.Connect()));
+            tasks.AddRange(from client in SlaveSshClients select Task.Run(() => client.Connect()));
             Task.WhenAll(tasks).Wait();
         }
 
         public void DestroyAll()
         {
+            Log.Information($"Destroy all remote clients...");
             var disconnectTasks = new List<Task>();
             disconnectTasks.Add(Task.Run(() => AppserverScpClient.Disconnect()));
             disconnectTasks.Add(Task.Run(() => MasterScpClient.Disconnect()));
