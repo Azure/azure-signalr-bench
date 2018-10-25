@@ -581,7 +581,9 @@ function remove_resource_group() {
   echo "!!Received EXIT!! and remove all created VMs"
 
   cd $CurrentWorkingDir
-  nohup ${VMMgrDir}/JenkinsScript --PidFile='./pid/pid_remove_rsg.txt' --step=DeleteResourceGroupByConfig --AgentConfigFile=$AgentConfig --DisableRandomSuffix --ServicePrincipal=$ServicePrincipal &
+  local clean_vm_daemon=daemon_${JOB_NAME}_cleanvms
+  local clean_asrs_daemon=daemon_${JOB_NAME}_cleanasrs
+  daemonize -o /tmp/${clean_vm_daemon}.out -e /tmp/${clean_vm_daemon}.err -E BUILD_ID=dontKillcenter /usr/bin/nohup ${VMMgrDir}/JenkinsScript --PidFile='./pid/pid_remove_rsg.txt' --step=DeleteResourceGroupByConfig --AgentConfigFile=$AgentConfig --DisableRandomSuffix --ServicePrincipal=$ServicePrincipal &
 
 cat << EOF > /tmp/clean_asrs.sh
 cd $ScriptWorkingDir
@@ -597,7 +599,7 @@ else
   delete_group $DogFoodResourceGroup
 fi
 EOF
-  nohup sh /tmp/clean_asrs.sh &
+  daemonize -o /tmp/${clean_asrs_daemon}.out -e /tmp/${clean_asrs_daemon}.err -E BUILD_ID=dontKillcenter /usr/bin/nohup /bin/sh /tmp/clean_asrs.sh &
 }
 
 ## register exit handler to remove resource group ##
