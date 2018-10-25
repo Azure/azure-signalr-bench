@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "slave": {
+      "commandName": "Project",
+      "commandLineArgs": "-- --RpcPort 5050 --HostName localhost"
+    }
+  }
+}

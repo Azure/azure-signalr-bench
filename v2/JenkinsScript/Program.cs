@@ -309,6 +309,18 @@ namespace JenkinsScript
                         var resultFolder = $"/home/{user}/signalr-bench-statistics-{statisticsSuffix}/results/";
                         var statisticCustomizedFolder = Environment.GetEnvironmentVariable("env_statistic_folder");
                         var resultCustomizedFolder = Environment.GetEnvironmentVariable("env_result_folder");
+
+                        // prepare result directory for regular test
+                        var collector = new StatisticsCollector(argsOption.Parent, argsOption.Root, argsOption.Scenario);
+
+                        if (argsOption.Regular)
+                        {
+                            collector.PrepareDirectory();
+                            statisticFolder = collector.MachineDirPath;
+                            logFolder = collector.LogDirPath;
+                            resultFolder = collector.ResultDirPath;
+                        }
+
                         if (!string.IsNullOrEmpty(statisticCustomizedFolder))
                         {
                             statisticFolder = $"{statisticCustomizedFolder}";
@@ -318,8 +330,6 @@ namespace JenkinsScript
                         {
                             resultFolder = resultCustomizedFolder;
                         }
-                        // 
-                        // var kubeConfigFile = 
 
                         var hosts = new List<string>();
                         if (privateIps.ServicePrivateIp != null && privateIps.ServicePrivateIp.Length > 0)
@@ -335,7 +345,7 @@ namespace JenkinsScript
                         {
                             foreach (var ip in privateIps.ServicePrivateIp.Split(";").ToList())
                             {
-                                suffix = GenerateSuffix($"service{ip}", serviceType, transportType, hubProtocol, scenario, connection, concurrentConnection, groupNum, overlap, enableGroupJoinLeave, messageSize);
+                                suffix = GenerateSuffix($"service{ip}");
                                 (errCode, result) = ShellHelper.PrepareLogPath(ip, user, password, sshPort, logRoot, resultRoot, suffix);
                                 logPathService.Add(result);
                             }
@@ -344,7 +354,7 @@ namespace JenkinsScript
                         var logPathAppServer = new List<string>();
                         foreach (var ip in privateIps.AppServerPrivateIp.Split(";").ToList())
                         {
-                            suffix = GenerateSuffix($"appserver{ip}", serviceType, transportType, hubProtocol, scenario, connection, concurrentConnection, groupNum, overlap, enableGroupJoinLeave, messageSize);
+                            suffix = GenerateSuffix($"appserver{ip}");
                             (errCode, result) = ShellHelper.PrepareLogPath(ip, user, password, sshPort, logRoot, resultRoot, suffix);
                             logPathAppServer.Add(result);
                         }
@@ -352,12 +362,13 @@ namespace JenkinsScript
                         var logPathSlave = new List<string>();
                         slavesPvtIp.ForEach(ip =>
                         {
-                            suffix = GenerateSuffix($"slave{ip}", serviceType, transportType, hubProtocol, scenario, connection, concurrentConnection, groupNum, overlap, enableGroupJoinLeave, messageSize);
+                            suffix = GenerateSuffix($"slave{ip}");
                             (errCode, result) = ShellHelper.PrepareLogPath(ip, user, password, sshPort, logRoot, resultRoot, suffix);
                             logPathSlave.Add(result);
                         });
 
-                        suffix = GenerateSuffix("master", serviceType, transportType, hubProtocol, scenario, connection, concurrentConnection, groupNum, overlap, enableGroupJoinLeave, messageSize);
+                        suffix = "master";
+                        var masterSuffix = suffix;
                         (errCode, result) = ShellHelper.PrepareLogPath(masterPvtIp, user, password, sshPort, logRoot, resultRoot, suffix);
                         var logPathMaster = result;
 
@@ -374,7 +385,7 @@ namespace JenkinsScript
                         if (!debug && privateIps.ServicePrivateIp != null && privateIps.ServicePrivateIp.Length > 0)
                         {
 
-                            privateIps.ServicePrivateIp.Split(";").ToList().ForEach(host => StartCollectMachineStatisticsTimer(host, user, password, sshPort, Util.MakeSureDirectoryExist(statisticFolder) + $"service{host}.txt", TimeSpan.FromSeconds(1)));
+                            privateIps.ServicePrivateIp.Split(";").ToList().ForEach(host => StartCollectMachineStatisticsTimer(host, user, password, sshPort, Path.Combine(Util.MakeSureDirectoryExist(statisticFolder), $"service{host}.txt"), TimeSpan.FromSeconds(1)));
                             // if () StartCollectMachineStatisticsTimer()
                             ShellHelper.ModifyServiceAppsettings(privateIps.ServicePrivateIp.Split(";").ToList(), user, password, sshPort, publicIps.ServicePublicIp.Split(";").ToList(), $"/home/{user}", "OSSServices-SignalR-Service", $"/home/{user}");
                             (errCode, result) = ShellHelper.StartSignalrService(privateIps.ServicePrivateIp.Split(";").ToList(), user, password, sshPort, serviceDir, logPathService);
@@ -391,26 +402,34 @@ namespace JenkinsScript
                         }
 
                         // start slaves
-                        privateIps.SlavePrivateIp.Split(";").ToList().ForEach(host => StartCollectMachineStatisticsTimer(host, user, password, sshPort, Util.MakeSureDirectoryExist(statisticFolder) + $"slave{host}.txt", TimeSpan.FromSeconds(1)));
-                        ShellHelper.StartRpcSlaves(privateIps.SlavePrivateIp.Split(";").ToList(), user, password, sshPort, rpcPort, logPathSlave, slaveRoot);
-                        Task.Delay(waitTime).Wait();
+                        privateIps.SlavePrivateIp.Split(";").ToList().ForEach(host => StartCollectMachineStatisticsTimer(host, user, password, sshPort, Path.Combine(Util.MakeSureDirectoryExist(statisticFolder), $"slave{host}.txt"), TimeSpan.FromSeconds(1)));ShellHelper.StartRpcSlaves(privateIps.SlavePrivateIp.Split(";").ToList(), user, password, sshPort, rpcPort, logPathSlave, slaveRoot);Task.Delay(waitTime).Wait();
 
                         // start master
-                        privateIps.MasterPrivateIp.Split(";").ToList().ForEach(host => StartCollectMachineStatisticsTimer(host, user, password, sshPort, Util.MakeSureDirectoryExist(statisticFolder) + $"master{host}.txt", TimeSpan.FromSeconds(1)));
-                        ShellHelper.StartRpcMaster(privateIps.MasterPrivateIp, privateIps.SlavePrivateIp.Split(";").ToList(),
+                        privateIps.MasterPrivateIp.Split(";").ToList().ForEach(host => StartCollectMachineStatisticsTimer(host, user, password, sshPort, Path.Combine(Util.MakeSureDirectoryExist(statisticFolder), $"master{host}.txt"), TimeSpan.FromSeconds(1)));ShellHelper.StartRpcMaster(privateIps.MasterPrivateIp, privateIps.SlavePrivateIp.Split(";").ToList(),
                             user, password, sshPort, logPathMaster, serviceType, transportType, hubProtocol, scenario,
                             connection, concurrentConnection, duration, interval, pipeline, groupNum, overlap, combineFactor, messageSize,
                             serverUrl, suffix, masterRoot, sendToFixedClient, enableGroupJoinLeave,
                             bool.Parse(argsOption.StopSendIfLatencyBig), bool.Parse(argsOption.StopSendIfConnectionErrorBig),
                             connectionString);
 
-                        // collect all logs
-                        ShellHelper.CollectStatistics(hosts, user, password, sshPort, $"/home/{user}/logs/{resultRoot}/", Util.MakeSureDirectoryExist(logFolder));
+                        if (argsOption.Regular)
+                        {
+                            // collect all logs
+                            ShellHelper.CollectStatistics(hosts, user, password, sshPort, $"/home/{user}/logs/{resultRoot}/*.txt", Util.MakeSureDirectoryExist(logFolder));
+                            // collect results from master
+                            ShellHelper.CollectStatistics(privateIps.MasterPrivateIp.Split(";").ToList(), user, password, sshPort, $"/home/{user}/results/{resultRoot}/{masterSuffix}/*.txt", Util.MakeSureDirectoryExist(resultFolder));
+                            // copy job config file
+                            collector.CollectConfig(argsOption.JobConfigFileV2);
+                        }
+                        else
+                        {
+                            // collect all logs
+                            ShellHelper.CollectStatistics(hosts, user, password, sshPort, $"/home/{user}/logs/{resultRoot}/", Util.MakeSureDirectoryExist(logFolder));
+                            // collect results from master
+                            ShellHelper.CollectStatistics(privateIps.MasterPrivateIp.Split(";").ToList(), user, password, sshPort, $"/home/{user}/results/{resultRoot}/", Util.MakeSureDirectoryExist(resultFolder));
+                        }
 
-                        // collect results from master
-                        ShellHelper.CollectStatistics(privateIps.MasterPrivateIp.Split(";").ToList(), user, password, sshPort, $"/home/{user}/results/{resultRoot}/", Util.MakeSureDirectoryExist(resultFolder));
-
-                        // killall process to avoid wirting log
+                        // killall process to avoid writing log
                         if (!debug) ShellHelper.KillAllDotnetProcess(hosts, remoteRepo, user, password, sshPort, repoRoot : localRepoRoot);
 
                         break;
@@ -419,10 +438,9 @@ namespace JenkinsScript
 
         }
 
-        private static string GenerateSuffix(string agent, string serviceType, string transportType, string hubProtocol,
-            string scenario, int connections, int concurrentConnection, int groupNum = 0, int overlap = 0, bool isGroupJoinLeave = false, string messageSize = "0")
+        private static string GenerateSuffix(string agent)
         {
-            return $"{agent}_{serviceType}_{transportType}_{hubProtocol}_{scenario}_{connections}_{concurrentConnection}_{groupNum}_{overlap}_{(isGroupJoinLeave ? "true" : "false")}_{messageSize}";
+            return $"{agent}";
         }
 
         private static void SavePid(string pidFile)
