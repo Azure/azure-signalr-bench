@@ -12,6 +12,9 @@ namespace Commander
         [Option("AppserverPort", Required = false, Default = 5050, HelpText = "Port of app server.")]
         public int AppserverPort { get; set; }
 
+        [Option("AzureSignalRConnectionString", Required = false, HelpText = "Azure SignalR connection string.")]
+        public string AzureSignalRConnectionString { get; set; }
+
         // Remote
         [Option("RpcPort", Required = false, Default = 5555, HelpText = "Port to be conencted from remote hosts.")]
         public int RpcPort { get; set; }

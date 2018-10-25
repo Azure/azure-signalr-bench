@@ -16,6 +16,7 @@ namespace Commander
 
         // App server information
         private readonly int _appserverPort;
+        private readonly string _azureSignalRConnectionString;
 
         // Slave Information
         private readonly int _rpcPort;
@@ -54,6 +55,7 @@ namespace Commander
             _slaveList = argOption.SlaveList;
             _rpcPort = argOption.RpcPort;
             _appserverPort = argOption.AppserverPort;
+            _azureSignalRConnectionString = argOption.AzureSignalRConnectionString;
 
             // Create clients
             var slaveHostnames = (from slave in argOption.SlaveList select slave.Split(':')[0]).ToList();
@@ -130,7 +132,15 @@ namespace Commander
                 var appserverDirectory = Path.Combine(Path.GetDirectoryName(_appserverTargetPath), Path.GetFileNameWithoutExtension(_appserverTargetPath), _baseName);
                 var masterExecutablePath = Path.Combine(Path.GetDirectoryName(_masterTargetPath), Path.GetFileNameWithoutExtension(_masterTargetPath), _baseName, "master.dll");
                 var slaveExecutablePath = Path.Combine(Path.GetDirectoryName(_slaveTargetPath), Path.GetFileNameWithoutExtension(_slaveTargetPath), _baseName, "slave.dll");
-                var appseverCommand = $"export useLocalSignalR=true; cd {appserverDirectory}; dotnet exec AppServer.dll --urls=http://*:{_appserverPort}";
+                var appseverCommand = "";
+                if (_azureSignalRConnectionString != null)
+                {
+                    appseverCommand = $"export useLocalSignalR=true; cd {appserverDirectory}; dotnet exec AppServer.dll --urls=http://*:{_appserverPort}";
+                }
+                else
+                {
+                    appseverCommand = $"export Azure__SignalR__ConnectionString='{_azureSignalRConnectionString}' ;cd {appserverDirectory}; dotnet exec AppServer.dll --urls=http://*:{_appserverPort} ";
+                }
                 var masterCommand = $"dotnet exec {masterExecutablePath} -- --BenchmarkConfiguration=\"{_benchmarkConfigurationTargetPath}\" --SlaveList=\"{string.Join(',', _slaveList)}\"";
                 var slaveCommand = $"dotnet exec {slaveExecutablePath} --HostName 0.0.0.0 --RpcPort {_rpcPort}";
                 var appserverSshCommand = _remoteClients.AppserverSshClient.CreateCommand(appseverCommand.Replace('\\', '/'));
