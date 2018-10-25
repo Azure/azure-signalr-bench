@@ -133,7 +133,7 @@ namespace Commander
                 var masterExecutablePath = Path.Combine(Path.GetDirectoryName(_masterTargetPath), Path.GetFileNameWithoutExtension(_masterTargetPath), _baseName, "master.dll");
                 var slaveExecutablePath = Path.Combine(Path.GetDirectoryName(_slaveTargetPath), Path.GetFileNameWithoutExtension(_slaveTargetPath), _baseName, "slave.dll");
                 var appseverCommand = "";
-                if (_azureSignalRConnectionString != null)
+                if (_azureSignalRConnectionString == null)
                 {
                     appseverCommand = $"export useLocalSignalR=true; cd {appserverDirectory}; dotnet exec AppServer.dll --urls=http://*:{_appserverPort}";
                 }
