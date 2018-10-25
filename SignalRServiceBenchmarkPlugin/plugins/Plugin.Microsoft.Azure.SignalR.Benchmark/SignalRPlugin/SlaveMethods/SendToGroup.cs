@@ -86,6 +86,10 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 Log.Error(message);
                 throw;
             }
+            finally
+            {
+                _statisticsCollector.IncreaseEpoch();
+            }
         }
 
         private void SetCallback(IList<HubConnection> connections)

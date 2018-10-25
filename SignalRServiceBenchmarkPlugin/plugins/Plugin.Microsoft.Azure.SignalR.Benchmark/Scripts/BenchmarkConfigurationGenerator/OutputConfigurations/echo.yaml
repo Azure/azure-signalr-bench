@@ -6,6 +6,7 @@ Pipeline:
     Type: echo
 - - Method: CollectStatistics
     Parameter.Interval: 1000
+    Parameter.StatisticsOutputPath: ./counters.txt
     Type: echo
 - - Method: CreateConnection
     Parameter.ConnectionTotal: 20000

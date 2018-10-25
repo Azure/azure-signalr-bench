@@ -81,6 +81,11 @@ namespace Common
             return unixDateTime;
         }
 
+        public static string Timestamp2DateTimeStr(long timestamp)
+        {
+            return DateTimeOffset.FromUnixTimeMilliseconds(timestamp).ToString("yyyy-MM-ddThh:mm:ssZ");
+        }
+
         public static Task BatchProcess<T>(IList<T> source, Func<T, Task> f, int max)
         {
             var initial = (max >> 1);
