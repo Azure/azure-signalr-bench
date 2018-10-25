@@ -1,0 +1,24 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp2.1</TargetFramework>
+    <LangVersion>latest</LangVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommandLineParser" Version="2.3.0" />
+    <PackageReference Include="Grpc" Version="1.15.0" />
+    <PackageReference Include="Serilog" Version="2.7.2-dev-01027" />
+    <PackageReference Include="Serilog.Sinks.Console" Version="3.1.2-dev-00779" />
+    <PackageReference Include="Serilog.Sinks.File" Version="4.0.1-dev-00798" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\common\common.csproj" />
+    <ProjectReference Include="..\..\plugins\base\base.csproj" />
+    <ProjectReference Include="..\..\plugins\Plugin.Microsoft.Azure.SignalR.Benchmark\SignalRPlugin\Plugin.Microsoft.Azure.SignalR.Benchmark.csproj" />
+    <ProjectReference Include="..\rpc\rpc.csproj" />
+  </ItemGroup>
+
+</Project>

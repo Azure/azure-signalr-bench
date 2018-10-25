@@ -650,7 +650,7 @@ namespace JenkinsScript
                 cmd = $"cp /etc/security/limits.conf ~/limits.conf";
                 (errCode, res) = ShellHelper.RemoteBash(user, domain, 22, password, cmd, handleRes : true, retry : 5);
 
-                cmd = $"echo 'wanl    soft    nofile  655350\n' >> ~/limits.conf";
+                cmd = $"echo '{user}    soft    nofile  655350\n' >> ~/limits.conf";
                 (errCode, res) = ShellHelper.RemoteBash(user, domain, 22, password, cmd, handleRes : true, retry : 5);
 
                 cmd = $"echo '{password}' | sudo -S mv ~/limits.conf /etc/security/limits.conf";

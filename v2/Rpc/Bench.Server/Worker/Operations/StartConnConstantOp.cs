@@ -90,6 +90,7 @@ namespace Bench.RpcSlave.Worker.Operations
                 Interlocked.Increment(ref cnt);
                 await connection.StartAsync();
                 Interlocked.Decrement(ref cnt);
+                _tk.Counters.IncreaseConnectionSuccess();
             }
             catch (Exception ex)
             {

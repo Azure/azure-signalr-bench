@@ -374,3 +374,11 @@ v2/signalr_bench/DebugScripts/**/*.sh
 v2/JenkinsScript/privateIps\.yaml
 
 v2/JenkinsScript/publicIps\.yaml
+
+SignalRServiceBenchmarkPlugin/framework/master/BenchmarkConfigurationSample\.yaml
+
+SignalRServiceBenchmarkPlugin/utils/Commander/Properties/launchSettings\.json
+
+SignalRServiceBenchmarkPlugin/framework/slave/publish\.zip
+
+SignalRServiceBenchmarkPlugin/framework/master/publish\.zip
