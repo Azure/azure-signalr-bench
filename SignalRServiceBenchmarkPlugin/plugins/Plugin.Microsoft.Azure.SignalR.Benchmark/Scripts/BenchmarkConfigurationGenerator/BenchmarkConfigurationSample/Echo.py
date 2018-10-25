@@ -17,7 +17,7 @@ transport_type = 'Websockets'
 types = [type_]
 pipeline = [
     init_statistics_collector(type_) + init_statistics_collector(type_),
-    collect_statistics(type_, statistic_interval),
+    collect_statistics(type_, statistic_interval, './counters.txt'),
     create_connection(type_, total_connection, Common.hub_url, protocol, transport_type),
     start_connection(type_, concurrent_connection),
     echo(type_, duration, interval, remainder_begin, remainder_end, total_connection, message_size),

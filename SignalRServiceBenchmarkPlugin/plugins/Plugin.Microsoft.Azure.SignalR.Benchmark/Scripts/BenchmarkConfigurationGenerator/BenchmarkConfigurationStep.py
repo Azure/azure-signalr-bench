@@ -20,7 +20,8 @@ Key = {
     'GroupLevelRemainderEnd': 'Parameter.GroupLevelRemainderEnd',
     'GroupInternalRemainderBegin': 'Parameter.GroupInternalRemainderBegin',
     'GroupInternalRemainderEnd': 'Parameter.GroupInternalRemainderEnd',
-    'GroupInternalModulo': 'Parameter.GroupInternalModulo'
+    'GroupInternalModulo': 'Parameter.GroupInternalModulo',
+    'StatisticsOutputPath': 'Parameter.StatisticsOutputPath'
 }
 
 
@@ -45,11 +46,12 @@ def init_statistics_collector(type_):
     return [dict(required(type_, "InitStatisticsCollector"))]
 
 
-def collect_statistics(type_, interval):
+def collect_statistics(type_, interval, output_path):
     return [{
         **required(type_, "CollectStatistics"),
         **{
             Key['Interval']: interval,
+            Key['StatisticsOutputPath']: output_path
         }
     }]
 
