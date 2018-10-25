@@ -30,6 +30,7 @@ type Counters struct {
 	GE_1000     int64 `json:"message:ge:1000"`
 	Sending     int64 `json:"sendingStep"`
         ConnError   int64 `json:"connection:error"`
+        ReConn      int64 `json:"connection:reconnect"`
         ConnSucc    int64 `json:"connection:success"`
 }
 

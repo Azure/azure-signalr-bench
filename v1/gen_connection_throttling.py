@@ -16,7 +16,7 @@ def unit10throttling():
    return 0
 
 def unit20throttling():
-   return 0
+   return 20000
 
 def unit50throttling():
    return 20000
