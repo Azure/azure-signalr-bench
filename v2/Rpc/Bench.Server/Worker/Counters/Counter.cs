@@ -100,7 +100,10 @@ namespace Bench.RpcSlave.Worker.Counters
 
         public void RecordSendingStep(ulong sending)
         {
-            InnerCounters.AddOrUpdate($"sendingStep", sending, (k, v) => sending);
+            if (sending == 0)
+                Console.WriteLine("sendingStep is zero");
+            else
+                InnerCounters.AddOrUpdate($"sendingStep", sending, (k, v) => sending);
         }
 
         public void CountLatency(long sendTimestamp, long receiveTimestamp)
@@ -144,13 +147,35 @@ namespace Bench.RpcSlave.Worker.Counters
         public void IncreaseConnectionError()
         {
             InnerCounters.AddOrUpdate("connection:error", 0, (k, v) => v + 1);
+        }
 
+        public void DecreaseConnectionError()
+        {
+            InnerCounters.AddOrUpdate("connection:error", 0, (k, v) => v >= 1 ? v - 1 : 0);
+        }
+
+        public void IncreaseReconnect()
+        {
+            InnerCounters.AddOrUpdate("connection:reconnect", 0, (k, v) => v + 1);
+        }
+
+        public void DropOneConnection()
+        {
+            lock (InnerCounters)
+            {
+                DecreaseConnectionSuccess();
+                IncreaseConnectionError();
+            }
         }
 
         public void IncreaseConnectionSuccess()
         {
             InnerCounters.AddOrUpdate("connection:success", 0, (k, v) => v + 1);
+        }
 
+        public void DecreaseConnectionSuccess()
+        {
+            InnerCounters.AddOrUpdate("connection:success", 0, (k, v) => v >= 1 ? v - 1 : v);
         }
 
         public void UpdateConnectionSuccess(ulong totalConn)

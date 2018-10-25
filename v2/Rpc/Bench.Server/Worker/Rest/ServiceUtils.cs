@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using System.Text.RegularExpressions;
 using Microsoft.IdentityModel.Tokens;
 
 namespace Bench.RpcSlave.Worker.Serverless
@@ -13,7 +14,23 @@ namespace Bench.RpcSlave.Worker.Serverless
     public class ServiceUtils
     {
         private static readonly JwtSecurityTokenHandler JwtTokenHandler = new JwtSecurityTokenHandler();
+        private const string EndpointProperty = "endpoint";
+        private const string AccessKeyProperty = "accesskey";
+        private const string VersionProperty = "version";
+        private const string PortProperty = "port";
+        // For SDK 1.x, only support Azure SignalR Service 1.x
+        private const string SupportedVersion = "1";
+        private const string ValidVersionRegex = "^" + SupportedVersion + @"\.\d+(?:[\w-.]+)?$";
 
+        private static readonly string MissingRequiredProperty =
+            $"Connection string missing required properties endpoint and accesskey.";
+
+        private const string InvalidVersionValueFormat = "Version {0} is not supported.";
+
+        private static readonly string InvalidPortValue = $"Invalid value for {PortProperty} property.";
+
+        private static readonly char[] PropertySeparator = { ';' };
+        private static readonly char[] KeyValueSeparator = { '=' };
         public const string ClientUserIdPrefix = "cli";
         public const string MethodName = "SendMessage";
         public const string HubName = "RestBench";
@@ -22,9 +39,11 @@ namespace Bench.RpcSlave.Worker.Serverless
 
         public string AccessKey { get; }
 
+        public int? Port { get; }
+
         public ServiceUtils(string connectionString)
         {
-            (Endpoint, AccessKey) = ParseConnectionString(connectionString);
+            (Endpoint, AccessKey, _, Port) = ParseConnectionString(connectionString);
         }
 
         public string GenerateAccessToken(string audience, string userId, TimeSpan? lifetime = null)
@@ -39,11 +58,6 @@ namespace Bench.RpcSlave.Worker.Serverless
             }
 
             return GenerateAccessTokenInternal(audience, claims, lifetime ?? TimeSpan.FromHours(1));
-        }
-
-        public static string GetClientUrl(string endpoint, string hubName)
-        {
-            return $"{endpoint}:5001/client/?hub={hubName}";
         }
 
         public string GetBroadcastUrl()
@@ -68,7 +82,9 @@ namespace Bench.RpcSlave.Worker.Serverless
 
         public string GetClientUrl()
         {
-            return GetClientUrl(Endpoint, HubName);
+            return Port.HasValue ?
+                $"{Endpoint}:{Port}/client/?hub={HubName}" :
+                $"{Endpoint}/client/?hub={HubName}";
         }
 
         public string GenerateAccessTokenInternal(string audience, IEnumerable<Claim> claims, TimeSpan lifetime)
@@ -87,38 +103,74 @@ namespace Bench.RpcSlave.Worker.Serverless
             return JwtTokenHandler.WriteToken(token);
         }
 
-        private static readonly char[] PropertySeparator = { ';' };
-        private static readonly char[] KeyValueSeparator = { '=' };
-        private const string EndpointProperty = "endpoint";
-        private const string AccessKeyProperty = "accesskey";
-
-        internal static (string, string) ParseConnectionString(string connectionString)
+        internal static (string endpoint, string accessKey, string version, int? port) ParseConnectionString (string connectionString)
         {
             var properties = connectionString.Split(PropertySeparator, StringSplitOptions.RemoveEmptyEntries);
-            if (properties.Length > 1)
+            if (properties.Length < 2)
             {
-                var dict = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-                foreach (var property in properties)
+                throw new ArgumentException(MissingRequiredProperty, nameof(connectionString));
+            }
+
+            var dict = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var property in properties)
+            {
+                var kvp = property.Split(KeyValueSeparator, 2);
+                if (kvp.Length != 2) continue;
+
+                var key = kvp[0].Trim();
+                if (dict.ContainsKey(key))
                 {
-                    var kvp = property.Split(KeyValueSeparator, 2);
-                    if (kvp.Length != 2) continue;
-
-                    var key = kvp[0].Trim();
-                    if (dict.ContainsKey(key))
-                    {
-                        throw new ArgumentException($"Duplicate properties found in connection string: {key}.");
-                    }
-
-                    dict.Add(key, kvp[1].Trim());
+                    throw new ArgumentException($"Duplicate properties found in connection string: {key}.");
                 }
 
-                if (dict.ContainsKey(EndpointProperty) && dict.ContainsKey(AccessKeyProperty))
+                dict.Add(key, kvp[1].Trim());
+            }
+
+            if (!dict.ContainsKey(EndpointProperty) || !dict.ContainsKey(AccessKeyProperty))
+            {
+                throw new ArgumentException(MissingRequiredProperty, nameof(connectionString));
+            }
+
+            if (!ValidateEndpoint(dict[EndpointProperty]))
+            {
+                throw new ArgumentException($"Endpoint property in connection string is not a valid URI: {dict[EndpointProperty]}.");
+            }
+
+            string version = null;
+            if (dict.TryGetValue(VersionProperty, out var v))
+            {
+                if (Regex.IsMatch(v, ValidVersionRegex))
                 {
-                    return (dict[EndpointProperty].TrimEnd('/'), dict[AccessKeyProperty]);
+                    version = v;
+                }
+                else
+                {
+                    throw new ArgumentException(string.Format(InvalidVersionValueFormat, v), nameof(connectionString));
                 }
             }
 
-            throw new ArgumentException($"Connection string missing required properties {EndpointProperty} and {AccessKeyProperty}.");
+            int? port = null;
+            if (dict.TryGetValue(PortProperty, out var s))
+            {
+                if (int.TryParse(s, out var p) &&
+                    p > 0 && p <= 0xFFFF)
+                {
+                    port = p;
+                }
+                else
+                {
+                    throw new ArgumentException(InvalidPortValue, nameof(connectionString));
+                }
+            }
+
+            return (dict[EndpointProperty].TrimEnd('/'), dict[AccessKeyProperty], version, port);
         }
+
+        internal static bool ValidateEndpoint(string endpoint)
+        {
+            return Uri.TryCreate(endpoint, UriKind.Absolute, out var uriResult) &&
+                   (uriResult.Scheme == Uri.UriSchemeHttp || uriResult.Scheme == Uri.UriSchemeHttps);
+        }
+
     }
 }

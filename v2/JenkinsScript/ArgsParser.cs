@@ -107,7 +107,6 @@ namespace JenkinsScript
         public string StopSendIfLatencyBig { get; set; }
 
         // result folder
-
         [Option("Parent", Default = "", Required = false, HelpText = "")]
         public string Parent { get; set; }
 
@@ -119,5 +118,11 @@ namespace JenkinsScript
 
         [Option("Regular", Required = false, HelpText = "")]
         public bool Regular { get; set; }
+
+        [Option("stopSendIfConnectionErrorBig", Default = "false", Required = false, HelpText = "Stop sending steps if there are too many errors")]
+        public string StopSendIfConnectionErrorBig { get; set; }
+
+        [Option("connectionString", Default = null, Required = false, HelpText = "Specify SignalR service connection string")]
+        public string ConnectionString { get; set; }
     }
 }

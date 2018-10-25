@@ -252,6 +252,7 @@ namespace JenkinsScript
                         // app server
                         var useLocalSignalR = debug && argsOption.AzureSignalrConnectionString == "" ? "true" : "false";
                         var azureSignalrConnectionStrings = argsOption.AzureSignalrConnectionString.Split("^").ToList();
+                        var connectionString = argsOption.ConnectionString;
 
                         // load private ips
                         var privateIps = configLoader.Load<PrivateIpConfig>(argsOption.PrivateIps);
@@ -284,7 +285,6 @@ namespace JenkinsScript
                         var branch = argsOption.Branch;
                         var serviceVmCnt = agentConfig.SvcVmCount;
                         var appserverVmCount = agentConfig.AppSvrVmCount;
-
                         // benchmark config
                         var serviceType = jobConfigV2.ServiceType;
                         var transportType = jobConfigV2.TransportType;
@@ -296,6 +296,7 @@ namespace JenkinsScript
                         var interval = jobConfigV2.Interval;
                         var groupNum = jobConfigV2.GroupNum;
                         var overlap = jobConfigV2.Overlap;
+                        var combineFactor = jobConfigV2.CombineFactor;
                         var enableGroupJoinLeave = jobConfigV2.EnableGroupJoinLeave;
                         var pipeline = jobConfigV2.Pipeline;
                         var serverUrl = jobConfigV2.ServerUrl;
@@ -392,7 +393,13 @@ namespace JenkinsScript
                         Task.Delay(waitTime).Wait();
 
                         // start app server
-                        privateIps.AppServerPrivateIp.Split(";").ToList().ForEach(host => StartCollectMachineStatisticsTimer(host, user, password, sshPort, Path.Combine(Util.MakeSureDirectoryExist(statisticFolder), $"appserver{host}.txt"), TimeSpan.FromSeconds(1)));ShellHelper.StartAppServer(privateIps.AppServerPrivateIp.Split(";").ToList(), user, password, sshPort, azureSignalrConnectionStrings, logPathAppServer, useLocalSignalR, appSvrRoot);Task.Delay(waitTime).Wait();
+                        if (connectionString == null)
+                        {
+                            // serverless mode (connectionString != null) does not need to start app server
+                            privateIps.AppServerPrivateIp.Split(";").ToList().ForEach(host => StartCollectMachineStatisticsTimer(host, user, password, sshPort, Util.MakeSureDirectoryExist(statisticFolder) + $"appserver{host}.txt", TimeSpan.FromSeconds(1)));
+                            ShellHelper.StartAppServer(privateIps.AppServerPrivateIp.Split(";").ToList(), user, password, sshPort, azureSignalrConnectionStrings, logPathAppServer, useLocalSignalR, appSvrRoot);
+                            Task.Delay(waitTime).Wait();
+                        }
 
                         // start slaves
                         privateIps.SlavePrivateIp.Split(";").ToList().ForEach(host => StartCollectMachineStatisticsTimer(host, user, password, sshPort, Path.Combine(Util.MakeSureDirectoryExist(statisticFolder), $"slave{host}.txt"), TimeSpan.FromSeconds(1)));ShellHelper.StartRpcSlaves(privateIps.SlavePrivateIp.Split(";").ToList(), user, password, sshPort, rpcPort, logPathSlave, slaveRoot);Task.Delay(waitTime).Wait();
@@ -400,8 +407,10 @@ namespace JenkinsScript
                         // start master
                         privateIps.MasterPrivateIp.Split(";").ToList().ForEach(host => StartCollectMachineStatisticsTimer(host, user, password, sshPort, Path.Combine(Util.MakeSureDirectoryExist(statisticFolder), $"master{host}.txt"), TimeSpan.FromSeconds(1)));ShellHelper.StartRpcMaster(privateIps.MasterPrivateIp, privateIps.SlavePrivateIp.Split(";").ToList(),
                             user, password, sshPort, logPathMaster, serviceType, transportType, hubProtocol, scenario,
-                            connection, concurrentConnection, duration, interval, pipeline, groupNum, overlap, messageSize,
-                            serverUrl, suffix, masterRoot, sendToFixedClient, enableGroupJoinLeave, bool.Parse(argsOption.StopSendIfLatencyBig));
+                            connection, concurrentConnection, duration, interval, pipeline, groupNum, overlap, combineFactor, messageSize,
+                            serverUrl, suffix, masterRoot, sendToFixedClient, enableGroupJoinLeave,
+                            bool.Parse(argsOption.StopSendIfLatencyBig), bool.Parse(argsOption.StopSendIfConnectionErrorBig),
+                            connectionString);
 
                         if (argsOption.Regular)
                         {
@@ -447,7 +456,7 @@ namespace JenkinsScript
         {
             var timer = new Timer(interval.TotalMilliseconds);
             timer.AutoReset = true;
-            timer.Elapsed += async(sender, e) =>
+            timer.Elapsed += (sender, e) =>
             {
                 ShellHelper.CollectMachineStatistics(host, user, password, sshPort, path);
             };

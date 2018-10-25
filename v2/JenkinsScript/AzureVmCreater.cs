@@ -2,7 +2,10 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Net;
+using System.Net.Sockets;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.Management.Compute.Fluent;
 using Microsoft.Azure.Management.Compute.Fluent.Models;
@@ -52,6 +55,41 @@ namespace JenkinsScript
             var vnet = CreateVirtualNetwork(vnetName, Location, BenchGroupName, subnetName);
             CreateBenchServerCore(0, vnet);
         }
+
+        private bool CheckAllSSHPort(int appSvrVmCount, int svcVmCount)
+        {
+            var portCheckTaskList = new List<Task>();
+            for (var i = 0; i < _agentConfig.SlaveVmCount; i++)
+            {
+                var privateIp = GetPrivateIp(NicBase + $"{i}");
+                portCheckTaskList.Add(Task.Run(() => WaitPortOpen(privateIp, 22)));
+            }
+            // service
+            for (var i = 0; i < svcVmCount; i++)
+            {
+                var privateIp = GetPrivateIp(ServiceNicBase + $"{i}");
+                portCheckTaskList.Add(Task.Run(() => WaitPortOpen(privateIp, 22)));
+            }
+
+            // app server
+            for (var i = 0; i < appSvrVmCount; i++)
+            {
+                var privateIp = GetPrivateIp(AppSvrNicBase + $"{i}");
+                portCheckTaskList.Add(Task.Run(() => WaitPortOpen(privateIp, 22)));
+            }
+
+            if (Task.WaitAll(portCheckTaskList.ToArray(), TimeSpan.FromSeconds(300)))
+            {
+                Util.Log("All ports are ready");
+                return true;
+            }
+            else
+            {
+                Util.Log("Not all ports are ready");
+                return false;
+            }
+        }
+
         public void CreateAllVmsInSameVnet(string groupName, string vnetName, string subnetName, int appSvrVmCount, int svcVmCount)
         {
             (var vnet,
@@ -63,10 +101,14 @@ namespace JenkinsScript
             tasks.Add(Task.Run(() => CreateAgentVmsCore(vnet, subnet)));
             Task.WhenAll(tasks).Wait();
 
+            CheckAllSSHPort(appSvrVmCount, svcVmCount);
+
             // debug: list all private ip
             var slvPvtIps = new List<string>();
-            for (var i = 0; i < _agentConfig.SlaveVmCount; i++) slvPvtIps.Add(GetPrivateIp(NicBase + $"{i}"));
-
+            for (var i = 0; i < _agentConfig.SlaveVmCount; i++)
+            {
+                slvPvtIps.Add(GetPrivateIp(NicBase + $"{i}"));
+            }
             slvPvtIps.ForEach(ip => Util.Log($"slv pvt ip: {ip}"));
 
             // save all private ips
@@ -76,9 +118,9 @@ namespace JenkinsScript
             str += $"servicePrivateIp: ";
             for (var i = 0; i < svcVmCount; i++)
             {
-                str += $"{GetPrivateIp(ServiceNicBase + $"{i}")}";
+                var privateIp = GetPrivateIp(ServiceNicBase + $"{i}");
+                str += $"{privateIp}";
                 if (i < svcVmCount - 1) str += ";";
-
             }
             str += "\n";
 
@@ -86,9 +128,9 @@ namespace JenkinsScript
             str += $"appServerPrivateIp: ";
             for (var i = 0; i < appSvrVmCount; i++)
             {
-                str += $"{GetPrivateIp(AppSvrNicBase + $"{i}")}";
+                var privateIp = GetPrivateIp(AppSvrNicBase + $"{i}");
+                str += $"{privateIp}";
                 if (i < appSvrVmCount - 1) str += ";";
-
             }
             str += "\n";
 
@@ -104,7 +146,12 @@ namespace JenkinsScript
                 }
                 str += "\n";
             }
-            File.WriteAllText("privateIps.yaml", str);
+            var privateIpFile = Environment.GetEnvironmentVariable("PrivateIps");
+            if (string.IsNullOrEmpty(privateIpFile))
+            {
+                privateIpFile = "privateIps.yaml";
+            }
+            File.WriteAllText(privateIpFile, str);
 
             // save public IP of service and appserver
             str = "";
@@ -124,9 +171,12 @@ namespace JenkinsScript
                 if (i < appSvrVmCount - 1) str += ";";
             }
             str += "\n";
-
-            File.WriteAllText("publicIps.yaml", str);
-
+            var publicIpFile = Environment.GetEnvironmentVariable("PublicIps");
+            if (string.IsNullOrEmpty(publicIpFile))
+            {
+                publicIpFile = "publicIps.yaml";
+            }
+            File.WriteAllText(publicIpFile, str);
         }
 
         public Task CreateAppServerVm()
@@ -217,6 +267,10 @@ namespace JenkinsScript
 
             List<ICreatable<IVirtualMachine>> creatableVirtualMachines = new List<ICreatable<IVirtualMachine>>();
 
+            /*
+            var publicIpTasks = CreatePublicIPAddrListWithRetry(_azure, _agentConfig.SlaveVmCount,
+                PublicIpBase, Location, GroupName, PublicDnsBase).GetAwaiter().GetResult();
+            */
             var publicIpTasks = new List<Task<IPublicIPAddress>>();
             for (var i = 0; i < _agentConfig.SlaveVmCount; i++)
             {
@@ -234,14 +288,16 @@ namespace JenkinsScript
             var nicTasks = new List<Task<INetworkInterface>>();
             for (var i = 0; i < _agentConfig.SlaveVmCount; i++)
             {
-                nicTasks.Add(CreateNetworkInterfaceAsync(NicBase, Location, GroupName, subnet == null? SubNet : subnet.Name, vNet, publicIps[i], nsgs[i], i));
+                nicTasks.Add(CreateNetworkInterfaceAsync(NicBase, Location, GroupName,
+                    subnet == null? SubNet : subnet.Name, vNet, publicIps[i], nsgs[i], i));
             }
             var nics = Task.WhenAll(nicTasks).GetAwaiter().GetResult();
 
             var vmTasks = new List<Task<IWithCreate>>();
             for (var i = 0; i < _agentConfig.SlaveVmCount; i++)
             {
-                vmTasks.Add(GenerateVmTemplateAsync(VmNameBase, Location, GroupName, _agentConfig.ImageId, _agentConfig.User, _agentConfig.Password, _agentConfig.Ssh, SlaveVmSize, nics[i], avSet, i));
+                vmTasks.Add(GenerateVmTemplateAsync(VmNameBase, Location, GroupName, _agentConfig.ImageId,
+                    _agentConfig.User, _agentConfig.Password, _agentConfig.Ssh, SlaveVmSize, nics[i], avSet, i));
             }
 
             var vms = Task.WhenAll(vmTasks).GetAwaiter().GetResult();
@@ -307,34 +363,82 @@ namespace JenkinsScript
                 .Create();
         }
 
-        public Task<IPublicIPAddress> CreatePublicIpAsync(string publicIpBase, Region location, string groupName, string publicDnsBase, int i = 0)
+        public Task<IPublicIPAddress> CreatePublicIpAsync(
+            string publicIpBase, Region location, string groupName, string publicDnsBase, int i = 0)
         {
             return Task.Run(async() =>
             {
-                while (true)
+                try
                 {
-                    try
+                    var newIp = await _azure.PublicIPAddresses.Define(publicIpBase + Convert.ToString(i))
+                        .WithRegion(location)
+                        .WithExistingResourceGroup(groupName)
+                        .WithLeafDomainLabel(publicDnsBase + Convert.ToString(i))
+                        .WithDynamicIP()
+                        .CreateAsync();
+                    return newIp;
+                }
+                catch (System.Exception e)
+                {
+                    await Task.Delay(2000);
+                    Util.Log($"Fail to create PubIP {e.Message}");
+                    throw;
+                }
+            });
+        }
+
+        private static async Task<List<Task<IPublicIPAddress>>> CreatePublicIPAddrListWithRetry(
+            IAzure azure, int count, string publicIpBase, Region region,
+            string resourceGroupName, string publicDnsBase, int maxTry = 3)
+        {
+            var publicIpTaskList = new List<Task<IPublicIPAddress>>();
+            var j = 0;
+            var i = 0;
+            while (j < maxTry)
+            {
+                try
+                {
+                    for (i = 0; i < count; i++)
                     {
-                        var newIp = await _azure.PublicIPAddresses.Define(publicIpBase + Convert.ToString(i))
-                            .WithRegion(location)
-                            .WithExistingResourceGroup(groupName)
+                        // create public ip
+                        var publicIPAddress = azure.PublicIPAddresses.Define(publicIpBase + Convert.ToString(i) + "PubIP")
+                            .WithRegion(region)
+                            .WithExistingResourceGroup(resourceGroupName)
                             .WithLeafDomainLabel(publicDnsBase + Convert.ToString(i))
                             .WithDynamicIP()
                             .CreateAsync();
-                        return newIp;
+                        publicIpTaskList.Add(publicIPAddress);
                     }
-                    catch (System.Exception)
-                    {
-                        await Task.Delay(2000);
-                        Util.Log($"retry create {i}th public th ip");
-
-                        continue;
-                    }
-
+                    await Task.WhenAll(publicIpTaskList.ToArray());
+                    return publicIpTaskList;
                 }
+                catch (Exception e)
+                {
+                    Util.Log(e.ToString());
+                    await Task.Delay(2000);
+                    publicIpTaskList.Clear();
 
-            });
-
+                    var allPubIPs = azure.PublicIPAddresses.ListByResourceGroupAsync(resourceGroupName);
+                    await allPubIPs;
+                    var ids = new List<string>();
+                    var enumerator = allPubIPs.Result.GetEnumerator();
+                    while (enumerator.MoveNext())
+                    {
+                        ids.Add(enumerator.Current.Id);
+                    }
+                    await azure.PublicIPAddresses.DeleteByIdsAsync(ids);
+                    if (j + 1 < maxTry)
+                    {
+                        Util.Log($"Fail to create public IP for {e.Message} and will retry");
+                    }
+                    else
+                    {
+                        Util.Log($"Fail to create public IP for {e.Message} and retry has reached max limit, will return with failure");
+                    }
+                }
+                j++;
+            }
+            return null;
         }
 
         public Task<INetworkSecurityGroup> CreateNetworkSecurityGroupAsync(string nsgBase, Region location, string groupName, int sshPort, int i = 0)
@@ -342,7 +446,9 @@ namespace JenkinsScript
 
             return Task.Run(async() =>
             {
-
+                var azureRegionIP =
+                "167.220.148.0/23,131.107.147.0/24,131.107.159.0/24,131.107.160.0/24,131.107.174.0/24,167.220.24.0/24,167.220.26.0/24,167.220.238.0/27,167.220.238.128/27,167.220.238.192/27,167.220.238.64/27,167.220.232.0/23,167.220.255.0/25,167.220.242.0/27,167.220.242.128/27,167.220.242.192/27,167.220.242.64/27,94.245.87.0/24,167.220.196.0/23,194.69.104.0/25,191.234.97.0/26,167.220.0.0/23,167.220.2.0/24,207.68.190.32/27,13.106.78.32/27,10.254.32.0/20,10.97.136.0/22,13.106.174.32/27,13.106.4.96/27,168.61.37.236";
+                var allowedIpRange = azureRegionIP.Split(',');
                 while (true)
                 {
                     try
@@ -353,21 +459,12 @@ namespace JenkinsScript
                             .WithExistingResourceGroup(groupName)
                             .DefineRule("SSH-PORT")
                             .AllowInbound()
-                            .FromAnyAddress()
+                            .FromAddresses(allowedIpRange)
                             .FromAnyPort()
                             .ToAnyAddress()
                             .ToPort(22)
                             .WithAnyProtocol()
                             .WithPriority(100)
-                            .Attach()
-                            .DefineRule("NEW-SSH-PORT")
-                            .AllowInbound()
-                            .FromAnyAddress()
-                            .FromAnyPort()
-                            .ToAnyAddress()
-                            .ToPort(sshPort)
-                            .WithAnyProtocol()
-                            .WithPriority(101)
                             .Attach()
                             .DefineRule("BENCHMARK-PORT")
                             .AllowInbound()
@@ -444,10 +541,10 @@ namespace JenkinsScript
                             .CreateAsync();
                         return newNsg;
                     }
-                    catch (System.Exception)
+                    catch (System.Exception e)
                     {
                         await Task.Delay(2000);
-                        Util.Log($"retry create {i}th nsg");
+                        Util.Log($"error {e.Message}, retry create {i}th nsg");
                         continue;
                     }
                 }
@@ -456,7 +553,9 @@ namespace JenkinsScript
 
         }
 
-        public Task<INetworkInterface> CreateNetworkInterfaceAsync(string nicBase, Region location, string groupName, string subNet, INetwork network, IPublicIPAddress publicIPAddress, INetworkSecurityGroup nsg, int i = 0)
+        public Task<INetworkInterface> CreateNetworkInterfaceAsync(string nicBase, Region location,
+            string groupName, string subNet, INetwork network,
+            IPublicIPAddress publicIPAddress, INetworkSecurityGroup nsg, int i = 0)
         {
             Console.WriteLine($"Creating {i}th network interface in resource group {groupName}");
             var j = 0;
@@ -465,16 +564,30 @@ namespace JenkinsScript
             {
                 try
                 {
-                    var newNic = _azure.NetworkInterfaces.Define(nicBase + Convert.ToString(i))
-                        .WithRegion(location)
-                        .WithExistingResourceGroup(groupName)
-                        .WithExistingPrimaryNetwork(network)
-                        .WithSubnet(subNet)
-                        .WithPrimaryPrivateIPAddressDynamic()
-                        .WithExistingPrimaryPublicIPAddress(publicIPAddress)
-                        .WithExistingNetworkSecurityGroup(nsg)
-                        .CreateAsync();
-                    return newNic;
+                    if (publicIPAddress != null && nsg != null)
+                    {
+                        var newNic = _azure.NetworkInterfaces.Define(nicBase + Convert.ToString(i))
+                            .WithRegion(location)
+                            .WithExistingResourceGroup(groupName)
+                            .WithExistingPrimaryNetwork(network)
+                            .WithSubnet(subNet)
+                            .WithPrimaryPrivateIPAddressDynamic()
+                            .WithExistingPrimaryPublicIPAddress(publicIPAddress)
+                            .WithExistingNetworkSecurityGroup(nsg)
+                            .CreateAsync();
+                        return newNic;
+                    }
+                    else
+                    {
+                        var newNic = _azure.NetworkInterfaces.Define(nicBase + Convert.ToString(i))
+                            .WithRegion(location)
+                            .WithExistingResourceGroup(groupName)
+                            .WithExistingPrimaryNetwork(network)
+                            .WithSubnet(subNet)
+                            .WithPrimaryPrivateIPAddressDynamic()
+                            .CreateAsync();
+                        return newNic;
+                    }
                 }
                 catch (Exception e)
                 {
@@ -939,16 +1052,40 @@ namespace JenkinsScript
             }
         }
 
-        public INetwork GetVnet(string groupName, string vnetName)
+        static void WaitPortOpen(string ipAddr, int port)
         {
-            foreach (var vnet in _azure.Networks.ListByResourceGroup(groupName))
+            using (var cts = new CancellationTokenSource())
             {
-                if (vnet.Name == vnetName) return vnet;
+                Util.Log($"Check {ipAddr}:{port} open or not");
+                cts.CancelAfter(TimeSpan.FromSeconds(120));
+                while (!cts.IsCancellationRequested)
+                {
+                    if (isPortOpen(ipAddr, port))
+                    {
+                        break;
+                    }
+                }
             }
-            return null;
         }
 
-        public(INetwork, ISubnet) GetVnetSubnet(string groupName, string vnetName, string subnetName)
+        private static bool isPortOpen(string ip, int port)
+        {
+            var ipAddr = IPAddress.Parse(ip);
+            var endPoint = new IPEndPoint(ipAddr, port);
+            try
+            {
+                var tcp = new TcpClient();
+                tcp.Connect(endPoint);
+                return true;
+            }
+            catch (Exception e)
+            {
+                Util.Log($"{ip}:{port} is unaccessible for {e.Message}");
+                return false;
+            }
+        }
+
+        public (INetwork, ISubnet) GetVnetSubnet(string groupName, string vnetName, string subnetName)
         {
             foreach (var vnet in _azure.Networks.ListByResourceGroup(groupName))
             {
@@ -957,11 +1094,5 @@ namespace JenkinsScript
             }
             return (null, null);
         }
-
-        // public string GetDnsByPrivateIp(string pvtIp, string groupName)
-        // {
-        //     var vms = _azure.Networks.;
-
-        // }
     }
 }

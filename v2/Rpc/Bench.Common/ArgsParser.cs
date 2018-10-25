@@ -28,7 +28,7 @@ namespace Bench.Common
         [Option('o', "outputcounterfile", Required = false, HelpText = "Specify Output File For Counters")]
         public string OutputCounterFile { get; set; }
 
-        [Option('v', "servicetype", Required = false, HelpText = "Specify BenchMark Service Type")]
+        [Option('v', "servicetype", Default = "ASRS", Required = false, HelpText = "Specify BenchMark Service Type")]
         public string ServiceType { get; set; }
 
         [Option('t', "transporttype", Required = false, HelpText = "Specify TransportType")]
@@ -52,7 +52,7 @@ namespace Bench.Common
         [Option("duration", Required = false, HelpText = "Specify Connection Increase Step")]
         public int Duration { get; set; }
 
-        [Option("interval", Required = false, HelpText = "Specify Connection Increase Step")]
+        [Option("interval", Default = 1, Required = false, HelpText = "Specify Connection Increase Step")]
         public int Interval { get; set; }
 
         [Option("slaves", Required = false, HelpText = "Specify Connection Increase Step")]
@@ -97,8 +97,11 @@ namespace Bench.Common
         [Option("groupNum", Required = false, HelpText = "")]
         public int groupNum { get; set; }
 
-        [Option("groupOverlap", Required = false, HelpText = "Number of group(s) a connection belongs to")]
+        [Option("groupOverlap", Default= 1, Required = false, HelpText = "Number of group(s) a connection belongs to, default is 1")]
         public int groupOverlap { get; set; }
+
+        [Option("combineFactor", Default = 1, Required = false, HelpText = "Factor for combining the sendGroup of client connections, default is 1")]
+        public int combineFactor { get; set; }
 
         [Option("debug", Required = false, HelpText = "")]
         public string Debug { get; set; }
@@ -117,5 +120,8 @@ namespace Bench.Common
 
         [Option("stopSendIfLatencyBig", Default = "false", Required = false, HelpText = "Stop sending steps if there are more than 1% message whose latency greater than 1000ms")]
         public string StopSendIfLatencyBig { get; set; }
+
+        [Option("stopSendIfConnectionErrorBig", Default = "false", Required = false, HelpText = "Stop sending steps if there are too many errors")]
+        public string StopSendIfConnectionErrorBig { get; set; }
     }
 }

@@ -2,7 +2,7 @@
 g_CPU_requests="1|2|3|4"
 g_CPU_limits="1|2|3|4"
 g_Memory_limits="4000|4000|4000|4000"
-g_k8s_config_list="srdevacsrpe.json|kubeconfig_srdevacsseasiac.json"
+g_k8s_config_list="srdevacsrpe.json|kubeconfig_srdevacsseasiac.json|kubeconfig_srprodacswestus2a.json|kubeconfig_srprodacswestus2b.json|kubeconfig_srprodacswestus2c.json|kubeconfig_srprodacswestus2d.json|kubeconfig_srprodacswestus2e.json|kubeconfig_srprodacswestus2f.json"
 
 ## Bourne shell does not support array, so a string is used
 ## to work around with the hep of awk array
@@ -40,7 +40,7 @@ function find_target_by_iterate_all_k8slist()
   local config
   local result
   local i=1
-  local ns=""
+  local ns="default"
   if [ $# -eq 3 ]
   then
     ns=$3
@@ -49,12 +49,15 @@ function find_target_by_iterate_all_k8slist()
   while [ $i -le $len ]
   do
      config=$(array_get $g_k8s_config_list $i "|")
-     result=$($callback $resName $config "$ns")
-     if [ "$result" != "" ]
+     if [ -e $config ]
      then
-        g_config=$config
-        g_result=$result
-        break
+        result=$($callback $resName $config "$ns")
+        if [ "$result" != "" ]
+        then
+           g_config=$config
+           g_result=$result
+           break
+        fi
      fi
      i=$(($i + 1))
   done
@@ -63,12 +66,17 @@ function find_target_by_iterate_all_k8slist()
 function get_k8s_deploy_name() {
   local resName=$1
   local config_file=$2
-  local len=`kubectl get deploy -o=json --selector resourceName=$resName --kubeconfig=${config_file}|jq '.items|length'`
+  local ns="default"
+  if [ $# -eq 3 ]
+  then
+    ns=$3
+  fi
+  local len=`kubectl get deploy -o=json --selector resourceName=$resName --namespace=${ns} --kubeconfig=${config_file}|jq '.items|length'`
   if [ $len -eq 0 ]
   then
     return
   fi
-  local deployName=`kubectl get deploy -o=json --selector resourceName=$resName --kubeconfig=${config_file}|jq '.items[0].metadata.name'|tr -d '"'`
+  local deployName=`kubectl get deploy -o=json --selector resourceName=$resName --namespace=${ns} --kubeconfig=${config_file}|jq '.items[0].metadata.name'|tr -d '"'`
   echo $deployName
   #kubectl get deploy $deployName -o=json  --kubeconfig=$config_file
 }
@@ -91,6 +99,24 @@ function read_k8s_deploy_env() {
   do
     env_name=`kubectl get deployment $deploy_name -o=json --kubeconfig=${config_file}|jq ".spec.template.spec.containers[0].env[$i].name"|tr -d '"'`
     echo $env_name
+    i=$(($i+1))
+  done
+}
+
+function update_k8s_deploy_env_unit_per_pod() {
+  local env_name
+  local deploy_name=$1
+  local unit_per_pod=$2
+  local config_file=$3
+  local i=0
+  local env_len=`kubectl get deployment $deploy_name -o=json --kubeconfig=${config_file}|jq '.spec.template.spec.containers[0].env|length'`
+  while [ $i -lt $env_len ]
+  do
+    env_name=`kubectl get deployment $deploy_name -o=json --kubeconfig=${config_file}|jq ".spec.template.spec.containers[0].env[$i].name"|tr -d '"'`
+    if [ "$env_name" == "UNIT_PER_POD" ]
+    then
+      kubectl patch deployment $deploy_name --type=json -p="[{'op': 'replace', 'path': "/spec/template/spec/containers/0/env/$i/value", 'value': '$unit_per_pod'}]" --kubeconfig=$config_file
+    fi
     i=$(($i+1))
   done
 }
@@ -126,10 +152,14 @@ function update_k8s_deploy_env_connections() {
 function get_pod() {
   local resName=$1
   local output=$2
-
+  local ns="default"
+  if [ $# -eq 3 ]
+  then
+     ns="$3"
+  fi
   g_config=""
   g_result=""
-  find_target_by_iterate_all_k8slist $resName get_k8s_deploy_name
+  find_target_by_iterate_all_k8slist $resName get_k8s_deploy_name "$ns"
   local config_file=$g_config
   local result=$g_result
   echo "$result"
@@ -273,8 +303,10 @@ function start_top_tracking() {
   local config_file=$g_config
   local result=$g_result
   echo "'$result'"
-  while [ 1 ]
-  do
+  if [ "$config_file" != "" ] && [ "$result" != "" ]
+  then
+    while [ 1 ]
+    do
      for i in $result
      do
        local date_time=`date --iso-8601='seconds'`
@@ -282,7 +314,8 @@ function start_top_tracking() {
        kubectl exec $i --kubeconfig=$config_file -- bash -c "top -b -n 1" >> $output_dir/${i}_top.txt
      done
      sleep 1
-  done
+    done
+  fi
 }
 
 function stop_top_tracking() {
@@ -373,8 +406,8 @@ function wait_deploy_ready() {
   local end=$((SECONDS + 120))
   while [ $SECONDS -lt $end ]
   do
-    echo kubectl rollout status deployment/$result --kubeconfig=$config_file
-    kubectl rollout status deployment/$result --kubeconfig=$config_file
+    echo kubectl rollout status deployment/$deploy --kubeconfig=$config_file
+    kubectl rollout status deployment/$deploy --kubeconfig=$config_file
     if [ $? -eq 0 ]
     then
       break
@@ -413,6 +446,29 @@ function patch_connection_throttling_env() {
 
   wait_deploy_ready $result $config_file
 
+  wait_replica_ready $config_file $resName $pods
+}
+
+function restart_all_pods() {
+  local resName=$1
+  g_config=""
+  g_result=""
+  find_target_by_iterate_all_k8slist $resName k8s_query
+  local config_file=$g_config
+  local result=$g_result
+  local pods=$(k8s_get_pod_number $config_file $resName)
+  for i in $result
+  do
+    echo "kubectl delete pods ${i} --kubeconfig=${config_file}"
+    kubectl delete pods ${i} --kubeconfig=${config_file}
+  done
+
+  g_config=""
+  g_result=""
+  find_target_by_iterate_all_k8slist $resName get_k8s_deploy_name
+  local config_file=$g_config
+  local result=$g_result
+  wait_deploy_ready $result $config_file
   wait_replica_ready $config_file $resName $pods
 }
 
@@ -491,6 +547,22 @@ function patch() {
   wait_replica_ready $config_file $resName $replicas
 }
 
+function patch_deployment_for_no_tc_and_wait() {
+  local resName=$1
+  local tcLimit=$2
+  g_config=""
+  g_result=""
+  find_target_by_iterate_all_k8slist $resName get_k8s_deploy_name
+  local config_file=$g_config
+  local result=$g_result
+  local pods=$(k8s_get_pod_number $config_file $resName)
+  update_k8s_deploy_env_unit_per_pod $result $tcLimit $config_file
+
+  wait_deploy_ready $result $config_file
+
+  wait_replica_ready $config_file $resName $pods
+}
+
 function patch_and_wait() {
   local name=$1
   local rsg=$2
@@ -503,10 +575,10 @@ function patch_and_wait() {
   #patch_liveprobe_timeout ${name} 2
 }
 
-function get_nginx_pod() {
+function get_nginx_pod_internal() {
   local res=$1
-  local ns=$2
-  local config=kubeconfig.southeastasia.json
+  local config=$2
+  local ns=$3
   local appId=`kubectl get deploy -o=json --namespace=${ns} --selector resourceName=${res} --kubeconfig=${config}|jq '.items[0].spec.selector.matchLabels.app'|tr -d '"'`
   local len=`kubectl get pod -o=json --namespace=${ns} --selector app=${appId} --kubeconfig=${config}|jq '.items|length'`
   local i=0
@@ -517,14 +589,28 @@ function get_nginx_pod() {
   done
 }
 
+function get_nginx_pod() {
+  local res=$1
+  local ns=$2
+  g_config=""
+  g_result=""
+  find_target_by_iterate_all_k8slist $res get_nginx_pod_internal "$ns"
+  echo "$g_result"
+}
+
 function track_nginx_top() {
   local res=$1
   local ns=$2
   local output_dir=$3
-  local config_file=kubeconfig.southeastasia.json
-  local result=$(get_nginx_pod $res $ns)
-  while [ 1 ]
-  do
+  g_config=""
+  g_result=""
+  find_target_by_iterate_all_k8slist $res get_nginx_pod_internal $ns
+  local config_file=$g_config
+  local result=$g_result
+  if [ "$config_file" != "" ] && [ "$result" != "" ]
+  then
+    while [ 1 ]
+    do
      for i in $result
      do
        local date_time=`date --iso-8601='seconds'`
@@ -532,15 +618,19 @@ function track_nginx_top() {
        kubectl exec $i --namespace=$ns --kubeconfig=$config_file -- bash -c "top -b -n 1" >> $output_dir/${i}_top.txt
      done
      sleep 1
-  done
+    done
+  fi
 }
 
 function get_nginx_log() {
   local res=$1
   local ns=$2
   local outdir=$3
-  local config_file=kubeconfig.southeastasia.json
-  local result=$(get_nginx_pod $res $ns)
+  g_config=""
+  g_result=""
+  find_target_by_iterate_all_k8slist $res get_nginx_pod_internal $ns
+  local config_file=$g_config
+  local result=$g_result
   for i in $result
   do
     kubectl logs $i --namespace=$ns --kubeconfig=$config_file > $outdir/${i}.log
@@ -550,8 +640,11 @@ function get_nginx_log() {
 function delete_all_nginx_pods() {
   local res=$1
   local ns=$2
-  local config_file=kubeconfig.southeastasia.json
-  local result=$(get_nginx_pod $res $ns)
+  g_config=""
+  g_result=""
+  find_target_by_iterate_all_k8slist $res get_nginx_pod_internal $ns
+  local config_file=$g_config
+  local result=$g_result
   for i in $result
   do
     kubectl delete pods $i --namespace=$ns --kubeconfig=$config_file

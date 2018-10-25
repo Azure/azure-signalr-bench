@@ -45,6 +45,7 @@ gen_cli_master_single_bench()
 		sendToFixClient_option="--sendToFixedClient true"
 		secenario="sendToClient"
 	fi
+
 	local len=$(array_len $bench_app_pub_server "|")
 	if [ $len == 1 ]
 	then
@@ -112,12 +113,27 @@ send_interval=$send_interval
 EOF
 	local pipeline=""
 	local groupOption=""
+	local connectionStringOption=""
+	local serverOption="--serverUrl "${server_endpoint}""
+	local conn_str_len=$(array_len "$connection_string_list" "|")
 	if [ $bench_name == "SendGroup" ]
 	then
 		pipeline="createConn;startConn;joinGroup;${send_num}leaveGroup;stopConn;disposeConn"
 		groupOption="--groupNum ${group_number} --groupOverlap 1"
 	else
-		pipeline="createConn;startConn;${send_num}stopConn;disposeConn"
+		if [[ "${bench_name}" == "Rest"* ]]
+		then
+			if [ "$conn_str_len" != 1 ]
+			then
+				echo "!!!!REST API test  does not support multiple service connection strings!!!!"
+				exit 1
+			fi
+			pipeline="createRestClientConn;startRestClientConn;${send_num}stopConn;disposeConn"
+			connectionStringOption="--connectionString \"$connection_string_list\""
+			serverOption=""
+		else
+			pipeline="createConn;startConn;${send_num}stopConn;disposeConn"
+		fi
 	fi
 cat << EOF > ${cli_script_prefix}_${result_name}.sh
 #!/bin/bash
@@ -143,7 +159,7 @@ slaveList="${cli_agents_g}"
 sendSize="${send_size}"
 scenario="$secenario"
 
-/home/${bench_app_user}/.dotnet/dotnet run -- --rpcPort 7000 --duration $sigbench_run_duration --connections $connection_num --interval 1 --serverUrl "\${server}" --pipeLine "\${pipeline}" -v $bench_type -t "\${transport}" -p ${codec} -s "\${scenario}" --slaveList "\${slaveList}" -o ${result_name}/counters.txt --pidFile /tmp/master.pid --concurrentConnection ${concurrent_num} --messageSize "\${sendSize}" ${sendToFixClient_option} ${groupOption}
+/home/${bench_app_user}/.dotnet/dotnet run -- --rpcPort 7000 --duration $sigbench_run_duration --connections $connection_num --interval 1 "${serverOption}" --pipeLine "\${pipeline}" -v $bench_type -t "\${transport}" -p ${codec} -s "\${scenario}" --slaveList "\${slaveList}" -o ${result_name}/counters.txt --pidFile /tmp/master.pid --concurrentConnection ${concurrent_num} --messageSize "\${sendSize}" ${sendToFixClient_option} ${groupOption} ${connectionStringOption}
 EOF
 }
 

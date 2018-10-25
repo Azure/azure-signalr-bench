@@ -1,18 +1,18 @@
-repo: https://github.com/xxx/xxx.git
+repo: https://github.com/Azure/azure-signalr-bench.git
 
-rpcPort: 0000
+rpcPort: 5555
 sshPort: 22
 
-imageId: /subscriptions/xxx/resourceGroups/xxx/providers/Microsoft.Compute/images/xxx
+imageId: /subscriptions/9caf2a1e-9c49-49b6-89a2-56bdec7e3f97/resourceGroups/wanlimage/providers/Microsoft.Compute/images/wanlSignalrGeneralImage-eastus
 
 
-user: xxx
-password: xxx
+user: honzhan
+password: Hackathon@2018
 
 # config for creating VMs
-prefix: xxx
-location: xxx
+prefix: hz2eus
+location: eastus
 
 # bench 
-benchVmSize: xxx
+benchVmSize: StandardDS2V2
 
