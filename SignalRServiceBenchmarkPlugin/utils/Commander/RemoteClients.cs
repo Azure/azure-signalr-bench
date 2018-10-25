@@ -76,8 +76,8 @@ namespace Commander
             tasks.Add(Connect(MasterSshClient));
             Task.WhenAll(tasks).Wait();
 
-            Util.BatchProcess(SlaveScpClients, Connect, 100).Wait();
-            Util.BatchProcess(SlaveSshClients, Connect, 100).Wait();
+            Util.BatchProcess(SlaveScpClients, Connect, 10).Wait();
+            Util.BatchProcess(SlaveSshClients, Connect, 10).Wait();
         }
 
         private Task Dispose(BaseClient client) =>
