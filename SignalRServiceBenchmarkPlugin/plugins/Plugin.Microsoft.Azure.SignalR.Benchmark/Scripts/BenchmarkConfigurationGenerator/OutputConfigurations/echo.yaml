@@ -1,0 +1,48 @@
+ModuleName: Plugin.Microsoft.Azure.SignalR.Benchmark.SignalRBenchmarkPlugin, Plugin.Microsoft.Azure.SignalR.Benchmark
+Pipeline:
+- - Method: InitStatisticsCollector
+    Type: echo
+  - Method: InitStatisticsCollector
+    Type: echo
+- - Method: CollectStatistics
+    Parameter.Interval: 1000
+    Type: echo
+- - Method: CreateConnection
+    Parameter.ConnectionTotal: 20000
+    Parameter.HubUrl: http://wanleastusagents953034586appsvrdns0.eastus.cloudapp.azure.com:5050/signalrbench
+    Parameter.Protocol: json
+    Parameter.TransportType: Websockets
+    Type: echo
+- - Method: StartConnection
+    Parameter.ConcurrentConnetion: 100
+    Type: echo
+- - Method: Echo
+    Parameter.Duration: 10000
+    Parameter.Interval: 1000
+    Parameter.MessageSize: 40
+    Parameter.Modulo: 20000
+    Parameter.RemainderBegin: 0
+    Parameter.RemainderEnd: 1
+    Type: echo
+- - Method: Wait
+    Parameter.Duration: 5000
+    Type: echo
+- - Method: Echo
+    Parameter.Duration: 10000
+    Parameter.Interval: 1000
+    Parameter.MessageSize: 40
+    Parameter.Modulo: 20000
+    Parameter.RemainderBegin: 0
+    Parameter.RemainderEnd: 4
+    Type: echo
+- - Method: Wait
+    Parameter.Duration: 5000
+    Type: echo
+- - Method: StopCollector
+    Type: echo
+- - Method: StopConnection
+    Type: echo
+- - Method: DisposeConnection
+    Type: echo
+Types:
+- echo
