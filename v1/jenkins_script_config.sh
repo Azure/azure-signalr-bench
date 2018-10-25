@@ -581,8 +581,7 @@ function remove_resource_group() {
   echo "!!Received EXIT!! and remove all created VMs"
 
   cd $CurrentWorkingDir
-  nohup ${VMMgrDir}/JenkinsScript --PidFile='./pid/pid_remove_rsg.txt' --step=DeleteResourceGroupByConfig --AgentConfigFile=$AgentConfig --DisableRandomSuffix --ServicePrincipal=$ServicePrincipal &
-
+  ## remove ASRS
 cat << EOF > /tmp/clean_asrs.sh
 cd $ScriptWorkingDir
 . ./az_signalr_service.sh
@@ -598,6 +597,9 @@ else
 fi
 EOF
   nohup sh /tmp/clean_asrs.sh &
+
+  ## remove all test VMs
+  nohup ${VMMgrDir}/JenkinsScript --PidFile='./pid/pid_remove_rsg.txt' --step=DeleteResourceGroupByConfig --AgentConfigFile=$AgentConfig --DisableRandomSuffix --ServicePrincipal=$ServicePrincipal &
 }
 
 ## register exit handler to remove resource group ##
