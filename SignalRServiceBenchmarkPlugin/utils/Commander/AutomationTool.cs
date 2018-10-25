@@ -135,11 +135,11 @@ namespace Commander
                 var appseverCommand = "";
                 if (_azureSignalRConnectionString == null)
                 {
-                    appseverCommand = $"export useLocalSignalR=true; cd {appserverDirectory}; dotnet exec AppServer.dll --urls=http://*:{_appserverPort}";
+                    appseverCommand = $"export useLocalSignalR=true; cd {appserverDirectory}; dotnet exec AppServer.dll --urls=http://*:{_appserverPort} > appserver.log";
                 }
                 else
                 {
-                    appseverCommand = $"export Azure__SignalR__ConnectionString='{_azureSignalRConnectionString}' ;cd {appserverDirectory}; dotnet exec AppServer.dll --urls=http://*:{_appserverPort} ";
+                    appseverCommand = $"export Azure__SignalR__ConnectionString='{_azureSignalRConnectionString}' ;cd {appserverDirectory}; dotnet exec AppServer.dll --urls=http://*:{_appserverPort} > appserver.log";
                 }
                 var masterCommand = $"dotnet exec {masterExecutablePath} -- --BenchmarkConfiguration=\"{_benchmarkConfigurationTargetPath}\" --SlaveList=\"{string.Join(',', _slaveList)}\"";
                 var slaveCommand = $"dotnet exec {slaveExecutablePath} --HostName 0.0.0.0 --RpcPort {_rpcPort}";
