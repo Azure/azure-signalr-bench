@@ -42,6 +42,18 @@ def wait(type_, duration):
     }]
 
 
+def register_callback_record_latency(type_):
+    return [dict(required(type_, "RegisterCallbackRecordLatency"))]
+
+
+def register_callback_join_group(type_):
+    return [dict(required(type_, "RegisterCallbackJoinGroup"))]
+
+
+def register_callback_leave_group(type_):
+    return [dict(required(type_, "RegisterCallbackLeaveGroup"))]
+
+
 def init_statistics_collector(type_):
     return [dict(required(type_, "InitStatisticsCollector"))]
 

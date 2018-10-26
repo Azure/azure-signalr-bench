@@ -34,9 +34,6 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionOffset}.{type}", out int offset, Convert.ToInt32);
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.StatisticsStore}.{type}", out _statisticsCollector, obj => (StatisticsCollector) obj);
 
-                // Set callback
-                SetCallback(connections);
-                
                 // Generate necessary data
                 var data = new Dictionary<string, object>
                 {
@@ -57,20 +54,6 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 var message = $"Fail to echo: {ex}";
                 Log.Error(message);
                 throw;
-            }
-        }
-
-        private void SetCallback(IList<HubConnection> connections)
-        {
-            foreach (var connection in connections)
-            {
-                connection.On(SignalRConstants.EchoCallbackName, (IDictionary<string, object> data) =>
-                {
-                    var receiveTimestamp = Util.Timestamp();
-                    data.TryGetTypedValue(SignalRConstants.Timestamp, out long sendTimestamp, Convert.ToInt64);
-                    var latency = receiveTimestamp - sendTimestamp;
-                    _statisticsCollector.RecordLatency(latency);
-                });
             }
         }
 

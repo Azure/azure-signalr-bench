@@ -21,6 +21,7 @@ pre_send = [
     collect_statistics(type_, statistic_interval, './counters_{}.txt'.format(type_)),
     create_connection(type_, total_connection, Common.hub_url, protocol, transport_type),
     start_connection(type_, concurrent_connection),
+    register_callback_record_latency(type_)
 ]
 
 sending = []
