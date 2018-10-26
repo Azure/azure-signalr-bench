@@ -188,7 +188,7 @@ namespace Commander
             // Copy executables
             var copyTasks = new List<Task>();
             copyTasks.AddRange(from client in _remoteClients.AppserverScpClients
-                               select Task.Run(() => client.Upload(appserverExecutable, _slaveTargetPath)));
+                               select Task.Run(() => client.Upload(appserverExecutable, _appserverTargetPath)));
             copyTasks.Add(Task.Run(() => _remoteClients.MasterScpClient.Upload(masterExecutable, _masterTargetPath)));
             copyTasks.Add(Task.Run(() => _remoteClients.MasterScpClient.Upload(_benchmarkConfiguration, _benchmarkConfigurationTargetPath)));
             copyTasks.AddRange(from client in _remoteClients.SlaveScpClients
@@ -249,7 +249,7 @@ namespace Commander
 
             var tasks = new List<Task>();
             tasks.AddRange(from client in _remoteClients.AppserverSshClients
-                           select Task.Run(() => Unzip(client, _slaveTargetPath)));
+                           select Task.Run(() => Unzip(client, _appserverTargetPath)));
             tasks.Add(Task.Run(() => Unzip(_remoteClients.MasterSshClient, _masterTargetPath)));
             tasks.AddRange(from client in _remoteClients.SlaveSshClients
                            select Task.Run(() => Unzip(client, _slaveTargetPath)));
