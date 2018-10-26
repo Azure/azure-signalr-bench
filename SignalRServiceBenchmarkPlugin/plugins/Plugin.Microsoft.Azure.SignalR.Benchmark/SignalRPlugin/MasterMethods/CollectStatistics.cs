@@ -105,7 +105,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
             SumMessageLatencyStatistics[SignalRUtils.MessageGreaterOrEqaulTo(StatisticsCollector.LatencyMax)] = Sum(results, SignalRUtils.MessageGreaterOrEqaulTo(StatisticsCollector.LatencyMax));
 
             // Sum of total received message count
-            merged[SignalRConstants.StatisticsMessageReceived] = Sum(results, SignalRConstants.StatisticsMessageReceived);
+            merged[SignalRConstants.StatisticsMessageReceived] = SumMessageLatencyStatistics.Select(entry => entry.Value).Sum();
 
             // Sum of sent message statistics (should be calculated after "message:ge:latency")
             merged[SignalRConstants.StatisticsMessageSent] = Sum(results, SignalRConstants.StatisticsMessageSent);
