@@ -18,7 +18,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
 
             // Get parameters
             stepParameters.TryGetTypedValue(SignalRConstants.ConnectionTotal, out int connectionTotal, Convert.ToInt32);
-            stepParameters.TryGetTypedValue(SignalRConstants.HubUrl, out string hubUrl, Convert.ToString);
+            stepParameters.TryGetTypedValue(SignalRConstants.HubUrls, out string hubUrl, Convert.ToString);
             stepParameters.TryGetTypedValue(SignalRConstants.TransportType, out string transportType, Convert.ToString);
             stepParameters.TryGetTypedValue(SignalRConstants.HubProtocol, out string hubProtocol, Convert.ToString);
 
@@ -30,7 +30,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
                 {
                     { SignalRConstants.ConnectionBegin, beg },
                     { SignalRConstants.ConnectionEnd, end },
-                    { SignalRConstants.HubUrl, hubUrl },
+                    { SignalRConstants.HubUrls, hubUrl },
                     { SignalRConstants.TransportType, transportType },
                     { SignalRConstants.HubProtocol, hubProtocol }
                 };

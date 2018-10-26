@@ -59,6 +59,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
             }
             finally
             {
+                _statisticsCollector.ResetGroupCounters();
+                _statisticsCollector.ResetGroupCounters();
                 _statisticsCollector.IncreaseEpoch();
             }
         }

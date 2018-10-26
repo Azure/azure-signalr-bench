@@ -12,7 +12,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         public static readonly string ConnectionTotal = "Parameter.ConnectionTotal";
         public static readonly string ConnectionBegin = "Parameter.ConnectionBegin";
         public static readonly string ConnectionEnd = "Parameter.ConnectionEnd";
-        public static readonly string HubUrl = "Parameter.HubUrl";
+        public static readonly string HubUrls = "Parameter.HubUrl";
         public static readonly string HubProtocol = "Parameter.Protocol";
         public static readonly string TransportType = "Parameter.TransportType";
         public static readonly string Duration = "Parameter.Duration";
@@ -60,6 +60,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         public static readonly string StatisticsCounters = "Counters";
         public static readonly string StatisticsEpoch = "epoch";
         public static readonly string StatisticsMessageSent = "message:sent";
+        public static readonly string StatisticsMessageReceived = "message:received";
         public static readonly string StatisticsGroupJoinSuccess = "group:join:success";
         public static readonly string StatisticsGroupLeaveSuccess = "group:leave:success";
         public static readonly string StatisticsGroupJoinFail = "group:join:fail";
