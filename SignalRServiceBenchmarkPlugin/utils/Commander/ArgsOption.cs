@@ -25,8 +25,8 @@ namespace Commander
         [Option("MasterHostname", Required = true, HelpText = "Hostname of master.")]
         public string MasterHostname { get; set; }
 
-        [Option("AppServerHostname", Required = true, HelpText = "Hostname of app server.")]
-        public string AppServerHostname { get; set; }
+        [Option("AppServerHostnames", Required = true, HelpText = "Hostname of app server.")]
+        public IList<string> AppServerHostnames { get; set; }
 
         [Option("Username", Required = true, HelpText = "Username of VMs.")]
         public string Username { get; set; }

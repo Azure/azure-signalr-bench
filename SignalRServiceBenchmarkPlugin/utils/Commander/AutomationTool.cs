@@ -61,7 +61,7 @@ namespace Commander
             var slaveHostnames = (from slave in argOption.SlaveList select slave.Split(':')[0]).ToList();
             _remoteClients = new RemoteClients();
             _remoteClients.CreateAll(argOption.Username, argOption.Password, 
-                argOption.AppServerHostname, argOption.MasterHostname, slaveHostnames);
+                argOption.AppServerHostnames, argOption.MasterHostname, slaveHostnames);
         }
 
         public void Start()
@@ -143,13 +143,13 @@ namespace Commander
                 }
                 var masterCommand = $"dotnet exec {masterExecutablePath} -- --BenchmarkConfiguration=\"{_benchmarkConfigurationTargetPath}\" --SlaveList=\"{string.Join(',', _slaveList)}\"";
                 var slaveCommand = $"dotnet exec {slaveExecutablePath} --HostName 0.0.0.0 --RpcPort {_rpcPort}";
-                var appserverSshCommand = _remoteClients.AppserverSshClient.CreateCommand(appseverCommand.Replace('\\', '/'));
+                var appserverSshCommands = (from client in _remoteClients.AppserverSshClients select client.CreateCommand(slaveCommand.Replace('\\', '/'))).ToList();
                 var masterSshCommand = _remoteClients.MasterSshClient.CreateCommand(masterCommand.Replace('\\', '/'));
                 var slaveSshCommands = (from client in _remoteClients.SlaveSshClients select client.CreateCommand(slaveCommand.Replace('\\', '/'))).ToList();
 
                 // Start app server
                 Log.Information($"Start app server");
-                var appserverAsyncResult = appserverSshCommand.BeginExecute();
+                var appserverAsyncResults = (from command in appserverSshCommands select command.BeginExecute()).ToList();
 
                 // Start slaves
                 Log.Information($"Start slaves");
@@ -176,7 +176,7 @@ namespace Commander
                 _ = sshCommand.Execute();
             }
 
-            killDotnet(_remoteClients.AppserverSshClient);
+            _remoteClients.AppserverSshClients.ToList().ForEach(client => killDotnet(client));
             killDotnet(_remoteClients.MasterSshClient);
             _remoteClients.SlaveSshClients.ToList().ForEach(client => killDotnet(client));
         }
@@ -187,7 +187,8 @@ namespace Commander
 
             // Copy executables
             var copyTasks = new List<Task>();
-            copyTasks.Add(Task.Run(() => _remoteClients.AppserverScpClient.Upload(appserverExecutable, _appserverTargetPath)));
+            copyTasks.AddRange(from slaveScpClient in _remoteClients.AppserverScpClients
+                               select Task.Run(() => slaveScpClient.Upload(slaveExecutable, _slaveTargetPath)));
             copyTasks.Add(Task.Run(() => _remoteClients.MasterScpClient.Upload(masterExecutable, _masterTargetPath)));
             copyTasks.Add(Task.Run(() => _remoteClients.MasterScpClient.Upload(_benchmarkConfiguration, _benchmarkConfigurationTargetPath)));
             copyTasks.AddRange(from slaveScpClient in _remoteClients.SlaveScpClients
@@ -247,7 +248,8 @@ namespace Commander
             Log.Information($"Unzip executables");
 
             var tasks = new List<Task>();
-            tasks.Add(Task.Run(() => Unzip(_remoteClients.AppserverSshClient, _appserverTargetPath)));
+            tasks.AddRange(from client in _remoteClients.AppserverSshClients
+                           select Task.Run(() => Unzip(client, _slaveTargetPath)));
             tasks.Add(Task.Run(() => Unzip(_remoteClients.MasterSshClient, _masterTargetPath)));
             tasks.AddRange(from client in _remoteClients.SlaveSshClients
                            select Task.Run(() => Unzip(client, _slaveTargetPath)));
