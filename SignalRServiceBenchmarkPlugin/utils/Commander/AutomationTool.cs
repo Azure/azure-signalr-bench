@@ -187,12 +187,12 @@ namespace Commander
 
             // Copy executables
             var copyTasks = new List<Task>();
-            copyTasks.AddRange(from slaveScpClient in _remoteClients.AppserverScpClients
-                               select Task.Run(() => slaveScpClient.Upload(slaveExecutable, _slaveTargetPath)));
+            copyTasks.AddRange(from client in _remoteClients.AppserverScpClients
+                               select Task.Run(() => client.Upload(appserverExecutable, _slaveTargetPath)));
             copyTasks.Add(Task.Run(() => _remoteClients.MasterScpClient.Upload(masterExecutable, _masterTargetPath)));
             copyTasks.Add(Task.Run(() => _remoteClients.MasterScpClient.Upload(_benchmarkConfiguration, _benchmarkConfigurationTargetPath)));
-            copyTasks.AddRange(from slaveScpClient in _remoteClients.SlaveScpClients
-                                select Task.Run(() => slaveScpClient.Upload(slaveExecutable, _slaveTargetPath)));
+            copyTasks.AddRange(from client in _remoteClients.SlaveScpClients
+                                select Task.Run(() => client.Upload(slaveExecutable, _slaveTargetPath)));
             Task.WhenAll(copyTasks).Wait();
         }
 
