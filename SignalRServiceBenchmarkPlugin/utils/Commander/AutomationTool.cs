@@ -143,7 +143,7 @@ namespace Commander
                 }
                 var masterCommand = $"dotnet exec {masterExecutablePath} -- --BenchmarkConfiguration=\"{_benchmarkConfigurationTargetPath}\" --SlaveList=\"{string.Join(',', _slaveList)}\"";
                 var slaveCommand = $"dotnet exec {slaveExecutablePath} --HostName 0.0.0.0 --RpcPort {_rpcPort}";
-                var appserverSshCommands = (from client in _remoteClients.AppserverSshClients select client.CreateCommand(slaveCommand.Replace('\\', '/'))).ToList();
+                var appserverSshCommands = (from client in _remoteClients.AppserverSshClients select client.CreateCommand(appseverCommand.Replace('\\', '/'))).ToList();
                 var masterSshCommand = _remoteClients.MasterSshClient.CreateCommand(masterCommand.Replace('\\', '/'));
                 var slaveSshCommands = (from client in _remoteClients.SlaveSshClients select client.CreateCommand(slaveCommand.Replace('\\', '/'))).ToList();
 
