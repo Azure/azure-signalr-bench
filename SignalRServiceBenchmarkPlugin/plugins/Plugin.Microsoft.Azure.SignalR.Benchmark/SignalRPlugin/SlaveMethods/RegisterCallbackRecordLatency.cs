@@ -24,7 +24,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.StatisticsStore}.{type}", out var statisticsCollector, obj => (StatisticsCollector)obj);
 
                 // Set callback
-                SetCallback(connections, SignalRConstants.EchoCallbackName, statisticsCollector);
+                SetCallback(connections, SignalRConstants.RecordLatencyCallbackName, statisticsCollector);
 
                 return null;
             }

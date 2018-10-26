@@ -44,6 +44,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         public static readonly string BroadcastCallbackName = "Broadcast";
         public static readonly string SendToClientCallbackName = "SendToClient";
         public static readonly string SendToGroupCallbackName = "SendToGroup";
+        public static readonly string RecordLatencyCallbackName = "RecordLatency";
         public static readonly string JoinGroupCallbackName = "JoinGroup";
         public static readonly string LeaveGroupCallbackName = "LeaveGroup";
         public static readonly string GetConnectionIdCallback = "GetConnectionId";
