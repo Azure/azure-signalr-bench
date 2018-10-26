@@ -61,6 +61,10 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                                    }
                                };
 
+                // Reset counters
+                _statisticsCollector.ResetGroupCounters();
+                _statisticsCollector.ResetMessageCounters();
+
                 Func<int, int, int, int, bool> isSending = (index, modulo, beg, end) => (index % modulo) >= beg && (index % modulo) < end;
 
                 Func<HubConnection, IDictionary<string, object>, bool, bool, Task> generateTask = (connection, data, isSendGroupLevel, isSendGroupInternal) =>

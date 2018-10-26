@@ -52,6 +52,10 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                                    }
                                };
 
+                // Reset counters
+                _statisticsCollector.ResetGroupCounters();
+                _statisticsCollector.ResetMessageCounters();
+
                 // Send messages
                 await Task.WhenAll(from package in packages
                                    let i = package.Index

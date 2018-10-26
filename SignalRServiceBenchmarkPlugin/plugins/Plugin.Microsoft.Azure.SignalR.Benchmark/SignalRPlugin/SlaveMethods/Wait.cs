@@ -1,5 +1,6 @@
 ﻿using Common;
 using Plugin.Base;
+using Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods.Statistics;
 using Serilog;
 using System;
 using System.Collections.Generic;
@@ -18,8 +19,13 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
 
                 // Get parameters
                 stepParameters.TryGetTypedValue(SignalRConstants.Duration, out long duration, Convert.ToInt64);
+                stepParameters.TryGetTypedValue(SignalRConstants.Type, out string type, Convert.ToString);
+                pluginParameters.TryGetTypedValue($"{SignalRConstants.StatisticsStore}.{type}", out var statisticsCollector, obj => (StatisticsCollector)obj);
 
                 await Task.Delay(TimeSpan.FromMilliseconds(duration));
+
+                // Update epoch at the end of 'Wait' to ensure all the messages are received and all clients stop sending
+                statisticsCollector.IncreaseEpoch();
 
                 return null;
             }

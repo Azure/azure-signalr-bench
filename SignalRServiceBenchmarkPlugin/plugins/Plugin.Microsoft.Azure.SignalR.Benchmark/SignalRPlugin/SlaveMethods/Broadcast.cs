@@ -39,6 +39,10 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                     { SignalRConstants.MessageBlob, new byte[messageSize] } // message payload
                 };
 
+                // Reset counters
+                _statisticsCollector.ResetGroupCounters();
+                _statisticsCollector.ResetMessageCounters();
+
                 // Send messages
                 await Task.WhenAll(from i in Enumerable.Range(0, connections.Count)
                                     where (i + offset) % modulo >= remainderBegin && (i + offset) % modulo < remainderEnd
