@@ -38,7 +38,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
                 DisplayStatistics(results, type);
 
                 // Merge statistics
-                var merged = MergeStatistics(results);
+                var merged = MergeStatistics(results, type);
 
                 // Display merged statistics
                 Log.Information(Environment.NewLine + $"Statistic type: {type}" + Environment.NewLine + merged.GetContents());
@@ -89,7 +89,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
             }).Min();
         }
 
-        private IDictionary<string, int> MergeStatistics(IDictionary<string, object>[] results)
+        private IDictionary<string, int> MergeStatistics(IDictionary<string, object>[] results, string type)
         {
             var merged = new Dictionary<string, int>();
 
@@ -116,7 +116,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
             // Sum of sent message statistics (should be calculated after "message:ge:latency")
             merged[SignalRConstants.StatisticsMessageSent] = Sum(results, SignalRConstants.StatisticsMessageSent);
 
-            // Add epoch
+            // Update epoch
             merged[SignalRConstants.StatisticsEpoch] = Min(results, SignalRConstants.StatisticsEpoch);
 
             merged = merged.Union(SumMessageLatencyStatistics).ToDictionary(entry => entry.Key, entry => entry.Value);

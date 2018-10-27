@@ -38,7 +38,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods.Statistics
 
         public void IncreaseEpoch()
         {
-            _statistics.AddOrUpdate(SignalRConstants.StatisticsEpoch, 0, (k, v) => v + 1);
+            _statistics.AddOrUpdate(SignalRConstants.StatisticsEpoch, 1, (k, v) => v + 1);
         }
 
         public void IncreaseSentMessage()
