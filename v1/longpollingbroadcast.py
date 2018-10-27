@@ -3,55 +3,55 @@ import settings
 
 longpolling_connection={1:500, 2:1000, 5:2500, 10:5000, 20:10000, 50:25000, 100:50000}
 longpolling_concurrentConnection={1:100, 2:100, 5:100, 10:100, 20:100, 50:100, 100:200}
-longpolling_baseStep={1:50, 2:50, 5:100, 10:100, 20:200, 50:500, 100:1000}
-longpolling_step={1:50, 2:50, 5:50, 10:100, 20:200, 50:500, 100:1000}
+longpolling_baseStep={1:1, 2:1, 5:1, 10:1, 20:1, 50:1, 100:1}
+longpolling_step={1:1, 2:1, 5:1, 10:1, 20:1, 50:1, 100:1}
 if settings.gPerfType == settings.gConstMax:
   longpolling_connection={1:750, 2:1500, 5:3000, 10:7500, 20:15000, 50:30000, 100:75000}
   longpolling_concurrentConnection={1:100, 2:100, 5:100, 10:100, 20:100, 50:100, 100:200}
 
-def longpollingechounit1_connection():
+def longpollingbroadcastunit1_connection():
    return longpolling_connection[1]
 
-def longpollingechounit2_connection():
+def longpollingbroadcastunit2_connection():
    return longpolling_connection[2]
 
-def longpollingechounit5_connection():
+def longpollingbroadcastunit5_connection():
    return longpolling_connection[5]
 
-def longpollingechounit10_connection():
+def longpollingbroadcastunit10_connection():
    return longpolling_connection[10]
 
-def longpollingechounit20_connection():
+def longpollingbroadcastunit20_connection():
    return longpolling_connection[20]
 
-def longpollingechounit50_connection():
+def longpollingbroadcastunit50_connection():
    return longpolling_connection[50]
 
-def longpollingechounit100_connection():
+def longpollingbroadcastunit100_connection():
    return longpolling_connection[100]
 
-def longpollingechounit1_concurrentConnection():
+def longpollingbroadcastunit1_concurrentConnection():
    return longpolling_concurrentConnection[1]
 
-def longpollingechounit2_concurrentConnection():
+def longpollingbroadcastunit2_concurrentConnection():
    return longpolling_concurrentConnection[2]
 
-def longpollingechounit5_concurrentConnection():
+def longpollingbroadcastunit5_concurrentConnection():
    return longpolling_concurrentConnection[5]
 
-def longpollingechounit10_concurrentConnection():
+def longpollingbroadcastunit10_concurrentConnection():
    return longpolling_concurrentConnection[10]
 
-def longpollingechounit20_concurrentConnection():
+def longpollingbroadcastunit20_concurrentConnection():
    return longpolling_concurrentConnection[20]
 
-def longpollingechounit50_concurrentConnection():
+def longpollingbroadcastunit50_concurrentConnection():
    return longpolling_concurrentConnection[50]
 
-def longpollingechounit100_concurrentConnection():
+def longpollingbroadcastunit100_concurrentConnection():
    return longpolling_concurrentConnection[100]
 
-def longpollingechounit1(duration):
+def longpollingbroadcastunit1(duration):
    #print sys._getframe().f_code.co_name
    connection=longpolling_connection[1]
    concurrentConnection=longpolling_concurrentConnection[1]
@@ -83,7 +83,7 @@ pipeline:
 	duration=duration,baseSend=baseSend,send=stepSend)
    return(pipeline)
 
-def longpollingechounit2(duration):
+def longpollingbroadcastunit2(duration):
    #print sys._getframe().f_code.co_name
    connection=longpolling_connection[2]
    concurrentConnection=longpolling_concurrentConnection[2]
@@ -115,15 +115,15 @@ pipeline:
 	duration=duration,baseSend=baseSend,send=stepSend)
    return(pipeline)
 
-def longpollingechounit3(duration):
+def longpollingbroadcastunit3(duration):
    #print sys._getframe().f_code.co_name
    raise ValueError('function {func} has not implemented'.format(func=sys._getframe().f_code.co_name))
 
-def longpollingechounit4(duration):
+def longpollingbroadcastunit4(duration):
    #print sys._getframe().f_code.co_name
    raise ValueError('function {func} has not implemented'.format(func=sys._getframe().f_code.co_name))
 
-def longpollingechounit5(duration):
+def longpollingbroadcastunit5(duration):
    connection=longpolling_connection[5]
    concurrentConnection=longpolling_concurrentConnection[5]
    baseSend=longpolling_baseStep[5]
@@ -154,23 +154,23 @@ pipeline:
 	duration=duration,baseSend=baseSend,send=stepSend)
    return(pipeline)
 
-def longpollingechounit6(duration):
+def longpollingbroadcastunit6(duration):
    #print sys._getframe().f_code.co_name
    raise ValueError('function {func} has not implemented'.format(func=sys._getframe().f_code.co_name))
 
-def longpollingechounit7(duration):
+def longpollingbroadcastunit7(duration):
    #print sys._getframe().f_code.co_name
    raise ValueError('function {func} has not implemented'.format(func=sys._getframe().f_code.co_name))
 
-def longpollingechounit8(duration):
+def longpollingbroadcastunit8(duration):
    #print sys._getframe().f_code.co_name
    raise ValueError('function {func} has not implemented'.format(func=sys._getframe().f_code.co_name))
 
-def longpollingechounit9(duration):
+def longpollingbroadcastunit9(duration):
    #print sys._getframe().f_code.co_name
    raise ValueError('function {func} has not implemented'.format(func=sys._getframe().f_code.co_name))
 
-def longpollingechounit10(duration):
+def longpollingbroadcastunit10(duration):
    #print sys._getframe().f_code.co_name
    connection=longpolling_connection[10]
    concurrentConnection=longpolling_concurrentConnection[10]
@@ -202,7 +202,7 @@ pipeline:
 	duration=duration,baseSend=baseSend,send=stepSend)
    return(pipeline)
 
-def longpollingechounit20(duration):
+def longpollingbroadcastunit20(duration):
    #print sys._getframe().f_code.co_name
    connection=longpolling_connection[20]
    concurrentConnection=longpolling_concurrentConnection[20]
@@ -234,7 +234,7 @@ pipeline:
 	duration=duration,baseSend=baseSend,send=stepSend)
    return(pipeline)
 
-def longpollingechounit50(duration):
+def longpollingbroadcastunit50(duration):
    #print sys._getframe().f_code.co_name
    connection=longpolling_connection[50]
    concurrentConnection=longpolling_concurrentConnection[50]
@@ -266,7 +266,7 @@ pipeline:
 	duration=duration,baseSend=baseSend,send=stepSend)
    return(pipeline)
 
-def longpollingechounit100(duration):
+def longpollingbroadcastunit100(duration):
    #print sys._getframe().f_code.co_name
    connection=longpolling_connection[100]
    concurrentConnection=longpolling_concurrentConnection[100]

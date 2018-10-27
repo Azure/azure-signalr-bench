@@ -100,6 +100,7 @@ if __name__=="__main__":
    import websocketsrestbroadcast
    import websocketsrestsendtouser
    import longpollingecho
+   import longpollingbroadcast
    import serversenteventsecho
    import serversenteventsbroadcast
 
