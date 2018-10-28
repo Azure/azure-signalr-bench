@@ -124,5 +124,8 @@ namespace JenkinsScript
 
         [Option("connectionString", Default = null, Required = false, HelpText = "Specify SignalR service connection string")]
         public string ConnectionString { get; set; }
+
+        [Option("neverStopAppServer", Default = "false", Required = false, HelpText = "Whether stop app server or not: true/false")]
+        public string NeverStopAppServer { get; set; }
     }
 }

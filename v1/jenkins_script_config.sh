@@ -3,10 +3,15 @@
 # input Jenkinw workspace directory
 # this function is invoked in every job entry
 function set_global_env() {
+   local relative_dir="azure-signalr-bench"
    local Jenkins_Workspace_Root=$1
+   if [ $# -eq 2 ]
+   then
+      relative_dir=$2
+   fi
    export JenkinsRootPath="$Jenkins_Workspace_Root"
-   export ScriptWorkingDir=$Jenkins_Workspace_Root/azure-signalr-bench/v1                     # folders to find all scripts
-   export CurrentWorkingDir=$Jenkins_Workspace_Root/azure-signalr-bench/v2/JenkinsScript/     # workding directory
+   export ScriptWorkingDir=$Jenkins_Workspace_Root/${relative_dir}/v1                     # folders to find all scripts
+   export CurrentWorkingDir=$Jenkins_Workspace_Root/${relative_dir}/v2/JenkinsScript/     # workding directory
 
 ############# those configurations are shared in Jenkins folder #####
    export AgentConfig=$JenkinsRootPath'/agent.yaml'
@@ -54,6 +59,11 @@ function run_and_gen_report()
    then
       connectionStringOpt="--connectionString='$ConnectionString'"
    fi
+   local neverStopAppServerOpt=""
+   if [ "$NeverStopAppServer" == "true" ]
+   then
+      neverStopAppServerOpt="--neverStopAppServer=true"
+   fi
    dotnet run -- --PidFile='./pid/pid_'$result_root'.txt' --step=AllInSameVnet \
     --branch=$Branch \
     --PrivateIps=$PrivateIps \
@@ -64,7 +74,7 @@ function run_and_gen_report()
     --stopSendIfLatencyBig="true" \
     --stopSendIfConnectionErrorBig="true" \
     --ServicePrincipal=$ServicePrincipal \
-    --AzureSignalrConnectionString=$connectStr "$connectionStringOpt"
+    --AzureSignalrConnectionString=$connectStr "$connectionStringOpt" "$neverStopAppServerOpt"
    ############# gen report ##############
    local counterPath=`find ${env_statistic_folder} -iname "counters.txt"`
    if [ "$counterPath" != "" ]
@@ -248,7 +258,6 @@ function run_customer_bench()
      tag=${tag}_${k}
      prepare_result_folder_4_scenario ${tag} ${Transport} ${MessageEncoding} ${Scenario}
      ############## configure scenario ############
-     send=`python gen_complex_pipeline.py -t $Transport -s $Scenario -u unit${unit} -d 0 -S`
      python query_customer.py -c $k -i JobConfig > $JobConfig
      cat << EOF >> $JobConfig
 serverUrl: ${serverUrl}
