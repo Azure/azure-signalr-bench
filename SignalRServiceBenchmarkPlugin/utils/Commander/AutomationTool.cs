@@ -155,6 +155,9 @@ namespace Commander
                 Log.Information($"Start slaves");
                 var slaveAsyncResults = (from command in slaveSshCommands select command.BeginExecute()).ToList();
 
+                // Wait app server started
+                Task.Delay(TimeSpan.FromSeconds(30)).Wait();
+
                 // Start master
                 Log.Information($"Start master");
                 var masterResult = masterSshCommand.Execute();
