@@ -228,7 +228,7 @@ namespace Commander
             var result = command.Execute();
             if (command.Error != "")
             {
-                Log.Warning(result);
+                Log.Error($"Install zip error on {client.ConnectionInfo.Host}: {result}, {command.Error}");
             }
         }
 
