@@ -584,7 +584,8 @@ function remove_resource_group() {
   local clean_vm_daemon=daemon_${JOB_NAME}_cleanvms
   local clean_asrs_daemon=daemon_${JOB_NAME}_cleanasrs
   ## remove all test VMs
-  daemonize -o /tmp/${clean_vm_daemon}.out -e /tmp/${clean_vm_daemon}.err -E BUILD_ID=dontKillcenter /usr/bin/nohup ${VMMgrDir}/JenkinsScript --PidFile="$CurrentWorkingDir/pid/pid_remove_rsg.txt" --step=DeleteResourceGroupByConfig --AgentConfigFile=$AgentConfig --DisableRandomSuffix --ServicePrincipal=$ServicePrincipal &
+  local pid_file_path=/tmp/${result_root}_pid_remove_rsg.txt
+  daemonize -v -o /tmp/${clean_vm_daemon}.out -e /tmp/${clean_vm_daemon}.err -E BUILD_ID=dontKillcenter /usr/bin/nohup ${VMMgrDir}/JenkinsScript --PidFile="$pid_file_path" --step=DeleteResourceGroupByConfig --AgentConfigFile=$AgentConfig --DisableRandomSuffix --ServicePrincipal=$ServicePrincipal &
 
   ## remove ASRS
 cat << EOF > /tmp/clean_asrs.sh
@@ -601,7 +602,7 @@ else
   delete_group $DogFoodResourceGroup
 fi
 EOF
-  daemonize -o /tmp/${clean_asrs_daemon}.out -e /tmp/${clean_asrs_daemon}.err -E BUILD_ID=dontKillcenter /usr/bin/nohup /bin/sh /tmp/clean_asrs.sh &
+  daemonize -v -o /tmp/${clean_asrs_daemon}.out -e /tmp/${clean_asrs_daemon}.err -E BUILD_ID=dontKillcenter /usr/bin/nohup /bin/sh /tmp/clean_asrs.sh &
 }
 
 ## register exit handler to remove resource group ##
