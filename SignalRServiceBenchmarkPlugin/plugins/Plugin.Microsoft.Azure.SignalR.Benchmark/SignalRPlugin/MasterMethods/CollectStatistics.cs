@@ -51,8 +51,6 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
             };
             timer.Start();
 
-            await Task.Delay(TimeSpan.FromSeconds(1));
-
             // Save timer to plugin
             pluginParameters[$"{SignalRConstants.Timer}.{type}"] = timer;
         }
