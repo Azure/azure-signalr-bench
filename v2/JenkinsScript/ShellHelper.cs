@@ -666,8 +666,7 @@ fi
                 (errCode, result) = ShellHelper.ScpDirecotryRemoteToLocal(user, host, password, remote, local);
                 if (errCode != 0)
                 {
-                    Util.Log($"ERR {errCode}: {result}");
-                    Environment.Exit(1);
+                    Util.Log($"Collect statistic ERR {errCode}: {result}");
                 }
             });
             return (errCode, result);
