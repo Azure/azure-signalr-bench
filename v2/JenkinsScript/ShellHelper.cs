@@ -12,8 +12,8 @@ namespace JenkinsScript
         {
             if (errCode != 0)
             {
-                Util.Log($"ERR {errCode}: {result}");
-                Environment.Exit(1);
+                Util.Log($"Handle result ERR {errCode}: {result}");
+                // Environment.Exit(1);
             }
             return;
         }
@@ -261,7 +261,7 @@ cloneRepo
             if (errCode != 0)
             {
                 Util.Log($"ERR {errCode}: {result}");
-                Environment.Exit(1);
+                //Environment.Exit(1);
             }
 
             return (errCode, result);
@@ -316,7 +316,7 @@ cloneRepo
                     }
 
                     // Any server fails to start is a fatal error, so exit.
-                    Environment.Exit(1);
+                    //Environment.Exit(1);
                 }
             }
         }
@@ -388,7 +388,7 @@ fi
                 if (errCode != 0)
                 {
                     Util.Log($"ERR {errCode}: {result}");
-                    Environment.Exit(1);
+                    //Environment.Exit(1);
                 }
             }
             // wait the starting of AppServer, sometimes the log file has not yet generated when we want to read it.
@@ -413,8 +413,8 @@ fi
             };
             if (errCode != 0)
             {
-                Util.Log($"ERR {errCode}: {result}");
-                Environment.Exit(1);
+                Util.Log($"RPC slave stopped: ERR {errCode}: {result}");
+                //Environment.Exit(1);
             }
             // wait the starting of slave VM.
             Task.Delay(TimeSpan.FromSeconds(1)).Wait();
@@ -522,7 +522,7 @@ fi
                 if (errCode != 0)
                 {
                     Util.Log($"ERR {errCode}: {result}");
-                    Environment.Exit(1);
+                    //Environment.Exit(1);
                 }
             }
 
@@ -647,8 +647,8 @@ fi
 
             if (errCode != 0)
             {
-                Util.Log($"ERR {errCode}: {result}");
-                Environment.Exit(1);
+                Util.Log($"Fail to prepare log ERR {errCode}: {result}");
+                //Environment.Exit(1);
             }
 
             result = Path.Join(targetDir, $"log_{suffix}.txt");
@@ -690,8 +690,8 @@ fi
                 (errCode, result) = ScpFileLocalToRemote(user, host, password, "serviceruntime.zip", "~/");
                 if (errCode != 0)
                 {
-                    Util.Log($"ERR {errCode}: {result}");
-                    Environment.Exit(1);
+                    Util.Log($"Fail to transfer service to VM ERR {errCode}: {result}");
+                    //Environment.Exit(1);
                 }
 
                 // install unzip
