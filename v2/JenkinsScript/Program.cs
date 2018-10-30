@@ -30,7 +30,10 @@ namespace JenkinsScript
                 return;
             }
 
-            SavePid(argsOption.PidFile);
+            if (!string.IsNullOrEmpty(argsOption.PidFile))
+            {
+                SavePid(argsOption.PidFile);
+            }
 
             var resourceGroupName = "";
             var signalrServiceName = "";
