@@ -300,6 +300,7 @@ namespace JenkinsScript
                         var enableGroupJoinLeave = jobConfigV2.EnableGroupJoinLeave;
                         var pipeline = jobConfigV2.Pipeline;
                         var serverUrl = jobConfigV2.ServerUrl;
+                        var neverStopAppServer = bool.Parse(argsOption.NeverStopAppServer);
                         var messageSize = jobConfigV2.MessageSize;
                         var sendToFixedClient = argsOption.SendToFixedClient;
                         var statisticsSuffix = argsOption.StatisticsSuffix;
@@ -334,7 +335,15 @@ namespace JenkinsScript
                         var hosts = new List<string>();
                         if (privateIps.ServicePrivateIp != null && privateIps.ServicePrivateIp.Length > 0)
                             hosts.AddRange(privateIps.ServicePrivateIp.Split(";").ToList());
-                        hosts.AddRange(privateIps.AppServerPrivateIp.Split(";").ToList());
+                        if (!neverStopAppServer)
+                        {
+                            hosts.AddRange(privateIps.AppServerPrivateIp.Split(";").ToList());
+                        }
+                        else
+                        {
+                            Util.Log("Never stop app server is enabled");
+                        }
+
                         hosts.Add(privateIps.MasterPrivateIp);
                         hosts.AddRange(privateIps.SlavePrivateIp.Split(";").ToList());
 
@@ -354,9 +363,18 @@ namespace JenkinsScript
                         var logPathAppServer = new List<string>();
                         foreach (var ip in privateIps.AppServerPrivateIp.Split(";").ToList())
                         {
-                            suffix = GenerateSuffix($"appserver{ip}");
-                            (errCode, result) = ShellHelper.PrepareLogPath(ip, user, password, sshPort, logRoot, resultRoot, suffix);
-                            logPathAppServer.Add(result);
+                            if (!neverStopAppServer)
+                            {
+                                suffix = GenerateSuffix($"appserver{ip}");
+                                (errCode, result) = ShellHelper.PrepareLogPath(ip, user, password, sshPort, logRoot, resultRoot, suffix);
+                                logPathAppServer.Add(result);
+                            }
+                            else
+                            {
+                                // set a fixed output log folder
+                                (errCode, result) = ShellHelper.PrepareLogPath(ip, user, password, sshPort, logRoot, "", $"appserver{ip}", false);
+                                logPathAppServer.Add(result);
+                            }
                         }
 
                         var logPathSlave = new List<string>();
@@ -374,10 +392,16 @@ namespace JenkinsScript
 
                         // clone repo to all vms
                         if (!debug) ShellHelper.GitCloneRepo(hosts, remoteRepo, user, password,
-                            sshPort, commit: "", branch : branch, repoRoot : localRepoRoot);
-
+                                        sshPort, commit: "", branch: branch, repoRoot: localRepoRoot);
                         // kill all dotnet
                         if (!debug) ShellHelper.KillAllDotnetProcess(hosts, remoteRepo, user, password, sshPort, repoRoot : localRepoRoot);
+
+                        // specially handle app servers
+                        if (neverStopAppServer)
+                        {
+                            ShellHelper.GitCloneRepo(privateIps.AppServerPrivateIp.Split(";").ToList(), remoteRepo, user, password,
+                                        sshPort, commit: "", branch: branch, repoRoot: localRepoRoot, false);
+                        }
                         Task.Delay(waitTime).Wait();
                         Task.Delay(waitTime).Wait();
 
@@ -431,7 +455,12 @@ namespace JenkinsScript
                             ShellHelper.CollectStatistics(privateIps.MasterPrivateIp.Split(";").ToList(), user, password, sshPort, $"/home/{user}/results/{resultRoot}/", Util.MakeSureDirectoryExist(resultFolder));
                         }
 
-                        // killall process to avoid writing log
+                        if (neverStopAppServer)
+                        {
+                            ShellHelper.CollectStatistics(privateIps.AppServerPrivateIp.Split(";").ToList(), user, password, sshPort,
+                                $"/home/{user}/logs/", Util.MakeSureDirectoryExist(logFolder));
+                        }
+                        // killall process to avoid wirting log
                         if (!debug) ShellHelper.KillAllDotnetProcess(hosts, remoteRepo, user, password, sshPort, repoRoot : localRepoRoot);
 
                         break;

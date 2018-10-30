@@ -139,8 +139,10 @@ namespace JenkinsScript
             return (errCode, result);
         }
 
-        public static(int, string) GitCloneRepo(List<string> hosts, string repoUrl, string user, string password, int sshPort,
-            string commit = "", string branch = "origin/master", string repoRoot = "/home/wanl/signalr_auto_test_framework")
+        public static(int, string) GitCloneRepo(List<string> hosts, string repoUrl,
+            string user, string password, int sshPort,
+            string commit = "", string branch = "origin/master",
+            string repoRoot = "/home/wanl/signalr_auto_test_framework", bool cleanOldRepo = true)
         {
             var errCode = 0;
             var result = "";
@@ -154,32 +156,56 @@ namespace JenkinsScript
                 {
                     var errCodeInner = 0;
                     var resultInner = "";
-                    var remoteScriptContent = $@"
+                    var remoteScriptContent = "";
+                    var leftBrace = "{";
+                    var rightBrace = "}";
+                    if (cleanOldRepo)
+                    {
+                        remoteScriptContent = $@"
 #!/bin/bash
-if [ -d {repoRoot} ]
-then
-   rm -rf {repoRoot}
-fi
-git clone {repoUrl} {repoRoot}
-rtn=$?
-## re-check whether repo was cloned successfully
-v=0
-while [ $rtn -ne 0 ] && [ $v -lt 3 ]
-do
-   if [ -d {repoRoot} ]
-   then
-      rm -rf {repoRoot}
-   fi
-   git clone {repoUrl} {repoRoot}
-   rtn=$?
-   if [ $rtn -eq 0 ]
-   then
-      break
-   fi
-   v=$(($v+1))
-done
-cd {repoRoot}
-git checkout {branch}
+# clean the old repo directory
+function cloneRepo() {leftBrace}
+    if [ -d {repoRoot} ]
+    then
+        rm -rf {repoRoot}
+    fi
+";
+                    }
+                    else
+                    {
+                        remoteScriptContent = $@"
+#!/bin/bash
+# use existing repo if it exists to not break the running process
+function cloneRepo() {leftBrace}
+    if [ -d {repoRoot} ]
+    then
+        return
+    fi
+";
+                    }
+                    remoteScriptContent += $@"
+    git clone {repoUrl} {repoRoot}
+    rtn=$?
+    ## re-check whether repo was cloned successfully
+    v=0
+    while [ $rtn -ne 0 ] && [ $v -lt 3 ]
+    do
+        if [ -d {repoRoot} ]
+        then
+            rm -rf {repoRoot}
+        fi
+        git clone {repoUrl} {repoRoot}
+        rtn=$?
+        if [ $rtn -eq 0 ]
+        then
+            break
+        fi
+        v=$(($v+1))
+    done
+    cd {repoRoot}
+    git checkout {branch}
+{rightBrace}
+cloneRepo
 ";
                     var scriptFile = "remoteScript.sh";
                     using (StreamWriter sw = new StreamWriter(scriptFile))
@@ -299,16 +325,65 @@ git checkout {branch}
         {
             var errCode = 0;
             var result = "";
-            var cmd = "";
 
-            for (var i = 0; i < hosts.Count; i++)
+            for (var j = 0; j < hosts.Count; j++)
             {
-                cmd = $"cd {appSvrRoot}; " +
-                    $"export Azure__SignalR__ConnectionString='{azureSignalrConnectionStrings[i]}'; " +
-                    $"export useLocalSignalR={useLocalSingalR}; " +
-                    $"dotnet run > {logPath[i]}";
-                Util.Log($"{user}@{hosts[i]}: {cmd}");
-                (errCode, result) = ShellHelper.RemoteBash(user, hosts[i], sshPort, password, cmd, wait : false);
+                var remoteScriptContent = $@"
+#!/bin/bash
+isRun=`ps axu|grep dotnet|wc -l`
+if [ $isRun -eq 1 ]
+then
+    cd {appSvrRoot}
+    export Azure__SignalR__ConnectionString=""{azureSignalrConnectionStrings[j]}""
+    export useLocalSignalR={useLocalSingalR}
+    dotnet run > {logPath[j]}
+else
+    echo 'AppServer has started'
+fi
+";
+                var scriptFile = $"remoteScript{j}.sh";
+                using (StreamWriter sw = new StreamWriter(scriptFile, false))
+                {
+                    sw.Write(remoteScriptContent);
+                }
+                var innerCmd = $"chmod +x {scriptFile}; ./{scriptFile}";
+                var i = 0;
+                var retry = 5;
+                for (; i < retry; i++)
+                {
+                    (errCode, result) = ScpFileLocalToRemote(user, hosts[j], password, scriptFile, "~/");
+                    if (errCode != 0)
+                    {
+                        // handle error
+                        Console.WriteLine("Fail to copy script from local to remote: {errCode}");
+                        if (i < retry)
+                        {
+                            Console.WriteLine("We will retry");
+                            continue;
+                        }
+                        else
+                        {
+                            Console.WriteLine("Retry limit reaches, fail finally!");
+                        }
+                    }
+                    (errCode, result) = RemoteBash(user, hosts[j], sshPort, password, innerCmd, wait: false);
+                    if (errCode != 0)
+                    {
+                        // handle error
+                        if (i < retry)
+                        {
+                            Console.WriteLine($"Retry remote bash for {innerCmd}");
+                        }
+                        else
+                        {
+                            Console.WriteLine($"Retry limit reaches, fail finally!");
+                        }
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
 
                 if (errCode != 0)
                 {
@@ -550,14 +625,22 @@ git checkout {branch}
             return (errCode, result);
         }
         public static(int, string) PrepareLogPath(string host, string user, string password, int sshPort,
-            string dstDir, string time, string suffix)
+            string dstDir, string time, string suffix, bool removeOldLog=true)
         {
 
             var targetDir = Path.Join(dstDir, time);
 
             var errCode = 0;
             var result = "";
-            var cmd = $"rm -rf ~/logs || true; rm -rf ~/results || true; mkdir -p {targetDir}";
+            var cmd = "";
+            if (removeOldLog)
+            {
+                cmd = $"rm -rf ~/logs || true; rm -rf ~/results || true; mkdir -p {targetDir}";
+            }
+            else
+            {
+                cmd = $"[[ ! -e {targetDir} ]] && mkdir -p {targetDir}";
+            }
 
             Util.Log($"{user}@{host}: {cmd}");
             (errCode, result) = ShellHelper.RemoteBash(user, host, sshPort, password, cmd, wait : false);
