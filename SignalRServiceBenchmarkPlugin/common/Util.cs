@@ -113,5 +113,34 @@ namespace Common
                                     }
                                 }));
         }
+
+        public static Task<TOut[]> BatchProcess<T, TOut>(IList<T> source, Func<T, Task<TOut>> f, int max)
+        {
+            var initial = (max >> 1);
+            var s = new System.Threading.SemaphoreSlim(initial, max);
+            _ = Task.Run(async () =>
+            {
+                for (int i = initial; i < max; i++)
+                {
+                    await Task.Delay(100);
+                    s.Release();
+                }
+            });
+
+             return Task.WhenAll(from item in source
+                                select Task.Run(async () =>
+                                {
+                                    await s.WaitAsync();
+                                    try
+                                    {
+                                        var res = await f(item);
+                                        return res;
+                                    }
+                                    finally
+                                    {
+                                        s.Release();
+                                    }
+                                }));
+        }
     }
 }

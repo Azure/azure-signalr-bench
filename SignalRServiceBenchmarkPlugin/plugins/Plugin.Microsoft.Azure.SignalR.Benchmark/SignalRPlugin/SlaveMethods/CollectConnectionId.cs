@@ -38,24 +38,16 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
 
         private async Task<IDictionary<string, object>> GetConnectionIds(IList<HubConnection> connections)
         {
-            var connectionIds = new List<string>();
 
-            // Set callback
-            foreach (var connection in connections)
-            {
-                connection.On(SignalRConstants.GetConnectionIdCallback, (string connectionId) =>
-                {
-                    connectionIds.Add(connectionId);
-                });
-            }
-
-            // TODO: batch query
             // Query connection Id
-            foreach (var connection in connections) await connection.InvokeAsync(SignalRConstants.GetConnectionIdCallback);
+            var connectionIds = await Util.BatchProcess(connections, CollectConnectionIdFromServer<string>, 100);
 
-            return new Dictionary<string, object> { { SignalRConstants.ConnectionId, connectionIds} };
+            return new Dictionary<string, object> { { SignalRConstants.ConnectionId, connectionIds } };
         }
 
-
+        private async Task<T> CollectConnectionIdFromServer<T>(HubConnection connection)
+        {
+            return await connection.InvokeAsync<T>(SignalRConstants.GetConnectionIdCallback);
+        }
     }
 }

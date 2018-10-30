@@ -17,7 +17,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
 {
     public class CollectStatistics : IMasterMethod
     {
-        public Task Do(IDictionary<string, object> stepParameters, IDictionary<string, object> pluginParameters, IList<IRpcClient> clients)
+        public async Task Do(IDictionary<string, object> stepParameters, IDictionary<string, object> pluginParameters, IList<IRpcClient> clients)
         {
 
             Log.Information($"Start to collect statistics...");
@@ -28,9 +28,12 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
             stepParameters.TryGetTypedValue(SignalRConstants.StatisticsOutputPath, out string statisticsOutputPath, Convert.ToString);
 
             // Start timer
-            var timer = new System.Timers.Timer(interval);
+            var timer = new System.Timers.Timer();
             timer.Elapsed += async (sender, e) =>
             {
+                // Start timer immedietely
+                if (timer.Interval != interval) timer.Interval = interval;
+
                 var results = await Task.WhenAll(from client in clients
                                                  select client.QueryAsync(stepParameters));
 
@@ -48,10 +51,10 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
             };
             timer.Start();
 
+            await Task.Delay(TimeSpan.FromSeconds(1));
+
             // Save timer to plugin
             pluginParameters[$"{SignalRConstants.Timer}.{type}"] = timer;
-
-            return Task.CompletedTask;
         }
 
         private void DisplayStatistics(IDictionary<string, object>[] results, string type)
