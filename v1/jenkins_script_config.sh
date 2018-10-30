@@ -572,6 +572,10 @@ EOF
 # CurrentWorkingDir VMMgrDir
 function register_exit_handler() {
   cd $CurrentWorkingDir
-  dotnet publish -c Release -f netcoreapp2.1 -o ${VMMgrDir}  --self-contained -r linux-x64
+  if [ -d ${VMMgrDir} ]
+  then
+    rm -rf ${VMMgrDir}
+  fi
+  dotnet publish -c Release -f netcoreapp2.1 -o ${VMMgrDir} --self-contained -r linux-x64
   trap remove_resource_group EXIT
 }

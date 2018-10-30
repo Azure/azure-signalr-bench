@@ -634,6 +634,13 @@ function get_nginx_log() {
   for i in $result
   do
     kubectl logs $i --namespace=$ns --kubeconfig=$config_file > $outdir/${i}.log
+    if [ -e $outdir/${i}.log ]
+    then
+       cd $outdir
+       tar zcvf ${i}.log.tgz ${i}.log
+       rm ${i}.log
+       cd -
+    fi
   done
 }
 
