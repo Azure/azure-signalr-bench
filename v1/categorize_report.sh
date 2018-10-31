@@ -2,17 +2,10 @@
 httpBase="http://hz2benchdns0.westus2.cloudapp.azure.com:8000"
 #nginx_server_dns
 function category_scenario() {
-  local unit=$1
-  local transport=$2
-  local scenario=$3
+  local filter=$1
   local i d f counterPath maxSend html
-  local protocol="json"
   local timestamp=`date +%Y%m%d%H%M%S`
-  if [ $# -eq 4 ]
-  then
-     protocol=$4
-  fi
-  local filter="$unit"_"$transport"_"$protocol"_"$scenario"
+  #local filter="$unit"_"$transport"_"$protocol"_"$scenario"
   python find_counters.py | sort -k 2 |grep "$filter" > /tmp/rawCounterList${timestamp}
   while read -r i
   do
@@ -29,4 +22,12 @@ function category_scenario() {
   done < /tmp/rawCounterList${timestamp}
 }
 
-category_scenario "unit2" "Websockets" broadcast
+function analyze_all() {
+  local i
+  for i in `python find_counters.py|sort -k 2 |awk '{print $2}'|uniq` 
+  do
+    category_scenario $i
+  done
+}
+#category_scenario unit2_Websockets_json_broadcast
+analyze_all
