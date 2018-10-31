@@ -1,5 +1,5 @@
 #!/bin/bash
-httpBase="http://hz2benchdns0.westus2.cloudapp.azure.com:8000"
+httpBase="http://honzhan1eusbenchdns0.eastus.cloudapp.azure.com:8000"
 #nginx_server_dns
 function category_scenario() {
   local filter=$1

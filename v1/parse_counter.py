@@ -35,7 +35,7 @@ def FindMaxValidSend(jsonFile):
                    if (tmpSend > maxSending):
                       maxSending = sendingStep
        received = item['Counters']['message:received']
-       if (received > 0):
+       if (received > 0 and 'sendingStep' in item['Counters']):
           tmpSend = Analyze(item)
           if (tmpSend > maxSending):
              maxSending = sendingStep
