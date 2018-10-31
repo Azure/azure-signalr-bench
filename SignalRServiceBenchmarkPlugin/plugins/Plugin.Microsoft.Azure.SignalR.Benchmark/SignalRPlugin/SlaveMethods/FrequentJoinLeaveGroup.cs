@@ -47,7 +47,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 var messageBlob = new byte[messageSize];
                 
                 var packages = from i in Enumerable.Range(0, connections.Count)
-                               let groupName = SignalRUtils.GroupName(type, i % groupCount)
+                               let groupName = SignalRUtils.GroupName(type, (i + offset) % groupCount)
                                select new
                                {
                                    Index = i,
