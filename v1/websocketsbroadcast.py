@@ -56,11 +56,12 @@ def websocketsbroadcastunit1(duration):
    concurrentConnection=websockets_concurrentConnection[1]
    baseSend=websockets_baseStep[1]
    stepSend=websockets_step[1]
+   interval=settings.gInterval
    pipeline = '''\
 connection: {connection}
 concurrentConnection: {concurrentConnection}
 duration: {duration}
-interval: 1
+interval: {interval}
 pipeline:
 - createConn
 - startConn
@@ -77,7 +78,7 @@ pipeline:
 - stopConn
 - disposeConn'''.format(connection=connection,
 	concurrentConnection=concurrentConnection,
-	duration=duration,baseSend=baseSend,send=stepSend)
+	duration=duration,baseSend=baseSend,send=stepSend,interval=interval)
    return pipeline
 
 def websocketsbroadcastunit2(duration):
@@ -86,11 +87,12 @@ def websocketsbroadcastunit2(duration):
    concurrentConnection=websockets_concurrentConnection[2]
    baseSend=websockets_baseStep[2]
    stepSend=websockets_step[2]
+   interval=settings.gInterval
    pipeline = '''\
 connection: {connection}
 concurrentConnection: {concurrentConnection}
 duration: {duration}
-interval: 1
+interval: {interval}
 pipeline:
 - createConn
 - startConn
@@ -107,7 +109,7 @@ pipeline:
 - stopConn
 - disposeConn'''.format(connection=connection,
 	concurrentConnection=concurrentConnection,
-	duration=duration,baseSend=baseSend,send=stepSend)
+	duration=duration,baseSend=baseSend,send=stepSend,interval=interval)
    return(pipeline)
 
 def websocketsbroadcastunit3(duration):
@@ -125,11 +127,12 @@ def websocketsbroadcastunit5(duration):
    concurrentConnection=websockets_concurrentConnection[5]
    baseSend=websockets_baseStep[5]
    stepSend=websockets_step[5]
+   interval=settings.gInterval
    pipeline = '''\
 connection: {connection}
 concurrentConnection: {concurrentConnection}
 duration: {duration}
-interval: 1
+interval: {interval}
 pipeline:
 - createConn
 - startConn
@@ -156,7 +159,7 @@ pipeline:
 - stopConn
 - disposeConn'''.format(connection=connection,
 	concurrentConnection=concurrentConnection,
-	duration=duration,baseSend=baseSend,send=stepSend)
+	duration=duration,baseSend=baseSend,send=stepSend, interval=interval)
    return(pipeline)
    
 
@@ -182,11 +185,12 @@ def websocketsbroadcastunit10(duration):
    concurrentConnection=websockets_concurrentConnection[10]
    baseSend=websockets_baseStep[10]
    stepSend=websockets_step[10]
+   interval=settings.gInterval
    pipeline = '''\
 connection: {connection}
 concurrentConnection: {concurrentConnection}
 duration: {duration}
-interval: 1
+interval: {interval}
 pipeline:
 - createConn
 - startConn
@@ -209,7 +213,7 @@ pipeline:
 - stopConn
 - disposeConn'''.format(connection=connection,
 	concurrentConnection=concurrentConnection,
-	duration=duration,baseSend=baseSend,send=stepSend)
+	duration=duration,baseSend=baseSend,send=stepSend,interval=interval)
    return(pipeline)
 
 def websocketsbroadcastunit20(duration):
@@ -218,11 +222,12 @@ def websocketsbroadcastunit20(duration):
    concurrentConnection=websockets_concurrentConnection[20]
    baseSend=websockets_baseStep[20]
    stepSend=websockets_step[20]
+   interval=settings.gInterval
    pipeline = '''\
 connection: {connection}
 concurrentConnection: {concurrentConnection}
 duration: {duration}
-interval: 1
+interval: {interval}
 pipeline:
 - createConn
 - startConn
@@ -249,7 +254,7 @@ pipeline:
 - stopConn
 - disposeConn'''.format(connection=connection,
 	concurrentConnection=concurrentConnection,
-	duration=duration,baseSend=baseSend,send=stepSend)
+	duration=duration,baseSend=baseSend,send=stepSend,interval=interval)
    return(pipeline)
 
 def websocketsbroadcastunit50(duration):
@@ -258,11 +263,12 @@ def websocketsbroadcastunit50(duration):
    concurrentConnection=websockets_concurrentConnection[50]
    baseSend=websockets_baseStep[50]
    stepSend=websockets_step[50]
+   interval=settings.gInterval
    pipeline = '''\
 connection: {connection}
 concurrentConnection: {concurrentConnection}
 duration: {duration}
-interval: 1
+interval: {interval}
 pipeline:
 - createConn
 - startConn
@@ -281,7 +287,7 @@ pipeline:
 - stopConn
 - disposeConn'''.format(connection=connection,
 	concurrentConnection=concurrentConnection,
-	duration=duration,baseSend=baseSend,send=stepSend)
+	duration=duration,baseSend=baseSend,send=stepSend,interval=interval)
    return(pipeline)
 
 def websocketsbroadcastunit100(duration):
@@ -290,11 +296,12 @@ def websocketsbroadcastunit100(duration):
    concurrentConnection=websockets_concurrentConnection[100]
    baseSend=websockets_baseStep[100]
    stepSend=websockets_step[100]
+   interval=settings.gInterval
    pipeline = '''\
 connection: {connection}
 concurrentConnection: {concurrentConnection}
 duration: {duration}
-interval: 1
+interval: {interval}
 pipeline:
 - createConn
 - startConn
@@ -309,5 +316,5 @@ pipeline:
 - stopConn
 - disposeConn'''.format(connection=connection,
 	concurrentConnection=concurrentConnection,
-	duration=duration,baseSend=baseSend,send=stepSend)
+	duration=duration,baseSend=baseSend,send=stepSend,interval=interval)
    return(pipeline)

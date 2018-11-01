@@ -73,6 +73,7 @@ def handleArgs(args):
 
 if __name__=="__main__":
    parser = argparse.ArgumentParser()
+   parser.add_argument("-i", "--interval", help="specify the sending interval. Default is 1 second")
    parser.add_argument("-t", "--transport", help="specify the transport type: <websockets>|<serversentevents>|<longpolling>")
    parser.add_argument("-s", "--scenario", help="specify the scenario type: <echo>|<broadcast>|<sendGroup>|<sendToClient>|<sendToFixedClient>|<restSendToUser>|<restBroadcast>")
    parser.add_argument("--sendToClientSz", choices=["256","2k","16k","128k"], type=str, help="specify the message size:")
@@ -93,6 +94,8 @@ if __name__=="__main__":
    init()
    if args.useMaxConnection == True:
       setMaxConnections()
+   if args.interval != None:
+      setInterval(args.interval)
    import websocketsecho
    import websocketsbroadcast
    import websocketssendgroup
