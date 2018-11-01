@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace Commander
@@ -155,12 +156,27 @@ namespace Commander
                 Log.Information($"Start slaves");
                 var slaveAsyncResults = (from command in slaveSshCommands select command.BeginExecute()).ToList();
 
+
                 // Wait app server started
                 Task.Delay(TimeSpan.FromSeconds(30)).Wait();
 
                 // Start master
                 Log.Information($"Start master");
-                var masterResult = masterSshCommand.Execute();
+                var masterResult = masterSshCommand.BeginExecute();
+                using (var reader =
+                   new StreamReader(masterSshCommand.OutputStream, Encoding.UTF8, true, 1024, true))
+                {
+                    while (!masterResult.IsCompleted || !reader.EndOfStream)
+                    {
+                        string line = reader.ReadLine();
+                        if (line != null)
+                        {
+                            Log.Information(line);
+                        }
+                    }
+                }
+
+                masterSshCommand.EndExecute(masterResult);
             }
             finally
             {
