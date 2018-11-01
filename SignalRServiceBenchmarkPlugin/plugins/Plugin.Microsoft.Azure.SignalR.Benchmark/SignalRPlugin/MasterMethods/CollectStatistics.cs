@@ -37,11 +37,9 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
                 var results = await Task.WhenAll(from client in clients
                                                  select client.QueryAsync(stepParameters));
 
-                // Display result for each client
-                DisplayStatistics(results, type);
-
                 // Merge statistics
                 var merged = MergeStatistics(results, type);
+                Log.Information($"Counters {Environment.NewLine}{merged.GetContents()}");
 
                 // Display merged statistics
                 Log.Information(Environment.NewLine + $"Statistic type: {type}" + Environment.NewLine + merged.GetContents());
