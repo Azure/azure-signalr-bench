@@ -1,0 +1,13 @@
+Phases:
+- Name: echo
+  UsersPerSecond: {{ UsersPerSecond }}
+  Duration: {{ Duration }}
+SessionNames:
+- signalrconnmsgpackcore:echo
+SessionPercentages:
+- 1
+SessionParams:
+ host: {{ Endpoint }}
+ useNonBlocking: true
+ repeatEcho: true
+ hub: {{ Hub }}
