@@ -4,16 +4,33 @@ import sys
 import yaml
 
 def masterIP(input):
-    a='function {func} has not implemented'.format(func=sys._getframe().f_code.co_name)
-    return a
+    with open(input, 'r') as f:
+        data = yaml.load(f)
+        return data['masterPrivateIp']
 
 def slavesIP(input):
-    a='function {func} has not implemented'.format(func=sys._getframe().f_code.co_name)
-    return a
+    ret=""
+    with open(input, 'r') as f:
+        data = yaml.load(f)
+        slaveList = data['slavePrivateIp'].split(';')
+        l = len(slaveList)
+        for i, item in enumerate(slaveList):
+            ret += item + ":5555"
+            if i + 1 < l:
+               ret += ","
+    return ret
 
 def appserverIP(input):
-    a='function {func} has not implemented'.format(func=sys._getframe().f_code.co_name)
-    return a
+    ret=""
+    with open(input, 'r') as f:
+        data = yaml.load(f)
+        appserverList = data['appServerPrivateIp'].split(';')
+        l = len(appserverList)
+        for i, item in enumerate(appserverList):
+            ret += item
+            if i + 1< l:
+               ret += ","
+    return ret
 
 if __name__=="__main__":
    parser = argparse.ArgumentParser()
