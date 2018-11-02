@@ -13,17 +13,26 @@ def Analyze(item):
    if (ge1sRate < 0.01 and errRate < 0.01):
       return sendingStep
    return 0
-   #return ((1-ge1s/float(received)), (ge1s/float(received)), errConn/float(totalConn))
-   #print("%.3f" % (1-ge1s/float(received)))
-   #print(sendingStep, "%.3f" % (1-ge1s/float(received)), ("%.3f" % (ge1s/float(received))),
-   #     "%.3f" % (errConn/float(totalConn)))
+
+
+def GetConnection(item):
+   if ('connection:success' in item['Counters'] and
+       'connection:error' in item['Counters']):
+       successConn = item['Counters']['connection:success']
+       errConn = item['Counters']['connection:error']
+       return successConn + errConn
+   return 0
 
 def FindMaxValidSend(jsonFile):
    maxSending = 0
+   maxConnection = 0
    with open(jsonFile) as f:
        jData = json.load(f, 'utf-8')
        jLen = len(jData)
        for index, item in enumerate(jData):
+           connection = GetConnection(item)
+           if (connection > maxConnection):
+               maxConnection = connection
            if ('sendingStep' in item['Counters']):
                sendingStep = item['Counters']['sendingStep']
                received = item['Counters']['message:received']
@@ -34,12 +43,17 @@ def FindMaxValidSend(jsonFile):
                    tmpSend = Analyze(item)
                    if (tmpSend > maxSending):
                       maxSending = sendingStep
+
+       connection = GetConnection(item)
+       if (connection > maxConnection):
+           maxConnection = connection
        received = item['Counters']['message:received']
        if (received > 0 and 'sendingStep' in item['Counters']):
           tmpSend = Analyze(item)
           if (tmpSend > maxSending):
              maxSending = sendingStep
-       print(maxSending)
+       
+       print maxConnection,maxSending
 
 if __name__=="__main__":
    parser = argparse.ArgumentParser()

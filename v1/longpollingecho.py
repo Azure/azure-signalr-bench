@@ -3,11 +3,10 @@ import settings
 
 longpolling_connection={1:500, 2:1000, 5:2500, 10:5000, 20:10000, 50:25000, 100:50000}
 longpolling_concurrentConnection={1:100, 2:100, 5:100, 10:100, 20:100, 50:100, 100:200}
-longpolling_baseStep={1:50, 2:50, 5:100, 10:100, 20:200, 50:500, 100:1000}
-longpolling_step={1:50, 2:50, 5:50, 10:100, 20:200, 50:500, 100:1000}
+longpolling_baseStep={1:50, 2:50, 5:50, 10:50, 20:100, 50:500, 100:500}
+longpolling_step={1:50, 2:50, 5:50, 10:50, 20:50, 50:500, 100:500}
 if settings.gPerfType == settings.gConstMax:
   longpolling_connection={1:750, 2:1500, 5:3000, 10:7500, 20:15000, 50:30000, 100:75000}
-  longpolling_concurrentConnection={1:100, 2:100, 5:100, 10:100, 20:100, 50:100, 100:200}
 
 def longpollingechounit1_connection():
    return longpolling_connection[1]
