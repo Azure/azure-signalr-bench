@@ -1,5 +1,4 @@
 #!/bin/bash
-. ./servers_env.sh
 
 ## set the SignalR bench configuration ##
 if [ "$bench_name_list" == "" ]

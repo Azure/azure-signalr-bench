@@ -14,7 +14,6 @@ do
    fi
 done
 
-. ./servers_env.sh
 export BenchEndpoint=${bench_server}:${bench_server_port}
 export SignalRServiceExtSSHEndpoint=${bench_service_pub_server}:${bench_service_pub_port}
 export SignalRServiceIntEndpoint=${bench_service_server}:${bench_service_port}

@@ -13,7 +13,7 @@ function set_global_env() {
    export JenkinsRootPath="$Jenkins_Workspace_Root"
    export ScriptWorkingDir=$Jenkins_Workspace_Root/${relative_dir}/Scripts                     # folders to find all scripts
    export CurrentWorkingDir=$Jenkins_Workspace_Root/${relative_dir}/v2/JenkinsScript/     # workding directory
-
+   export CommandWorkingDir=$Jenkins_Workspace_Root/SignalRServiceBenchmarkPlugin/utils/Commander
 ############# those configurations are shared in Jenkins folder #####
    export AgentConfig=$JenkinsRootPath'/agent.yaml'
    export PrivateIps=$JenkinsRootPath'/privateIps.yaml'
@@ -26,7 +26,6 @@ function set_global_env() {
    export ScenarioRoot="$RootFolder/signalr_perf_config_sample/scenarios/"
    export BenchConfig=$ConfigRoot'/bench.yaml'
    #export ResultFolderSuffix='suffix'
-   export SendToFixedClient='true'
    export VMMgrDir=/tmp/VMMgr
 }
 
@@ -73,6 +72,25 @@ then
 fi
 }
 
+function run_command() {
+  local user=$1
+  local passwd="$2"
+  cd $ScriptWorkingDir
+  local master=`python extract_ip.py -i $PrivateIps -q master`
+  local appserver=`python extract_ip.py -i $PrivateIps -q appserver`
+  local slaves=`python extract_ip.py -i $PrivateIps -q slaves`
+  cd $CommandWorkingDir
+  dotnet run -- --RpcPort=5555 --SlaveList="$slaves" --MasterHostname="$master" --AppServerHostnames="$appserver" \
+         --Username="$user" --Password="$passwd" \
+         --AppserverProject="/home/wanl/executables/appserver" \
+         --MasterProject="/home/wanl/executables/master" \
+         --SlaveProject="/home/wanl/executables/slave" \
+         --AppserverTargetPath="/home/wanl/appserver.zip" --MasterTargetPath="/home/wanl/master.zip" \
+         --SlaveTargetPath="/home/wanl/slave.zip" \
+         --BenchmarkConfiguration="/home/wanl/benchmarkConfiguration/echo.yaml" \
+         --BenchmarkConfigurationTargetPath="/home/wanl/signalr.yaml" \
+         --AzureSignalRConnectionString="Endpoint=https://signalr-wanl-benchmark-v3.service.signalr.net;AccessKey=4DB3v7sgkv+5mz8e+plPjA/JZPCYOBV4pDIJLH7tgng=;Version=1.0;"
+}
 ## exit handler to remove resource group ##
 # global env:
 # CurrentWorkingDir, ServicePrincipal, AgentConfig, VMMgrDir
