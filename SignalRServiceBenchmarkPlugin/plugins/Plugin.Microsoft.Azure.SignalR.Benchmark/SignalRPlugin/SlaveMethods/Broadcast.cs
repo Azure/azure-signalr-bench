@@ -14,7 +14,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
 {
     public class Broadcast : BaseContinuousSendMethod, ISlaveMethod
     {
-        private StatisticsCollector _statistics;
+        private StatisticsCollector _statisticsCollector;
         public async Task<IDictionary<string, object>> Do(IDictionary<string, object> stepParameters, IDictionary<string, object> pluginParameters)
         {
             try
@@ -31,16 +31,17 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 stepParameters.TryGetTypedValue(SignalRConstants.MessageSize, out int messageSize, Convert.ToInt32);
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionStore}.{type}", out IList<HubConnection> connections, (obj) => (IList<HubConnection>)obj);
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionOffset}.{type}", out int offset, Convert.ToInt32);
-                pluginParameters.TryGetTypedValue($"{SignalRConstants.StatisticsStore}.{type}", out _statistics, obj => (StatisticsCollector) obj);
+                pluginParameters.TryGetTypedValue($"{SignalRConstants.StatisticsStore}.{type}", out _statisticsCollector, obj => (StatisticsCollector) obj);
 
-                // Set callback
-                SetCallback(connections);
-                
                 // Generate necessary data
                 var data = new Dictionary<string, object>
                 {
                     { SignalRConstants.MessageBlob, new byte[messageSize] } // message payload
                 };
+
+                // Reset counters
+                _statisticsCollector.ResetGroupCounters();
+                _statisticsCollector.ResetMessageCounters();
 
                 // Send messages
                 await Task.WhenAll(from i in Enumerable.Range(0, connections.Count)
@@ -56,20 +57,6 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 var message = $"Fail to broadcast: {ex}";
                 Log.Error(message);
                 throw;
-            }
-        }
-
-        private void SetCallback(IList<HubConnection> connections)
-        {
-            foreach (var connection in connections)
-            {
-                connection.On(SignalRConstants.BroadcastCallbackName, (IDictionary<string, object> data) =>
-                {
-                    var receiveTimestamp = Util.Timestamp();
-                    data.TryGetTypedValue(SignalRConstants.Timestamp, out long sendTimestamp, Convert.ToInt64);
-                    var latency = receiveTimestamp - sendTimestamp;
-                    _statistics.RecordLatency(latency);
-                });
             }
         }
 
@@ -91,7 +78,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 await connection.SendAsync(SignalRConstants.BroadcastCallbackName, payload);
 
                 // Update statistics
-                _statistics.IncreaseSentMessage();
+                _statisticsCollector.IncreaseSentMessage();
             }
             catch (Exception ex)
             {

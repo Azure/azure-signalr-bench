@@ -1,4 +1,5 @@
 ﻿using Common;
+using Microsoft.AspNetCore.SignalR.Client;
 using Plugin.Base;
 using Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods.Statistics;
 using Serilog;
@@ -9,32 +10,30 @@ using System.Threading.Tasks;
 
 namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
 {
-    public class Wait : ISlaveMethod
+    public class RegisterCallbackLeaveGroup : RegisterCallbackBase, ISlaveMethod
     {
         public async Task<IDictionary<string, object>> Do(IDictionary<string, object> stepParameters, IDictionary<string, object> pluginParameters)
         {
             try
             {
-                Log.Information($"Wait...");
+                Log.Information($"Set callback for leaving group...");
 
                 // Get parameters
-                stepParameters.TryGetTypedValue(SignalRConstants.Duration, out long duration, Convert.ToInt64);
                 stepParameters.TryGetTypedValue(SignalRConstants.Type, out string type, Convert.ToString);
+                pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionStore}.{type}", out IList<HubConnection> connections, (obj) => (IList<HubConnection>)obj);
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.StatisticsStore}.{type}", out var statisticsCollector, obj => (StatisticsCollector)obj);
 
-                await Task.Delay(TimeSpan.FromMilliseconds(duration));
-
-                // Update epoch at the end of 'Wait' to ensure all the messages are received and all clients stop sending
-                statisticsCollector.IncreaseEpoch();
+                // Set callback
+                SetCallbackLeaveGroup(connections, statisticsCollector);
 
                 return null;
             }
             catch (Exception ex)
             {
-                var message = $"Fail to wait: {ex}";
+                var message = $"Fail to set callback for leaving group: {ex}";
                 Log.Error(message);
                 throw;
             }
-        }
+        }        
     }
 }

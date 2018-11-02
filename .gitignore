@@ -382,3 +382,9 @@ SignalRServiceBenchmarkPlugin/utils/Commander/Properties/launchSettings\.json
 SignalRServiceBenchmarkPlugin/framework/slave/publish\.zip
 
 SignalRServiceBenchmarkPlugin/framework/master/publish\.zip
+
+SignalRServiceBenchmarkPlugin/plugins/Plugin\.Microsoft\.Azure\.SignalR\.Benchmark/Scripts/BenchmarkConfigurationGenerator/OutputConfigurations/
+
+SignalRServiceBenchmarkPlugin/framework/master/countersP1\.txt
+
+SignalRServiceBenchmarkPlugin/framework/master/countersP2\.txt

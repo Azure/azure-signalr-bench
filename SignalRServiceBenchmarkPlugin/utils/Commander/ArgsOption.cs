@@ -12,6 +12,9 @@ namespace Commander
         [Option("AppserverPort", Required = false, Default = 5050, HelpText = "Port of app server.")]
         public int AppserverPort { get; set; }
 
+        [Option("AzureSignalRConnectionString", Required = false, HelpText = "Azure SignalR connection string.")]
+        public string AzureSignalRConnectionString { get; set; }
+
         // Remote
         [Option("RpcPort", Required = false, Default = 5555, HelpText = "Port to be conencted from remote hosts.")]
         public int RpcPort { get; set; }
@@ -22,8 +25,8 @@ namespace Commander
         [Option("MasterHostname", Required = true, HelpText = "Hostname of master.")]
         public string MasterHostname { get; set; }
 
-        [Option("AppServerHostname", Required = true, HelpText = "Hostname of app server.")]
-        public string AppServerHostname { get; set; }
+        [Option("AppServerHostnames", Required = true, Separator = ',', HelpText = "Hostname of app server.")]
+        public IList<string> AppServerHostnames { get; set; }
 
         [Option("Username", Required = true, HelpText = "Username of VMs.")]
         public string Username { get; set; }

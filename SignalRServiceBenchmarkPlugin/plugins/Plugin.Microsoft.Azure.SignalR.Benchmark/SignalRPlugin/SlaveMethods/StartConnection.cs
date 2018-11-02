@@ -1,6 +1,7 @@
 ﻿using Common;
 using Microsoft.AspNetCore.SignalR.Client;
 using Plugin.Base;
+using Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods.Statistics;
 using Serilog;
 using System;
 using System.Collections.Generic;
@@ -12,6 +13,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
 {
     public class StartConnection : ISlaveMethod
     {
+        private StatisticsCollector _statisticsCollector;
+
         public async Task<IDictionary<string, object>> Do(IDictionary<string, object> stepParameters, IDictionary<string, object> pluginParameters)
         {
             try
@@ -22,6 +25,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 stepParameters.TryGetTypedValue(SignalRConstants.ConcurrentConnection, out int concurrentConnection, Convert.ToInt32);
                 stepParameters.TryGetTypedValue(SignalRConstants.Type, out string type, Convert.ToString);
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionStore}.{type}", out IList<HubConnection> connections, (obj) => (IList<HubConnection>)obj);
+                pluginParameters.TryGetTypedValue($"{SignalRConstants.StatisticsStore}.{type}", out _statisticsCollector, obj => (StatisticsCollector)obj);
 
                 await Task.WhenAll(Util.BatchProcess(connections, StartConnect, concurrentConnection));
 
@@ -41,9 +45,11 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
             try
             {
                 await connection.StartAsync();
+                _statisticsCollector.IncreaseConnectionConnectSuccess();
             }
             catch (Exception ex)
             {
+                _statisticsCollector.IncreaseConnectionConnectFail();
                 var message = $"Fail to start connection: {ex}";
                 Log.Error(message);
                 throw;

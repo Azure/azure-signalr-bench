@@ -33,8 +33,9 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionOffset}.{type}", out int offset, Convert.ToInt32);
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.StatisticsStore}.{type}", out _statisticsCollector, obj => (StatisticsCollector)obj);
 
-                // Set callback
-                SetCallback(connections);
+                // Reset counters
+                _statisticsCollector.ResetGroupCounters();
+                _statisticsCollector.ResetMessageCounters();
 
                 // Join group
                 await Task.WhenAll(from i in Enumerable.Range(0, connections.Count)
@@ -47,17 +48,6 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 var message = $"Fail to join group: {ex}";
                 Log.Error(message);
                 throw;
-            }
-        }
-
-        private void SetCallback(IList<HubConnection> connections)
-        {
-            foreach (var connection in connections)
-            {
-                connection.On(SignalRConstants.JoinGroupCallbackName, () =>
-                {
-                    _statisticsCollector.IncreaseJoinGroupSuccess();
-                });
             }
         }
 
