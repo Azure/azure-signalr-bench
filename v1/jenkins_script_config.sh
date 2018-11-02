@@ -186,6 +186,11 @@ function gen_job_config()
      then
         maxConnectionOption="-M"
      fi
+     local sendIntervalOption=""
+     if [ "$sendInterval" != "" ]
+     then
+        sendIntervalOption="-i $sendInterval"
+     fi
      cat << EOF > $JobConfig
 serviceType: $tag
 transportType: ${Transport}
@@ -193,7 +198,7 @@ hubProtocol: ${MessageEncoding}
 scenario: ${Scenario}
 EOF
      cd $ScriptWorkingDir
-     python gen_complex_pipeline.py -t $Transport -s $Scenario -u unit${unit} -d ${sigbench_run_duration} ${maxConnectionOption}>>$JobConfig
+     python gen_complex_pipeline.py -t $Transport -s $Scenario -u unit${unit} -d ${sigbench_run_duration} ${maxConnectionOption} ${sendIntervalOption}>>$JobConfig
      cat << EOF >> $JobConfig
 serverUrl: ${serverUrl}
 messageSize: ${messageSize}
@@ -547,7 +552,7 @@ function remove_resource_group() {
   local clean_asrs_daemon=daemon_${JOB_NAME}_cleanasrs
   ## remove all test VMs
   local pid_file_path=/tmp/${result_root}_pid_remove_rsg.txt
-  daemonize -v -o /tmp/${clean_vm_daemon}.out -e /tmp/${clean_vm_daemon}.err -E BUILD_ID=dontKillcenter /usr/bin/nohup ${VMMgrDir}/JenkinsScript --PidFile="$pid_file_path" --step=DeleteResourceGroupByConfig --AgentConfigFile=$AgentConfig --DisableRandomSuffix --ServicePrincipal=$ServicePrincipal &
+  daemonize -v -o /tmp/${clean_vm_daemon}.out -e /tmp/${clean_vm_daemon}.err -E BUILD_ID=dontKillcenter /usr/bin/nohup ${VMMgrDir}/JenkinsScript  --step=DeleteResourceGroupByConfig --AgentConfigFile=$AgentConfig --DisableRandomSuffix --ServicePrincipal=$ServicePrincipal &
 
   ## remove ASRS
 cat << EOF > /tmp/clean_asrs.sh
