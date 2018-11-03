@@ -14,8 +14,6 @@ namespace Commander
 {
     class Program
     {
-        private static string _baseName = "publish";
-
         public static void Main(string[] args)
         {
             var argsOption = ParseArgs(args);

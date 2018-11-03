@@ -250,11 +250,20 @@ namespace Commander
 
         private void Unzip(SshClient client, string targetPath)
         {
-            InstallZip(client);
-
+            SshCommand command = null;
             var directory = Path.GetDirectoryName(targetPath);
             var filenameWithoutExtension = Path.GetFileNameWithoutExtension(targetPath);
-            var command = client.CreateCommand($"unzip -o -d {filenameWithoutExtension} {targetPath}");
+            var fileName = Path.GetFileName(targetPath);
+            var ext = Path.GetExtension(targetPath);
+            if (string.Equals("zip", ext, StringComparison.OrdinalIgnoreCase))
+            {
+                InstallZip(client);
+                command = client.CreateCommand($"unzip -o -d {filenameWithoutExtension} {targetPath}");
+            }
+            else
+            {
+                command = client.CreateCommand($"cd {directory}; tar zxvf {fileName}");
+            }
             var result = command.Execute();
             if (command.Error != "")
             {
