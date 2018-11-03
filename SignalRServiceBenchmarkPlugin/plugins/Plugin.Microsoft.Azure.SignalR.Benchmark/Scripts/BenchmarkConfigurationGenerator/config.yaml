@@ -1,0 +1,59 @@
+ModuleName: Plugin, Namespace
+Pipeline:
+- - Method: InitStatisticsCollector
+    Type: broadcast
+- - Method: CollectStatistics
+    Parameter.Interval: 1000
+    Parameter.StatisticsOutputPath: haha.txt
+    Type: broadcast
+- - Method: CreateConnection
+    Parameter.ConnectionTotal: 3500
+    Parameter.HubUrl: http://localhost:5050/signalrbench
+    Parameter.Protocol: json
+    Parameter.TransportType: Websockets
+    Type: broadcast
+- - Method: StartConnection
+    Parameter.ConcurrentConnetion: 100
+    Type: broadcast
+- - Method: RegisterCallbackRecordLatency
+    Type: broadcast
+- - Method: Broadcast
+    Parameter.Duration: 240000
+    Parameter.Interval: 1000
+    Parameter.MessageSize: 1
+    Parameter.Modulo: 100
+    Parameter.RemainderBegin: 0
+    Parameter.RemainderEnd: 2
+    Type: broadcast
+- - Method: Wait
+    Parameter.Duration: 5000
+    Type: broadcast
+- - Method: Broadcast
+    Parameter.Duration: 240000
+    Parameter.Interval: 1000
+    Parameter.MessageSize: 1
+    Parameter.Modulo: 100
+    Parameter.RemainderBegin: 0
+    Parameter.RemainderEnd: 7
+    Type: broadcast
+- - Method: Wait
+    Parameter.Duration: 5000
+    Type: broadcast
+- - Method: Broadcast
+    Parameter.Duration: 240000
+    Parameter.Interval: 1000
+    Parameter.MessageSize: 1
+    Parameter.Modulo: 100
+    Parameter.RemainderBegin: 0
+    Parameter.RemainderEnd: 12
+    Type: broadcast
+- - Method: Wait
+    Parameter.Duration: 5000
+    Type: broadcast
+- - Method: StopCollector
+    Type: broadcast
+- - Method: StopConnection
+    Type: broadcast
+- - Method: DisposeConnection
+    Type: broadcast
+Types: broadcast
