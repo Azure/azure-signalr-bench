@@ -99,9 +99,16 @@ namespace Commander
                 // Clients connect to host
                 _remoteClients.ConnectAll();
 
-                var appserverExecutable = new FileInfo($"{_appserverProject}/{_baseName}.zip");
-                var masterExecutable = new FileInfo($"{_masterProject}/{_baseName}.zip");
-                var slaveExecutable = new FileInfo($"{_slaveProject}/{_baseName}.zip");
+                FileInfo appserverExecutable, masterExecutable, slaveExecutable;
+                appserverExecutable = File.Exists($"{_appserverProject}/{_baseName}.tgz") ?
+                    new FileInfo($"{_appserverProject}/{_baseName}.tgz") :
+                    new FileInfo($"{_appserverProject}/{_baseName}.zip");
+                masterExecutable = File.Exists($"{_masterProject}/{_baseName}.tgz") ?
+                    new FileInfo($"{_masterProject}/{_baseName}.tgz") :
+                    new FileInfo($"{_masterProject}/{_baseName}.zip");
+                slaveExecutable = File.Exists($"{_slaveProject}/{_baseName}.tgz") ?
+                    new FileInfo($"{_slaveProject}/{_baseName}.tgz") :
+                    new FileInfo($"{_slaveProject}/{_baseName}.zip");
 
                 // Copy executables and configurations
                 CopyExcutables(appserverExecutable, masterExecutable, slaveExecutable);
