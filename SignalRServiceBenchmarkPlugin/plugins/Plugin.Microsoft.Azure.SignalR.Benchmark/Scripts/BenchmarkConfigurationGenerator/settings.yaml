@@ -7,7 +7,7 @@ unit_map:
 - 10
 
 
-scenario:echo,transport:Websockets,use_max_connection:True:
+scenario:echo,transport:Websockets:
   normal_connection: [1000, 2000, 3000, 4000]
   max_connection: [1500, 2500, 3500, 4500]
   base_step: [3000,3000,3000,3000]
@@ -16,11 +16,11 @@ scenario:echo,transport:Websockets,use_max_connection:True:
   concurrent: [100,100,100,100]
 
 
-scenario:broadcast,transport:Websockets,use_max_connection:False:
+scenario:broadcast,transport:Websockets:
   normal_connection: [1000, 2000, 3000, 4000]
   max_connection: [1500, 2500, 3500, 4500]
-  base_step: [1,2,3,4]
-  step: [1,2,3,4]
+  base_step: [1,2,2,4]
+  step: [1,2,5,4]
   step_length: [1,2,3,4]
   concurrent: [100,100,100,100]
 
