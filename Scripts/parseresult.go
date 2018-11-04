@@ -492,7 +492,6 @@ func main() {
                         lt1 = v.Counters.LT_100 + v.Counters.LT_200 + v.Counters.LT_300 + v.Counters.LT_400 + v.Counters.LT_500 + v.Counters.LT_600 + v.Counters.LT_700 + v.Counters.LT_800 + v.Counters.LT_900 + v.Counters.LT_1000
                         ge1 = v.Counters.GE_1000
                         fmt.Printf("\t [%d, %.2f, %.2f, %.2f],\n", curSendingStep, float64(lt1)/sumfloat*100, float64(ge1)/sumfloat*100, float64(v.Counters.ConnError)/totalConnFloat*100)
-                        fmt.Printf("%d %d %d\n", i, curSendingStep, monitors[i+1].Counters.Sending)
                     }
                 }
                 v = monitors[len(monitors)-1]
@@ -505,7 +504,6 @@ func main() {
                         lt1 = v.Counters.LT_100 + v.Counters.LT_200 + v.Counters.LT_300 + v.Counters.LT_400 + v.Counters.LT_500 + v.Counters.LT_600 + v.Counters.LT_700 + v.Counters.LT_800 + v.Counters.LT_900 + v.Counters.LT_1000
                         ge1 = v.Counters.GE_1000
                         fmt.Printf("\t [%d, %.2f, %.2f, %.2f],\n", v.Counters.Sending, float64(lt1)/sumfloat*100, float64(ge1)/sumfloat*100, float64(v.Counters.ConnError)/totalConnFloat*100)
-                        fmt.Printf("%d %d\n", len(monitors)-1, v.Counters.Sending)
                 }
 			chartfunc = `
         ]);

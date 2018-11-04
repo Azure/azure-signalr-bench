@@ -27,7 +27,7 @@ function set_global_env() {
    export BenchConfig=$ConfigRoot'/bench.yaml'
    #export ResultFolderSuffix='suffix'
    export VMMgrDir=/tmp/VMMgr
-   export nginx_root=
+   export nginx_root=/mnt/Data/NginxRoot
 }
 
 # depends on set_global_env

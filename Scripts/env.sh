@@ -32,12 +32,9 @@ app_running_log=bench_app_running.log
 #result_root=`date +%Y%m%d%H%M%S`
 result_dir=${result_root}
 html_dir=$result_dir
-nginx_root=$HOME/NginxRoot
 
 cmd_file_prefix=auto_cmds
 cmd_config_prefix="cmd_4"
 websocket_script_prefix=autorun_websocket
 cli_script_prefix=autorun_sigcli
 error_mark_file=error.mark
-
-. ./config_env.sh # customized parameters
