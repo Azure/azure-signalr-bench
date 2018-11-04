@@ -1,5 +1,6 @@
 #!/bin/bash
-httpBase="http://honzhan1eusbenchdns0.eastus.cloudapp.azure.com:8000"
+#httpBase="http://hz2benchdns0.westus2.cloudapp.azure.com:8000"
+httpBase=$env_global_http_base # global environment
 
 #nginx_server_dns
 filter_date_window() {
@@ -103,4 +104,10 @@ analyze_date_in_window() {
 }
 
 #analyze_all
-analyze_date_in_window 20181010 20181025
+if [ $# -ne 2 ]
+then
+  echo "$0: <start_date> <end_date>, i.g. 20181010 20181104"
+  exit 1
+fi
+
+analyze_date_in_window $1 $2
