@@ -27,6 +27,7 @@ function set_global_env() {
    export BenchConfig=$ConfigRoot'/bench.yaml'
    #export ResultFolderSuffix='suffix'
    export VMMgrDir=/tmp/VMMgr
+   export nginx_root=
 }
 
 # depends on set_global_env
@@ -216,6 +217,7 @@ function run_command() {
   local appserver=`python extract_ip.py -i $PrivateIps -q appserver`
   local slaves=`python extract_ip.py -i $PrivateIps -q slaves`
   cd $CommandWorkingDir
+  sshpass -p ${passwd} ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR ${user}@${master} "[[ -e counters.txt ]] && rm counters.txt"
   dotnet run -- --RpcPort=5555 --SlaveList="$slaves" --MasterHostname="$master" --AppServerHostnames="$appserver" \
          --Username=$user --Password=$passwd \
          --AppserverProject="/home/wanl/executables/appserver" \
