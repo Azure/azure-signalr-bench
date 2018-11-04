@@ -1,8 +1,9 @@
 from Echo import *
+from Broadcast import *
+from SendToClient import *
 import argparse
 import yaml
 from Util.SettingsHelper import *
-from Broadcast import *
 
 def parse_settings(path):
     with open(path, 'r') as f:
@@ -22,9 +23,9 @@ def parse_arguments():
     parser.add_argument('-U', '--url', required=True)
     parser.add_argument('-m', '--use_max_connection', action='store_true')
     parser.add_argument('-sc', '--slave_count', type=int, required=True)
-    parser.add_argument('-ms', '--message_size', type=int, required=True)
 
     # todo: add default value
+    parser.add_argument('-ms', '--message_size', type=int, default=2*1024)  # todo: set default value
     parser.add_argument('-M', '--module', required=True)  # todo: set default value
     parser.add_argument('-s', '--settings', type=str, default='settings.yaml', help='')  # todo: set default value
     parser.add_argument('-d', '--duration', type=int, default=240000)
@@ -57,7 +58,7 @@ def main():
 
     # determine settings
     scenario_config = determine_scenario_config(scenario_config_collection, args.unit, args.scenario, args.transport,
-                                                args.use_max_connection)
+                                                args.use_max_connection, args.message_size)
 
     # basic sending config
     sending_config = SendingConfig(args.duration, args.interval, args.slave_count, args.message_size)
@@ -66,6 +67,9 @@ def main():
         Echo(sending_config, scenario_config, connection_config, statistics_config, constant_config).generate_config()
     elif args.scenario == "broadcast":
         Broadcast(sending_config, scenario_config, connection_config, statistics_config, constant_config)\
+            .generate_config()
+    elif args.scenario == 'sendToClient':
+        SendToClient(sending_config, scenario_config, connection_config, statistics_config, constant_config)\
             .generate_config()
 
 

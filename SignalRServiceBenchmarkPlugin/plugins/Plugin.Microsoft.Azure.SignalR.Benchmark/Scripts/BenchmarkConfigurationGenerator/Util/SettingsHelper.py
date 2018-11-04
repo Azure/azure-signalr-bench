@@ -47,33 +47,34 @@ class ParameterKey:
         self.unit_map = "unit_map"
 
 
-def determine_scenario_config(settings, unit, scenario, transport, use_max_connection=True):
+def determine_scenario_config(settings, unit, scenario, transport, use_max_connection=True, message_size=None):
     if scenario == "sendToClient":
-        pass
+        key = "{}:{},{}:{},{}:{}".format("scenario", scenario, "transport", transport, "message_size", message_size)
     else:
         key = "{}:{},{}:{}".format("scenario", scenario, "transport", transport)
-        para_key = ParameterKey()
-        cur_settings = settings[key]
 
-        index = 0
-        found = False
-        for k, v in enumerate(settings[para_key.unit_map]):
-            if v == unit:
-                index = k
-                found = True
-                break
+    para_key = ParameterKey()
+    cur_settings = settings[key]
 
-        if found is False:
-            print("Cannot find unit {}, use the first one by default".format(unit))
+    index = 0
+    found = False
+    for k, v in enumerate(settings[para_key.unit_map]):
+        if v == unit:
+            index = k
+            found = True
+            break
 
-        connections = cur_settings[para_key.normal_connection] if use_max_connection is False else \
-            cur_settings[para_key.max_connection][index]
-        concurrent = cur_settings[para_key.concurrent][index]
-        base_step = cur_settings[para_key.base_step][index]
-        step = cur_settings[para_key.step][index]
-        step_length = cur_settings[para_key.step_length][index]
+    if found is False:
+        print("Cannot find unit {}, use the first one by default".format(unit))
 
-        config = ScenarioConfig(scenario, connections, concurrent, base_step, step, step_length)
+    connections = cur_settings[para_key.normal_connection] if use_max_connection is False else \
+        cur_settings[para_key.max_connection][index]
+    concurrent = cur_settings[para_key.concurrent][index]
+    base_step = cur_settings[para_key.base_step][index]
+    step = cur_settings[para_key.step][index]
+    step_length = cur_settings[para_key.step_length][index]
 
-        return config
+    config = ScenarioConfig(scenario, connections, concurrent, base_step, step, step_length)
+
+    return config
 

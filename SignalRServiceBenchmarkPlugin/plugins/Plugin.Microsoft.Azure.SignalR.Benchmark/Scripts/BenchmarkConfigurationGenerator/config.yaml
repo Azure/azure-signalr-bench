@@ -1,59 +1,62 @@
 ModuleName: Plugin, Namespace
 Pipeline:
 - - Method: InitStatisticsCollector
-    Type: broadcast
+    Type: sendToClient
 - - Method: CollectStatistics
     Parameter.Interval: 1000
     Parameter.StatisticsOutputPath: haha.txt
-    Type: broadcast
+    Type: sendToClient
 - - Method: CreateConnection
     Parameter.ConnectionTotal: 3500
     Parameter.HubUrl: http://localhost:5050/signalrbench
     Parameter.Protocol: json
     Parameter.TransportType: Websockets
-    Type: broadcast
+    Type: sendToClient
 - - Method: StartConnection
     Parameter.ConcurrentConnetion: 100
-    Type: broadcast
+    Type: sendToClient
 - - Method: RegisterCallbackRecordLatency
-    Type: broadcast
-- - Method: Broadcast
+    Type: sendToClient
+- - Method: SendToClient
+    Parameter.ConnectionTotal: 3500
     Parameter.Duration: 240000
     Parameter.Interval: 1000
-    Parameter.MessageSize: 1
+    Parameter.MessageSize: 2048
     Parameter.Modulo: 100
     Parameter.RemainderBegin: 0
-    Parameter.RemainderEnd: 2
-    Type: broadcast
+    Parameter.RemainderEnd: 10
+    Type: sendToClient
 - - Method: Wait
     Parameter.Duration: 5000
-    Type: broadcast
-- - Method: Broadcast
+    Type: sendToClient
+- - Method: SendToClient
+    Parameter.ConnectionTotal: 3500
     Parameter.Duration: 240000
     Parameter.Interval: 1000
-    Parameter.MessageSize: 1
+    Parameter.MessageSize: 2048
     Parameter.Modulo: 100
     Parameter.RemainderBegin: 0
-    Parameter.RemainderEnd: 7
-    Type: broadcast
+    Parameter.RemainderEnd: 40
+    Type: sendToClient
 - - Method: Wait
     Parameter.Duration: 5000
-    Type: broadcast
-- - Method: Broadcast
+    Type: sendToClient
+- - Method: SendToClient
+    Parameter.ConnectionTotal: 3500
     Parameter.Duration: 240000
     Parameter.Interval: 1000
-    Parameter.MessageSize: 1
+    Parameter.MessageSize: 2048
     Parameter.Modulo: 100
     Parameter.RemainderBegin: 0
-    Parameter.RemainderEnd: 12
-    Type: broadcast
+    Parameter.RemainderEnd: 70
+    Type: sendToClient
 - - Method: Wait
     Parameter.Duration: 5000
-    Type: broadcast
+    Type: sendToClient
 - - Method: StopCollector
-    Type: broadcast
+    Type: sendToClient
 - - Method: StopConnection
-    Type: broadcast
+    Type: sendToClient
 - - Method: DisposeConnection
-    Type: broadcast
-Types: broadcast
+    Type: sendToClient
+Types: sendToClient
