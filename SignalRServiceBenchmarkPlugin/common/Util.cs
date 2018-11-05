@@ -81,6 +81,11 @@ namespace Common
             return unixDateTime;
         }
 
+        public static string Timestamp2DateTimeStr(long timestamp)
+        {
+            return DateTimeOffset.FromUnixTimeMilliseconds(timestamp).ToString("yyyy-MM-ddThh:mm:ssZ");
+        }
+
         public static Task BatchProcess<T>(IList<T> source, Func<T, Task> f, int max)
         {
             var initial = (max >> 1);
@@ -101,6 +106,35 @@ namespace Common
                                     try
                                     {
                                         await f(item);
+                                    }
+                                    finally
+                                    {
+                                        s.Release();
+                                    }
+                                }));
+        }
+
+        public static Task<TOut[]> BatchProcess<T, TOut>(IList<T> source, Func<T, Task<TOut>> f, int max)
+        {
+            var initial = (max >> 1);
+            var s = new System.Threading.SemaphoreSlim(initial, max);
+            _ = Task.Run(async () =>
+            {
+                for (int i = initial; i < max; i++)
+                {
+                    await Task.Delay(100);
+                    s.Release();
+                }
+            });
+
+             return Task.WhenAll(from item in source
+                                select Task.Run(async () =>
+                                {
+                                    await s.WaitAsync();
+                                    try
+                                    {
+                                        var res = await f(item);
+                                        return res;
                                     }
                                     finally
                                     {

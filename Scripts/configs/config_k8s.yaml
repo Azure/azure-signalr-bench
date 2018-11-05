@@ -1,0 +1,15 @@
+Phases:
+- Name: echo
+  UsersPerSecond: 100
+  Duration: 30
+SessionNames:
+- signalrcoreservicemsgpack:echo
+SessionPercentages:
+- 1
+SessionParams:
+ host: ds-f1f820f2-37af-4825-a71b-ee85e5beb3d8.southeastasia.cloudapp.azure.com:5001
+ repeatEcho: true
+ useNonBlocking: true
+ hub: chat
+ audience: ds-f1f820f2-37af-4825-a71b-ee85e5beb3d8.southeastasia.cloudapp.azure.com:5001/client/
+ key: bcD4ax/Oo18/9zwrxtXPJcIWR1603n2BPxJ2ii3NcWI=

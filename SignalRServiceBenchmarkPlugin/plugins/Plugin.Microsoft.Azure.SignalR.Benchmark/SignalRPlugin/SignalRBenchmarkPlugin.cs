@@ -9,6 +9,7 @@ using Common;
 using System.Linq;
 using Newtonsoft.Json;
 using System.Reflection;
+using System.Collections.Concurrent;
 
 namespace Plugin.Microsoft.Azure.SignalR.Benchmark
 {
@@ -17,8 +18,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
     {
         private string _masterNamespaceSuffix = "MasterMethods";
         private string _slaveNamespaceSuffix = "SlaveMethods";
-        public IDictionary<string, object> PluginMasterParameters { get; set; } = new Dictionary<string, object>();
-        public IDictionary<string, object> PluginSlaveParamaters { get; set; } = new Dictionary<string, object>();
+        public IDictionary<string, object> PluginMasterParameters { get; set; } = new ConcurrentDictionary<string, object>();
+        public IDictionary<string, object> PluginSlaveParamaters { get; set; } = new ConcurrentDictionary<string, object>();
 
         public IMasterMethod CreateMasterMethodInstance(string methodName)
         {

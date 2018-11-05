@@ -12,7 +12,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         public static readonly string ConnectionTotal = "Parameter.ConnectionTotal";
         public static readonly string ConnectionBegin = "Parameter.ConnectionBegin";
         public static readonly string ConnectionEnd = "Parameter.ConnectionEnd";
-        public static readonly string HubUrl = "Parameter.HubUrl";
+        public static readonly string HubUrls = "Parameter.HubUrl";
         public static readonly string HubProtocol = "Parameter.Protocol";
         public static readonly string TransportType = "Parameter.TransportType";
         public static readonly string Duration = "Parameter.Duration";
@@ -27,6 +27,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         public static readonly string GroupInternalRemainderBegin = "Parameter.GroupInternalRemainderBegin";
         public static readonly string GroupInternalRemainderEnd = "Parameter.GroupInternalRemainderEnd";
         public static readonly string GroupInternalModulo = "Parameter.GroupInternalModulo";
+        public static readonly string StatisticsOutputPath = "Parameter.StatisticsOutputPath";
 
         // Connection/group information
         public static readonly string ConnectionId = "information.ConnectionId";
@@ -43,6 +44,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         public static readonly string BroadcastCallbackName = "Broadcast";
         public static readonly string SendToClientCallbackName = "SendToClient";
         public static readonly string SendToGroupCallbackName = "SendToGroup";
+        public static readonly string RecordLatencyCallbackName = "RecordLatency";
         public static readonly string JoinGroupCallbackName = "JoinGroup";
         public static readonly string LeaveGroupCallbackName = "LeaveGroup";
         public static readonly string GetConnectionIdCallback = "GetConnectionId";
@@ -55,11 +57,16 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         public static readonly string Timer = "Timer";
 
         // Statistics
+        public static readonly string StatisticsTimestamp = "Time";
+        public static readonly string StatisticsCounters = "Counters";
+        public static readonly string StatisticsEpoch = "epoch";
         public static readonly string StatisticsMessageSent = "message:sent";
+        public static readonly string StatisticsMessageReceived = "message:received";
         public static readonly string StatisticsGroupJoinSuccess = "group:join:success";
         public static readonly string StatisticsGroupLeaveSuccess = "group:leave:success";
         public static readonly string StatisticsGroupJoinFail = "group:join:fail";
         public static readonly string StatisticsGroupLeaveFail = "group:leave:fail";
-
+        public static readonly string StatisticsConnectionConnectSuccess = "connection:connect:success";
+        public static readonly string StatisticsConnectionConnectFail = "connection:connect:fail";
     }
 }

@@ -17,7 +17,6 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
 
             // Process on clients
             return Task.WhenAll(from client in clients select client.QueryAsync(stepParameters));
-
         }
     }
 }

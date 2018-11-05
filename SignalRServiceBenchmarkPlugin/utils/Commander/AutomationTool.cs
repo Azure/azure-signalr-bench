@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace Commander
@@ -16,6 +17,7 @@ namespace Commander
 
         // App server information
         private readonly int _appserverPort;
+        private readonly string _azureSignalRConnectionString;
 
         // Slave Information
         private readonly int _rpcPort;
@@ -54,12 +56,13 @@ namespace Commander
             _slaveList = argOption.SlaveList;
             _rpcPort = argOption.RpcPort;
             _appserverPort = argOption.AppserverPort;
+            _azureSignalRConnectionString = argOption.AzureSignalRConnectionString;
 
             // Create clients
             var slaveHostnames = (from slave in argOption.SlaveList select slave.Split(':')[0]).ToList();
             _remoteClients = new RemoteClients();
             _remoteClients.CreateAll(argOption.Username, argOption.Password, 
-                argOption.AppServerHostname, argOption.MasterHostname, slaveHostnames);
+                argOption.AppServerHostnames, argOption.MasterHostname, slaveHostnames);
         }
 
         public void Start()
@@ -96,9 +99,16 @@ namespace Commander
                 // Clients connect to host
                 _remoteClients.ConnectAll();
 
-                var appserverExecutable = new FileInfo($"{_appserverProject}/{_baseName}.zip");
-                var masterExecutable = new FileInfo($"{_masterProject}/{_baseName}.zip");
-                var slaveExecutable = new FileInfo($"{_slaveProject}/{_baseName}.zip");
+                FileInfo appserverExecutable, masterExecutable, slaveExecutable;
+                appserverExecutable = File.Exists($"{_appserverProject}/{_baseName}.tgz") ?
+                    new FileInfo($"{_appserverProject}/{_baseName}.tgz") :
+                    new FileInfo($"{_appserverProject}/{_baseName}.zip");
+                masterExecutable = File.Exists($"{_masterProject}/{_baseName}.tgz") ?
+                    new FileInfo($"{_masterProject}/{_baseName}.tgz") :
+                    new FileInfo($"{_masterProject}/{_baseName}.zip");
+                slaveExecutable = File.Exists($"{_slaveProject}/{_baseName}.tgz") ?
+                    new FileInfo($"{_slaveProject}/{_baseName}.tgz") :
+                    new FileInfo($"{_slaveProject}/{_baseName}.zip");
 
                 // Copy executables and configurations
                 CopyExcutables(appserverExecutable, masterExecutable, slaveExecutable);
@@ -130,24 +140,50 @@ namespace Commander
                 var appserverDirectory = Path.Combine(Path.GetDirectoryName(_appserverTargetPath), Path.GetFileNameWithoutExtension(_appserverTargetPath), _baseName);
                 var masterExecutablePath = Path.Combine(Path.GetDirectoryName(_masterTargetPath), Path.GetFileNameWithoutExtension(_masterTargetPath), _baseName, "master.dll");
                 var slaveExecutablePath = Path.Combine(Path.GetDirectoryName(_slaveTargetPath), Path.GetFileNameWithoutExtension(_slaveTargetPath), _baseName, "slave.dll");
-                var appseverCommand = $"export useLocalSignalR=true; cd {appserverDirectory}; dotnet exec AppServer.dll --urls=http://*:{_appserverPort}";
+                var appseverCommand = "";
+                if (_azureSignalRConnectionString == null)
+                {
+                    appseverCommand = $"export useLocalSignalR=true; cd {appserverDirectory}; dotnet exec AppServer.dll --urls=http://*:{_appserverPort}";
+                }
+                else
+                {
+                    appseverCommand = $"export Azure__SignalR__ConnectionString='{_azureSignalRConnectionString}' ;cd {appserverDirectory}; dotnet exec AppServer.dll --urls=http://*:{_appserverPort}";
+                }
                 var masterCommand = $"dotnet exec {masterExecutablePath} -- --BenchmarkConfiguration=\"{_benchmarkConfigurationTargetPath}\" --SlaveList=\"{string.Join(',', _slaveList)}\"";
                 var slaveCommand = $"dotnet exec {slaveExecutablePath} --HostName 0.0.0.0 --RpcPort {_rpcPort}";
-                var appserverSshCommand = _remoteClients.AppserverSshClient.CreateCommand(appseverCommand.Replace('\\', '/'));
+                var appserverSshCommands = (from client in _remoteClients.AppserverSshClients select client.CreateCommand(appseverCommand.Replace('\\', '/'))).ToList();
                 var masterSshCommand = _remoteClients.MasterSshClient.CreateCommand(masterCommand.Replace('\\', '/'));
                 var slaveSshCommands = (from client in _remoteClients.SlaveSshClients select client.CreateCommand(slaveCommand.Replace('\\', '/'))).ToList();
 
                 // Start app server
                 Log.Information($"Start app server");
-                var appserverAsyncResult = appserverSshCommand.BeginExecute();
+                var appserverAsyncResults = (from command in appserverSshCommands select command.BeginExecute()).ToList();
 
                 // Start slaves
                 Log.Information($"Start slaves");
                 var slaveAsyncResults = (from command in slaveSshCommands select command.BeginExecute()).ToList();
 
+
+                // Wait app server started
+                Task.Delay(TimeSpan.FromSeconds(30)).Wait();
+
                 // Start master
                 Log.Information($"Start master");
-                var masterResult = masterSshCommand.Execute();
+                var masterResult = masterSshCommand.BeginExecute();
+                using (var reader =
+                   new StreamReader(masterSshCommand.OutputStream, Encoding.UTF8, true, 1024, true))
+                {
+                    while (!masterResult.IsCompleted || !reader.EndOfStream)
+                    {
+                        string line = reader.ReadLine();
+                        if (line != null)
+                        {
+                            Log.Information(line);
+                        }
+                    }
+                }
+
+                masterSshCommand.EndExecute(masterResult);
             }
             finally
             {
@@ -166,7 +202,7 @@ namespace Commander
                 _ = sshCommand.Execute();
             }
 
-            killDotnet(_remoteClients.AppserverSshClient);
+            _remoteClients.AppserverSshClients.ToList().ForEach(client => killDotnet(client));
             killDotnet(_remoteClients.MasterSshClient);
             _remoteClients.SlaveSshClients.ToList().ForEach(client => killDotnet(client));
         }
@@ -177,11 +213,12 @@ namespace Commander
 
             // Copy executables
             var copyTasks = new List<Task>();
-            copyTasks.Add(Task.Run(() => _remoteClients.AppserverScpClient.Upload(appserverExecutable, _appserverTargetPath)));
+            copyTasks.AddRange(from client in _remoteClients.AppserverScpClients
+                               select Task.Run(() => client.Upload(appserverExecutable, _appserverTargetPath)));
             copyTasks.Add(Task.Run(() => _remoteClients.MasterScpClient.Upload(masterExecutable, _masterTargetPath)));
             copyTasks.Add(Task.Run(() => _remoteClients.MasterScpClient.Upload(_benchmarkConfiguration, _benchmarkConfigurationTargetPath)));
-            copyTasks.AddRange(from slaveScpClient in _remoteClients.SlaveScpClients
-                                select Task.Run(() => slaveScpClient.Upload(slaveExecutable, _slaveTargetPath)));
+            copyTasks.AddRange(from client in _remoteClients.SlaveScpClients
+                                select Task.Run(() => client.Upload(slaveExecutable, _slaveTargetPath)));
             Task.WhenAll(copyTasks).Wait();
         }
 
@@ -214,17 +251,26 @@ namespace Commander
             var result = command.Execute();
             if (command.Error != "")
             {
-                Log.Warning(result);
+                Log.Error($"Install zip error on {client.ConnectionInfo.Host}: {result}, {command.Error}");
             }
         }
 
         private void Unzip(SshClient client, string targetPath)
         {
-            InstallZip(client);
-
+            SshCommand command = null;
             var directory = Path.GetDirectoryName(targetPath);
             var filenameWithoutExtension = Path.GetFileNameWithoutExtension(targetPath);
-            var command = client.CreateCommand($"unzip -o -d {filenameWithoutExtension} {targetPath}");
+            var fileName = Path.GetFileName(targetPath);
+            var ext = Path.GetExtension(targetPath);
+            if (string.Equals("zip", ext, StringComparison.OrdinalIgnoreCase))
+            {
+                InstallZip(client);
+                command = client.CreateCommand($"unzip -o -d {filenameWithoutExtension} {targetPath}");
+            }
+            else
+            {
+                command = client.CreateCommand($"cd {directory}; tar zxvf {fileName}");
+            }
             var result = command.Execute();
             if (command.Error != "")
             {
@@ -237,7 +283,8 @@ namespace Commander
             Log.Information($"Unzip executables");
 
             var tasks = new List<Task>();
-            tasks.Add(Task.Run(() => Unzip(_remoteClients.AppserverSshClient, _appserverTargetPath)));
+            tasks.AddRange(from client in _remoteClients.AppserverSshClients
+                           select Task.Run(() => Unzip(client, _appserverTargetPath)));
             tasks.Add(Task.Run(() => Unzip(_remoteClients.MasterSshClient, _masterTargetPath)));
             tasks.AddRange(from client in _remoteClients.SlaveSshClients
                            select Task.Run(() => Unzip(client, _slaveTargetPath)));
