@@ -1,6 +1,6 @@
 #!/bin/bash
 #httpBase="http://hz2benchdns0.westus2.cloudapp.azure.com:8000"
-httpBase=$env_global_http_base # global environment
+httpBase=$env_g_http_base # global environment
 
 #nginx_server_dns
 filter_date_window() {
@@ -104,10 +104,18 @@ analyze_date_in_window() {
 }
 
 #analyze_all
-if [ $# -ne 2 ]
+if [ $# -lt 2 ]
 then
-  echo "$0: <start_date> <end_date>, i.g. 20181010 20181104"
+  echo "$0: <start_date> (<end_date>), i.g. 20181010 20181104. If you do not specify end_date, the default value is today."
   exit 1
 fi
 
-analyze_date_in_window $1 $2
+start_date=$1
+end_date=`date +%Y%m%d`
+
+if [ $# -eq 2 ]
+then
+  end_date=$2
+fi
+
+analyze_date_in_window $start_date $end_date

@@ -38,7 +38,7 @@ def gen_google_chart_table(input):
 
 if __name__=="__main__":
    parser = argparse.ArgumentParser()
-   parser.add_argument("-i", "--input", help="Specify the input Yaml file")
+   parser.add_argument("-i", "--input", help="Specify the file contains <date,scenario,connection,send,link> information")
    args = parser.parse_args()
    if args.input is None:
       print("Input file is not specified!")
