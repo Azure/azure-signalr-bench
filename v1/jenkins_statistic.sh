@@ -9,7 +9,7 @@ function create_html() {
 }
 
 function publish_html() {
-  mv $env_g_root $env_g_nginx_root_dir
+  mv $env_g_root $env_g_nginx_root_dir/
 }
 
 if [ -e jenkins_stat_env.sh ]
