@@ -1,14 +1,17 @@
 import yaml
+from Util.Common import *
 
 
 class ScenarioConfig:
-    def __init__(self, type_, connections, concurrent, base_step, step, step_length):
+    def __init__(self, type_, connections, concurrent, base_step, step, step_length, group_count=1, group_type=""):
         self.connections = connections
         self.concurrent = concurrent
         self.base_step = base_step
         self.step = step
         self.step_length = step_length
         self.type = type_
+        self.group_count = group_count
+        self.group_type = group_type
 
 
 class StatisticsConfig:
@@ -32,14 +35,13 @@ class ConstantConfig:
 
 
 class SendingConfig:
-    def __init__(self, duration, interval, slave_count, message_size):
+    def __init__(self, duration, interval, message_size):
         self.duration = duration
         self.interval = interval
-        self.slave_count = slave_count
         self.message_size = message_size
 
 
-class ParameterKey:
+class SettingParaKey:
     def __init__(self):
         self.normal_connection = "normal_connection"
         self.max_connection = "max_connection"
@@ -48,6 +50,7 @@ class ParameterKey:
         self.concurrent = "concurrent"
         self.step_length = "step_length"
         self.unit_map = "unit_map"
+        self.group_count = "group_count"
 
 
 def parse_settings(path):
@@ -57,13 +60,17 @@ def parse_settings(path):
     return config
 
 
-def determine_scenario_config(settings, unit, scenario, transport, use_max_connection=True, message_size=None):
-    if scenario == "sendToClient":
+def determine_scenario_config(settings, unit, scenario, transport, use_max_connection=True, message_size=None, group=""):
+    scenario_type = ScenarioType()
+
+    if scenario == scenario_type.send_to_client:
         key = "{}:{},{}:{},{}:{}".format("scenario", scenario, "transport", transport, "message_size", message_size)
+    elif scenario == scenario_type.send_to_group:
+        key = "{}:{},{}:{},{}:{}".format("scenario", scenario, "transport", transport, "group", group)
     else:
         key = "{}:{},{}:{}".format("scenario", scenario, "transport", transport)
 
-    para_key = ParameterKey()
+    para_key = SettingParaKey()
     cur_settings = settings[key]
 
     index = 0
@@ -84,7 +91,9 @@ def determine_scenario_config(settings, unit, scenario, transport, use_max_conne
     step = cur_settings[para_key.step][index]
     step_length = cur_settings[para_key.step_length][index]
 
-    config = ScenarioConfig(scenario, connections, concurrent, base_step, step, step_length)
+    group_count = settings[para_key.group_count][group] if scenario == scenario_type.send_to_group else 0
+
+    config = ScenarioConfig(scenario, connections, concurrent, base_step, step, step_length, group_count)
 
     return config
 

@@ -18,20 +18,15 @@ class SendToClient:
         post_sending = CommonStep.post_sending_steps(self.scenario_config.type)
 
         remainder_begin = 0
-        # todo: consider edge case
-        if self.scenario_config.step % self.sending_config.slave_count != 0:
-            print("Not support: send_step % slave_count != 0")
-        if self.scenario_config.step % self.sending_config.slave_count != 0:
-            print("Not support: base_step % slave_count != 0")
-        remainder_end_dx = self.scenario_config.step // self.sending_config.slave_count
+        remainder_end_dx = self.scenario_config.step
 
         sending = []
         for epoch in range(0, self.scenario_config.step_length):
-            remainder_end = self.scenario_config.base_step // self.sending_config.slave_count + epoch * remainder_end_dx
+            remainder_end = self.scenario_config.base_step + epoch * remainder_end_dx
             sending += [
                 send_to_client(self.scenario_config.type, self.scenario_config.connections,
                                self.sending_config.duration, self.sending_config.interval, remainder_begin,
-                               remainder_end, self.sending_config.slave_count, self.sending_config.message_size),
+                               remainder_end, self.scenario_config.connections, self.sending_config.message_size),
                 wait(self.scenario_config.type, self.constant_config.wait_time)
             ]
 

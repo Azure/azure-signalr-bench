@@ -1,12 +1,15 @@
 from Echo import *
 from Broadcast import *
 from SendToClient import *
+from SendToGroup import *
 import argparse
-import yaml
 from Util.SettingsHelper import *
+from Util.Common import *
 
 
 def parse_arguments():
+    arg_type = ArgType()
+
     parser = argparse.ArgumentParser(description='')
 
     # required
@@ -16,7 +19,8 @@ def parse_arguments():
     parser.add_argument('-t', '--transport', required=True)
     parser.add_argument('-U', '--url', required=True)
     parser.add_argument('-m', '--use_max_connection', action='store_true')
-    parser.add_argument('-sc', '--slave_count', type=int, required=True)
+    parser.add_argument('-g', '--group_type', type=str, choices=[arg_type.tiny_group, arg_type.small_group,
+                                                                 arg_type.big_group], default=arg_type.tiny_group)
 
     # todo: add default value
     parser.add_argument('-ms', '--message_size', type=int, default=2*1024)  # todo: set default value
@@ -52,10 +56,10 @@ def main():
 
     # determine settings
     scenario_config = determine_scenario_config(scenario_config_collection, args.unit, args.scenario, args.transport,
-                                                args.use_max_connection, args.message_size)
+                                                args.use_max_connection, args.message_size, args.group_type)
 
     # basic sending config
-    sending_config = SendingConfig(args.duration, args.interval, args.slave_count, args.message_size)
+    sending_config = SendingConfig(args.duration, args.interval, args.message_size)
 
     if args.scenario == "echo":
         Echo(sending_config, scenario_config, connection_config, statistics_config, constant_config).generate_config()
@@ -64,6 +68,9 @@ def main():
             .generate_config()
     elif args.scenario == 'sendToClient':
         SendToClient(sending_config, scenario_config, connection_config, statistics_config, constant_config)\
+            .generate_config()
+    elif args.scenario == 'sendToGroup':
+        SendToGroup(sending_config, scenario_config, connection_config, statistics_config, constant_config) \
             .generate_config()
 
 

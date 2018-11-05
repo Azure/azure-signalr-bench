@@ -25,7 +25,7 @@ class Broadcast:
             remainder_end = self.scenario_config.base_step + epoch * remainder_end_dx
             sending += [
                 broadcast(self.scenario_config.type, self.sending_config.duration, self.sending_config.interval, remainder_begin,
-                          remainder_end, self.sending_config.slave_count, self.sending_config.message_size),
+                          remainder_end, self.scenario_config.connections, self.sending_config.message_size),
                 wait(self.scenario_config.type, self.constant_config.wait_time)
             ]
 

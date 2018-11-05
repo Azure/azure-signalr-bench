@@ -1,62 +1,71 @@
 ModuleName: Plugin, Namespace
 Pipeline:
 - - Method: InitStatisticsCollector
-    Type: sendToClient
+    Type: sendToGroup
 - - Method: CollectStatistics
     Parameter.Interval: 1000
     Parameter.StatisticsOutputPath: haha.txt
-    Type: sendToClient
+    Type: sendToGroup
 - - Method: CreateConnection
     Parameter.ConnectionTotal: 3500
     Parameter.HubUrl: http://localhost:5050/signalrbench
     Parameter.Protocol: json
     Parameter.TransportType: Websockets
-    Type: sendToClient
+    Type: sendToGroup
 - - Method: StartConnection
     Parameter.ConcurrentConnetion: 100
-    Type: sendToClient
+    Type: sendToGroup
 - - Method: RegisterCallbackRecordLatency
-    Type: sendToClient
-- - Method: SendToClient
+    Type: sendToGroup
+- - Method: SendToGroup
     Parameter.ConnectionTotal: 3500
     Parameter.Duration: 240000
+    Parameter.GroupCount: 1000
+    Parameter.GroupInternalModulo: 1
+    Parameter.GroupInternalRemainderBegin: 0
+    Parameter.GroupInternalRemainderEnd: 1
+    Parameter.GroupLevelRemainderBegin: 0
+    Parameter.GroupLevelRemainderEnd: 500
     Parameter.Interval: 1000
     Parameter.MessageSize: 2048
-    Parameter.Modulo: 100
-    Parameter.RemainderBegin: 0
-    Parameter.RemainderEnd: 10
-    Type: sendToClient
+    Type: sendToGroup
 - - Method: Wait
     Parameter.Duration: 5000
-    Type: sendToClient
-- - Method: SendToClient
+    Type: sendToGroup
+- - Method: SendToGroup
     Parameter.ConnectionTotal: 3500
     Parameter.Duration: 240000
+    Parameter.GroupCount: 1000
+    Parameter.GroupInternalModulo: 1
+    Parameter.GroupInternalRemainderBegin: 0
+    Parameter.GroupInternalRemainderEnd: 1
+    Parameter.GroupLevelRemainderBegin: 0
+    Parameter.GroupLevelRemainderEnd: 800
     Parameter.Interval: 1000
     Parameter.MessageSize: 2048
-    Parameter.Modulo: 100
-    Parameter.RemainderBegin: 0
-    Parameter.RemainderEnd: 40
-    Type: sendToClient
+    Type: sendToGroup
 - - Method: Wait
     Parameter.Duration: 5000
-    Type: sendToClient
-- - Method: SendToClient
+    Type: sendToGroup
+- - Method: SendToGroup
     Parameter.ConnectionTotal: 3500
     Parameter.Duration: 240000
+    Parameter.GroupCount: 1000
+    Parameter.GroupInternalModulo: 1
+    Parameter.GroupInternalRemainderBegin: 0
+    Parameter.GroupInternalRemainderEnd: 1
+    Parameter.GroupLevelRemainderBegin: 0
+    Parameter.GroupLevelRemainderEnd: 1100
     Parameter.Interval: 1000
     Parameter.MessageSize: 2048
-    Parameter.Modulo: 100
-    Parameter.RemainderBegin: 0
-    Parameter.RemainderEnd: 70
-    Type: sendToClient
+    Type: sendToGroup
 - - Method: Wait
     Parameter.Duration: 5000
-    Type: sendToClient
+    Type: sendToGroup
 - - Method: StopCollector
-    Type: sendToClient
+    Type: sendToGroup
 - - Method: StopConnection
-    Type: sendToClient
+    Type: sendToGroup
 - - Method: DisposeConnection
-    Type: sendToClient
-Types: sendToClient
+    Type: sendToGroup
+Types: sendToGroup
