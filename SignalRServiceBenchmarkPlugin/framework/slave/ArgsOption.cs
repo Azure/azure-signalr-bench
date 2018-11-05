@@ -15,7 +15,7 @@ namespace Rpc.Slave
 
         // Log
         [Option("LogName", Required = false, Default = "slave-.log", HelpText = "Log file name. " + 
-            "Timestamp will insert into the position before dot. If the name is 'master-.log'. " + 
+            "Timestamp will insert into the position before dot. If the name is 'slave-.log'. " + 
             " The final file name will be 'master-123456789.log', for example.")]
         public string LogName { get; set; }
 
