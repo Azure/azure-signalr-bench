@@ -1,3 +1,6 @@
+import yaml
+
+
 class ScenarioConfig:
     def __init__(self, type_, connections, concurrent, base_step, step, step_length):
         self.connections = connections
@@ -45,6 +48,13 @@ class ParameterKey:
         self.concurrent = "concurrent"
         self.step_length = "step_length"
         self.unit_map = "unit_map"
+
+
+def parse_settings(path):
+    with open(path, 'r') as f:
+        content = f.read()
+        config = yaml.load(content, Loader=yaml.Loader)
+    return config
 
 
 def determine_scenario_config(settings, unit, scenario, transport, use_max_connection=True, message_size=None):

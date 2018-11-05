@@ -5,12 +5,6 @@ import argparse
 import yaml
 from Util.SettingsHelper import *
 
-def parse_settings(path):
-    with open(path, 'r') as f:
-        content = f.read()
-        config = yaml.load(content, Loader=yaml.Loader)
-    return config
-
 
 def parse_arguments():
     parser = argparse.ArgumentParser(description='')
