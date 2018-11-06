@@ -32,6 +32,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 stepParameters.TryGetTypedValue(SignalRConstants.HubProtocol, out string protocol, Convert.ToString);
                 stepParameters.TryGetTypedValue(SignalRConstants.TransportType, out string transportType, Convert.ToString);
                 stepParameters.TryGetTypedValue(SignalRConstants.Type, out string type, Convert.ToString);
+                stepParameters.TryGetTypedValue(SignalRConstants.ConnectionIndex, out string connectionIndex, Convert.ToString);
 
                 // Create Connections
                 var connections = CreateConnections(connectionBegin, connectionEnd - connectionBegin, urls, transportType, protocol);
@@ -39,6 +40,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 // Prepare plugin parameters
                 pluginParameters[$"{SignalRConstants.ConnectionStore}.{type}"] = connections;
                 pluginParameters[$"{SignalRConstants.ConnectionOffset}.{type}"] = connectionBegin;
+                pluginParameters[$"{SignalRConstants.ConnectionIndex}.{type}"] = connectionIndex.Split(',').Select(ind => Convert.ToInt32(ind)).ToList();
 
                 return null;
             }

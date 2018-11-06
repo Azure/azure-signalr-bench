@@ -42,6 +42,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionStore}.{type}", out IList<HubConnection> connections, (obj) => (IList<HubConnection>)obj);
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionOffset}.{type}", out int offset, Convert.ToInt32);
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.StatisticsStore}.{type}", out _statisticsCollector, obj => (StatisticsCollector) obj);
+                pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionIndex}.{type}", out List<int> connectionIndex, (obj) => (List<int>)obj);
 
                 // Generate necessary data
                 var messageBlob = new byte[messageSize];
@@ -65,7 +66,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 _statisticsCollector.ResetGroupCounters();
                 _statisticsCollector.ResetMessageCounters();
 
-                Func<int, int, int, int, bool> isSending = (index, modulo, beg, end) => (index % modulo) >= beg && (index % modulo) < end;
+                Func<int, int, int, int, bool> IsSending = (index, modulo, beg, end) => (index % modulo) >= beg && (index % modulo) < end;
 
                 Func<HubConnection, IDictionary<string, object>, bool, bool, Task> generateTask = (connection, data, isSendGroupLevel, isSendGroupInternal) =>
                 {
@@ -86,14 +87,14 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
 
                 // Send messages
                 await Task.WhenAll(from package in packages
-                                   let connectionIndex = package.Index + offset
+                                   let index = package.Index + offset
                                    let groupSize = totalConnection / groupCount
-                                   let groupIndex = connectionIndex % groupCount
-                                   let indexInGroup = connectionIndex / groupCount
+                                   let groupIndex = index % groupCount
+                                   let indexInGroup = index / groupCount
                                    let connection = package.Connection
                                    let data = package.Data
-                                   let isSendGroupLevel = isSending(groupIndex, groupCount, GroupLevelRemainderBegin, GroupLevelRemainderEnd)
-                                   let isSendGroupInternal = isSending(indexInGroup, GroupInternalModulo, GroupInternalRemainderBegin, GroupInternalRemainderEnd)
+                                   let isSendGroupLevel = IsSending(groupIndex, groupCount, GroupLevelRemainderBegin, GroupLevelRemainderEnd)
+                                   let isSendGroupInternal = IsSending(indexInGroup, GroupInternalModulo, GroupInternalRemainderBegin, GroupInternalRemainderEnd)
                                    select generateTask(connection, data, isSendGroupLevel, isSendGroupInternal));
 
                 return null;

@@ -32,6 +32,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionStore}.{type}", out IList<HubConnection> connections, (obj) => (IList<HubConnection>)obj);
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionOffset}.{type}", out int offset, Convert.ToInt32);
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.StatisticsStore}.{type}", out _statisticsCollector, obj => (StatisticsCollector) obj);
+                pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionIndex}.{type}", out List<int> connectionIndex, (obj) => (List<int>)obj);
 
                 // Generate necessary data
                 var data = new Dictionary<string, object>
@@ -45,7 +46,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
 
                 // Send messages
                 await Task.WhenAll(from i in Enumerable.Range(0, connections.Count)
-                                    where (i + offset) % modulo >= remainderBegin && (i + offset) % modulo < remainderEnd
+                                    where connectionIndex[i] % modulo >= remainderBegin && connectionIndex[i] % modulo < remainderEnd
                                     select ContinuousSend(connections[i], data, SendBroadcast,
                                             TimeSpan.FromMilliseconds(duration), TimeSpan.FromMilliseconds(interval), 
                                             TimeSpan.FromMilliseconds(1), TimeSpan.FromMilliseconds(interval)));

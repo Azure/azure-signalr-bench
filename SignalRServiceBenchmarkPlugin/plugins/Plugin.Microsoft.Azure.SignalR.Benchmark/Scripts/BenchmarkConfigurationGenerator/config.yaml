@@ -1,0 +1,71 @@
+ModuleName: Plugin, Namespace
+Pipeline:
+- - Method: InitStatisticsCollector
+    Type: sendToGroup
+- - Method: CollectStatistics
+    Parameter.Interval: 1000
+    Parameter.StatisticsOutputPath: haha.txt
+    Type: sendToGroup
+- - Method: CreateConnection
+    Parameter.ConnectionTotal: 3500
+    Parameter.HubUrl: http://localhost:5050/signalrbench
+    Parameter.Protocol: json
+    Parameter.TransportType: Websockets
+    Type: sendToGroup
+- - Method: StartConnection
+    Parameter.ConcurrentConnetion: 100
+    Type: sendToGroup
+- - Method: RegisterCallbackRecordLatency
+    Type: sendToGroup
+- - Method: SendToGroup
+    Parameter.ConnectionTotal: 3500
+    Parameter.Duration: 240000
+    Parameter.GroupCount: 1000
+    Parameter.GroupInternalModulo: 1
+    Parameter.GroupInternalRemainderBegin: 0
+    Parameter.GroupInternalRemainderEnd: 1
+    Parameter.GroupLevelRemainderBegin: 0
+    Parameter.GroupLevelRemainderEnd: 500
+    Parameter.Interval: 1000
+    Parameter.MessageSize: 2048
+    Type: sendToGroup
+- - Method: Wait
+    Parameter.Duration: 5000
+    Type: sendToGroup
+- - Method: SendToGroup
+    Parameter.ConnectionTotal: 3500
+    Parameter.Duration: 240000
+    Parameter.GroupCount: 1000
+    Parameter.GroupInternalModulo: 1
+    Parameter.GroupInternalRemainderBegin: 0
+    Parameter.GroupInternalRemainderEnd: 1
+    Parameter.GroupLevelRemainderBegin: 0
+    Parameter.GroupLevelRemainderEnd: 800
+    Parameter.Interval: 1000
+    Parameter.MessageSize: 2048
+    Type: sendToGroup
+- - Method: Wait
+    Parameter.Duration: 5000
+    Type: sendToGroup
+- - Method: SendToGroup
+    Parameter.ConnectionTotal: 3500
+    Parameter.Duration: 240000
+    Parameter.GroupCount: 1000
+    Parameter.GroupInternalModulo: 1
+    Parameter.GroupInternalRemainderBegin: 0
+    Parameter.GroupInternalRemainderEnd: 1
+    Parameter.GroupLevelRemainderBegin: 0
+    Parameter.GroupLevelRemainderEnd: 1100
+    Parameter.Interval: 1000
+    Parameter.MessageSize: 2048
+    Type: sendToGroup
+- - Method: Wait
+    Parameter.Duration: 5000
+    Type: sendToGroup
+- - Method: StopCollector
+    Type: sendToGroup
+- - Method: StopConnection
+    Type: sendToGroup
+- - Method: DisposeConnection
+    Type: sendToGroup
+Types: sendToGroup
