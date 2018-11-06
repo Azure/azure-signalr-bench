@@ -324,8 +324,8 @@ function remove_resource_group() {
   local clean_vm_daemon=daemon_${JOB_NAME}_cleanvms
   local clean_asrs_daemon=daemon_${JOB_NAME}_cleanasrs
   ## remove all test VMs
-  #local pid_file_path=/tmp/${result_root}_pid_remove_rsg.txt
-  #BUILD_ID=dontKillcenter /usr/bin/nohup ${VMMgrDir}/JenkinsScript --step=DeleteResourceGroupByConfig --AgentConfigFile=$AgentConfig --DisableRandomSuffix --ServicePrincipal=$ServicePrincipal &
+  local pid_file_path=/tmp/${result_root}_pid_remove_rsg.txt
+  BUILD_ID=dontKillcenter /usr/bin/nohup ${VMMgrDir}/JenkinsScript --step=DeleteResourceGroupByConfig --AgentConfigFile=$AgentConfig --DisableRandomSuffix --ServicePrincipal=$ServicePrincipal &
 
   ## remove ASRS
 cat << EOF > /tmp/clean_asrs.sh
