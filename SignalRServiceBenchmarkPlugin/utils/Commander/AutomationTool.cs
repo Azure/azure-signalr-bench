@@ -279,7 +279,7 @@ namespace Commander
             }
             else
             {
-                command = client.CreateCommand($"cd {directory}; mkdir {filenameWithoutExtension}; tar zxvf {fileName} -C {directory}/{filenameWithoutExtension}");
+                command = client.CreateCommand($"cd {directory}; mkdir -p {filenameWithoutExtension}; tar zxvf {fileName} -C {directory}/{filenameWithoutExtension}");
             }
             var result = command.Execute();
             if (command.Error != "")
