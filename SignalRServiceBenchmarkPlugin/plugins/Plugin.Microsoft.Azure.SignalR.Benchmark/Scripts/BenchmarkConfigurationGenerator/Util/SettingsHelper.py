@@ -60,12 +60,14 @@ def parse_settings(path):
     return config
 
 
-def determine_scenario_config(settings, unit, scenario, transport, use_max_connection=True, message_size=None, group=""):
+def determine_scenario_config(settings, unit, scenario, transport, protocol="json", use_max_connection=True, message_size=None,
+                              group=""):
     scenario_type = ScenarioType()
 
     if scenario == scenario_type.send_to_client:
-        key = "{}:{},{}:{},{}:{}".format("scenario", scenario, "transport", transport, "message_size", message_size)
-    elif scenario == scenario_type.send_to_group:
+        key = "{}:{},{}:{},{}:{},{}:{}".format("scenario", scenario, "transport", transport, "protocol", protocol,
+                                               "message_size", message_size)
+    elif scenario == scenario_type.send_to_group or scenario == scenario_type.frequent_join_leave_group:
         key = "{}:{},{}:{},{}:{}".format("scenario", scenario, "transport", transport, "group", group)
     else:
         key = "{}:{},{}:{}".format("scenario", scenario, "transport", transport)
@@ -91,9 +93,10 @@ def determine_scenario_config(settings, unit, scenario, transport, use_max_conne
     step = cur_settings[para_key.step][index]
     step_length = cur_settings[para_key.step_length][index]
 
-    group_count = settings[para_key.group_count][group] if scenario == scenario_type.send_to_group else 0
+    group_count = settings[para_key.group_count][group] if scenario == scenario_type.send_to_group or scenario == \
+                                                           scenario_type.frequent_join_leave_group else 0
 
-    config = ScenarioConfig(scenario, connections, concurrent, base_step, step, step_length, group_count)
+    config = ScenarioConfig(scenario, connections, concurrent, base_step, step, step_length, group_count, group)
 
     return config
 

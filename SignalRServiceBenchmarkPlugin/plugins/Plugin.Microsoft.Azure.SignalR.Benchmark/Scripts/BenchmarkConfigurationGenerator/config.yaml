@@ -1,71 +1,59 @@
 ModuleName: Plugin, Namespace
 Pipeline:
 - - Method: InitStatisticsCollector
-    Type: sendToGroup
+    Type: echo
 - - Method: CollectStatistics
     Parameter.Interval: 1000
     Parameter.StatisticsOutputPath: haha.txt
-    Type: sendToGroup
+    Type: echo
 - - Method: CreateConnection
     Parameter.ConnectionTotal: 3500
     Parameter.HubUrl: http://localhost:5050/signalrbench
     Parameter.Protocol: json
     Parameter.TransportType: Websockets
-    Type: sendToGroup
+    Type: echo
 - - Method: StartConnection
     Parameter.ConcurrentConnetion: 100
-    Type: sendToGroup
+    Type: echo
 - - Method: RegisterCallbackRecordLatency
-    Type: sendToGroup
-- - Method: SendToGroup
-    Parameter.ConnectionTotal: 3500
+    Type: echo
+- - Method: Echo
     Parameter.Duration: 240000
-    Parameter.GroupCount: 1000
-    Parameter.GroupInternalModulo: 1
-    Parameter.GroupInternalRemainderBegin: 0
-    Parameter.GroupInternalRemainderEnd: 1
-    Parameter.GroupLevelRemainderBegin: 0
-    Parameter.GroupLevelRemainderEnd: 500
     Parameter.Interval: 1000
     Parameter.MessageSize: 2048
-    Type: sendToGroup
+    Parameter.Modulo: 3500
+    Parameter.RemainderBegin: 0
+    Parameter.RemainderEnd: 3000
+    Type: echo
 - - Method: Wait
     Parameter.Duration: 5000
-    Type: sendToGroup
-- - Method: SendToGroup
-    Parameter.ConnectionTotal: 3500
+    Type: echo
+- - Method: Echo
     Parameter.Duration: 240000
-    Parameter.GroupCount: 1000
-    Parameter.GroupInternalModulo: 1
-    Parameter.GroupInternalRemainderBegin: 0
-    Parameter.GroupInternalRemainderEnd: 1
-    Parameter.GroupLevelRemainderBegin: 0
-    Parameter.GroupLevelRemainderEnd: 800
     Parameter.Interval: 1000
     Parameter.MessageSize: 2048
-    Type: sendToGroup
+    Parameter.Modulo: 3500
+    Parameter.RemainderBegin: 0
+    Parameter.RemainderEnd: 4000
+    Type: echo
 - - Method: Wait
     Parameter.Duration: 5000
-    Type: sendToGroup
-- - Method: SendToGroup
-    Parameter.ConnectionTotal: 3500
+    Type: echo
+- - Method: Echo
     Parameter.Duration: 240000
-    Parameter.GroupCount: 1000
-    Parameter.GroupInternalModulo: 1
-    Parameter.GroupInternalRemainderBegin: 0
-    Parameter.GroupInternalRemainderEnd: 1
-    Parameter.GroupLevelRemainderBegin: 0
-    Parameter.GroupLevelRemainderEnd: 1100
     Parameter.Interval: 1000
     Parameter.MessageSize: 2048
-    Type: sendToGroup
+    Parameter.Modulo: 3500
+    Parameter.RemainderBegin: 0
+    Parameter.RemainderEnd: 5000
+    Type: echo
 - - Method: Wait
     Parameter.Duration: 5000
-    Type: sendToGroup
+    Type: echo
 - - Method: StopCollector
-    Type: sendToGroup
+    Type: echo
 - - Method: StopConnection
-    Type: sendToGroup
+    Type: echo
 - - Method: DisposeConnection
-    Type: sendToGroup
-Types: sendToGroup
+    Type: echo
+Types: echo
