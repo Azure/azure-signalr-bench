@@ -102,7 +102,7 @@ def dispose_connection(type_):
 
 
 def collect_connection_id(type_):
-    return [dict((type_, "CollectConnectionId"))]
+    return [required(type_, "CollectConnectionId")]
 
 
 def echo_broadcast(type_, method, duration, interval, remainder_begin, remainder_end, modulo, message_size):

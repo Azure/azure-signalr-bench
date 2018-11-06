@@ -32,6 +32,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         // Connection/group information
         public static readonly string ConnectionId = "information.ConnectionId";
         public static readonly string GroupName = "information.GroupName";
+        public static readonly string ConnectionIndex = "information.ConnectionIndex";
 
         // Plugin parameters
         public static readonly string ConnectionStore = "Plugin.ConnectionStore";

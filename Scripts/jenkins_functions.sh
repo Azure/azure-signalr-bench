@@ -28,6 +28,7 @@ function set_global_env() {
    #export ResultFolderSuffix='suffix'
    export VMMgrDir=/tmp/VMMgr
    export nginx_root=/mnt/Data/NginxRoot
+   export g_nginx_ns="ingress-nginx"
 }
 
 # depends on set_global_env
@@ -35,6 +36,32 @@ function set_job_env() {
    export result_root=`date +%Y%m%d%H%M%S`
    export DogFoodResourceGroup="hzatpf"`date +%M%S`
    export serverUrl=`awk '{print $2}' $JenkinsRootPath/JobConfig.yaml`
+}
+# require global env:
+# ASRSEnv, DogFoodResourceGroup, ASRSLocation
+function prepare_ASRS_creation() {
+cd $ScriptWorkingDir
+. ./az_signalr_service.sh
+
+if [ "$ASRSEnv" == "dogfood" ]
+then
+  register_signalr_service_dogfood
+  az_login_ASRS_dogfood
+else
+  az_login_signalr_dev_sub
+fi
+create_group_if_not_exist $DogFoodResourceGroup $ASRSLocation
+}
+
+# global env: ScriptWorkingDir, DogFoodResourceGroup, ASRSEnv
+function clean_ASRS_group() {
+############# remove SignalR Service Resource Group #########
+cd $ScriptWorkingDir
+delete_group $DogFoodResourceGroup
+if [ "$ASRSEnv" == "dogfood" ]
+then
+  unregister_signalr_service_dogfood
+fi
 }
 
 function register_exit_handler() {
@@ -96,7 +123,7 @@ function run_all_units() {
    cd $ScriptWorkingDir
    ConnectionString="" # set it to be invalid first
    signalrServiceName="atpf"`date +%H%M%S`
-   create_asrs $DogFoodResourceGroup $signalrServiceName $Sku $service
+   create_asrs $DogFoodResourceGroup $signalrServiceName $service
    if [ "$ConnectionString" == "" ]
    then
      echo "Skip the running on SignalR service unit'$service' since it was failed to create"
@@ -216,8 +243,21 @@ function run_command() {
   local master=`python extract_ip.py -i $PrivateIps -q master`
   local appserver=`python extract_ip.py -i $PrivateIps -q appserver`
   local slaves=`python extract_ip.py -i $PrivateIps -q slaves`
+  local appserverUrls=`python extract_ip.py -i $PublicIps -q appserverPub`
+
+  python parse_config.py -i /home/wanl/benchmarkConfiguration/echo.yaml -s $appserverUrls > echo.yaml
   cd $CommandWorkingDir
-  sshpass -p ${passwd} ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR ${user}@${master} "[[ -e counters.txt ]] && rm counters.txt"
+  local remoteCmd="remove_counters.sh"
+  cat << EOF > $remoteCmd
+#!/bin/bash
+if [ -e counters.txt ]
+then
+  rm counters.txt
+fi
+EOF
+  sshpass -p ${passwd} scp -o StrictHostKeyChecking=no -o LogLevel=ERROR $remoteCmd ${user}@${master}:/home/${user}/
+  sshpass -p ${passwd} ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR ${user}@${master} "chmod +x $remoteCmd"
+  sshpass -p ${passwd} ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR ${user}@${master} "./$remoteCmd"
   dotnet run -- --RpcPort=5555 --SlaveList="$slaves" --MasterHostname="$master" --AppServerHostnames="$appserver" \
          --Username=$user --Password=$passwd \
          --AppserverProject="/home/wanl/executables/appserver" \
@@ -225,12 +265,55 @@ function run_command() {
          --SlaveProject="/home/wanl/executables/slave" \
          --AppserverTargetPath="/home/${user}/appserver.tgz" --MasterTargetPath="/home/${user}/master.tgz" \
          --SlaveTargetPath="/home/${user}/slave.tgz" \
-         --BenchmarkConfiguration="/home/wanl/benchmarkConfiguration/echo.yaml" \
+         --BenchmarkConfiguration="$ScriptWorkingDir/echo.yaml" \
          --BenchmarkConfigurationTargetPath="/home/${user}/signalr.yaml" \
          --AzureSignalRConnectionString="$connectionString"
   sshpass -p ${passwd} scp -o StrictHostKeyChecking=no -o LogLevel=ERROR ${user}@${master}:/home/${user}/counters.txt ${outputDir}/
 }
 
+function create_asrs()
+{
+  local rsg=$1
+  local name=$2
+  local unit=$3
+
+. ./az_signalr_service.sh
+. ./kubectl_utils.sh
+
+  local signalr_service=$(create_signalr_service $rsg $name "Basic_DS2" $unit)
+  if [ "$signalr_service" == "" ]
+  then
+    echo "Fail to create SignalR Service"
+    return
+  else
+    echo "Create SignalR Service '${signalr_service}'"
+  fi
+  local dns_ready=$(check_signalr_service_dns $rsg $name)
+  if [ $dns_ready -eq 1 ]
+  then
+    echo "SignalR Service DNS is not ready, suppose it is failed!"
+    delete_signalr_service $name $rsg
+    return
+  fi
+  if [ "$ASRSEnv" == "dogfood" ]
+  then
+    if [ "$Disable_UNIT_PER_POD" == "true" ]
+    then
+      patch_deployment_for_no_tc_and_wait $name 100
+    fi
+    if [ "$Disable_Connection_Throttling" == "true" ]
+    then
+      local limit=`python gen_connection_throttling.py -u "unit"$unit`
+      if [ $limit -ne 0 ]
+      then
+         patch_connection_throttling_env $name $limit
+      fi
+    fi
+  fi
+  local connectionStr=$(query_connection_string $name $rsg)
+  echo "[ConnectionString]: $connectionStr"
+  export ConnectionString="$connectionStr"
+}
 ## exit handler to remove resource group ##
 # global env:
 # CurrentWorkingDir, ServicePrincipal, AgentConfig, VMMgrDir
@@ -241,7 +324,7 @@ function remove_resource_group() {
   local clean_vm_daemon=daemon_${JOB_NAME}_cleanvms
   local clean_asrs_daemon=daemon_${JOB_NAME}_cleanasrs
   ## remove all test VMs
-  #local pid_file_path=/tmp/${result_root}_pid_remove_rsg.txt
+  local pid_file_path=/tmp/${result_root}_pid_remove_rsg.txt
   BUILD_ID=dontKillcenter /usr/bin/nohup ${VMMgrDir}/JenkinsScript --step=DeleteResourceGroupByConfig --AgentConfigFile=$AgentConfig --DisableRandomSuffix --ServicePrincipal=$ServicePrincipal &
 
   ## remove ASRS

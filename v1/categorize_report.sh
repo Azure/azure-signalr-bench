@@ -104,7 +104,7 @@ analyze_date_in_window() {
 }
 
 #analyze_all
-if [ $# -lt 2 ]
+if [ $# -lt 1 ]
 then
   echo "$0: <start_date> (<end_date>), i.g. 20181010 20181104. If you do not specify end_date, the default value is today."
   exit 1

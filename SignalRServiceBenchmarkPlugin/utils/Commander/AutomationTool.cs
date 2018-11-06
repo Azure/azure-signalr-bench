@@ -41,6 +41,7 @@ namespace Commander
 
         // Scp/Ssh clients
         private RemoteClients _remoteClients;
+        private AsyncCallback _sshCmdCallback;
 
         public AutomationTool(ArgsOption argOption)
         {
@@ -57,7 +58,7 @@ namespace Commander
             _rpcPort = argOption.RpcPort;
             _appserverPort = argOption.AppserverPort;
             _azureSignalRConnectionString = argOption.AzureSignalRConnectionString;
-
+            _sshCmdCallback = new AsyncCallback(OnAsyncSshCommandComplete);
             // Create clients
             var slaveHostnames = (from slave in argOption.SlaveList select slave.Split(':')[0]).ToList();
             _remoteClients = new RemoteClients();
@@ -126,6 +127,16 @@ namespace Commander
             }
         }
 
+        private void OnAsyncSshCommandComplete(IAsyncResult result)
+        {
+            var command = (SshCommand)result.AsyncState;
+            if (command.ExitStatus != 0)
+            {
+                Log.Error($"SshCommand '{command.CommandText}' occurs error: {command.Error}");
+                throw new Exception(command.Error);
+            }
+        }
+
         private void RunBenchmark()
         {
             try
@@ -157,12 +168,11 @@ namespace Commander
 
                 // Start app server
                 Log.Information($"Start app server");
-                var appserverAsyncResults = (from command in appserverSshCommands select command.BeginExecute()).ToList();
+                var appserverAsyncResults = (from command in appserverSshCommands select command.BeginExecute(OnAsyncSshCommandComplete, command)).ToList();
 
                 // Start slaves
                 Log.Information($"Start slaves");
-                var slaveAsyncResults = (from command in slaveSshCommands select command.BeginExecute()).ToList();
-
+                var slaveAsyncResults = (from command in slaveSshCommands select command.BeginExecute(OnAsyncSshCommandComplete, command)).ToList();
 
                 // Wait app server started
                 Task.Delay(TimeSpan.FromSeconds(30)).Wait();
@@ -269,7 +279,7 @@ namespace Commander
             }
             else
             {
-                command = client.CreateCommand($"cd {directory}; tar zxvf {fileName}");
+                command = client.CreateCommand($"cd {directory}; mkdir -p {filenameWithoutExtension}; tar zxvf {fileName} -C {directory}/{filenameWithoutExtension}");
             }
             var result = command.Execute();
             if (command.Error != "")

@@ -22,6 +22,10 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
             stepParameters.TryGetTypedValue(SignalRConstants.TransportType, out string transportType, Convert.ToString);
             stepParameters.TryGetTypedValue(SignalRConstants.HubProtocol, out string hubProtocol, Convert.ToString);
 
+            // Shuffle connection indexes
+            var indexes = Enumerable.Range(0, connectionTotal).ToList();
+            indexes.Shuffle();
+
             // Prepare configuration for each clients
             var packages = clients.Select((client, i) => 
             {
@@ -32,7 +36,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
                     { SignalRConstants.ConnectionEnd, end },
                     { SignalRConstants.HubUrls, hubUrl },
                     { SignalRConstants.TransportType, transportType },
-                    { SignalRConstants.HubProtocol, hubProtocol }
+                    { SignalRConstants.HubProtocol, hubProtocol },
+                    { SignalRConstants.ConnectionIndex, string.Join(',', indexes.GetRange(beg, end - beg)) }
                 };
                 // Add method and type
                 PluginUtils.AddMethodAndType(data, stepParameters);
