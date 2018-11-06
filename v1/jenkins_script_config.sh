@@ -89,6 +89,11 @@ send=${send}
 bench_config_endpoint="$serverUrl"
 EOF
 
+     ## zip the appserver, master and slave logs
+     cd ${env_statistic_folder}
+     tar zcvf log.tgz appserver*.txt slave*.txt
+     rm appserver*.txt slave*.txt
+     cd -
      ## gen_html.sh requires bench_name_list, bench_codec_list, and bench_type_list
      export bench_name_list="$Scenario"
      export bench_codec_list="$MessageEncoding"
@@ -550,9 +555,6 @@ function remove_resource_group() {
   cd $CurrentWorkingDir
   local clean_vm_daemon=daemon_${JOB_NAME}_cleanvms
   local clean_asrs_daemon=daemon_${JOB_NAME}_cleanasrs
-  ## remove all test VMs
-  local pid_file_path=/tmp/${result_root}_pid_remove_rsg.txt
-  daemonize -v -o /tmp/${clean_vm_daemon}.out -e /tmp/${clean_vm_daemon}.err -E BUILD_ID=dontKillcenter /usr/bin/nohup ${VMMgrDir}/JenkinsScript  --step=DeleteResourceGroupByConfig --AgentConfigFile=$AgentConfig --DisableRandomSuffix --ServicePrincipal=$ServicePrincipal &
 
   ## remove ASRS
 cat << EOF > /tmp/clean_asrs.sh
@@ -570,6 +572,8 @@ else
 fi
 EOF
   daemonize -v -o /tmp/${clean_asrs_daemon}.out -e /tmp/${clean_asrs_daemon}.err -E BUILD_ID=dontKillcenter /usr/bin/nohup /bin/sh /tmp/clean_asrs.sh &
+  ## remove all test VMs
+  BUILD_ID=dontKillcenter nohup ${VMMgrDir}/JenkinsScript  --step=DeleteResourceGroupByConfig --AgentConfigFile=$AgentConfig --DisableRandomSuffix --ServicePrincipal=$ServicePrincipal &
 }
 
 ## register exit handler to remove resource group ##
