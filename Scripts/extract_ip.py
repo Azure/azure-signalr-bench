@@ -32,10 +32,22 @@ def appserverIP(input):
                ret += ","
     return ret
 
+def appserverPubIP(input):
+    ret=""
+    with open(input, 'r') as f:
+        data = yaml.load(f)
+        appserverList = data['appServerPublicIp'].split(';')
+        l = len(appserverList)
+        for i, item in enumerate(appserverList):
+            ret += "http://" + item + ":5050/signalrbench"
+            if i + 1< l:
+               ret += ","
+    return ret
+
 if __name__=="__main__":
    parser = argparse.ArgumentParser()
    parser.add_argument("-i", "--input", help="Specify the input Yaml file")
-   parser.add_argument("-q", "--query", choices=["master", "slaves", "appserver"], type=str, help="Choose the entity you want to know its IP")
+   parser.add_argument("-q", "--query", choices=["master", "slaves", "appserver", "appserverPub"], type=str, help="Choose the entity you want to know its IP")
    args = parser.parse_args()
    if args.input is None:
       print("Input file is not specified!")
