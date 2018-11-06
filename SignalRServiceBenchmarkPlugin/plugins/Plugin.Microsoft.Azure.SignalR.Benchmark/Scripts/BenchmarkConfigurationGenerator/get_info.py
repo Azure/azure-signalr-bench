@@ -27,7 +27,7 @@ def main():
     scenario_config = determine_scenario_config(scenario_config_collection, args.unit, args.scenario, args.transport,
                                                 message_size=args.message_size)
 
-    step_list = [ scenario_config.base_step + i * scenario_config.step for i in range(0, scenario_config.step_length)]
+    step_list = [scenario_config.base_step + i * scenario_config.step for i in range(0, scenario_config.step_length)]
 
     return step_list
 

@@ -1,71 +1,71 @@
 ModuleName: Plugin, Namespace
 Pipeline:
 - - Method: InitStatisticsCollector
-    Type: sendToGroup
+    Type: frequentJoinLeaveGroup
 - - Method: CollectStatistics
     Parameter.Interval: 1000
     Parameter.StatisticsOutputPath: haha.txt
-    Type: sendToGroup
+    Type: frequentJoinLeaveGroup
 - - Method: CreateConnection
-    Parameter.ConnectionTotal: 3500
+    Parameter.ConnectionTotal: 10000
     Parameter.HubUrl: http://localhost:5050/signalrbench
     Parameter.Protocol: json
     Parameter.TransportType: Websockets
-    Type: sendToGroup
+    Type: frequentJoinLeaveGroup
 - - Method: StartConnection
     Parameter.ConcurrentConnetion: 100
-    Type: sendToGroup
+    Type: frequentJoinLeaveGroup
 - - Method: RegisterCallbackRecordLatency
-    Type: sendToGroup
-- - Method: SendToGroup
-    Parameter.ConnectionTotal: 3500
+    Type: frequentJoinLeaveGroup
+- - Method: FrequentJoinLeaveGroup
+    Parameter.ConnectionTotal: 10000
     Parameter.Duration: 240000
-    Parameter.GroupCount: 1000
+    Parameter.GroupCount: 10000
     Parameter.GroupInternalModulo: 1
     Parameter.GroupInternalRemainderBegin: 0
     Parameter.GroupInternalRemainderEnd: 1
     Parameter.GroupLevelRemainderBegin: 0
-    Parameter.GroupLevelRemainderEnd: 500
+    Parameter.GroupLevelRemainderEnd: 10000
     Parameter.Interval: 1000
     Parameter.MessageSize: 2048
-    Type: sendToGroup
+    Type: frequentJoinLeaveGroup
 - - Method: Wait
     Parameter.Duration: 5000
-    Type: sendToGroup
-- - Method: SendToGroup
-    Parameter.ConnectionTotal: 3500
+    Type: frequentJoinLeaveGroup
+- - Method: FrequentJoinLeaveGroup
+    Parameter.ConnectionTotal: 10000
     Parameter.Duration: 240000
-    Parameter.GroupCount: 1000
+    Parameter.GroupCount: 10000
     Parameter.GroupInternalModulo: 1
     Parameter.GroupInternalRemainderBegin: 0
     Parameter.GroupInternalRemainderEnd: 1
     Parameter.GroupLevelRemainderBegin: 0
-    Parameter.GroupLevelRemainderEnd: 800
+    Parameter.GroupLevelRemainderEnd: 20000
     Parameter.Interval: 1000
     Parameter.MessageSize: 2048
-    Type: sendToGroup
+    Type: frequentJoinLeaveGroup
 - - Method: Wait
     Parameter.Duration: 5000
-    Type: sendToGroup
-- - Method: SendToGroup
-    Parameter.ConnectionTotal: 3500
+    Type: frequentJoinLeaveGroup
+- - Method: FrequentJoinLeaveGroup
+    Parameter.ConnectionTotal: 10000
     Parameter.Duration: 240000
-    Parameter.GroupCount: 1000
+    Parameter.GroupCount: 10000
     Parameter.GroupInternalModulo: 1
     Parameter.GroupInternalRemainderBegin: 0
     Parameter.GroupInternalRemainderEnd: 1
     Parameter.GroupLevelRemainderBegin: 0
-    Parameter.GroupLevelRemainderEnd: 1100
+    Parameter.GroupLevelRemainderEnd: 30000
     Parameter.Interval: 1000
     Parameter.MessageSize: 2048
-    Type: sendToGroup
+    Type: frequentJoinLeaveGroup
 - - Method: Wait
     Parameter.Duration: 5000
-    Type: sendToGroup
+    Type: frequentJoinLeaveGroup
 - - Method: StopCollector
-    Type: sendToGroup
+    Type: frequentJoinLeaveGroup
 - - Method: StopConnection
-    Type: sendToGroup
+    Type: frequentJoinLeaveGroup
 - - Method: DisposeConnection
-    Type: sendToGroup
-Types: sendToGroup
+    Type: frequentJoinLeaveGroup
+Types: frequentJoinLeaveGroup

@@ -3,7 +3,7 @@ from Util import TemplateSetter, ConfigSaver, CommonStep
 from Util.Common import *
 
 
-class SendToGroup:
+class FrequentJoinLeaveGroup:
     def __init__(self, sending_config, scenario_config, connection_config, statistics_config, constant_config):
         self.sending_config = sending_config
         self.scenario_config = scenario_config
@@ -27,7 +27,7 @@ class SendToGroup:
                 else self.scenario_config.connections // self.scenario_config.group_count
             remainder_end = self.scenario_config.base_step + epoch * remainder_end_dx
             sending += [
-                send_to_group(self.scenario_config.type, self.sending_config.duration, self.sending_config.interval,
+                frequent_join_leave_group(self.scenario_config.type, self.sending_config.duration, self.sending_config.interval,
                               self.sending_config.message_size, self.scenario_config.connections,
                               self.scenario_config.group_count, 0, remainder_end,
                               0, group_member, self.scenario_config.connections // self.scenario_config.group_count),

@@ -2,6 +2,7 @@ from Echo import *
 from Broadcast import *
 from SendToClient import *
 from SendToGroup import *
+from FrequentJoinLeaveGroup import *
 import argparse
 from Util.SettingsHelper import *
 from Util.Common import *
@@ -71,6 +72,9 @@ def main():
             .generate_config()
     elif args.scenario == 'sendToGroup':
         SendToGroup(sending_config, scenario_config, connection_config, statistics_config, constant_config) \
+            .generate_config()
+    elif args.scenario == 'frequentJoinLeaveGroup':
+        FrequentJoinLeaveGroup(sending_config, scenario_config, connection_config, statistics_config, constant_config) \
             .generate_config()
 
 

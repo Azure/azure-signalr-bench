@@ -11,3 +11,4 @@ class ScenarioType:
         self.broadcast = "broadcast"
         self.send_to_client = "sendToClient"
         self.send_to_group = "sendToGroup"
+        self.frequent_join_leave_group = "frequentJoinLeaveGroup"

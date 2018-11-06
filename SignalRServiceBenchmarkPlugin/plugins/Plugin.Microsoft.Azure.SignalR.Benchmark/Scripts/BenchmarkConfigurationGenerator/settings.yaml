@@ -7,7 +7,7 @@ unit_map:
 - 10
 
 group_count:
-  tiny: 100000
+  tiny: 10000
   small: 1000
   big: 10
 
@@ -38,10 +38,35 @@ scenario:sendToClient,transport:Websockets,message_size:2048:
   concurrent: [100,100,100,100]
 
 
+scenario:sendToGroup,transport:Websockets,group:tiny:
+  normal_connection: [1000, 2000, 3000, 4000]
+  max_connection: [1500, 2500, 10000, 4500]
+  base_step: [3000,3000,10000,3000]
+  step: [1000,2000,10000,4000]
+  step_length: [1,2,3,4]
+  concurrent: [100,100,100,100]
+
+
+scenario:frequentJoinLeaveGroup,transport:Websockets,group:tiny:
+  normal_connection: [1000, 2000, 3000, 4000]
+  max_connection: [1500, 2500, 10000, 4500]
+  base_step: [3000,3000,10000,3000]
+  step: [1000,2000,10000,4000]
+  step_length: [1,2,3,4]
+  concurrent: [100,100,100,100]
+
 scenario:sendToGroup,transport:Websockets,group:small:
   normal_connection: [1000, 2000, 3000, 4000]
-  max_connection: [1500, 2500, 3500, 4500]
-  base_step: [3000,3000,500,3000]
-  step: [1000,2000,300,4000]
+  max_connection: [1500, 2500, 10000, 4500]
+  base_step: [3000,3000,10000,3000]
+  step: [1000,2000,10000,4000]
+  step_length: [1,2,3,4]
+  concurrent: [100,100,100,100]
+
+scenario:sendToGroup,transport:Websockets,group:big:
+  normal_connection: [1000, 2000, 3000, 4000]
+  max_connection: [1500, 2500, 10000, 4500]
+  base_step: [3000,3000,10000,3000]
+  step: [1000,2000,10000,4000]
   step_length: [1,2,3,4]
   concurrent: [100,100,100,100]
