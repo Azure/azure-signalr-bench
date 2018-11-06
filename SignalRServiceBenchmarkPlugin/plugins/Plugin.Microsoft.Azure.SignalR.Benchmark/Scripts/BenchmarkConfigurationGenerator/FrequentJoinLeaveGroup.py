@@ -27,10 +27,12 @@ class FrequentJoinLeaveGroup:
                 else self.scenario_config.connections // self.scenario_config.group_count
             remainder_end = self.scenario_config.base_step + epoch * remainder_end_dx
             sending += [
-                frequent_join_leave_group(self.scenario_config.type, self.sending_config.duration, self.sending_config.interval,
-                              self.sending_config.message_size, self.scenario_config.connections,
-                              self.scenario_config.group_count, 0, remainder_end,
-                              0, group_member, self.scenario_config.connections // self.scenario_config.group_count),
+                frequent_join_leave_group(self.scenario_config.type, self.sending_config.duration,
+                                          self.sending_config.interval,
+                                          self.sending_config.message_size, self.scenario_config.connections,
+                                          self.scenario_config.group_count, 0, remainder_end,
+                                          0, group_member,
+                                          self.scenario_config.connections // self.scenario_config.group_count),
                 wait(self.scenario_config.type, self.constant_config.wait_time)
             ]
 

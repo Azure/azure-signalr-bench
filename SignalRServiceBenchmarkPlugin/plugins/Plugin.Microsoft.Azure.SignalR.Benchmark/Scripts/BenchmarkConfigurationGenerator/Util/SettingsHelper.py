@@ -60,7 +60,8 @@ def parse_settings(path):
     return config
 
 
-def determine_scenario_config(settings, unit, scenario, transport, use_max_connection=True, message_size=None, group=""):
+def determine_scenario_config(settings, unit, scenario, transport, use_max_connection=True, message_size=None,
+                              group=""):
     scenario_type = ScenarioType()
 
     if scenario == scenario_type.send_to_client:

@@ -3,15 +3,26 @@ from Util.SettingsHelper import *
 
 
 def parse_arguments():
+    scenario_type = ScenarioType()
+
     parser = argparse.ArgumentParser(description='')
 
     # required
-    parser.add_argument('-u', '--unit', type=int, required=True)
-    parser.add_argument('-S', '--scenario', required=True)
-    parser.add_argument('-p', '--protocol', required=True)
-    parser.add_argument('-t', '--transport', required=True)
-    parser.add_argument('-ms', '--message_size', type=int, default=2*1024)
-    parser.add_argument('-s', '--settings', type=str, default='settings.yaml', help='')  # todo: set default value
+    parser.add_argument('-u', '--unit', type=int, required=True, help='Azure SignalR service unit.')
+    parser.add_argument('-S', '--scenario', required=True,  choices=[scenario_type.echo, scenario_type.broadcast,
+                                                                     scenario_type.send_to_client,
+                                                                     scenario_type.send_to_group,
+                                                                     scenario_type.frequent_join_leave_group],
+                        help="Scenario, choose from {}, {}, {}, {}, {}".format(scenario_type.echo,
+                                                                               scenario_type.broadcast,
+                                                                               scenario_type.send_to_client,
+                                                                               scenario_type.send_to_group,
+                                                                               scenario_type.frequent_join_leave_group))
+    parser.add_argument('-p', '--protocol', required=True, help="SignalR Hub protocol")
+    parser.add_argument('-t', '--transport', required=True, help="SignalR connection transport type")
+    parser.add_argument('-ms', '--message_size', type=int, default=2*1024, help="Message size")
+    # todo: set default value
+    parser.add_argument('-s', '--settings', type=str, default='settings.yaml', help='Settings from different unit')
 
     args = parser.parse_args()
 

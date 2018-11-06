@@ -10,29 +10,45 @@ from Util.Common import *
 
 def parse_arguments():
     arg_type = ArgType()
-
-    parser = argparse.ArgumentParser(description='')
+    scenario_type = ScenarioType()
+    parser = argparse.ArgumentParser(description='Generate benchmark configuration')
 
     # required
-    parser.add_argument('-u', '--unit', type=int, required=True)
-    parser.add_argument('-S', '--scenario', required=True)
-    parser.add_argument('-p', '--protocol', required=True)
-    parser.add_argument('-t', '--transport', required=True)
-    parser.add_argument('-U', '--url', required=True)
-    parser.add_argument('-m', '--use_max_connection', action='store_true')
-    parser.add_argument('-g', '--group_type', type=str, choices=[arg_type.tiny_group, arg_type.small_group,
-                                                                 arg_type.big_group], default=arg_type.tiny_group)
+    parser.add_argument('-u', '--unit', type=int, required=True, help="Azure SignalR service unit.")
+    parser.add_argument('-S', '--scenario', required=True, choices=[scenario_type.echo, scenario_type.broadcast,
+                                                                    scenario_type.send_to_client,
+                                                                    scenario_type.send_to_group,
+                                                                    scenario_type.frequent_join_leave_group],
+                        help="Scenario, choose from {}, {}, {}, {}, {}".format(scenario_type.echo,
+                                                                               scenario_type.broadcast,
+                                                                               scenario_type.send_to_client,
+                                                                               scenario_type.send_to_group,
+                                                                               scenario_type.frequent_join_leave_group))
+    parser.add_argument('-p', '--protocol', required=True, help="SignalR Hub protocol")
+    parser.add_argument('-t', '--transport', required=True, help="SignalR connection transport type")
+    parser.add_argument('-U', '--url', required=True, help="App server Url")
+    parser.add_argument('-m', '--use_max_connection', action='store_true',
+                        help="Flag indicates using max connection or not. Set true to apply 1.5x on normal connections")
 
     # todo: add default value
-    parser.add_argument('-ms', '--message_size', type=int, default=2*1024)  # todo: set default value
-    parser.add_argument('-M', '--module', required=True)  # todo: set default value
-    parser.add_argument('-s', '--settings', type=str, default='settings.yaml', help='')  # todo: set default value
-    parser.add_argument('-d', '--duration', type=int, default=240000)
-    parser.add_argument('-i', '--interval', type=int, default=1000)
-    parser.add_argument('-so', '--statistics_output_path', default='counters.txt')
-    parser.add_argument('-si', '--statistic_interval', type=int, default=1000)
-    parser.add_argument('-w', '--wait_time', type=int, default=5000)
-    parser.add_argument('-c', '--config_save_path', default='config.yaml')
+    parser.add_argument('-g', '--group_type', type=str, choices=[arg_type.tiny_group, arg_type.small_group,
+                                                                 arg_type.big_group], default=arg_type.tiny_group,
+                        help="Group type, choose from {}, {}, {}".format(arg_type.tiny_group, arg_type.small_group,
+                                                                         arg_type.big_group))
+    # todo: set default value
+    parser.add_argument('-ms', '--message_size', type=int, default=2*1024, help="Message size")
+    # todo: set default value
+    parser.add_argument('-M', '--module', required=True, help='Plugin name')
+    # todo: set default value
+    parser.add_argument('-s', '--settings', type=str, default='settings.yaml', help='Settings from different unit')
+    parser.add_argument('-d', '--duration', type=int, default=240000, help='Duration to run (second)')
+    parser.add_argument('-i', '--interval', type=int, default=1000, help='Interval for message sending')
+    parser.add_argument('-so', '--statistics_output_path', default='counters.txt',
+                        help='Path to counters which record the statistics while running benchmark')
+    parser.add_argument('-si', '--statistic_interval', type=int, default=1000, help='Interval for collecting intervals')
+    parser.add_argument('-w', '--wait_time', type=int, default=5000, help='Waiting time for each epoch')
+    parser.add_argument('-c', '--config_save_path', default='config.yaml',
+                        help='Path of output benchmark configuration')
 
     args = parser.parse_args()
 
