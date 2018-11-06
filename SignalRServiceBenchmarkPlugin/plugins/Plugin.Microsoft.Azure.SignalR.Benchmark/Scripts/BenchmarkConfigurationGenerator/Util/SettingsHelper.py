@@ -60,12 +60,13 @@ def parse_settings(path):
     return config
 
 
-def determine_scenario_config(settings, unit, scenario, transport, use_max_connection=True, message_size=None,
+def determine_scenario_config(settings, unit, scenario, transport, protocol="json", use_max_connection=True, message_size=None,
                               group=""):
     scenario_type = ScenarioType()
 
     if scenario == scenario_type.send_to_client:
-        key = "{}:{},{}:{},{}:{}".format("scenario", scenario, "transport", transport, "message_size", message_size)
+        key = "{}:{},{}:{},{}:{},{}:{}".format("scenario", scenario, "transport", transport, "protocol", protocol,
+                                               "message_size", message_size)
     elif scenario == scenario_type.send_to_group or scenario == scenario_type.frequent_join_leave_group:
         key = "{}:{},{}:{},{}:{}".format("scenario", scenario, "transport", transport, "group", group)
     else:

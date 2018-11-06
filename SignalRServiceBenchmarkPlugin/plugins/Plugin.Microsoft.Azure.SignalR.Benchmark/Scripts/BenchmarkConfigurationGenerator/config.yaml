@@ -1,71 +1,59 @@
 ModuleName: Plugin, Namespace
 Pipeline:
 - - Method: InitStatisticsCollector
-    Type: frequentJoinLeaveGroup
+    Type: echo
 - - Method: CollectStatistics
     Parameter.Interval: 1000
     Parameter.StatisticsOutputPath: haha.txt
-    Type: frequentJoinLeaveGroup
+    Type: echo
 - - Method: CreateConnection
-    Parameter.ConnectionTotal: 10000
+    Parameter.ConnectionTotal: 3500
     Parameter.HubUrl: http://localhost:5050/signalrbench
     Parameter.Protocol: json
     Parameter.TransportType: Websockets
-    Type: frequentJoinLeaveGroup
+    Type: echo
 - - Method: StartConnection
     Parameter.ConcurrentConnetion: 100
-    Type: frequentJoinLeaveGroup
+    Type: echo
 - - Method: RegisterCallbackRecordLatency
-    Type: frequentJoinLeaveGroup
-- - Method: FrequentJoinLeaveGroup
-    Parameter.ConnectionTotal: 10000
+    Type: echo
+- - Method: Echo
     Parameter.Duration: 240000
-    Parameter.GroupCount: 10000
-    Parameter.GroupInternalModulo: 1
-    Parameter.GroupInternalRemainderBegin: 0
-    Parameter.GroupInternalRemainderEnd: 1
-    Parameter.GroupLevelRemainderBegin: 0
-    Parameter.GroupLevelRemainderEnd: 10000
     Parameter.Interval: 1000
     Parameter.MessageSize: 2048
-    Type: frequentJoinLeaveGroup
+    Parameter.Modulo: 3500
+    Parameter.RemainderBegin: 0
+    Parameter.RemainderEnd: 3000
+    Type: echo
 - - Method: Wait
     Parameter.Duration: 5000
-    Type: frequentJoinLeaveGroup
-- - Method: FrequentJoinLeaveGroup
-    Parameter.ConnectionTotal: 10000
+    Type: echo
+- - Method: Echo
     Parameter.Duration: 240000
-    Parameter.GroupCount: 10000
-    Parameter.GroupInternalModulo: 1
-    Parameter.GroupInternalRemainderBegin: 0
-    Parameter.GroupInternalRemainderEnd: 1
-    Parameter.GroupLevelRemainderBegin: 0
-    Parameter.GroupLevelRemainderEnd: 20000
     Parameter.Interval: 1000
     Parameter.MessageSize: 2048
-    Type: frequentJoinLeaveGroup
+    Parameter.Modulo: 3500
+    Parameter.RemainderBegin: 0
+    Parameter.RemainderEnd: 4000
+    Type: echo
 - - Method: Wait
     Parameter.Duration: 5000
-    Type: frequentJoinLeaveGroup
-- - Method: FrequentJoinLeaveGroup
-    Parameter.ConnectionTotal: 10000
+    Type: echo
+- - Method: Echo
     Parameter.Duration: 240000
-    Parameter.GroupCount: 10000
-    Parameter.GroupInternalModulo: 1
-    Parameter.GroupInternalRemainderBegin: 0
-    Parameter.GroupInternalRemainderEnd: 1
-    Parameter.GroupLevelRemainderBegin: 0
-    Parameter.GroupLevelRemainderEnd: 30000
     Parameter.Interval: 1000
     Parameter.MessageSize: 2048
-    Type: frequentJoinLeaveGroup
+    Parameter.Modulo: 3500
+    Parameter.RemainderBegin: 0
+    Parameter.RemainderEnd: 5000
+    Type: echo
 - - Method: Wait
     Parameter.Duration: 5000
-    Type: frequentJoinLeaveGroup
+    Type: echo
 - - Method: StopCollector
-    Type: frequentJoinLeaveGroup
+    Type: echo
 - - Method: StopConnection
-    Type: frequentJoinLeaveGroup
+    Type: echo
 - - Method: DisposeConnection
-    Type: frequentJoinLeaveGroup
-Types: frequentJoinLeaveGroup
+    Type: echo
+Types: echo

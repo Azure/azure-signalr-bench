@@ -24,17 +24,25 @@ def parse_arguments():
                                                                                scenario_type.send_to_client,
                                                                                scenario_type.send_to_group,
                                                                                scenario_type.frequent_join_leave_group))
-    parser.add_argument('-p', '--protocol', required=True, help="SignalR Hub protocol")
-    parser.add_argument('-t', '--transport', required=True, help="SignalR connection transport type")
+    parser.add_argument('-p', '--protocol', required=True, choices=[arg_type.protocol_json,
+                                                                    arg_type.protocol_messagepack],
+                        help="SignalR Hub protocol, choose from {}, {}".format(arg_type.protocol_json,
+                                                                               arg_type.protocol_messagepack))
+    parser.add_argument('-t', '--transport', required=True, choices=[arg_type.transport_websockets,
+                                                                     arg_type.transport_long_polling,
+                                                                     arg_type.transport_server_sent_event],
+                        help="SignalR connection transport type, choose from: {}, {}, {}".format(
+                            arg_type.transport_websockets, arg_type.transport_long_polling,
+                            arg_type.transport_server_sent_event))
     parser.add_argument('-U', '--url', required=True, help="App server Url")
     parser.add_argument('-m', '--use_max_connection', action='store_true',
                         help="Flag indicates using max connection or not. Set true to apply 1.5x on normal connections")
 
     # todo: add default value
-    parser.add_argument('-g', '--group_type', type=str, choices=[arg_type.tiny_group, arg_type.small_group,
-                                                                 arg_type.big_group], default=arg_type.tiny_group,
-                        help="Group type, choose from {}, {}, {}".format(arg_type.tiny_group, arg_type.small_group,
-                                                                         arg_type.big_group))
+    parser.add_argument('-g', '--group_type', type=str, choices=[arg_type.group_tiny, arg_type.group_small,
+                                                                 arg_type.group_big], default=arg_type.group_tiny,
+                        help="Group type, choose from {}, {}, {}".format(arg_type.group_tiny, arg_type.group_small,
+                                                                         arg_type.group_big))
     # todo: set default value
     parser.add_argument('-ms', '--message_size', type=int, default=2*1024, help="Message size")
     # todo: set default value
@@ -73,7 +81,8 @@ def main():
 
     # determine settings
     scenario_config = determine_scenario_config(scenario_config_collection, args.unit, args.scenario, args.transport,
-                                                args.use_max_connection, args.message_size, args.group_type)
+                                                args.protocol, args.use_max_connection, args.message_size,
+                                                args.group_type)
 
     # basic sending config
     sending_config = SendingConfig(args.duration, args.interval, args.message_size)

@@ -23,7 +23,7 @@ class FrequentJoinLeaveGroup:
         arg_type = ArgType()
         sending = []
         for epoch in range(0, self.scenario_config.step_length):
-            group_member = 3 if self.scenario_config.group_type == arg_type.big_group \
+            group_member = 3 if self.scenario_config.group_type == arg_type.group_big \
                 else self.scenario_config.connections // self.scenario_config.group_count
             remainder_end = self.scenario_config.base_step + epoch * remainder_end_dx
             sending += [
