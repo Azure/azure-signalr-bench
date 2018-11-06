@@ -28,6 +28,7 @@ function set_global_env() {
    #export ResultFolderSuffix='suffix'
    export VMMgrDir=/tmp/VMMgr
    export nginx_root=/mnt/Data/NginxRoot
+   export g_nginx_ns="ingress-nginx"
 }
 
 # depends on set_global_env
