@@ -19,19 +19,20 @@ def parse_arguments():
                                                                     scenario_type.send_to_client,
                                                                     scenario_type.send_to_group,
                                                                     scenario_type.frequent_join_leave_group],
-                        help="Scenario, choose from {}, {}, {}, {}, {}".format(scenario_type.echo,
-                                                                               scenario_type.broadcast,
-                                                                               scenario_type.send_to_client,
-                                                                               scenario_type.send_to_group,
-                                                                               scenario_type.frequent_join_leave_group))
+                        help="Scenario, choose from <{}>|<{}>|<{}>|<{}>|<{}>"
+                        .format(scenario_type.echo,
+                                scenario_type.broadcast,
+                                scenario_type.send_to_client,
+                                scenario_type.send_to_group,
+                                scenario_type.frequent_join_leave_group))
     parser.add_argument('-p', '--protocol', required=True, choices=[arg_type.protocol_json,
                                                                     arg_type.protocol_messagepack],
-                        help="SignalR Hub protocol, choose from {}, {}".format(arg_type.protocol_json,
-                                                                               arg_type.protocol_messagepack))
+                        help="SignalR Hub protocol, choose from <{}>|<{}>".format(arg_type.protocol_json,
+                                                                                  arg_type.protocol_messagepack))
     parser.add_argument('-t', '--transport', required=True, choices=[arg_type.transport_websockets,
                                                                      arg_type.transport_long_polling,
                                                                      arg_type.transport_server_sent_event],
-                        help="SignalR connection transport type, choose from: {}, {}, {}".format(
+                        help="SignalR connection transport type, choose from: <{}>|<{}>|<{}>".format(
                             arg_type.transport_websockets, arg_type.transport_long_polling,
                             arg_type.transport_server_sent_event))
     parser.add_argument('-U', '--url', required=True, help="App server Url")
@@ -41,8 +42,8 @@ def parse_arguments():
     # todo: add default value
     parser.add_argument('-g', '--group_type', type=str, choices=[arg_type.group_tiny, arg_type.group_small,
                                                                  arg_type.group_big], default=arg_type.group_tiny,
-                        help="Group type, choose from {}, {}, {}".format(arg_type.group_tiny, arg_type.group_small,
-                                                                         arg_type.group_big))
+                        help="Group type, choose from <{}>|<{}>|<{}>".format(arg_type.group_tiny, arg_type.group_small,
+                                                                             arg_type.group_big))
     # todo: set default value
     parser.add_argument('-ms', '--message_size', type=int, default=2*1024, help="Message size")
     # todo: set default value

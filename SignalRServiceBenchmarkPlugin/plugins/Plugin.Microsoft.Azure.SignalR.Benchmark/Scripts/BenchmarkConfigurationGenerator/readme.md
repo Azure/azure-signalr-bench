@@ -1,31 +1,47 @@
-# Scripts for generating benchmark configuration
+# Scripts for benchmark configuration
+
+## Generate benchmark configuration
+`generate.py`
+
 Support different benchmark configurations for different unit
 
-## Supported scenario
+### Supported scenario
 * Echo
 * Broadcast
 * Send to client
 * Send to group
 * Frequently join/leave group
 
-## Arguments
+### Arguments
 ```
+usage: generate.py [-h] -u UNIT -S
+                   {echo,broadcast,sendToClient,sendToGroup,frequentJoinLeaveGroup}
+                   -p {json,messagepack} -t
+                   {Websockets,Longpolling,ServerSentEvent} -U URL [-m]
+                   [-g {tiny,small,big}] [-ms MESSAGE_SIZE] -M MODULE
+                   [-s SETTINGS] [-d DURATION] [-i INTERVAL]
+                   [-so STATISTICS_OUTPUT_PATH] [-si STATISTIC_INTERVAL]
+                   [-w WAIT_TIME] [-c CONFIG_SAVE_PATH]
+
+Generate benchmark configuration
+
+optional arguments:
   -h, --help            show this help message and exit
   -u UNIT, --unit UNIT  Azure SignalR service unit.
-  -S {echo,broadcast,sendToClient,sendToGroup,frequentJoinLeaveGroup}, --scenario {echo,broadcast,sendToClient,sendToGroup,frequen
-tJoinLeaveGroup}
-                        Scenario, choose from echo, broadcast, sendToClient,
-                        sendToGroup, frequentJoinLeaveGroup
-  -p PROTOCOL, --protocol PROTOCOL
-                        SignalR Hub protocol
-  -t TRANSPORT, --transport TRANSPORT
-                        SignalR connection transport type
+  -S {echo,broadcast,sendToClient,sendToGroup,frequentJoinLeaveGroup}, --scenario {echo,broadcast,sendToClient,sendToGroup,frequentJoinLeaveGroup}
+                        Scenario, choose from <echo>|<broadcast>|<sendToClient
+                        >|<sendToGroup>|<frequentJoinLeaveGroup>
+  -p {json,messagepack}, --protocol {json,messagepack}
+                        SignalR Hub protocol, choose from <json>|<messagepack>
+  -t {Websockets,Longpolling,ServerSentEvent}, --transport {Websockets,Longpolling,ServerSentEvent}
+                        SignalR connection transport type, choose from:
+                        <Websockets>|<Longpolling>|<ServerSentEvent>
   -U URL, --url URL     App server Url
   -m, --use_max_connection
                         Flag indicates using max connection or not. Set true
                         to apply 1.5x on normal connections
   -g {tiny,small,big}, --group_type {tiny,small,big}
-                        Group type, choose from tiny, small, big
+                        Group type, choose from <tiny>|<small>|<big>
   -ms MESSAGE_SIZE, --message_size MESSAGE_SIZE
                         Message size
   -M MODULE, --module MODULE
@@ -48,18 +64,18 @@ tJoinLeaveGroup}
 
 ```
 
-### Settings
+#### Settings
 
 The `settings` is a `yaml` file, there is an example shown as below.
 
 
-#### unit map
+##### unit map
 SignalR service unit map to list index. For example, unit 5 map to index 2, then for scenario "scenario:echo,transport:Websocket", the noral connection is 3000, which is in the index 2. 
 
-#### group count
+##### group count
 Group count for different group type.
 
-#### scenario
+##### scenario
 All parameters that is independent to unit is defined in key.
 For "echo", "broadcast", the key is in format of: `scenario:<SCENARIO>,transport:<TRANSPORT>`  
 For "send to client", the key is in format of: `scenario:<SCENARIO>,transport:<TRANSPORT>,message_size:<MESSAGE_SIZE>`
@@ -118,5 +134,38 @@ scenario:sendToGroup,transport:Websockets,group:small:
   step: [1000,2000,10000,4000]
   step_length: [1,2,3,4]
   concurrent: [100,100,100,100]
+
+```
+
+
+## Get configuration information
+
+`get_sending_connection.py`
+
+Get sending connections list for epoches.
+
+### Arguments
+```
+usage: get_sending_connection.py [-h] -u UNIT -S
+                   {echo,broadcast,sendToClient,sendToGroup,frequentJoinLeaveGroup}
+                   -p {json,messagepack} -t
+                   {Websockets,Longpolling,ServerSentEvent} [-ms MESSAGE_SIZE]
+                   [-s SETTINGS]
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -u UNIT, --unit UNIT  Azure SignalR service unit.
+  -S {echo,broadcast,sendToClient,sendToGroup,frequentJoinLeaveGroup}, --scenario {echo,broadcast,sendToClient,sendToGroup,frequentJoinLeaveGroup}
+                        Scenario, choose from <echo>|<broadcast>|<sendToClient
+                        >|<sendToGroup>|<frequentJoinLeaveGroup>
+  -p {json,messagepack}, --protocol {json,messagepack}
+                        SignalR Hub protocol, choose from <json>|<messagepack>
+  -t {Websockets,Longpolling,ServerSentEvent}, --transport {Websockets,Longpolling,ServerSentEvent}
+                        SignalR connection transport type, choose from:
+                        <Websockets>|<Longpolling>|<ServerSentEvent>
+  -ms MESSAGE_SIZE, --message_size MESSAGE_SIZE
+                        Message size
+  -s SETTINGS, --settings SETTINGS
+                        Settings from different unit
 
 ```
