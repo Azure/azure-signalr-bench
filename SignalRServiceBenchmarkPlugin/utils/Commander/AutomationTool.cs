@@ -132,7 +132,7 @@ namespace Commander
             var command = (SshCommand)result.AsyncState;
             if (command.ExitStatus != 0)
             {
-                Log.Error($"SshCommand {command.CommandText} occurs error: {command.Error}");
+                Log.Error($"SshCommand '{command.CommandText}' occurs error: {command.Error}");
                 throw new Exception(command.Error);
             }
         }
@@ -279,7 +279,7 @@ namespace Commander
             }
             else
             {
-                command = client.CreateCommand($"cd {directory}; tar zxvf {fileName}");
+                command = client.CreateCommand($"cd {directory}; mkdir {filenameWithoutExtension}; tar zxvf {fileName} -C {directory}/{filenameWithoutExtension}");
             }
             var result = command.Execute();
             if (command.Error != "")
