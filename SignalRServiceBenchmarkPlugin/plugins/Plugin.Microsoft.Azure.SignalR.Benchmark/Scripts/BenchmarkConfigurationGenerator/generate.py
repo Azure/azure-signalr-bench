@@ -47,11 +47,11 @@ def parse_arguments():
     # todo: set default value
     parser.add_argument('-ms', '--message_size', type=int, default=2*1024, help="Message size")
     # todo: set default value
-    parser.add_argument('-M', '--module', required=True, help='Plugin name')
+    parser.add_argument('-M', '--module', help='Plugin name', default='Plugin.Microsoft.Azure.SignalR.Benchmark.SignalRBenchmarkPlugin, Plugin.Microsoft.Azure.SignalR.Benchmark')
     # todo: set default value
     parser.add_argument('-s', '--settings', type=str, default='settings.yaml', help='Settings from different unit')
-    parser.add_argument('-d', '--duration', type=int, default=240000, help='Duration to run (second)')
-    parser.add_argument('-i', '--interval', type=int, default=1000, help='Interval for message sending')
+    parser.add_argument('-d', '--duration', type=int, default=240, help='Duration to run (second)')
+    parser.add_argument('-i', '--interval', type=int, default=1000, help='Interval for message sending (millisecond)')
     parser.add_argument('-so', '--statistics_output_path', default='counters.txt',
                         help='Path to counters which record the statistics while running benchmark')
     parser.add_argument('-si', '--statistic_interval', type=int, default=1000, help='Interval for collecting intervals')
@@ -61,6 +61,8 @@ def parse_arguments():
 
     args = parser.parse_args()
 
+    # unit convert from second to millisecond
+    args.duration = args.duration * 1000
     return args
 
 
