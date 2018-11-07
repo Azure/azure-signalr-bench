@@ -11,7 +11,8 @@ function set_global_env() {
       relative_dir=$2
    fi
    export JenkinsRootPath="$Jenkins_Workspace_Root"
-   export ScriptWorkingDir=$Jenkins_Workspace_Root/${relative_dir}/Scripts                     # folders to find all scripts
+   export PluginScriptWorkingDir=$Jenkins_Workspace_Root/${relative_dir}/SignalRServiceBenchmarkPlugin/plugins/Plugin.Microsoft.Azure.SignalR.Benchmark/Scripts/BenchmarkConfigurationGenerator/
+   export ScriptWorkingDir=$Jenkins_Workspace_Root/${relative_dir}/Scripts/                     # folders to find all scripts
    export CurrentWorkingDir=$Jenkins_Workspace_Root/${relative_dir}/v2/JenkinsScript/     # workding directory
    export CommandWorkingDir=$Jenkins_Workspace_Root/${relative_dir}/SignalRServiceBenchmarkPlugin/utils/Commander
 ############# those configurations are shared in Jenkins folder #####
@@ -171,7 +172,7 @@ function run_benchmark() {
                fi     
             fi
             ## TODO generate configuration
-            run_and_gen_report $tag $Scenario $Transport $MessageEncoding $user $passwd "$connectStr" $k8s_result_dir
+            run_and_gen_report $tag $Scenario $Transport $MessageEncoding $user $passwd "$connectStr" $k8s_result_dir $unit
             if [ "$service_name" != "" ]
             then
                if [ "$collect_pod_top_pid" != "" ]
@@ -212,12 +213,24 @@ function run_and_gen_report() {
   local passwd="$6"
   local connectionString="$7"
   local outputDir="$8"
+  local unit=$9
+
+  cd $ScriptWorkingDir
+  local appserverUrls=`python extract_ip.py -i $PublicIps -q appserverPub`
+
+  cd $PluginScriptWorkingDir
+  local config_path=$PluginScriptWorkingDir/${unit}_${Scenario}_${Transport}_${MessageEncoding}.config
+  python3 generate.py -u $unit -S $Scenario \
+                      -t $Transport -p $MessageEncoding \
+                      -U $appserverUrls -d $sigbench_run_duration \
+                      -c $config_path
+
   #TODO dummy values
   local connection=3000
   local concurrentConnection=300
   local send=1000
   
-  run_command $user $passwd $connectionString $outputDir
+  run_command $user $passwd $connectionString $outputDir $config_path
   cd $ScriptWorkingDir
      #### generate the connection configuration for HTML ####
 cat << EOF > configs/cmd_4_${MessageEncoding}_${Scenario}_${tag}_${Transport}
@@ -239,13 +252,12 @@ function run_command() {
   local passwd="$2"
   local connectionString="$3"
   local outputDir="$4"
+  local configPath=$5
   cd $ScriptWorkingDir
   local master=`python extract_ip.py -i $PrivateIps -q master`
   local appserver=`python extract_ip.py -i $PrivateIps -q appserver`
   local slaves=`python extract_ip.py -i $PrivateIps -q slaves`
-  local appserverUrls=`python extract_ip.py -i $PublicIps -q appserverPub`
 
-  python parse_config.py -i /home/wanl/benchmarkConfiguration/echo.yaml -s $appserverUrls > echo.yaml
   cd $CommandWorkingDir
   local remoteCmd="remove_counters.sh"
   cat << EOF > $remoteCmd
@@ -265,7 +277,7 @@ EOF
          --SlaveProject="/home/wanl/executables/slave" \
          --AppserverTargetPath="/home/${user}/appserver.tgz" --MasterTargetPath="/home/${user}/master.tgz" \
          --SlaveTargetPath="/home/${user}/slave.tgz" \
-         --BenchmarkConfiguration="$ScriptWorkingDir/echo.yaml" \
+         --BenchmarkConfiguration="$configPath" \
          --BenchmarkConfigurationTargetPath="/home/${user}/signalr.yaml" \
          --AzureSignalRConnectionString="$connectionString"
   sshpass -p ${passwd} scp -o StrictHostKeyChecking=no -o LogLevel=ERROR ${user}@${master}:/home/${user}/counters.txt ${outputDir}/
