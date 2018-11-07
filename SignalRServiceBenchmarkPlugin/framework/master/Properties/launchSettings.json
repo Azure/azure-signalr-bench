@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "master": {
+      "commandName": "Project",
+      "commandLineArgs": "-- --BenchmarkConfiguration \"..\\..\\..\\BenchmarkConfigurationSample.yaml\""
+    }
+  }
+}
