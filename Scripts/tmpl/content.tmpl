@@ -1,0 +1,77 @@
+{{define "content"}}
+{{template "header"}}
+    <script type="text/javascript" src="latency_table.js"></script>
+    <script type="text/javascript" src="latency_table_500ms_category.js"></script>
+    <script type="text/javascript" src="latency_table_1s_category.js"></script>
+    <script type="text/javascript" src="latency_donut.js"></script>
+    <script type="text/javascript" src="latency_area.js"></script>
+    <script type="text/javascript" src="latency_rate.js"></script>
+    <script type="text/javascript" src="latency_rate_size.js"></script>
+    <script type="text/javascript" src="CPU_metrics1.js"></script>
+    <script type="text/javascript" src="CPU_metrics2.js"></script>
+    <script type="text/javascript" src="CPU_metrics3.js"></script>
+    <script type="text/javascript" src="CPU_metrics4.js"></script>
+    <script type="text/javascript" src="Memory_metrics1.js"></script>
+    <script type="text/javascript" src="Memory_metrics2.js"></script>
+    <script type="text/javascript" src="Memory_metrics3.js"></script>
+    <script type="text/javascript" src="Memory_metrics4.js"></script>
+
+</head>
+<body>
+  <div class="container">
+        <header>
+            <h1>SignalR Service Performance Report Summary</h1>
+        </header>
+	<div class="wrapper clearfix">
+          <div class="content">
+                <section>
+                    <h2>Environment</h2>
+		    <div>
+			<ul>
+				<li>Server: {{.Endpoint}}</li>
+				<li>Concurrent connection: {{.ConcurrentConnection}}</lib>
+				<li>Online connections: {{.OnlineConnections}}</li>
+				<li>Active connections: {{.ActiveConnections}}</li>
+				<li>Connection duration: {{.Duration}} (s)</li>
+				<li>Hub: {{.Hub}}</li>
+				<li>Benchmark: {{.Benchmark}}</li>
+				<li><a href="cpuinfo.txt">CPU Information</a></li>
+			</ul>
+		    </div>
+                </section>
+          </div>
+	  <div class="content">
+                <section>
+                    <h2>Latency distribution</h2>
+		    <div id="piechart_3d"></div>
+		    <div id="area_div"></div>
+		    <h3>Latency distribution in the last second</h3>
+		    <div id="table_div"></div>
+		    <div id="500ms_percent_table_div"></div>
+		    <div id="1s_percent_table_div"></div>
+                </section>
+          </div>
+	  <div class="content">
+                <section>
+                    <h2>Sending/Receiving rate</h2>
+		    <div id="send_recv_rate"></div>
+		    <div id="send_recv_size"></div>
+                </section>
+          </div>
+	  <div class="content">
+                <section>
+                    <h2>CPU & Memory metrics for Service</h2>
+		    <div id="CPU_metrics1"></div>
+		    <div id="CPU_metrics2"></div>
+		    <div id="CPU_metrics3"></div>
+		    <div id="CPU_metrics4"></div>
+		    <div id="Memory_metrics1"></div>
+		    <div id="Memory_metrics2"></div>
+		    <div id="Memory_metrics3"></div>
+		    <div id="Memory_metrics4"></div>
+                </section>
+          </div>
+
+        </div>
+{{template "footer"}}
+{{end}}

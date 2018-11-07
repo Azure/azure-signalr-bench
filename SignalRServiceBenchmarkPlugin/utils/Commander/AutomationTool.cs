@@ -41,6 +41,7 @@ namespace Commander
 
         // Scp/Ssh clients
         private RemoteClients _remoteClients;
+        private AsyncCallback _sshCmdCallback;
 
         public AutomationTool(ArgsOption argOption)
         {
@@ -57,7 +58,7 @@ namespace Commander
             _rpcPort = argOption.RpcPort;
             _appserverPort = argOption.AppserverPort;
             _azureSignalRConnectionString = argOption.AzureSignalRConnectionString;
-
+            _sshCmdCallback = new AsyncCallback(OnAsyncSshCommandComplete);
             // Create clients
             var slaveHostnames = (from slave in argOption.SlaveList select slave.Split(':')[0]).ToList();
             _remoteClients = new RemoteClients();
@@ -99,9 +100,16 @@ namespace Commander
                 // Clients connect to host
                 _remoteClients.ConnectAll();
 
-                var appserverExecutable = new FileInfo($"{_appserverProject}/{_baseName}.zip");
-                var masterExecutable = new FileInfo($"{_masterProject}/{_baseName}.zip");
-                var slaveExecutable = new FileInfo($"{_slaveProject}/{_baseName}.zip");
+                FileInfo appserverExecutable, masterExecutable, slaveExecutable;
+                appserverExecutable = File.Exists($"{_appserverProject}/{_baseName}.tgz") ?
+                    new FileInfo($"{_appserverProject}/{_baseName}.tgz") :
+                    new FileInfo($"{_appserverProject}/{_baseName}.zip");
+                masterExecutable = File.Exists($"{_masterProject}/{_baseName}.tgz") ?
+                    new FileInfo($"{_masterProject}/{_baseName}.tgz") :
+                    new FileInfo($"{_masterProject}/{_baseName}.zip");
+                slaveExecutable = File.Exists($"{_slaveProject}/{_baseName}.tgz") ?
+                    new FileInfo($"{_slaveProject}/{_baseName}.tgz") :
+                    new FileInfo($"{_slaveProject}/{_baseName}.zip");
 
                 // Copy executables and configurations
                 CopyExcutables(appserverExecutable, masterExecutable, slaveExecutable);
@@ -116,6 +124,16 @@ namespace Commander
             {
                 // Disconnect and dispose
                 _remoteClients.DestroyAll();
+            }
+        }
+
+        private void OnAsyncSshCommandComplete(IAsyncResult result)
+        {
+            var command = (SshCommand)result.AsyncState;
+            if (command.ExitStatus != 0)
+            {
+                Log.Error($"SshCommand '{command.CommandText}' occurs error: {command.Error}");
+                throw new Exception(command.Error);
             }
         }
 
@@ -150,12 +168,11 @@ namespace Commander
 
                 // Start app server
                 Log.Information($"Start app server");
-                var appserverAsyncResults = (from command in appserverSshCommands select command.BeginExecute()).ToList();
+                var appserverAsyncResults = (from command in appserverSshCommands select command.BeginExecute(OnAsyncSshCommandComplete, command)).ToList();
 
                 // Start slaves
                 Log.Information($"Start slaves");
-                var slaveAsyncResults = (from command in slaveSshCommands select command.BeginExecute()).ToList();
-
+                var slaveAsyncResults = (from command in slaveSshCommands select command.BeginExecute(OnAsyncSshCommandComplete, command)).ToList();
 
                 // Wait app server started
                 Task.Delay(TimeSpan.FromSeconds(30)).Wait();
@@ -250,11 +267,20 @@ namespace Commander
 
         private void Unzip(SshClient client, string targetPath)
         {
-            InstallZip(client);
-
+            SshCommand command = null;
             var directory = Path.GetDirectoryName(targetPath);
             var filenameWithoutExtension = Path.GetFileNameWithoutExtension(targetPath);
-            var command = client.CreateCommand($"unzip -o -d {filenameWithoutExtension} {targetPath}");
+            var fileName = Path.GetFileName(targetPath);
+            var ext = Path.GetExtension(targetPath);
+            if (string.Equals("zip", ext, StringComparison.OrdinalIgnoreCase))
+            {
+                InstallZip(client);
+                command = client.CreateCommand($"unzip -o -d {filenameWithoutExtension} {targetPath}");
+            }
+            else
+            {
+                command = client.CreateCommand($"cd {directory}; mkdir -p {filenameWithoutExtension}; tar zxvf {fileName} -C {directory}/{filenameWithoutExtension}");
+            }
             var result = command.Execute();
             if (command.Error != "")
             {

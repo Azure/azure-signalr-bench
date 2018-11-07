@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Threading.Tasks;
 using Microsoft.Azure.Management.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent.Core;
@@ -47,11 +48,37 @@ namespace JenkinsScript
         {
             if (_azure.ResourceGroups.Contain(name))
             {
-                _azure.ResourceGroups.DeleteByName(name);
+                int maxTry = 5, i = 0;
+                while (i < maxTry)
+                {
+                    try
+                    {
+                        _azure.ResourceGroups.DeleteByName(name);
+                        return;
+                    }
+                    catch (Exception e)
+                    {
+                        Util.Log($"Fail to remove resource group {name} for {e.Message}");
+                    }
+                    i++;
+                }
             }
             else
             {
                 Util.Log($"Resource group {name} doesn't exist");
+            }
+        }
+
+        public Task DeleteResourceGroupAsync(string name)
+        {
+            if (_azure.ResourceGroups.Contain(name))
+            {
+                return _azure.ResourceGroups.DeleteByNameAsync(name);
+            }
+            else
+            {
+                Util.Log($"Resource group {name} doesn't exist");
+                return Task.CompletedTask;
             }
         }
     }

@@ -1,0 +1,14 @@
+{{define "content"}}
+		<div id="{{.TabID}}">
+        	   <div class="wrapper clearfix">
+		      <div class="content">
+			<section>
+			   <h1>{{.TabHeadline}}</h1>
+			   <ul>
+{{template "tabcontentlist"}}
+			   </ul>
+			</section>
+		      </div>
+	           </div>
+	        </div>
+{{end}}

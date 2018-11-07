@@ -615,7 +615,8 @@ function stop_sdk_server()
 function extract_servicename_from_connectionstring() {
 	local connectionString=$1
 	local is_dogfood=`echo "$connectionString"|grep "servicedev.signalr.net"`
-	if [ "$is_dogfood" != "" ]
+        local is_prod=`echo "$connectionString"|grep "service.signalr.net"`
+	if [ "$is_dogfood" != "" ] || [ "$is_prod" != "" ]
 	then
 		local serviceName=`echo "$connectionString"|awk -F = '{print $2}'|awk -F ";" '{print $1}'|awk -F '//' '{print $2}'|awk -F . '{print $1}'`
 		if [ "$serviceName" != "" ]
@@ -628,6 +629,11 @@ function extract_servicename_from_connectionstring() {
 }
 
 function gen_final_report() {
+  # if there are errors blocking generating report,
+  # the error can also be found
+  cat << EOF > /tmp/send_mail.txt
+Details: $BUILD_URL/console
+EOF
   sh gen_all_tabs.sh
   sh publish_report.sh
   sh gen_summary.sh # refresh summary.html in NginxRoot gen_summary

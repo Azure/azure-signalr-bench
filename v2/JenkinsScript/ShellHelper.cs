@@ -12,8 +12,8 @@ namespace JenkinsScript
         {
             if (errCode != 0)
             {
-                Util.Log($"ERR {errCode}: {result}");
-                Environment.Exit(1);
+                Util.Log($"Handle result ERR {errCode}: {result}");
+                // Environment.Exit(1);
             }
             return;
         }
@@ -121,21 +121,28 @@ namespace JenkinsScript
                 if (host.Contains("localhost") || host.Contains("127.0.0.1")) return;
 
                 Util.Log($"CMD: {user}@{host}: {cmd}");
-                (errCode, result) = ShellHelper.RemoteBash(user, host, sshPort, password, cmd);
-                if (errCode != 0) return;
+                var i = 0;
+                // retry if error occurs
+                while (i < 3)
+                {
+                    (errCode, result) = ShellHelper.RemoteBash(user, host, sshPort, password, cmd);
+                    if (errCode == 0) return;
+                    i++;
+                }
             });
 
             if (errCode != 0)
             {
                 Util.Log($"ERR {errCode}: {result}");
-                Environment.Exit(1);
             }
 
             return (errCode, result);
         }
 
-        public static(int, string) GitCloneRepo(List<string> hosts, string repoUrl, string user, string password, int sshPort,
-            string commit = "", string branch = "origin/master", string repoRoot = "/home/wanl/signalr_auto_test_framework")
+        public static(int, string) GitCloneRepo(List<string> hosts, string repoUrl,
+            string user, string password, int sshPort,
+            string commit = "", string branch = "origin/master",
+            string repoRoot = "/home/wanl/signalr_auto_test_framework", bool cleanOldRepo = true)
         {
             var errCode = 0;
             var result = "";
@@ -149,32 +156,56 @@ namespace JenkinsScript
                 {
                     var errCodeInner = 0;
                     var resultInner = "";
-                    var remoteScriptContent = $@"
+                    var remoteScriptContent = "";
+                    var leftBrace = "{";
+                    var rightBrace = "}";
+                    if (cleanOldRepo)
+                    {
+                        remoteScriptContent = $@"
 #!/bin/bash
-if [ -d {repoRoot} ]
-then
-   rm -rf {repoRoot}
-fi
-git clone {repoUrl} {repoRoot}
-rtn=$?
-## re-check whether repo was cloned successfully
-v=0
-while [ $rtn -ne 0 ] && [ $v -lt 3 ]
-do
-   if [ -d {repoRoot} ]
-   then
-      rm -rf {repoRoot}
-   fi
-   git clone {repoUrl} {repoRoot}
-   rtn=$?
-   if [ $rtn -eq 0 ]
-   then
-      break
-   fi
-   v=$(($v+1))
-done
-cd {repoRoot}
-git checkout {branch}
+# clean the old repo directory
+function cloneRepo() {leftBrace}
+    if [ -d {repoRoot} ]
+    then
+        rm -rf {repoRoot}
+    fi
+";
+                    }
+                    else
+                    {
+                        remoteScriptContent = $@"
+#!/bin/bash
+# use existing repo if it exists to not break the running process
+function cloneRepo() {leftBrace}
+    if [ -d {repoRoot} ]
+    then
+        return
+    fi
+";
+                    }
+                    remoteScriptContent += $@"
+    git clone {repoUrl} {repoRoot}
+    rtn=$?
+    ## re-check whether repo was cloned successfully
+    v=0
+    while [ $rtn -ne 0 ] && [ $v -lt 3 ]
+    do
+        if [ -d {repoRoot} ]
+        then
+            rm -rf {repoRoot}
+        fi
+        git clone {repoUrl} {repoRoot}
+        rtn=$?
+        if [ $rtn -eq 0 ]
+        then
+            break
+        fi
+        v=$(($v+1))
+    done
+    cd {repoRoot}
+    git checkout {branch}
+{rightBrace}
+cloneRepo
 ";
                     var scriptFile = "remoteScript.sh";
                     using (StreamWriter sw = new StreamWriter(scriptFile))
@@ -182,26 +213,45 @@ git checkout {branch}
                         sw.Write(remoteScriptContent);
                     }
                     var innerCmd = $"chmod +x {scriptFile}; ./{scriptFile}";
+                    // execute script on remote machine can be retried if failed
                     var i = 0;
-                    var retry = 3;
-                    while (i < retry)
+                    var retry = 5;
+                    for (; i < retry; i++)
                     {
-                        (errCode, result) = ShellHelper.ScpFileLocalToRemote(user, host, password, scriptFile, "~/");
+                        (errCode, result) = ScpFileLocalToRemote(user, host, password, scriptFile, "~/");
                         if (errCode != 0)
                         {
+                            // handle error
                             Console.WriteLine("Fail to copy script from local to remote: {errCode}");
+                            if (i < retry)
+                            {
+                                Console.WriteLine("We will retry");
+                                continue;
+                            }
+                            else
+                            {
+                                Console.WriteLine("Retry limit reaches, fail finally!");
+                            }
                         }
-                        (errCodeInner, resultInner) = ShellHelper.RemoteBash(user, host, sshPort, password, innerCmd);
+                        (errCodeInner, resultInner) = RemoteBash(user, host, sshPort, password, innerCmd);
+                        errCode = errCodeInner;
+                        result = resultInner;
                         if (errCodeInner != 0)
                         {
-                            errCode = errCodeInner;
-                            result = resultInner;
+                            // handle error
+                            if (i < retry)
+                            {
+                                Console.WriteLine($"Retry remote bash for {innerCmd}");
+                            }
+                            else
+                            {
+                                Console.WriteLine($"Retry limit reaches, fail finally!");
+                            }
                         }
                         else
                         {
                             break;
                         }
-                        i++;
                     }
                 }));
             });
@@ -211,65 +261,7 @@ git checkout {branch}
             if (errCode != 0)
             {
                 Util.Log($"ERR {errCode}: {result}");
-                Environment.Exit(1);
-            }
-
-            return (errCode, result);
-        }
-
-        public static(int, string) ScpRepo(List<string> hosts, string repoUrl, string user, string password, int sshPort,
-            string commit = "", string branch = "origin/master", string repoRoot = "/home/wanl/signalr_auto_test_framework")
-        {
-            var errCode = 0;
-            var result = "";
-
-            var tasks = new List<Task>();
-
-            hosts.ForEach(host =>
-            {
-                tasks.Add(Task.Run(() =>
-                {
-                    var errCodeInner = 0;
-                    var resultInner = "";
-
-                    if (host.Contains("localhost") || host.Contains("127.0.0.1")) return;
-
-                    // clear old repo
-                    var cmdInner = $"rm -rf {repoRoot};"; //TODO
-                    Util.Log($"CMD: {user}@{host}: {cmdInner}");
-                    (errCodeInner, resultInner) = ShellHelper.RemoteBash(user, host, sshPort, password, cmdInner);
-
-                    if (errCodeInner != 0)
-                    {
-                        errCode = errCodeInner;
-                        result = resultInner;
-                    }
-
-                    // scp local repo to remote
-                    ScpDirecotryLocalToRemote(user, host, password, repoRoot, repoRoot);
-
-                    // // set node on git
-                    // cmdInner = $"cd {repoRoot};";
-                    // cmdInner += $"git checkout {branch};";
-                    // cmdInner += $"git reset --hard {commit};";
-                    // cmdInner += $" cd ~ ;";
-                    // Util.Log($"CMD: {user}@{host}: {cmdInner}");
-                    // (errCodeInner, resultInner) = ShellHelper.RemoteBash(user, host, sshPort, password, cmdInner);
-
-                    if (errCodeInner != 0)
-                    {
-                        errCode = errCodeInner;
-                        result = resultInner;
-                    }
-                }));
-            });
-
-            Task.WhenAll(tasks).Wait();
-
-            if (errCode != 0)
-            {
-                Util.Log($"ERR {errCode}: {result}");
-                Environment.Exit(1);
+                //Environment.Exit(1);
             }
 
             return (errCode, result);
@@ -286,8 +278,9 @@ git checkout {branch}
                 var targetLog = logPath[i];
                 var applogFolder = $"log{i}";
                 var host = hosts[i];
-                var recheckTimeout = 120;
+                var recheckTimeout = 600;
                 var recheck = 0;
+                string content = null;
                 while (recheck < recheckTimeout)
                 {
                     Util.Log($"remote copy from {targetLog} to {applogFolder}");
@@ -302,7 +295,7 @@ git checkout {branch}
                         // check whether contains the keywords
                         using (StreamReader sr = new StreamReader(applogFolder))
                         {
-                            var content = sr.ReadToEnd();
+                            content = sr.ReadToEnd();
                             if (content.Contains(keywords))
                             {
                                 Util.Log($"{host} started!");
@@ -317,7 +310,13 @@ git checkout {branch}
                 if (recheck == recheckTimeout)
                 {
                     Util.Log($"Fail to start server {host}!!!");
-                    Environment.Exit(1);
+                    if (content != null)
+                    {
+                        Util.Log($"log content: {content}");
+                    }
+
+                    // Any server fails to start is a fatal error, so exit.
+                    //Environment.Exit(1);
                 }
             }
         }
@@ -326,21 +325,70 @@ git checkout {branch}
         {
             var errCode = 0;
             var result = "";
-            var cmd = "";
 
-            for (var i = 0; i < hosts.Count; i++)
+            for (var j = 0; j < hosts.Count; j++)
             {
-                cmd = $"cd {appSvrRoot}; " +
-                    $"export Azure__SignalR__ConnectionString='{azureSignalrConnectionStrings[i]}'; " +
-                    $"export useLocalSignalR={useLocalSingalR}; " +
-                    $"dotnet run > {logPath[i]}";
-                Util.Log($"{user}@{hosts[i]}: {cmd}");
-                (errCode, result) = ShellHelper.RemoteBash(user, hosts[i], sshPort, password, cmd, wait : false);
+                var remoteScriptContent = $@"
+#!/bin/bash
+isRun=`ps axu|grep dotnet|wc -l`
+if [ $isRun -eq 1 ]
+then
+    cd {appSvrRoot}
+    export Azure__SignalR__ConnectionString=""{azureSignalrConnectionStrings[j]}""
+    export useLocalSignalR={useLocalSingalR}
+    dotnet run > {logPath[j]}
+else
+    echo 'AppServer has started'
+fi
+";
+                var scriptFile = $"remoteScript{j}.sh";
+                using (StreamWriter sw = new StreamWriter(scriptFile, false))
+                {
+                    sw.Write(remoteScriptContent);
+                }
+                var innerCmd = $"chmod +x {scriptFile}; ./{scriptFile}";
+                var i = 0;
+                var retry = 5;
+                for (; i < retry; i++)
+                {
+                    (errCode, result) = ScpFileLocalToRemote(user, hosts[j], password, scriptFile, "~/");
+                    if (errCode != 0)
+                    {
+                        // handle error
+                        Console.WriteLine("Fail to copy script from local to remote: {errCode}");
+                        if (i < retry)
+                        {
+                            Console.WriteLine("We will retry");
+                            continue;
+                        }
+                        else
+                        {
+                            Console.WriteLine("Retry limit reaches, fail finally!");
+                        }
+                    }
+                    (errCode, result) = RemoteBash(user, hosts[j], sshPort, password, innerCmd, wait: false);
+                    if (errCode != 0)
+                    {
+                        // handle error
+                        if (i < retry)
+                        {
+                            Console.WriteLine($"Retry remote bash for {innerCmd}");
+                        }
+                        else
+                        {
+                            Console.WriteLine($"Retry limit reaches, fail finally!");
+                        }
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
 
                 if (errCode != 0)
                 {
                     Util.Log($"ERR {errCode}: {result}");
-                    Environment.Exit(1);
+                    //Environment.Exit(1);
                 }
             }
             // wait the starting of AppServer, sometimes the log file has not yet generated when we want to read it.
@@ -365,8 +413,8 @@ git checkout {branch}
             };
             if (errCode != 0)
             {
-                Util.Log($"ERR {errCode}: {result}");
-                Environment.Exit(1);
+                Util.Log($"RPC slave stopped: ERR {errCode}: {result}");
+                //Environment.Exit(1);
             }
             // wait the starting of slave VM.
             Task.Delay(TimeSpan.FromSeconds(1)).Wait();
@@ -379,9 +427,9 @@ git checkout {branch}
             string host, List<string> slaves, string user, string password, int sshPort, string logPath,
             string serviceType, string transportType, string hubProtocol, string scenario,
             int connection, int concurrentConnection, int duration, int interval, List<string> pipeLine,
-            int groupNum, int groupOverlap, string messageSize, string serverUrl, string suffix,
+            int groupNum, int groupOverlap, int combineFactor, string messageSize, string serverUrl, string suffix,
             string masterRoot, string sendToFixedClient, bool enableGroupJoinLeave, bool stopSendIfLatencyBig,
-            bool stopSendIfConnectionErrorBig)
+            bool stopSendIfConnectionErrorBig, string connectionString)
         {
 
             Util.Log($"service type: {serviceType}, transport type: {transportType}, hub protocol: {hubProtocol}, scenario: {scenario}");
@@ -407,12 +455,31 @@ git checkout {branch}
             // todo
             var outputCounterDir = Path.Join(userRoot, $"results/{Environment.GetEnvironmentVariable("result_root")}/{suffix}/");
             outputCounterFile = outputCounterDir + $"counters.txt";
+            var connectionStringOpt = "";
+            var serverOption = "";
+            if (connectionString != null)
+            {
+                if (!connectionString.StartsWith('\'') && !connectionString.StartsWith('"'))
+                {
+                    connectionStringOpt = $"--connectionString '{connectionString}'";
+                }
+                else
+                {
+                    connectionStringOpt = $"--connectionString {connectionString}";
+                }
+            }
+            else
+            {
+                serverOption = $"--serverUrl '{serverUrl}'";
+            }
+
+            var concatPipeline = string.Join(";", pipeLine);
 
             cmd = $"cd {masterRoot}; ";
             cmd += $"mkdir -p {outputCounterDir} || true;";
             cmd += $"dotnet run -- " +
                 $"--rpcPort 5555 " +
-                $"--duration {duration} --connections {connection} --interval {interval} --slaves {slaves.Count} --serverUrl '{serverUrl}' --pipeLine '{string.Join(";", pipeLine)}' " +
+                $"--duration {duration} --connections {connection} --interval {interval} --slaves {slaves.Count} {serverOption} --pipeLine '{string.Join(";", pipeLine)}' " +
                 $"-v {serviceType} -t {transportType} -p {hubProtocol} -s {scenario} " +
                 $" --slaveList '{slaveList}' " +
                 $" --retry {0} " +
@@ -420,15 +487,17 @@ git checkout {branch}
                 $" --concurrentConnection {concurrentConnection} " +
                 $" --groupNum {groupNum} " +
                 $" --groupOverlap {groupOverlap} " +
+                $" --combineFactor {combineFactor} " +
                 $"--messageSize {messageSize} " +
                 $"--sendToFixedClient {sendToFixedClient} " +
                 $"--enableGroupJoinLeave {enableGroupJoinLeave} " +
                 $"--stopSendIfLatencyBig {stopSendIfLatencyBig} " +
                 $"--stopSendIfConnectionErrorBig {stopSendIfConnectionErrorBig} " +
-                $" -o '{outputCounterFile}' |tee {logPath}";
+                $"{connectionStringOpt} " + // this option is only for RestAPI scenario test
+                $" -o '{outputCounterFile}' | tee {logPath}";
 
             Util.Log($"CMD: {user}@{host}: {cmd}");
-            (errCode, result) = ShellHelper.RemoteBash(user, host, sshPort, password, cmd, captureConsole : true);
+            (errCode, result) = ShellHelper.RemoteBash(user, host, sshPort, password, cmd, captureConsole: true);
 
             if (errCode != 0)
             {
@@ -436,7 +505,6 @@ git checkout {branch}
             }
 
             return (errCode, result);
-
         }
 
         public static(int, string) StartSignalrService(List<string> hosts, string user, string password, int sshPort, string serviceDir, List<string> logPath)
@@ -454,7 +522,7 @@ git checkout {branch}
                 if (errCode != 0)
                 {
                     Util.Log($"ERR {errCode}: {result}");
-                    Environment.Exit(1);
+                    //Environment.Exit(1);
                 }
             }
 
@@ -557,22 +625,30 @@ git checkout {branch}
             return (errCode, result);
         }
         public static(int, string) PrepareLogPath(string host, string user, string password, int sshPort,
-            string dstDir, string time, string suffix)
+            string dstDir, string time, string suffix, bool removeOldLog=true)
         {
 
             var targetDir = Path.Join(dstDir, time);
 
             var errCode = 0;
             var result = "";
-            var cmd = $"rm -rf ~/logs || true; rm -rf ~/results || true; mkdir -p {targetDir}";
+            var cmd = "";
+            if (removeOldLog)
+            {
+                cmd = $"rm -rf ~/logs || true; rm -rf ~/results || true; mkdir -p {targetDir}";
+            }
+            else
+            {
+                cmd = $"[[ ! -e {targetDir} ]] && mkdir -p {targetDir}";
+            }
 
             Util.Log($"{user}@{host}: {cmd}");
             (errCode, result) = ShellHelper.RemoteBash(user, host, sshPort, password, cmd, wait : false);
 
             if (errCode != 0)
             {
-                Util.Log($"ERR {errCode}: {result}");
-                Environment.Exit(1);
+                Util.Log($"Fail to prepare log ERR {errCode}: {result}");
+                //Environment.Exit(1);
             }
 
             result = Path.Join(targetDir, $"log_{suffix}.txt");
@@ -590,8 +666,7 @@ git checkout {branch}
                 (errCode, result) = ShellHelper.ScpDirecotryRemoteToLocal(user, host, password, remote, local);
                 if (errCode != 0)
                 {
-                    Util.Log($"ERR {errCode}: {result}");
-                    Environment.Exit(1);
+                    Util.Log($"Collect statistic ERR {errCode}: {result}");
                 }
             });
             return (errCode, result);
@@ -615,8 +690,8 @@ git checkout {branch}
                 (errCode, result) = ScpFileLocalToRemote(user, host, password, "serviceruntime.zip", "~/");
                 if (errCode != 0)
                 {
-                    Util.Log($"ERR {errCode}: {result}");
-                    Environment.Exit(1);
+                    Util.Log($"Fail to transfer service to VM ERR {errCode}: {result}");
+                    //Environment.Exit(1);
                 }
 
                 // install unzip
@@ -641,7 +716,6 @@ git checkout {branch}
         {
             var errCode = 0;
             var result = "";
-            var cmd = "";
 
             Util.Log($"modify service appsettings");
 
