@@ -23,6 +23,10 @@ class Broadcast:
         sending = []
         for epoch in range(0, self.scenario_config.step_length):
             remainder_end = self.scenario_config.base_step + epoch * remainder_end_dx
+
+            if remainder_end - remainder_begin > self.scenario_config.connections:
+                break
+
             sending += [
                 broadcast(self.scenario_config.type, self.sending_config.duration, self.sending_config.interval, remainder_begin,
                           remainder_end, self.scenario_config.connections, self.sending_config.message_size),
@@ -31,6 +35,6 @@ class Broadcast:
 
         pipeline = pre_sending + sending + post_sending
 
-        config = TemplateSetter.set_config(self.constant_config.module, self.scenario_config.type, pipeline)
+        config = TemplateSetter.set_config(self.constant_config.module, [self.scenario_config.type], pipeline)
 
         ConfigSaver.save_yaml(config, self.constant_config.config_save_path)

@@ -1,4 +1,4 @@
-ModuleName: Plugin, Namespace
+ModuleName: Plugin.Microsoft.Azure.SignalR.Benchmark.SignalRBenchmarkPlugin, Plugin.Microsoft.Azure.SignalR.Benchmark
 Pipeline:
 - - Method: InitStatisticsCollector
     Type: echo
@@ -7,7 +7,7 @@ Pipeline:
     Parameter.StatisticsOutputPath: haha.txt
     Type: echo
 - - Method: CreateConnection
-    Parameter.ConnectionTotal: 3000
+    Parameter.ConnectionTotal: 7500
     Parameter.HubUrl: http://localhost:5050/signalrbench
     Parameter.Protocol: json
     Parameter.TransportType: Websockets
@@ -18,43 +18,10 @@ Pipeline:
 - - Method: RegisterCallbackRecordLatency
     Type: echo
 - - Method: Echo
-    Parameter.Duration: 240000
-    Parameter.Interval: 1000
-    Parameter.MessageSize: 2048
-    Parameter.Modulo: 3000
-    Parameter.RemainderBegin: 0
-    Parameter.RemainderEnd: 2000
-    Type: echo
-- - Method: Wait
     Parameter.Duration: 5000
-    Type: echo
-- - Method: Echo
-    Parameter.Duration: 240000
     Parameter.Interval: 1000
     Parameter.MessageSize: 2048
-    Parameter.Modulo: 3000
-    Parameter.RemainderBegin: 0
-    Parameter.RemainderEnd: 3000
-    Type: echo
-- - Method: Wait
-    Parameter.Duration: 5000
-    Type: echo
-- - Method: Echo
-    Parameter.Duration: 240000
-    Parameter.Interval: 1000
-    Parameter.MessageSize: 2048
-    Parameter.Modulo: 3000
-    Parameter.RemainderBegin: 0
-    Parameter.RemainderEnd: 4000
-    Type: echo
-- - Method: Wait
-    Parameter.Duration: 5000
-    Type: echo
-- - Method: Echo
-    Parameter.Duration: 240000
-    Parameter.Interval: 1000
-    Parameter.MessageSize: 2048
-    Parameter.Modulo: 3000
+    Parameter.Modulo: 7500
     Parameter.RemainderBegin: 0
     Parameter.RemainderEnd: 5000
     Type: echo
@@ -62,12 +29,12 @@ Pipeline:
     Parameter.Duration: 5000
     Type: echo
 - - Method: Echo
-    Parameter.Duration: 240000
+    Parameter.Duration: 5000
     Parameter.Interval: 1000
     Parameter.MessageSize: 2048
-    Parameter.Modulo: 3000
+    Parameter.Modulo: 7500
     Parameter.RemainderBegin: 0
-    Parameter.RemainderEnd: 6000
+    Parameter.RemainderEnd: 7500
     Type: echo
 - - Method: Wait
     Parameter.Duration: 5000
@@ -78,4 +45,5 @@ Pipeline:
     Type: echo
 - - Method: DisposeConnection
     Type: echo
-Types: echo
+Types:
+- echo
