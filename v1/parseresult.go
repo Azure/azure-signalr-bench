@@ -29,6 +29,7 @@ type Counters struct {
 	LT_1000     int64 `json:"message:lt:1000"`
 	GE_1000     int64 `json:"message:ge:1000"`
 	Sending     int64 `json:"sendingStep"`
+        ConnError   int64 `json:"connection:error"`
 }
 
 type Monitor struct {
@@ -260,6 +261,7 @@ func main() {
         data.addColumn('number', 'GE1000ms(%)');
 		`
 		fmt.Printf("%s\n", chartfunc)
+                fmt.Printf("\tdata.addRows([\n")
                 var curSendingStep int64
                 for i, v := range monitors {
                     curSendingStep = v.Counters.Sending
@@ -270,7 +272,6 @@ func main() {
                               v.Counters.LT_1000 + v.Counters.GE_1000
                         var sumfloat float64
                         sumfloat = float64(sum)
-                        fmt.Printf("\tdata.addRows([\n")
                         fmt.Printf("\t [%d, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f],\n", curSendingStep, float64(v.Counters.LT_100)/sumfloat*100, float64(v.Counters.LT_200)/sumfloat*100,
                                 float64(v.Counters.LT_300)/sumfloat*100, float64(v.Counters.LT_400)/sumfloat*100,
                                 float64(v.Counters.LT_500)/sumfloat*100, float64(v.Counters.LT_600)/sumfloat*100,
@@ -281,9 +282,12 @@ func main() {
                 v = monitors[len(monitors)-1]
                 if v.Counters.Sending != 0 {
                         var sumfloat float64
+                        sum = v.Counters.LT_100 + v.Counters.LT_200 + v.Counters.LT_300 +
+                              v.Counters.LT_400 + v.Counters.LT_500 + v.Counters.LT_600 +
+                              v.Counters.LT_700 + v.Counters.LT_800 + v.Counters.LT_900 +
+                              v.Counters.LT_1000 + v.Counters.GE_1000
                         sumfloat = float64(sum)
-                        fmt.Printf("\tdata.addRows([\n")
-                        fmt.Printf("\t [%d, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f],\n", curSendingStep, float64(v.Counters.LT_100)/sumfloat*100, float64(v.Counters.LT_200)/sumfloat*100,
+                        fmt.Printf("\t [%d, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f],\n", v.Counters.Sending, float64(v.Counters.LT_100)/sumfloat*100, float64(v.Counters.LT_200)/sumfloat*100,
                                 float64(v.Counters.LT_300)/sumfloat*100, float64(v.Counters.LT_400)/sumfloat*100,
                                 float64(v.Counters.LT_500)/sumfloat*100, float64(v.Counters.LT_600)/sumfloat*100,
                                 float64(v.Counters.LT_700)/sumfloat*100, float64(v.Counters.LT_800)/sumfloat*100,
@@ -345,8 +349,67 @@ func main() {
             }
 	}
 	if category500ms {
-		var sum, lt500, ge500 int64
-		var v Monitor
+	    var sum, lt500, ge500 int64
+	    var v Monitor
+            var hasSendingStep bool
+            for _, v := range monitors {
+                if v.Counters.Sending != 0 {
+                    hasSendingStep = true
+                }
+            }
+            if hasSendingStep {
+		var chartfunc string
+		chartfunc = `
+      google.charts.load("current", {packages:["corechart", "line", "table"]});
+      google.charts.setOnLoadCallback(draw500msPercent);
+      function draw500msPercent() {
+        var cssClassNames = {headerCell: 'headerCell', tableCell: 'tableCell'};
+        var options = {showRowNumber: true,'allowHtml': true, 'cssClassNames': cssClassNames, 'alternatingRowStyle': true};
+        var data = new google.visualization.DataTable();
+        data.addColumn('number', 'Sending');
+        data.addColumn('number', 'LT500ms(%)');
+        data.addColumn('number', 'GE500ms(%)');
+			`
+		fmt.Printf("%s\n", chartfunc)
+		fmt.Printf("\tdata.addRows([\n")
+
+                var curSendingStep int64
+                for i, v := range monitors {
+                    curSendingStep = v.Counters.Sending
+                    if curSendingStep != 0 && i + 1 < len(monitors)-1 && monitors[i+1].Counters.Sending == 0 {
+                        sum = v.Counters.LT_100 + v.Counters.LT_200 + v.Counters.LT_300 +
+                              v.Counters.LT_400 + v.Counters.LT_500 + v.Counters.LT_600 +
+                              v.Counters.LT_700 + v.Counters.LT_800 + v.Counters.LT_900 +
+                              v.Counters.LT_1000 + v.Counters.GE_1000
+                        var sumfloat float64
+                        sumfloat = float64(sum)
+		        lt500 = v.Counters.LT_100 + v.Counters.LT_200 + v.Counters.LT_300 + v.Counters.LT_400 + v.Counters.LT_500
+		        ge500 = v.Counters.LT_600 + v.Counters.LT_700 + v.Counters.LT_800 + v.Counters.LT_900 + v.Counters.LT_1000 + v.Counters.GE_1000
+
+			fmt.Printf("\t [%d, %.2f, %.2f],\n", curSendingStep, float64(lt500)/sumfloat*100, float64(ge500)/sumfloat*100)
+                    }
+                }
+                v = monitors[len(monitors)-1]
+                if v.Counters.Sending != 0 {
+                        sum = v.Counters.LT_100 + v.Counters.LT_200 + v.Counters.LT_300 +
+                              v.Counters.LT_400 + v.Counters.LT_500 + v.Counters.LT_600 +
+                              v.Counters.LT_700 + v.Counters.LT_800 + v.Counters.LT_900 +
+                              v.Counters.LT_1000 + v.Counters.GE_1000
+                        var sumfloat float64
+                        sumfloat = float64(sum)
+		        lt500 = v.Counters.LT_100 + v.Counters.LT_200 + v.Counters.LT_300 + v.Counters.LT_400 + v.Counters.LT_500
+		        ge500 = v.Counters.LT_600 + v.Counters.LT_700 + v.Counters.LT_800 + v.Counters.LT_900 + v.Counters.LT_1000 + v.Counters.GE_1000
+                        fmt.Printf("\t [%d, %.2f, %.2f],\n", v.Counters.Sending, float64(lt500)/sumfloat*100, float64(ge500)/sumfloat*100)
+                }
+			chartfunc = `
+        ]);
+        var table = new google.visualization.Table(document.getElementById('500ms_percent_table_div'));
+
+        table.draw(data, options);
+      }
+			`
+			fmt.Printf("%s\n", chartfunc)
+            } else {
 		v = monitors[len(monitors)-1]
 		sum = v.Counters.LT_100 + v.Counters.LT_200 + v.Counters.LT_300 + v.Counters.LT_400 + v.Counters.LT_500 + v.Counters.LT_600 +
 			v.Counters.LT_700 + v.Counters.LT_800 + v.Counters.LT_900 + v.Counters.LT_1000 + v.Counters.GE_1000
@@ -378,10 +441,69 @@ func main() {
 			`
 			fmt.Printf("%s\n", chartfunc)
 		}
+            }
 	}
 	if category1s {
-		var sum, lt1, ge1 int64
-		var v Monitor
+            var sum, lt1, ge1 int64
+            var v Monitor
+            var hasSendingStep bool
+            for _, v := range monitors {
+                if v.Counters.Sending != 0 {
+                    hasSendingStep = true
+                }
+            }
+            if hasSendingStep {
+		var chartfunc string
+		chartfunc = `
+      google.charts.load("current", {packages:["corechart", "line", "table"]});
+      google.charts.setOnLoadCallback(draw1sPercent);
+      function draw1sPercent() {
+        var cssClassNames = {headerCell: 'headerCell', tableCell: 'tableCell'};
+        var options = {showRowNumber: true,'allowHtml': true, 'cssClassNames': cssClassNames, 'alternatingRowStyle': true};
+        var data = new google.visualization.DataTable();
+        data.addColumn('number', 'Sending');
+        data.addColumn('number', 'LT1s(%)');
+        data.addColumn('number', 'GE1s(%)');
+			`
+		fmt.Printf("%s\n", chartfunc)
+		fmt.Printf("\tdata.addRows([\n")
+
+                var curSendingStep int64
+                for i, v := range monitors {
+                    curSendingStep = v.Counters.Sending
+                    if curSendingStep != 0 && i + 1 < len(monitors)-1 && monitors[i+1].Counters.Sending == 0 {
+                        sum = v.Counters.LT_100 + v.Counters.LT_200 + v.Counters.LT_300 +
+                              v.Counters.LT_400 + v.Counters.LT_500 + v.Counters.LT_600 +
+                              v.Counters.LT_700 + v.Counters.LT_800 + v.Counters.LT_900 +
+                              v.Counters.LT_1000 + v.Counters.GE_1000
+                        var sumfloat float64
+                        sumfloat = float64(sum)
+                        lt1 = v.Counters.LT_100 + v.Counters.LT_200 + v.Counters.LT_300 + v.Counters.LT_400 + v.Counters.LT_500 + v.Counters.LT_600 + v.Counters.LT_700 + v.Counters.LT_800 + v.Counters.LT_900 + v.Counters.LT_1000
+                        ge1 = v.Counters.GE_1000
+                        fmt.Printf("\t [%d, %.2f, %.2f],\n", curSendingStep, float64(lt1)/sumfloat*100, float64(ge1)/sumfloat*100)
+                    }
+                }
+                v = monitors[len(monitors)-1]
+                if v.Counters.Sending != 0 {
+			sum = v.Counters.LT_100 + v.Counters.LT_200 + v.Counters.LT_300 +
+                              v.Counters.LT_400 + v.Counters.LT_500 + v.Counters.LT_600 +
+                              v.Counters.LT_700 + v.Counters.LT_800 + v.Counters.LT_900 +
+                              v.Counters.LT_1000 + v.Counters.GE_1000
+                        var sumfloat float64
+                        sumfloat = float64(sum)
+                        lt1 = v.Counters.LT_100 + v.Counters.LT_200 + v.Counters.LT_300 + v.Counters.LT_400 + v.Counters.LT_500 + v.Counters.LT_600 + v.Counters.LT_700 + v.Counters.LT_800 + v.Counters.LT_900 + v.Counters.LT_1000
+                        ge1 = v.Counters.GE_1000
+                        fmt.Printf("\t [%d, %.2f, %.2f],\n", v.Counters.Sending, float64(lt1)/sumfloat*100, float64(ge1)/sumfloat*100)
+                }
+			chartfunc = `
+        ]);
+        var table = new google.visualization.Table(document.getElementById('1s_percent_table_div'));
+
+        table.draw(data, options);
+      }
+			`
+			fmt.Printf("%s\n", chartfunc)
+            } else {
 		v = monitors[len(monitors)-1]
 		sum = v.Counters.LT_100 + v.Counters.LT_200 + v.Counters.LT_300 + v.Counters.LT_400 + v.Counters.LT_500 + v.Counters.LT_600 +
 			v.Counters.LT_700 + v.Counters.LT_800 + v.Counters.LT_900 + v.Counters.LT_1000 + v.Counters.GE_1000
@@ -413,7 +535,7 @@ func main() {
 			`
 			fmt.Printf("%s\n", chartfunc)
 		}
-
+            }
 	}
 	if rate {
 		if googlechart {

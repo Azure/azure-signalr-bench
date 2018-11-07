@@ -117,5 +117,8 @@ namespace Bench.Common
 
         [Option("stopSendIfLatencyBig", Default = "false", Required = false, HelpText = "Stop sending steps if there are more than 1% message whose latency greater than 1000ms")]
         public string StopSendIfLatencyBig { get; set; }
+
+        [Option("stopSendIfConnectionErrorBig", Default = "false", Required = false, HelpText = "Stop sending steps if there are too many errors")]
+        public string StopSendIfConnectionErrorBig { get; set; }
     }
 }

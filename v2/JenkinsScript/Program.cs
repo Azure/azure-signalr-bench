@@ -401,7 +401,8 @@ namespace JenkinsScript
                         privateIps.MasterPrivateIp.Split(";").ToList().ForEach(host => StartCollectMachineStatisticsTimer(host, user, password, sshPort, Path.Combine(Util.MakeSureDirectoryExist(statisticFolder), $"master{host}.txt"), TimeSpan.FromSeconds(1)));ShellHelper.StartRpcMaster(privateIps.MasterPrivateIp, privateIps.SlavePrivateIp.Split(";").ToList(),
                             user, password, sshPort, logPathMaster, serviceType, transportType, hubProtocol, scenario,
                             connection, concurrentConnection, duration, interval, pipeline, groupNum, overlap, messageSize,
-                            serverUrl, suffix, masterRoot, sendToFixedClient, enableGroupJoinLeave, bool.Parse(argsOption.StopSendIfLatencyBig));
+                            serverUrl, suffix, masterRoot, sendToFixedClient, enableGroupJoinLeave,
+                            bool.Parse(argsOption.StopSendIfLatencyBig), bool.Parse(argsOption.StopSendIfConnectionErrorBig));
 
                         if (argsOption.Regular)
                         {

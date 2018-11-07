@@ -380,7 +380,8 @@ git checkout {branch}
             string serviceType, string transportType, string hubProtocol, string scenario,
             int connection, int concurrentConnection, int duration, int interval, List<string> pipeLine,
             int groupNum, int groupOverlap, string messageSize, string serverUrl, string suffix,
-            string masterRoot, string sendToFixedClient, bool enableGroupJoinLeave, bool stopSendIfLatencyBig)
+            string masterRoot, string sendToFixedClient, bool enableGroupJoinLeave, bool stopSendIfLatencyBig,
+            bool stopSendIfConnectionErrorBig)
         {
 
             Util.Log($"service type: {serviceType}, transport type: {transportType}, hub protocol: {hubProtocol}, scenario: {scenario}");
@@ -423,6 +424,7 @@ git checkout {branch}
                 $"--sendToFixedClient {sendToFixedClient} " +
                 $"--enableGroupJoinLeave {enableGroupJoinLeave} " +
                 $"--stopSendIfLatencyBig {stopSendIfLatencyBig} " +
+                $"--stopSendIfConnectionErrorBig {stopSendIfConnectionErrorBig} " +
                 $" -o '{outputCounterFile}' |tee {logPath}";
 
             Util.Log($"CMD: {user}@{host}: {cmd}");
