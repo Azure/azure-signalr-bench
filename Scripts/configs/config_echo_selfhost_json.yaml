@@ -1,0 +1,13 @@
+Phases:
+- Name: echo
+  UsersPerSecond: {{ UsersPerSecond }}
+  Duration: {{ Duration }}
+SessionNames:
+- signalrconncore:echo
+SessionPercentages:
+- 1
+SessionParams:
+ host: {{ Endpoint }}
+ repeatEcho: true
+ #lazySending: true
+ hub: {{ Hub }}

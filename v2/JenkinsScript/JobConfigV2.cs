@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Text;
 using JenkinsScript.Config.FinerConfigs;
 using JenkinsScript.FinerConfigs;
@@ -24,6 +25,6 @@ namespace JenkinsScript
         public List<string> Pipeline { get; set; }
         public string ServerUrl { get; set; }
         public string MessageSize { get; set; }
-
+        public int CombineFactor { get; set; }
     }
 }

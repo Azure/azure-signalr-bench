@@ -106,7 +106,26 @@ namespace JenkinsScript
         [Option("stopSendIfLatencyBig", Default = "false", Required = false, HelpText = "Stop sending steps if there are more than 1% message whose latency greater than 1000ms")]
         public string StopSendIfLatencyBig { get; set; }
 
+        // result folder
+        [Option("Parent", Default = "", Required = false, HelpText = "")]
+        public string Parent { get; set; }
+
+        [Option("Root", Default = "", Required = false, HelpText = "")]
+        public string Root { get; set; }
+
+        [Option("Scenario", Default = "", Required = false, HelpText = "")]
+        public string Scenario { get; set; }
+
+        [Option("Regular", Required = false, HelpText = "")]
+        public bool Regular { get; set; }
+
         [Option("stopSendIfConnectionErrorBig", Default = "false", Required = false, HelpText = "Stop sending steps if there are too many errors")]
         public string StopSendIfConnectionErrorBig { get; set; }
+
+        [Option("connectionString", Default = null, Required = false, HelpText = "Specify SignalR service connection string")]
+        public string ConnectionString { get; set; }
+
+        [Option("neverStopAppServer", Default = "false", Required = false, HelpText = "Whether stop app server or not: true/false")]
+        public string NeverStopAppServer { get; set; }
     }
 }

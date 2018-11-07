@@ -13,6 +13,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR.Client;
 using System.Net;
+using Bench.RpcSlave.Worker.Rest;
+using System.Linq;
+using CSharpx;
 
 namespace Bench.RpcSlave.Worker.Operations
 {
@@ -35,7 +38,7 @@ namespace Bench.RpcSlave.Worker.Operations
             await Task.Delay(5000);
             _tk.State = Stat.Types.State.SendRunning;
             await StartSendMsg();
-
+            TryReconnect();
             _tk.State = Stat.Types.State.SendComplete;
             Util.Log($"Sending Complete");
         }
@@ -53,6 +56,7 @@ namespace Bench.RpcSlave.Worker.Operations
                         var receiveTimestamp = Util.Timestamp();
                         var sendTimestamp = Convert.ToInt64(timestamp);
                         _tk.Counters.CountLatency(sendTimestamp, receiveTimestamp);
+                        _tk.Counters.RecordSendingStep(_tk.CurSending);
                         _tk.Counters.IncreaseReceivedMessageSize((ulong)content.Length);
                     }));
             }
@@ -70,6 +74,16 @@ namespace Bench.RpcSlave.Worker.Operations
                 SetCallbacks();
                 _tk.Init[_tk.BenchmarkCellConfig.Step] = true;
             }
+        }
+
+        private void TryReconnect()
+        {
+            ConnectionUtils.TryReconnect(_tk, async (tk, index) =>
+            {
+                var connection = ConnectionUtils.CreateSingleDirectConnection(tk, tk.ConnectionString, index);
+                tk.Connections[index] = connection;
+                await ConnectionUtils.StartConnection(tk, index, true);
+            });
         }
 
         public override async Task StartSendMsg()
@@ -105,7 +119,7 @@ namespace Bench.RpcSlave.Worker.Operations
                     {
                         var targetUserId = _tk.BenchmarkCellConfig.TargetConnectionIds[i - beg];
                         tasks.Add(StartSendingMessageAsync(i - beg, targetUserId, messageBlob,
-                            _tk.JobConfig.Duration, _tk.JobConfig.Interval, _tk.Counters));
+                            _tk.JobConfig.Duration, _tk.JobConfig.Interval, _tk.Counters, end - beg));
                     }   
                 }
                 await Task.WhenAll(tasks);
@@ -113,7 +127,7 @@ namespace Bench.RpcSlave.Worker.Operations
         }
 
         protected async Task StartSendingMessageAsync(int index, string targetUserId,
-            byte[] messageBlob, int duration, int interval, Counter counter)
+            byte[] messageBlob, int duration, int interval, Counter counter, int totalConnectionCount)
         {
             var messageSize = (ulong)messageBlob.Length;
             await Task.Delay(StartTimeOffsetGenerator.Delay(TimeSpan.FromSeconds(interval)));
@@ -121,48 +135,48 @@ namespace Bench.RpcSlave.Worker.Operations
             {
                 while (!cts.IsCancellationRequested)
                 {
-                    _ = Task.Run(async () =>
+                    if (!ConnectionUtils.IsRestUserDropped(_tk, targetUserId))
                     {
-                        try
+                        _ = Task.Run(async () =>
                         {
-                            var url = GenRestUrl(_serviceUtils, targetUserId);
-                            var request = new HttpRequestMessage(HttpMethod.Post, GetUrl(url));
-                            // Corefx changed the default version and High Sierra curlhandler tries to upgrade request
-                            request.Version = new Version(1, 1);
-                            request.Headers.Authorization =
-                                new AuthenticationHeaderValue("Bearer",
-                                    _serviceUtils.GenerateAccessToken(url, _serverName));
-                            request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-                            var payloadRequest = new PayloadMessage
+                            try
                             {
-                                Target = ServiceUtils.MethodName,
-                                Arguments = new[]
+                                var url = GenRestUrl(_serviceUtils, targetUserId);
+                                var request = new HttpRequestMessage(HttpMethod.Post, GetUrl(url));
+                                // Corefx changed the default version and High Sierra curlhandler tries to upgrade request
+                                request.Version = new Version(1, 1);
+                                request.Headers.Authorization =
+                                    new AuthenticationHeaderValue("Bearer",
+                                        _serviceUtils.GenerateAccessToken(url, _serverName));
+                                request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                                var payloadRequest = new PayloadMessage
                                 {
-                                _serverName,
-                                $"{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}",
-                                _content
+                                    Target = ServiceUtils.MethodName,
+                                    Arguments = new[]
+                                    {
+                                        _serverName,
+                                        $"{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}",
+                                        _content
+                                    }
+                                };
+                                request.Content = new StringContent(JsonConvert.SerializeObject(payloadRequest), Encoding.UTF8, "application/json");
+                                // ResponseHeadersRead instructs SendAsync to return once headers are read
+                                // rather than buffer the entire response. This gives a small perf boost.
+                                // Note that it is important to dispose of the response when doing this to
+                                // avoid leaving the connection open.
+                                using (var response = await _tk.HttpClients[index].SendAsync(request, HttpCompletionOption.ResponseHeadersRead))
+                                {
+                                    response.EnsureSuccessStatusCode();
+                                }
+                                counter.IncreaseSentMessageSize(messageSize);
+                                counter.IncreseSentMsg();
                             }
-                            };
-                            request.Content = new StringContent(JsonConvert.SerializeObject(payloadRequest), Encoding.UTF8, "application/json");
-                            // ResponseHeadersRead instructs SendAsync to return once headers are read
-                            // rather than buffer the entire response. This gives a small perf boost.
-                            // Note that it is important to dispose of the response when doing this to
-                            // avoid leaving the connection open.
-                            using (var response = await _tk.HttpClients[index].SendAsync(request, HttpCompletionOption.ResponseHeadersRead))
+                            catch (Exception ex)
                             {
-                                response.EnsureSuccessStatusCode();
+                                Util.Log($"exception in sending message of {index}th connection: {ex}");
                             }
-                            counter.IncreaseSentMessageSize(messageSize);
-                            counter.IncreseSentMsg();
-                        }
-                        catch (Exception ex)
-                        {
-                            Util.Log($"exception in sending message of {index}th connection: {ex}");
-                            //counter.IncreaseConnectionError();
-                            counter.IncreseNotSentFromClientMsg();
-                        }
-                    });
-                    
+                        });
+                    }
                     // sleep for the fixed interval
                     await Task.Delay(TimeSpan.FromSeconds(interval));
                 }

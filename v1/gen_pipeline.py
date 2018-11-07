@@ -1,7 +1,9 @@
 import sys
-import websockets
-import longpolling
-import serversentevents
+import websocketsecho
+import websocketsbroadcast
+import websocketssendgroup
+import longpollingecho
+import serversenteventsecho
 
 if __name__=="__main__":
    #print(len(sys.argv))
@@ -15,8 +17,8 @@ if __name__=="__main__":
    func = transport+scenario+unit
    if (len(sys.argv) == 5):
       duration=sys.argv[4]
-      callfunc="{transport}.{func}({duration})".format(transport=transport, func=func, duration=duration)
+      callfunc="{transport}.{func}({duration})".format(transport=transport+scenario, func=func, duration=duration)
    elif (len(sys.argv) == 4):
-      callfunc="{transport}.{func}_connection()".format(transport=transport, func=func)
+      callfunc="{transport}.{func}_connection()".format(transport=transport+scenario, func=func)
    r = eval(callfunc)
    print(r)

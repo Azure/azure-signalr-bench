@@ -1,0 +1,165 @@
+
+
+<html>
+<head>
+    <meta http-equiv="pragma" content="no-cache" />
+    <style type="text/css">
+        body{
+            font: 12px verdana, sans-serif; 
+            margin: 0px;
+        }
+        header{
+            background-color: #679BB7; 
+            padding: 10px;
+        }
+        header h1{
+            font-size: 18px; 
+            margin: 10px 0;
+        }
+        .container{
+            width: 80%;
+            margin: 0 auto; /* Align container DIV horizontally center */
+            background-color: #f0f0f0; 
+        }
+        .sidebar{
+            float: left; 
+            width: 20%; 
+            min-height: 170px;
+            background-color: #bbd2df;
+        }
+        .sidebar nav{
+            padding: 10px;
+        }
+        nav ul{
+            list-style: none;  
+            padding: 0px; 
+            margin: 0px;
+        }
+        nav ul li{
+            margin-bottom: 5px;
+        }
+        nav ul li a{
+            color: #3d677e;
+        }
+        nav ul li a:hover{
+            text-decoration: none;
+        }
+	.two-columns li {
+	    float: left;
+	    width: 50%;
+	}
+        .content{
+            float: left;
+            width: 80%;
+            min-height: 170px;
+        }
+        .content section{
+            padding: 10px;
+        }
+        section h2{
+            font-size: 16px; 
+            margin: 0px;
+        }
+        .clearfix:after{
+            content: ".";
+            display: block;
+            height: 0;
+            clear: both;
+            visibility: hidden;
+        }
+        footer{
+            background-color: #679BB7; 
+            padding: 10px;
+        }
+        footer p{
+            text-align: center; 
+            margin: 5px;
+        }
+	td {
+            padding: 2px;
+        }
+    </style>
+  <script src="../css/tabcontent.js" type="text/javascript"></script>
+  <link href="../css/tabcontent.css" rel="stylesheet" type="text/css" />
+  <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+  <script type='text/javascript' src='selfhost_json_echo_latency_table_1s_category.js'></script>
+  <script type='text/javascript' src='selfhost_msgpack_echo_latency_table_1s_category.js'></script>
+  <script type='text/javascript' src='service_json_echo_latency_table_1s_category.js'></script>
+  <script type='text/javascript' src='service_msgpack_echo_latency_table_1s_category.js'></script>
+  <script type='text/javascript' src='selfhost_json_broadcast_latency_table_1s_category.js'></script>
+  <script type='text/javascript' src='selfhost_msgpack_broadcast_latency_table_1s_category.js'></script>
+  <script type='text/javascript' src='service_json_broadcast_latency_table_1s_category.js'></script>
+  <script type='text/javascript' src='service_msgpack_broadcast_latency_table_1s_category.js'></script>
+  <script type='text/javascript' src='selfhost_json_echo_latency_table_500ms_category.js'></script>
+  <script type='text/javascript' src='selfhost_msgpack_echo_latency_table_500ms_category.js'></script>
+  <script type='text/javascript' src='service_json_echo_latency_table_500ms_category.js'></script>
+  <script type='text/javascript' src='service_msgpack_echo_latency_table_500ms_category.js'></script>
+  <script type='text/javascript' src='selfhost_json_broadcast_latency_table_500ms_category.js'></script>
+  <script type='text/javascript' src='selfhost_msgpack_broadcast_latency_table_500ms_category.js'></script>
+  <script type='text/javascript' src='service_json_broadcast_latency_table_500ms_category.js'></script>
+  <script type='text/javascript' src='service_msgpack_broadcast_latency_table_500ms_category.js'></script>
+</head>
+<body>
+  <div class="container">
+        <header>
+            <h1>SignalR Service Performance Report Summary</h1>
+        </header>
+	<div class="wrapper clearfix">
+          <div class="content">
+                <section>
+                    <h2>Summary</h2>
+		    <ul>
+			<!--
+			<li>Bench server endpoint: {{BenchEndpoint}} </li>
+			<li>SignalR service external ssh endpoint: {{SignalRServiceExtSSHEndpoint}}</li>
+			<li>SignalR service internal endpoint: {{SignalRServiceIntEndpoint}}</li>
+			<li>SignalR demo app external ssh endpoint: {{SignalRDemoAppExtSSHEndpoint}}</li>
+			<li>SignalR demo app internal endpoint: {{SignalRDemoAppIntEndpoint}}</li>
+			-->
+			<li>SignalR demo app external ssh endpoint: {{SignalRDemoAppExtSSHEndpoint}}</li>
+		    </ul>
+		    <b>1s latency</b>
+		    <div>
+			<ul>
+				<li><a href='service_json_echo/index.html'>echo_service_json 1s latency</a><div id='service_json_echo_1s_percent_table_div'></div></li>
+                                <li><a href='service_msgpack_echo/index.html'>echo_service_msgpack 1s latency</a><div id='service_msgpack_echo_1s_percent_table_div'></div></li>
+			<!--
+				<li><a href='selfhost_json_echo/index.html'>echo_selfhost_json 1s latency</a><div id='selfhost_json_echo_1s_percent_table_div'></div></li>
+				<li><a href='selfhost_msgpack_echo/index.html'>echo_selfhost_msgpack 1s latency</a><div id='selfhost_msgpack_echo_1s_percent_table_div'></div></li>
+				<li><a href='service_json_echo/index.html'>echo_service_json 1s latency</a><div id='service_json_echo_1s_percent_table_div'></div></li>
+				<li><a href='service_msgpack_echo/index.html'>echo_service_msgpack 1s latency</a><div id='service_msgpack_echo_1s_percent_table_div'></div></li>
+				<li><a href='selfhost_json_broadcast/index.html'>broadcast_selfhost_json 1s latency</a><div id='selfhost_json_broadcast_1s_percent_table_div'></div></li>
+				<li><a href='selfhost_msgpack_broadcast/index.html'>broadcast_selfhost_msgpack 1s latency</a><div id='selfhost_msgpack_broadcast_1s_percent_table_div'></div></li>
+				<li><a href='service_json_broadcast/index.html'>broadcast_service_json 1s latency</a><div id='service_json_broadcast_1s_percent_table_div'></div></li>
+				<li><a href='service_msgpack_broadcast/index.html'>broadcast_service_msgpack 1s latency</a><div id='service_msgpack_broadcast_1s_percent_table_div'></div></li>
+			-->
+			</ul>
+		    </div>
+		<!--
+		    <b>500ms latency</b>
+		    <div>
+			<ul>
+				<li><a href='selfhost_json_echo/index.html'>echo_selfhost_json 500ms latency</a><div id='selfhost_json_echo_500ms_percent_table_div'></div></li>
+				<li><a href='selfhost_msgpack_echo/index.html'>echo_selfhost_msgpack 500ms latency</a><div id='selfhost_msgpack_echo_500ms_percent_table_div'></div></li>
+				<li><a href='service_json_echo/index.html'>echo_service_json 500ms latency</a><div id='service_json_echo_500ms_percent_table_div'></div></li>
+				<li><a href='service_msgpack_echo/index.html'>echo_service_msgpack 500ms latency</a><div id='service_msgpack_echo_500ms_percent_table_div'></div></li>
+				<li><a href='selfhost_json_broadcast/index.html'>broadcast_selfhost_json 500ms latency</a><div id='selfhost_json_broadcast_500ms_percent_table_div'></div></li>
+				<li><a href='selfhost_msgpack_broadcast/index.html'>broadcast_selfhost_msgpack 500ms latency</a><div id='selfhost_msgpack_broadcast_500ms_percent_table_div'></div></li>
+				<li><a href='service_json_broadcast/index.html'>broadcast_service_json 500ms latency</a><div id='service_json_broadcast_500ms_percent_table_div'></div></li>
+				<li><a href='service_msgpack_broadcast/index.html'>broadcast_service_msgpack 500ms latency</a><div id='service_msgpack_broadcast_500ms_percent_table_div'></div></li>
+			</ul>
+		    <div>
+		-->
+                </section>
+          </div>
+        </div>
+
+        <footer>
+                <p>copyright &copy; DevDiv@microsoft.com</p>
+        </footer>
+  </div>
+</body>
+</html>
+
+
+

@@ -24,6 +24,7 @@ using System.Threading.Tasks;
 using Bench.Common;
 using Bench.Common.Config;
 using CommandLine;
+using Google.Protobuf;
 using Grpc.Core;
 using Newtonsoft.Json.Linq;
 
@@ -39,6 +40,11 @@ namespace Bench.RpcMaster
         private static bool _ge1000msGT1Percent = false;
         // if there is > 1% connection errors, we may stop sending
         private static bool _connectionErrorGT1Percent = false;
+        // Recording the sending step on Master side to fix randomly zero received from slaves
+        private static int _currentSendingStep = 0;
+        private static System.Timers.Timer _counterCollectorTimer = null;
+        // Each job step at most waits for 2 hours
+        private static long _defaultWaiting = 2;
 
         public static async Task Main(string[] args)
         {
@@ -95,7 +101,7 @@ namespace Bench.RpcMaster
                 await ProcessPipeline(clients, argsOption.PipeLine, slaveList,
                     argsOption.Connections, argsOption.ServiceType, argsOption.TransportType,
                     argsOption.HubProtocal, argsOption.Scenario, argsOption.MessageSize,
-                    argsOption.groupNum, argsOption.groupOverlap, serverCount, argsOption.SendToFixedClient,
+                    argsOption.groupNum, argsOption.groupOverlap, argsOption.combineFactor, serverCount, argsOption.SendToFixedClient,
                     argsOption.EnableGroupJoinLeave, argsOption.StopSendIfLatencyBig, argsOption.StopSendIfConnectionErrorBig);
             }
             catch (Exception ex)
@@ -105,7 +111,8 @@ namespace Bench.RpcMaster
                 throw;
             }
             SaveJobResult(_jobResultFile, _counters, argsOption.Connections, argsOption.ServiceType, argsOption.TransportType, argsOption.HubProtocal, argsOption.Scenario);
-
+            _counterCollectorTimer.Stop();
+            Console.WriteLine("Wait channles to shutdown...");
             WaitChannelsShutDown(channels);
             Console.WriteLine("Exit client...");
         }
@@ -147,20 +154,82 @@ namespace Bench.RpcMaster
             return connectionIds;
         }
 
-        private static List<string> GenerateGroupNameList(int connCnt, int groupNum, int overlap)
+        private static List<string> GenerateGroupNameList(int connCnt, int groupNum, int groupOverlap)
         {
+            // groupNameList for group join operation
             var groupNameList = Enumerable.Repeat("", connCnt).ToList();
-            for (var j = 0; j < overlap; j++)
+            if (groupNum > connCnt)
             {
-                for (var i = 0; i < groupNameList.Count; i++)
+                // For example: 
+                // groupNum: 10, connCnt: 5, then every connection joins 2 groups
+                for (var j = 0; j < groupNum; j++)
                 {
+                    var i = j % connCnt;
                     if (groupNameList[i].Length > 0) groupNameList[i] += ";";
-                    groupNameList[i] += $"gp{(i + j) % groupNum}";
+                    groupNameList[i] += $"g{j}";
+                }
+            }
+            else if (groupNum > 0)
+            {
+                for (var j = 0; j < connCnt; j++)
+                {
+                    groupNameList[j] = $"g{j % groupNum}";
+                }
+            }
+            // After automatically group assignment, typcially, if group number > connection count,
+            // we will see only 1 connection belongs to a group. We hope to see many connections in a group,
+            // that is done by specifying groupOverlap, which re-assigned groups to every connection.
+            if (groupOverlap > 1)
+            {
+                var newGroupNameList = "";
+                for (var j = 0; j < connCnt; j++)
+                {
+                    if (newGroupNameList.Length > 0) newGroupNameList += ";";
+                    newGroupNameList += groupNameList[j];
+                    if ((j + 1) % groupOverlap == 0)
+                    {
+                        for (var i = 0; i < groupOverlap; i++)
+                        {
+                            groupNameList[j - i] = newGroupNameList;
+                        }
+                        newGroupNameList = "";
+                    }
                 }
             }
             groupNameList.Shuffle();
 
             return groupNameList;
+        }
+
+        // Create sending groups which contains more connections.
+        // For example, if every original connection belongs to 2 groups, the combineFactor is 3,
+        // then, the new connection's sending group contains 2x3 connections.
+        private static List<string> CombineConnectionSendGroups(List<string> sendGroupNameList, int combineFactor)
+        {   
+            if (combineFactor > 1)
+            {
+                var connCnt = sendGroupNameList.Count;
+                var groupNameSendList = Enumerable.Repeat("", connCnt).ToList();
+                var newGroupNameList = "";
+                for (var j = 0; j < connCnt; j++)
+                {
+                    if (newGroupNameList.Length > 0) newGroupNameList += ";";
+                    newGroupNameList += sendGroupNameList[j];
+                    if ((j + 1) % combineFactor == 0)
+                    {
+                        for (var i = 0; i < combineFactor; i++)
+                        {
+                            groupNameSendList[j - i] = newGroupNameList;
+                        }
+                        newGroupNameList = "";
+                    }
+                }
+                return groupNameSendList;
+            }
+            else
+            {
+                return sendGroupNameList;
+            }
         }
 
         private static void SaveConfig(string path, int connection, string serviceType, string transportType, string protocol, string scenario)
@@ -268,8 +337,8 @@ namespace Bench.RpcMaster
         private static BenchmarkCellConfig GenerateBenchmarkConfig(int indClient, string step,
             string serviceType, string transportType, string hubProtocol, string scenario,
             string MessageSizeStr, List<string> targetConnectionIds, List<string> groupNameList,
-            List<bool> callbackList, int messageCountPerInterval, bool enableGroupJoinLeave,
-            List<bool> joinLeavePerGroupList, List<bool> sendGroupList)
+            List<string> sendGroupNameList, List<bool> callbackList, int messageCountPerInterval,
+            bool enableGroupJoinLeave, List<bool> joinLeavePerGroupList, List<bool> sendGroupList)
         {
             var messageSize = ParseMessageSize(MessageSizeStr);
 
@@ -292,6 +361,7 @@ namespace Bench.RpcMaster
             // add lists
             benchmarkCellConfig.TargetConnectionIds.AddRange(targetConnectionIds);
             benchmarkCellConfig.GroupNameList.AddRange(groupNameList);
+            benchmarkCellConfig.SendGroupNameList.AddRange(sendGroupNameList);
             benchmarkCellConfig.CallbackList.AddRange(callbackList);
             benchmarkCellConfig.JoinLeaveGroupList.AddRange(joinLeavePerGroupList);
             benchmarkCellConfig.SendGroupList.AddRange(sendGroupList);
@@ -302,13 +372,12 @@ namespace Bench.RpcMaster
         private static void StartCollectCounters(List<RpcService.RpcServiceClient> clients, string outputSaveFile)
         {
             var collectTimer = new System.Timers.Timer(1000);
+            _counterCollectorTimer = collectTimer;
             collectTimer.AutoReset = true;
             collectTimer.Elapsed += async(sender, e) =>
             {
                 var allClientCounters = new ConcurrentDictionary<string, ulong>();
                 var collectCountersTasks = new List<Task>(clients.Count);
-                var isSend = false;
-                var isComplete = false;
                 var swCollect = new Stopwatch();
                 // Util.Log("\n\nstart collecting");
                 swCollect.Start();
@@ -319,16 +388,11 @@ namespace Bench.RpcMaster
                     {
                         var state = clients[ind].GetState(new Empty { });
 
-                        if ((int) state.State >= (int) Stat.Types.State.SendComplete) isComplete = true;
-
-                        // if (false)
                         if ((int) state.State < (int) Stat.Types.State.SendRunning ||
                             (int) state.State > (int) Stat.Types.State.SendComplete && (int) state.State < (int) Stat.Types.State.HubconnDisconnecting)
                         {
                             return;
                         }
-                        isSend = true;
-                        isComplete = false;
 
                         var swRpc = new Stopwatch();
                         swRpc.Start();
@@ -346,6 +410,13 @@ namespace Bench.RpcMaster
                             }
                             else if (string.Equals(key, "sendingStep", StringComparison.OrdinalIgnoreCase))
                             {
+                                if (value < (ulong)_currentSendingStep)
+                                {
+                                    // Util.Log($"slave uses small sending step, we reset it {value} {_currentSendingStep}");
+                                    // sometimes, the received value from slave is zero,
+                                    // we have to correct it.
+                                    value = (ulong)_currentSendingStep;
+                                }
                                 allClientCounters.AddOrUpdate(key, value, (k, v) => value);
                             }
                             else
@@ -358,11 +429,6 @@ namespace Bench.RpcMaster
                 await Task.WhenAll(collectCountersTasks);
                 swCollect.Stop();
                 Util.Log($"collecting counters time: {swCollect.Elapsed.TotalMilliseconds} ms");
-                if (isSend == false || isComplete == true)
-                {
-                    return;
-                }
-
                 var jobj = new JObject();
                 var received = (ulong)0;
                 foreach (var item in allClientCounters)
@@ -459,8 +525,8 @@ namespace Bench.RpcMaster
                     Util.Log($"add channel: {slaveList[i]}:{rpcPort}");
                     channels.Add(new Channel($"{slaveList[i]}:{rpcPort}", ChannelCredentials.Insecure,
                         new ChannelOption[] {
-                            // For Group, the received message size is very large, so here set 8000k
-                            new ChannelOption(ChannelOptions.MaxReceiveMessageLength, 8192000)
+                            // For Group, the received message size is very large, so here set 32000k
+                            new ChannelOption(ChannelOptions.MaxReceiveMessageLength, 32768000)
                         }));
                 }
             }
@@ -549,6 +615,7 @@ namespace Bench.RpcMaster
                     // temporarily borrow the 'server' field to pass connection string,
                     // because I do not want to modify RPC model.
                     server = connectionString;
+                    Util.Log($"connection string: {server}");
                 }
                 var config = new CellJobConfig
                 {
@@ -569,7 +636,7 @@ namespace Bench.RpcMaster
 
         private static async Task ProcessPipeline(List<RpcService.RpcServiceClient> clients, string pipelineStr, List<string> slaveList, int connections,
             string serviceType, string transportType, string hubProtocol, string scenario, string messageSize,
-            int groupNum, int overlap, int serverCount, string sendToFixedClient, bool enableGroupJoinLeave,
+            int groupNum, int groupOverlap, int combineFactor, int serverCount, string sendToFixedClient, bool enableGroupJoinLeave,
             string stopIfLatencyIsBig, string stopSendIfConnectionErrorBig)
         {
             // var connections = argsOption.Connections;
@@ -587,7 +654,8 @@ namespace Bench.RpcMaster
             var connectionConfigBuilder = new ConnectionConfigBuilder();
             var connectionAllConfigList = connectionConfigBuilder.Build(connections);
             var targetConnectionIds = new List<string>();
-            var groupNameList = GenerateGroupNameList(connections, groupNum, overlap);
+            var groupNameList = GenerateGroupNameList(connections, groupNum, groupOverlap);
+            var sendGroupNameList = CombineConnectionSendGroups(groupNameList, combineFactor);
             var callbackList = Enumerable.Repeat(true, connections).ToList();
             var messageCountPerInterval = 1;
             var joinLeavePerGroupAdditionalCnt = 0;
@@ -595,6 +663,7 @@ namespace Bench.RpcMaster
             var sendGroupList = Enumerable.Repeat(false, groupNum).ToList();
             var stopIfLatencyBig = bool.Parse(stopIfLatencyIsBig);
             var stopIfConnectionErrorBig = bool.Parse(stopSendIfConnectionErrorBig);
+            int curTotalSending = 0;
             // var serverUrls = serverCount;
             for (var i = 0; i < pipeline.Count; i++)
             {
@@ -603,10 +672,9 @@ namespace Bench.RpcMaster
                 var step = pipeline[i];
                 int indClient = -1;
                 Util.Log($"current step: {step}");
-
-                if (stopIfLatencyBig && _ge1000msGT1Percent)
+                if (step.Substring(0, 2) == "up")
                 {
-                    if (step.Substring(0, 2) == "up")
+                    if (stopIfLatencyBig && _ge1000msGT1Percent)
                     {
                         Util.Log($"Stop the sending steps since there are too many messages whose latency is larger than 1s!");
                         // skip "upxxxx" step
@@ -615,10 +683,7 @@ namespace Bench.RpcMaster
                         // as a result, all "upxxx;scenario" steps were skipped.
                         continue;
                     }
-                }
-                if (stopIfConnectionErrorBig && _connectionErrorGT1Percent)
-                {
-                    if (step.Substring(0, 2) == "up")
+                    if (stopIfConnectionErrorBig && _connectionErrorGT1Percent)
                     {
                         Util.Log($"Stop the sending steps since there are too many connections drops (dropped connection > 1%)!");
                         // skip "upxxxx" step
@@ -627,12 +692,36 @@ namespace Bench.RpcMaster
                         // as a result, all "upxxx;scenario" steps were skipped.
                         continue;
                     }
+                    // Sending number should not be larger than total connection number
+                    var upNo = ExtractUpNumber(step);
+                    if (upNo != 0)
+                    {
+                        if (curTotalSending + upNo > connections)
+                        {
+                            Util.Log($"Stop the sending steps since sending number {curTotalSending + upNo} is larger than {connections}");
+                            i++;
+                            continue;
+                        }
+                        else
+                        {
+                            curTotalSending += upNo;
+                        }
+                    }
+                    else
+                    {
+                        // skip up0
+                        Util.Log($"Skip up0");
+                        i++;
+                        continue;
+                    }
+                    _currentSendingStep = curTotalSending;
+                    Util.Log($"Master's sendingStep: {_currentSendingStep}");
                 }
                 // up op
                 HandleBasicUpOp(step, connectionConfigBuilder, connectionAllConfigList, connections, slaveList);
 
                 // handle up join/leave group per group
-                HandleUpSendGroupOp(step, sendGroupList, groupNum, overlap);
+                HandleUpSendGroupOp(step, sendGroupList, groupNum);
 
                 // handle up per group op
                 HandleUpPerGroupOp(step, connectionConfigBuilder, connectionAllConfigList, groupNameList);
@@ -651,13 +740,23 @@ namespace Bench.RpcMaster
                 // remove last one callback
                 RemoveExceptLastOneCallback(step, callbackList);
 
+                var displayStep = step;
+                if (step.Substring(0, 2) == "up")
+                {
+                    displayStep = $"up{_currentSendingStep}";
+                }
+                else if (step == "scenario")
+                {
+                    displayStep = scenario;
+                }
+
                 clients.ForEach(client =>
                 {
                     indClient++;
 
                     var benchmarkCellConfig = GenerateBenchmarkConfig(indClient, step,
                         serviceType, transportType, hubProtocol, scenario, messageSize,
-                        targetConnectionIds, groupNameList, callbackList, messageCountPerInterval,
+                        targetConnectionIds, groupNameList, sendGroupNameList, callbackList, messageCountPerInterval,
                         enableGroupJoinLeave, joinLeavePerGroupList, sendGroupList);
 
                     Util.Log($"service: {benchmarkCellConfig.ServiceType}; transport: {benchmarkCellConfig.TransportType}; hubprotocol: {benchmarkCellConfig.HubProtocol}; scenario: {benchmarkCellConfig.Scenario}; step: {step}");
@@ -665,6 +764,14 @@ namespace Bench.RpcMaster
                     var indClientInLoop = indClient;
                     tasks.Add(Task.Run(() =>
                     {
+                        Stopwatch stopwatch = new Stopwatch();
+
+                        // Begin timing.
+                        stopwatch.Start();
+
+                        // Write result.
+                        Console.WriteLine("Time elapsed: {0}", stopwatch.Elapsed);
+                        Util.Log($"{DateTime.Now.ToString("hh:mm:ss.fff")}: Assign {displayStep} job to slave {slaveList[indClientInLoop]}");
                         var beg = 0;
                         for (var indStart = 0; indStart < indClientInLoop; indStart++)
                         {
@@ -674,12 +781,30 @@ namespace Bench.RpcMaster
 
                         client.LoadConnectionRange(new Range { Begin = beg, End = beg + currConnSliceCnt });
                         client.LoadConnectionConfig(connectionAllConfigList);
+                        using (var memStream = new MemoryStream())
+                        {
+                            benchmarkCellConfig.WriteTo(memStream);
+                            Util.Log($"RunJob parameter size: {memStream.Length}");
+                        }
                         client.RunJob(benchmarkCellConfig);
+                        // Stop timing.
+                        stopwatch.Stop();
+
+                        Util.Log($"{DateTime.Now.ToString("hh:mm:ss.fff")}: Slave {slaveList[indClientInLoop]} finished the {displayStep} job with time elapsed {stopwatch.Elapsed}");
                     }));
                 });
-                await Task.WhenAll(tasks);
+                var waitingTask = Task.WhenAll(tasks);
+                try
+                {
+                    await TimedOutTask.TimeoutAfter(waitingTask, TimeSpan.FromHours(_defaultWaiting));
+                    Util.Log($"Step {displayStep} finished.");
+                }
+                catch (TimeoutException)
+                {
+                    Util.Log($"The step {displayStep} timedout ({_defaultWaiting} hours).");
+                    throw;
+                }
                 await Task.Delay(1000);
-
                 // collect all connections' ids just after connections start
                 if (step.Contains("startConn", StringComparison.OrdinalIgnoreCase) ||
                     step.Contains("StartRestClientConn", StringComparison.OrdinalIgnoreCase))
@@ -701,7 +826,7 @@ namespace Bench.RpcMaster
             }
         }
 
-        private static void HandleUpSendGroupOp(string step, List<bool> sendGroupList, int groupCnt, int groupOverlap)
+        private static void HandleUpSendGroupOp(string step, List<bool> sendGroupList, int groupCnt)
         {
             if (step.Contains("upSendGroup"))
             {
@@ -766,6 +891,18 @@ namespace Bench.RpcMaster
                 if (!isNumeric) throw new Exception();
                 connectionConfigBuilder.UpdateSendConnPerGroup(connectionAllConfigList, groupNameMat, upNum);
             }
+        }
+
+        private static int ExtractUpNumber(string step)
+        {
+            int upNo = 0;
+            var isNumeric = int.TryParse(step.Substring(2), out int n);
+
+            if (step.Substring(0, 2) == "up" && isNumeric)
+            {
+                upNo = Convert.ToInt32(step.Substring(2));
+            }
+            return upNo;
         }
 
         private static void HandleBasicUpOp(string step, ConnectionConfigBuilder connectionConfigBuilder,
