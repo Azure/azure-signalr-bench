@@ -525,8 +525,8 @@ namespace Bench.RpcMaster
                     Util.Log($"add channel: {slaveList[i]}:{rpcPort}");
                     channels.Add(new Channel($"{slaveList[i]}:{rpcPort}", ChannelCredentials.Insecure,
                         new ChannelOption[] {
-                            // For Group, the received message size is very large, so here set 16000k
-                            new ChannelOption(ChannelOptions.MaxReceiveMessageLength, 16384000)
+                            // For Group, the received message size is very large, so here set 32000k
+                            new ChannelOption(ChannelOptions.MaxReceiveMessageLength, 32768000)
                         }));
                 }
             }

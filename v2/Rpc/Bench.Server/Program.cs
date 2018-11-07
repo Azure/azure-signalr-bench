@@ -19,8 +19,8 @@ namespace Bench.RpcSlave
                 .WithNotParsed(error => { });
             Grpc.Core.Server server = new Grpc.Core.Server(new ChannelOption[]
             {
-                // For Group, the received message size is very large, so here set 16000k
-                new ChannelOption(ChannelOptions.MaxReceiveMessageLength, 16384000)
+                // For Group, the received message size is very large, so here set 32000k
+                new ChannelOption(ChannelOptions.MaxReceiveMessageLength, 32768000)
             })
             {
                 Services = { RpcService.BindService(new RpcServiceImpl()) },
