@@ -86,7 +86,7 @@ def determine_scenario_config(settings, unit, scenario, transport, protocol="jso
     if found is False:
         print("Cannot find unit {}, use the first one by default".format(unit))
 
-    connections = cur_settings[para_key.normal_connection] if use_max_connection is False else \
+    connections = cur_settings[para_key.normal_connection][index] if use_max_connection is False else \
         cur_settings[para_key.max_connection][index]
     concurrent = cur_settings[para_key.concurrent][index]
     base_step = cur_settings[para_key.base_step][index]

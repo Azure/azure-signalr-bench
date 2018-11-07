@@ -7,7 +7,7 @@ Pipeline:
     Parameter.StatisticsOutputPath: haha.txt
     Type: echo
 - - Method: CreateConnection
-    Parameter.ConnectionTotal: 7500
+    Parameter.ConnectionTotal: 3000
     Parameter.HubUrl: http://localhost:5050/signalrbench
     Parameter.Protocol: json
     Parameter.TransportType: Websockets
@@ -21,7 +21,40 @@ Pipeline:
     Parameter.Duration: 240000
     Parameter.Interval: 1000
     Parameter.MessageSize: 2048
-    Parameter.Modulo: 7500
+    Parameter.Modulo: 3000
+    Parameter.RemainderBegin: 0
+    Parameter.RemainderEnd: 2000
+    Type: echo
+- - Method: Wait
+    Parameter.Duration: 5000
+    Type: echo
+- - Method: Echo
+    Parameter.Duration: 240000
+    Parameter.Interval: 1000
+    Parameter.MessageSize: 2048
+    Parameter.Modulo: 3000
+    Parameter.RemainderBegin: 0
+    Parameter.RemainderEnd: 3000
+    Type: echo
+- - Method: Wait
+    Parameter.Duration: 5000
+    Type: echo
+- - Method: Echo
+    Parameter.Duration: 240000
+    Parameter.Interval: 1000
+    Parameter.MessageSize: 2048
+    Parameter.Modulo: 3000
+    Parameter.RemainderBegin: 0
+    Parameter.RemainderEnd: 4000
+    Type: echo
+- - Method: Wait
+    Parameter.Duration: 5000
+    Type: echo
+- - Method: Echo
+    Parameter.Duration: 240000
+    Parameter.Interval: 1000
+    Parameter.MessageSize: 2048
+    Parameter.Modulo: 3000
     Parameter.RemainderBegin: 0
     Parameter.RemainderEnd: 5000
     Type: echo
@@ -32,42 +65,9 @@ Pipeline:
     Parameter.Duration: 240000
     Parameter.Interval: 1000
     Parameter.MessageSize: 2048
-    Parameter.Modulo: 7500
+    Parameter.Modulo: 3000
     Parameter.RemainderBegin: 0
-    Parameter.RemainderEnd: 7500
-    Type: echo
-- - Method: Wait
-    Parameter.Duration: 5000
-    Type: echo
-- - Method: Echo
-    Parameter.Duration: 240000
-    Parameter.Interval: 1000
-    Parameter.MessageSize: 2048
-    Parameter.Modulo: 7500
-    Parameter.RemainderBegin: 0
-    Parameter.RemainderEnd: 10000
-    Type: echo
-- - Method: Wait
-    Parameter.Duration: 5000
-    Type: echo
-- - Method: Echo
-    Parameter.Duration: 240000
-    Parameter.Interval: 1000
-    Parameter.MessageSize: 2048
-    Parameter.Modulo: 7500
-    Parameter.RemainderBegin: 0
-    Parameter.RemainderEnd: 12500
-    Type: echo
-- - Method: Wait
-    Parameter.Duration: 5000
-    Type: echo
-- - Method: Echo
-    Parameter.Duration: 240000
-    Parameter.Interval: 1000
-    Parameter.MessageSize: 2048
-    Parameter.Modulo: 7500
-    Parameter.RemainderBegin: 0
-    Parameter.RemainderEnd: 15000
+    Parameter.RemainderEnd: 6000
     Type: echo
 - - Method: Wait
     Parameter.Duration: 5000
