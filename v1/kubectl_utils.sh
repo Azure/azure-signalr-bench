@@ -371,16 +371,20 @@ function copy_syslog() {
 
   for i in $result
   do
-     kubectl cp default/${i}:/var/log/ASRS/ASRS.log $outdir/${i}_ASRS.txt --kubeconfig=$config_file
-     if [ -e $outdir/${i}_ASRS.txt ]
+     # double confirm the pod is accessable
+     local len=`kubectl get deploy -o=json --selector pod=${i} --kubeconfig=$config_file|jq '.items|length'`
+     if [ $len -ne 0 ]
      then
+       kubectl cp default/${i}:/var/log/ASRS/ASRS.log $outdir/${i}_ASRS.txt --kubeconfig=$config_file
+       if [ -e $outdir/${i}_ASRS.txt ]
+       then
         cd $outdir
         tar zcvf ${i}_ASRS.tgz ${i}_ASRS.txt
         rm ${i}_ASRS.txt
         cd -
+       fi
      fi
   done
-
 }
 
 function wait_replica_ready() {

@@ -90,16 +90,42 @@ bench_config_endpoint="$serverUrl"
 EOF
 
      ## zip the appserver, master and slave logs
-     cd ${env_statistic_folder}
-     tar zcvf log.tgz appserver*.txt slave*.txt
-     rm appserver*.txt slave*.txt
-     cd -
+     zip_vm_logs
      ## gen_html.sh requires bench_name_list, bench_codec_list, and bench_type_list
      export bench_name_list="$Scenario"
      export bench_codec_list="$MessageEncoding"
      export bench_type_list="${tag}_${Transport}"
      sh gen_html.sh $ConnectionString
    fi
+}
+
+function zip_vm_logs() {
+     local master_target="master*.txt"
+     local slave_target="slave*.txt"
+     local appserver_target="appserver*.txt"
+     ## zip the appserver, master and slave logs
+     cd ${env_statistic_folder}
+     local exist
+     local options=""
+
+     exist=`find . -iname "$master_target"`
+     if [ "$exist" != "" ]
+     then
+        options="$options $master_target"
+     fi
+     exist=`find . -iname "$slave_target"`
+     if [ "$exist" != "" ]
+     then
+        options="$options $slave_target"
+     fi
+     exist=`find . -iname "$appserver_target"`
+     if [ "$exist" != "" ]
+     then
+        options="$options $appserver_target"
+     fi
+     tar zcvf log.tgz $options
+     rm $options
+     cd -
 }
 
 function gen_sendtoclient_job_config()
@@ -465,6 +491,17 @@ function run_unit() {
    ## stop collecting top
    if [ "$service_name" != "" ]
    then
+   ############# copy pod log ############
+      if [ "$copy_syslog" == "true" ]
+      then
+         copy_syslog $service_name $k8s_result_dir
+      fi
+      if [ "$copy_nginx_log" == "true" ]
+      then
+         get_nginx_log $service_name "$g_nginx_ns" $k8s_result_dir
+      fi
+      get_k8s_pod_status $service_name $k8s_result_dir
+   ############# stop top ##############
       if [ "$collect_pod_top_pid" != "" ]
       then
          # kill the process if it is alive
@@ -482,16 +519,6 @@ function run_unit() {
             kill $collect_nginx_top_pid
          fi
       fi
-   ############# copy pod log ############
-      if [ "$copy_syslog" == "true" ]
-      then
-         copy_syslog $service_name $k8s_result_dir
-      fi
-      if [ "$copy_nginx_log" == "true" ]
-      then
-         get_nginx_log $service_name "$g_nginx_ns" $k8s_result_dir
-      fi
-      get_k8s_pod_status $service_name $k8s_result_dir
    fi
 }
 
