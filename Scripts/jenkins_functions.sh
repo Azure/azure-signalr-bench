@@ -224,10 +224,15 @@ function run_and_gen_report() {
 
   cd $PluginScriptWorkingDir
   local config_path=$PluginScriptWorkingDir/${unit}_${Scenario}_${Transport}_${MessageEncoding}.config
+  local maxConnectionOption=""
+  if [ "$useMaxConnection" == "true" ]
+  then
+    maxConnectionOption="-m"
+  fi
   python3 generate.py -u $unit -S $Scenario \
                       -t $Transport -p $MessageEncoding \
                       -U $appserverUrls -d $sigbench_run_duration \
-                      -c $config_path
+                      -c $config_path $maxConnectionOption
 
   #TODO dummy values
   local connection=3000
