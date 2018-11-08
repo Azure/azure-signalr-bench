@@ -1,2 +1,5 @@
 # Simple benchmark framework
-For testing plugins only
+
+## Build
+
+Go to rpc folder and run build.sh or build.bat

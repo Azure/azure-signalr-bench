@@ -22,6 +22,7 @@ cd /d %~dp0
 set PROTOC=%UserProfile%\.nuget\packages\Google.Protobuf.Tools\3.6.1\tools\windows_x64\protoc.exe
 set PLUGIN=%UserProfile%\.nuget\packages\Grpc.Tools\1.15.0\tools\windows_x64\grpc_csharp_plugin.exe
 
+if not exist build mkdir build
 %PROTOC% -Iprotos --csharp_out build  protos/rpc.proto --grpc_out build --plugin=protoc-gen-grpc=%PLUGIN%
 
 endlocal
