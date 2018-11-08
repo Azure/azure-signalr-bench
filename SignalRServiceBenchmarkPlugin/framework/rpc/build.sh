@@ -1,9 +1,7 @@
 #!/bin/bash
 
 install_required_libs() {
-  cd ..
   dotnet restore
-  cd -
 }
 
 generate_proto() {
@@ -14,14 +12,13 @@ generate_proto() {
 build_rpc() {
   install_required_libs
   generate_proto
-  cd ../
   dotnet build
 }
 
 build_master() {
   install_required_libs
   generate_proto
-  cd ../../master/
+  cd ../master/
   dotnet build
   cd -
 }
@@ -29,7 +26,7 @@ build_master() {
 build_slave() {
   install_required_libs
   generate_proto
-  cd ../../slave/
+  cd ../slave/
   dotnet build
   cd -
 }
@@ -37,7 +34,7 @@ build_slave() {
 package_master() {
   local outDir=$1
   build_master
-  cd ../../master
+  cd ../master
   dotnet publish -c Release -f netcoreapp2.1 -o ${outDir} --self-contained -r $PLATFORM
   cd -
 }
@@ -45,7 +42,7 @@ package_master() {
 package_slave() {
   local outDir=$1
   build_slave
-  cd ../../slave
+  cd ../slave
   dotnet publish -c Release -f netcoreapp2.1 -o ${outDir} --self-contained -r $PLATFORM
   cd -
 }

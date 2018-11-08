@@ -12,6 +12,7 @@ function set_global_env() {
    fi
    export JenkinsRootPath="$Jenkins_Workspace_Root"
    export PluginScriptWorkingDir=$Jenkins_Workspace_Root/${relative_dir}/SignalRServiceBenchmarkPlugin/plugins/Plugin.Microsoft.Azure.SignalR.Benchmark/Scripts/BenchmarkConfigurationGenerator/
+   export PluginRpcBuildWorkingDir=$Jenkins_Workspace_Root/${relative_dir}/SignalRServiceBenchmarkPlugin/framework/rpc/
    export ScriptWorkingDir=$Jenkins_Workspace_Root/${relative_dir}/Scripts/                     # folders to find all scripts
    export CurrentWorkingDir=$Jenkins_Workspace_Root/${relative_dir}/v2/JenkinsScript/     # workding directory
    export CommandWorkingDir=$Jenkins_Workspace_Root/${relative_dir}/SignalRServiceBenchmarkPlugin/utils/Commander
@@ -173,6 +174,8 @@ function run_benchmark() {
             fi
             ## TODO generate configuration
             run_and_gen_report $tag $Scenario $Transport $MessageEncoding $user $passwd "$connectStr" $k8s_result_dir $unit
+
+            disable_exit_immediately_when_fail
             if [ "$service_name" != "" ]
             then
                if [ "$collect_pod_top_pid" != "" ]
@@ -197,6 +200,7 @@ function run_benchmark() {
                get_nginx_log $service_name "$g_nginx_ns" $k8s_result_dir
                get_k8s_pod_status $service_name $k8s_result_dir
             fi
+            enable_exit_immediately_when_fail
             ## TODO reboot ASRS
          done
       done
@@ -247,6 +251,46 @@ EOF
   sh gen_html.sh $connectionString
 }
 
+function build_rpc_master() {
+  local targetDir=$1
+  local tmpMaster=/tmp/master
+  if [ -e $tmpMaster ]
+  then
+     rm -rf $tmpMaster
+  fi
+  cd $PluginRpcBuildWorkingDir
+  ./build.sh master $tmpMaster
+  mv $tmpMaster $targetDir/publish
+  cd $targetDir
+  tar zcvf publish.tgz publish
+  cd -
+}
+
+function build_rpc_slave() {
+  local targetDir=$1
+  local tmpSlave=/tmp/slave
+  if [ -e $tmpSlave ]
+  then
+     rm -rf $tmpSlave
+  fi
+  cd $PluginRpcBuildWorkingDir
+  ./build.sh slave $tmpSlave
+  mv $tmpSlave $targetDir/publish
+  cd $targetDir
+  tar zcvf publish.tgz publish
+  cd -
+}
+
+disable_exit_immediately_when_fail()
+{
+  set +e
+}
+
+enable_exit_immediately_when_fail()
+{
+  set -e
+}
+
 function run_command() {
   local user=$1
   local passwd="$2"
@@ -258,6 +302,12 @@ function run_command() {
   local appserver=`python extract_ip.py -i $PrivateIps -q appserver`
   local slaves=`python extract_ip.py -i $PrivateIps -q slaves`
 
+  local masterDir=$CommandWorkingDir/master
+  local slaveDir=$CommandWorkingDir/slave
+  mkdir -p $masterDir
+  mkdir -p $slaveDir
+  build_rpc_master $masterDir
+  build_rpc_slave $slaveDir
   cd $CommandWorkingDir
   local remoteCmd="remove_counters.sh"
   cat << EOF > $remoteCmd
@@ -270,16 +320,18 @@ EOF
   sshpass -p ${passwd} scp -o StrictHostKeyChecking=no -o LogLevel=ERROR $remoteCmd ${user}@${master}:/home/${user}/
   sshpass -p ${passwd} ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR ${user}@${master} "chmod +x $remoteCmd"
   sshpass -p ${passwd} ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR ${user}@${master} "./$remoteCmd"
+  disable_exit_immediately_when_fail
   dotnet run -- --RpcPort=5555 --SlaveList="$slaves" --MasterHostname="$master" --AppServerHostnames="$appserver" \
          --Username=$user --Password=$passwd \
          --AppserverProject="/home/wanl/executables/appserver" \
-         --MasterProject="/home/wanl/executables/master" \
-         --SlaveProject="/home/wanl/executables/slave" \
+         --MasterProject="$masterDir" \
+         --SlaveProject="$slaveDir" \
          --AppserverTargetPath="/home/${user}/appserver.tgz" --MasterTargetPath="/home/${user}/master.tgz" \
          --SlaveTargetPath="/home/${user}/slave.tgz" \
          --BenchmarkConfiguration="$configPath" \
          --BenchmarkConfigurationTargetPath="/home/${user}/signalr.yaml" \
          --AzureSignalRConnectionString="$connectionString"
+  enable_exit_immediately_when_fail
   sshpass -p ${passwd} scp -o StrictHostKeyChecking=no -o LogLevel=ERROR ${user}@${master}:/home/${user}/counters.txt ${outputDir}/
 }
 
