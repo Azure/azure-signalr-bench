@@ -1,5 +1,16 @@
 #!/bin/bash
 . ./func_env.sh
+
+disable_exit_immediately_when_fail()
+{
+  set +e
+}
+
+enable_exit_immediately_when_fail()
+{
+  set -e
+}
+
 # input Jenkinw workspace directory
 # this function is invoked in every job entry
 function set_global_env() {
@@ -492,6 +503,7 @@ function run_unit() {
    if [ "$service_name" != "" ]
    then
    ############# copy pod log ############
+      disable_exit_immediately_when_fail
       if [ "$copy_syslog" == "true" ]
       then
          copy_syslog $service_name $k8s_result_dir
@@ -501,6 +513,7 @@ function run_unit() {
          get_nginx_log $service_name "$g_nginx_ns" $k8s_result_dir
       fi
       get_k8s_pod_status $service_name $k8s_result_dir
+      enable_exit_immediately_when_fail
    ############# stop top ##############
       if [ "$collect_pod_top_pid" != "" ]
       then
