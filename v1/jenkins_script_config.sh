@@ -1,6 +1,7 @@
 #!/bin/bash
 . ./func_env.sh
 
+# disable the Jenkins job exits when it sees error
 disable_exit_immediately_when_fail()
 {
   set +e
