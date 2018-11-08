@@ -139,7 +139,7 @@ namespace JenkinsScript
             {
                 str += $"masterPrivateIp: {slvPvtIps[0]}\n";
                 str += "slavePrivateIp: ";
-                for (var i = 1; i < slvPvtIps.Count; i++)
+                for (var i = 0; i < slvPvtIps.Count; i++)
                 {
                     str += slvPvtIps[i];
                     if (i < slvPvtIps.Count - 1) str += ";";
