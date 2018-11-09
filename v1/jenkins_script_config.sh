@@ -555,31 +555,37 @@ do
    fi
 
    run_unit "$ConnectionString" run_benchmark $service
-   
+
+   azure_login
    delete_signalr_service $signalrServiceName $DogFoodResourceGroup
 done
+}
+
+function azure_login() {
+  if [ "$ASRSEnv" == "dogfood" ]
+  then
+    register_signalr_service_dogfood
+    az_login_ASRS_dogfood
+  else
+    az_login_signalr_dev_sub
+  fi
 }
 
 # require global env:
 # ASRSEnv, DogFoodResourceGroup, ASRSLocation
 function prepare_ASRS_creation() {
-cd $ScriptWorkingDir
-. ./az_signalr_service.sh
+  cd $ScriptWorkingDir
+  . ./az_signalr_service.sh
 
-if [ "$ASRSEnv" == "dogfood" ]
-then
-  register_signalr_service_dogfood
-  az_login_ASRS_dogfood
-else
-  az_login_signalr_dev_sub
-fi
-create_group_if_not_exist $DogFoodResourceGroup $ASRSLocation
+  azure_login
+  create_group_if_not_exist $DogFoodResourceGroup $ASRSLocation
 }
 
 # global env: ScriptWorkingDir, DogFoodResourceGroup, ASRSEnv
 function clean_ASRS_group() {
 ############# remove SignalR Service Resource Group #########
 cd $ScriptWorkingDir
+azure_login
 delete_group $DogFoodResourceGroup
 if [ "$ASRSEnv" == "dogfood" ]
 then
