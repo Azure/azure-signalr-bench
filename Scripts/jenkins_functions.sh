@@ -138,6 +138,63 @@ function run_all_units() {
  done
 }
 
+function start_collect_top_for_signalr_and_nginx()
+{
+    local k8s_result_dir=$env_statistic_folder
+    cd $ScriptWorkingDir
+    . ./func_env.sh
+    . ./kubectl_utils.sh
+    local service_name=$(extract_servicename_from_connectionstring $ConnectionString)
+    if [ "$service_name" != "" ]
+    then
+       nohup sh collect_pod_top.sh $service_name $k8s_result_dir &
+       collect_pod_top_pid=$!
+       if [ "$g_nginx_ns" != "" ]
+       then
+          nohup sh collect_nginx_top.sh $service_name $g_nginx_ns $k8s_result_dir &
+          collect_nginx_top_pid=$!
+       fi
+    fi
+}
+
+function stop_collect_top_for_signalr_and_nginx()
+{
+    if [ "$collect_pod_top_pid" != "" ]
+    then
+      # kill the process if it is alive
+      local a=`ps -o pid= -p $collect_pod_top_pid`
+      if [ "$a" != "" ]
+      then
+         kill $collect_pod_top_pid
+      fi
+    fi
+    if [ "$collect_nginx_top_pid" != "" ]
+    then
+      local a=`ps -o pid= -p $collect_nginx_top_pid`
+      if [ "$a" != "" ]
+      then
+         kill $collect_nginx_top_pid
+      fi
+    fi
+}
+
+function copy_log_from_k8s()
+{
+    local k8s_result_dir=$env_statistic_folder
+    cd $ScriptWorkingDir
+    . ./func_env.sh
+    . ./kubectl_utils.sh
+    local service_name=$(extract_servicename_from_connectionstring $ConnectionString)
+    disable_exit_immediately_when_fail
+    if [ "$service_name" != "" ]
+    then
+    ############# copy pod log ############
+       copy_syslog $service_name $k8s_result_dir
+       get_nginx_log $service_name "$g_nginx_ns" $k8s_result_dir
+       get_k8s_pod_status $service_name $k8s_result_dir
+    fi
+    enable_exit_immediately_when_fail
+}
 
 function run_benchmark() {
   local unit=$1
@@ -156,51 +213,14 @@ function run_benchmark() {
          for MessageEncoding in $bench_encoding_list
          do
             prepare_result_folder_4_scenario $tag $Transport $MessageEncoding $Scenario
-            local k8s_result_dir=$env_statistic_folder
-            ## TODO start collecting top
-            cd $ScriptWorkingDir
-            . ./func_env.sh
-            . ./kubectl_utils.sh
-            local service_name=$(extract_servicename_from_connectionstring $ConnectionString)
-            if [ "$service_name" != "" ]
-            then
-               nohup sh collect_pod_top.sh $service_name $k8s_result_dir &
-               collect_pod_top_pid=$!
-               if [ "$g_nginx_ns" != "" ]
-               then
-                  nohup sh collect_nginx_top.sh $service_name $g_nginx_ns $k8s_result_dir &
-                  collect_nginx_top_pid=$!
-               fi     
-            fi
-            ## TODO generate configuration
+
+            start_collect_top_for_signalr_and_nginx
+
             run_and_gen_report $tag $Scenario $Transport $MessageEncoding $user $passwd "$connectStr" $k8s_result_dir $unit
 
-            disable_exit_immediately_when_fail
-            if [ "$service_name" != "" ]
-            then
-               if [ "$collect_pod_top_pid" != "" ]
-               then
-         # kill the process if it is alive
-                 local a=`ps -o pid= -p $collect_pod_top_pid`
-                 if [ "$a" != "" ]
-                 then
-                    kill $collect_pod_top_pid
-                 fi
-               fi
-               if [ "$collect_nginx_top_pid" != "" ]
-               then
-                 local a=`ps -o pid= -p $collect_nginx_top_pid`
-                 if [ "$a" != "" ]
-                 then
-                    kill $collect_nginx_top_pid
-                 fi
-               fi
-   ############# copy pod log ############
-               copy_syslog $service_name $k8s_result_dir
-               get_nginx_log $service_name "$g_nginx_ns" $k8s_result_dir
-               get_k8s_pod_status $service_name $k8s_result_dir
-            fi
-            enable_exit_immediately_when_fail
+            stop_collect_top_for_signalr_and_nginx
+
+            copy_log_from_k8s
             ## TODO reboot ASRS
          done
       done
@@ -296,6 +316,23 @@ enable_exit_immediately_when_fail()
   set -e
 }
 
+function copy_log_from_slaves_appserver()
+{
+  local user=$1
+  local passwd="$2"
+  local outputDir="$3"
+  cd $ScriptWorkingDir
+  local i
+  for i in `python extract_ip.py -i $PrivateIps -q slaveList`
+  do
+    sshpass -p $passwd scp -o StrictHostKeyChecking=no -o LogLevel=ERROR $user@${i}:~/slave*.log $outputDir/
+  done
+  for i in `python extract_ip.py -i $PrivateIps -q appserverList`
+  do
+    sshpass -p $passwd scp -o StrictHostKeyChecking=no -o LogLevel=ERROR $user@${i}:~/slave*.log $outputDir/
+  done
+}
+
 function run_command() {
   local user=$1
   local passwd="$2"
@@ -383,6 +420,7 @@ function create_asrs()
   echo "[ConnectionString]: $connectionStr"
   export ConnectionString="$connectionStr"
 }
+
 ## exit handler to remove resource group ##
 # global env:
 # CurrentWorkingDir, ServicePrincipal, AgentConfig, VMMgrDir
