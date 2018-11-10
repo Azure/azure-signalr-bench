@@ -148,17 +148,17 @@ namespace Commander
                 while (recheck < timeout)
                 {
                     using (var reader =
-                        new StreamReader(appservers[i].OutputStream, Encoding.UTF8, true, 4096))
+                        new StreamReader(appservers[i].OutputStream, Encoding.UTF8, true, 4096, true))
                     {
                         var applog = reader.ReadToEnd();
                         if (applog.Contains("HttpConnection Started"))
                         {
-                            Log.Information($"appserver '{appservers[i]}' started");
+                            Log.Information($"appserver '{appservers[i].CommandText}' started");
                             break;
                         }
                         else
                         {
-                            Log.Information($"waiting for appserver '{appservers[i]}' starting...");
+                            Log.Information($"waiting for appserver '{appservers[i].CommandText}' starting...");
                             recheck++;
                             Task.Delay(TimeSpan.FromSeconds(1)).Wait();
                         }
