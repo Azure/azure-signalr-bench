@@ -226,7 +226,7 @@ namespace Commander
                                       $"dotnet exec AppServer.dll --urls=http://*:{_appserverPort}";
                 }
                 var masterCommand = $"dotnet exec {masterExecutablePath} -- " +
-                                    $"--BenchmarkConfiguration=\"{_benchmarkConfigurationTargetPath}\"" +
+                                    $"--BenchmarkConfiguration=\"{_benchmarkConfigurationTargetPath}\" " +
                                     $"--SlaveList=\"{string.Join(',', _slaveList)}\"";
                 var slaveCommand = $"dotnet exec {slaveExecutablePath} --HostName 0.0.0.0 --RpcPort {_rpcPort}";
                 var appserverSshCommands = (from client in _remoteClients.AppserverSshClients
