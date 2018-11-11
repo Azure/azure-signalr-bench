@@ -213,6 +213,7 @@ function run_benchmark() {
          for MessageEncoding in $bench_encoding_list
          do
             prepare_result_folder_4_scenario $tag $Transport $MessageEncoding $Scenario
+            local k8s_result_dir=$env_statistic_folder
 
             start_collect_top_for_signalr_and_nginx
 
@@ -325,11 +326,7 @@ function copy_log_from_slaves_appserver()
   local i
   for i in `python extract_ip.py -i $PrivateIps -q slaveList`
   do
-    sshpass -p $passwd scp -o StrictHostKeyChecking=no -o LogLevel=ERROR $user@${i}:~/slave*.log $outputDir/
-  done
-  for i in `python extract_ip.py -i $PrivateIps -q appserverList`
-  do
-    sshpass -p $passwd scp -o StrictHostKeyChecking=no -o LogLevel=ERROR $user@${i}:~/slave*.log $outputDir/
+    sshpass -p $passwd scp -o StrictHostKeyChecking=no -o LogLevel=ERROR $user@${i}:~/slave*.log $outputDir/slave-${i}.log
   done
 }
 
@@ -372,9 +369,11 @@ EOF
          --SlaveTargetPath="/home/${user}/slave.tgz" \
          --BenchmarkConfiguration="$configPath" \
          --BenchmarkConfigurationTargetPath="/home/${user}/signalr.yaml" \
-         --AzureSignalRConnectionString="$connectionString"
+         --AzureSignalRConnectionString="$connectionString" \
+         --AppserverLogDirectory="${outputDir}"
   enable_exit_immediately_when_fail
   sshpass -p ${passwd} scp -o StrictHostKeyChecking=no -o LogLevel=ERROR ${user}@${master}:/home/${user}/counters.txt ${outputDir}/
+  copy_log_from_slaves_appserver ${user} $passwd ${outputDir}
 }
 
 function create_asrs()
@@ -432,8 +431,11 @@ function remove_resource_group() {
   local clean_asrs_daemon=daemon_${JOB_NAME}_cleanasrs
   ## remove all test VMs
   local pid_file_path=/tmp/${result_root}_pid_remove_rsg.txt
-  BUILD_ID=dontKillcenter /usr/bin/nohup ${VMMgrDir}/JenkinsScript --step=DeleteResourceGroupByConfig --AgentConfigFile=$AgentConfig --DisableRandomSuffix --ServicePrincipal=$ServicePrincipal &
-
+  #BUILD_ID=dontKillcenter /usr/bin/nohup ${VMMgrDir}/JenkinsScript --step=DeleteResourceGroupByConfig --AgentConfigFile=$AgentConfig --DisableRandomSuffix --ServicePrincipal=$ServicePrincipal &
+cat << EOF > /tmp/clean_vms.sh
+${VMMgrDir}/JenkinsScript --step=DeleteResourceGroupByConfig --AgentConfigFile=$AgentConfig --DisableRandomSuffix --ServicePrincipal=$ServicePrincipal
+EOF
+  daemonize -v -o /tmp/${clean_vm_daemon}.out -e /tmp/${clean_vm_daemon}.err -E BUILD_ID=dontKillcenter /usr/bin/nohup /bin/sh /tmp/clean_vms.sh &
   ## remove ASRS
 cat << EOF > /tmp/clean_asrs.sh
 cd $ScriptWorkingDir

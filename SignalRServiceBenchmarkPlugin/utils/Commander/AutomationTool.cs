@@ -178,7 +178,7 @@ namespace Commander
                 {
                     Directory.CreateDirectory(_appserverLogDirPath);
                 }
-                var logFilePath = System.IO.Path.GetDirectoryName(Path.Combine(_appserverLogDirPath, logFile));
+                var logFilePath = Path.Combine(_appserverLogDirPath, logFile);
 
                 using (var reader = new StreamReader(cmd.OutputStream, Encoding.UTF8, true, 1024))
                 using (var writer = new StreamWriter(logFilePath, true))
@@ -188,7 +188,7 @@ namespace Commander
                         string line = reader.ReadLine();
                         if (line != null)
                         {
-                            writer.Write(line);
+                            writer.WriteLine(line);
                         }
                     }
                 }
