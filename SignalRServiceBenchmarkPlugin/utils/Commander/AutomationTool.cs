@@ -252,7 +252,7 @@ namespace Commander
                 Log.Information($"Start master");
                 var masterResult = masterSshCommand.BeginExecute();
                 using (var reader =
-                   new StreamReader(masterSshCommand.OutputStream, Encoding.UTF8, true, 1024))
+                   new StreamReader(masterSshCommand.OutputStream, Encoding.UTF8, true, 1024, true))
                 {
                     while (!masterResult.IsCompleted || !reader.EndOfStream)
                     {
@@ -265,7 +265,6 @@ namespace Commander
                 }
 
                 masterSshCommand.EndExecute(masterResult);
-
                 CopyAppServerLog(appserverSshCommands);
             }
             finally
