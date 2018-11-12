@@ -256,9 +256,9 @@ function run_and_gen_report() {
                       -c $config_path $maxConnectionOption
 
   #TODO dummy values
-  local connection=3000
-  local concurrentConnection=300
-  local send=1000
+  local connection=`python3 get_sending_connection.py -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q totalConnections`
+  local concurrentConnection=`python3 get_sending_connection.py -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q concurrentConnection`
+  local send=`python3 get_sending_connection.py -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q sendingSteps`
   
   run_command $user $passwd $connectionString $outputDir $config_path
   cd $ScriptWorkingDir
