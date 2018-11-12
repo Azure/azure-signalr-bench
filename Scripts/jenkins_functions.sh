@@ -16,6 +16,7 @@ function set_global_env() {
    export ScriptWorkingDir=$Jenkins_Workspace_Root/${relative_dir}/Scripts/                     # folders to find all scripts
    export CurrentWorkingDir=$Jenkins_Workspace_Root/${relative_dir}/v2/JenkinsScript/     # workding directory
    export CommandWorkingDir=$Jenkins_Workspace_Root/${relative_dir}/SignalRServiceBenchmarkPlugin/utils/Commander
+   export AppServerWorkingDir=$Jenkins_Workspace_Root/${relative_dir}/SignalRServiceBenchmarkPlugin/utils/AppServer
 ############# those configurations are shared in Jenkins folder #####
    export AgentConfig=$JenkinsRootPath'/agent.yaml'
    export PrivateIps=$JenkinsRootPath'/privateIps.yaml'
@@ -255,14 +256,13 @@ function run_and_gen_report() {
                       -U $appserverUrls -d $sigbench_run_duration \
                       -c $config_path $maxConnectionOption
 
-  #TODO dummy values
   local connection=`python3 get_sending_connection.py -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q totalConnections`
   local concurrentConnection=`python3 get_sending_connection.py -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q concurrentConnection`
   local send=`python3 get_sending_connection.py -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q sendingSteps`
   
   run_command $user $passwd $connectionString $outputDir $config_path
   cd $ScriptWorkingDir
-     #### generate the connection configuration for HTML ####
+  #### generate the connection configuration for HTML ####
 cat << EOF > configs/cmd_4_${MessageEncoding}_${Scenario}_${tag}_${Transport}
 connection=${connection}
 connection_concurrent=${concurrentConnection}
@@ -302,6 +302,21 @@ function build_rpc_slave() {
   cd $PluginRpcBuildWorkingDir
   ./build.sh slave $tmpSlave
   mv $tmpSlave $targetDir/publish
+  cd $targetDir
+  tar zcvf publish.tgz publish
+  cd -
+}
+
+build_app_server() {
+  local targetDir=$1
+  local tmpAppServer=/tmp/appserver
+  if [ -e $tmpAppServer ]
+  then
+     rm -rf $tmpAppServer
+  fi
+  cd $AppServerWorkingDir
+  ./build.sh $tmpAppServer
+  mv $tmpAppServer $targetDir/publish
   cd $targetDir
   tar zcvf publish.tgz publish
   cd -
@@ -402,10 +417,13 @@ function run_command() {
 
   local masterDir=$CommandWorkingDir/master
   local slaveDir=$CommandWorkingDir/slave
+  local appserverDir=$CommandWorkingDir/appserver
   mkdir -p $masterDir
   mkdir -p $slaveDir
+  mkdir -p $appserverDir
   build_rpc_master $masterDir
   build_rpc_slave $slaveDir
+  build_app_server $appserverDir
   cd $CommandWorkingDir
   local remoteCmd="remove_counters.sh"
   cat << EOF > $remoteCmd
@@ -423,7 +441,7 @@ EOF
   cd $CommandWorkingDir
   dotnet run -- --RpcPort=5555 --SlaveList="$slaves" --MasterHostname="$master" --AppServerHostnames="$appserver" \
          --Username=$user --Password=$passwd \
-         --AppserverProject="/home/wanl/executables/appserver" \
+         --AppserverProject="$appserverDir" \
          --MasterProject="$masterDir" \
          --SlaveProject="$slaveDir" \
          --AppserverTargetPath="/home/${user}/appserver.tgz" --MasterTargetPath="/home/${user}/master.tgz" \
