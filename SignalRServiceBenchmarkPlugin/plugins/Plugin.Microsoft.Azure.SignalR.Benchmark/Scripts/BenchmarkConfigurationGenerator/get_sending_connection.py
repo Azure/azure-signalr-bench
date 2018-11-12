@@ -33,11 +33,20 @@ def parse_arguments():
     parser.add_argument('-ms', '--message_size', type=int, default=2*1024, help="Message size")
     # todo: set default value
     parser.add_argument('-s', '--settings', type=str, default='settings.yaml', help='Settings from different unit')
-
+    parser.add_argument('-q', '--query', choices=["sendingSteps","concurrentConnection","totalConnections"], help='Specify the query item', required=True)
     args = parser.parse_args()
 
     return args
 
+def sendingSteps(scenario_config):
+    step_list = [scenario_config.base_step + i * scenario_config.step for i in range(0, scenario_config.step_length)]
+    print(','.join(str(step) for step in step_list if step <= scenario_config.connections))
+
+def concurrentConnection(scenario_config):
+    print(scenario_config.concurrent)
+
+def totalConnections(scenario_config):
+    print(scenario_config.connections)
 
 def main():
     args = parse_arguments()
@@ -48,9 +57,8 @@ def main():
     scenario_config = determine_scenario_config(scenario_config_collection, args.unit, args.scenario, args.transport,
                                                 message_size=args.message_size)
 
-    step_list = [scenario_config.base_step + i * scenario_config.step for i in range(0, scenario_config.step_length)]
-
-    print(','.join(str(step) for step in step_list if step <= scenario_config.connections))
+    func="{f}(scenario_config)".format(f=args.query)
+    eval(func)
 
 
 if __name__ == "__main__":
