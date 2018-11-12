@@ -371,7 +371,7 @@ EOF
 
 stop_collect_slaves_appserver_top()
 {
-  if [ "$collet_slaves_top_pid" != "" ]
+  if [ "$collect_slaves_top_pid" != "" ]
   then
     # kill the process if it is alive
     local a=`ps -o pid= -p $collect_slaves_top_pid`
@@ -380,7 +380,7 @@ stop_collect_slaves_appserver_top()
        kill $collect_slaves_top_pid
     fi
   fi
-  if [ "$collet_appserver_top_pid" != "" ]
+  if [ "$collect_appserver_top_pid" != "" ]
   then
     # kill the process if it is alive
     local a=`ps -o pid= -p $collect_appserver_top_pid`
