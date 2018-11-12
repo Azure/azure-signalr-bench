@@ -475,7 +475,8 @@ namespace Bench.RpcMaster
         private static void WaitRpcConnectSuccess(List<RpcService.RpcServiceClient> clients)
         {
             var maxTry = 100;
-            for (var i = 0; i < maxTry; i++)
+            var i = 0;
+            for (; i < maxTry; i++)
             {
                 try
                 {
@@ -500,6 +501,10 @@ namespace Bench.RpcMaster
                     continue;
                 }
                 break;
+            }
+            if (i == maxTry)
+            {
+                throw new Exception($"Fatal error: at least one of slaves cannot be connected after {maxTry} try");
             }
         }
 
