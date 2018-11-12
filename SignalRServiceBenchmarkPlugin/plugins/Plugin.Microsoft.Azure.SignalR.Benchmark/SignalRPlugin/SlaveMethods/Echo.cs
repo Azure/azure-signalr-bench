@@ -14,8 +14,6 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
 {
     public class Echo : BaseContinuousSendMethod, ISlaveMethod
     {
-        private StatisticsCollector _statisticsCollector;
-
         public async Task<IDictionary<string, object>> Do(IDictionary<string, object> stepParameters, IDictionary<string, object> pluginParameters)
         {
             try
@@ -32,8 +30,9 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 stepParameters.TryGetTypedValue(SignalRConstants.MessageSize, out int messageSize, Convert.ToInt32);
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionStore}.{type}", out IList<HubConnection> connections, (obj) => (IList<HubConnection>)obj);
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionOffset}.{type}", out int offset, Convert.ToInt32);
-                pluginParameters.TryGetTypedValue($"{SignalRConstants.StatisticsStore}.{type}", out _statisticsCollector, obj => (StatisticsCollector) obj);
+                pluginParameters.TryGetTypedValue($"{SignalRConstants.StatisticsStore}.{type}", out StatisticsCollector statisticsCollector, obj => (StatisticsCollector) obj);
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionIndex}.{type}", out List<int> connectionIndex, (obj) => (List<int>)obj);
+                pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionSuccessFlag}.{type}", out List<SignalREnums.ConnectionState> connectionsSuccessFlag, (obj) => (List<SignalREnums.ConnectionState>)obj);
 
                 // Generate necessary data
                 var data = new Dictionary<string, object>
@@ -42,13 +41,13 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 };
 
                 // Reset counters
-                _statisticsCollector.ResetGroupCounters();
-                _statisticsCollector.ResetMessageCounters();
+                statisticsCollector.ResetGroupCounters();
+                statisticsCollector.ResetMessageCounters();
 
                 // Send messages
                 await Task.WhenAll(from i in Enumerable.Range(0, connections.Count)
                                    where connectionIndex[i] % modulo >= remainderBegin && connectionIndex[i] % modulo < remainderEnd
-                                   select ContinuousSend(connections[i], data, SendEcho,
+                                   select ContinuousSend((Connection: connections[i], LocalIndex: i, ConnectionsSuccessFlag: connectionsSuccessFlag, StatisticsCollector: statisticsCollector), data, SendEcho,
                                            TimeSpan.FromMilliseconds(duration), TimeSpan.FromMilliseconds(interval),
                                            TimeSpan.FromMilliseconds(1), TimeSpan.FromMilliseconds(interval)));
 
@@ -62,10 +61,13 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
             }
         }
 
-        private async Task SendEcho(HubConnection connection, IDictionary<string, object> data)
+        private async Task SendEcho((HubConnection Connection, int LocalIndex, List<SignalREnums.ConnectionState> ConnectionsSuccessFlag, StatisticsCollector StatisticsCollector) package, IDictionary<string, object> data)
         {
             try
             {
+                // Is the connection is not active, then stop sending message
+                if (package.ConnectionsSuccessFlag[package.LocalIndex] != SignalREnums.ConnectionState.Success) return;
+
                 // Extract data
                 data.TryGetValue(SignalRConstants.MessageBlob, out var messageBlob);
 
@@ -77,16 +79,17 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 };
 
                 // Send message
-                await connection.SendAsync(SignalRConstants.EchoCallbackName, payload);
+                await package.Connection.SendAsync(SignalRConstants.EchoCallbackName, payload);
 
                 // Update statistics
-                _statisticsCollector.IncreaseSentMessage();
+                package.StatisticsCollector.IncreaseSentMessage();
             }
             catch (Exception ex)
             {
+                package.ConnectionsSuccessFlag[package.LocalIndex] = SignalREnums.ConnectionState.Fail;
                 var message = $"Error in Echo: {ex}";
                 Log.Error(message);
-                throw;
+                //throw;
             }
         }
     }

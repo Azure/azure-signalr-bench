@@ -26,8 +26,12 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 stepParameters.TryGetTypedValue(SignalRConstants.Type, out string type, Convert.ToString);
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionStore}.{type}", out IList<HubConnection> connections, (obj) => (IList<HubConnection>)obj);
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.StatisticsStore}.{type}", out _statisticsCollector, obj => (StatisticsCollector)obj);
+                pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionSuccessFlag}.{type}", out List<SignalREnums.ConnectionState> connectionsSuccessFlag, (obj) => (List<SignalREnums.ConnectionState>)obj);
 
-                await Task.WhenAll(Util.BatchProcess(connections, StartConnect, concurrentConnection));
+                var packages = (from i in Enumerable.Range(0, connections.Count())
+                                select (Connection: connections[i], LocalIndex: i, ConnectionsSuccessFlag: connectionsSuccessFlag)).ToList();
+
+                await Task.WhenAll(Util.BatchProcess(packages, StartConnect, concurrentConnection));
 
                 return null;
             }
@@ -39,17 +43,18 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
             }
         }
 
-        private async Task StartConnect(HubConnection connection)
+        private async Task StartConnect((HubConnection Connection, int LocalIndex, List<SignalREnums.ConnectionState> connectionsSuccessFlag) package)
         {
-            if (connection == null) return;
+            if (package.Connection == null || package.connectionsSuccessFlag[package.LocalIndex] != SignalREnums.ConnectionState.Init) return;
+
             try
             {
-                await connection.StartAsync();
-                _statisticsCollector.IncreaseConnectionConnectSuccess();
+                await package.Connection.StartAsync();
+                package.connectionsSuccessFlag[package.LocalIndex] = SignalREnums.ConnectionState.Success;
             }
             catch (Exception ex)
             {
-                _statisticsCollector.IncreaseConnectionConnectFail();
+                package.connectionsSuccessFlag[package.LocalIndex] = SignalREnums.ConnectionState.Fail;
                 var message = $"Fail to start connection: {ex}";
                 Log.Error(message);
                 throw;

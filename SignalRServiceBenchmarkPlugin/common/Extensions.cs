@@ -34,6 +34,7 @@ namespace Common
             return false;
         }
 
+        // TODO: Change method name to "GetTypedValue" 
         public static void TryGetTypedValue<TKey, TValue, TActual>(this IDictionary<TKey, TValue> dict, TKey key, out TActual val, Func<TValue, TActual> converter = null) where TActual : TValue
         {
             var success = dict.TryGetTypedValueInternal(key, out val, converter);

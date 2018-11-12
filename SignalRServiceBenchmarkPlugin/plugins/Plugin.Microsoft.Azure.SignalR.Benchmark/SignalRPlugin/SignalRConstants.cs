@@ -28,11 +28,14 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         public static readonly string GroupInternalRemainderEnd = "Parameter.GroupInternalRemainderEnd";
         public static readonly string GroupInternalModulo = "Parameter.GroupInternalModulo";
         public static readonly string StatisticsOutputPath = "Parameter.StatisticsOutputPath";
+        public static readonly string CriteriaMaxFailConnectionPercentage = "Parameter.CriteriaMaxFailConnectionPercentage";
+        public static readonly string CriteriaMaxFailConnectionAmount = "Parameter.CriteriaMaxFailConnectionAmount";
 
         // Connection/group information
         public static readonly string ConnectionId = "information.ConnectionId";
         public static readonly string GroupName = "information.GroupName";
         public static readonly string ConnectionIndex = "information.ConnectionIndex";
+        public static readonly string ConnectionSuccessFlag = "information.ConnectionSuccess";
 
         // Plugin parameters
         public static readonly string ConnectionStore = "Plugin.ConnectionStore";

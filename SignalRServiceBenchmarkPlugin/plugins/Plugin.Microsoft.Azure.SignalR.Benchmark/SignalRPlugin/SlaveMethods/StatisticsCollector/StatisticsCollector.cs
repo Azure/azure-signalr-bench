@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading.Tasks;
 using Plugin.Microsoft.Azure.SignalR.Benchmark;
 
 namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods.Statistics
@@ -86,14 +87,35 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods.Statistics
             _statistics.AddOrUpdate(SignalRConstants.StatisticsGroupLeaveFail, 1, (k, v) => v + 1);
         }
 
-        public void IncreaseConnectionConnectSuccess()
+        public async Task UpdateConnectionsState(List<SignalREnums.ConnectionState> connectionsSuccessFlag)
         {
-            _statistics.AddOrUpdate(SignalRConstants.StatisticsConnectionConnectSuccess, 1, (k, v) => v + 1);
-        }
+            var s = new System.Threading.SemaphoreSlim(1);
+            await s.WaitAsync();
+            try
+            {
+                var success = 0;
+                var fail = 0;
+                foreach (var state in connectionsSuccessFlag)
+                {
+                    switch (state)
+                    {
+                        case SignalREnums.ConnectionState.Success:
+                            success++;
+                            break;
+                        case SignalREnums.ConnectionState.Fail:
+                            fail++;
+                            break;
+                    }
+                }
 
-        public void IncreaseConnectionConnectFail()
-        {
-            _statistics.AddOrUpdate(SignalRConstants.StatisticsConnectionConnectFail, 1, (k, v) => v + 1);
+                _statistics.AddOrUpdate(SignalRConstants.StatisticsConnectionConnectSuccess, success, (k, v) => success);
+                _statistics.AddOrUpdate(SignalRConstants.StatisticsConnectionConnectFail, fail, (k, v) => fail);
+
+            }
+            finally
+            {
+                s.Release();
+            }
         }
     }
 }

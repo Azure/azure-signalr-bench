@@ -37,10 +37,24 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 // Create Connections
                 var connections = CreateConnections(connectionBegin, connectionEnd - connectionBegin, urls, transportType, protocol);
 
+                // Setup connection success flag
+                var connectionsSuccessFlag = Enumerable.Repeat(SignalREnums.ConnectionState.Init, connections.Count()).ToList();
+
+                // Setup connection drop handler
+                for (int i = 0; i < connections.Count(); i++)
+                {
+                    connections[i].Closed += e =>
+                    {
+                        connectionsSuccessFlag[i] = SignalREnums.ConnectionState.Fail;
+                        return Task.CompletedTask;
+                    };
+                }
+
                 // Prepare plugin parameters
                 pluginParameters[$"{SignalRConstants.ConnectionStore}.{type}"] = connections;
                 pluginParameters[$"{SignalRConstants.ConnectionOffset}.{type}"] = connectionBegin;
                 pluginParameters[$"{SignalRConstants.ConnectionIndex}.{type}"] = connectionIndex.Split(',').Select(ind => Convert.ToInt32(ind)).ToList();
+                pluginParameters[$"{SignalRConstants.ConnectionSuccessFlag}.{type}"] = connectionsSuccessFlag;
 
                 return null;
             }
