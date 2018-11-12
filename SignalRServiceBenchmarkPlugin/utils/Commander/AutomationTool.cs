@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -319,11 +320,20 @@ namespace Commander
             publish.Wait();
             if (!publish.Result.Success) throw new Exception(publish.Result.StandardOutput);
 
-            var zip = Command.Run("zip", new string[] { "-r", $"{baseName}.zip", $"{baseName}/" }, o => o.WorkingDirectory(projectPath));
-            zip.Wait();
-            if (!zip.Result.Success) throw new Exception(zip.Result.StandardOutput);
-
-            return new FileInfo(Path.Combine(projectPath, $"{baseName}.zip"));
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                var zip = Command.Run("zip", new string[] { "-r", $"{baseName}.zip", $"{baseName}/" }, o => o.WorkingDirectory(projectPath));
+                zip.Wait();
+                if (!zip.Result.Success) throw new Exception(zip.Result.StandardOutput);
+                return new FileInfo(Path.Combine(projectPath, $"{baseName}.zip"));
+            }
+            else
+            {
+                var tar = Command.Run("tar", new string[] { "zcvf", $"{baseName}.tgz", $"{baseName}/" }, o => o.WorkingDirectory(projectPath));
+                tar.Wait();
+                if (!tar.Result.Success) throw new Exception(tar.Result.StandardOutput);
+                return new FileInfo(Path.Combine(projectPath, $"{baseName}.tgz"));
+            }
         }
 
         private void InstallZip(SshClient client)
