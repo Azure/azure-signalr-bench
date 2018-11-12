@@ -317,7 +317,66 @@ enable_exit_immediately_when_fail()
   set -e
 }
 
-function copy_log_from_slaves_appserver()
+start_collect_slaves_appserver_top()
+{
+  local user=$1
+  local passwd="$2"
+  local outputDir="$3"
+  local script_collect_slaves_top="collect_slaves_top.sh"
+  local script_collect_appserver_top="collect_appserver_top.sh"
+  cd $ScriptWorkingDir
+cat << EOF > $script_collect_slaves_top
+#!/bin/bash
+while [ true ]
+do
+  for i in `python extract_ip.py -i $PrivateIps -q slaveList`
+  do
+    sshpass -p $passwd ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $user@\${i} "top -b -n 1|head -n 17" >> $outputDir/slave_\${i}_top.txt
+  done
+  sleep 1
+done
+EOF
+cat << EOF > $script_collect_appserver_top
+#!/bin/bash
+while [ true ]
+do
+  for i in `python extract_ip.py -i $PrivateIps -q appserverList`
+  do
+    sshpass -p $passwd ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $user@\${i} "top -b -n 1|head -n 17" >> $outputDir/appserver_\${i}_top.txt
+  done
+  sleep 1
+done
+EOF
+  nohup sh $script_collect_slaves_top &
+  collect_slaves_top_pid=$!
+
+  nohup sh $script_collect_appserver_top &
+  collect_appserver_top_pid=$!
+}
+
+stop_collect_slaves_appserver_top()
+{
+  if [ "$collet_slaves_top_pid" != "" ]
+  then
+    # kill the process if it is alive
+    local a=`ps -o pid= -p $collect_slaves_top_pid`
+    if [ "$a" != "" ]
+    then
+       kill $collect_slaves_top_pid
+    fi
+  fi
+  if [ "$collet_appserver_top_pid" != "" ]
+  then
+    # kill the process if it is alive
+    local a=`ps -o pid= -p $collect_appserver_top_pid`
+    if [ "$a" != "" ]
+    then
+       kill $collect_appserver_top_pid
+    fi
+  fi
+}
+
+function copy_log_from_slaves()
 {
   local user=$1
   local passwd="$2"
@@ -326,7 +385,7 @@ function copy_log_from_slaves_appserver()
   local i
   for i in `python extract_ip.py -i $PrivateIps -q slaveList`
   do
-    sshpass -p $passwd scp -o StrictHostKeyChecking=no -o LogLevel=ERROR $user@${i}:~/slave*.log $outputDir/slave-${i}.log
+    sshpass -p $passwd scp -o StrictHostKeyChecking=no -o LogLevel=ERROR $user@${i}:~/slave*.log $outputDir/slave_${i}.log
   done
 }
 
@@ -360,6 +419,8 @@ EOF
   sshpass -p ${passwd} ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR ${user}@${master} "chmod +x $remoteCmd"
   sshpass -p ${passwd} ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR ${user}@${master} "./$remoteCmd"
   disable_exit_immediately_when_fail
+  start_collect_slaves_appserver_top ${user} $passwd ${outputDir}
+  cd $CommandWorkingDir
   dotnet run -- --RpcPort=5555 --SlaveList="$slaves" --MasterHostname="$master" --AppServerHostnames="$appserver" \
          --Username=$user --Password=$passwd \
          --AppserverProject="/home/wanl/executables/appserver" \
@@ -371,9 +432,10 @@ EOF
          --BenchmarkConfigurationTargetPath="/home/${user}/signalr.yaml" \
          --AzureSignalRConnectionString="$connectionString" \
          --AppserverLogDirectory="${outputDir}"
+  stop_collect_slaves_appserver_top ${user} $passwd ${outputDir}
   enable_exit_immediately_when_fail
   sshpass -p ${passwd} scp -o StrictHostKeyChecking=no -o LogLevel=ERROR ${user}@${master}:/home/${user}/counters.txt ${outputDir}/
-  copy_log_from_slaves_appserver ${user} $passwd ${outputDir}
+  copy_log_from_slaves ${user} $passwd ${outputDir}
 }
 
 function create_asrs()
