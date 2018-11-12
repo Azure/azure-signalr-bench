@@ -474,7 +474,8 @@ namespace Bench.RpcMaster
 
         private static void WaitRpcConnectSuccess(List<RpcService.RpcServiceClient> clients)
         {
-            while (true)
+            var maxTry = 100;
+            for (var i = 0; i < maxTry; i++)
             {
                 try
                 {
@@ -495,6 +496,7 @@ namespace Bench.RpcMaster
                 catch (Exception ex)
                 {
                     Util.Log($"rpc connection ex: {ex}");
+                    Task.Delay(TimeSpan.FromSeconds(1)).Wait();
                     continue;
                 }
                 break;
