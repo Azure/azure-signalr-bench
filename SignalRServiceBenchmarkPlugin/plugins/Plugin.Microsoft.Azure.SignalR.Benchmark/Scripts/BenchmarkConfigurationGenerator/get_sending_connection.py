@@ -50,7 +50,7 @@ def main():
 
     step_list = [scenario_config.base_step + i * scenario_config.step for i in range(0, scenario_config.step_length)]
 
-    return step_list
+    print(','.join(str(step) for step in step_list if step <= scenario_config.connections))
 
 
 if __name__ == "__main__":
