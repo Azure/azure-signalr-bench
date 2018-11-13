@@ -38,14 +38,15 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
 
             var connectionTotal = connectionSuccess + connectionFail;
             var connectionFailPercentage = (double)connectionFail / connectionTotal;
-            var largeLatencyPercentage = GetLargeLatencyPercentage(merged);
+            var largeLatencyPercentage = GetLargeLatencyPercentage(merged, latencyMax);
             if (connectionFailPercentage > criteriaMaxFailConnectionPercentage) throw new Exception($"Connection fail percentage {connectionFailPercentage * 100}% is greater than criteria {criteriaMaxFailConnectionPercentage * 100}%");
             if (connectionFail > criteriaMaxFailConnectionAmount) throw new Exception($"Connection fail amount {connectionFail} is greater than {criteriaMaxFailConnectionAmount}");
+            if (largeLatencyPercentage > criteriaMaxFailSendingPercentage) throw new Exception($"The percentage {largeLatencyPercentage * 100}% of Sending latency greater than {latencyMax} ms is larger than {criteriaMaxFailSendingPercentage * 100}%");
         }
 
-        private double GetLargeLatencyPercentage(IDictionary<string, int> data)
+        private double GetLargeLatencyPercentage(IDictionary<string, int> data, long latencyMax)
         {
-            var largeLatencyMessageCount = data[SignalRUtils.MessageGreaterOrEqaulTo(StatisticsCollector.LatencyMax)];
+            var largeLatencyMessageCount = data[SignalRUtils.MessageGreaterOrEqaulTo(latencyMax)];
             var receivedMessageCount = data[SignalRConstants.StatisticsMessageReceived];
             return (double)largeLatencyMessageCount / receivedMessageCount;
         }
