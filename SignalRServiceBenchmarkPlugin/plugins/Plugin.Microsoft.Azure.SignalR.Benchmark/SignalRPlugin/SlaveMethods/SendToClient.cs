@@ -14,8 +14,6 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
 {
     public class SendToClient : BaseContinuousSendMethod, ISlaveMethod
     {
-        private StatisticsCollector _statisticsCollector;
-
         public async Task<IDictionary<string, object>> Do(IDictionary<string, object> stepParameters, IDictionary<string, object> pluginParameters)
         {
             try
@@ -35,8 +33,9 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 // Get context
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionStore}.{type}", out IList<HubConnection> connections, (obj) => (IList<HubConnection>)obj);
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionOffset}.{type}", out int offset, Convert.ToInt32);
-                pluginParameters.TryGetTypedValue($"{SignalRConstants.StatisticsStore}.{type}", out _statisticsCollector, obj => (StatisticsCollector) obj);
+                pluginParameters.TryGetTypedValue($"{SignalRConstants.StatisticsStore}.{type}", out StatisticsCollector statisticsCollector, obj => (StatisticsCollector) obj);
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionIndex}.{type}", out List<int> connectionIndex, (obj) => (List<int>)obj);
+                pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionSuccessFlag}.{type}", out List<SignalREnums.ConnectionState> connectionsSuccessFlag, (obj) => (List<SignalREnums.ConnectionState>)obj);
 
                 // Generate necessary data
                 var messageBlob = new byte[messageSize];
@@ -54,8 +53,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                                };
 
                 // Reset counters
-                _statisticsCollector.ResetGroupCounters();
-                _statisticsCollector.ResetMessageCounters();
+                statisticsCollector.ResetGroupCounters();
+                statisticsCollector.ResetMessageCounters();
 
                 // Send messages
                 await Task.WhenAll(from package in packages
@@ -63,7 +62,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                                    let connection = package.Connection
                                    let data = package.Data
                                    where connectionIndex[i] % modulo >= remainderBegin && connectionIndex[i] % modulo < remainderEnd
-                                   select ContinuousSend(connection, data, SendClient,
+                                   select ContinuousSend((Connection: connections[i], LocalIndex: i, ConnectionsSuccessFlag: connectionsSuccessFlag, StatisticsCollector: statisticsCollector), data, SendClient,
                                         TimeSpan.FromMilliseconds(duration), TimeSpan.FromMilliseconds(interval),
                                         TimeSpan.FromMilliseconds(1), TimeSpan.FromMilliseconds(interval)));
 
@@ -77,7 +76,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
             }
         }
 
-        private async Task SendClient(HubConnection connection, IDictionary<string, object> data)
+        private async Task SendClient((HubConnection Connection, int LocalIndex, List<SignalREnums.ConnectionState> ConnectionsSuccessFlag, StatisticsCollector StatisticsCollector) package, IDictionary<string, object> data)
         {
             try
             {
@@ -94,10 +93,10 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 };
 
                 // Send message
-                await connection.SendAsync(SignalRConstants.SendToClientCallbackName, payload);
+                await package.Connection.SendAsync(SignalRConstants.SendToClientCallbackName, payload);
 
                 // Update statistics
-                _statisticsCollector.IncreaseSentMessage();
+                package.StatisticsCollector.IncreaseSentMessage();
             }
             catch (Exception ex)
             {

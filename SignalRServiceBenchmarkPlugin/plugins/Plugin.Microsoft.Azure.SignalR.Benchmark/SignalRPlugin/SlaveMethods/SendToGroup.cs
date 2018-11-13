@@ -14,8 +14,6 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
 {
     public class SendToGroup : BaseContinuousSendMethod, ISlaveMethod
     {
-        private StatisticsCollector _statisticsCollector;
-
         public async Task<IDictionary<string, object>> Do(IDictionary<string, object> stepParameters, IDictionary<string, object> pluginParameters)
         {
             try
@@ -40,8 +38,9 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 // Get context
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionStore}.{type}", out IList<HubConnection> connections, (obj) => (IList<HubConnection>)obj);
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionOffset}.{type}", out int offset, Convert.ToInt32);
-                pluginParameters.TryGetTypedValue($"{SignalRConstants.StatisticsStore}.{type}", out _statisticsCollector, obj => (StatisticsCollector) obj);
+                pluginParameters.TryGetTypedValue($"{SignalRConstants.StatisticsStore}.{type}", out StatisticsCollector statisticsCollector, obj => (StatisticsCollector) obj);
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionIndex}.{type}", out List<int> connectionIndex, (obj) => (List<int>)obj);
+                pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionSuccessFlag}.{type}", out List<SignalREnums.ConnectionState> connectionsSuccessFlag, (obj) => (List<SignalREnums.ConnectionState>)obj);
 
                 // Generate necessary data
                 var messageBlob = new byte[messageSize];
@@ -61,8 +60,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                                };
 
                 // Reset counters
-                _statisticsCollector.ResetGroupCounters();
-                _statisticsCollector.ResetMessageCounters();
+                statisticsCollector.ResetGroupCounters();
+                statisticsCollector.ResetMessageCounters();
 
                 Func<int, int, int, int, bool> IsSending = (index, modulo, beg, end) => (index % modulo) >= beg && (index % modulo) < end;
 
@@ -76,7 +75,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                                    let data = package.Data
                                    where IsSending(indexInGroup, GroupInternalModulo, GroupInternalRemainderBegin, GroupInternalRemainderEnd) &&
                                          IsSending(groupIndex, groupCount, GroupLevelRemainderBegin, GroupLevelRemainderEnd)
-                                   select ContinuousSend(connection, data, SendGroup,
+                                   select ContinuousSend((Connection: connections[index], LocalIndex: index, ConnectionsSuccessFlag: connectionsSuccessFlag, StatisticsCollector: statisticsCollector), data, SendGroup,
                                         TimeSpan.FromMilliseconds(duration), TimeSpan.FromMilliseconds(interval),
                                         TimeSpan.FromMilliseconds(1), TimeSpan.FromMilliseconds(interval)));
 
@@ -90,10 +89,13 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
             }
         }
 
-        private async Task SendGroup(HubConnection connection, IDictionary<string, object> data)
+        private async Task SendGroup((HubConnection Connection, int LocalIndex, List<SignalREnums.ConnectionState> ConnectionsSuccessFlag, StatisticsCollector StatisticsCollector) package, IDictionary<string, object> data)
         {
             try
             {
+                // Is the connection is not active, then stop sending message
+                if (package.ConnectionsSuccessFlag[package.LocalIndex] != SignalREnums.ConnectionState.Success) return;
+
                 // Extract data
                 data.TryGetTypedValue(SignalRConstants.GroupName, out string groupName, Convert.ToString);
                 data.TryGetValue(SignalRConstants.MessageBlob, out var messageBlob);
@@ -107,13 +109,14 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 };
 
                 // Send message
-                await connection.SendAsync(SignalRConstants.SendToGroupCallbackName, payload);
+                await package.Connection.SendAsync(SignalRConstants.SendToGroupCallbackName, payload);
 
                 // Update statistics
-                _statisticsCollector.IncreaseSentMessage();
+                package.StatisticsCollector.IncreaseSentMessage();
             }
             catch (Exception ex)
             {
+                package.ConnectionsSuccessFlag[package.LocalIndex] = SignalREnums.ConnectionState.Fail;
                 var message = $"Error in send to group: {ex}";
                 Log.Error(message);
                 throw;
