@@ -213,6 +213,10 @@ namespace Commander
                     {
                         Log.Error(tar.Result.StandardOutput);
                     }
+                    else
+                    {
+                        Command.Run("rm", new string[] { $"{logFile}" }, o => o.WorkingDirectory(_appserverLogDirPath));
+                    }
                 }
             }
         }
