@@ -197,6 +197,18 @@ function copy_log_from_k8s()
     enable_exit_immediately_when_fail
 }
 
+function reboot_all_pods()
+{
+   local connectionString=$1
+   cd $ScriptWorkingDir
+   . ./kubectl_utils.sh
+   local service_name=$(extract_servicename_from_connectionstring $connectionString)
+   if [ "$service_name" != "" ]
+   then
+     restart_all_pods $service_name
+   fi
+}
+
 function run_benchmark() {
   local unit=$1
   local user=$2
@@ -223,7 +235,8 @@ function run_benchmark() {
             stop_collect_top_for_signalr_and_nginx
 
             copy_log_from_k8s
-            ## TODO reboot ASRS
+
+            reboot_all_pods "$connectStr"
          done
       done
   done
@@ -286,6 +299,10 @@ function build_rpc_master() {
   fi
   cd $PluginRpcBuildWorkingDir
   ./build.sh master $tmpMaster
+  if [ -e $targetDir/publish ]
+  then
+     rm -rf $targetDir/publish
+  fi
   mv $tmpMaster $targetDir/publish
   cd $targetDir
   tar zcvf publish.tgz publish
@@ -301,6 +318,10 @@ function build_rpc_slave() {
   fi
   cd $PluginRpcBuildWorkingDir
   ./build.sh slave $tmpSlave
+  if [ -e $targetDir/publish ]
+  then
+     rm -rf $targetDir/publish
+  fi
   mv $tmpSlave $targetDir/publish
   cd $targetDir
   tar zcvf publish.tgz publish
@@ -316,6 +337,10 @@ build_app_server() {
   fi
   cd $AppServerWorkingDir
   ./build.sh $tmpAppServer
+  if [ -e $targetDir/publish ]
+  then
+     rm -rf $targetDir/publish
+  fi
   mv $tmpAppServer $targetDir/publish
   cd $targetDir
   tar zcvf publish.tgz publish
