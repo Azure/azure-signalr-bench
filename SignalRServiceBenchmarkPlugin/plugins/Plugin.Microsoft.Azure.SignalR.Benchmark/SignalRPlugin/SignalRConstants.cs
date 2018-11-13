@@ -30,6 +30,9 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         public static readonly string StatisticsOutputPath = "Parameter.StatisticsOutputPath";
         public static readonly string CriteriaMaxFailConnectionPercentage = "Parameter.CriteriaMaxFailConnectionPercentage";
         public static readonly string CriteriaMaxFailConnectionAmount = "Parameter.CriteriaMaxFailConnectionAmount";
+        public static readonly string CriteriaMaxFailSendingPercentage = "Parameter.CriteriaMaxFailSendingPercentage";
+        public static readonly string LatencyStep = "Parameter.LatencyStep";
+        public static readonly string LatencyMax = "Parameter.LatencyMax";
 
         // Connection/group information
         public static readonly string ConnectionId = "information.ConnectionId";

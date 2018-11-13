@@ -27,6 +27,10 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
             stepParameters.TryGetTypedValue(SignalRConstants.Type, out string type, Convert.ToString);
             stepParameters.TryGetTypedValue(SignalRConstants.StatisticsOutputPath, out string statisticsOutputPath, Convert.ToString);
 
+            // Get context
+            pluginParameters.TryGetTypedValue($"{SignalRConstants.LatencyStep}.{type}", out long latencyStep, Convert.ToInt64);
+            pluginParameters.TryGetTypedValue($"{SignalRConstants.LatencyMax}.{type}", out long latencyMax, Convert.ToInt64);
+
             // Start timer
             var timer = new System.Timers.Timer();
             timer.Elapsed += async (sender, e) =>
@@ -38,7 +42,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
                                                  select client.QueryAsync(stepParameters));
 
                 // Merge statistics
-                var merged = SignalRUtils.MergeStatistics(results, type);
+                var merged = SignalRUtils.MergeStatistics(results, type, latencyMax, latencyStep);
                 Log.Information($"Counters {Environment.NewLine}{merged.GetContents()}");
 
                 // Display merged statistics

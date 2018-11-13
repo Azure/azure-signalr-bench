@@ -20,9 +20,11 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
 
                 // Get parameters
                 stepParameters.TryGetTypedValue(SignalRConstants.Type, out string type, Convert.ToString);
+                stepParameters.TryGetTypedValue(SignalRConstants.LatencyStep, out long latencyStep, Convert.ToInt64);
+                stepParameters.TryGetTypedValue(SignalRConstants.LatencyMax, out long latencyMax, Convert.ToInt64);
 
                 // Init statistic collector
-                pluginParameters[$"{SignalRConstants.StatisticsStore}.{type}"] = new StatisticsCollector();
+                pluginParameters[$"{SignalRConstants.StatisticsStore}.{type}"] = new StatisticsCollector(latencyStep, latencyMax);
 
                 return null;
             }

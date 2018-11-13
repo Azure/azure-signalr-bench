@@ -15,6 +15,12 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods.Statistics
 
         private ConcurrentDictionary<string, long> _statistics = new ConcurrentDictionary<string, long>();
 
+        public StatisticsCollector(long latencyStep, long latencyMax)
+        {
+            LatencyStep = latencyStep;
+            LatencyMax = latencyMax;
+        }
+
         private void ResetCounters(string containedString)
         {
             var keys = _statistics.Keys;
@@ -81,7 +87,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods.Statistics
         {
             _statistics.AddOrUpdate(SignalRConstants.StatisticsGroupLeaveSuccess, 1, (k, v) => v + 1);
         }
-
+            
         public void IncreaseLeaveGroupFail()
         {
             _statistics.AddOrUpdate(SignalRConstants.StatisticsGroupLeaveFail, 1, (k, v) => v + 1);
