@@ -16,6 +16,7 @@ function set_global_env() {
    export ScriptWorkingDir=$Jenkins_Workspace_Root/${relative_dir}/Scripts/                     # folders to find all scripts
    export CurrentWorkingDir=$Jenkins_Workspace_Root/${relative_dir}/v2/JenkinsScript/     # workding directory
    export CommandWorkingDir=$Jenkins_Workspace_Root/${relative_dir}/SignalRServiceBenchmarkPlugin/utils/Commander
+   export AppServerWorkingDir=$Jenkins_Workspace_Root/${relative_dir}/SignalRServiceBenchmarkPlugin/utils/AppServer
 ############# those configurations are shared in Jenkins folder #####
    export AgentConfig=$JenkinsRootPath'/agent.yaml'
    export PrivateIps=$JenkinsRootPath'/privateIps.yaml'
@@ -138,6 +139,75 @@ function run_all_units() {
  done
 }
 
+function start_collect_top_for_signalr_and_nginx()
+{
+    local k8s_result_dir=$env_statistic_folder
+    cd $ScriptWorkingDir
+    . ./func_env.sh
+    . ./kubectl_utils.sh
+    local service_name=$(extract_servicename_from_connectionstring $ConnectionString)
+    if [ "$service_name" != "" ]
+    then
+       nohup sh collect_pod_top.sh $service_name $k8s_result_dir &
+       collect_pod_top_pid=$!
+       if [ "$g_nginx_ns" != "" ]
+       then
+          nohup sh collect_nginx_top.sh $service_name $g_nginx_ns $k8s_result_dir &
+          collect_nginx_top_pid=$!
+       fi
+    fi
+}
+
+function stop_collect_top_for_signalr_and_nginx()
+{
+    if [ "$collect_pod_top_pid" != "" ]
+    then
+      # kill the process if it is alive
+      local a=`ps -o pid= -p $collect_pod_top_pid`
+      if [ "$a" != "" ]
+      then
+         kill $collect_pod_top_pid
+      fi
+    fi
+    if [ "$collect_nginx_top_pid" != "" ]
+    then
+      local a=`ps -o pid= -p $collect_nginx_top_pid`
+      if [ "$a" != "" ]
+      then
+         kill $collect_nginx_top_pid
+      fi
+    fi
+}
+
+function copy_log_from_k8s()
+{
+    local k8s_result_dir=$env_statistic_folder
+    cd $ScriptWorkingDir
+    . ./func_env.sh
+    . ./kubectl_utils.sh
+    local service_name=$(extract_servicename_from_connectionstring $ConnectionString)
+    disable_exit_immediately_when_fail
+    if [ "$service_name" != "" ]
+    then
+    ############# copy pod log ############
+       copy_syslog $service_name $k8s_result_dir
+       get_nginx_log $service_name "$g_nginx_ns" $k8s_result_dir
+       get_k8s_pod_status $service_name $k8s_result_dir
+    fi
+    enable_exit_immediately_when_fail
+}
+
+function reboot_all_pods()
+{
+   local connectionString=$1
+   cd $ScriptWorkingDir
+   . ./kubectl_utils.sh
+   local service_name=$(extract_servicename_from_connectionstring $connectionString)
+   if [ "$service_name" != "" ]
+   then
+     restart_all_pods $service_name
+   fi
+}
 
 function run_benchmark() {
   local unit=$1
@@ -157,51 +227,16 @@ function run_benchmark() {
          do
             prepare_result_folder_4_scenario $tag $Transport $MessageEncoding $Scenario
             local k8s_result_dir=$env_statistic_folder
-            ## TODO start collecting top
-            cd $ScriptWorkingDir
-            . ./func_env.sh
-            . ./kubectl_utils.sh
-            local service_name=$(extract_servicename_from_connectionstring $ConnectionString)
-            if [ "$service_name" != "" ]
-            then
-               nohup sh collect_pod_top.sh $service_name $k8s_result_dir &
-               collect_pod_top_pid=$!
-               if [ "$g_nginx_ns" != "" ]
-               then
-                  nohup sh collect_nginx_top.sh $service_name $g_nginx_ns $k8s_result_dir &
-                  collect_nginx_top_pid=$!
-               fi     
-            fi
-            ## TODO generate configuration
+
+            start_collect_top_for_signalr_and_nginx
+
             run_and_gen_report $tag $Scenario $Transport $MessageEncoding $user $passwd "$connectStr" $k8s_result_dir $unit
 
-            disable_exit_immediately_when_fail
-            if [ "$service_name" != "" ]
-            then
-               if [ "$collect_pod_top_pid" != "" ]
-               then
-         # kill the process if it is alive
-                 local a=`ps -o pid= -p $collect_pod_top_pid`
-                 if [ "$a" != "" ]
-                 then
-                    kill $collect_pod_top_pid
-                 fi
-               fi
-               if [ "$collect_nginx_top_pid" != "" ]
-               then
-                 local a=`ps -o pid= -p $collect_nginx_top_pid`
-                 if [ "$a" != "" ]
-                 then
-                    kill $collect_nginx_top_pid
-                 fi
-               fi
-   ############# copy pod log ############
-               copy_syslog $service_name $k8s_result_dir
-               get_nginx_log $service_name "$g_nginx_ns" $k8s_result_dir
-               get_k8s_pod_status $service_name $k8s_result_dir
-            fi
-            enable_exit_immediately_when_fail
-            ## TODO reboot ASRS
+            stop_collect_top_for_signalr_and_nginx
+
+            copy_log_from_k8s
+
+            reboot_all_pods "$connectStr"
          done
       done
   done
@@ -234,14 +269,13 @@ function run_and_gen_report() {
                       -U $appserverUrls -d $sigbench_run_duration \
                       -c $config_path $maxConnectionOption
 
-  #TODO dummy values
-  local connection=3000
-  local concurrentConnection=300
-  local send=1000
+  local connection=`python3 get_sending_connection.py -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q totalConnections`
+  local concurrentConnection=`python3 get_sending_connection.py -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q concurrentConnection`
+  local send=`python3 get_sending_connection.py -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q sendingSteps`
   
   run_command $user $passwd $connectionString $outputDir $config_path
   cd $ScriptWorkingDir
-     #### generate the connection configuration for HTML ####
+  #### generate the connection configuration for HTML ####
 cat << EOF > configs/cmd_4_${MessageEncoding}_${Scenario}_${tag}_${Transport}
 connection=${connection}
 connection_concurrent=${concurrentConnection}
@@ -265,6 +299,10 @@ function build_rpc_master() {
   fi
   cd $PluginRpcBuildWorkingDir
   ./build.sh master $tmpMaster
+  if [ -e $targetDir/publish ]
+  then
+     rm -rf $targetDir/publish
+  fi
   mv $tmpMaster $targetDir/publish
   cd $targetDir
   tar zcvf publish.tgz publish
@@ -280,7 +318,30 @@ function build_rpc_slave() {
   fi
   cd $PluginRpcBuildWorkingDir
   ./build.sh slave $tmpSlave
+  if [ -e $targetDir/publish ]
+  then
+     rm -rf $targetDir/publish
+  fi
   mv $tmpSlave $targetDir/publish
+  cd $targetDir
+  tar zcvf publish.tgz publish
+  cd -
+}
+
+build_app_server() {
+  local targetDir=$1
+  local tmpAppServer=/tmp/appserver
+  if [ -e $tmpAppServer ]
+  then
+     rm -rf $tmpAppServer
+  fi
+  cd $AppServerWorkingDir
+  ./build.sh $tmpAppServer
+  if [ -e $targetDir/publish ]
+  then
+     rm -rf $targetDir/publish
+  fi
+  mv $tmpAppServer $targetDir/publish
   cd $targetDir
   tar zcvf publish.tgz publish
   cd -
@@ -296,6 +357,78 @@ enable_exit_immediately_when_fail()
   set -e
 }
 
+start_collect_slaves_appserver_top()
+{
+  local user=$1
+  local passwd="$2"
+  local outputDir="$3"
+  local script_collect_slaves_top="collect_slaves_top.sh"
+  local script_collect_appserver_top="collect_appserver_top.sh"
+  cd $ScriptWorkingDir
+cat << EOF > $script_collect_slaves_top
+#!/bin/bash
+while [ true ]
+do
+  for i in `python extract_ip.py -i $PrivateIps -q slaveList`
+  do
+    sshpass -p $passwd ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $user@\${i} "top -b -n 1|head -n 17" >> $outputDir/slave_\${i}_top.txt
+  done
+  sleep 1
+done
+EOF
+cat << EOF > $script_collect_appserver_top
+#!/bin/bash
+while [ true ]
+do
+  for i in `python extract_ip.py -i $PrivateIps -q appserverList`
+  do
+    sshpass -p $passwd ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $user@\${i} "top -b -n 1|head -n 17" >> $outputDir/appserver_\${i}_top.txt
+  done
+  sleep 1
+done
+EOF
+  nohup sh $script_collect_slaves_top &
+  collect_slaves_top_pid=$!
+
+  nohup sh $script_collect_appserver_top &
+  collect_appserver_top_pid=$!
+}
+
+stop_collect_slaves_appserver_top()
+{
+  if [ "$collect_slaves_top_pid" != "" ]
+  then
+    # kill the process if it is alive
+    local a=`ps -o pid= -p $collect_slaves_top_pid`
+    if [ "$a" != "" ]
+    then
+       kill $collect_slaves_top_pid
+    fi
+  fi
+  if [ "$collect_appserver_top_pid" != "" ]
+  then
+    # kill the process if it is alive
+    local a=`ps -o pid= -p $collect_appserver_top_pid`
+    if [ "$a" != "" ]
+    then
+       kill $collect_appserver_top_pid
+    fi
+  fi
+}
+
+function copy_log_from_slaves()
+{
+  local user=$1
+  local passwd="$2"
+  local outputDir="$3"
+  cd $ScriptWorkingDir
+  local i
+  for i in `python extract_ip.py -i $PrivateIps -q slaveList`
+  do
+    sshpass -p $passwd scp -o StrictHostKeyChecking=no -o LogLevel=ERROR $user@${i}:~/slave*.log $outputDir/slave_${i}.log
+  done
+}
+
 function run_command() {
   local user=$1
   local passwd="$2"
@@ -309,10 +442,13 @@ function run_command() {
 
   local masterDir=$CommandWorkingDir/master
   local slaveDir=$CommandWorkingDir/slave
+  local appserverDir=$CommandWorkingDir/appserver
   mkdir -p $masterDir
   mkdir -p $slaveDir
+  mkdir -p $appserverDir
   build_rpc_master $masterDir
   build_rpc_slave $slaveDir
+  build_app_server $appserverDir
   cd $CommandWorkingDir
   local remoteCmd="remove_counters.sh"
   cat << EOF > $remoteCmd
@@ -326,18 +462,23 @@ EOF
   sshpass -p ${passwd} ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR ${user}@${master} "chmod +x $remoteCmd"
   sshpass -p ${passwd} ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR ${user}@${master} "./$remoteCmd"
   disable_exit_immediately_when_fail
+  start_collect_slaves_appserver_top ${user} $passwd ${outputDir}
+  cd $CommandWorkingDir
   dotnet run -- --RpcPort=5555 --SlaveList="$slaves" --MasterHostname="$master" --AppServerHostnames="$appserver" \
          --Username=$user --Password=$passwd \
-         --AppserverProject="/home/wanl/executables/appserver" \
+         --AppserverProject="$appserverDir" \
          --MasterProject="$masterDir" \
          --SlaveProject="$slaveDir" \
          --AppserverTargetPath="/home/${user}/appserver.tgz" --MasterTargetPath="/home/${user}/master.tgz" \
          --SlaveTargetPath="/home/${user}/slave.tgz" \
          --BenchmarkConfiguration="$configPath" \
          --BenchmarkConfigurationTargetPath="/home/${user}/signalr.yaml" \
-         --AzureSignalRConnectionString="$connectionString"
+         --AzureSignalRConnectionString="$connectionString" \
+         --AppserverLogDirectory="${outputDir}"
+  stop_collect_slaves_appserver_top ${user} $passwd ${outputDir}
   enable_exit_immediately_when_fail
   sshpass -p ${passwd} scp -o StrictHostKeyChecking=no -o LogLevel=ERROR ${user}@${master}:/home/${user}/counters.txt ${outputDir}/
+  copy_log_from_slaves ${user} $passwd ${outputDir}
 }
 
 function create_asrs()
@@ -383,6 +524,7 @@ function create_asrs()
   echo "[ConnectionString]: $connectionStr"
   export ConnectionString="$connectionStr"
 }
+
 ## exit handler to remove resource group ##
 # global env:
 # CurrentWorkingDir, ServicePrincipal, AgentConfig, VMMgrDir
@@ -394,8 +536,11 @@ function remove_resource_group() {
   local clean_asrs_daemon=daemon_${JOB_NAME}_cleanasrs
   ## remove all test VMs
   local pid_file_path=/tmp/${result_root}_pid_remove_rsg.txt
-  BUILD_ID=dontKillcenter /usr/bin/nohup ${VMMgrDir}/JenkinsScript --step=DeleteResourceGroupByConfig --AgentConfigFile=$AgentConfig --DisableRandomSuffix --ServicePrincipal=$ServicePrincipal &
-
+  #BUILD_ID=dontKillcenter /usr/bin/nohup ${VMMgrDir}/JenkinsScript --step=DeleteResourceGroupByConfig --AgentConfigFile=$AgentConfig --DisableRandomSuffix --ServicePrincipal=$ServicePrincipal &
+cat << EOF > /tmp/clean_vms.sh
+${VMMgrDir}/JenkinsScript --step=DeleteResourceGroupByConfig --AgentConfigFile=$AgentConfig --DisableRandomSuffix --ServicePrincipal=$ServicePrincipal
+EOF
+  daemonize -v -o /tmp/${clean_vm_daemon}.out -e /tmp/${clean_vm_daemon}.err -E BUILD_ID=dontKillcenter /usr/bin/nohup /bin/sh /tmp/clean_vms.sh &
   ## remove ASRS
 cat << EOF > /tmp/clean_asrs.sh
 cd $ScriptWorkingDir

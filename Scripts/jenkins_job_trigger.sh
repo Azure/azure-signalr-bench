@@ -11,7 +11,7 @@ function create_html() {
 function publish_html() {
   if [ ! -e $env_g_nginx_root_dir ]
   then
-     mkdir -p $env_g_nginx_root_dir
+    mkdir -p $env_g_nginx_root_dir
   fi
   mv $env_g_root $env_g_nginx_root_dir/
 }
@@ -22,6 +22,7 @@ then
   export env_g_http_base=$env_g_http_base
   export env_g_nginx_root_dir=$env_g_nginx_root_dir
   export nginx_server_dns=$env_g_dns
+  export env_g_root=$env_g_root
 else
   echo "Specify jenkins_stat_env.sh which contains required parameters"
   exit 1
@@ -29,9 +30,9 @@ fi
 
 prepare
 
-./categorize_report.sh $env_g_start_date $env_g_end_date | tee $env_g_root/table.csv
+sh ListAllJenkinsTrigger.sh >$env_g_root/table.csv
 
-python gen_cate_html.py -i $env_g_root/table.csv > $env_g_root/latency_table_1s_category.js
+python gen_trigger_html.py -i $env_g_root/table.csv > $env_g_root/latency_table_1s_category.js
 
 create_html
 

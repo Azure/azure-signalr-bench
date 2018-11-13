@@ -141,7 +141,7 @@ namespace Rpc.Master
                 }
                 catch (Exception ex)
                 {
-                    Log.Warning($"Fail to connect slaves, retry {i}th time");
+                    Log.Warning($"Fail to connect slaves because of {ex.Message}, retry {i}th time");
                     await Task.Delay(_retryInterval);
                     continue;
                 }

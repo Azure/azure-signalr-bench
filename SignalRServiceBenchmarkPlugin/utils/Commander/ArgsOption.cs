@@ -50,6 +50,9 @@ namespace Commander
         [Option("AppserverProject", Required = true, HelpText = "App server project.")]
         public string AppserverProject { get; set; }
 
+        [Option("AppserverLogDirectory", Required = false, Default = ".", HelpText = "Specify the directory path to save appserver log")]
+        public string AppserverLogDirectory { get; set; }
+
         [Option("MasterProject", Required = true, HelpText = "Master project.")]
         public string MasterProject { get; set; }
 

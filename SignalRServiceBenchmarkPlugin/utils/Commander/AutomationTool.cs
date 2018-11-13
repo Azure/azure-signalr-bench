@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -18,6 +19,7 @@ namespace Commander
         // App server information
         private readonly int _appserverPort;
         private readonly string _azureSignalRConnectionString;
+        private readonly string _appserverLogDirPath;
 
         // Slave Information
         private readonly int _rpcPort;
@@ -47,6 +49,7 @@ namespace Commander
         {
             // Initialize
             _appserverProject = argOption.AppserverProject;
+            _appserverLogDirPath = argOption.AppserverLogDirectory;
             _masterProject = argOption.MasterProject;
             _slaveProject = argOption.SlaveProject;
             _appserverTargetPath = argOption.AppserverTargetPath;
@@ -137,6 +140,62 @@ namespace Commander
             }
         }
 
+        private void WaitAppserverStarted(List<SshCommand> appservers)
+        {
+            var timeout = 600;
+            for (var i = 0; i < appservers.Count; i++)
+            {
+                var recheck = 0;
+                while (recheck < timeout)
+                {
+                    using (var reader =
+                        new StreamReader(appservers[i].OutputStream, Encoding.UTF8, true, 4096, true))
+                    {
+                        var applog = reader.ReadToEnd();
+                        if (applog.Contains("HttpConnection Started"))
+                        {
+                            Log.Information($"appserver '{appservers[i].CommandText}' started");
+                            break;
+                        }
+                        else
+                        {
+                            Log.Information($"waiting for appserver '{appservers[i].CommandText}' starting...");
+                            recheck++;
+                            Task.Delay(TimeSpan.FromSeconds(1)).Wait();
+                        }
+                    }
+                }
+            }
+        }
+
+        private void CopyAppServerLog(List<SshCommand> appservers)
+        {
+            for (var i = 0; i < appservers.Count; i++)
+            {
+                var cmd = appservers[i];
+                var logFile = $"applog{i}.log";
+
+                if (!String.IsNullOrEmpty(_appserverLogDirPath) && !Directory.Exists(_appserverLogDirPath))
+                {
+                    Directory.CreateDirectory(_appserverLogDirPath);
+                }
+                var logFilePath = Path.Combine(_appserverLogDirPath, logFile);
+
+                using (var reader = new StreamReader(cmd.OutputStream, Encoding.UTF8, true, 1024))
+                using (var writer = new StreamWriter(logFilePath, true))
+                {
+                    while (!reader.EndOfStream)
+                    {
+                        string line = reader.ReadLine();
+                        if (line != null)
+                        {
+                            writer.WriteLine(line);
+                        }
+                    }
+                }
+            }
+        }
+
         private void RunBenchmark()
         {
             try
@@ -148,31 +207,44 @@ namespace Commander
                 KillallDotnet();
 
                 // Create SSH commands
-                var appserverDirectory = Path.Combine(Path.GetDirectoryName(_appserverTargetPath), Path.GetFileNameWithoutExtension(_appserverTargetPath), _baseName);
-                var masterExecutablePath = Path.Combine(Path.GetDirectoryName(_masterTargetPath), Path.GetFileNameWithoutExtension(_masterTargetPath), _baseName, "master.dll");
-                var slaveExecutablePath = Path.Combine(Path.GetDirectoryName(_slaveTargetPath), Path.GetFileNameWithoutExtension(_slaveTargetPath), _baseName, "slave.dll");
+                var appserverDirectory = Path.Combine(Path.GetDirectoryName(_appserverTargetPath),
+                    Path.GetFileNameWithoutExtension(_appserverTargetPath), _baseName);
+                var masterExecutablePath = Path.Combine(Path.GetDirectoryName(_masterTargetPath),
+                    Path.GetFileNameWithoutExtension(_masterTargetPath), _baseName, "master.dll");
+                var slaveExecutablePath = Path.Combine(Path.GetDirectoryName(_slaveTargetPath),
+                    Path.GetFileNameWithoutExtension(_slaveTargetPath), _baseName, "slave.dll");
                 var appseverCommand = "";
                 if (_azureSignalRConnectionString == null)
                 {
-                    appseverCommand = $"export useLocalSignalR=true; cd {appserverDirectory}; dotnet exec AppServer.dll --urls=http://*:{_appserverPort}";
+                    appseverCommand = $"export useLocalSignalR=true; " +
+                                      $"cd {appserverDirectory};" +
+                                      $"dotnet exec AppServer.dll --urls=http://*:{_appserverPort}";
                 }
                 else
                 {
-                    appseverCommand = $"export Azure__SignalR__ConnectionString='{_azureSignalRConnectionString}' ;cd {appserverDirectory}; dotnet exec AppServer.dll --urls=http://*:{_appserverPort}";
+                    appseverCommand = $"export Azure__SignalR__ConnectionString='{_azureSignalRConnectionString}';" +
+                                      $"cd {appserverDirectory};" +
+                                      $"dotnet exec AppServer.dll --urls=http://*:{_appserverPort}";
                 }
-                var masterCommand = $"dotnet exec {masterExecutablePath} -- --BenchmarkConfiguration=\"{_benchmarkConfigurationTargetPath}\" --SlaveList=\"{string.Join(',', _slaveList)}\"";
+                var masterCommand = $"dotnet exec {masterExecutablePath} -- " +
+                                    $"--BenchmarkConfiguration=\"{_benchmarkConfigurationTargetPath}\" " +
+                                    $"--SlaveList=\"{string.Join(',', _slaveList)}\"";
                 var slaveCommand = $"dotnet exec {slaveExecutablePath} --HostName 0.0.0.0 --RpcPort {_rpcPort}";
-                var appserverSshCommands = (from client in _remoteClients.AppserverSshClients select client.CreateCommand(appseverCommand.Replace('\\', '/'))).ToList();
+                var appserverSshCommands = (from client in _remoteClients.AppserverSshClients
+                                            select client.CreateCommand(appseverCommand.Replace('\\', '/'))).ToList();
                 var masterSshCommand = _remoteClients.MasterSshClient.CreateCommand(masterCommand.Replace('\\', '/'));
-                var slaveSshCommands = (from client in _remoteClients.SlaveSshClients select client.CreateCommand(slaveCommand.Replace('\\', '/'))).ToList();
+                var slaveSshCommands = (from client in _remoteClients.SlaveSshClients
+                                        select client.CreateCommand(slaveCommand.Replace('\\', '/'))).ToList();
 
                 // Start app server
                 Log.Information($"Start app server");
-                var appserverAsyncResults = (from command in appserverSshCommands select command.BeginExecute(OnAsyncSshCommandComplete, command)).ToList();
-
+                var appserverAsyncResults = (from command in appserverSshCommands
+                                             select command.BeginExecute(OnAsyncSshCommandComplete, command)).ToList();
+                WaitAppserverStarted(appserverSshCommands);
                 // Start slaves
                 Log.Information($"Start slaves");
-                var slaveAsyncResults = (from command in slaveSshCommands select command.BeginExecute(OnAsyncSshCommandComplete, command)).ToList();
+                var slaveAsyncResults = (from command in slaveSshCommands
+                                         select command.BeginExecute(OnAsyncSshCommandComplete, command)).ToList();
 
                 // Wait app server started
                 Task.Delay(TimeSpan.FromSeconds(30)).Wait();
@@ -194,13 +266,13 @@ namespace Commander
                 }
 
                 masterSshCommand.EndExecute(masterResult);
+                CopyAppServerLog(appserverSshCommands);
             }
             finally
             {
                 // Killall dotnet
                 KillallDotnet();
             }
-
         }
 
         private void KillallDotnet()
@@ -248,11 +320,20 @@ namespace Commander
             publish.Wait();
             if (!publish.Result.Success) throw new Exception(publish.Result.StandardOutput);
 
-            var zip = Command.Run("zip", new string[] { "-r", $"{baseName}.zip", $"{baseName}/" }, o => o.WorkingDirectory(projectPath));
-            zip.Wait();
-            if (!zip.Result.Success) throw new Exception(zip.Result.StandardOutput);
-
-            return new FileInfo(Path.Combine(projectPath, $"{baseName}.zip"));
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                var zip = Command.Run("zip", new string[] { "-r", $"{baseName}.zip", $"{baseName}/" }, o => o.WorkingDirectory(projectPath));
+                zip.Wait();
+                if (!zip.Result.Success) throw new Exception(zip.Result.StandardOutput);
+                return new FileInfo(Path.Combine(projectPath, $"{baseName}.zip"));
+            }
+            else
+            {
+                var tar = Command.Run("tar", new string[] { "zcvf", $"{baseName}.tgz", $"{baseName}/" }, o => o.WorkingDirectory(projectPath));
+                tar.Wait();
+                if (!tar.Result.Success) throw new Exception(tar.Result.StandardOutput);
+                return new FileInfo(Path.Combine(projectPath, $"{baseName}.tgz"));
+            }
         }
 
         private void InstallZip(SshClient client)
