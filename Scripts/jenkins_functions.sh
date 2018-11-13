@@ -1,6 +1,7 @@
 #!/bin/bash
 
 . ./func_env.sh
+
 # input Jenkinw workspace directory
 # this function is invoked in every job entry
 function set_global_env() {
@@ -427,6 +428,10 @@ function copy_log_from_slaves()
   do
     sshpass -p $passwd scp -o StrictHostKeyChecking=no -o LogLevel=ERROR $user@${i}:~/slave*.log $outputDir/slave_${i}.log
   done
+  cd $outputDir
+  tar zcvf slavelog.tgz slave*.log
+  rm slave*.log
+  cd -
 }
 
 function run_command() {
