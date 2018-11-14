@@ -31,6 +31,8 @@ function start_collect_top_for_signalr_and_nginx()
           nohup sh collect_nginx_top.sh $service_name $g_nginx_ns $k8s_result_dir &
           collect_nginx_top_pid=$!
        fi
+       nohup sh collect_connections.sh $service_name $k8s_result_dir &
+       collect_conn_pid=$!
     fi
 }
 
@@ -52,6 +54,14 @@ function stop_collect_top_for_signalr_and_nginx()
       then
          kill $collect_nginx_top_pid
       fi
+    fi
+    if [ "$collect_conn_pid" != "" ]
+    then
+       local a=`ps -o pid= -p $collect_conn_pid`
+       if [ "$a" != "" ]
+       then
+          kill $collect_conn_pid
+       fi
     fi
 }
 
