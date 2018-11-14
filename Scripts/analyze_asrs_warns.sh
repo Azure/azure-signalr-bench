@@ -9,6 +9,7 @@ ASRS_WARN_HTML_POSTFIX=_error.html
 ASRS_TMPL=tmpl/asrswarns.html
 SUMMARY_TMPL=tmpl/analysis.html
 ASRS_WARN_SUMMARY_TABLE=table.csv
+SEPARATOR='|'
 
 filter_asrs_logs() {
   local startDate endDate
@@ -44,7 +45,7 @@ parse_single_log() {
     cp $tgz_log_path .
   fi
   cd -
-  python parse_asrs_log.py -i $workdir/${log_file}.txt -q counter > $output_dir/$counter_output
+  python parse_asrs_log.py -i $workdir/${log_file}.txt -q counter |sort -t $SEPARATOR -k 2 -n -r > $output_dir/$counter_output
   python parse_asrs_log.py -i $workdir/${log_file}.txt -q details > $output_dir/$detail_output
   rm $workdir/${log_file}.txt
 }
@@ -56,8 +57,8 @@ gen_html_files() {
   local log_ext=`echo "$tgz_log_path"|awk -F / '{print $NF}'|awk -F . '{print $2}'`
   local counter_output=${log_file}${COUNT_POSTFIX}
   local detail_output=${log_file}${DETAILS_POSTFIX}
-  python gen_warn_count_html.py -s '|' -i $output_dir/$counter_output -g counter >$output_dir/${log_file}${COUNT_JS_POSTFIX}.js
-  python gen_warn_count_html.py -s '|' -i $output_dir/$detail_output -g details >$output_dir/${log_file}${DETAILS_JS_POSTFIX}.js
+  python gen_warn_count_html.py -s $SEPARATOR -i $output_dir/$counter_output -g counter >$output_dir/${log_file}${COUNT_JS_POSTFIX}.js
+  python gen_warn_count_html.py -s $SEPARATOR -i $output_dir/$detail_output -g details >$output_dir/${log_file}${DETAILS_JS_POSTFIX}.js
   sed -e "s/WARN_COUNT_TABLE/${log_file}${COUNT_JS_POSTFIX}/g" -e "s/WARN_DETAILS_TABLE/${log_file}${DETAILS_JS_POSTFIX}/g" $ASRS_TMPL > $output_dir/${log_file}${ASRS_WARN_HTML_POSTFIX}
 }
 
