@@ -11,6 +11,21 @@ SUMMARY_TMPL=tmpl/analysis.html
 ASRS_WARN_SUMMARY_TABLE=table.csv
 SEPARATOR='|'
 
+filter_asrs_log_a_single_run() {
+  local tgt_dir=$1
+  local output_file=$2
+  if [ -e $output_file ]
+  then
+    rm $output_file
+  fi
+  find $tgt_dir -iname signalr*ASRS.tgz |while read line
+  do
+    local d=`echo "$line"|awk -F / '{print $5}'`
+    local unit=`echo "$line"|awk -F / '{print $6}'`
+    echo "$d $unit $line" >>$output_file
+  done
+}
+
 filter_asrs_logs() {
   local startDate endDate
   if [ $# -eq 2 ]
