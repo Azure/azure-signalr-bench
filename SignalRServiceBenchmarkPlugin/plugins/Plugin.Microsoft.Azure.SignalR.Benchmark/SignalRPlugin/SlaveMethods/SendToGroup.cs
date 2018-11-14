@@ -37,7 +37,6 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
 
                 // Get context
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionStore}.{type}", out IList<HubConnection> connections, (obj) => (IList<HubConnection>)obj);
-                pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionOffset}.{type}", out int offset, Convert.ToInt32);
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.StatisticsStore}.{type}", out StatisticsCollector statisticsCollector, obj => (StatisticsCollector) obj);
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionIndex}.{type}", out List<int> connectionIndex, (obj) => (List<int>)obj);
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionSuccessFlag}.{type}", out List<SignalREnums.ConnectionState> connectionsSuccessFlag, (obj) => (List<SignalREnums.ConnectionState>)obj);
@@ -49,7 +48,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                                let groupName = SignalRUtils.GroupName(type, i % groupCount)
                                select new
                                {
-                                   Index = i,
+                                   LocalIndex = i,
                                    Connection = connections[i],
                                    GroupName = groupName,
                                    Data = new Dictionary<string, object>
@@ -67,7 +66,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
 
                 // Send messages
                 await Task.WhenAll(from package in packages
-                                   let index = connectionIndex[package.Index]
+                                   let index = connectionIndex[package.LocalIndex]
                                    let groupSize = totalConnection / groupCount
                                    let groupIndex = index % groupCount
                                    let indexInGroup = index / groupCount
@@ -75,7 +74,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                                    let data = package.Data
                                    where IsSending(indexInGroup, GroupInternalModulo, GroupInternalRemainderBegin, GroupInternalRemainderEnd) &&
                                          IsSending(groupIndex, groupCount, GroupLevelRemainderBegin, GroupLevelRemainderEnd)
-                                   select ContinuousSend((Connection: connections[index], LocalIndex: index, ConnectionsSuccessFlag: connectionsSuccessFlag, StatisticsCollector: statisticsCollector), data, SendGroup,
+                                   select ContinuousSend((Connection: connections[package.LocalIndex], LocalIndex: package.LocalIndex, ConnectionsSuccessFlag: connectionsSuccessFlag, StatisticsCollector: statisticsCollector), data, SendGroup,
                                         TimeSpan.FromMilliseconds(duration), TimeSpan.FromMilliseconds(interval),
                                         TimeSpan.FromMilliseconds(1), TimeSpan.FromMilliseconds(interval)));
 
@@ -119,7 +118,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 package.ConnectionsSuccessFlag[package.LocalIndex] = SignalREnums.ConnectionState.Fail;
                 var message = $"Error in send to group: {ex}";
                 Log.Error(message);
-                throw;
+                //throw;
             }
         }
     }

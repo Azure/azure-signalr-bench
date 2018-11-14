@@ -45,6 +45,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         public static readonly string ConnectionOffset = "Plugin.ConnectionOffset";
         public static readonly string StatisticsStore = "Plugin.StatisticsStore";
         public static readonly string ConnectionIdStore = "Plugin.ConnectionId";
+        public static readonly string RegisteredCallbacks = "Plugin.Callback";
 
         // Callback Name
         public static readonly string EchoCallbackName = "Echo";
@@ -75,5 +76,9 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         public static readonly string StatisticsGroupLeaveFail = "group:leave:fail";
         public static readonly string StatisticsConnectionConnectSuccess = "connection:connect:success";
         public static readonly string StatisticsConnectionConnectFail = "connection:connect:fail";
+
+        // Constants
+        public static readonly int ConnectionCloseTimeout = 100;
+
     }
 }

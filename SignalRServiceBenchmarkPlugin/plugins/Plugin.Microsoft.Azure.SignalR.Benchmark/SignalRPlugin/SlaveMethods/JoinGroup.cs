@@ -30,8 +30,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
 
                 // Get context
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionStore}.{type}", out IList<HubConnection> connections, (obj) => (IList<HubConnection>)obj);
-                pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionOffset}.{type}", out int offset, Convert.ToInt32);
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.StatisticsStore}.{type}", out _statisticsCollector, obj => (StatisticsCollector)obj);
+                pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionIndex}.{type}", out List<int> connectionIndex, (obj) => (List<int>)obj);
 
                 // Reset counters
                 _statisticsCollector.ResetGroupCounters();
@@ -39,7 +39,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
 
                 // Join group
                 await Task.WhenAll(from i in Enumerable.Range(0, connections.Count)
-                                   select JoinIntoGroup(connections[i], SignalRUtils.GroupName(type, (i + offset) % groupCount)));
+                                   select JoinIntoGroup(connections[i], SignalRUtils.GroupName(type, connectionIndex[i] % groupCount)));
 
                 return null;
             }

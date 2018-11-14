@@ -39,7 +39,6 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
 
                 // Get context
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionStore}.{type}", out IList<HubConnection> connections, (obj) => (IList<HubConnection>)obj);
-                pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionOffset}.{type}", out int offset, Convert.ToInt32);
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.StatisticsStore}.{type}", out StatisticsCollector statisticsCollector, obj => (StatisticsCollector) obj);
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionIndex}.{type}", out List<int> connectionIndex, (obj) => (List<int>)obj);
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionSuccessFlag}.{type}", out List<SignalREnums.ConnectionState> connectionsSuccessFlag, (obj) => (List<SignalREnums.ConnectionState>)obj);
@@ -48,12 +47,11 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 var messageBlob = new byte[messageSize];
                 
                 var packages = from i in Enumerable.Range(0, connections.Count)
-                               let groupName = SignalRUtils.GroupName(type, (i + offset) % groupCount)
+                               let groupName = SignalRUtils.GroupName(type, connectionIndex[i] % groupCount)
                                select new
                                {
-                                   Index = i,
+                                   LocalIndex = i,
                                    Connection = connections[i],
-                                   GroupName = groupName,
                                    Data = new Dictionary<string, object>
                                    {
                                        { SignalRConstants.MessageBlob, messageBlob }, // message payload
@@ -87,7 +85,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
 
                 // Send messages
                 await Task.WhenAll(from package in packages
-                                   let index = connectionIndex[package.Index]
+                                   let index = connectionIndex[package.LocalIndex]
                                    let groupSize = totalConnection / groupCount
                                    let groupIndex = index % groupCount
                                    let indexInGroup = index / groupCount
@@ -95,7 +93,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                                    let data = package.Data
                                    let isSendGroupLevel = IsSending(groupIndex, groupCount, GroupLevelRemainderBegin, GroupLevelRemainderEnd)
                                    let isSendGroupInternal = IsSending(indexInGroup, GroupInternalModulo, GroupInternalRemainderBegin, GroupInternalRemainderEnd)
-                                   select generateTask((Connection: connections[index], LocalIndex: index, ConnectionsSuccessFlag: connectionsSuccessFlag, StatisticsCollector: statisticsCollector), data, isSendGroupLevel, isSendGroupInternal));
+                                   select generateTask((Connection: connections[package.LocalIndex], LocalIndex: package.LocalIndex, ConnectionsSuccessFlag: connectionsSuccessFlag, StatisticsCollector: statisticsCollector), data, isSendGroupLevel, isSendGroupInternal));
 
                 return null;
             }
@@ -137,7 +135,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 package.ConnectionsSuccessFlag[package.LocalIndex] = SignalREnums.ConnectionState.Fail;
                 var message = $"Error in send to group: {ex}";
                 Log.Error(message);
-                throw;
+                //throw;
             }
         }
 
