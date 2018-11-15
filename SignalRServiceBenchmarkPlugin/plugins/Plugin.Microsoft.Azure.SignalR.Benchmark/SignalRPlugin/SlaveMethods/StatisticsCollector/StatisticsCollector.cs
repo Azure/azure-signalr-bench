@@ -93,35 +93,27 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods.Statistics
             _statistics.AddOrUpdate(SignalRConstants.StatisticsGroupLeaveFail, 1, (k, v) => v + 1);
         }
 
-        public async Task UpdateConnectionsState(List<SignalREnums.ConnectionState> connectionsSuccessFlag)
+        public void UpdateConnectionsState(List<SignalREnums.ConnectionState> connectionsSuccessFlag)
         {
-            var s = new System.Threading.SemaphoreSlim(1);
-            await s.WaitAsync();
-            try
+            var success = 0;
+            var fail = 0;
+            // Todo: make it thread save
+            var copyedFlags = new List<SignalREnums.ConnectionState>(connectionsSuccessFlag);
+            foreach (var state in copyedFlags)
             {
-                var success = 0;
-                var fail = 0;
-                foreach (var state in connectionsSuccessFlag)
+                switch (state)
                 {
-                    switch (state)
-                    {
-                        case SignalREnums.ConnectionState.Success:
-                            success++;
-                            break;
-                        case SignalREnums.ConnectionState.Fail:
-                            fail++;
-                            break;
-                    }
+                    case SignalREnums.ConnectionState.Success:
+                        success++;
+                        break;
+                    case SignalREnums.ConnectionState.Fail:
+                        fail++;
+                        break;
                 }
-
-                _statistics.AddOrUpdate(SignalRConstants.StatisticsConnectionConnectSuccess, success, (k, v) => success);
-                _statistics.AddOrUpdate(SignalRConstants.StatisticsConnectionConnectFail, fail, (k, v) => fail);
-
             }
-            finally
-            {
-                s.Release();
-            }
+
+            _statistics.AddOrUpdate(SignalRConstants.StatisticsConnectionConnectSuccess, success, (k, v) => success);
+            _statistics.AddOrUpdate(SignalRConstants.StatisticsConnectionConnectFail, fail, (k, v) => fail);
         }
     }
 }

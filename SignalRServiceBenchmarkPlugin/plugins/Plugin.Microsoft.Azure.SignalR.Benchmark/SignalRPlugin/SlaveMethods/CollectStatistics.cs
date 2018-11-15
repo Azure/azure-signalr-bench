@@ -26,7 +26,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 {
                     pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionSuccessFlag}.{type}", out List<SignalREnums.ConnectionState> connectionsSuccessFlag, (obj) => (List<SignalREnums.ConnectionState>)obj);
                     // Update connections' states
-                    await statistics.UpdateConnectionsState(connectionsSuccessFlag);
+                    statistics.UpdateConnectionsState(connectionsSuccessFlag);
                 }
                 else
                 {
