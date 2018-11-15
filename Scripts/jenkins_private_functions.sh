@@ -185,6 +185,11 @@ function build_rpc_master() {
   fi
   cd $PluginRpcBuildWorkingDir
   ./build.sh master $tmpMaster
+  if [ ! -e $tmpMaster/master ]
+  then
+    echo "!!! Fail to build master: the '$tmpMaster/master' does not exist!!!"
+    exit 1
+  fi
   if [ -e $targetDir/publish ]
   then
      rm -rf $targetDir/publish
@@ -204,6 +209,11 @@ function build_rpc_slave() {
   fi
   cd $PluginRpcBuildWorkingDir
   ./build.sh slave $tmpSlave
+  if [ ! -e $tmpSlave/slave ]
+  then
+    echo "!!! Fail to build slave: the '$tmpSlave/slave' does not exist!!!"
+    exit 1
+  fi
   if [ -e $targetDir/publish ]
   then
      rm -rf $targetDir/publish
@@ -223,6 +233,11 @@ build_app_server() {
   fi
   cd $AppServerWorkingDir
   ./build.sh $tmpAppServer
+  if [ ! -e $tmpAppServer/AppServer ]
+  then
+    echo "!!! Fail to build appserver: the '$tmpAppServer/AppServer' does not exist!!!"
+    exit 1
+  fi
   if [ -e $targetDir/publish ]
   then
      rm -rf $targetDir/publish

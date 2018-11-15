@@ -11,7 +11,7 @@ class ArgType:
 
         # transport
         self.transport_websockets = 'Websockets'
-        self.transport_long_polling = 'Longpolling'
+        self.transport_long_polling = 'LongPolling'
         self.transport_server_sent_event = 'ServerSentEvent'
 
 
