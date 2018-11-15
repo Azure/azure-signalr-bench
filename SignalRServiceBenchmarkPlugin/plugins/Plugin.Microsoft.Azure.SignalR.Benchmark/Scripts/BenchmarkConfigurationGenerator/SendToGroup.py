@@ -26,6 +26,12 @@ class SendToGroup:
             group_member = 3 if self.scenario_config.group_type == arg_type.group_big \
                 else self.scenario_config.connections // self.scenario_config.group_count
             remainder_end = self.scenario_config.base_step + epoch * remainder_end_dx
+
+            # conditional stop and reconnect
+            if epoch > 0:
+                CommonStep.conditional_stop(sending, self.scenario_config, self.constant_config,
+                                            self.connection_config)
+
             sending += [
                 send_to_group(self.scenario_config.type, self.sending_config.duration, self.sending_config.interval,
                               self.sending_config.message_size, self.scenario_config.connections,

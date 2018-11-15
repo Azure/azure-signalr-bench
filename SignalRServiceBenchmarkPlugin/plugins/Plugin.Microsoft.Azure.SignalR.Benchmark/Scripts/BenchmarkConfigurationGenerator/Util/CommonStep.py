@@ -20,3 +20,19 @@ def post_sending_steps(type_):
         dispose_connection(type_)
     ]
     return post_sending
+
+
+def conditional_stop_and_reconnect_steps(sending, scenario_config, constant_config, connection_config):
+    sending += [
+        conditional_stop(scenario_config.type,
+                         constant_config.criteria_max_fail_connection_percentage,
+                         scenario_config.connections + 1,
+                         constant_config.criteria_max_fail_sending_percentage),
+        reconnect(scenario_config.type, scenario_config.connections, connection_config.url,
+                  connection_config.protocol, connection_config.transport,
+                  scenario_config.concurrent),
+        conditional_stop(scenario_config.type,
+                         constant_config.criteria_max_fail_connection_percentage,
+                         scenario_config.connections + 1, 2.00)
+    ]
+    return sending

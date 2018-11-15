@@ -27,6 +27,11 @@ class SendToClient:
             if remainder_end - remainder_begin > self.scenario_config.connections:
                 break
 
+            # conditional stop and reconnect
+            if epoch > 0:
+                CommonStep.conditional_stop(sending, self.scenario_config, self.constant_config,
+                                            self.connection_config)
+
             sending += [
                 send_to_client(self.scenario_config.type, self.scenario_config.connections,
                                self.sending_config.duration, self.sending_config.interval, remainder_begin,

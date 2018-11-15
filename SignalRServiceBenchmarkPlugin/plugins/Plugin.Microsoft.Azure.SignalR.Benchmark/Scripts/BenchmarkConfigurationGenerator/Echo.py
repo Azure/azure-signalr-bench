@@ -27,25 +27,16 @@ class Echo:
             if remainder_end - remainder_begin > self.scenario_config.connections:
                 break
 
+            # conditional stop and reconnect
+            if epoch > 0:
+                CommonStep.conditional_stop(sending, self.scenario_config, self.constant_config, self.connection_config)
+
             sending += [
                 echo(self.scenario_config.type, self.sending_config.duration, self.sending_config.interval,
                      remainder_begin, remainder_end, self.scenario_config.connections,
                      self.sending_config.message_size),
                 wait(self.scenario_config.type, self.constant_config.wait_time)
             ]
-
-            if epoch < self.scenario_config.step_length - 1:
-                sending += [
-                    conditional_stop(self.scenario_config.type,
-                                     self.constant_config.criteria_max_fail_connection_percentage,
-                                     self.scenario_config.connections + 1,
-                                     self.constant_config.criteria_max_fail_sending_percentage),
-                    reconnect(self.scenario_config.type, self.scenario_config.connections, self.connection_config.url,
-                              self.connection_config.protocol, self.connection_config.transport,
-                              self.scenario_config.concurrent),
-                    conditional_stop(self.scenario_config.type,
-                                     self.constant_config.criteria_max_fail_connection_percentage,
-                                     self.scenario_config.connections + 1, 2.00)]
 
         pipeline = pre_sending + sending + post_sending
 

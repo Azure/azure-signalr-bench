@@ -10,7 +10,7 @@ Pipeline:
     Type: echo
 - - Method: CreateConnection
     Parameter.ConnectionTotal: 750
-    Parameter.HubUrl: http://localhost:5050/signalrbench
+    Parameter.HubUrl: http://localhost:5000/signalrbench
     Parameter.Protocol: json
     Parameter.TransportType: Websockets
     Type: echo
@@ -38,7 +38,7 @@ Pipeline:
 - - Method: Reconnect
     Parameter.ConcurrentConnetion: 100
     Parameter.ConnectionTotal: 750
-    Parameter.HubUrl: http://localhost:5050/signalrbench
+    Parameter.HubUrl: http://localhost:5000/signalrbench
     Parameter.Protocol: json
     Parameter.TransportType: Websockets
     Type: echo
