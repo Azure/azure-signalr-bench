@@ -3,7 +3,8 @@ from Util.BenchmarkConfigurationStep import *
 
 def pre_sending_steps(type_, connection_config, statistics_config, scenario_config):
     pre_send = [
-        init_statistics_collector(type_),
+        init_statistics_collector(type_, statistics_config.statistic_latency_max,
+                                  statistics_config.statistic_latency_step),
         collect_statistics(type_, statistics_config.statistic_interval, statistics_config.statistics_output_path),
         create_connection(type_, scenario_config.connections, connection_config.url, connection_config.protocol,
                           connection_config.transport),

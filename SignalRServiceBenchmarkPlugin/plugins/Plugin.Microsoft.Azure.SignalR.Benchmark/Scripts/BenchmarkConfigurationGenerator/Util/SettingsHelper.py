@@ -15,9 +15,11 @@ class ScenarioConfig:
 
 
 class StatisticsConfig:
-    def __init__(self, statistics_output_path, statistic_interval):
+    def __init__(self, statistics_output_path, statistic_interval, statistic_latency_max, statistic_latency_step):
         self.statistic_interval = statistic_interval
         self.statistics_output_path = statistics_output_path
+        self.statistic_latency_max = statistic_latency_max
+        self.statistic_latency_step = statistic_latency_step
 
 
 class ConnectionConfig:
@@ -28,10 +30,14 @@ class ConnectionConfig:
 
 
 class ConstantConfig:
-    def __init__(self, module, wait_time, config_save_path):
+    def __init__(self, module, wait_time, config_save_path, criteria_max_fail_connection_amount,
+                 criteria_max_fail_connection_percentage, criteria_max_fail_sending_percentage):
         self.wait_time = wait_time
         self.module = module
         self.config_save_path = config_save_path
+        self.criteria_max_fail_connection_amount = criteria_max_fail_connection_amount
+        self.criteria_max_fail_connection_percentage = criteria_max_fail_connection_percentage
+        self.criteria_max_fail_sending_percentage = criteria_max_fail_sending_percentage
 
 
 class SendingConfig:

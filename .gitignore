@@ -394,3 +394,5 @@ SignalRServiceBenchmarkPlugin/framework/master/debug\.yaml
 SignalRServiceBenchmarkPlugin/framework/master/haha\.txt
 
 SignalRServiceBenchmarkPlugin/framework/master/BenchmarkConfigurationSample_group\.yaml
+
+SignalRServiceBenchmarkPlugin/framework/master/BenchmarkConfigurationSample_debug\.yaml

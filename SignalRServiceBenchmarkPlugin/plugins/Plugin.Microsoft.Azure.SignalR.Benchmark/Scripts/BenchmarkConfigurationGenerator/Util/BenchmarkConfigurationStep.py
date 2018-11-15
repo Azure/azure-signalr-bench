@@ -21,7 +21,12 @@ Key = {
     'GroupInternalRemainderBegin': 'Parameter.GroupInternalRemainderBegin',
     'GroupInternalRemainderEnd': 'Parameter.GroupInternalRemainderEnd',
     'GroupInternalModulo': 'Parameter.GroupInternalModulo',
-    'StatisticsOutputPath': 'Parameter.StatisticsOutputPath'
+    'StatisticsOutputPath': 'Parameter.StatisticsOutputPath',
+    'CriteriaMaxFailConnectionPercentage': 'Parameter.CriteriaMaxFailConnectionPercentage',
+    'CriteriaMaxFailConnectionAmount': 'Parameter.CriteriaMaxFailConnectionAmount',
+    'CriteriaMaxFailSendingPercentage': 'Parameter.CriteriaMaxFailSendingPercentage',
+    'LatencyStep': 'Parameter.LatencyStep',
+    'LatencyMax': 'Parameter.LatencyMax'
 }
 
 
@@ -42,6 +47,31 @@ def wait(type_, duration):
     }]
 
 
+def conditional_stop(type_, criteria_max_fail_connection_percentage, criteria_max_fail_connection_amount,
+                     criteria_max_fail_sending_percentage):
+    return [{
+        **required(type_, "ConditionalStop"),
+        **{
+            Key['CriteriaMaxFailConnectionPercentage']: criteria_max_fail_connection_percentage,
+            Key['CriteriaMaxFailConnectionAmount']: criteria_max_fail_connection_amount,
+            Key['CriteriaMaxFailSendingPercentage']: criteria_max_fail_sending_percentage
+        }
+    }]
+
+
+def reconnect(type_, connection_total, hub_url, protocol, transport_type, concurrent):
+    return [{
+        **required(type_, "Reconnect"),
+        **{
+            Key['ConnectionTotal']: connection_total,
+            Key['HubUrl']: hub_url,
+            Key['Protocol']: protocol,
+            Key['TransportType']: transport_type,
+            Key['ConcurrentConnetion']: concurrent
+        }
+    }]
+
+
 def register_callback_record_latency(type_):
     return [dict(required(type_, "RegisterCallbackRecordLatency"))]
 
@@ -54,8 +84,14 @@ def register_callback_leave_group(type_):
     return [dict(required(type_, "RegisterCallbackLeaveGroup"))]
 
 
-def init_statistics_collector(type_):
-    return [dict(required(type_, "InitStatisticsCollector"))]
+def init_statistics_collector(type_, latency_max, latency_step):
+    return [{
+        **required(type_, "InitStatisticsCollector"),
+        **{
+            Key['LatencyMax']: latency_max,
+            Key['LatencyStep']: latency_step
+        }
+    }]
 
 
 def collect_statistics(type_, interval, output_path):
