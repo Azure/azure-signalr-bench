@@ -173,8 +173,8 @@ namespace Commander
             for (var i = 0; i < appservers.Count; i++)
             {
                 var cmd = appservers[i];
-                var logFile = $"applog{i}.log";
-
+                var logFileNameWithouExt = $"applog{i}";
+                var logFile = logFileNameWithouExt + ".log";
                 if (!String.IsNullOrEmpty(_appserverLogDirPath) && !Directory.Exists(_appserverLogDirPath))
                 {
                     Directory.CreateDirectory(_appserverLogDirPath);
@@ -191,6 +191,31 @@ namespace Commander
                         {
                             writer.WriteLine(line);
                         }
+                    }
+                }
+                // zip the applog because it may be big
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                {
+                    var zip = Command.Run("zip", new string[] { "-r", $"{logFileNameWithouExt}.zip", $"{logFile}" },
+                        o => o.WorkingDirectory(_appserverLogDirPath));
+                    zip.Wait();
+                    if (!zip.Result.Success)
+                    {
+                        Log.Error(zip.Result.StandardOutput);
+                    }
+                }
+                else
+                {
+                    var tar = Command.Run("tar", new string[] { "zcvf", $"{logFileNameWithouExt}.tgz", $"{logFile}" },
+                        o => o.WorkingDirectory(_appserverLogDirPath));
+                    tar.Wait();
+                    if (!tar.Result.Success)
+                    {
+                        Log.Error(tar.Result.StandardOutput);
+                    }
+                    else
+                    {
+                        Command.Run("rm", new string[] { $"{logFile}" }, o => o.WorkingDirectory(_appserverLogDirPath));
                     }
                 }
             }

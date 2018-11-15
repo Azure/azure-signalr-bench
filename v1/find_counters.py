@@ -10,6 +10,5 @@ def FindCounters():
               if (len(b)==7 and pat.match(b[4])):
                  c = "{date} {scenario} {path}".format(date=b[4],scenario=b[5], path=a)
                  print(c)
-              #print(os.path.join(root, file))
 
 FindCounters()
