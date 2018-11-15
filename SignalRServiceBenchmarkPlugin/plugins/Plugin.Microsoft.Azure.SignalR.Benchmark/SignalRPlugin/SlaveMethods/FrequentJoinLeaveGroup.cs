@@ -12,164 +12,63 @@ using System.Threading.Tasks;
 
 namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
 {
-    public class FrequentJoinLeaveGroup : BaseContinuousSendMethod, ISlaveMethod
+    public class FrequentJoinLeaveGroup : SendToGroupBase, ISlaveMethod
     {
-        private static readonly string _isIngroup = "IsInGroup"; 
-
-        public async Task<IDictionary<string, object>> Do(IDictionary<string, object> stepParameters, IDictionary<string, object> pluginParameters)
+        protected override Task SendMessages(IEnumerable<Package> packages)
         {
-            try
-            {
-                Log.Information($"Frequently join and leave group...");
+            // Send messages
+            return Task.WhenAll(from package in packages
+                               let index = connectionIndex[package.LocalIndex]
+                               let groupSize = totalConnection / groupCount
+                               let groupIndex = index % groupCount
+                               let indexInGroup = index / groupCount
+                               let connection = package.Connection
+                               let data = package.Data
+                               let isSendGroupLevel = IsSending(groupIndex, groupCount, GroupLevelRemainderBegin, GroupLevelRemainderEnd)
+                               let isSendGroupInternal = IsSending(indexInGroup, GroupInternalModulo, GroupInternalRemainderBegin, GroupInternalRemainderEnd)
+                               select GenerateTask((Connection: connections[package.LocalIndex], LocalIndex: package.LocalIndex, ConnectionsSuccessFlag: connectionsSuccessFlag, StatisticsCollector: statisticsCollector), data, isSendGroupLevel, isSendGroupInternal));
 
-                // Get parameters
-                stepParameters.TryGetTypedValue(SignalRConstants.Type, out string type, Convert.ToString);
-                stepParameters.TryGetTypedValue(SignalRConstants.Duration, out long duration, Convert.ToInt64);
-                stepParameters.TryGetTypedValue(SignalRConstants.Interval, out long interval, Convert.ToInt64);
-                stepParameters.TryGetTypedValue(SignalRConstants.MessageSize, out int messageSize, Convert.ToInt32);
-                stepParameters.TryGetTypedValue(SignalRConstants.ConnectionTotal, out int totalConnection, Convert.ToInt32);
-                stepParameters.TryGetTypedValue(SignalRConstants.GroupCount, out int groupCount, Convert.ToInt32);
-                stepParameters.TryGetTypedValue(SignalRConstants.GroupLevelRemainderBegin, out int GroupLevelRemainderBegin, Convert.ToInt32);
-                stepParameters.TryGetTypedValue(SignalRConstants.GroupLevelRemainderEnd, out int GroupLevelRemainderEnd, Convert.ToInt32);
-                stepParameters.TryGetTypedValue(SignalRConstants.GroupInternalRemainderBegin, out int GroupInternalRemainderBegin, Convert.ToInt32);
-                stepParameters.TryGetTypedValue(SignalRConstants.GroupInternalRemainderEnd, out int GroupInternalRemainderEnd, Convert.ToInt32);
-                stepParameters.TryGetTypedValue(SignalRConstants.GroupInternalModulo, out int GroupInternalModulo, Convert.ToInt32);
+        }
 
-                if (totalConnection % groupCount != 0) throw new Exception("Not supported: Total connections cannot be divided by group count");
+        protected override IEnumerable<Package> GenerateData()
+        {
+            // Generate necessary data
+            var messageBlob = new byte[messageSize];
 
-                // Get context
-                pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionStore}.{type}", out IList<HubConnection> connections, (obj) => (IList<HubConnection>)obj);
-                pluginParameters.TryGetTypedValue($"{SignalRConstants.StatisticsStore}.{type}", out StatisticsCollector statisticsCollector, obj => (StatisticsCollector) obj);
-                pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionIndex}.{type}", out List<int> connectionIndex, (obj) => (List<int>)obj);
-                pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionSuccessFlag}.{type}", out List<SignalREnums.ConnectionState> connectionsSuccessFlag, (obj) => (List<SignalREnums.ConnectionState>)obj);
-
-                // Generate necessary data
-                var messageBlob = new byte[messageSize];
-                
-                var packages = from i in Enumerable.Range(0, connections.Count)
-                               let groupName = SignalRUtils.GroupName(type, connectionIndex[i] % groupCount)
-                               select new
-                               {
-                                   LocalIndex = i,
-                                   Connection = connections[i],
-                                   Data = new Dictionary<string, object>
+            var packages = from i in Enumerable.Range(0, connections.Count)
+                           let groupName = SignalRUtils.GroupName(type, i % groupCount)
+                           select
+                           new Package
+                           {
+                               LocalIndex = i,
+                               Connection = connections[i],
+                               GroupName = groupName,
+                               Data = new Dictionary<string, object>
                                    {
                                        { SignalRConstants.MessageBlob, messageBlob }, // message payload
                                        { SignalRConstants.GroupName, groupName},
                                        { _isIngroup, false}
-                                   }
-                               };
+                                  }
+                           };
 
-                // Reset counters
-                statisticsCollector.ResetGroupCounters();
-                statisticsCollector.ResetMessageCounters();
-
-                Func<int, int, int, int, bool> IsSending = (index, modulo, beg, end) => (index % modulo) >= beg && (index % modulo) < end;
-
-                Func<(HubConnection Connection, int LocalIndex, List<SignalREnums.ConnectionState> ConnectionsSuccessFlag, StatisticsCollector StatisticsCollector), IDictionary<string, object>, bool, bool, Task> generateTask = (connection, data, isSendGroupLevel, isSendGroupInternal) =>
-                {
-                    if (isSendGroupLevel && isSendGroupInternal)
-                    {
-                        return ContinuousSend(connection, data, SendGroup,
-                                        TimeSpan.FromMilliseconds(duration), TimeSpan.FromMilliseconds(interval),
-                                        TimeSpan.FromMilliseconds(1), TimeSpan.FromMilliseconds(interval));
-                    }
-                    else if (isSendGroupLevel && !isSendGroupInternal)
-                    {
-                        return ContinuousSend(connection, data, JoinLeaveGroup,
-                                        TimeSpan.FromMilliseconds(duration), TimeSpan.FromMilliseconds(interval),
-                                        TimeSpan.FromMilliseconds(1), TimeSpan.FromMilliseconds(interval));
-                    }
-                    return Task.CompletedTask;
-                };
-
-                // Send messages
-                await Task.WhenAll(from package in packages
-                                   let index = connectionIndex[package.LocalIndex]
-                                   let groupSize = totalConnection / groupCount
-                                   let groupIndex = index % groupCount
-                                   let indexInGroup = index / groupCount
-                                   let connection = package.Connection
-                                   let data = package.Data
-                                   let isSendGroupLevel = IsSending(groupIndex, groupCount, GroupLevelRemainderBegin, GroupLevelRemainderEnd)
-                                   let isSendGroupInternal = IsSending(indexInGroup, GroupInternalModulo, GroupInternalRemainderBegin, GroupInternalRemainderEnd)
-                                   select generateTask((Connection: connections[package.LocalIndex], LocalIndex: package.LocalIndex, ConnectionsSuccessFlag: connectionsSuccessFlag, StatisticsCollector: statisticsCollector), data, isSendGroupLevel, isSendGroupInternal));
-
-                return null;
-            }
-            catch (Exception ex)
-            {
-                var message = $"Fail to frequently join and leave group: {ex}";
-                Log.Error(message);
-                throw;
-            }
+            return packages;
         }
 
-        private async Task SendGroup((HubConnection Connection, int LocalIndex, List<SignalREnums.ConnectionState> ConnectionsSuccessFlag, StatisticsCollector StatisticsCollector) package, IDictionary<string, object> data)
+        private Task GenerateTask((HubConnection Connection, int LocalIndex, List<SignalREnums.ConnectionState> ConnectionsSuccessFlag, StatisticsCollector StatisticsCollector) connection, IDictionary<string, object> data, bool isSendGroupLevel, bool isSendGroupInternal)
         {
-            try
+            if (isSendGroupLevel && isSendGroupInternal)
             {
-                // Is the connection is not active, then stop sending message
-                if (package.ConnectionsSuccessFlag[package.LocalIndex] != SignalREnums.ConnectionState.Success) return;
-
-                // Extract data
-                data.TryGetTypedValue(SignalRConstants.GroupName, out string groupName, Convert.ToString);
-                data.TryGetValue(SignalRConstants.MessageBlob, out var messageBlob);
-
-                // Generate payload
-                var payload = new Dictionary<string, object>
-                {
-                    { SignalRConstants.MessageBlob, messageBlob },
-                    { SignalRConstants.Timestamp, Util.Timestamp() },
-                    { SignalRConstants.GroupName, groupName }
-                };
-
-                // Send message
-                await package.Connection.SendAsync(SignalRConstants.SendToGroupCallbackName, payload);
-
-                // Update statistics
-                package.StatisticsCollector.IncreaseSentMessage();
+                return ContinuousSend(connection, data, SendGroup,
+                                TimeSpan.FromMilliseconds(duration), TimeSpan.FromMilliseconds(interval),
+                                TimeSpan.FromMilliseconds(1), TimeSpan.FromMilliseconds(interval));
             }
-            catch (Exception ex)
+            else if (isSendGroupLevel && !isSendGroupInternal)
             {
-                package.ConnectionsSuccessFlag[package.LocalIndex] = SignalREnums.ConnectionState.Fail;
-                var message = $"Error in send to group: {ex}";
-                Log.Error(message);
-                //throw;
+                return ContinuousSend(connection, data, JoinLeaveGroup,
+                                TimeSpan.FromMilliseconds(duration), TimeSpan.FromMilliseconds(interval),
+                                TimeSpan.FromMilliseconds(1), TimeSpan.FromMilliseconds(interval));
             }
-        }
-
-        private async Task JoinLeaveGroup((HubConnection Connection, int LocalIndex, List<SignalREnums.ConnectionState> ConnectionsSuccessFlag, StatisticsCollector StatisticsCollector) package, IDictionary<string, object> data)
-        {
-            // Extract data
-            data.TryGetTypedValue(SignalRConstants.GroupName, out string groupName, Convert.ToString);
-            data.TryGetTypedValue(_isIngroup, out bool isInGroup, Convert.ToBoolean);
-
-            // Join or leave groups
-            if (isInGroup)
-            {
-                try
-                {
-                    await package.Connection.SendAsync(SignalRConstants.LeaveGroupCallbackName, groupName);
-                }
-                catch
-                {
-                    package.StatisticsCollector.IncreaseLeaveGroupFail();
-                }
-            }
-            else
-            {
-                try
-                {
-                    await package.Connection.SendAsync(SignalRConstants.JoinGroupCallbackName, groupName);
-                }
-                catch
-                {
-                    package.StatisticsCollector.IncreaseJoinGroupFail();
-                }
-            }
-
-            data[_isIngroup] = !isInGroup;
+            return Task.CompletedTask;
         }
     }
 }

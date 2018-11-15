@@ -33,7 +33,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
         protected List<SignalREnums.ConnectionState> connectionsSuccessFlag;
 
         // Key
-        private static readonly string _isIngroup = "IsInGroup";
+        protected static readonly string _isIngroup = "IsInGroup";
 
         protected class Package
         {
@@ -112,7 +112,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
             pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionSuccessFlag}.{type}", out connectionsSuccessFlag, (obj) => (List<SignalREnums.ConnectionState>)obj);
         }
 
-        protected IEnumerable<Package> GenerateData()
+        protected virtual IEnumerable<Package> GenerateData()
         {
             // Generate necessary data
             var messageBlob = new byte[messageSize];
