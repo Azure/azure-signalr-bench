@@ -27,6 +27,10 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 stepParameters.TryGetTypedValue(SignalRConstants.MessageSize, out int messageSize, Convert.ToInt32);
                 stepParameters.TryGetTypedValue(SignalRConstants.ConnectionTotal, out int totalConnection, Convert.ToInt32);
                 stepParameters.TryGetTypedValue(SignalRConstants.GroupCount, out int groupCount, Convert.ToInt32);
+
+                // Conenction Mode
+
+                // Group Mode
                 stepParameters.TryGetTypedValue(SignalRConstants.GroupLevelRemainderBegin, out int GroupLevelRemainderBegin, Convert.ToInt32);
                 stepParameters.TryGetTypedValue(SignalRConstants.GroupLevelRemainderEnd, out int GroupLevelRemainderEnd, Convert.ToInt32);
                 stepParameters.TryGetTypedValue(SignalRConstants.GroupInternalRemainderBegin, out int GroupInternalRemainderBegin, Convert.ToInt32);

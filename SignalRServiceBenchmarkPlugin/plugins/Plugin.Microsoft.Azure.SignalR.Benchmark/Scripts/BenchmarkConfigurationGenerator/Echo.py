@@ -29,7 +29,7 @@ class Echo:
 
             # conditional stop and reconnect
             if epoch > 0:
-                CommonStep.conditional_stop(sending, self.scenario_config, self.constant_config, self.connection_config)
+                sending += CommonStep.conditional_stop_and_reconnect_steps(sending, self.scenario_config, self.constant_config, self.connection_config)
 
             sending += [
                 echo(self.scenario_config.type, self.sending_config.duration, self.sending_config.interval,

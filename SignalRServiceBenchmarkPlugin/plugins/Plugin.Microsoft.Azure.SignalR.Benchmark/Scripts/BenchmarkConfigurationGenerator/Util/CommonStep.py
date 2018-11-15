@@ -23,7 +23,7 @@ def post_sending_steps(type_):
 
 
 def conditional_stop_and_reconnect_steps(sending, scenario_config, constant_config, connection_config):
-    sending += [
+    return [
         conditional_stop(scenario_config.type,
                          constant_config.criteria_max_fail_connection_percentage,
                          scenario_config.connections + 1,
@@ -35,4 +35,3 @@ def conditional_stop_and_reconnect_steps(sending, scenario_config, constant_conf
                          constant_config.criteria_max_fail_connection_percentage,
                          scenario_config.connections + 1, 2.00)
     ]
-    return sending
