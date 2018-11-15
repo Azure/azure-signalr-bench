@@ -25,7 +25,7 @@ scenario:echo,transport:Websockets:
   concurrent: [100, 100, 100, 200, 200, 200, 200]
 
 
-scenario:echo,transport:Longpolling:
+scenario:echo,transport:LongPolling:
   normal_connection: [500, 1000, 2500, 5000, 10000, 25000, 50000]
   max_connection: [750, 1500, 3000, 7500, 15000, 30000, 75000]
   base_step: [50, 50, 50, 50, 100, 500, 500]
@@ -53,7 +53,7 @@ scenario:broadcast,transport:Websockets:
   concurrent: [100, 100, 100, 200, 200, 200, 200]
 
 
-scenario:broadcast,transport:Longpolling:
+scenario:broadcast,transport:LongPolling:
   normal_connection: [500, 1000, 2500, 5000, 10000, 25000, 50000]
   max_connection: [750, 1500, 3000, 7500, 15000, 30000, 75000]
   base_step: [1, 1, 1, 1, 1, 1, 1]
