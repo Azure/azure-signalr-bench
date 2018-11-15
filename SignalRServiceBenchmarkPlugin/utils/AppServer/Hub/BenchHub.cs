@@ -12,13 +12,11 @@ namespace Microsoft.Azure.SignalR.PerfTest.AppServer
     {
         public void Echo(IDictionary<string, object> data)
         {
-            foreach (var entry in data) Console.WriteLine($"{entry.Key} : {entry.Value}");
             Clients.Client(Context.ConnectionId).SendAsync("RecordLatency", data);
         }
 
         public void Broadcast(IDictionary<string, object> data)
         {
-            Console.WriteLine("broadcast");
             Clients.All.SendAsync("RecordLatency", data);
         }
 
