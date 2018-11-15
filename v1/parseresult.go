@@ -272,7 +272,7 @@ func main() {
                     if curSendingStep != 0 &&
                        v.Counters.Recv > 0 && // fitler counters of zero
                        i > 0 && v.Counters.Recv >= monitors[i-1].Counters.Recv && // make sure it is a complete message
-                       i + 1 < len(monitors)-1 && monitors[i+1].Counters.Sending != curSendingStep { // a boundary of send step
+                       i + 1 < len(monitors) && monitors[i+1].Counters.Sending != curSendingStep { // a boundary of send step
                         sum = v.Counters.Recv
                         totalConnection = v.Counters.ConnError + v.Counters.ConnSucc
                         var sumfloat, totalConnFloat float64
@@ -387,7 +387,7 @@ func main() {
                     if curSendingStep != 0 &&
                        v.Counters.Recv > 0 && // fitler counters of zero
                        i > 0 && v.Counters.Recv >= monitors[i-1].Counters.Recv && // make sure it is a complete message
-                       i + 1 < len(monitors)-1 && monitors[i+1].Counters.Sending != curSendingStep { // a boundary of send step
+                       i + 1 < len(monitors) && monitors[i+1].Counters.Sending != curSendingStep { // a boundary of send step
                         sum = v.Counters.Recv
                         totalConnection = v.Counters.ConnError + v.Counters.ConnSucc
                         var sumfloat, totalConnFloat float64
@@ -483,7 +483,7 @@ func main() {
                     if curSendingStep != 0 &&
                        v.Counters.Recv > 0 && // fitler counters of zero
                        i > 0 && v.Counters.Recv >= monitors[i-1].Counters.Recv && // make sure it is a complete message
-                       i + 1 < len(monitors)-1 && monitors[i+1].Counters.Sending != curSendingStep { // a boundary of send step
+                       i + 1 < len(monitors) && monitors[i+1].Counters.Sending != curSendingStep { // a boundary of send step
                         sum = v.Counters.Recv
                         totalConnection = v.Counters.ConnError + v.Counters.ConnSucc
                         var sumfloat, totalConnFloat float64
