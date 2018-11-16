@@ -41,19 +41,19 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
             var largeLatencyPercentage = GetLargeLatencyPercentage(merged, latencyMax);
             if (connectionFailPercentage > criteriaMaxFailConnectionPercentage)
             {
-                var message = $"Connection fail percentage {connectionFailPercentage * 100}% is greater than criteria {criteriaMaxFailConnectionPercentage * 100}%";
+                var message = $"Connection fail percentage {connectionFailPercentage * 100}% is greater than criteria {criteriaMaxFailConnectionPercentage * 100}%, stop benchmark";
                 Log.Warning(message);
                 throw new Exception(message);
             }
             if (connectionFail > criteriaMaxFailConnectionAmount)
             {
-                var message = $"Connection fail amount {connectionFail} is greater than {criteriaMaxFailConnectionAmount}";
+                var message = $"Connection fail amount {connectionFail} is greater than {criteriaMaxFailConnectionAmount}, stop benchmark";
                 Log.Warning(message);
                 throw new Exception(message);
             }
              if (largeLatencyPercentage > criteriaMaxFailSendingPercentage) 
             {
-                var message = $"The percentage {largeLatencyPercentage * 100}% of Sending latency greater than {latencyMax} ms is larger than {criteriaMaxFailSendingPercentage * 100}%";
+                var message = $"The percentage {largeLatencyPercentage * 100}% of Sending latency greater than {latencyMax} ms is larger than {criteriaMaxFailSendingPercentage * 100}%, stop benchmark";
                 Log.Warning(message);
                 throw new Exception(message);
             }
