@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using Common;
 using Microsoft.AspNetCore.SignalR.Client;
@@ -14,23 +13,28 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
     public abstract class SendToGroupBase : BaseContinuousSendMethod, ISlaveMethod
     {
         // Step parameters
-        protected string type;
-        protected long duration;
-        protected long interval;
-        protected int messageSize;
-        protected int totalConnection;
-        protected int groupCount;
+        protected string Type;
+        protected long Duration;
+        protected long Interval;
+        protected int MessageSize;
+        protected int TotalConnection;
+        protected int GroupCount;
         protected int GroupLevelRemainderBegin;
         protected int GroupLevelRemainderEnd;
         protected int GroupInternalRemainderBegin;
         protected int GroupInternalRemainderEnd;
         protected int GroupInternalModulo;
+        protected int RemainderBegin;
+        protected int RemainderEnd;
+        protected int Modulo;
+
+        protected SignalREnums.GroupConfigMode Mode;
 
         // Context
-        protected IList<HubConnection> connections;
-        protected StatisticsCollector statisticsCollector;
-        protected List<int> connectionIndex;
-        protected List<SignalREnums.ConnectionState> connectionsSuccessFlag;
+        protected IList<HubConnection> Connections;
+        protected StatisticsCollector StatisticsCollector;
+        protected List<int> ConnectionIndex;
+        protected List<SignalREnums.ConnectionState> ConnectionsSuccessFlag;
 
         // Key
         protected static readonly string _isIngroup = "IsInGroup";
@@ -51,7 +55,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
 
                 // Load parameters
                 LoadParameters(stepParameters);
-                if (totalConnection % groupCount != 0) throw new Exception("Not supported: Total connections cannot be divided by group count");
+                if (TotalConnection % GroupCount != 0) throw new Exception("Not supported: Total connections cannot be divided by group count");
 
                 // Load context
                 LoadContext(pluginParameters);
@@ -81,49 +85,68 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
 
         protected virtual void ResetCounters()
         {
-            statisticsCollector.ResetGroupCounters();
-            statisticsCollector.ResetMessageCounters();
+            StatisticsCollector.ResetGroupCounters();
+            StatisticsCollector.ResetMessageCounters();
         }
 
         protected virtual void LoadParameters(IDictionary<string, object> stepParameters)
         {
             // Get parameters
-            stepParameters.TryGetTypedValue(SignalRConstants.Type, out type, Convert.ToString);
-            stepParameters.TryGetTypedValue(SignalRConstants.Duration, out duration, Convert.ToInt64);
-            stepParameters.TryGetTypedValue(SignalRConstants.Interval, out interval, Convert.ToInt64);
-            stepParameters.TryGetTypedValue(SignalRConstants.MessageSize, out messageSize, Convert.ToInt32);
-            stepParameters.TryGetTypedValue(SignalRConstants.ConnectionTotal, out totalConnection, Convert.ToInt32);
-            stepParameters.TryGetTypedValue(SignalRConstants.GroupCount, out groupCount, Convert.ToInt32);
+            stepParameters.TryGetTypedValue(SignalRConstants.Type, out Type, Convert.ToString);
+            stepParameters.TryGetTypedValue(SignalRConstants.Duration, out Duration, Convert.ToInt64);
+            stepParameters.TryGetTypedValue(SignalRConstants.Interval, out Interval, Convert.ToInt64);
+            stepParameters.TryGetTypedValue(SignalRConstants.MessageSize, out MessageSize, Convert.ToInt32);
+            stepParameters.TryGetTypedValue(SignalRConstants.ConnectionTotal, out TotalConnection, Convert.ToInt32);
+            stepParameters.TryGetTypedValue(SignalRConstants.GroupCount, out GroupCount, Convert.ToInt32);
+            stepParameters.TryGetTypedValue(SignalRConstants.GroupConfigMode, out string groupConfigMode, Convert.ToString);
 
-            // Group Mode
-            stepParameters.TryGetTypedValue(SignalRConstants.GroupLevelRemainderBegin, out GroupLevelRemainderBegin, Convert.ToInt32);
-            stepParameters.TryGetTypedValue(SignalRConstants.GroupLevelRemainderEnd, out GroupLevelRemainderEnd, Convert.ToInt32);
-            stepParameters.TryGetTypedValue(SignalRConstants.GroupInternalRemainderBegin, out GroupInternalRemainderBegin, Convert.ToInt32);
-            stepParameters.TryGetTypedValue(SignalRConstants.GroupInternalRemainderEnd, out GroupInternalRemainderEnd, Convert.ToInt32);
-            stepParameters.TryGetTypedValue(SignalRConstants.GroupInternalModulo, out GroupInternalModulo, Convert.ToInt32);
+            var success = Enum.TryParse(groupConfigMode, out Mode);
+
+            if (!success)
+            {
+                var message = $"Config mode not supported: {groupConfigMode}";
+                Log.Error(message);
+                throw new Exception(message);
+            }
+
+            switch (Mode)
+            {
+                case SignalREnums.GroupConfigMode.Group:
+                    stepParameters.TryGetTypedValue(SignalRConstants.GroupLevelRemainderBegin, out GroupLevelRemainderBegin, Convert.ToInt32);
+                    stepParameters.TryGetTypedValue(SignalRConstants.GroupLevelRemainderEnd, out GroupLevelRemainderEnd, Convert.ToInt32);
+                    stepParameters.TryGetTypedValue(SignalRConstants.GroupInternalRemainderBegin, out GroupInternalRemainderBegin, Convert.ToInt32);
+                    stepParameters.TryGetTypedValue(SignalRConstants.GroupInternalRemainderEnd, out GroupInternalRemainderEnd, Convert.ToInt32);
+                    stepParameters.TryGetTypedValue(SignalRConstants.GroupInternalModulo, out GroupInternalModulo, Convert.ToInt32);
+                    break;
+                case SignalREnums.GroupConfigMode.Connection:
+                    stepParameters.TryGetTypedValue(SignalRConstants.RemainderBegin, out RemainderBegin, Convert.ToInt32);
+                    stepParameters.TryGetTypedValue(SignalRConstants.RemainderEnd, out RemainderEnd, Convert.ToInt32);
+                    stepParameters.TryGetTypedValue(SignalRConstants.Modulo, out Modulo, Convert.ToInt32);
+                    break;
+            }
         }
 
         protected virtual void LoadContext(IDictionary<string, object> pluginParameters)
         {
             // Get context
-            pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionStore}.{type}", out connections, (obj) => (IList<HubConnection>)obj);
-            pluginParameters.TryGetTypedValue($"{SignalRConstants.StatisticsStore}.{type}", out statisticsCollector, obj => (StatisticsCollector)obj);
-            pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionIndex}.{type}", out connectionIndex, (obj) => (List<int>)obj);
-            pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionSuccessFlag}.{type}", out connectionsSuccessFlag, (obj) => (List<SignalREnums.ConnectionState>)obj);
+            pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionStore}.{Type}", out Connections, (obj) => (IList<HubConnection>)obj);
+            pluginParameters.TryGetTypedValue($"{SignalRConstants.StatisticsStore}.{Type}", out StatisticsCollector, obj => (StatisticsCollector)obj);
+            pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionIndex}.{Type}", out ConnectionIndex, (obj) => (List<int>)obj);
+            pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionSuccessFlag}.{Type}", out ConnectionsSuccessFlag, (obj) => (List<SignalREnums.ConnectionState>)obj);
         }
 
         protected virtual IEnumerable<Package> GenerateData()
         {
             // Generate necessary data
-            var messageBlob = new byte[messageSize];
+            var messageBlob = new byte[MessageSize];
 
-            var packages = from i in Enumerable.Range(0, connections.Count)
-                           let groupName = SignalRUtils.GroupName(type, i % groupCount)
+            var packages = from i in Enumerable.Range(0, Connections.Count)
+                           let groupName = SignalRUtils.GroupName(Type, i % GroupCount)
                            select 
                            new Package
                            {
                                LocalIndex = i,
-                               Connection = connections[i],
+                               Connection = Connections[i],
                                GroupName = groupName,
                                Data = new Dictionary<string, object>
                                    {
@@ -135,12 +158,12 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
             return packages;
         }
 
-        protected virtual async Task SendGroup((HubConnection Connection, int LocalIndex, List<SignalREnums.ConnectionState> ConnectionsSuccessFlag, StatisticsCollector StatisticsCollector) package, IDictionary<string, object> data)
+        protected virtual async Task SendGroup(int localIndex, IDictionary<string, object> data)
         {
             try
             {
                 // Is the connection is not active, then stop sending message
-                if (package.ConnectionsSuccessFlag[package.LocalIndex] != SignalREnums.ConnectionState.Success) return;
+                if (ConnectionsSuccessFlag[localIndex] != SignalREnums.ConnectionState.Success) return;
 
                 // Extract data
                 data.TryGetTypedValue(SignalRConstants.GroupName, out string groupName, Convert.ToString);
@@ -155,21 +178,21 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 };
 
                 // Send message
-                await package.Connection.SendAsync(SignalRConstants.SendToGroupCallbackName, payload);
+                await Connections[localIndex].SendAsync(SignalRConstants.SendToGroupCallbackName, payload);
 
                 // Update statistics
-                package.StatisticsCollector.IncreaseSentMessage();
+                StatisticsCollector.IncreaseSentMessage();
             }
             catch (Exception ex)
             {
-                package.ConnectionsSuccessFlag[package.LocalIndex] = SignalREnums.ConnectionState.Fail;
+                ConnectionsSuccessFlag[localIndex] = SignalREnums.ConnectionState.Fail;
                 var message = $"Error in send to group: {ex}";
                 Log.Error(message);
                 //throw;
             }
         }
 
-        protected virtual async Task JoinLeaveGroup((HubConnection Connection, int LocalIndex, List<SignalREnums.ConnectionState> ConnectionsSuccessFlag, StatisticsCollector StatisticsCollector) package, IDictionary<string, object> data)
+        protected virtual async Task JoinLeaveGroup(int localIndex, IDictionary<string, object> data)
         {
             // Extract data
             data.TryGetTypedValue(SignalRConstants.GroupName, out string groupName, Convert.ToString);
@@ -180,22 +203,22 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
             {
                 try
                 {
-                    await package.Connection.SendAsync(SignalRConstants.LeaveGroupCallbackName, groupName);
+                    await Connections[localIndex].SendAsync(SignalRConstants.LeaveGroupCallbackName, groupName);
                 }
                 catch
                 {
-                    package.StatisticsCollector.IncreaseLeaveGroupFail();
+                    StatisticsCollector.IncreaseLeaveGroupFail();
                 }
             }
             else
             {
                 try
                 {
-                    await package.Connection.SendAsync(SignalRConstants.JoinGroupCallbackName, groupName);
+                    await Connections[localIndex].SendAsync(SignalRConstants.JoinGroupCallbackName, groupName);
                 }
                 catch
                 {
-                    package.StatisticsCollector.IncreaseJoinGroupFail();
+                    StatisticsCollector.IncreaseJoinGroupFail();
                 }
             }
 

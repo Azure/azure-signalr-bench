@@ -2,7 +2,7 @@
   "profiles": {
     "master": {
       "commandName": "Project",
-      "commandLineArgs": "-- --BenchmarkConfiguration \"..\\..\\..\\BenchmarkConfigurationSample.yaml\""
+      "commandLineArgs": "-- --BenchmarkConfiguration \"..\\..\\..\\BenchmarkConfigurationSample_group.yaml\""
     }
   }
 }

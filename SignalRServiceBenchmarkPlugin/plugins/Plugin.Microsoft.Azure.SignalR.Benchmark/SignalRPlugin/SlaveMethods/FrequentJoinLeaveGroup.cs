@@ -1,13 +1,7 @@
-﻿using Common;
-using Microsoft.AspNetCore.SignalR.Client;
-using Plugin.Base;
-using Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods.Statistics;
-using Serilog;
+﻿using Plugin.Base;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
@@ -18,30 +12,32 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
         {
             // Send messages
             return Task.WhenAll(from package in packages
-                               let index = connectionIndex[package.LocalIndex]
-                               let groupSize = totalConnection / groupCount
-                               let groupIndex = index % groupCount
-                               let indexInGroup = index / groupCount
-                               let connection = package.Connection
-                               let data = package.Data
-                               let isSendGroupLevel = IsSending(groupIndex, groupCount, GroupLevelRemainderBegin, GroupLevelRemainderEnd)
-                               let isSendGroupInternal = IsSending(indexInGroup, GroupInternalModulo, GroupInternalRemainderBegin, GroupInternalRemainderEnd)
-                               select GenerateTask((Connection: connections[package.LocalIndex], LocalIndex: package.LocalIndex, ConnectionsSuccessFlag: connectionsSuccessFlag, StatisticsCollector: statisticsCollector), data, isSendGroupLevel, isSendGroupInternal));
+                                let index = ConnectionIndex[package.LocalIndex]
+                                let groupSize = TotalConnection / GroupCount
+                                let groupIndex = index % GroupCount
+                                let indexInGroup = index / GroupCount
+                                let connection = package.Connection
+                                let data = package.Data
+                                let isSendGroupLevel = IsSending(groupIndex, GroupCount, GroupLevelRemainderBegin, GroupLevelRemainderEnd)
+                                let isSendGroupInternal = IsSending(indexInGroup, GroupInternalModulo, GroupInternalRemainderBegin, GroupInternalRemainderEnd)
+                                let isSendConnectionMode = IsSending(index, Modulo, RemainderBegin, RemainderEnd)
+                                select Mode == SignalREnums.GroupConfigMode.Group ? 
+                                GenerateTaskForGroupMode(package.LocalIndex, data, isSendGroupLevel, isSendGroupInternal) : GenerateTaskForGroupMode(package.LocalIndex, data, true, isSendConnectionMode));
 
         }
 
         protected override IEnumerable<Package> GenerateData()
         {
             // Generate necessary data
-            var messageBlob = new byte[messageSize];
+            var messageBlob = new byte[MessageSize];
 
-            var packages = from i in Enumerable.Range(0, connections.Count)
-                           let groupName = SignalRUtils.GroupName(type, i % groupCount)
+            var packages = from i in Enumerable.Range(0, Connections.Count)
+                           let groupName = SignalRUtils.GroupName(Type, i % GroupCount)
                            select
                            new Package
                            {
                                LocalIndex = i,
-                               Connection = connections[i],
+                               Connection = Connections[i],
                                GroupName = groupName,
                                Data = new Dictionary<string, object>
                                    {
@@ -54,19 +50,19 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
             return packages;
         }
 
-        private Task GenerateTask((HubConnection Connection, int LocalIndex, List<SignalREnums.ConnectionState> ConnectionsSuccessFlag, StatisticsCollector StatisticsCollector) connection, IDictionary<string, object> data, bool isSendGroupLevel, bool isSendGroupInternal)
+        private Task GenerateTaskForGroupMode(int localIndex, IDictionary<string, object> data, bool isSendGroupLevel, bool isSendGroupInternal)
         {
             if (isSendGroupLevel && isSendGroupInternal)
             {
-                return ContinuousSend(connection, data, SendGroup,
-                                TimeSpan.FromMilliseconds(duration), TimeSpan.FromMilliseconds(interval),
-                                TimeSpan.FromMilliseconds(1), TimeSpan.FromMilliseconds(interval));
+                return ContinuousSend(localIndex, data, SendGroup,
+                                TimeSpan.FromMilliseconds(Duration), TimeSpan.FromMilliseconds(Interval),
+                                TimeSpan.FromMilliseconds(1), TimeSpan.FromMilliseconds(Interval));
             }
             else if (isSendGroupLevel && !isSendGroupInternal)
             {
-                return ContinuousSend(connection, data, JoinLeaveGroup,
-                                TimeSpan.FromMilliseconds(duration), TimeSpan.FromMilliseconds(interval),
-                                TimeSpan.FromMilliseconds(1), TimeSpan.FromMilliseconds(interval));
+                return ContinuousSend(localIndex, data, JoinLeaveGroup,
+                                TimeSpan.FromMilliseconds(Duration), TimeSpan.FromMilliseconds(Interval),
+                                TimeSpan.FromMilliseconds(1), TimeSpan.FromMilliseconds(Interval));
             }
             return Task.CompletedTask;
         }
