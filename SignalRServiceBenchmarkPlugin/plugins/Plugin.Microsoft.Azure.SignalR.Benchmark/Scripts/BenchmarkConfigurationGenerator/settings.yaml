@@ -29,7 +29,7 @@ scenario:echo,transport:LongPolling:
   concurrent: [100, 100, 100, 100, 100, 100, 200]
 
 
-scenario:echo,transport:ServerSentEvent:
+scenario:echo,transport:ServerSentEvents:
   normal_connection: [1000, 2000, 5000, 10000, 20000, 50000, 100000]
   max_connection: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
   base_step: [50, 50, 300, 500, 700, 2000, 5000]
@@ -57,7 +57,7 @@ scenario:broadcast,transport:LongPolling:
   concurrent: [100, 100, 100, 100, 100, 100, 200]
 
 
-scenario:broadcast,transport:ServerSentEvent:
+scenario:broadcast,transport:ServerSentEvents:
   normal_connection: [1000, 2000, 5000, 10000, 20000, 50000, 100000]
   max_connection: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
   base_step: [1, 1, 1, 2, 1, 1, 1]
