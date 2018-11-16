@@ -15,6 +15,8 @@ class SendToClient:
                                                    self.statistics_config, self.scenario_config)
         pre_sending += [register_callback_record_latency(self.scenario_config.type)]
 
+        pre_sending += collect_connection_id(self.scenario_config.type)
+
         post_sending = CommonStep.post_sending_steps(self.scenario_config.type)
 
         remainder_begin = 0
