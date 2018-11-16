@@ -31,6 +31,14 @@ build_slave() {
   cd -
 }
 
+build_app_server() {
+  install_required_libs
+  cd ../../utils/AppServer/
+  dotnet build
+  cd -
+}
+
+
 package_master() {
   local outDir=$1
   build_master
