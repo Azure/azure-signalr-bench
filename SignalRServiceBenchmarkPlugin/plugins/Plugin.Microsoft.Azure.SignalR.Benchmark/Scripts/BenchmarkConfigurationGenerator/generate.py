@@ -72,6 +72,11 @@ for max failed sending percentage')
     parser.add_argument('-lm', '--statistic_latency_max', type=int, default=1000, help='Latency max of statistics')
     parser.add_argument('-ls', '--statistic_latency_step', type=int, default=100, help='Latency step of statistics')
 
+    # group config mode
+    parser.add_argument('-gm', '--group_config_mode', choices=[arg_type.group_config_mode_group,
+                                                               arg_type.group_config_mode_connection],
+                        default=arg_type.group_config_mode_connection, help='Group configuration mode')
+
     # args
     args = parser.parse_args()
 
@@ -104,7 +109,7 @@ def main():
     # determine settings
     scenario_config = determine_scenario_config(scenario_config_collection, args.unit, args.scenario, args.transport,
                                                 args.protocol, args.use_max_connection, args.message_size,
-                                                args.group_type)
+                                                args.group_type, args.group_config_mode)
 
     # basic sending config
     sending_config = SendingConfig(args.duration, args.interval, args.message_size)

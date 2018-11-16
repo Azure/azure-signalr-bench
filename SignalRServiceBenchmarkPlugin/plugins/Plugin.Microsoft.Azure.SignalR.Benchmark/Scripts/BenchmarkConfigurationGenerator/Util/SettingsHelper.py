@@ -3,7 +3,8 @@ from Util.Common import *
 
 
 class ScenarioConfig:
-    def __init__(self, type_, connections, concurrent, base_step, step, step_length, group_count=1, group_type=""):
+    def __init__(self, type_, connections, concurrent, base_step, step, step_length, group_count=1, group_type="",
+                 group_config_mode=""):
         self.connections = connections
         self.concurrent = concurrent
         self.base_step = base_step
@@ -12,6 +13,7 @@ class ScenarioConfig:
         self.type = type_
         self.group_count = group_count
         self.group_type = group_type
+        self.group_config_mode = group_config_mode
 
 
 class StatisticsConfig:
@@ -66,8 +68,8 @@ def parse_settings(path):
     return config
 
 
-def determine_scenario_config(settings, unit, scenario, transport, protocol="json", use_max_connection=True, message_size=None,
-                              group=""):
+def determine_scenario_config(settings, unit, scenario, transport, protocol="json", use_max_connection=True,
+                              message_size=None, group="", group_config_mode=""):
     scenario_type = ScenarioType()
 
     if scenario == scenario_type.send_to_client:
@@ -99,10 +101,11 @@ def determine_scenario_config(settings, unit, scenario, transport, protocol="jso
     step = cur_settings[para_key.step][index]
     step_length = cur_settings[para_key.step_length][index]
 
-    group_count = settings[para_key.group_count][group] if scenario == scenario_type.send_to_group or scenario == \
-                                                           scenario_type.frequent_join_leave_group else 0
+    group_count = cur_settings[para_key.group_count][index] if scenario == scenario_type.send_to_group or scenario == \
+                                                            scenario_type.frequent_join_leave_group else 0
 
-    config = ScenarioConfig(scenario, connections, concurrent, base_step, step, step_length, group_count, group)
+    config = ScenarioConfig(scenario, connections, concurrent, base_step, step, step_length, group_count, group,
+                            group_config_mode)
 
     return config
 
