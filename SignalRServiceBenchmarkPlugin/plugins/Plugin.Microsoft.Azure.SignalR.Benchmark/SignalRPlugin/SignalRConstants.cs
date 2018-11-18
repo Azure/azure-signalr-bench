@@ -30,6 +30,10 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         public static readonly string StatisticsOutputPath = "Parameter.StatisticsOutputPath";
         public static readonly string CriteriaMaxFailConnectionPercentage = "Parameter.CriteriaMaxFailConnectionPercentage";
         public static readonly string CriteriaMaxFailConnectionAmount = "Parameter.CriteriaMaxFailConnectionAmount";
+        public static readonly string CriteriaMaxFailSendingPercentage = "Parameter.CriteriaMaxFailSendingPercentage";
+        public static readonly string LatencyStep = "Parameter.LatencyStep";
+        public static readonly string LatencyMax = "Parameter.LatencyMax";
+        public static readonly string GroupConfigMode = "Parameter.Mode";
 
         // Connection/group information
         public static readonly string ConnectionId = "information.ConnectionId";
@@ -42,6 +46,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         public static readonly string ConnectionOffset = "Plugin.ConnectionOffset";
         public static readonly string StatisticsStore = "Plugin.StatisticsStore";
         public static readonly string ConnectionIdStore = "Plugin.ConnectionId";
+        public static readonly string RegisteredCallbacks = "Plugin.Callback";
 
         // Callback Name
         public static readonly string EchoCallbackName = "Echo";
@@ -72,5 +77,9 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         public static readonly string StatisticsGroupLeaveFail = "group:leave:fail";
         public static readonly string StatisticsConnectionConnectSuccess = "connection:connect:success";
         public static readonly string StatisticsConnectionConnectFail = "connection:connect:fail";
+
+        // Constants
+        public static readonly int ConnectionCloseTimeout = 100;
+
     }
 }

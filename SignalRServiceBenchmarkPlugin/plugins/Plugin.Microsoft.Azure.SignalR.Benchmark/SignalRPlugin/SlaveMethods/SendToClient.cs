@@ -32,7 +32,6 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
 
                 // Get context
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionStore}.{type}", out IList<HubConnection> connections, (obj) => (IList<HubConnection>)obj);
-                pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionOffset}.{type}", out int offset, Convert.ToInt32);
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.StatisticsStore}.{type}", out StatisticsCollector statisticsCollector, obj => (StatisticsCollector) obj);
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionIndex}.{type}", out List<int> connectionIndex, (obj) => (List<int>)obj);
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionSuccessFlag}.{type}", out List<SignalREnums.ConnectionState> connectionsSuccessFlag, (obj) => (List<SignalREnums.ConnectionState>)obj);

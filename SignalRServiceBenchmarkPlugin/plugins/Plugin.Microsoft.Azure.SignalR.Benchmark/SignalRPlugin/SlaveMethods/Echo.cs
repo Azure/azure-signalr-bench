@@ -29,7 +29,6 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 stepParameters.TryGetTypedValue(SignalRConstants.Interval, out long interval, Convert.ToInt64);
                 stepParameters.TryGetTypedValue(SignalRConstants.MessageSize, out int messageSize, Convert.ToInt32);
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionStore}.{type}", out IList<HubConnection> connections, (obj) => (IList<HubConnection>)obj);
-                pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionOffset}.{type}", out int offset, Convert.ToInt32);
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.StatisticsStore}.{type}", out StatisticsCollector statisticsCollector, obj => (StatisticsCollector) obj);
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionIndex}.{type}", out List<int> connectionIndex, (obj) => (List<int>)obj);
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionSuccessFlag}.{type}", out List<SignalREnums.ConnectionState> connectionsSuccessFlag, (obj) => (List<SignalREnums.ConnectionState>)obj);

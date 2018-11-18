@@ -11,8 +11,12 @@ class ArgType:
 
         # transport
         self.transport_websockets = 'Websockets'
-        self.transport_long_polling = 'Longpolling'
-        self.transport_server_sent_event = 'ServerSentEvent'
+        self.transport_long_polling = 'LongPolling'
+        self.transport_server_sent_event = 'ServerSentEvents'
+
+        # group config mode
+        self.group_config_mode_group = "Group"
+        self.group_config_mode_connection = "Connection"
 
 
 class ScenarioType:

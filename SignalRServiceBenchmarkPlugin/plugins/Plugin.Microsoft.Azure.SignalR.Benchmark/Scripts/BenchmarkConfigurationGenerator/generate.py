@@ -47,22 +47,42 @@ def parse_arguments():
     # todo: set default value
     parser.add_argument('-ms', '--message_size', type=int, default=2*1024, help="Message size")
     # todo: set default value
-    parser.add_argument('-M', '--module', help='Plugin name', default='Plugin.Microsoft.Azure.SignalR.Benchmark.SignalRBenchmarkPlugin, Plugin.Microsoft.Azure.SignalR.Benchmark')
+    parser.add_argument('-M', '--module', help='Plugin name', default='Plugin.Microsoft.Azure.SignalR.Benchmark.\
+SignalRBenchmarkPlugin, Plugin.Microsoft.Azure.SignalR.Benchmark')
     # todo: set default value
     parser.add_argument('-s', '--settings', type=str, default='settings.yaml', help='Settings from different unit')
     parser.add_argument('-d', '--duration', type=int, default=240, help='Duration to run (second)')
     parser.add_argument('-i', '--interval', type=int, default=1000, help='Interval for message sending (millisecond)')
+    parser.add_argument('-c', '--config_save_path', default='config.yaml',
+                        help='Path of output benchmark configuration')
+
+    # args for conditional stop
+    parser.add_argument('-cc', '--criteria_max_fail_connection_amount', type=int, default=100, help='Criteria for max \
+failed connection amount')
+    parser.add_argument('-cp', '--criteria_max_fail_connection_percentage', type=float, default=0.01, help='Criteria \
+for max failed connection percentage')
+    parser.add_argument('-cs', '--criteria_max_fail_sending_percentage', type=float, default=0.01, help='Criteria \
+for max failed sending percentage')
+
+    # args for statistics collector
     parser.add_argument('-so', '--statistics_output_path', default='counters.txt',
                         help='Path to counters which record the statistics while running benchmark')
     parser.add_argument('-si', '--statistic_interval', type=int, default=1000, help='Interval for collecting intervals')
     parser.add_argument('-w', '--wait_time', type=int, default=5000, help='Waiting time for each epoch')
-    parser.add_argument('-c', '--config_save_path', default='config.yaml',
-                        help='Path of output benchmark configuration')
+    parser.add_argument('-lm', '--statistic_latency_max', type=int, default=1000, help='Latency max of statistics')
+    parser.add_argument('-ls', '--statistic_latency_step', type=int, default=100, help='Latency step of statistics')
 
+    # group config mode
+    parser.add_argument('-gm', '--group_config_mode', choices=[arg_type.group_config_mode_group,
+                                                               arg_type.group_config_mode_connection],
+                        default=arg_type.group_config_mode_connection, help='Group configuration mode')
+
+    # args
     args = parser.parse_args()
 
     # unit convert from second to millisecond
     args.duration = args.duration * 1000
+
     return args
 
 
@@ -74,10 +94,14 @@ def main():
     scenario_config_collection = parse_settings(args.settings)
 
     # constant config
-    constant_config = ConstantConfig(args.module, args.wait_time, args.config_save_path)
+    constant_config = ConstantConfig(args.module, args.wait_time, args.config_save_path,
+                                     args.criteria_max_fail_connection_amount,
+                                     args.criteria_max_fail_connection_percentage,
+                                     args.criteria_max_fail_sending_percentage)
 
     # statistics config
-    statistics_config = StatisticsConfig(args.statistics_output_path, args.statistic_interval)
+    statistics_config = StatisticsConfig(args.statistics_output_path, args.statistic_interval,
+                                         args.statistic_latency_max, args.statistic_latency_step)
 
     # connection config
     connection_config = ConnectionConfig(args.url, args.protocol, args.transport)
@@ -85,7 +109,7 @@ def main():
     # determine settings
     scenario_config = determine_scenario_config(scenario_config_collection, args.unit, args.scenario, args.transport,
                                                 args.protocol, args.use_max_connection, args.message_size,
-                                                args.group_type)
+                                                args.group_type, args.group_config_mode)
 
     # basic sending config
     sending_config = SendingConfig(args.duration, args.interval, args.message_size)

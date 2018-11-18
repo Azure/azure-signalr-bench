@@ -21,11 +21,12 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 // Get parameters
                 stepParameters.TryGetTypedValue(SignalRConstants.Type, out string type, Convert.ToString);
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.StatisticsStore}.{type}", out StatisticsCollector statistics, (obj) => (StatisticsCollector) obj);
+
                 if (pluginParameters.ContainsKey($"{SignalRConstants.ConnectionSuccessFlag}.{type}"))
                 {
                     pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionSuccessFlag}.{type}", out List<SignalREnums.ConnectionState> connectionsSuccessFlag, (obj) => (List<SignalREnums.ConnectionState>)obj);
                     // Update connections' states
-                    await statistics.UpdateConnectionsState(connectionsSuccessFlag);
+                    statistics.UpdateConnectionsState(connectionsSuccessFlag);
                 }
                 else
                 {

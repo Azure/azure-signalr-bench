@@ -21,7 +21,13 @@ Key = {
     'GroupInternalRemainderBegin': 'Parameter.GroupInternalRemainderBegin',
     'GroupInternalRemainderEnd': 'Parameter.GroupInternalRemainderEnd',
     'GroupInternalModulo': 'Parameter.GroupInternalModulo',
-    'StatisticsOutputPath': 'Parameter.StatisticsOutputPath'
+    'StatisticsOutputPath': 'Parameter.StatisticsOutputPath',
+    'CriteriaMaxFailConnectionPercentage': 'Parameter.CriteriaMaxFailConnectionPercentage',
+    'CriteriaMaxFailConnectionAmount': 'Parameter.CriteriaMaxFailConnectionAmount',
+    'CriteriaMaxFailSendingPercentage': 'Parameter.CriteriaMaxFailSendingPercentage',
+    'LatencyStep': 'Parameter.LatencyStep',
+    'LatencyMax': 'Parameter.LatencyMax',
+    'GroupConfigMode': 'Parameter.Mode'
 }
 
 
@@ -42,6 +48,31 @@ def wait(type_, duration):
     }]
 
 
+def conditional_stop(type_, criteria_max_fail_connection_percentage, criteria_max_fail_connection_amount,
+                     criteria_max_fail_sending_percentage):
+    return [{
+        **required(type_, "ConditionalStop"),
+        **{
+            Key['CriteriaMaxFailConnectionPercentage']: criteria_max_fail_connection_percentage,
+            Key['CriteriaMaxFailConnectionAmount']: criteria_max_fail_connection_amount,
+            Key['CriteriaMaxFailSendingPercentage']: criteria_max_fail_sending_percentage
+        }
+    }]
+
+
+def reconnect(type_, connection_total, hub_url, protocol, transport_type, concurrent):
+    return [{
+        **required(type_, "Reconnect"),
+        **{
+            Key['ConnectionTotal']: connection_total,
+            Key['HubUrl']: hub_url,
+            Key['Protocol']: protocol,
+            Key['TransportType']: transport_type,
+            Key['ConcurrentConnetion']: concurrent
+        }
+    }]
+
+
 def register_callback_record_latency(type_):
     return [dict(required(type_, "RegisterCallbackRecordLatency"))]
 
@@ -54,8 +85,14 @@ def register_callback_leave_group(type_):
     return [dict(required(type_, "RegisterCallbackLeaveGroup"))]
 
 
-def init_statistics_collector(type_):
-    return [dict(required(type_, "InitStatisticsCollector"))]
+def init_statistics_collector(type_, latency_max, latency_step):
+    return [{
+        **required(type_, "InitStatisticsCollector"),
+        **{
+            Key['LatencyMax']: latency_max,
+            Key['LatencyStep']: latency_step
+        }
+    }]
 
 
 def collect_statistics(type_, interval, output_path):
@@ -156,9 +193,9 @@ def leave_group(type_, group_count, connection_total):
     return [join_leave_group(type_, "LeaveGroup", group_count, connection_total)]
 
 
-def group(type_, method, duration, interval, message_size, connection_total, group_count, group_level_remainder_begin,
-          group_level_remainder_end, group_internal_remainder_begin, group_internal_remainder_end,
-          group_internal_modulo):
+def group_group_mode(type_, method, duration, interval, message_size, connection_total, group_count,
+                     group_level_remainder_begin, group_level_remainder_end, group_internal_remainder_begin,
+                     group_internal_remainder_end, group_internal_modulo):
     return {
         **required(type_, method),
         **{
@@ -172,21 +209,53 @@ def group(type_, method, duration, interval, message_size, connection_total, gro
             Key['GroupInternalRemainderBegin']: group_internal_remainder_begin,
             Key['GroupInternalRemainderEnd']: group_internal_remainder_end,
             Key['GroupInternalModulo']: group_internal_modulo,
+            Key['GroupConfigMode']: 'Group'
         }
     }
 
 
-def send_to_group(type_, duration, interval, message_size, connection_total, group_count, group_level_remainder_begin,
-                  group_level_remainder_end, group_internal_remainder_begin, group_internal_remainder_end,
-                  group_internal_modulo):
-    return [group(type_, "SendToGroup", duration, interval, message_size, connection_total, group_count,
-                  group_level_remainder_begin, group_level_remainder_end, group_internal_remainder_begin,
-                  group_internal_remainder_end, group_internal_modulo)]
+def group_connection_mode(type_, method, duration, interval, message_size, connection_total, group_count,
+                          remainder_begin, remainder_end, modulo):
+    return {
+        **required(type_, method),
+        **{
+            Key['Duration']: duration,
+            Key['Interval']: interval,
+            Key['MessageSize']: message_size,
+            Key['ConnectionTotal']: connection_total,
+            Key['GroupCount']: group_count,
+            Key['RemainderBegin']: remainder_begin,
+            Key['RemainderEnd']: remainder_end,
+            Key['Modulo']: modulo,
+            Key['GroupConfigMode']: 'Connection'
+        }
+    }
 
 
-def frequent_join_leave_group(type_, duration, interval, message_size, connection_total, group_count,
-                              group_level_remainder_begin, group_level_remainder_end, group_internal_remainder_begin,
-                              group_internal_remainder_end, group_internal_modulo):
-    return [group(type_, "FrequentJoinLeaveGroup", duration, interval, message_size, connection_total, group_count,
-                  group_level_remainder_begin, group_level_remainder_end, group_internal_remainder_begin,
-                  group_internal_remainder_end, group_internal_modulo)]
+def send_to_group_group_mode(type_, duration, interval, message_size, connection_total, group_count,
+                             group_level_remainder_begin, group_level_remainder_end, group_internal_remainder_begin,
+                             group_internal_remainder_end, group_internal_modulo):
+    return [group_group_mode(type_, "SendToGroup", duration, interval, message_size, connection_total, group_count,
+                             group_level_remainder_begin, group_level_remainder_end, group_internal_remainder_begin,
+                             group_internal_remainder_end, group_internal_modulo)]
+
+
+def send_to_group_connection_mode(type_, duration, interval, message_size, connection_total, group_count,
+                                  remainder_begin, remainder_end, modulo):
+    return [group_connection_mode(type_, "SendToGroup", duration, interval, message_size, connection_total, group_count,
+                                  remainder_begin, remainder_end, modulo)]
+
+
+def frequent_join_leave_group_group_mode(type_, duration, interval, message_size, connection_total, group_count,
+                                         group_level_remainder_begin, group_level_remainder_end,
+                                         group_internal_remainder_begin, group_internal_remainder_end,
+                                         group_internal_modulo):
+    return [group_group_mode(type_, "FrequentJoinLeaveGroup", duration, interval, message_size, connection_total,
+                             group_count, group_level_remainder_begin, group_level_remainder_end,
+                             group_internal_remainder_begin, group_internal_remainder_end, group_internal_modulo)]
+
+
+def frequent_join_leave_group_connection_mode(type_, duration, interval, message_size, connection_total, group_count,
+                                              remainder_begin, remainder_end, modulo):
+    return [group_connection_mode(type_, "FrequentJoinLeaveGroup", duration, interval, message_size, connection_total,
+                                  group_count, remainder_begin, remainder_end, modulo)]

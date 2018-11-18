@@ -13,6 +13,10 @@ fi
 NginxRoot=$1
 RootDir=$2
 
-filter_asrs_log_a_single_run $NginxRoot/$RootDir $RAW_FILETER_RESULT
+if [ -e $RAW_FILETER_RESULT ]
+then
+   rm $RAW_FILETER_RESULT
+fi
+filter_asrs_log_a_single_run ${NginxRoot%/}/$RootDir $RAW_FILETER_RESULT
 
 parse_all_logs $NginxRoot/$RootDir/error

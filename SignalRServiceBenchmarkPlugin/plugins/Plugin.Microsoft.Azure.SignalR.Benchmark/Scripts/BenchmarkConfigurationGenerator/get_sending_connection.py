@@ -1,4 +1,6 @@
 import argparse
+from SendToClient import *
+from SendToGroup import *
 from Util.SettingsHelper import *
 
 
@@ -22,8 +24,9 @@ def parse_arguments():
                                 scenario_type.frequent_join_leave_group))
     parser.add_argument('-p', '--protocol', required=True, choices=[arg_type.protocol_json,
                                                                     arg_type.protocol_messagepack],
-                        help="SignalR Hub protocol, choose from <{}>|<{}>".format(arg_type.protocol_json,
-                                                                                  arg_type.protocol_messagepack))
+                        help="SignalR Hub protocol, choose from <{}>|<{}>, default is {}".format(arg_type.protocol_json,
+                                                                   arg_type.protocol_messagepack,
+                                                                   arg_type.protocol_json))
     parser.add_argument('-t', '--transport', required=True, choices=[arg_type.transport_websockets,
                                                                      arg_type.transport_long_polling,
                                                                      arg_type.transport_server_sent_event],
@@ -33,7 +36,18 @@ def parse_arguments():
     parser.add_argument('-ms', '--message_size', type=int, default=2*1024, help="Message size")
     # todo: set default value
     parser.add_argument('-s', '--settings', type=str, default='settings.yaml', help='Settings from different unit')
+    parser.add_argument('-m', '--use_max_connection', action='store_true',
+                        help="Flag indicates using max connection or not. Set true to apply 1.5x on normal connections")
     parser.add_argument('-q', '--query', choices=["sendingSteps","concurrentConnection","totalConnections"], help='Specify the query item', required=True)
+    parser.add_argument('-g', '--group_type', type=str, choices=[arg_type.group_tiny, arg_type.group_small,
+                                                                 arg_type.group_big], default=arg_type.group_tiny,
+                        help="Group type, choose from <{}>|<{}>|<{}>, default is {}".format(arg_type.group_tiny, arg_type.group_small,
+                                                                             arg_type.group_big, arg_type.group_tiny))
+    # group config mode
+    parser.add_argument('-gm', '--group_config_mode', choices=[arg_type.group_config_mode_group,
+                                                               arg_type.group_config_mode_connection],
+                        default=arg_type.group_config_mode_connection,
+                        help='Group configuration mode, default is {}'.format(arg_type.group_config_mode_connection))
     args = parser.parse_args()
 
     return args
@@ -55,7 +69,8 @@ def main():
 
     # determine settings
     scenario_config = determine_scenario_config(scenario_config_collection, args.unit, args.scenario, args.transport,
-                                                message_size=args.message_size)
+                                                args.protocol, args.use_max_connection, args.message_size,
+                                                args.group_type, args.group_config_mode)
 
     func="{f}(scenario_config)".format(f=args.query)
     eval(func)

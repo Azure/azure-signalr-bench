@@ -390,3 +390,11 @@ SignalRServiceBenchmarkPlugin/framework/master/countersP1\.txt
 SignalRServiceBenchmarkPlugin/framework/master/countersP2\.txt
 
 SignalRServiceBenchmarkPlugin/framework/master/debug\.yaml
+
+SignalRServiceBenchmarkPlugin/framework/master/haha\.txt
+
+SignalRServiceBenchmarkPlugin/framework/master/BenchmarkConfigurationSample_group\.yaml
+
+SignalRServiceBenchmarkPlugin/framework/master/BenchmarkConfigurationSample_debug\.yaml
+
+SignalRServiceBenchmarkPlugin/plugins/Plugin\.Microsoft\.Azure\.SignalR\.Benchmark/Scripts/BenchmarkConfigurationGenerator/config\.yaml

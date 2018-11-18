@@ -19,6 +19,13 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
             // Get parameters
             stepParameters.TryGetTypedValue(SignalRConstants.ConcurrentConnection, out int concurrentConnection, Convert.ToInt32);
 
+            if (concurrentConnection < clients.Count)
+            {
+                var message = $"Concurrent connection {concurrentConnection} should be larger than the number of slaves {clients.Count}";
+                Log.Error(message);
+                throw new Exception(message);
+            }
+
             var packages = clients.Select((client, i) =>
             {
                 int currentConcurrentConnection = Util.SplitNumber(concurrentConnection, i, clients.Count);

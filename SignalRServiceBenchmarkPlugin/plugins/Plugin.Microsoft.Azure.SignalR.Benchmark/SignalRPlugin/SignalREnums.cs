@@ -12,5 +12,11 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             Success,
             Fail
         }
+        
+        public enum GroupConfigMode
+        {
+            Group,
+            Connection
+        }
     }
 }

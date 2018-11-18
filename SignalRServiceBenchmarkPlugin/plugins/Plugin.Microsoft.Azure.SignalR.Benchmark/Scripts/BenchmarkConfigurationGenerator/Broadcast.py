@@ -27,6 +27,11 @@ class Broadcast:
             if remainder_end - remainder_begin > self.scenario_config.connections:
                 break
 
+            # conditional stop and reconnect
+            if epoch > 0:
+                sending += CommonStep.conditional_stop_and_reconnect_steps(sending, self.scenario_config, self.constant_config,
+                                            self.connection_config)
+
             sending += [
                 broadcast(self.scenario_config.type, self.sending_config.duration, self.sending_config.interval, remainder_begin,
                           remainder_end, self.scenario_config.connections, self.sending_config.message_size),

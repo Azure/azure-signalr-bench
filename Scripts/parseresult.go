@@ -269,10 +269,8 @@ func main() {
                 var curSendingStep int64
                 for i, v := range monitors {
                     curSendingStep = v.Counters.Sending
-                    if curSendingStep != 0 &&
-                       v.Counters.Recv > 0 && // fitler counters of zero
-                       i > 0 && v.Counters.Recv >= monitors[i-1].Counters.Recv && // make sure it is a complete message
-                       i + 1 < len(monitors)-1 && monitors[i+1].Counters.Sending != curSendingStep { // a boundary of send step
+                    if i + 1 < len(monitors) &&
+                       monitors[i+1].Counters.Sending != curSendingStep {
                         sum = v.Counters.Recv
                         totalConnection = v.Counters.ConnError + v.Counters.ConnSucc
                         var sumfloat, totalConnFloat float64
@@ -289,7 +287,7 @@ func main() {
                     }
                 }
                 v = monitors[len(monitors)-1]
-                if v.Counters.Sending != 0 && v.Counters.Recv > 0 && v.Counters.Recv != sum {
+                if v.Counters.Recv != sum {
                         var sumfloat, totalConnFloat float64
                         sum = v.Counters.Recv
                         totalConnection = v.Counters.ConnError + v.Counters.ConnSucc
@@ -384,10 +382,8 @@ func main() {
                 var curSendingStep int64
                 for i, v := range monitors {
                     curSendingStep = v.Counters.Sending
-                    if curSendingStep != 0 &&
-                       v.Counters.Recv > 0 && // fitler counters of zero
-                       i > 0 && v.Counters.Recv >= monitors[i-1].Counters.Recv && // make sure it is a complete message
-                       i + 1 < len(monitors)-1 && monitors[i+1].Counters.Sending != curSendingStep { // a boundary of send step
+                    if i + 1 < len(monitors) &&
+                       monitors[i+1].Counters.Sending != curSendingStep {
                         sum = v.Counters.Recv
                         totalConnection = v.Counters.ConnError + v.Counters.ConnSucc
                         var sumfloat, totalConnFloat float64
@@ -400,7 +396,7 @@ func main() {
                     }
                 }
                 v = monitors[len(monitors)-1]
-                if v.Counters.Sending != 0 && v.Counters.Recv > 0 && v.Counters.Recv != sum {
+                if v.Counters.Recv != sum {
                         sum = v.Counters.Recv
                         totalConnection = v.Counters.ConnError + v.Counters.ConnSucc
                         var sumfloat, totalConnFloat float64
@@ -480,10 +476,8 @@ func main() {
                 var curSendingStep int64
                 for i, v := range monitors {
                     curSendingStep = v.Counters.Sending
-                    if curSendingStep != 0 &&
-                       v.Counters.Recv > 0 && // fitler counters of zero
-                       i > 0 && v.Counters.Recv >= monitors[i-1].Counters.Recv && // make sure it is a complete message
-                       i + 1 < len(monitors)-1 && monitors[i+1].Counters.Sending != curSendingStep { // a boundary of send step
+                    if i + 1 < len(monitors) &&
+                       monitors[i+1].Counters.Sending != curSendingStep {
                         sum = v.Counters.Recv
                         totalConnection = v.Counters.ConnError + v.Counters.ConnSucc
                         var sumfloat, totalConnFloat float64
@@ -495,7 +489,7 @@ func main() {
                     }
                 }
                 v = monitors[len(monitors)-1]
-                if v.Counters.Sending != 0 && v.Counters.Recv > 0 && sum != v.Counters.Recv {
+                if sum != v.Counters.Recv {
                         sum = v.Counters.Recv
                         totalConnection = v.Counters.ConnError + v.Counters.ConnSucc
                         var sumfloat, totalConnFloat float64

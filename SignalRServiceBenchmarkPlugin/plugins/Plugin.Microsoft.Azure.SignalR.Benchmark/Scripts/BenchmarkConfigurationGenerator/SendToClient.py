@@ -15,6 +15,8 @@ class SendToClient:
                                                    self.statistics_config, self.scenario_config)
         pre_sending += [register_callback_record_latency(self.scenario_config.type)]
 
+        pre_sending += [collect_connection_id(self.scenario_config.type)]
+
         post_sending = CommonStep.post_sending_steps(self.scenario_config.type)
 
         remainder_begin = 0
@@ -26,6 +28,11 @@ class SendToClient:
 
             if remainder_end - remainder_begin > self.scenario_config.connections:
                 break
+
+            # conditional stop and reconnect
+            if epoch > 0:
+                sending += CommonStep.conditional_stop_and_reconnect_steps(sending, self.scenario_config, self.constant_config,
+                                            self.connection_config)
 
             sending += [
                 send_to_client(self.scenario_config.type, self.scenario_config.connections,
