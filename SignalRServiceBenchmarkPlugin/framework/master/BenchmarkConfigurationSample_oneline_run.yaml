@@ -6,7 +6,7 @@ Pipeline:
     Type: echo
 - - Method: CollectStatistics
     Parameter.Interval: 1000
-    Parameter.StatisticsOutputPath: haha.txt
+    Parameter.StatisticsOutputPath: counters_oneline.txt
     Type: echo
 - - Method: CreateConnection
     Parameter.ConnectionTotal: 500
@@ -15,7 +15,7 @@ Pipeline:
     Parameter.TransportType: Websockets
     Type: echo
 - - Method: StartConnection
-    Parameter.ConcurrentConnetion: 2
+    Parameter.ConcurrentConnetion: 100
     Type: echo
 
 - - Method: RegisterCallbackRecordLatency
