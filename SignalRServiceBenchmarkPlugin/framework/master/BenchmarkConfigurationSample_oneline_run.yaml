@@ -6,6 +6,7 @@ Pipeline:
     Type: echo
 - - Method: CollectStatistics
     Parameter.Interval: 1000
+    # do not modify Parameter.StatisticsOutputPath
     Parameter.StatisticsOutputPath: counters_oneline.txt
     Type: echo
 - - Method: CreateConnection

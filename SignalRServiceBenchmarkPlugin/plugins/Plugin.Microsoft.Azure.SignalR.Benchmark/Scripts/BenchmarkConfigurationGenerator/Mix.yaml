@@ -1,0 +1,53 @@
+ModuleName: Module name
+Pipeline:
+- - Method: CreateConnection
+    Parameter.ConnectionTotal: 100
+    Parameter.HubUrl: http://localhost:5050/signalrbench
+    Parameter.Protocol: json
+    Parameter.TransportType: WebSockets
+    Type: scenario echo
+  - Method: CreateConnection
+    Parameter.ConnectionTotal: 100
+    Parameter.HubUrl: http://localhost:5050/signalrbench
+    Parameter.Protocol: json
+    Parameter.TransportType: WebSockets
+    Type: scenario broadcast
+- - Method: StartConnection
+    Parameter.ConcurrentConnetion: 10
+    Type: scenario echo
+  - Method: StartConnection
+    Parameter.ConcurrentConnetion: 10
+    Type: scenario broadcast
+- - Method: Echo
+    Parameter.Duration: 10000
+    Parameter.Interval: 1000
+    Parameter.MessageSize: 2048
+    Parameter.Modulo: 100
+    Parameter.RemainderBegin: 0
+    Parameter.RemainderEnd: 100
+    Type: scenario echo
+  - Method: Broadcast
+    Parameter.Duration: 10000
+    Parameter.Interval: 1000
+    Parameter.MessageSize: 2048
+    Parameter.Modulo: 100
+    Parameter.RemainderBegin: 0
+    Parameter.RemainderEnd: 1
+    Type: scenario echo
+- - Method: Wait
+    Parameter.Duration: 1000
+    Type: scenario echo
+  - Method: Wait
+    Parameter.Duration: 1000
+    Type: scenario broadcast
+- - Method: StopConnection
+    Type: scenario echo
+  - Method: StopConnection
+    Type: scenario broadcast
+- - Method: DisposeConnection
+    Type: scenario echo
+  - Method: DisposeConnection
+    Type: scenario broadcast
+Types:
+- scenario echo
+- scenario broadcast

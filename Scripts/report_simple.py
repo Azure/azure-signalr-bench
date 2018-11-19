@@ -6,8 +6,6 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from functools import cmp_to_key
 
-# result = "/home/wanl/workspace/azure-signalr-bench/SignalRServiceBenchmarkPlugin/framework/master/counters_oneline.txt"
-# result='C:/Users/wanl/Documents/microsoft/workspace/azure-signalr-bench/SignalRServiceBenchmarkPlugin/framework/master/counters_oneline.txt'
 
 result = sys.argv[1]
 
