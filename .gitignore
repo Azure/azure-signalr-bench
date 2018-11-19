@@ -398,3 +398,7 @@ SignalRServiceBenchmarkPlugin/framework/master/BenchmarkConfigurationSample_grou
 SignalRServiceBenchmarkPlugin/framework/master/BenchmarkConfigurationSample_debug\.yaml
 
 SignalRServiceBenchmarkPlugin/plugins/Plugin\.Microsoft\.Azure\.SignalR\.Benchmark/Scripts/BenchmarkConfigurationGenerator/config\.yaml
+
+Scripts/report\.svg
+
+SignalRServiceBenchmarkPlugin/framework/master/counters_oneline\.txt
