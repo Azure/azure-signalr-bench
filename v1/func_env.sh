@@ -641,6 +641,7 @@ EOF
   then
     cd ../Scripts/
     sh gen_asrs_warns.sh $nginx_root $result_root
+    sh gen_asrs_health_stat.sh $nginx_root $result_root
     cd -
   fi
   sh send_mail.sh $nginx_root/$result_root/allunits.html

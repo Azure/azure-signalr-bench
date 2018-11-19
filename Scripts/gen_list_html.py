@@ -16,13 +16,16 @@ def render(tmplPath, scriptContent, divContent):
 def generate_html(iDir, tmplFile):
     scriptList = ""
     tabDivList = ""
+    dirDepth = iDir.split(os.path.sep)
+    skipDepth = len(dirDepth)
     for root, dirs, files in os.walk(iDir):
         for file in files:
             if file.endswith("health_stat.js"):
                a = os.path.join(root, file)
+               b = os.path.join(*(a.split(os.path.sep)[skipDepth:]))
                fname = os.path.basename(os.path.splitext(a)[0])
                sList = """
-   <script type="text/javascript" src="{s}"></script>""".format(s=a)
+   <script type="text/javascript" src="{s}"></script>""".format(s=b)
                tList = """
                     <div id="{d}_table_div"></div>""".format(d=fname)
                if len(scriptList) == 0:
@@ -33,9 +36,8 @@ def generate_html(iDir, tmplFile):
                   tabDivList = tList
                else:
                   tabDivList=tabDivList+tList
-    #print(scriptList)
-    #print(tabDivList)
     print(render(tmplFile, scriptList, tabDivList))
+
 if __name__=="__main__":
    parser = argparse.ArgumentParser()
    parser.add_argument("-i", "--inputDir", help="Specify the folder whose subdirectories contain *health_stat.js")

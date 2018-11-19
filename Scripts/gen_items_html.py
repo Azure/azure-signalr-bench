@@ -31,12 +31,13 @@ def gen_google_chart_table_items(input, sep):
 
    print("""        data.addRows([""")
 
+   fname = os.path.basename(os.path.splitext(input)[0])
    with open(input, 'r') as f:
       for i,line in enumerate(f):
           fields = line.rstrip().split(' ')
           lr = len(fields)
           assert lr >= 2, "expect column >= 2, but see {lr}".format(lr=lr)
-          data = "{a}".format(a="'" + fields[0] + "'")
+          data = "{a}".format(a="'" + fname + "_" + fields[0] + "'")
           for j, val in enumerate(fields[1:]):
               values = val.split(sep)
               if len(data) == 0:
@@ -46,15 +47,17 @@ def gen_google_chart_table_items(input, sep):
           row="""          [{d}],""".format(d=data)
           print(row)
 
-   fname = os.path.basename(os.path.splitext(input)[0])
    tail="""
         ]);
-        data.setColumnProperty(1, {allowHtml: true});
+        data.setColumnProperty(1, {allowHtml: true});"""
+   print(tail)
+   tail="""
         var table = new google.visualization.Table(document.getElementById('{fname}_table_div'));
-
-        table.draw(data, options);
-      }
 """.format(fname=fname)
+   print(tail)
+   tail="""
+        table.draw(data, options);
+      }"""
    print(tail)
 
 
