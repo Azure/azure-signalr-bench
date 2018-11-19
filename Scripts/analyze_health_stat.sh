@@ -4,7 +4,22 @@ RAW_FILTER_RESULT="/tmp/asrs_health_list.txt"
 COUNT_STAT=health_stat.csv
 COUNT_JS_POSTFIX=_health_stat
 ASRS_HEALTH_STAT_JS_POSTFIX=_health_stat.js
-LIST_TMPL=health_stat.tmpl
+LIST_TMPL=tmpl/health_stat.tmpl
+
+filter_asrs_log_a_single_run() {
+  local tgt_dir=$1
+  local output_file=$2
+  if [ -e $output_file ]
+  then
+    rm $output_file
+  fi
+  find $tgt_dir -iname "_connections.txt" |while read line
+  do
+    local d=`echo "$line"|awk -F / '{print $5}'`
+    local unit=`echo "$line"|awk -F / '{print $6}'`
+    echo "$d $unit $line" >>$output_file
+  done
+}
 
 filter_asrs_logs() {
   local startDate endDate
