@@ -46,7 +46,7 @@ run_benchmark_simple.sh <PROJECT_ROOT> <AZURE_SIGNALR_CONNECTION_STRING>
 cd <PROJECT_ROOT>/Scripts/
 run_benchmark_simple.ps1 <PROJECT_ROOT> <BENCHMARK_CONFIGURATION> <AZURE_SIGNALR_CONNECTION_STRING>
 ```
-A sample benchmark configuration is [BenchmarkConfigurationSample_oneline_run.yaml]()  [TODO]
+A sample benchmark configuration is [BenchmarkConfigurationSample_oneline_run.yaml](https://github.com/Azure/azure-signalr-bench/blob/master/SignalRServiceBenchmarkPlugin/framework/master/BenchmarkConfigurationSample_oneline_run.yaml)
 
 Simple graphic report will be save in ```<PROJECT_ROOT>/Scripts/report.svg```
 
@@ -60,7 +60,7 @@ Simple graphic report will be save in ```<PROJECT_ROOT>/Scripts/report.svg```
 
 #### Generate benchmark configuration
 
-Use [generate.py](https://github.com/Azure/azure-signalr-bench/blob/master/SignalRServiceBenchmarkPlugin/plugins/Plugin.Microsoft.Azure.SignalR.Benchmark/Scripts/BenchmarkConfigurationGenerator/generate.py) to generate benchmark.
+Use [generate.py](https://github.com/Azure/azure-signalr-bench/blob/master/SignalRServiceBenchmarkPlugin/plugins/Plugin.Microsoft.Azure.SignalR.Benchmark/Scripts/BenchmarkConfigurationGenerator/generate.py) to generate benchmark. Read more for [usage](https://github.com/Azure/azure-signalr-bench/blob/master/SignalRServiceBenchmarkPlugin/plugins/Plugin.Microsoft.Azure.SignalR.Benchmark/Scripts/BenchmarkConfigurationGenerator/readme.md) of generate.py.
 
 ##### Example to generate benchmark configuration
 
@@ -136,7 +136,7 @@ The Microsoft.Azure.SignalR.Benchmark not only support single scenario benchmark
 
 All common scenarios are defined in [BenchmarkConfigurationStep.py](https://github.com/Azure/azure-signalr-bench/blob/master/SignalRServiceBenchmarkPlugin/plugins/Plugin.Microsoft.Azure.SignalR.Benchmark/Scripts/BenchmarkConfigurationGenerator/Util/BenchmarkConfigurationStep.py)
 
-A sample script for combination of common scenarios is in [Mix.py]()[TODO]. Mention that in list ```pipeline```, outer items are executed in order, while inner items are executed parallelly.
+A sample script for combination of common scenarios is in [Mix.py](https://github.com/Azure/azure-signalr-bench/blob/master/SignalRServiceBenchmarkPlugin/plugins/Plugin.Microsoft.Azure.SignalR.Benchmark/Scripts/BenchmarkConfigurationGenerator/Mix.py). Mention that in list ```pipeline```, outer items are executed in order, while inner items are executed parallelly.
 
 **Structure of pipeline**
 
