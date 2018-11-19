@@ -402,3 +402,9 @@ SignalRServiceBenchmarkPlugin/plugins/Plugin\.Microsoft\.Azure\.SignalR\.Benchma
 Scripts/report\.svg
 
 SignalRServiceBenchmarkPlugin/framework/master/counters_oneline\.txt
+
+SignalRServiceBenchmarkPlugin/plugins/Plugin\.Microsoft\.Azure\.SignalR\.Benchmark/Scripts/BenchmarkConfigurationGenerator/Mix\.yaml
+
+SignalRServiceBenchmarkPlugin/framework/master/counters_echo\.txt
+
+SignalRServiceBenchmarkPlugin/framework/master/counters_broadcast\.txt
