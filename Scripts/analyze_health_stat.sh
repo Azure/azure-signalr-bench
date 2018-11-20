@@ -13,7 +13,7 @@ filter_asrs_log_a_single_run() {
   then
     rm $output_file
   fi
-  find $tgt_dir -iname "_connections.txt" |while read line
+  find $tgt_dir -iname "*_connections.txt" |while read line
   do
     local d=`echo "$line"|awk -F / '{print $5}'`
     local unit=`echo "$line"|awk -F / '{print $6}'`

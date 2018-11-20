@@ -2,7 +2,7 @@
 
 . ./analyze_health_stat.sh
 
-RAW_FILETER_RESULT=/tmp/asrs_health_log_list.txt
+#RAW_FILTER_RESULT=/tmp/asrs_health_log_list.txt
 
 if [ $# -ne 2 ]
 then
@@ -13,14 +13,14 @@ fi
 NginxRoot=$1
 RootDir=$2
 
-if [ -e $RAW_FILETER_RESULT ]
+if [ -e $RAW_FILTER_RESULT ]
 then
-   rm $RAW_FILETER_RESULT
+   rm $RAW_FILTER_RESULT
 fi
 
 health_stat_result=${NginxRoot%/}/$RootDir/health
 
-filter_asrs_log_a_single_run ${NginxRoot%/}/$RootDir $RAW_FILETER_RESULT
+filter_asrs_log_a_single_run ${NginxRoot%/}/$RootDir $RAW_FILTER_RESULT
 
 parse_all_logs $health_stat_result
 
