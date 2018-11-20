@@ -74,6 +74,10 @@ namespace Commander
         [Option("BenchmarkConfigurationTargetPath", Required = true, HelpText = "Benchmark configurations target path.")]
         public string BenchmarkConfigurationTargetPath { get; set; }
 
+        // Performance mode
+        [Option("UserMode", Required = false, HelpText = "User mode.")]
+        public bool UserMode { get; set; }
+
 
     }
 }

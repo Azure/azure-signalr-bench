@@ -318,6 +318,14 @@ namespace Commander
         {
             Log.Information($"Copy executables to hosts...");
 
+            string GetDir(string path) => Path.GetDirectoryName(path).Replace('\\', '/');
+
+            // Make sure the remote path is available
+            _remoteClients.AppserverSshClients.ToList().ForEach(client => client.CreateCommand("mkdir -p " + GetDir(_appserverTargetPath)).Execute());
+            _remoteClients.SlaveSshClients.ToList().ForEach(client => client.CreateCommand("mkdir -p " + GetDir(_slaveTargetPath)).Execute());
+            _remoteClients.MasterSshClient.CreateCommand("mkdir -p " + GetDir(_masterTargetPath)).Execute();
+
+
             // Copy executables
             var copyTasks = new List<Task>();
             copyTasks.AddRange(from client in _remoteClients.AppserverScpClients
@@ -387,6 +395,7 @@ namespace Commander
             {
                 command = client.CreateCommand($"cd {directory}; mkdir -p {filenameWithoutExtension}; tar zxvf {fileName} -C {directory}/{filenameWithoutExtension}");
             }
+
             var result = command.Execute();
             if (command.Error != "")
             {

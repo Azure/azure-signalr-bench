@@ -21,8 +21,14 @@ namespace Commander
             Util.CreateLogger(argsOption.LogDirectory, argsOption.LogName, argsOption.LogTarget);
 
             var automationTool = new AutomationTool(argsOption);
-            //automationTool.Start();
-            automationTool.StartDev();
+            if (argsOption.UserMode)
+            {
+                automationTool.Start();
+            }
+            else
+            {
+                automationTool.StartDev();
+            }
         }
 
         private static ArgsOption ParseArgs(string[] args)
