@@ -3,6 +3,7 @@
 
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Logging;
 
 namespace Microsoft.Azure.SignalR.PerfTest.AppServer
 {

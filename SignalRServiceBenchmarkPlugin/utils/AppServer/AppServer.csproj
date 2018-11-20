@@ -8,7 +8,7 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore" Version="2.1.2" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc" Version="2.1.1" />
-    <PackageReference Include="Microsoft.Azure.SignalR" Version="1.0.2" />
+    <PackageReference Include="Microsoft.Azure.SignalR" Version="1.0.4-preview1-10260" />
     <PackageReference Include="Microsoft.AspNetCore.StaticFiles" Version="2.1.0-rc1-30677" />
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Protocols.MessagePack" Version="1.0.1" />
     <PackageReference Include="Serilog.Extensions.Logging.File" Version="1.1.0" />
