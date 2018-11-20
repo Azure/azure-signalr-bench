@@ -416,7 +416,13 @@ function create_asrs()
 . ./az_signalr_service.sh
 . ./kubectl_utils.sh  
 
-  local signalr_service=$(create_signalr_service $rsg $name $sku $unit)
+  local signalr_service
+  if [ $separatedRedis != "" ]
+  then
+    signalr_service=$(create_signalr_service_with_specific_redis $rsg $name $sku $unit $separatedRedis)
+  else
+    signalr_service=$(create_signalr_service $rsg $name $sku $unit)
+  fi
   if [ "$signalr_service" == "" ]
   then
     echo "Fail to create SignalR Service"
@@ -589,6 +595,14 @@ function prepare_ASRS_creation() {
 
   azure_login
   create_group_if_not_exist $DogFoodResourceGroup $ASRSLocation
+  if [ "$ASRSLocation" == "westus2" ] && [ "$ASRSEnv" == "production" ]
+  then
+     # on production environment, we use separate Redis for westus2 region
+     if [ -e westus2_redis_rawkey.txt ]
+     then
+       separatedRedis=`cat westus2_redis_rawkey.txt`
+     fi
+  fi
 }
 
 # global env: ScriptWorkingDir, DogFoodResourceGroup, ASRSEnv
