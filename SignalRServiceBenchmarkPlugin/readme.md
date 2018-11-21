@@ -112,11 +112,19 @@ Simple graphic report will be save in ```<PROJECT_ROOT>/Scripts/report.svg```
 
 Usually, one node is unable to handle large number of connections and large number messages if the performance test is a highly stress one. A automation tool is provided to help to split stress to multiple slave nodes. The [commander](https://github.com/Azure/azure-signalr-bench/tree/master/SignalRServiceBenchmarkPlugin/utils/Commander) is the automation tool to run benchmark in several nodes. For now, the automation tool only supports Linux. The automation tool is responsible for controlling app server, slaves and master to start, run benchmark and stop.
 
-[](todo) is the script to use the automation tool. You should provide the essential information in the variable section to execute the script.
+[automation_tool.sh](https://github.com/Azure/azure-signalr-bench/blob/master/Scripts/automation_tool.sh) is the script to use the automation tool. You should provide the essential information in the variable section to execute the script.
 
 ``` bash
-
-[todo]
+# variable section 
+username=<USERNAME>
+password=<PASSWORD>
+benchmark_path=<BENCHMARK_CONFIGURATION_PATH>
+master_hostname=<MASTER_HOSTNAME>
+slave_list=<SLAVE_HOSTNAME_A>:<RPC_PORT_A>,<SLAVE_HOSTNAME_B>:<RPC_PORT_B>
+app_server_hostnames=<APP_SERVER_HOSTNAME_A>,<APP_SERVER_HOSTNAME_B>
+remote_store_root=<REMOTE_STORE_ROOT_FOR_EXE_AND_CONFIG>
+azure_signalr_connection_string=<AZURE_SIGNALR_CONNECTION_STRING>
+# end of variable section
 ```
 Simple graphic report will be save in ```<PROJECT_ROOT>/Scripts/report.svg```
 
