@@ -34,8 +34,10 @@ namespace Microsoft.Azure.SignalR.PerfTest.AppServer
                 services.AddSignalR().AddMessagePackProtocol().AddAzureSignalR(option =>
                 {
                     option.ConnectionCount = Configuration.GetValue<int>("Azure:SignalR:ConnectionNumber");
+                    /*
                     option.ClaimsProvider = httpContext => httpContext.User.Claims.Concat(
                         new Claim[] { new Claim(ClaimTypes.NameIdentifier, Guid.NewGuid().ToString("N")) });
+                    */
                 });
         }
 
