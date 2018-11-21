@@ -14,9 +14,15 @@ class SendToGroup:
     def generate_config(self):
         pre_sending = CommonStep.pre_sending_steps(self.scenario_config.type, self.connection_config,
                                                    self.statistics_config, self.scenario_config)
-        pre_sending += [register_callback_record_latency(self.scenario_config.type)]
+        pre_sending += [
+            register_callback_record_latency(self.scenario_config.type),
+            join_group(self.scenario_config.type, self.scenario_config.group_count, self.scenario_config.connections)
+        ]
 
-        post_sending = CommonStep.post_sending_steps(self.scenario_config.type)
+        post_sending = [
+            leave_group(self.scenario_config.type, self.scenario_config.group_count, self.scenario_config.connections)
+        ]
+        post_sending += CommonStep.post_sending_steps(self.scenario_config.type)
 
         remainder_end_dx = self.scenario_config.step
 
