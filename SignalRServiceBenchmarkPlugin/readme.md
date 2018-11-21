@@ -52,28 +52,22 @@ while the main part of the benchmark running, a statistics collector collect mes
 For example, 1000 clients connect to Azure SignalR Service at speed 100 per second. After about 10 seconds, all clients connected to service. 200 clients then send 200 messages per second in 1 minutes. After that, 400 clients then send 400 messages per second in 1 minutes, ... The benchmark will stop if the percentage of messages' latencies that geater than 1 second is larger than 1%. 
 
 
-##### Echo
+> ##### Echo
+> Choose part/all of the clients to send messages from client to server then back to the same client.
 
-Choose part/all of the clients to send messages from client to server then back to the same client.
+> ##### Broadcast
+> Choose part/all of the clients to send messages to all clients on the same SignalR hub.
 
-##### Broadcast
+> ##### Send To Client: send messages to any client
+> Choose part/all of the clients to send messages to some client via a ramdom connection ID.
 
-Choose part/all of the clients to send messages to all clients on the same SignalR hub.
+> ##### Send to Group: send messages to group
+> Divide the connections into several groups. Choose part/all of the clients to send messages to the group the client is in. Finally, leave groups.
 
-##### Send To Client: send messages to any client
-
-Choose part/all of the clients to send messages to some client via a ramdom connection ID.
-
-##### Send to Group: send messages to group
-
-Divide the connections into several groups. Choose part/all of the clients to send messages to the group the client is in. Finally, leave groups.
-
-##### Send to Group while group members frequently join and leave groups: some clients send messages to group while other clients join and leave group frequently
-
-Divide the connections into several groups. Choose part/all of the clients to send messages to the group the client is in, while other clients keep join/leave groups. Finally, leave groups.
+> ##### Send to Group while group members frequently join and leave groups: some clients send messages to group while other clients join and leave group frequently
+> Divide the connections into several groups. Choose part/all of the clients to send messages to the group the client is in, while other clients keep join/leave groups. Finally, leave groups.
  
 ##### Mix: this plugin and handle the mix of the above scenarios
-
 Combine part/all of the scenarios to make real-world scenario.
 
 <a name="Usage"></a>
