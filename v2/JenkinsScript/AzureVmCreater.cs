@@ -1043,13 +1043,34 @@ namespace JenkinsScript
 
         public string GetPrivateIp(string nicName)
         {
-            using(var client = new NetworkManagementClient(_credentials))
+            var retry = 5;
+            var i = 0;
+            while (i < retry)
             {
-                client.SubscriptionId = _servicePrincipal.Subscription;
-                var network = NetworkInterfacesOperationsExtensions.GetAsync(client.NetworkInterfaces, GroupName, nicName).GetAwaiter().GetResult();
-                string ip = network.IpConfigurations[0].PrivateIPAddress;
-                return ip;
+                using (var client = new NetworkManagementClient(_credentials))
+                {
+                    try
+                    {
+                        client.SubscriptionId = _servicePrincipal.Subscription;
+                        var network = NetworkInterfacesOperationsExtensions.GetAsync(client.NetworkInterfaces, GroupName, nicName).GetAwaiter().GetResult();
+                        string ip = network.IpConfigurations[0].PrivateIPAddress;
+                        return ip;
+                    }
+                    catch (Exception e)
+                    {
+                        if (i + 1 == retry)
+                        {
+                            throw;
+                        }
+                        else
+                        {
+                            Util.Log($"Encounter error {e.Message} and retry");
+                        }
+                    }
+                };
+                i++;
             }
+            throw new Exception("Fail to get private IP");
         }
 
         static void WaitPortOpen(string ipAddr, int port)
