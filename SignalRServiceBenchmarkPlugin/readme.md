@@ -2,8 +2,10 @@
 
 A general benchmark framework for evaluating the performance of general functionality. 
 
-[]()
-
+* [Overview](#Overview)
+* [Supported Scenarios](#Scenarios)
+* [Usage](#Usage)
+* [Benchmark Configuration](#BenchmarkConfiguration)
 
 ## Benchmark Plugin
 
@@ -15,10 +17,12 @@ Benchmark plugin can be anything only if it implements the interface in [plugins
 
 Evaluating the performance of Azure SignalR Service is the initial requirement for this benchmark. Meanwhile, there are some users of Azure SignalR Service who also want to compare the performance of Azure-SignalR with other products, therefore, they want to understand how to develop a customized stress test. This benchmark can be taken as a reference. 
 
-#### Overview
-The methodology used by this benchmark is to find the maximum message sending with a critieria that 99% of messages' end to end latency is less than 1s. Let us take 'send to client' as an example. First, SignalR client connect to Auzre SignalR Service at the same speed. After all clients connected, for example, 1000 clients to SignalR service, those 1000 clients can send message to each other. For SendToClient, the benchmark firstly randomly selects a series of clients, for example, 500 as the target clients, which means there are 500 concurrent message sending to those clients every second. If 500 x 99% message's latency is less than 1 second after running a specified duration, the benchmark selects more targets to allow more batch message sending. While sending, the benchmark collect statistics of messages' latency and connections' status per second. As the concurrent message sending increases, there are two results: either all clients send message each other, or the critieria (99% messages' latency less than 1 second) cannot be met. The benchmark will stop. at the end of the benchmark, user can get benchmark statistics. See [Usage Section](# Usage) for more detail. 
+<a name="Overview"></a>
 
-The benchmark is designed to be [master-slave mode](https://github.com/Azure/azure-signalr-bench/wiki/Architecture). One master controls one/many slave(s). Master node assigns SignalR clients randomly to every slaves nodes, and assigns benchmark tasks to every slave node, and slave node is responsible to connect SignalR service, send message, collect message latency and report it to master node. In case user has a highly stress test, an [automation tool](# Automation Tool For Multiple Nodes) for controlling master node slave(s) node and app server node(s) is also included.
+#### Overview
+The methodology used by this benchmark is to find the maximum message sending with a critieria that 99% of messages' end to end latency is less than 1s. Let us take 'send to client' as an example. First, SignalR client connect to Auzre SignalR Service at the same speed. After all clients connected, for example, 1000 clients to SignalR service, those 1000 clients can send message to each other. For SendToClient, the benchmark firstly randomly selects a series of clients, for example, 500 as the target clients, which means there are 500 concurrent message sending to those clients every second. If 500 x 99% message's latency is less than 1 second after running a specified duration, the benchmark selects more targets to allow more batch message sending. While sending, the benchmark collect statistics of messages' latency and connections' status per second. As the concurrent message sending increases, there are two results: either all clients send message each other, or the critieria (99% messages' latency less than 1 second) cannot be met. The benchmark will stop. at the end of the benchmark, user can get benchmark statistics. See [Usage Section](#Usage) for more detail. 
+
+The benchmark is designed to be [master-slave mode](https://github.com/Azure/azure-signalr-bench/wiki/Architecture). One master controls one/many slave(s). Master node assigns SignalR clients randomly to every slaves nodes, and assigns benchmark tasks to every slave node, and slave node is responsible to connect SignalR service, send message, collect message latency and report it to master node. In case user has a highly stress test, an [automation tool](#Automation) for controlling master node slave(s) node and app server node(s) is also included.
 
 Since Azure SignalR requires developer or user to define a hub to receive message, this benchmark depends on a [customized App Server](https://github.com/Azure/azure-signalr-bench/tree/master/SignalRServiceBenchmarkPlugin/utils/AppServer) which is also included. 
 
@@ -26,6 +30,7 @@ Azure-SignalR support 3 transport types: Websockets, ServerSentEvents, and Longp
 
 Message size also impacts the latency, so the benchmark allows to specify message size.
 
+<a name="Scenarios"></a>
 
 
 #### Supported Scenarios
@@ -69,12 +74,15 @@ Divide the connections into several groups. Choose part/all of the clients to se
 
 Combine part/all of the scenarios to make real-world scenario.
 
+<a name="Usage"></a>
 
 ## Usage
 
-The benchmark is designed to be master-slave mode. One master controls one/many slave(s). Master node load [benchmark configurations](# Benchmark Configuration) assigns SignalR clients randomly to every slaves nodes, and assigns benchmark tasks to every slave node, and slave node is responsible to connect SignalR service, send message, collect message latency and report it to master node. 
+The benchmark is designed to be master-slave mode. One master controls one/many slave(s). Master node load [benchmark configurations](#BenchmarkConfiguration) assigns SignalR clients randomly to every slaves nodes, and assigns benchmark tasks to every slave node, and slave node is responsible to connect SignalR service, send message, collect message latency and report it to master node. 
 
-[Quick Try](# Quick Try ) describes how to run benchmark in local node, master/salve(s) and app server are in the same node. [Automation Tool For Multiple Nodes](# Automation Tool For Multiple Nodes) describes how to run benchmark with remote nodes (typically, on master node, several app server nodes and several app server node) to split stress to several nodes.
+[Quick Try](#Quick) describes how to run benchmark in local node, master/salve(s) and app server are in the same node. [Automation Tool For Multiple Nodes](#Automation) describes how to run benchmark with remote nodes (typically, on master node, several app server nodes and several app server node) to split stress to several nodes.
+
+<a name="QuickTry"></a>
 
 ### Quick Try 
 
@@ -90,7 +98,7 @@ cd <PROJECT_ROOT>/Scripts
 cd <PROJECT_ROOT>/Scripts/
 run_benchmark_simple.ps1 (Resolve-Path BenchmarkConfigurationSample_oneline_run.yaml) "<AZURE_SIGNALR_CONNECTION_STRING>"
 ```
-A sample benchmark configuration is [BenchmarkConfigurationSample_oneline_run.yaml](https://github.com/Azure/azure-signalr-bench/blob/master/SignalRServiceBenchmarkPlugin/framework/master/BenchmarkConfigurationSample_oneline_run.yaml). You can modify parameters in this file or input your own benchmark. To quickly generate typical scenarios, see [Generate Benchmark Configuration](# Scripts For Generating Benchmark Configuration) for more detail.
+A sample benchmark configuration is [BenchmarkConfigurationSample_oneline_run.yaml](https://github.com/Azure/azure-signalr-bench/blob/master/Scripts/BenchmarkConfigurationSample_oneline_run.yaml). You can modify parameters in this file or input your own benchmark. To quickly generate typical scenarios, see [Generate Benchmark Configuration](# Scripts For Generating Benchmark Configuration) for more detail.
 
 ```x
 cd <PROJECT_ROOT>/Scripts
@@ -106,6 +114,7 @@ run_benchmark_simple.ps1 <BENCHMARK_CONFIGURATION> "<AZURE_SIGNALR_CONNECTION_ST
 
 Simple graphic report will be save in ```<PROJECT_ROOT>/Scripts/report.svg```
 
+<a name="Automation"></a>
 
 
 ### Automation Tool For Multiple Nodes
@@ -128,11 +137,12 @@ azure_signalr_connection_string=<AZURE_SIGNALR_CONNECTION_STRING>
 ```
 Simple graphic report will be save in ```<PROJECT_ROOT>/Scripts/report.svg```
 
+<a name="BenchmarkConfiguration"></a>
 ## Benchmark Configuration
 
 Benchmark configuration defines pipeline to evalute perfomance.
 
-
+<a name="GenerateBenchmarkConfiguration"></a>
 ### Scripts For Generating Benchmark Configuration
 
 Use [generate.py](https://github.com/Azure/azure-signalr-bench/blob/master/SignalRServiceBenchmarkPlugin/plugins/Plugin.Microsoft.Azure.SignalR.Benchmark/Scripts/BenchmarkConfigurationGenerator/generate.py) to generate benchmark. Read more for [usage](https://github.com/Azure/azure-signalr-bench/blob/master/SignalRServiceBenchmarkPlugin/plugins/Plugin.Microsoft.Azure.SignalR.Benchmark/Scripts/BenchmarkConfigurationGenerator/readme.md) of generate.py.
