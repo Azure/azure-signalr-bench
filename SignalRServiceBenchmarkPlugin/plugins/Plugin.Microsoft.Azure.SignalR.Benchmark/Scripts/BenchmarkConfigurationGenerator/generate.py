@@ -25,11 +25,11 @@ def parse_arguments():
                                 scenario_type.send_to_client,
                                 scenario_type.send_to_group,
                                 scenario_type.frequent_join_leave_group))
-    parser.add_argument('-p', '--protocol', required=True, choices=[arg_type.protocol_json,
+    parser.add_argument('-p', '--protocol', required=False, default=arg_type.protocol_json, choices=[arg_type.protocol_json,
                                                                     arg_type.protocol_messagepack],
                         help="SignalR Hub protocol, choose from <{}>|<{}>".format(arg_type.protocol_json,
                                                                                   arg_type.protocol_messagepack))
-    parser.add_argument('-t', '--transport', required=True, choices=[arg_type.transport_websockets,
+    parser.add_argument('-t', '--transport', required=False, default=arg_type.transport_websockets, choices=[arg_type.transport_websockets,
                                                                      arg_type.transport_long_polling,
                                                                      arg_type.transport_server_sent_event],
                         help="SignalR connection transport type, choose from: <{}>|<{}>|<{}>".format(
