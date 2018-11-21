@@ -1,3 +1,5 @@
+#! /bin/bash
+
 #functions
 start_appserver() {
   echo 'Start app server'
@@ -17,23 +19,30 @@ start_slaves() {
 start_master() {
   sleep 10
   echo 'Start master'
-  cd $project_root/SignalRServiceBenchmarkPlugin/framework/master/
-  dotnet build
+  project_master=$project_root"/SignalRServiceBenchmarkPlugin/framework/master"
+  cd $project_master
+  dotnet build 
   dotnet run -- --BenchmarkConfiguration=$benchmark --SlaveList=localhost:5555
+  cp counters.txt $current_dir"/counters.txt"
 }
 
 generate_report() {
   echo 'Generate report'
   cd $current_dir
-  report_simple_dist_linux/report_simple/report_simple $project_root/SignalRServiceBenchmarkPlugin/framework/master/counters_oneline.txt
+  report_simple_dist_linux/report_simple/report_simple $current_dir"/counters.txt"
   echo 'Report saved as ./report.svg'
 }
 
 # Project root 
 current_dir=`pwd`
-project_root=$1
-benchmark=$2
-azure_signalr_connection_string=$3
+project_root=$current_dir"/.."
+azure_signalr_connection_string=$2
+benchmark=$1
+
+
+if [[ $benchmark != /* ]]; then
+  benchmark=$current_dir"/"$benchmark
+fi
 
 # generate rpc protocol
 cd $project_root/SignalRServiceBenchmarkPlugin/framework/rpc
@@ -42,7 +51,5 @@ generate_proto
 
 # run benchmark
 killall dotnet
-
-# export useLocalSignalR=true
 start_appserver & start_slaves & \
 start_master; killall dotnet; generate_report

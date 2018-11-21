@@ -2,31 +2,37 @@ Stop-Job *
 Remove-Job *
 
 $current_dir = Get-Location
-$project_root = $Args[0]
-$benchmark = $Args[1]
-$azure_signalr_connection_string = $Args[2]
+$project_root =  "$current_dir\.."
+$benchmark = $Args[0]
+$azure_signalr_connection_string = $Args[1]
 
-Write-Host $current_dir
-Write-Host $project_root
-Write-Host $azure_signalr_connection_string
+$generate_proto = {
+    & cd $project_root\SignalRServiceBenchmarkPlugin\framework\rpc\
+    & ./generate_protos.ps1
+    cd $current_dir
+}
 
 $start_appserver = { 
-    $env:Azure__SignalR__ConnectionString = $args[1]
-    cd ($args[0] + "\SignalRServiceBenchmarkPlugin\utils\AppServer")
+    $env:Azure__SignalR__ConnectionString = $using:azure_signalr_connection_string
+    & cd ($using:project_root + "\SignalRServiceBenchmarkPlugin\utils\AppServer")
+    dotnet clean
     dotnet build
-    dotnet run -- --urls=http://*:5050 > appserver1.log
+    dotnet run -- --urls=http://*:5050 > appserver.log
+    & cd $using:current_dir
 }
 
 $start_slaves = {
-    echo 'Start slave'
-    cd ($args[0] + "\SignalRServiceBenchmarkPlugin\framework\slave\")
+    Write-Host 'Start slave'
+    cd ($using:project_root + "\SignalRServiceBenchmarkPlugin\framework\slave\")
+    dotnet clean
     dotnet build
     dotnet run -- --HostName 0.0.0.0 --RpcPort 5555
+    cd $using:current_dir
 }
 
 $generate_report = {
     Write-Host 'Generate report'
-    cd $args[0]
+    cd $current_dir
     report_simple_dist_windows\report_simple\report_simple.exe $args[1]
     Write-Host 'Report saved as ./report.svg'
 }
@@ -34,14 +40,20 @@ $generate_report = {
 $start_master = {
     sleep 10
     echo 'Start master'
-    cd ($args[0] + "\SignalRServiceBenchmarkPlugin\framework\master\")
+    $project_master = ($using:project_root + "\SignalRServiceBenchmarkPlugin\framework\master\")
+    cd ($project_master)
+    dotnet clean
     dotnet build
-    dotnet run -- --BenchmarkConfiguration $args[1] --SlaveList localhost:5555
+    cd ($using:current_dir)
+    dotnet run -p $project_master -- --BenchmarkConfiguration ($using:benchmark) --SlaveList localhost:5555
+    cd $using:current_dir
 }
 
-Start-Job $start_appserver -Name "appserver" -ArgumentList $project_root,$azure_signalr_connection_string
-Start-Job $start_slaves -Name "slaves" -ArgumentList $project_root
-Start-Job $start_master -Name "master" -ArgumentList $project_root,$benchmark
+Invoke-Command $generate_proto
+
+Start-Job $start_appserver -Name "appserver"
+Start-Job $start_slaves -Name "slaves"
+Start-Job $start_master -Name "master"
 
 $master_finish = 0
 while($master_finish -eq 0)
@@ -64,7 +76,7 @@ while($master_finish -eq 0)
 
 Stop-Job *
 Remove-Job *
-Invoke-Command $generate_report -ArgumentList $current_dir,($project_root+ "\SignalRServiceBenchmarkPlugin\framework\master\counters_oneline.txt")
+Invoke-Command $generate_report -ArgumentList $current_dir,"counters.txt"
 
 
 "All tasts finish"
