@@ -35,7 +35,9 @@ latency.sort(key=cmp_to_key(cmp))
 fig, ax = plt.subplots(figsize=(8, 3), subplot_kw=dict(aspect="equal"))
 
 data = [float(x[1]) for x in latency]
-list = [x[0] for x in latency]
+sum_ = sum(data)
+list = ["{x} - {y:.1f}%".format(x=latency[i][0], y=data[i]/sum_*100 if sum_ != 0 else 0) for i in range(0, len(latency))]
+
 
 wedges, texts, autotexts = ax.pie(data, autopct='%.1f%%', wedgeprops=dict(width=0.618),
                                   textprops=dict(color="black"))
