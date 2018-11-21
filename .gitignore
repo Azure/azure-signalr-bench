@@ -408,3 +408,20 @@ SignalRServiceBenchmarkPlugin/plugins/Plugin\.Microsoft\.Azure\.SignalR\.Benchma
 SignalRServiceBenchmarkPlugin/framework/master/counters_echo\.txt
 
 SignalRServiceBenchmarkPlugin/framework/master/counters_broadcast\.txt
+
+SignalRServiceBenchmarkPlugin/framework/slave/publish\.tgz
+
+SignalRServiceBenchmarkPlugin/framework/master/publish\.tgz
+
+SignalRServiceBenchmarkPlugin/utils/AppServer/publish\.tgz
+
+SignalRServiceBenchmarkPlugin/utils/Commander/applog0\.tgz
+
+Scripts/packages-microsoft-prod\.deb
+
+Scripts/counters_oneline\.txt
+
+SignalRServiceBenchmarkPlugin/framework/master/counters\.txt
+
+*.wanldev
+Scripts/counters\.txt
