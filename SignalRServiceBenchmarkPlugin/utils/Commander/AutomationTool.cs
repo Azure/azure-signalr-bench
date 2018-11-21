@@ -92,6 +92,8 @@ namespace Commander
             {
                 // Disconnect and dispose
                 _remoteClients.DestroyAll();
+
+                Log.Information("Finish");
             }
         }
 
@@ -234,6 +236,10 @@ namespace Commander
                 // Create SSH commands
                 var appserverDirectory = Path.Combine(Path.GetDirectoryName(_appserverTargetPath),
                     Path.GetFileNameWithoutExtension(_appserverTargetPath), _baseName);
+                var slaveDirectory = Path.Combine(Path.GetDirectoryName(_slaveTargetPath),
+                    Path.GetFileNameWithoutExtension(_slaveTargetPath), _baseName);
+                var masterDirectory = Path.Combine(Path.GetDirectoryName(_masterTargetPath),
+                    Path.GetFileNameWithoutExtension(_masterTargetPath), _baseName);
                 var masterExecutablePath = Path.Combine(Path.GetDirectoryName(_masterTargetPath),
                     Path.GetFileNameWithoutExtension(_masterTargetPath), _baseName, "master.dll");
                 var slaveExecutablePath = Path.Combine(Path.GetDirectoryName(_slaveTargetPath),
@@ -251,10 +257,11 @@ namespace Commander
                                       $"cd {appserverDirectory};" +
                                       $"dotnet exec AppServer.dll --urls=http://*:{_appserverPort}";
                 }
-                var masterCommand = $"dotnet exec {masterExecutablePath} -- " +
+                var masterCommand = $"cd {masterDirectory}; " +
+                                    $"dotnet exec {masterExecutablePath} -- " +
                                     $"--BenchmarkConfiguration=\"{_benchmarkConfigurationTargetPath}\" " +
                                     $"--SlaveList=\"{string.Join(',', _slaveList)}\"";
-                var slaveCommand = $"dotnet exec {slaveExecutablePath} --HostName 0.0.0.0 --RpcPort {_rpcPort}";
+                var slaveCommand = $"cd {slaveDirectory}; dotnet exec {slaveExecutablePath} --HostName 0.0.0.0 --RpcPort {_rpcPort}";
                 var appserverSshCommands = (from client in _remoteClients.AppserverSshClients
                                             select client.CreateCommand(appseverCommand.Replace('\\', '/'))).ToList();
                 var masterSshCommand = _remoteClients.MasterSshClient.CreateCommand(masterCommand.Replace('\\', '/'));
@@ -321,10 +328,14 @@ namespace Commander
             string GetDir(string path) => Path.GetDirectoryName(path).Replace('\\', '/');
 
             // Make sure the remote path is available
-            _remoteClients.AppserverSshClients.ToList().ForEach(client => client.CreateCommand("mkdir -p " + GetDir(_appserverTargetPath)).Execute());
-            _remoteClients.SlaveSshClients.ToList().ForEach(client => client.CreateCommand("mkdir -p " + GetDir(_slaveTargetPath)).Execute());
-            _remoteClients.MasterSshClient.CreateCommand("mkdir -p " + GetDir(_masterTargetPath)).Execute();
+            var makeDirTasks = new List<Task>();
+            makeDirTasks.Add(Task.Run(() => _remoteClients.MasterSshClient.CreateCommand("mkdir -p " + GetDir(_masterTargetPath))));
+            makeDirTasks.AddRange(from client in _remoteClients.AppserverSshClients
+                                  select Task.Run(() => client.CreateCommand("mkdir -p " + GetDir(_appserverTargetPath)).Execute()));
+            makeDirTasks.AddRange(from client in _remoteClients.SlaveSshClients
+                                  select Task.Run(() => client.CreateCommand("mkdir -p " + GetDir(_slaveTargetPath)).Execute()));
 
+            Task.WhenAll(makeDirTasks).Wait();
 
             // Copy executables
             var copyTasks = new List<Task>();

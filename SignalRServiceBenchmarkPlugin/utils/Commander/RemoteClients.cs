@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Commander
@@ -102,6 +103,8 @@ namespace Commander
 
             try
             {
+                Log.Information($"Disconnect all remote clients...");
+
                 var disconnectTasks = new List<Task>();
                 disconnectTasks.AddRange(from client in AppserverScpClients select Disconnect(client));
                 disconnectTasks.Add(Disconnect(MasterScpClient));
@@ -109,10 +112,11 @@ namespace Commander
                 disconnectTasks.AddRange(from client in AppserverSshClients select Disconnect(client));
                 disconnectTasks.Add(Disconnect(MasterSshClient));
                 disconnectTasks.AddRange(from client in SlaveSshClients select Disconnect(client));
-                Task.WhenAll(disconnectTasks).Wait();
+                Task.WhenAll(disconnectTasks).Wait(TimeSpan.FromSeconds(30));
             }
             finally
             {
+                Log.Information($"Dispose all remote clients...");
                 var disposeTasks = new List<Task>();
                 disposeTasks.AddRange(from client in AppserverScpClients select Dispose(client));
                 disposeTasks.Add(Dispose(MasterScpClient));
