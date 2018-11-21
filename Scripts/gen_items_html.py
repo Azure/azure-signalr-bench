@@ -10,7 +10,7 @@ def gen_table_column_name(typicalLine, kvSep):
       record = val.split(kvSep)
       lr = len(record)
       assert lr == 2, "expect format of 'key{s}value', but see {v}".format(s=kvSep, v=val)
-      data = """        data.addColumn('number', '{name}');""".format(name=record[0])
+      data = """        data.addColumn('string', '{name}');""".format(name=record[0])
       print(data)
 
 def gen_google_chart_table_items(input, sep):
@@ -30,7 +30,6 @@ def gen_google_chart_table_items(input, sep):
       gen_table_column_name(sampleLine[0], sep)
 
    print("""        data.addRows([""")
-
    fname = os.path.basename(os.path.splitext(input)[0])
    with open(input, 'r') as f:
       for i,line in enumerate(f):
@@ -41,9 +40,9 @@ def gen_google_chart_table_items(input, sep):
           for j, val in enumerate(fields[1:]):
               values = val.split(sep)
               if len(data) == 0:
-                 data = "{d}".format(d=values[1])
+                 data = "'{d}'".format(d=values[1])
               else:
-                 data = data + ", {d}".format(d=values[1])
+                 data = data + ", '{d}'".format(d=values[1])
           row="""          [{d}],""".format(d=data)
           print(row)
 
