@@ -2,6 +2,205 @@
 
 . ./func_env.sh
 
+declare -A ScenarioHandlerDict=(["sendToGroup"]="SendToGroup" ["sendToClient"]="SendToClient")
+
+function run_command_core()
+{
+  local tag=$1
+  local Scenario=$2
+  local Transport=$3
+  local MessageEncoding=$4
+  local user=$5
+  local passwd="$6"
+  local connectionString="$7"
+  local outputDir="$8"
+  local config_path=$9
+  local connection=${10}
+  local concurrentConnection=${11}
+  local send=${12}
+  local serverUrl=${13}
+  run_command $user $passwd $connectionString $outputDir $config_path
+  cd $ScriptWorkingDir
+  #### generate the connection configuration for HTML ####
+cat << EOF > configs/cmd_4_${MessageEncoding}_${Scenario}_${tag}_${Transport}
+connection=${connection}
+connection_concurrent=${concurrentConnection}
+send=${send}
+bench_config_endpoint="$serverUrl"
+EOF
+
+  ## gen_html.sh requires bench_name_list, bench_codec_list, and bench_type_list
+  export bench_name_list="$Scenario"
+  export bench_codec_list="$MessageEncoding"
+  export bench_type_list="${tag}_${Transport}"
+  sh gen_html.sh $connectionString
+}
+
+function RunSendToGroup()
+{
+  local tag=$1
+  local Scenario=$2
+  local Transport=$3
+  local MessageEncoding=$4
+  local user=$5
+  local passwd="$6"
+  local connectionString="$7"
+  local outputDir="$8"
+  local unit=$9
+  local groupType=${10}
+
+  cd $ScriptWorkingDir
+  local appserverUrls=`python extract_ip.py -i $PublicIps -q appserverPub`
+
+  cd $PluginScriptWorkingDir
+  local config_path=$PluginScriptWorkingDir/${tag}_${Scenario}_${Transport}_${MessageEncoding}.config
+
+  local maxConnectionOption=""
+  if [ "$useMaxConnection" == "true" ]
+  then
+    maxConnectionOption="-m"
+  fi
+  python3 generate.py -u $unit -S $Scenario \
+                      -t $Transport -p $MessageEncoding \
+                      -U $appserverUrls -d $sigbench_run_duration \
+                      -g $groupType \
+                      -c $config_path $maxConnectionOption
+
+  local connection=`python3 get_sending_connection.py -g $groupType -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q totalConnections`
+  local concurrentConnection=`python3 get_sending_connection.py -g $groupType -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q concurrentConnection`
+  local send=`python3 get_sending_connection.py -g $groupType -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q sendingSteps`
+  run_command_core $tag $Scenario $Transport $MessageEncoding $user "$passwd" "$connectionString" $outputDir $config_path $connection $concurrentConnection $send $serverUrl
+}
+
+function RunSendToClient()
+{
+  local tag=$1
+  local Scenario=$2
+  local Transport=$3
+  local MessageEncoding=$4
+  local user=$5
+  local passwd="$6"
+  local connectionString="$7"
+  local outputDir="$8"
+  local unit=$9
+  local msgSize=${10}
+
+  cd $ScriptWorkingDir
+  local appserverUrls=`python extract_ip.py -i $PublicIps -q appserverPub`
+
+  cd $PluginScriptWorkingDir
+  local config_path=$PluginScriptWorkingDir/${tag}_${Scenario}_${Transport}_${MessageEncoding}.config
+
+  local maxConnectionOption=""
+  if [ "$useMaxConnection" == "true" ]
+  then
+    maxConnectionOption="-m"
+  fi
+  python3 generate.py -u $unit -S $Scenario \
+                      -t $Transport -p $MessageEncoding \
+                      -U $appserverUrls -d $sigbench_run_duration \
+                      -ms $msgSize \
+                      -c $config_path $maxConnectionOption
+
+  local connection=`python3 get_sending_connection.py -ms $msgSize -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q totalConnections`
+  local concurrentConnection=`python3 get_sending_connection.py -ms $msgSize -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q concurrentConnection`
+  local send=`python3 get_sending_connection.py -ms $msgSize -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q sendingSteps`
+
+  run_command_core $tag $Scenario $Transport $MessageEncoding $user "$passwd" "$connectionString" $outputDir $config_path $connection $concurrentConnection $send $serverUrl
+}
+
+function RunCommonScenario()
+{
+  local tag=$1
+  local Scenario=$2
+  local Transport=$3
+  local MessageEncoding=$4
+  local user=$5
+  local passwd="$6"
+  local connectionString="$7"
+  local outputDir="$8"
+  local unit=$9
+
+  cd $ScriptWorkingDir
+  local appserverUrls=`python extract_ip.py -i $PublicIps -q appserverPub`
+
+  cd $PluginScriptWorkingDir
+  local config_path=$PluginScriptWorkingDir/${tag}_${Scenario}_${Transport}_${MessageEncoding}.config
+
+  local maxConnectionOption=""
+  if [ "$useMaxConnection" == "true" ]
+  then
+    maxConnectionOption="-m"
+  fi
+  python3 generate.py -u $unit -S $Scenario \
+                      -t $Transport -p $MessageEncoding \
+                      -U $appserverUrls -d $sigbench_run_duration \
+                      -c $config_path $maxConnectionOption
+
+  local connection=`python3 get_sending_connection.py -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q totalConnections`
+  local concurrentConnection=`python3 get_sending_connection.py -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q concurrentConnection`
+  local send=`python3 get_sending_connection.py -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q sendingSteps`
+  run_command_core $tag $Scenario $Transport $MessageEncoding $user "$passwd" "$connectionString" $outputDir $config_path $connection $concurrentConnection $send $serverUrl
+}
+
+function SendToGroup()
+{
+  local Scenario=$1
+  local Transport=$2
+  local MessageEncoding=$3
+  local origTag=$4
+  local user=$5
+  local passwd="$6"
+  local connectStr="$7"
+  local unit=$8
+  local j tag
+  for j in $GroupTypeList
+  do
+     tag=${origTag}"_${j}"
+
+     prepare_result_folder_4_scenario $tag $Transport $MessageEncoding $Scenario
+
+     start_collect_top_for_signalr_and_nginx
+
+     RunSendToGroup $tag $Scenario $Transport $MessageEncoding $user $passwd "$connectStr" $env_statistic_folder $unit $j
+
+     stop_collect_top_for_signalr_and_nginx
+
+     copy_log_from_k8s
+
+     reboot_all_pods "$connectStr"
+  done
+}
+
+function SendToClient()
+{
+  local Scenario=$1
+  local Transport=$2
+  local MessageEncoding=$3
+  local origTag=$4
+  local user=$5
+  local passwd="$6"
+  local connectStr="$7"
+  local unit=$8
+  local j tag
+  for j in $sendToClientMsgSize
+  do
+     tag=${origTag}"_${j}"
+
+     prepare_result_folder_4_scenario $tag $Transport $MessageEncoding $Scenario
+
+     start_collect_top_for_signalr_and_nginx
+
+     RunSendToClient $tag $Scenario $Transport $MessageEncoding $user $passwd "$connectStr" $env_statistic_folder $unit $j
+
+     stop_collect_top_for_signalr_and_nginx
+
+     copy_log_from_k8s
+
+     reboot_all_pods "$connectStr"
+  done
+}
+
 function prepare_result_folder_4_scenario()
 {
    local tag=$1
@@ -95,6 +294,28 @@ function reboot_all_pods()
    fi
 }
 
+function run_on_scenario() {
+  local Scenario=$1
+  local Transport=$2
+  local MessageEncoding=$3
+  local origTag=$4
+  local user=$5
+  local passwd="$6"
+  local connectStr="$7"
+  local unit=$8
+  if [ "${ScenarioHandlerDict[$Scenario]}" != "" ]
+  then
+     eval "${ScenarioHandlerDict[$Scenario]} $Scenario $Transport $MessageEncoding $tag $user $passwd \"$connectStr\" $unit"
+  else
+     prepare_result_folder_4_scenario $tag $Transport $MessageEncoding $Scenario
+     start_collect_top_for_signalr_and_nginx
+     run_and_gen_report $tag $Scenario $Transport $MessageEncoding $user $passwd "$connectStr" $env_statistic_folder $unit
+     stop_collect_top_for_signalr_and_nginx
+     copy_log_from_k8s
+     reboot_all_pods "$connectStr"
+  fi
+}
+
 function run_benchmark() {
   local unit=$1
   local user=$2
@@ -111,22 +332,10 @@ function run_benchmark() {
       do
          for MessageEncoding in $bench_encoding_list
          do
-            prepare_result_folder_4_scenario $tag $Transport $MessageEncoding $Scenario
-            local k8s_result_dir=$env_statistic_folder
-
-            start_collect_top_for_signalr_and_nginx
-
-            run_and_gen_report $tag $Scenario $Transport $MessageEncoding $user $passwd "$connectStr" $k8s_result_dir $unit
-
-            stop_collect_top_for_signalr_and_nginx
-
-            copy_log_from_k8s
-
-            reboot_all_pods "$connectStr"
+            run_on_scenario $Scenario $Transport $MessageEncoding $tag $user $passwd "$connectStr" $unit
          done
       done
   done
-
 }
 
 function run_and_gen_report() {
@@ -140,40 +349,7 @@ function run_and_gen_report() {
   local outputDir="$8"
   local unit=$9
 
-  cd $ScriptWorkingDir
-  local appserverUrls=`python extract_ip.py -i $PublicIps -q appserverPub`
-
-  cd $PluginScriptWorkingDir
-  local config_path=$PluginScriptWorkingDir/${unit}_${Scenario}_${Transport}_${MessageEncoding}.config
-  local maxConnectionOption=""
-  if [ "$useMaxConnection" == "true" ]
-  then
-    maxConnectionOption="-m"
-  fi
-  python3 generate.py -u $unit -S $Scenario \
-                      -t $Transport -p $MessageEncoding \
-                      -U $appserverUrls -d $sigbench_run_duration \
-                      -c $config_path $maxConnectionOption
-
-  local connection=`python3 get_sending_connection.py -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q totalConnections`
-  local concurrentConnection=`python3 get_sending_connection.py -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q concurrentConnection`
-  local send=`python3 get_sending_connection.py -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q sendingSteps`
-  
-  run_command $user $passwd $connectionString $outputDir $config_path
-  cd $ScriptWorkingDir
-  #### generate the connection configuration for HTML ####
-cat << EOF > configs/cmd_4_${MessageEncoding}_${Scenario}_${tag}_${Transport}
-connection=${connection}
-connection_concurrent=${concurrentConnection}
-send=${send}
-bench_config_endpoint="$serverUrl"
-EOF
-
-  ## gen_html.sh requires bench_name_list, bench_codec_list, and bench_type_list
-  export bench_name_list="$Scenario"
-  export bench_codec_list="$MessageEncoding"
-  export bench_type_list="${tag}_${Transport}"
-  sh gen_html.sh $connectionString
+  RunCommonScenario $tag $Scenario $Transport $MessageEncoding $user $passwd "$connectionString" $outputDir $unit
 }
 
 function build_rpc_master() {

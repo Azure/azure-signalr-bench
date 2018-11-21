@@ -13,7 +13,7 @@ filter_asrs_log_a_single_run() {
   then
     rm $output_file
   fi
-  find $tgt_dir -iname "_connections.txt" |while read line
+  find $tgt_dir -iname "*_connections.txt" |while read line
   do
     local d=`echo "$line"|awk -F / '{print $5}'`
     local unit=`echo "$line"|awk -F / '{print $6}'`
@@ -54,16 +54,16 @@ parse_single_log() {
   else
     cp $tgz_log_path .
   fi
-  cd -
+  cd - > /dev/null
   local i key value
   local record="$log_file"
   for i in $HEALTH_STAT_LIST
   do
     key=$i
-    value=`python parse_health_stat.py -i $workdir/${log_file}.txt -q $i`
+    value=`python parse_health_stat.py -i $workdir/${log_file}.txt -q $i -m`
     record="$record ${key}:${value}"
   done
-  echo "$record" >> $output_dir/$counter_output
+  echo "$record" |tee -a $output_dir/$counter_output
   rm $workdir/${log_file}.txt
 }
 

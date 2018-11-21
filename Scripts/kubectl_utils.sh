@@ -468,8 +468,11 @@ function restart_all_pods() {
   find_target_by_iterate_all_k8slist $resName get_k8s_deploy_name
   local config_file=$g_config
   local result=$g_result
-  wait_deploy_ready $result $config_file
-  wait_replica_ready $config_file $resName $pods
+  if [ "$result" != "" ] && [ "$config_file" != "" ]
+  then
+    wait_deploy_ready $result $config_file
+    wait_replica_ready $config_file $resName $pods
+  fi
 }
 
 function read_connection_throttling_env() {
