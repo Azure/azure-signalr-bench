@@ -88,11 +88,11 @@ function run_and_gen_report()
     --ServicePrincipal=$ServicePrincipal \
     --AzureSignalrConnectionString=$connectStr "$connectionStringOpt" "$neverStopAppServerOpt"
    ############# gen report ##############
+   cd $ScriptWorkingDir
    local counterPath=`find ${env_statistic_folder} -iname "counters.txt"`
    if [ "$counterPath" != "" ]
    then
      cp $counterPath ${env_statistic_folder}
-     cd $ScriptWorkingDir
      #### generate the connection configuration for HTML ####
 cat << EOF > configs/cmd_4_${MessageEncoding}_${Scenario}_${tag}_${Transport}
 connection=${connection}
@@ -357,12 +357,12 @@ function run_benchmark()
                 mkdir $ScenarioRoot"/${Scenario}"
              fi
              export JobConfig=$ScenarioRoot"/${Scenario}/job.yaml"
-             cd $ScriptWorkingDir
              local maxConnectionOption=""
              if [ "$useMaxConnection" == "true" ]
              then
                 maxConnectionOption="-M"
              fi
+             cd $ScriptWorkingDir
              connection=`python gen_complex_pipeline.py -t $Transport -s $Scenario -u unit${unit} -c ${maxConnectionOption}`
              concurrentConnection=`python gen_complex_pipeline.py -t $Transport -s $Scenario -u unit${unit} -C ${maxConnectionOption}`
              tag="unit"${unit}
@@ -371,6 +371,7 @@ function run_benchmark()
              then
                for j in $GroupTypeList
                do
+                 cd $ScriptWorkingDir
                  tag="unit"${unit}"_${j}"
                  prepare_result_folder_4_scenario ${tag} ${Transport} ${MessageEncoding} ${Scenario}
              ############## configure scenario ############
@@ -382,6 +383,7 @@ function run_benchmark()
                   then
                     for j in $sendToClientMsgSize
                     do
+                      cd $ScriptWorkingDir
                       tag="unit"${unit}"_${j}"
                       prepare_result_folder_4_scenario ${tag} ${Transport} ${MessageEncoding} ${Scenario}
                       ############## configure scenario ############
