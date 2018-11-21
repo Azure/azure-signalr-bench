@@ -5,8 +5,10 @@ A general benchmark framework for evaluating the performance of general function
 * [Overview](#Overview)
 * [Supported Scenarios](#Scenarios)
 * [Usage](#Usage)
+  * [Quick Try](#QuickTry)
+  * [Automation Tool](#Automation)
 * [Benchmark Configuration](#BenchmarkConfiguration)
-
+  * [Scripts For Generating Benchmark Configuration](#GenerateBenchmarkConfiguration)
 ## Benchmark Plugin
 
 Benchmark plugin can be anything only if it implements the interface in [plugins/base/PluginInterface/](https://github.com/Azure/azure-signalr-bench/tree/master/SignalRServiceBenchmarkPlugin/plugins/base/PluginInterface). A sample plugin is [plugins/Plugin.Microsoft.Azure.SignalR.Benchmark/](https://github.com/Azure/azure-signalr-bench/tree/master/SignalRServiceBenchmarkPlugin/plugins/Plugin.Microsoft.Azure.SignalR.Benchmark).
