@@ -1,4 +1,4 @@
-﻿using Common;
+using Common;
 using Microsoft.AspNetCore.SignalR.Client;
 using Plugin.Base;
 using Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods.Statistics;
@@ -81,9 +81,9 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 connections[packages[i].LocalIndex] = newConnections[i];
             }
 
-            for (var i = 0; i < connectionsSuccessFlag.Count; i++)
+            for (var i = 0; i < newConnections.Count; i++)
             {
-                connectionsSuccessFlag[i] = SignalREnums.ConnectionState.Init;
+                connectionsSuccessFlag[packages[i].LocalIndex] = SignalREnums.ConnectionState.Init;
             }
 
             return newConnections;
