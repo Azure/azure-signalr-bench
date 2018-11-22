@@ -88,10 +88,10 @@ scenario:sendToClient,transport:Websockets,protocol:json,message_size:16384:
 scenario:sendToClient,transport:Websockets,protocol:json,message_size:2048:
   normal_connection: [1000, 2000, 5000, 10000, 20000, 50000, 100000]
   max_connection: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
-  base_step: [1200, 1200, 3000, 5000, 5000, 10000, 10000]
+  base_step: [1200, 1200, 3000, 3000, 3000, 10000, 10000]
   step: [100, 100, 1000, 1000, 1000, 2000, 2000]
   step_length: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
-  concurrent: [100, 100, 100, 200, 200, 200, 200]
+  concurrent: [100, 100, 100, 100, 200, 200, 200]
 
 
 scenario:sendToClient,transport:Websockets,protocol:json,message_size:256:
@@ -110,7 +110,7 @@ scenario:sendToGroup,transport:Websockets,group:tiny:
   base_step: [800, 1000, 2000, 3000, 3000, 6000, 6000]
   step: [100, 100, 500, 1000, 1000, 1000, 1000]
   step_length: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
-  concurrent: [100, 100, 100, 200, 200, 200, 200]
+  concurrent: [50, 50, 50, 50, 200, 200, 200]
   group_count: [1000, 2000, 5000, 10000, 20000, 50000, 100000]
 
 
