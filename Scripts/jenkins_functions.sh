@@ -77,6 +77,18 @@ function register_exit_handler() {
   trap remove_resource_group EXIT
 }
 
+function run_unit() {
+ local user=$1
+ local passwd="$2"
+ local ConnectionString="$3"
+ local service
+ for service in $bench_serviceunit_list
+ do
+   cd $ScriptWorkingDir
+   run_benchmark $service $user "$passwd" "$ConnectionString"
+ done
+}
+
 function run_all_units() {
  local user=$1
  local passwd="$2"

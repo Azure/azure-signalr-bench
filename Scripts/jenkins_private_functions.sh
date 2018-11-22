@@ -65,7 +65,7 @@ function RunSendToGroup()
                       -U $appserverUrls -d $sigbench_run_duration \
                       -g $groupType \
                       -c $config_path $maxConnectionOption
-
+  cat $config_path
   local connection=`python3 get_sending_connection.py -g $groupType -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q totalConnections`
   local concurrentConnection=`python3 get_sending_connection.py -g $groupType -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q concurrentConnection`
   local send=`python3 get_sending_connection.py -g $groupType -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q sendingSteps`
@@ -101,7 +101,7 @@ function RunSendToClient()
                       -U $appserverUrls -d $sigbench_run_duration \
                       -ms $msgSize \
                       -c $config_path $maxConnectionOption
-
+  cat $config_path
   local connection=`python3 get_sending_connection.py -ms $msgSize -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q totalConnections`
   local concurrentConnection=`python3 get_sending_connection.py -ms $msgSize -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q concurrentConnection`
   local send=`python3 get_sending_connection.py -ms $msgSize -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q sendingSteps`
@@ -136,7 +136,7 @@ function RunCommonScenario()
                       -t $Transport -p $MessageEncoding \
                       -U $appserverUrls -d $sigbench_run_duration \
                       -c $config_path $maxConnectionOption
-
+  cat $config_path
   local connection=`python3 get_sending_connection.py -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q totalConnections`
   local concurrentConnection=`python3 get_sending_connection.py -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q concurrentConnection`
   local send=`python3 get_sending_connection.py -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q sendingSteps`
@@ -502,7 +502,12 @@ function copy_log_from_slaves()
   local i
   for i in `python extract_ip.py -i $PrivateIps -q slaveList`
   do
-    sshpass -p $passwd scp -o StrictHostKeyChecking=no -o LogLevel=ERROR $user@${i}:~/slave*.log $outputDir/slave_${i}.log
+    local slaveLogPath=`sshpass -p $passwd ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $user@${i} "find /home/$user/slave -iname slave*.log"`
+    sshpass -p $passwd scp -o StrictHostKeyChecking=no -o LogLevel=ERROR $user@${i}:${slaveLogPath} $outputDir/slave_${i}.log
+    if [ $? -ne 0 ]
+    then
+      sshpass -p $passwd ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $user@${i} "find /home/$user/slave -iname slave*.log"
+    fi
   done
   cd $outputDir
   tar zcvf slavelog.tgz slave*.log
@@ -557,9 +562,14 @@ EOF
          --AzureSignalRConnectionString="$connectionString" \
          --AppserverLogDirectory="${outputDir}"
   stop_collect_slaves_appserver_top ${user} $passwd ${outputDir}
-  enable_exit_immediately_when_fail
-  sshpass -p ${passwd} scp -o StrictHostKeyChecking=no -o LogLevel=ERROR ${user}@${master}:/home/${user}/counters.txt ${outputDir}/
+  local counterPath=`sshpass -p $passwd ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR ${user}@${master} "find /home/${user}/master -iname counters.txt"`
+  sshpass -p ${passwd} scp -o StrictHostKeyChecking=no -o LogLevel=ERROR ${user}@${master}:$counterPath ${outputDir}/
+  if [ $? -ne 0 ]
+  then
+    sshpass -p $passwd ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR ${user}@${master} "find /home/${user}/master -iname counters.txt"
+  fi
   copy_log_from_slaves ${user} $passwd ${outputDir}
+  enable_exit_immediately_when_fail
 }
 
 function create_asrs()
