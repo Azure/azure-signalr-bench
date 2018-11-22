@@ -12,7 +12,10 @@ result = sys.argv[1]
 with open(result, 'r') as f:
     lines = f.readlines()
 
-counters = json.loads(lines[-1])['Counters']
+# lines parse to json format
+statistics = [ json.loads(line) for line in lines if '{' in line and '}' in line]
+
+counters = statistics[-1]['Counters']
 received = counters['message:received']
 
 latency = [ (key, counters[key]) for key in counters if 'message:lt' in key or 'message:ge' in key]
@@ -32,11 +35,13 @@ def cmp(a, b):
 latency.sort(key=cmp_to_key(cmp))
 
 
+# display result
+
 fig, ax = plt.subplots(figsize=(8, 3), subplot_kw=dict(aspect="equal"))
 
 data = [float(x[1]) for x in latency]
 sum_ = sum(data)
-list = ["{x} - {y:.1f}%".format(x=latency[i][0], y=data[i]/sum_*100 if sum_ != 0 else 0) for i in range(0, len(latency))]
+keys = ["{x} - {y:.1f}%".format(x=latency[i][0], y=data[i]/sum_*100 if sum_ != 0 else 0) for i in range(0, len(latency))]
 
 
 wedges, texts, autotexts = ax.pie(data, autopct='%.1f%%', wedgeprops=dict(width=0.618),
@@ -49,7 +54,7 @@ kw = dict(xycoords='data', textcoords='data', arrowprops=dict(arrowstyle="-"),
 
 
 # draw informations
-ax.legend(wedges, list,
+ax.legend(wedges, keys,
           title="Latency",
           loc="upper left",
           bbox_to_anchor=(-1., 1., 0., 0.))

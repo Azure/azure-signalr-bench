@@ -13,7 +13,7 @@ class FrequentJoinLeaveGroup:
 
     def generate_config(self):
         pre_sending = CommonStep.pre_sending_steps(self.scenario_config.type, self.connection_config,
-                                                   self.statistics_config, self.scenario_config)
+                                                   self.statistics_config, self.scenario_config, self.constant_config)
         pre_sending += [register_callback_record_latency(self.scenario_config.type)]
 
         post_sending = CommonStep.post_sending_steps(self.scenario_config.type)

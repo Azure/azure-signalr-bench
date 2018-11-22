@@ -68,7 +68,7 @@ for max failed sending percentage')
     parser.add_argument('-so', '--statistics_output_path', default='counters.txt',
                         help='Path to counters which record the statistics while running benchmark')
     parser.add_argument('-si', '--statistic_interval', type=int, default=1000, help='Interval for collecting intervals')
-    parser.add_argument('-w', '--wait_time', type=int, default=5000, help='Waiting time for each epoch')
+    parser.add_argument('-w', '--wait_time', type=int, default=15000, help='Waiting time for each epoch')
     parser.add_argument('-lm', '--statistic_latency_max', type=int, default=1000, help='Latency max of statistics')
     parser.add_argument('-ls', '--statistic_latency_step', type=int, default=100, help='Latency step of statistics')
 
