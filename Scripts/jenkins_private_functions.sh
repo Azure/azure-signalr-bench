@@ -2,7 +2,7 @@
 
 . ./func_env.sh
 
-declare -A ScenarioHandlerDict=(["sendToGroup"]="SendToGroup" ["sendToClient"]="SendToClient")
+declare -A ScenarioHandlerDict=([frequentJoinLeaveGroup]="SendToGroup" ["sendToGroup"]="SendToGroup" ["sendToClient"]="SendToClient")
 
 function run_command_core()
 {
