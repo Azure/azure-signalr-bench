@@ -34,8 +34,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionIndex}.{type}", out List<int> connectionIndex, (obj) => (List<int>)obj);
 
                 // Reset counters
-                _statisticsCollector.ResetGroupCounters();
-                _statisticsCollector.ResetMessageCounters();
+                SignalRUtils.ResetCounters(_statisticsCollector);
 
                 // Join group
                 await Task.WhenAll(from i in Enumerable.Range(0, connections.Count)

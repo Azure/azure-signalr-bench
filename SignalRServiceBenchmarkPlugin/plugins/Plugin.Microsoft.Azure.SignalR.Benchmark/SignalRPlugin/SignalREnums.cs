@@ -10,7 +10,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         {
             Init,
             Success,
-            Fail
+            Fail,
+            Reconnect
         }
         
         public enum GroupConfigMode

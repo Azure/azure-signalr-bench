@@ -77,6 +77,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         public static readonly string StatisticsGroupLeaveFail = "group:leave:fail";
         public static readonly string StatisticsConnectionConnectSuccess = "connection:connect:success";
         public static readonly string StatisticsConnectionConnectFail = "connection:connect:fail";
+        public static readonly string StatisticsConnectionReconnect = "connection:connect:reconnect";
+        public static readonly string StatisticsConnectionInit = "connection:connect:init";
 
         // Constants
         public static readonly int ConnectionCloseTimeout = 100;

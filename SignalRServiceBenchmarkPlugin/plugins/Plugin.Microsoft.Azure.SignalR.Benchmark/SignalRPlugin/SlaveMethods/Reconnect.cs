@@ -1,4 +1,4 @@
-using Common;
+﻿using Common;
 using Microsoft.AspNetCore.SignalR.Client;
 using Plugin.Base;
 using Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods.Statistics;
@@ -35,7 +35,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
 
                 // Start connections
                 var packages = (from i in Enumerable.Range(0, connections.Count())
-                                select (Connection: connections[i], LocalIndex: i, ConnectionsSuccessFlag: connectionsSuccessFlag)).ToList();
+                                select (Connection: connections[i], LocalIndex: i, ConnectionsSuccessFlag: connectionsSuccessFlag, NormalState: SignalREnums.ConnectionState.Reconnect, AbnormalState: SignalREnums.ConnectionState.Fail)).ToList();
                 await Task.WhenAll(Util.BatchProcess(packages, SignalRUtils.StartConnect, concurrentConnection));
 
                 // Re-setCallbacks

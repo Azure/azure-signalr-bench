@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http.Connections;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.DependencyInjection;
 using Plugin.Base;
+using Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods.Statistics;
 using Serilog;
 using System;
 using System.Collections.Generic;
@@ -21,18 +22,19 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
 
         public static string MessageGreaterOrEqaulTo(long latency) => $"message:ge:{latency}";
 
-        public static async Task StartConnect((HubConnection Connection, int LocalIndex, List<SignalREnums.ConnectionState> connectionsSuccessFlag) package)
+        public static async Task StartConnect((HubConnection Connection, int LocalIndex, List<SignalREnums.ConnectionState> connectionsSuccessFlag, 
+            SignalREnums.ConnectionState NormalState, SignalREnums.ConnectionState AbnormalState) package)
         {
             if (package.Connection == null || package.connectionsSuccessFlag[package.LocalIndex] != SignalREnums.ConnectionState.Init) return;
-
+            
             try
             {
                 await package.Connection.StartAsync();
-                package.connectionsSuccessFlag[package.LocalIndex] = SignalREnums.ConnectionState.Success;
+                package.connectionsSuccessFlag[package.LocalIndex] = package.NormalState;
             }
             catch (Exception ex)
             {
-                package.connectionsSuccessFlag[package.LocalIndex] = SignalREnums.ConnectionState.Fail;
+                package.connectionsSuccessFlag[package.LocalIndex] = package.AbnormalState;
                 var message = $"Fail to start connection: {ex}";
                 Log.Error(message);
                 throw;
@@ -89,6 +91,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             // Sum of connection statistics
             merged[SignalRConstants.StatisticsConnectionConnectSuccess] = Sum(results, SignalRConstants.StatisticsConnectionConnectSuccess);
             merged[SignalRConstants.StatisticsConnectionConnectFail] = Sum(results, SignalRConstants.StatisticsConnectionConnectFail);
+            merged[SignalRConstants.StatisticsConnectionReconnect] = Sum(results, SignalRConstants.StatisticsConnectionReconnect);
+            //merged[SignalRConstants.StatisticsConnectionInit] = Sum(results, SignalRConstants.StatisticsConnectionInit);
 
             // Sum of group statistics
             merged[SignalRConstants.StatisticsGroupJoinSuccess] = Sum(results, SignalRConstants.StatisticsGroupJoinSuccess);
@@ -141,6 +145,23 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
                 }
                 return 0;
             }).Min();
+        }
+
+        public static void ResetCounters(StatisticsCollector statisticsCollecter)
+        {
+            statisticsCollecter.ResetGroupCounters();
+            statisticsCollecter.ResetMessageCounters();
+        }
+
+        public static void ChangeFlagConnectionFlag(List<SignalREnums.ConnectionState> connectionStates)
+        {
+            for (var i = 0; i < connectionStates.Count; i++)
+            {
+                if (connectionStates[i] == SignalREnums.ConnectionState.Reconnect)
+                {
+                    connectionStates[i] = SignalREnums.ConnectionState.Success;
+                }
+            }
         }
     }
 }

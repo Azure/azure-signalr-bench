@@ -85,8 +85,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
 
         protected virtual void ResetCounters()
         {
-            StatisticsCollector.ResetGroupCounters();
-            StatisticsCollector.ResetMessageCounters();
+            SignalRUtils.ResetCounters(StatisticsCollector);
         }
 
         protected virtual void LoadParameters(IDictionary<string, object> stepParameters)

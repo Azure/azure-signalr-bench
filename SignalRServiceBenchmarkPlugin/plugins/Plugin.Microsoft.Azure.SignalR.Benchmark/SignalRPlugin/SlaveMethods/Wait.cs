@@ -20,6 +20,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 // Get parameters
                 stepParameters.TryGetTypedValue(SignalRConstants.Duration, out long duration, Convert.ToInt64);
                 stepParameters.TryGetTypedValue(SignalRConstants.Type, out string type, Convert.ToString);
+                pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionSuccessFlag}.{type}", out List<SignalREnums.ConnectionState> connectionsSuccessFlag, (obj) => (List<SignalREnums.ConnectionState>)obj);
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.StatisticsStore}.{type}", out var statisticsCollector, obj => (StatisticsCollector)obj);
 
                 await Task.Delay(TimeSpan.FromMilliseconds(duration));
@@ -27,6 +28,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 // Update epoch at the end of 'Wait' to ensure all the messages are received and all clients stop sending
                 statisticsCollector.IncreaseEpoch();
 
+                // Update for reconnect statistics: change flag from reconnect to success
+                SignalRUtils.ChangeFlagConnectionFlag(connectionsSuccessFlag);
                 return null;
             }
             catch (Exception ex)

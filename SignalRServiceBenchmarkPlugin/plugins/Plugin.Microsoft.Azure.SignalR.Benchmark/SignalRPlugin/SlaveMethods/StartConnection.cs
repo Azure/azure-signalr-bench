@@ -29,7 +29,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionSuccessFlag}.{type}", out List<SignalREnums.ConnectionState> connectionsSuccessFlag, (obj) => (List<SignalREnums.ConnectionState>)obj);
 
                 var packages = (from i in Enumerable.Range(0, connections.Count())
-                                select (Connection: connections[i], LocalIndex: i, ConnectionsSuccessFlag: connectionsSuccessFlag)).ToList();
+                                select (Connection: connections[i], LocalIndex: i, ConnectionsSuccessFlag: connectionsSuccessFlag, NormalState: SignalREnums.ConnectionState.Success, AbnormalState: SignalREnums.ConnectionState.Fail)).ToList();
 
                 await Task.WhenAll(Util.BatchProcess(packages, SignalRUtils.StartConnect, concurrentConnection));
 

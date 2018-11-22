@@ -40,8 +40,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 };
 
                 // Reset counters
-                statisticsCollector.ResetGroupCounters();
-                statisticsCollector.ResetMessageCounters();
+                SignalRUtils.ResetCounters(statisticsCollector);
 
                 // Send messages
                 await Task.WhenAll(from i in Enumerable.Range(0, connections.Count)
