@@ -1,5 +1,6 @@
 ﻿using Common;
 using Plugin.Base;
+using Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods.Statistics;
 using Rpc.Service;
 using Serilog;
 using System;
@@ -21,8 +22,13 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
             stepParameters.TryGetTypedValue(SignalRConstants.LatencyStep, out long latencyStep, Convert.ToInt64);
             stepParameters.TryGetTypedValue(SignalRConstants.LatencyMax, out long latencyMax, Convert.ToInt64);
 
+            stepParameters[$"{SignalRConstants.LatencyStep}.{type}"] = latencyStep;
+            stepParameters[$"{SignalRConstants.LatencyMax}.{type}"] = latencyMax;
+
             pluginParameters[$"{SignalRConstants.LatencyStep}.{type}"] = latencyStep;
             pluginParameters[$"{SignalRConstants.LatencyMax}.{type}"] = latencyMax;
+
+            pluginParameters[$"{SignalRConstants.StatisticsStore}.{type}"] = new StatisticsCollector(latencyStep, latencyMax);
 
             return Task.WhenAll(from client in clients
                                 select client.QueryAsync(stepParameters));
