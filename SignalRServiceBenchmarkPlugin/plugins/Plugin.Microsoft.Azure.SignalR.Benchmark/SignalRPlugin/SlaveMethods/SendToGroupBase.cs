@@ -55,7 +55,20 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
 
                 // Load parameters
                 LoadParameters(stepParameters);
-                if (TotalConnection % GroupCount != 0) throw new Exception("Not supported: Total connections cannot be divided by group count");
+
+                if (GroupCount == 0)
+                {
+                    var message = $"Group count cannot be 0";
+                    Log.Error(message);
+                    throw new Exception(message);
+                }
+
+                if (TotalConnection % GroupCount != 0)
+                {
+                    var groupMember = GroupCount != 0 ? TotalConnection / GroupCount : 0;
+                    Log.Warning($"Total {TotalConnection} connections cannot be divided by group count {GroupCount}, the number of members in a group may be different from {groupMember}, may be {groupMember - 1} or {groupMember + 1}");
+                    //throw new Exception("Not supported: Total connections cannot be divided by group count");
+                }
 
                 // Load context
                 LoadContext(pluginParameters);
