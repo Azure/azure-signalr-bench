@@ -21,7 +21,9 @@ class FrequentJoinLeaveGroup:
         remainder_end_dx = self.scenario_config.step
 
         arg_type = ArgType()
+
         sending = []
+
         for epoch in range(0, self.scenario_config.step_length):
 
             remainder_end = self.scenario_config.base_step + epoch * remainder_end_dx

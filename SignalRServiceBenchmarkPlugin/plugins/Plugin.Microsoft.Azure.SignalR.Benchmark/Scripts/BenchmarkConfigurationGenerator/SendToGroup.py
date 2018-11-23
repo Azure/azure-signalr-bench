@@ -16,7 +16,8 @@ class SendToGroup:
                                                    self.statistics_config, self.scenario_config, self.constant_config)
         pre_sending += [
             register_callback_record_latency(self.scenario_config.type),
-            join_group(self.scenario_config.type, self.scenario_config.group_count, self.scenario_config.connections)
+            join_group(self.scenario_config.type, self.scenario_config.group_count, self.scenario_config.connections),
+            wait(self.scenario_config.type, self.constant_config.wait_time)
         ]
 
         post_sending = [
@@ -28,6 +29,7 @@ class SendToGroup:
 
         arg_type = ArgType()
         sending = []
+
         for epoch in range(0, self.scenario_config.step_length):
 
             remainder_end = self.scenario_config.base_step + epoch * remainder_end_dx
