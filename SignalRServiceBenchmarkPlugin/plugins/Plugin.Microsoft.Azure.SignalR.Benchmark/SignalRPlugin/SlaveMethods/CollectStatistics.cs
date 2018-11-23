@@ -12,7 +12,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
 {
     public class CollectStatistics : ISlaveMethod
     {
-        public async Task<IDictionary<string, object>> Do(IDictionary<string, object> stepParameters, IDictionary<string, object> pluginParameters)
+        public Task<IDictionary<string, object>> Do(IDictionary<string, object> stepParameters, IDictionary<string, object> pluginParameters)
         {
             try
             {
@@ -34,7 +34,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 }
 
                 // Return statistics
-                return statistics.GetData();
+                return Task.FromResult(statistics.GetData());
             }
             catch (Exception ex)
             {

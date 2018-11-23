@@ -17,7 +17,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
 {
     public class CollectStatistics : IMasterMethod
     {
-        public async Task Do(IDictionary<string, object> stepParameters, IDictionary<string, object> pluginParameters, IList<IRpcClient> clients)
+        public Task Do(IDictionary<string, object> stepParameters, IDictionary<string, object> pluginParameters, IList<IRpcClient> clients)
         {
 
             Log.Information($"Start to collect statistics...");
@@ -55,6 +55,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
 
             // Save timer to plugin
             pluginParameters[$"{SignalRConstants.Timer}.{type}"] = timer;
+            return Task.CompletedTask;
         }
 
         private void DisplayStatistics(IDictionary<string, object>[] results, string type)
