@@ -18,10 +18,50 @@ namespace ChatRoom
             Clients.All.broadcastMessage(name, message);
         }
 
-        public Task Echo(string name, string message)
+        public Task TestEcho(string name, string message)
         {
-            Clients.Client(Context.ConnectionId).echoBack(name, message);
+            Clients.Client(Context.ConnectionId).testEchoBack(name, message);
             return Task.CompletedTask;
+        }
+
+        public Task Echo(IDictionary<string, object> data)
+        {
+            Clients.Client(Context.ConnectionId).RecordLatency(data);
+            return Task.CompletedTask;
+        }
+
+        public void Broadcast(IDictionary<string, object> data)
+        {
+            Clients.All.RecordLatency(data);
+        }
+
+        public void SendToClient(IDictionary<string, object> data)
+        {
+            var targetId = (string)data["information.ConnectionId"];
+            Clients.Client(targetId).RecordLatency(data);
+        }
+
+        public string GetConnectionId()
+        {
+            return Context.ConnectionId;
+        }
+
+        public async Task JoinGroup(string groupName)
+        {
+            await Groups.Add(Context.ConnectionId, groupName);
+            Clients.Client(Context.ConnectionId).JoinGroup();
+        }
+
+        public async Task LeaveGroup(string groupName)
+        {
+            await Groups.Remove(Context.ConnectionId, groupName);
+            Clients.Client(Context.ConnectionId).LeaveGroup();
+        }
+
+        public void SendToGroup(IDictionary<string, object> data)
+        {
+            var groupName = (string)data["information.GroupName"];
+            Clients.Group(groupName).RecordLatency(data);
         }
     }
 }
