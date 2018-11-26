@@ -63,7 +63,7 @@ function run_and_gen_report()
    local concurrentConnection=$7
    local send=$8
    local ConnectionString=$9
-   local unitstr="$10"
+   local unitstr="${10}"
    cd $ScriptWorkingDir
    local appServerCount=`python get_appserver_count.py -u $unitstr`
    ############## run bench #####################
