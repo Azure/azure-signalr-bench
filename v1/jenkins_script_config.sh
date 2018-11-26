@@ -63,6 +63,9 @@ function run_and_gen_report()
    local concurrentConnection=$7
    local send=$8
    local ConnectionString=$9
+   local unitstr="$10"
+   cd $ScriptWorkingDir
+   local appServerCount=`python get_appserver_count.py -u $unitstr`
    ############## run bench #####################
    cd $RootFolder
    local connectionStringOpt=""
@@ -76,7 +79,8 @@ function run_and_gen_report()
    then
       neverStopAppServerOpt="--neverStopAppServer=true"
    fi
-   dotnet run -- --PidFile='./pid/pid_'$result_root'.txt' --step=AllInSameVnet \
+   dotnet run -- --PidFile='./pid/pid_'$result_root'.txt' --appServerCount $appServerCount \
+    --step=AllInSameVnet \
     --branch=$Branch \
     --PrivateIps=$PrivateIps \
     --PublicIps=$PublicIps \
@@ -312,7 +316,7 @@ serverUrl: ${serverUrl}
 EOF
 #gen_job_config $tag ${Transport} ${MessageEncoding} ${Scenario} ${unit} ${bench_send_size}
      ############## run bench #####################
-     run_and_gen_report $connectStr $tag $Scenario $Transport $MessageEncoding $connection $concurrentConnection $send $ConnectionString  
+     run_and_gen_report $connectStr $tag $Scenario $Transport $MessageEncoding $connection $concurrentConnection $send $ConnectionString "unit"${unit}
    done
 }
 
@@ -377,7 +381,7 @@ function run_benchmark()
              ############## configure scenario ############
                  gen_sendgroup_job_config ${tag} ${Transport} ${MessageEncoding} ${Scenario} ${unit} ${j} ${bench_send_size}
                  ############## run bench #####################
-                 run_and_gen_report $connectStr $tag $Scenario $Transport $MessageEncoding $connection $concurrentConnection $send $ConnectionString
+                 run_and_gen_report $connectStr $tag $Scenario $Transport $MessageEncoding $connection $concurrentConnection $send $ConnectionString "unit"${unit}
                done
              else if [ "$Scenario" == "sendToClient" ]
                   then
@@ -390,7 +394,7 @@ function run_benchmark()
                       send=`python gen_complex_pipeline.py -t $Transport -s $Scenario -u unit${unit} -d 0 --sendToClientSz $j -S ${maxConnectionOption}`
                       gen_sendtoclient_job_config $tag ${Transport} ${MessageEncoding} ${Scenario} ${unit} ${j}
                       ############## run bench #####################
-                      run_and_gen_report $connectStr $tag $Scenario $Transport $MessageEncoding $connection $concurrentConnection $send $ConnectionString
+                      run_and_gen_report $connectStr $tag $Scenario $Transport $MessageEncoding $connection $concurrentConnection $send $ConnectionString "unit"${unit}
                     done
                   else
                     prepare_result_folder_4_scenario ${tag} ${Transport} ${MessageEncoding} ${Scenario}
@@ -398,7 +402,7 @@ function run_benchmark()
                     send=`python gen_complex_pipeline.py -t $Transport -s $Scenario -u unit${unit} -d 0 -S ${maxConnectionOption}`
                     gen_job_config $tag ${Transport} ${MessageEncoding} ${Scenario} ${unit} ${bench_send_size}
                     ############## run bench #####################
-                    run_and_gen_report $connectStr $tag $Scenario $Transport $MessageEncoding $connection $concurrentConnection $send $ConnectionString
+                    run_and_gen_report $connectStr $tag $Scenario $Transport $MessageEncoding $connection $concurrentConnection $send $ConnectionString "unit"${unit}
                   fi
              fi
              ## restart the pod to fresh run next scenario
