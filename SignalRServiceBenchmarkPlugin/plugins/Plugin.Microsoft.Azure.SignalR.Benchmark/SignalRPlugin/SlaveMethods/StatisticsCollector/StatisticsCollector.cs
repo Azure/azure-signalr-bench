@@ -95,6 +95,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods.Statistics
 
         public void UpdateConnectionsState(List<SignalREnums.ConnectionState> connectionsSuccessFlag)
         {
+            if (connectionsSuccessFlag == null) return;
+
             var success = 0;
             var fail = 0;
             var reconnect = 0;
