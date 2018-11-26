@@ -265,8 +265,6 @@ namespace JenkinsScript
                         var jobConfigV2 = configLoader.Load<JobConfigV2>(argsOption.JobConfigFileV2);
 
                         // IPs
-                        var servicePvtIp = privateIps.ServicePrivateIp;
-                        var appserverPvtIp = privateIps.AppServerPrivateIp;
                         var slavesPvtIp = privateIps.SlavePrivateIp.Split(";").ToList();
                         var masterPvtIp = privateIps.MasterPrivateIp;
 
@@ -308,7 +306,8 @@ namespace JenkinsScript
                         var sendToFixedClient = argsOption.SendToFixedClient;
                         var statisticsSuffix = argsOption.StatisticsSuffix;
                         var appServerInUse = argsOption.AppServerCountInUse;
-
+                        var appServerList = privateIps.AppServerPrivateIp.Split(";").ToList();
+                        var appServerInUseList = appServerList.Take(appServerInUse < appServerList.Count() ? appServerInUse : appServerList.Count()).ToList();
                         var statisticFolder = $"/home/{user}/signalr-bench-statistics-{statisticsSuffix}/machine/{resultRoot}/";
                         var logFolder = $"/home/{user}/signalr-bench-statistics-{statisticsSuffix}/logs/";
                         var resultFolder = $"/home/{user}/signalr-bench-statistics-{statisticsSuffix}/results/";
@@ -341,7 +340,7 @@ namespace JenkinsScript
                             hosts.AddRange(privateIps.ServicePrivateIp.Split(";").ToList());
                         if (!neverStopAppServer)
                         {
-                            hosts.AddRange(privateIps.AppServerPrivateIp.Split(";").ToList());
+                            hosts.AddRange(appServerInUseList);
                         }
                         else
                         {
@@ -365,7 +364,6 @@ namespace JenkinsScript
                         }
 
                         var logPathAppServer = new List<string>();
-                        var appServerList = privateIps.AppServerPrivateIp.Split(";").ToList();
                         for (var m = 0; m < appServerInUse && m < appServerList.Count(); m++)
                         {
                             var ip = appServerList[m];
@@ -405,7 +403,7 @@ namespace JenkinsScript
                         // specially handle app servers
                         if (neverStopAppServer)
                         {
-                            ShellHelper.GitCloneRepo(privateIps.AppServerPrivateIp.Split(";").ToList(), remoteRepo, user, password,
+                            ShellHelper.GitCloneRepo(appServerInUseList, remoteRepo, user, password,
                                         sshPort, commit: "", branch: branch, repoRoot: localRepoRoot, false);
                         }
                         Task.Delay(waitTime).Wait();
@@ -426,8 +424,8 @@ namespace JenkinsScript
                         if (connectionString == null)
                         {
                             // serverless mode (connectionString != null) does not need to start app server
-                            privateIps.AppServerPrivateIp.Split(";").ToList().ForEach(host => StartCollectMachineStatisticsTimer(host, user, password, sshPort, Util.MakeSureDirectoryExist(statisticFolder) + $"appserver{host}.txt", TimeSpan.FromSeconds(1)));
-                            ShellHelper.StartAppServer(privateIps.AppServerPrivateIp.Split(";").ToList(), user, password, sshPort, azureSignalrConnectionStrings, logPathAppServer, useLocalSignalR, appSvrRoot);
+                            appServerInUseList.ForEach(host => StartCollectMachineStatisticsTimer(host, user, password, sshPort, Util.MakeSureDirectoryExist(statisticFolder) + $"appserver{host}.txt", TimeSpan.FromSeconds(1)));
+                            ShellHelper.StartAppServer(appServerInUseList, user, password, sshPort, azureSignalrConnectionStrings, logPathAppServer, useLocalSignalR, appSvrRoot);
                             Task.Delay(waitTime).Wait();
                         }
 
@@ -463,7 +461,7 @@ namespace JenkinsScript
 
                         if (neverStopAppServer)
                         {
-                            ShellHelper.CollectStatistics(privateIps.AppServerPrivateIp.Split(";").ToList(), user, password, sshPort,
+                            ShellHelper.CollectStatistics(appServerInUseList, user, password, sshPort,
                                 $"/home/{user}/logs/", Util.MakeSureDirectoryExist(logFolder));
                         }
                         // killall process to avoid wirting log
