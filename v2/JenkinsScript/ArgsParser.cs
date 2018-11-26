@@ -127,5 +127,8 @@ namespace JenkinsScript
 
         [Option("neverStopAppServer", Default = "false", Required = false, HelpText = "Whether stop app server or not: true/false")]
         public string NeverStopAppServer { get; set; }
+
+        [Option("appServerCount", Default = 1000, Required = false, HelpText = "The most app server count you want to use. Default it is a max value: 1000")]
+        public int AppServerCountInUse { get; set; }
     }
 }

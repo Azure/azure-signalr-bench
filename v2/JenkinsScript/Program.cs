@@ -307,6 +307,7 @@ namespace JenkinsScript
                         var messageSize = jobConfigV2.MessageSize;
                         var sendToFixedClient = argsOption.SendToFixedClient;
                         var statisticsSuffix = argsOption.StatisticsSuffix;
+                        var appServerInUse = argsOption.AppServerCountInUse;
 
                         var statisticFolder = $"/home/{user}/signalr-bench-statistics-{statisticsSuffix}/machine/{resultRoot}/";
                         var logFolder = $"/home/{user}/signalr-bench-statistics-{statisticsSuffix}/logs/";
@@ -364,8 +365,10 @@ namespace JenkinsScript
                         }
 
                         var logPathAppServer = new List<string>();
-                        foreach (var ip in privateIps.AppServerPrivateIp.Split(";").ToList())
+                        var appServerList = privateIps.AppServerPrivateIp.Split(";").ToList();
+                        for (var m = 0; m < appServerInUse && m < appServerList.Count(); m++)
                         {
+                            var ip = appServerList[m];
                             if (!neverStopAppServer)
                             {
                                 suffix = GenerateSuffix($"appserver{ip}");
