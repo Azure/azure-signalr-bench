@@ -37,8 +37,15 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 SignalRUtils.ResetCounters(_statisticsCollector);
 
                 // Join group
-                await Task.WhenAll(from i in Enumerable.Range(0, connections.Count)
-                                   select JoinIntoGroup(connections[i], SignalRUtils.GroupName(type, connectionIndex[i] % groupCount)));
+                //await Task.WhenAll(from i in Enumerable.Range(0, connections.Count)
+                //                   select JoinIntoGroup(connections[i], SignalRUtils.GroupName(type, connectionIndex[i] % groupCount)));
+
+                // debug
+                // join group one by one
+                for (var i = 0; i < connections.Count; i++)
+                {
+                    await JoinIntoGroup(connections[i], SignalRUtils.GroupName(type, connectionIndex[i] % groupCount));
+                }
 
                 return null;
             }
