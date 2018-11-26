@@ -499,15 +499,20 @@ function copy_log_from_slaves()
   local passwd="$2"
   local outputDir="$3"
   cd $ScriptWorkingDir
-  local i
+  local i j k
   for i in `python extract_ip.py -i $PrivateIps -q slaveList`
   do
     local slaveLogPath=`sshpass -p $passwd ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $user@${i} "find /home/$user/slave -iname slave*.log"`
-    sshpass -p $passwd scp -o StrictHostKeyChecking=no -o LogLevel=ERROR $user@${i}:${slaveLogPath} $outputDir/slave_${i}.log
-    if [ $? -ne 0 ]
-    then
-      sshpass -p $passwd ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $user@${i} "find /home/$user/slave -iname slave*.log"
-    fi
+    k=0
+    for j in $slaveLogPath
+    do
+      sshpass -p $passwd scp -o StrictHostKeyChecking=no -o LogLevel=ERROR $user@${i}:${j} $outputDir/slave_${i}_${k}.log
+      if [ $? -ne 0 ]
+      then
+        sshpass -p $passwd ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $user@${i} "find /home/$user/slave -iname slave*.log"
+      fi
+      k=$(($k+1))
+    done
   done
   cd $outputDir
   tar zcvf slavelog.tgz slave*.log
