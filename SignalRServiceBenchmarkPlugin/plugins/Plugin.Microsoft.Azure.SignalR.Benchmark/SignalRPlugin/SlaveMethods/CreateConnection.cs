@@ -12,7 +12,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
 {
     public class CreateConnection : ISlaveMethod
     {
-        public async Task<IDictionary<string, object>> Do(IDictionary<string, object> stepParameters, IDictionary<string, object> pluginParameters)
+        public Task<IDictionary<string, object>> Do(IDictionary<string, object> stepParameters, IDictionary<string, object> pluginParameters)
         {
             try
             {
@@ -40,9 +40,10 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 pluginParameters[$"{SignalRConstants.ConnectionStore}.{type}"] = connections;
                 pluginParameters[$"{SignalRConstants.ConnectionIndex}.{type}"] = connectionIndex;
                 pluginParameters[$"{SignalRConstants.ConnectionSuccessFlag}.{type}"] = connectionsSuccessFlag;
-                pluginParameters[$"{SignalRConstants.RegisteredCallbacks}.{type}"] = new List<Action<IList<HubConnection>, StatisticsCollector, string>>();
+                pluginParameters[$"{SignalRConstants.RegisteredCallbacks}.{type}"] =
+                    new List<Action<IList<IHubConnectionAdapter>, StatisticsCollector, string>>();
 
-                return null;
+                return Task.FromResult<IDictionary<string, object>>(null);
             }
             catch (Exception ex)
             {

@@ -31,7 +31,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
         protected SignalREnums.GroupConfigMode Mode;
 
         // Context
-        protected IList<HubConnection> Connections;
+        protected IList<IHubConnectionAdapter> Connections;
         protected StatisticsCollector StatisticsCollector;
         protected List<int> ConnectionIndex;
         protected List<SignalREnums.ConnectionState> ConnectionsSuccessFlag;
@@ -42,7 +42,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
         protected class Package
         {
             public int LocalIndex;
-            public HubConnection Connection;
+            public IHubConnectionAdapter Connection;
             public string GroupName;
             public Dictionary<string, object> Data;
         }
@@ -141,10 +141,14 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
         protected virtual void LoadContext(IDictionary<string, object> pluginParameters)
         {
             // Get context
-            pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionStore}.{Type}", out Connections, (obj) => (IList<HubConnection>)obj);
-            pluginParameters.TryGetTypedValue($"{SignalRConstants.StatisticsStore}.{Type}", out StatisticsCollector, obj => (StatisticsCollector)obj);
-            pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionIndex}.{Type}", out ConnectionIndex, (obj) => (List<int>)obj);
-            pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionSuccessFlag}.{Type}", out ConnectionsSuccessFlag, (obj) => (List<SignalREnums.ConnectionState>)obj);
+            pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionStore}.{Type}",
+                out Connections, (obj) => (IList<IHubConnectionAdapter>)obj);
+            pluginParameters.TryGetTypedValue($"{SignalRConstants.StatisticsStore}.{Type}",
+                out StatisticsCollector, obj => (StatisticsCollector)obj);
+            pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionIndex}.{Type}",
+                out ConnectionIndex, (obj) => (List<int>)obj);
+            pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionSuccessFlag}.{Type}",
+                out ConnectionsSuccessFlag, (obj) => (List<SignalREnums.ConnectionState>)obj);
         }
 
         protected virtual IEnumerable<Package> GenerateData()

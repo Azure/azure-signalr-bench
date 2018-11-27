@@ -11,6 +11,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
+using AspNetHubConnection = Microsoft.AspNet.SignalR.Client.HubConnection;
 
 namespace Plugin.Microsoft.Azure.SignalR.Benchmark
 {
@@ -22,8 +23,10 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
 
         public static string MessageGreaterOrEqaulTo(long latency) => $"message:ge:{latency}";
 
-        public static async Task StartConnect((HubConnection Connection, int LocalIndex, List<SignalREnums.ConnectionState> connectionsSuccessFlag, 
-            SignalREnums.ConnectionState NormalState, SignalREnums.ConnectionState AbnormalState) package)
+        public static async Task StartConnect((IHubConnectionAdapter Connection, int LocalIndex,
+            List<SignalREnums.ConnectionState> connectionsSuccessFlag,
+            SignalREnums.ConnectionState NormalState,
+            SignalREnums.ConnectionState AbnormalState) package)
         {
             if (package.Connection == null || package.connectionsSuccessFlag[package.LocalIndex] != SignalREnums.ConnectionState.Init) return;
             
@@ -41,7 +44,18 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             }
         }
 
-        public static IList<HubConnection> CreateConnections(IList<int> connectionIndex, string urls, string transportTypeString, string protocolString, int closeTimeout)
+        public static IList<IHubConnectionAdapter> CreateAspNetConnections(IList<int> connectionIndex, string urls, string transportTypeString, string protocolString, int closeTimeout)
+        {
+            List<string> urlList = urls.Split(',').ToList();
+            var connections = (from url in urlList
+                               let path = url.Substring(0, url.LastIndexOf('/'))
+                               let hubName = url.Substring(url.LastIndexOf('/') + 1)
+                               let hubConnection = new AspNetHubConnection(path)
+                               select new AspNetSignalRHubConnection(hubConnection, hubName, transportTypeString)).ToList();
+            return (IList<IHubConnectionAdapter>)connections;
+        }
+
+        public static IList<IHubConnectionAdapter> CreateConnections(IList<int> connectionIndex, string urls, string transportTypeString, string protocolString, int closeTimeout)
         {
             var success = true;
 
@@ -65,12 +79,13 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
                                   httpConnectionOptions.CloseTimeout = TimeSpan.FromMinutes(closeTimeout);
                                   httpConnectionOptions.Cookies = cookies;
                               }) into builder
-                              select protocolString.ToLower() == "messagepack" ? builder.AddMessagePackProtocol().Build() : builder.Build();
+                              let hubConnection = protocolString.ToLower() == "messagepack" ? builder.AddMessagePackProtocol().Build() : builder.Build()
+                              select (IHubConnectionAdapter)(new SignalRCoreHubConnection(hubConnection));
 
             return connections.ToList();
         }
 
-        public static void SetConnectionOnClose(IList<HubConnection> connections, IList<SignalREnums.ConnectionState> connectionsSuccessFlag)
+        public static void SetConnectionOnClose(IList<IHubConnectionAdapter> connections, IList<SignalREnums.ConnectionState> connectionsSuccessFlag)
         {
             // Setup connection drop handler
             for (var i = 0; i < connections.Count(); i++)

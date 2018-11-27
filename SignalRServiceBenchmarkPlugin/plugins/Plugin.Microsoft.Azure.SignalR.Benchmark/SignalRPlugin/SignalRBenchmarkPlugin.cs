@@ -48,6 +48,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             }
             catch (Exception ex)
             {
+                Log.Error($"Deserialize data failed: {ex.Message}");
                 return null;
             }
         }
