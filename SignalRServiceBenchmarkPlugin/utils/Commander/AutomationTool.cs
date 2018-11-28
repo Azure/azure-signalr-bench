@@ -62,11 +62,15 @@ namespace Commander
             _appserverPort = argOption.AppserverPort;
             _azureSignalRConnectionString = argOption.AzureSignalRConnectionString;
             _sshCmdCallback = new AsyncCallback(OnAsyncSshCommandComplete);
+            var appServerCount = argOption.AppServerHostnames.Count();
+            var appServerCountInUse = argOption.AppServerCountInUse;
+            var appServers = argOption.AppServerHostnames.Take(
+                appServerCountInUse < appServerCount ? appServerCountInUse: appServerCount).ToList();
             // Create clients
             var slaveHostnames = (from slave in argOption.SlaveList select slave.Split(':')[0]).ToList();
             _remoteClients = new RemoteClients();
             _remoteClients.CreateAll(argOption.Username, argOption.Password, 
-                argOption.AppServerHostnames, argOption.MasterHostname, slaveHostnames);
+                appServers, argOption.MasterHostname, slaveHostnames);
         }
 
         public void Start()

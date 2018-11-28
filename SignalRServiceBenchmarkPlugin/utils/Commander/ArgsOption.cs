@@ -28,6 +28,9 @@ namespace Commander
         [Option("AppServerHostnames", Required = true, Separator = ',', HelpText = "Hostname of app server.")]
         public IList<string> AppServerHostnames { get; set; }
 
+        [Option("AppServerCount", Default = 1000, Required = false, HelpText = "The most app server count you want to use. Default it is a max value: 1000")]
+        public int AppServerCountInUse { get; set; }
+
         [Option("Username", Required = true, HelpText = "Username of VMs.")]
         public string Username { get; set; }
 
