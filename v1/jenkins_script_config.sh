@@ -66,6 +66,7 @@ function run_and_gen_report()
    local unitstr="${10}"
    cd $ScriptWorkingDir
    local appServerCount=`python get_appserver_count.py -u $unitstr`
+   local partServerUrl=`python get_part_of_serverUrl.py -i "$serverUrl" -c $appServerCount`
    ############## run bench #####################
    cd $RootFolder
    local connectionStringOpt=""
@@ -102,7 +103,7 @@ cat << EOF > configs/cmd_4_${MessageEncoding}_${Scenario}_${tag}_${Transport}
 connection=${connection}
 connection_concurrent=${concurrentConnection}
 send=${send}
-bench_config_endpoint="$serverUrl"
+bench_config_endpoint="$partServerUrl"
 EOF
 
      ## zip the appserver, master and slave logs
@@ -157,6 +158,8 @@ function gen_sendtoclient_job_config()
     then
        maxConnectionOption="-M"
     fi
+    local appServerCount=`python get_appserver_count.py -u "unit"${unit}`
+    local partServerUrl=`python get_part_of_serverUrl.py -i "$serverUrl" -c $appServerCount`
     send=`python gen_complex_pipeline.py -t $Transport -s $Scenario -u unit${unit} -d 0 -S --sendToClientSz $msgSize ${maxConnectionOption}`
 cat << EOF > $JobConfig
 serviceType: $tag
@@ -166,7 +169,7 @@ scenario: ${Scenario}
 EOF
     python gen_complex_pipeline.py -t $Transport -s $Scenario -u unit${unit} --sendToClientSz $msgSize -d ${sigbench_run_duration} ${maxConnectionOption}>>$JobConfig
     cat << EOF >> $JobConfig
-serverUrl: ${serverUrl}
+serverUrl: ${partServerUrl}
 messageSize: ${msgSize}
 EOF
 }
@@ -206,6 +209,8 @@ function gen_sendgroup_job_config()
               fi
          fi
     fi
+    local appServerCount=`python get_appserver_count.py -u "unit"${unit}`
+    local partServerUrl=`python get_part_of_serverUrl.py -i "$serverUrl" -c $appServerCount`
     send=`python gen_complex_pipeline.py -t $Transport -s $Scenario -u unit${unit} -d 0 -S $groupOption ${maxConnectionOption}`
 cat << EOF > $JobConfig
 serviceType: $tag
@@ -215,7 +220,7 @@ scenario: ${Scenario}
 EOF
     python gen_complex_pipeline.py -t $Transport -s $Scenario -u unit${unit} $groupOption -d ${sigbench_run_duration} ${maxConnectionOption}>>$JobConfig
     cat << EOF >> $JobConfig
-serverUrl: ${serverUrl}
+serverUrl: ${partServerUrl}
 messageSize: ${messageSize}
 EOF
 }
@@ -245,9 +250,11 @@ hubProtocol: ${MessageEncoding}
 scenario: ${Scenario}
 EOF
      cd $ScriptWorkingDir
+     local appServerCount=`python get_appserver_count.py -u "unit"${unit}`
+     local partServerUrl=`python get_part_of_serverUrl.py -i "$serverUrl" -c $appServerCount`
      python gen_complex_pipeline.py -t $Transport -s $Scenario -u unit${unit} -d ${sigbench_run_duration} ${maxConnectionOption} ${sendIntervalOption}>>$JobConfig
      cat << EOF >> $JobConfig
-serverUrl: ${serverUrl}
+serverUrl: ${partServerUrl}
 messageSize: ${messageSize}
 EOF
 }
