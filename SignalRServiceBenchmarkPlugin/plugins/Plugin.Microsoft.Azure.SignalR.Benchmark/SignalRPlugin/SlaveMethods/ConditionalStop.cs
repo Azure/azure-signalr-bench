@@ -11,7 +11,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
 {
     public class ConditionalStop: ISlaveMethod
     {
-        public async Task<IDictionary<string, object>> Do(IDictionary<string, object> stepParameters, IDictionary<string, object> pluginParameters)
+        public Task<IDictionary<string, object>> Do(IDictionary<string, object> stepParameters, IDictionary<string, object> pluginParameters)
         {
             try
             {
@@ -19,13 +19,16 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
 
                 // Get parameters
                 stepParameters.TryGetTypedValue(SignalRConstants.Type, out string type, Convert.ToString);
-                stepParameters.TryGetTypedValue(SignalRConstants.CriteriaMaxFailConnectionPercentage, out double criteriaMaxFailConnectionPercentage, Convert.ToDouble);
-                stepParameters.TryGetTypedValue(SignalRConstants.CriteriaMaxFailConnectionAmount, out int criteriaMaxFailConnectionAmount, Convert.ToInt32);
+                stepParameters.TryGetTypedValue(SignalRConstants.CriteriaMaxFailConnectionPercentage,
+                    out double criteriaMaxFailConnectionPercentage, Convert.ToDouble);
+                stepParameters.TryGetTypedValue(SignalRConstants.CriteriaMaxFailConnectionAmount,
+                    out int criteriaMaxFailConnectionAmount, Convert.ToInt32);
 
                 // Get context
-                pluginParameters.TryGetTypedValue($"{SignalRConstants.StatisticsStore}.{type}", out StatisticsCollector statisticsCollector, obj => (StatisticsCollector) obj);
+                pluginParameters.TryGetTypedValue($"{SignalRConstants.StatisticsStore}.{type}",
+                    out StatisticsCollector statisticsCollector, obj => (StatisticsCollector) obj);
 
-                return statisticsCollector.GetData();
+                return Task.FromResult(statisticsCollector.GetData());
             }
             catch (Exception ex)
             {

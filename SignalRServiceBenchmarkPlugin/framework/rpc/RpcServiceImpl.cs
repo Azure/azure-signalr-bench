@@ -38,7 +38,7 @@ namespace Rpc.Service
             try
             {
                 var result = await methodInstance.Do(parameters, _plugin.PluginSlaveParamaters);
-                return new Result { Success = true, Message = "", Json = _plugin.Serialize(result)};
+                return new Result { Success = true, Message = "", Json = result != null ? _plugin.Serialize(result) : ""};
             }
             catch (Exception ex)
             {

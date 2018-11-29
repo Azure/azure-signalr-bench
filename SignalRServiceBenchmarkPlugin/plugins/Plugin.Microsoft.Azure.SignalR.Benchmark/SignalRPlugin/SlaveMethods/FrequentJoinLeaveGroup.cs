@@ -18,9 +18,12 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                                 let indexInGroup = index / GroupCount
                                 let connection = package.Connection
                                 let data = package.Data
-                                let isSendGroupLevel = Mode == SignalREnums.GroupConfigMode.Group && IsSending(groupIndex, GroupCount, GroupLevelRemainderBegin, GroupLevelRemainderEnd)
-                                let isSendGroupInternal = Mode == SignalREnums.GroupConfigMode.Group && IsSending(indexInGroup, GroupInternalModulo, GroupInternalRemainderBegin, GroupInternalRemainderEnd)
-                                let isSendConnectionMode = Mode == SignalREnums.GroupConfigMode.Connection && IsSending(index, Modulo, RemainderBegin, RemainderEnd)
+                                let isSendGroupLevel = Mode == SignalREnums.GroupConfigMode.Group &&
+                                    IsSending(groupIndex, GroupCount, GroupLevelRemainderBegin, GroupLevelRemainderEnd)
+                                let isSendGroupInternal = Mode == SignalREnums.GroupConfigMode.Group &&
+                                    IsSending(indexInGroup, GroupInternalModulo, GroupInternalRemainderBegin, GroupInternalRemainderEnd)
+                                let isSendConnectionMode = Mode == SignalREnums.GroupConfigMode.Connection &&
+                                    IsSending(index, Modulo, RemainderBegin, RemainderEnd)
                                 select Mode == SignalREnums.GroupConfigMode.Group ? 
                                 GenerateTaskForGroupMode(package.LocalIndex, data, isSendGroupLevel, isSendGroupInternal) : GenerateTaskForGroupMode(package.LocalIndex, data, true, isSendConnectionMode));
 

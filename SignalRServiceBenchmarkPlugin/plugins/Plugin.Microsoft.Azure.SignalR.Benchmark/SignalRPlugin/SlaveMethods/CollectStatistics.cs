@@ -3,9 +3,7 @@ using Plugin.Base;
 using Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods.Statistics;
 using Serilog;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
@@ -20,11 +18,14 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
 
                 // Get parameters
                 stepParameters.TryGetTypedValue(SignalRConstants.Type, out string type, Convert.ToString);
-                pluginParameters.TryGetTypedValue($"{SignalRConstants.StatisticsStore}.{type}", out StatisticsCollector statistics, (obj) => (StatisticsCollector) obj);
+                pluginParameters.TryGetTypedValue($"{SignalRConstants.StatisticsStore}.{type}",
+                    out StatisticsCollector statistics, (obj) => (StatisticsCollector) obj);
 
                 if (pluginParameters.ContainsKey($"{SignalRConstants.ConnectionSuccessFlag}.{type}"))
                 {
-                    pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionSuccessFlag}.{type}", out List<SignalREnums.ConnectionState> connectionsSuccessFlag, (obj) => (List<SignalREnums.ConnectionState>)obj);
+                    pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionSuccessFlag}.{type}",
+                        out List<SignalREnums.ConnectionState> connectionsSuccessFlag,
+                        (obj) => (List<SignalREnums.ConnectionState>)obj);
                     // Update connections' states
                     statistics.UpdateConnectionsState(connectionsSuccessFlag);
                 }
