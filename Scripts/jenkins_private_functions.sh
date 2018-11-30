@@ -37,6 +37,25 @@ EOF
   sh gen_html.sh $connectionString
 }
 
+function get_reduced_appserverCount()
+{
+  local unit=$1
+  local appserverInUse=13768
+  if [ "$DisableReduceServer" != "true" ]
+  then
+    appserverInUse=`python get_appserver_count.py -u $unit`
+  fi
+  echo $appserverInUse
+}
+
+function get_reduced_appserverUrl()
+{
+  local unit=$1
+  local appserverInUse=$(get_reduced_appserverCount $unit)
+  local appserverUrls=`python extract_ip.py -i $PublicIps -q appserverPub -c $appserverInUse`
+  echo $appserverUrls
+}
+
 function RunSendToGroup()
 {
   local tag=$1
@@ -51,9 +70,7 @@ function RunSendToGroup()
   local groupType=${10}
 
   cd $ScriptWorkingDir
-  local appserverInUse=`python get_appserver_count.py -u $unit`
-  local appserverUrls=`python extract_ip.py -i $PublicIps -q appserverPub -c $appserverInUse`
-
+  local appserverUrls=$(get_reduced_appserverUrl $unit)
   cd $PluginScriptWorkingDir
   local config_path=$PluginScriptWorkingDir/${tag}_${Scenario}_${Transport}_${MessageEncoding}.config
 
@@ -88,9 +105,7 @@ function RunSendToClient()
   local msgSize=${10}
 
   cd $ScriptWorkingDir
-  local appserverInUse=`python get_appserver_count.py -u $unit`
-  local appserverUrls=`python extract_ip.py -i $PublicIps -q appserverPub -c $appserverInUse`
-
+  local appserverUrls=$(get_reduced_appserverUrl $unit)
   cd $PluginScriptWorkingDir
   local config_path=$PluginScriptWorkingDir/${tag}_${Scenario}_${Transport}_${MessageEncoding}.config
 
@@ -125,8 +140,7 @@ function RunCommonScenario()
   local unit=$9
 
   cd $ScriptWorkingDir
-  local appserverInUse=`python get_appserver_count.py -u $unit`
-  local appserverUrls=`python extract_ip.py -i $PublicIps -q appserverPub -c $appserverInUse`
+  local appserverUrls=$(get_reduced_appserverUrl $unit)
 
   cd $PluginScriptWorkingDir
   local config_path=$PluginScriptWorkingDir/${tag}_${Scenario}_${Transport}_${MessageEncoding}.config
@@ -532,7 +546,7 @@ function run_command() {
   local configPath=$5
   local unit=$6
   cd $ScriptWorkingDir
-  local appserverInUse=`python get_appserver_count.py -u $unit`
+  local appserverInUse=$(get_reduced_appserverCount $unit)
   local master=`python extract_ip.py -i $PrivateIps -q master`
   local appserver=`python extract_ip.py -i $PrivateIps -q appserver -c $appserverInUse`
   local slaves=`python extract_ip.py -i $PrivateIps -q slaves`
