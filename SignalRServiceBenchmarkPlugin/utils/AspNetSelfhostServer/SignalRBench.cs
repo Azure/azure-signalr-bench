@@ -10,7 +10,7 @@ using Microsoft.AspNet.SignalR;
 
 namespace ChatRoom
 {
-    public class ChatHub : Hub
+    public class SignalRBench : Hub
     {
         public void Send(string name, string message)
         {
