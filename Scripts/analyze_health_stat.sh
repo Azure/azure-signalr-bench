@@ -1,5 +1,5 @@
 #!/bin/bash
-HEALTH_STAT_LIST="clientConnectionCount serverConnectionCount localRedisPubCount localClientMessageCount localServerMessageCount"
+HEALTH_STAT_LIST="clientConnectionCount serverConnectionCount localRedisPubCount localClientMessageCount localServerMessageCount localFromServerBytesCount localToServerBytesCount"
 RAW_FILTER_RESULT="/tmp/asrs_health_list.txt"
 COUNT_STAT=health_stat.csv
 COUNT_JS_POSTFIX=_health_stat
