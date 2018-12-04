@@ -12,7 +12,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
 {
     public class InitStatisticsCollector : ISlaveMethod
     {
-        public async Task<IDictionary<string, object>> Do(IDictionary<string, object> stepParameters, IDictionary<string, object> pluginParameters)
+        public Task<IDictionary<string, object>> Do(IDictionary<string, object> stepParameters, IDictionary<string, object> pluginParameters)
         {
             try
             {
@@ -26,7 +26,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 // Init statistic collector
                 pluginParameters[$"{SignalRConstants.StatisticsStore}.{type}"] = new StatisticsCollector(latencyStep, latencyMax);
 
-                return null;
+                return Task.FromResult<IDictionary<string, object>>(null);
             }
             catch (Exception ex)
             {

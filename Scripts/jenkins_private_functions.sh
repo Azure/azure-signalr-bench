@@ -19,7 +19,8 @@ function run_command_core()
   local concurrentConnection=${11}
   local send=${12}
   local serverUrl=${13}
-  run_command $user $passwd $connectionString $outputDir $config_path
+  local unit=${14}
+  run_command $user $passwd $connectionString $outputDir $config_path $unit
   cd $ScriptWorkingDir
   #### generate the connection configuration for HTML ####
 cat << EOF > configs/cmd_4_${MessageEncoding}_${Scenario}_${tag}_${Transport}
@@ -36,6 +37,25 @@ EOF
   sh gen_html.sh $connectionString
 }
 
+function get_reduced_appserverCount()
+{
+  local unit=$1
+  local appserverInUse=13768
+  if [ "$DisableReduceServer" != "true" ]
+  then
+    appserverInUse=`python get_appserver_count.py -u $unit`
+  fi
+  echo $appserverInUse
+}
+
+function get_reduced_appserverUrl()
+{
+  local unit=$1
+  local appserverInUse=$(get_reduced_appserverCount $unit)
+  local appserverUrls=`python extract_ip.py -i $PublicIps -q appserverPub -c $appserverInUse`
+  echo $appserverUrls
+}
+
 function RunSendToGroup()
 {
   local tag=$1
@@ -50,8 +70,7 @@ function RunSendToGroup()
   local groupType=${10}
 
   cd $ScriptWorkingDir
-  local appserverUrls=`python extract_ip.py -i $PublicIps -q appserverPub`
-
+  local appserverUrls=$(get_reduced_appserverUrl $unit)
   cd $PluginScriptWorkingDir
   local config_path=$PluginScriptWorkingDir/${tag}_${Scenario}_${Transport}_${MessageEncoding}.config
 
@@ -66,10 +85,10 @@ function RunSendToGroup()
                       -g $groupType \
                       -c $config_path $maxConnectionOption
   cat $config_path
-  local connection=`python3 get_sending_connection.py -g $groupType -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q totalConnections`
-  local concurrentConnection=`python3 get_sending_connection.py -g $groupType -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q concurrentConnection`
-  local send=`python3 get_sending_connection.py -g $groupType -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q sendingSteps`
-  run_command_core $tag $Scenario $Transport $MessageEncoding $user "$passwd" "$connectionString" $outputDir $config_path $connection $concurrentConnection $send $serverUrl
+  local connection=`python3 get_sending_connection.py -g $groupType -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q totalConnections $maxConnectionOption`
+  local concurrentConnection=`python3 get_sending_connection.py -g $groupType -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q concurrentConnection $maxConnectionOption`
+  local send=`python3 get_sending_connection.py -g $groupType -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q sendingSteps $maxConnectionOption`
+  run_command_core $tag $Scenario $Transport $MessageEncoding $user "$passwd" "$connectionString" $outputDir $config_path $connection $concurrentConnection $send $serverUrl $unit
 }
 
 function RunSendToClient()
@@ -86,8 +105,7 @@ function RunSendToClient()
   local msgSize=${10}
 
   cd $ScriptWorkingDir
-  local appserverUrls=`python extract_ip.py -i $PublicIps -q appserverPub`
-
+  local appserverUrls=$(get_reduced_appserverUrl $unit)
   cd $PluginScriptWorkingDir
   local config_path=$PluginScriptWorkingDir/${tag}_${Scenario}_${Transport}_${MessageEncoding}.config
 
@@ -102,11 +120,11 @@ function RunSendToClient()
                       -ms $msgSize \
                       -c $config_path $maxConnectionOption
   cat $config_path
-  local connection=`python3 get_sending_connection.py -ms $msgSize -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q totalConnections`
-  local concurrentConnection=`python3 get_sending_connection.py -ms $msgSize -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q concurrentConnection`
-  local send=`python3 get_sending_connection.py -ms $msgSize -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q sendingSteps`
+  local connection=`python3 get_sending_connection.py -ms $msgSize -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q totalConnections $maxConnectionOption`
+  local concurrentConnection=`python3 get_sending_connection.py -ms $msgSize -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q concurrentConnection $maxConnectionOption`
+  local send=`python3 get_sending_connection.py -ms $msgSize -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q sendingSteps $maxConnectionOption`
 
-  run_command_core $tag $Scenario $Transport $MessageEncoding $user "$passwd" "$connectionString" $outputDir $config_path $connection $concurrentConnection $send $serverUrl
+  run_command_core $tag $Scenario $Transport $MessageEncoding $user "$passwd" "$connectionString" $outputDir $config_path $connection $concurrentConnection $send $serverUrl $unit
 }
 
 function RunCommonScenario()
@@ -122,7 +140,7 @@ function RunCommonScenario()
   local unit=$9
 
   cd $ScriptWorkingDir
-  local appserverUrls=`python extract_ip.py -i $PublicIps -q appserverPub`
+  local appserverUrls=$(get_reduced_appserverUrl $unit)
 
   cd $PluginScriptWorkingDir
   local config_path=$PluginScriptWorkingDir/${tag}_${Scenario}_${Transport}_${MessageEncoding}.config
@@ -137,10 +155,10 @@ function RunCommonScenario()
                       -U $appserverUrls -d $sigbench_run_duration \
                       -c $config_path $maxConnectionOption
   cat $config_path
-  local connection=`python3 get_sending_connection.py -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q totalConnections`
-  local concurrentConnection=`python3 get_sending_connection.py -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q concurrentConnection`
-  local send=`python3 get_sending_connection.py -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q sendingSteps`
-  run_command_core $tag $Scenario $Transport $MessageEncoding $user "$passwd" "$connectionString" $outputDir $config_path $connection $concurrentConnection $send $serverUrl
+  local connection=`python3 get_sending_connection.py -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q totalConnections $maxConnectionOption`
+  local concurrentConnection=`python3 get_sending_connection.py -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q concurrentConnection $maxConnectionOption`
+  local send=`python3 get_sending_connection.py -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q sendingSteps $maxConnectionOption`
+  run_command_core $tag $Scenario $Transport $MessageEncoding $user "$passwd" "$connectionString" $outputDir $config_path $connection $concurrentConnection $send $serverUrl $unit
 }
 
 function SendToGroup()
@@ -288,7 +306,7 @@ function reboot_all_pods()
    cd $ScriptWorkingDir
    . ./kubectl_utils.sh
    local service_name=$(extract_servicename_from_connectionstring $connectionString)
-   if [ "$service_name" != "" ]
+   if [ "$service_name" != "" ] && [ "$RebootASRS" != "false" ]
    then
      restart_all_pods $service_name
    fi
@@ -526,11 +544,12 @@ function run_command() {
   local connectionString="$3"
   local outputDir="$4"
   local configPath=$5
+  local unit=$6
   cd $ScriptWorkingDir
+  local appserverInUse=$(get_reduced_appserverCount $unit)
   local master=`python extract_ip.py -i $PrivateIps -q master`
-  local appserver=`python extract_ip.py -i $PrivateIps -q appserver`
+  local appserver=`python extract_ip.py -i $PrivateIps -q appserver -c $appserverInUse`
   local slaves=`python extract_ip.py -i $PrivateIps -q slaves`
-
   local masterDir=$CommandWorkingDir/master
   local slaveDir=$CommandWorkingDir/slave
   local appserverDir=$CommandWorkingDir/appserver
@@ -565,7 +584,7 @@ EOF
          --BenchmarkConfiguration="$configPath" \
          --BenchmarkConfigurationTargetPath="/home/${user}/signalr.yaml" \
          --AzureSignalRConnectionString="$connectionString" \
-         --AppserverLogDirectory="${outputDir}"
+         --AppserverLogDirectory="${outputDir}" --AppServerCount=$appserverInUse
   stop_collect_slaves_appserver_top ${user} $passwd ${outputDir}
   local counterPath=`sshpass -p $passwd ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR ${user}@${master} "find /home/${user}/master -iname counters.txt"`
   sshpass -p ${passwd} scp -o StrictHostKeyChecking=no -o LogLevel=ERROR ${user}@${master}:$counterPath ${outputDir}/

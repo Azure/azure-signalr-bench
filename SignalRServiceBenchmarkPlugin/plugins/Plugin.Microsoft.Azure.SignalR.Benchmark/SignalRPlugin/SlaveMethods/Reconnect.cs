@@ -24,18 +24,27 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 stepParameters.TryGetTypedValue(SignalRConstants.ConcurrentConnection, out int concurrentConnection, Convert.ToInt32);
 
                 // Get context
-                pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionStore}.{type}", out IList<HubConnection> connections, (obj) => (IList<HubConnection>)obj);
-                pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionSuccessFlag}.{type}", out List<SignalREnums.ConnectionState> connectionsSuccessFlag, (obj) => (List<SignalREnums.ConnectionState>)obj);
-                pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionIndex}.{type}", out List<int> connectionIndex, (obj) => (List<int>)obj);
-                pluginParameters.TryGetTypedValue($"{SignalRConstants.RegisteredCallbacks}.{type}", out var registeredCallbacks, obj => (IList<Action<IList<HubConnection>, StatisticsCollector, string>>)obj);
-                pluginParameters.TryGetTypedValue($"{SignalRConstants.StatisticsStore}.{type}", out StatisticsCollector statisticsCollector, obj => (StatisticsCollector)obj);
+                pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionStore}.{type}",
+                    out IList<IHubConnectionAdapter> connections, (obj) => (IList<IHubConnectionAdapter>)obj);
+                pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionSuccessFlag}.{type}",
+                    out List<SignalREnums.ConnectionState> connectionsSuccessFlag, (obj) => (List<SignalREnums.ConnectionState>)obj);
+                pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionIndex}.{type}",
+                    out List<int> connectionIndex, (obj) => (List<int>)obj);
+                pluginParameters.TryGetTypedValue($"{SignalRConstants.RegisteredCallbacks}.{type}",
+                    out var registeredCallbacks, obj => (IList<Action<IList<IHubConnectionAdapter>, StatisticsCollector, string>>)obj);
+                pluginParameters.TryGetTypedValue($"{SignalRConstants.StatisticsStore}.{type}",
+                    out StatisticsCollector statisticsCollector, obj => (StatisticsCollector)obj);
 
                 // Re-create broken connections
-                var newConnections = await RecreateBrokenConnections(connections, connectionIndex, connectionsSuccessFlag, urls, transportType, protocol, SignalRConstants.ConnectionCloseTimeout);
+                var newConnections = await RecreateBrokenConnections(connections, connectionIndex,
+                    connectionsSuccessFlag, urls, transportType, protocol, SignalRConstants.ConnectionCloseTimeout);
 
                 // Start connections
                 var packages = (from i in Enumerable.Range(0, connections.Count())
-                                select (Connection: connections[i], LocalIndex: i, ConnectionsSuccessFlag: connectionsSuccessFlag, NormalState: SignalREnums.ConnectionState.Reconnect, AbnormalState: SignalREnums.ConnectionState.Fail)).ToList();
+                                select (Connection: connections[i], LocalIndex: i,
+                                ConnectionsSuccessFlag: connectionsSuccessFlag,
+                                NormalState: SignalREnums.ConnectionState.Reconnect,
+                                AbnormalState: SignalREnums.ConnectionState.Fail)).ToList();
                 await Task.WhenAll(Util.BatchProcess(packages, SignalRUtils.StartConnect, concurrentConnection));
 
                 // Re-setCallbacks
@@ -54,7 +63,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
             }
         }
 
-        private async Task<IList<HubConnection>> RecreateBrokenConnections(IList<HubConnection> connections, IList<int> connectionIndex, IList<SignalREnums.ConnectionState> connectionsSuccessFlag, 
+        private async Task<IList<IHubConnectionAdapter>> RecreateBrokenConnections(IList<IHubConnectionAdapter> connections, IList<int> connectionIndex, IList<SignalREnums.ConnectionState> connectionsSuccessFlag, 
             string urls, string transportTypeString, string protocolString, int closeTimeout)
         {
             // Filter broken connections and local index

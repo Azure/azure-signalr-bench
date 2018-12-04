@@ -82,6 +82,7 @@ function run_unit() {
  local passwd="$2"
  local ConnectionString="$3"
  local service
+ export RebootASRS="false"
  for service in $bench_serviceunit_list
  do
    cd $ScriptWorkingDir

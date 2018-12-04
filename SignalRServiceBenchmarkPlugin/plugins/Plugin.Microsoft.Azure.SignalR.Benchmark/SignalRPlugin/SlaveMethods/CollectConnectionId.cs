@@ -20,7 +20,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
 
                 // Get parameters
                 stepParameters.TryGetTypedValue(SignalRConstants.Type, out string type, Convert.ToString);
-                pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionStore}.{type}", out IList<HubConnection> connections, (obj) => (IList<HubConnection>)obj);
+                pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionStore}.{type}",
+                    out IList<IHubConnectionAdapter> connections, (obj) => (IList<IHubConnectionAdapter>)obj);
 
                 // Get connection Ids from app server
                 var connectionIds = await GetConnectionIds(connections);
@@ -36,7 +37,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
             }
         }
 
-        private async Task<IDictionary<string, object>> GetConnectionIds(IList<HubConnection> connections)
+        private async Task<IDictionary<string, object>> GetConnectionIds(IList<IHubConnectionAdapter> connections)
         {
 
             // Query connection Id
@@ -45,9 +46,9 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
             return new Dictionary<string, object> { { SignalRConstants.ConnectionId, connectionIds } };
         }
 
-        private async Task<T> CollectConnectionIdFromServer<T>(HubConnection connection)
+        private Task<T> CollectConnectionIdFromServer<T>(IHubConnectionAdapter connection)
         {
-            return await connection.InvokeAsync<T>(SignalRConstants.GetConnectionIdCallback);
+            return connection.InvokeAsync<T>(SignalRConstants.GetConnectionIdCallback);
         }
     }
 }

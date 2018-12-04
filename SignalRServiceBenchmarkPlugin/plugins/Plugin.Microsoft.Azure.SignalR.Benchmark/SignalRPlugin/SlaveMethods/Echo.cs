@@ -28,10 +28,14 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 stepParameters.TryGetTypedValue(SignalRConstants.Duration, out long duration, Convert.ToInt64);
                 stepParameters.TryGetTypedValue(SignalRConstants.Interval, out long interval, Convert.ToInt64);
                 stepParameters.TryGetTypedValue(SignalRConstants.MessageSize, out int messageSize, Convert.ToInt32);
-                pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionStore}.{type}", out IList<HubConnection> connections, (obj) => (IList<HubConnection>)obj);
-                pluginParameters.TryGetTypedValue($"{SignalRConstants.StatisticsStore}.{type}", out StatisticsCollector statisticsCollector, obj => (StatisticsCollector) obj);
-                pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionIndex}.{type}", out List<int> connectionIndex, (obj) => (List<int>)obj);
-                pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionSuccessFlag}.{type}", out List<SignalREnums.ConnectionState> connectionsSuccessFlag, (obj) => (List<SignalREnums.ConnectionState>)obj);
+                pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionStore}.{type}",
+                    out IList<IHubConnectionAdapter> connections, (obj) => (IList<IHubConnectionAdapter>)obj);
+                pluginParameters.TryGetTypedValue($"{SignalRConstants.StatisticsStore}.{type}",
+                    out StatisticsCollector statisticsCollector, obj => (StatisticsCollector) obj);
+                pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionIndex}.{type}",
+                    out List<int> connectionIndex, (obj) => (List<int>)obj);
+                pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionSuccessFlag}.{type}",
+                    out List<SignalREnums.ConnectionState> connectionsSuccessFlag, (obj) => (List<SignalREnums.ConnectionState>)obj);
 
                 // Generate necessary data
                 var data = new Dictionary<string, object>
@@ -45,9 +49,13 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 // Send messages
                 await Task.WhenAll(from i in Enumerable.Range(0, connections.Count)
                                    where connectionIndex[i] % modulo >= remainderBegin && connectionIndex[i] % modulo < remainderEnd
-                                   select ContinuousSend((Connection: connections[i], LocalIndex: i, ConnectionsSuccessFlag: connectionsSuccessFlag, StatisticsCollector: statisticsCollector), data, SendEcho,
-                                           TimeSpan.FromMilliseconds(duration), TimeSpan.FromMilliseconds(interval),
-                                           TimeSpan.FromMilliseconds(1), TimeSpan.FromMilliseconds(interval)));
+                                   select ContinuousSend((Connection: connections[i], LocalIndex: i,
+                                                          ConnectionsSuccessFlag: connectionsSuccessFlag,
+                                                          StatisticsCollector: statisticsCollector), data, SendEcho,
+                                                          TimeSpan.FromMilliseconds(duration),
+                                                          TimeSpan.FromMilliseconds(interval),
+                                                          TimeSpan.FromMilliseconds(1),
+                                                          TimeSpan.FromMilliseconds(interval)));
 
                 return null;
             }
@@ -59,7 +67,9 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
             }
         }
 
-        private async Task SendEcho((HubConnection Connection, int LocalIndex, List<SignalREnums.ConnectionState> ConnectionsSuccessFlag, StatisticsCollector StatisticsCollector) package, IDictionary<string, object> data)
+        private async Task SendEcho((IHubConnectionAdapter Connection, int LocalIndex,
+            List<SignalREnums.ConnectionState> ConnectionsSuccessFlag,
+            StatisticsCollector StatisticsCollector) package, IDictionary<string, object> data)
         {
             try
             {

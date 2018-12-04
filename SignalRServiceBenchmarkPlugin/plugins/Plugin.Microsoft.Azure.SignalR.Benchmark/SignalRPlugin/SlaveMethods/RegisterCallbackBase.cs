@@ -12,7 +12,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
 {
     public class RegisterCallbackBase
     {
-        public static void SetCallback(IList<HubConnection> connections, StatisticsCollector statisticsCollector, string methodName)
+        public static void SetCallback(IList<IHubConnectionAdapter> connections, StatisticsCollector statisticsCollector, string methodName)
         {
             foreach (var connection in connections)
             {
@@ -26,7 +26,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
             }
         }
 
-        public static void SetCallbackJoinGroup(IList<HubConnection> connections, StatisticsCollector statisticsCollector, string methodName=null)
+        public static void SetCallbackJoinGroup(IList<IHubConnectionAdapter> connections, StatisticsCollector statisticsCollector, string methodName=null)
         {
             foreach (var connection in connections)
             {
@@ -37,7 +37,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
             }
         }
 
-        public static void SetCallbackLeaveGroup(IList<HubConnection> connections, StatisticsCollector statisticsCollector, string methodName = null)
+        public static void SetCallbackLeaveGroup(IList<IHubConnectionAdapter> connections, StatisticsCollector statisticsCollector, string methodName = null)
         {
             foreach (var connection in connections)
             {

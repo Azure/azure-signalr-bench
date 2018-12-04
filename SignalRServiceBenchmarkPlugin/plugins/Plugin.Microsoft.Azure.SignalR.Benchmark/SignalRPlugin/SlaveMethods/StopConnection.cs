@@ -20,7 +20,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
 
                 // Get parameters
                 stepParameters.TryGetTypedValue(SignalRConstants.Type, out string type, Convert.ToString);
-                pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionStore}.{type}", out IList<HubConnection> connections, (obj) => (IList<HubConnection>) obj);
+                pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionStore}.{type}",
+                    out IList<IHubConnectionAdapter> connections, (obj) => (IList<IHubConnectionAdapter>) obj);
 
                 // Stop connections
                 await Task.WhenAll(from connection in connections

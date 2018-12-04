@@ -22,14 +22,22 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 Log.Information($"Start connections...");
 
                 // Get parameters
-                stepParameters.TryGetTypedValue(SignalRConstants.ConcurrentConnection, out int concurrentConnection, Convert.ToInt32);
+                stepParameters.TryGetTypedValue(SignalRConstants.ConcurrentConnection,
+                    out int concurrentConnection, Convert.ToInt32);
                 stepParameters.TryGetTypedValue(SignalRConstants.Type, out string type, Convert.ToString);
-                pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionStore}.{type}", out IList<HubConnection> connections, (obj) => (IList<HubConnection>)obj);
-                pluginParameters.TryGetTypedValue($"{SignalRConstants.StatisticsStore}.{type}", out _statisticsCollector, obj => (StatisticsCollector)obj);
-                pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionSuccessFlag}.{type}", out List<SignalREnums.ConnectionState> connectionsSuccessFlag, (obj) => (List<SignalREnums.ConnectionState>)obj);
+                pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionStore}.{type}",
+                    out IList<IHubConnectionAdapter> connections, (obj) => (IList<IHubConnectionAdapter>)obj);
+                pluginParameters.TryGetTypedValue($"{SignalRConstants.StatisticsStore}.{type}",
+                    out _statisticsCollector, obj => (StatisticsCollector)obj);
+                pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionSuccessFlag}.{type}",
+                    out List<SignalREnums.ConnectionState> connectionsSuccessFlag,
+                    (obj) => (List<SignalREnums.ConnectionState>)obj);
 
                 var packages = (from i in Enumerable.Range(0, connections.Count())
-                                select (Connection: connections[i], LocalIndex: i, ConnectionsSuccessFlag: connectionsSuccessFlag, NormalState: SignalREnums.ConnectionState.Success, AbnormalState: SignalREnums.ConnectionState.Fail)).ToList();
+                                select (Connection: connections[i], LocalIndex: i,
+                                ConnectionsSuccessFlag: connectionsSuccessFlag,
+                                NormalState: SignalREnums.ConnectionState.Success,
+                                AbnormalState: SignalREnums.ConnectionState.Fail)).ToList();
 
                 await Task.WhenAll(Util.BatchProcess(packages, SignalRUtils.StartConnect, concurrentConnection));
 
