@@ -19,5 +19,11 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             Group,
             Connection
         }
+
+        public enum ClientType
+        {
+            AspNetCore,
+            AspNet
+        }
     }
 }

@@ -59,6 +59,7 @@ class SettingParaKey:
         self.step_length = "step_length"
         self.unit_map = "unit_map"
         self.group_count = "group_count"
+        self.max_group_count = "max_group_count"
 
 
 def parse_settings(path):
@@ -101,8 +102,10 @@ def determine_scenario_config(settings, unit, scenario, transport, protocol="jso
     step = cur_settings[para_key.step][index]
     step_length = cur_settings[para_key.step_length][index]
 
-    group_count = cur_settings[para_key.group_count][index] if scenario == scenario_type.send_to_group or scenario == \
-                                                            scenario_type.frequent_join_leave_group else 0
+    select_group_count = cur_settings[para_key.group_count][index] if use_max_connection is False else \
+                           cur_settings[para_key.max_group_count][index]
+    group_count = select_group_count if scenario == scenario_type.send_to_group or scenario == \
+                    scenario_type.frequent_join_leave_group else 0
 
     config = ScenarioConfig(scenario, connections, concurrent, base_step, step, step_length, group_count, group,
                             group_config_mode)

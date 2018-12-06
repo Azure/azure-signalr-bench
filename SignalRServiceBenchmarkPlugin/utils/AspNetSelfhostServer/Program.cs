@@ -7,9 +7,10 @@ namespace AspNetSelfhostServer
     {
         static void Main(string[] args)
         {
-            using (WebApp.Start<Startup>("http://localhost:8009"))
+            var config = new Configuration();
+            using (WebApp.Start<Startup>(config.Url))
             {
-                Console.WriteLine("Server running at http://localhost:8009/");
+                Console.WriteLine($"Server running at {config.Url}");
                 Console.ReadLine();
             }
         }

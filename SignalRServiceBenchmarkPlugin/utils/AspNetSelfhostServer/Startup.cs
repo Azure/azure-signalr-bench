@@ -13,8 +13,9 @@ namespace AspNetSelfhostServer
     {
         public void Configuration(IAppBuilder app)
         {
+            var config = new Configuration();
             // Any connection or hub wire up and configuration should go here
-            app.MapAzureSignalR(this.GetType().FullName);
+            app.RunAzureSignalR(this.GetType().FullName, config.ConnectionString);
             GlobalHost.TraceManager.Switch.Level = SourceLevels.Information;
         }
     }

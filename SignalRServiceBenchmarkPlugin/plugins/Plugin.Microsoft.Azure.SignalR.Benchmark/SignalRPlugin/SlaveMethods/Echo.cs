@@ -97,7 +97,6 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 package.ConnectionsSuccessFlag[package.LocalIndex] = SignalREnums.ConnectionState.Fail;
                 var message = $"Error in Echo: {ex}";
                 Log.Error(message);
-                //throw;
             }
         }
     }
