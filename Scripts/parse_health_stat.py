@@ -60,6 +60,8 @@ if __name__=="__main__":
                    "redisSubCount",
                    "localClientMessageCount",
                    "localServerMessageCount",
+                   "localFromServerBytesCount",
+                   "localToServerBytesCount",
                    "clientMessageCount",
                    "serverMessageCount"],
           default='clientConnectionCount',
