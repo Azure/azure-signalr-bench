@@ -116,6 +116,7 @@ scenario:sendToGroup,transport:Websockets,group:tiny:
   step_length: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
   concurrent: [50, 50, 50, 50, 100, 200, 200]
   group_count: [1000, 2000, 5000, 10000, 20000, 50000, 100000]
+  max_group_count: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
 
 
 scenario:sendToGroup,transport:Websockets,group:small:
@@ -126,6 +127,7 @@ scenario:sendToGroup,transport:Websockets,group:small:
   step_length: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
   concurrent: [100, 100, 100, 200, 200, 200, 200]
   group_count: [100, 200, 500, 1000, 2000, 5000, 10000]
+  max_group_count: [150, 300, 750, 1500, 3000, 7500, 15000]
 
 
 scenario:sendToGroup,transport:Websockets,group:big:
@@ -136,7 +138,7 @@ scenario:sendToGroup,transport:Websockets,group:big:
   step_length: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
   concurrent: [100, 100, 100, 200, 200, 200, 200]
   group_count: [10, 10, 10, 10, 10, 10, 10]
-
+  max_group_count: [10, 10, 10, 10, 10, 10, 10]
 
 # frequently join leave group
 scenario:frequentJoinLeaveGroup,transport:Websockets,group:tiny:
