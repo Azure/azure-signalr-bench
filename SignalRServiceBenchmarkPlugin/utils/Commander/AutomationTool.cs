@@ -202,6 +202,7 @@ namespace Commander
                 }
             }
             // zip the applog because it may be big
+            /*
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
                 var zip = Command.Run("zip", new string[] { "-r", $"{logPrefix}.zip", $"{logPrefix}*.log" },
@@ -226,6 +227,7 @@ namespace Commander
                     Command.Run("rm", new string[] { $"{logPrefix}*.log" }, o => o.WorkingDirectory(_appserverLogDirPath));
                 }
             }
+            */
         }
 
         private void RunBenchmark()
