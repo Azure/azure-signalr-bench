@@ -396,7 +396,7 @@ namespace JenkinsScript
 
                         // clone repo to all vms
                         if (!debug) ShellHelper.GitCloneRepo(hosts, remoteRepo, user, password,
-                                        sshPort, commit: "", branch: branch, repoRoot: localRepoRoot);
+                                        sshPort, commit: "", branch: branch, repoRoot: localRepoRoot, false);
                         // kill all dotnet
                         if (!debug) ShellHelper.KillAllDotnetProcess(hosts, remoteRepo, user, password, sshPort, repoRoot : localRepoRoot);
 
