@@ -37,6 +37,25 @@ EOF
   sh gen_html.sh $connectionString
 }
 
+function get_reduced_appserverCount()
+{
+  local unit=$1
+  local appserverInUse=13768
+  if [ "$DisableReduceServer" != "true" ]
+  then
+    appserverInUse=`python get_appserver_count.py -u $unit`
+  fi
+  echo $appserverInUse
+}
+
+function get_reduced_appserverUrl()
+{
+  local unit=$1
+  local appserverInUse=$(get_reduced_appserverCount $unit)
+  local appserverUrls=`python extract_ip.py -i $PublicIps -q appserverPub -c $appserverInUse`
+  echo $appserverUrls
+}
+
 function RunSendToGroup()
 {
   local tag=$1
@@ -51,9 +70,7 @@ function RunSendToGroup()
   local groupType=${10}
 
   cd $ScriptWorkingDir
-  local appserverInUse=`python get_appserver_count.py -u $unit`
-  local appserverUrls=`python extract_ip.py -i $PublicIps -q appserverPub -c $appserverInUse`
-
+  local appserverUrls=$(get_reduced_appserverUrl $unit)
   cd $PluginScriptWorkingDir
   local config_path=$PluginScriptWorkingDir/${tag}_${Scenario}_${Transport}_${MessageEncoding}.config
 
@@ -68,9 +85,9 @@ function RunSendToGroup()
                       -g $groupType \
                       -c $config_path $maxConnectionOption
   cat $config_path
-  local connection=`python3 get_sending_connection.py -g $groupType -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q totalConnections`
-  local concurrentConnection=`python3 get_sending_connection.py -g $groupType -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q concurrentConnection`
-  local send=`python3 get_sending_connection.py -g $groupType -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q sendingSteps`
+  local connection=`python3 get_sending_connection.py -g $groupType -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q totalConnections $maxConnectionOption`
+  local concurrentConnection=`python3 get_sending_connection.py -g $groupType -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q concurrentConnection $maxConnectionOption`
+  local send=`python3 get_sending_connection.py -g $groupType -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q sendingSteps $maxConnectionOption`
   run_command_core $tag $Scenario $Transport $MessageEncoding $user "$passwd" "$connectionString" $outputDir $config_path $connection $concurrentConnection $send $serverUrl $unit
 }
 
@@ -88,9 +105,7 @@ function RunSendToClient()
   local msgSize=${10}
 
   cd $ScriptWorkingDir
-  local appserverInUse=`python get_appserver_count.py -u $unit`
-  local appserverUrls=`python extract_ip.py -i $PublicIps -q appserverPub -c $appserverInUse`
-
+  local appserverUrls=$(get_reduced_appserverUrl $unit)
   cd $PluginScriptWorkingDir
   local config_path=$PluginScriptWorkingDir/${tag}_${Scenario}_${Transport}_${MessageEncoding}.config
 
@@ -105,9 +120,9 @@ function RunSendToClient()
                       -ms $msgSize \
                       -c $config_path $maxConnectionOption
   cat $config_path
-  local connection=`python3 get_sending_connection.py -ms $msgSize -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q totalConnections`
-  local concurrentConnection=`python3 get_sending_connection.py -ms $msgSize -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q concurrentConnection`
-  local send=`python3 get_sending_connection.py -ms $msgSize -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q sendingSteps`
+  local connection=`python3 get_sending_connection.py -ms $msgSize -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q totalConnections $maxConnectionOption`
+  local concurrentConnection=`python3 get_sending_connection.py -ms $msgSize -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q concurrentConnection $maxConnectionOption`
+  local send=`python3 get_sending_connection.py -ms $msgSize -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q sendingSteps $maxConnectionOption`
 
   run_command_core $tag $Scenario $Transport $MessageEncoding $user "$passwd" "$connectionString" $outputDir $config_path $connection $concurrentConnection $send $serverUrl $unit
 }
@@ -125,8 +140,7 @@ function RunCommonScenario()
   local unit=$9
 
   cd $ScriptWorkingDir
-  local appserverInUse=`python get_appserver_count.py -u $unit`
-  local appserverUrls=`python extract_ip.py -i $PublicIps -q appserverPub -c $appserverInUse`
+  local appserverUrls=$(get_reduced_appserverUrl $unit)
 
   cd $PluginScriptWorkingDir
   local config_path=$PluginScriptWorkingDir/${tag}_${Scenario}_${Transport}_${MessageEncoding}.config
@@ -141,9 +155,9 @@ function RunCommonScenario()
                       -U $appserverUrls -d $sigbench_run_duration \
                       -c $config_path $maxConnectionOption
   cat $config_path
-  local connection=`python3 get_sending_connection.py -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q totalConnections`
-  local concurrentConnection=`python3 get_sending_connection.py -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q concurrentConnection`
-  local send=`python3 get_sending_connection.py -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q sendingSteps`
+  local connection=`python3 get_sending_connection.py -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q totalConnections $maxConnectionOption`
+  local concurrentConnection=`python3 get_sending_connection.py -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q concurrentConnection $maxConnectionOption`
+  local send=`python3 get_sending_connection.py -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q sendingSteps $maxConnectionOption`
   run_command_core $tag $Scenario $Transport $MessageEncoding $user "$passwd" "$connectionString" $outputDir $config_path $connection $concurrentConnection $send $serverUrl $unit
 }
 
@@ -532,7 +546,7 @@ function run_command() {
   local configPath=$5
   local unit=$6
   cd $ScriptWorkingDir
-  local appserverInUse=`python get_appserver_count.py -u $unit`
+  local appserverInUse=$(get_reduced_appserverCount $unit)
   local master=`python extract_ip.py -i $PrivateIps -q master`
   local appserver=`python extract_ip.py -i $PrivateIps -q appserver -c $appserverInUse`
   local slaves=`python extract_ip.py -i $PrivateIps -q slaves`

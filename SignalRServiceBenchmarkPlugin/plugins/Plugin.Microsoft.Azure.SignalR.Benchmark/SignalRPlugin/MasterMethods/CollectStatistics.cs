@@ -27,6 +27,10 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
             stepParameters.TryGetTypedValue(SignalRConstants.Type, out string type, Convert.ToString);
             stepParameters.TryGetTypedValue(SignalRConstants.StatisticsOutputPath, out string statisticsOutputPath, Convert.ToString);
 
+            if (File.Exists(statisticsOutputPath))
+            {
+                File.Delete(statisticsOutputPath);
+            }
             // Get context
             pluginParameters.TryGetTypedValue($"{SignalRConstants.LatencyStep}.{type}", out long latencyStep, Convert.ToInt64);
             pluginParameters.TryGetTypedValue($"{SignalRConstants.LatencyMax}.{type}", out long latencyMax, Convert.ToInt64);

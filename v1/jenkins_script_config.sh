@@ -113,6 +113,8 @@ EOF
      export bench_codec_list="$MessageEncoding"
      export bench_type_list="${tag}_${Transport}"
      sh gen_html.sh $ConnectionString
+   else
+     gMeetError="${gMeetError} $tag"
    fi
 }
 
@@ -630,6 +632,14 @@ then
 fi
 }
 
+function mark_job_as_failure_if_meet_error()
+{
+  if [ "$gMeetError" != "" ]
+  then
+     echo "!!!! Failed for ${gMeetError}, so mark this job as failure !!!!"
+     exit 1
+  fi
+}
 ## exit handler to remove resource group ##
 # global env:
 # CurrentWorkingDir, ServicePrincipal, AgentConfig, VMMgrDir
@@ -661,6 +671,7 @@ cat << EOF > /tmp/clean_vms.sh
 ${VMMgrDir}/JenkinsScript --step=DeleteResourceGroupByConfig --AgentConfigFile=$AgentConfig --DisableRandomSuffix --ServicePrincipal=$ServicePrincipal
 EOF
   daemonize -v -o /tmp/${clean_vm_daemon}.out -e /tmp/${clean_vm_daemon}.err -E BUILD_ID=dontKillcenter /usr/bin/nohup /bin/sh /tmp/clean_vms.sh &
+  mark_job_as_failure_if_meet_error
 }
 
 ## register exit handler to remove resource group ##

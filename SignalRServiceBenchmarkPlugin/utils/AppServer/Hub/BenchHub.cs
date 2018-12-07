@@ -1,10 +1,9 @@
 // Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using System;
+using Microsoft.AspNetCore.SignalR;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.SignalR;
 
 namespace Microsoft.Azure.SignalR.PerfTest.AppServer
 {
@@ -34,13 +33,13 @@ namespace Microsoft.Azure.SignalR.PerfTest.AppServer
         public async Task JoinGroup(string groupName)
         {
             await Groups.AddToGroupAsync(Context.ConnectionId, groupName);
-            Clients.Client(Context.ConnectionId).SendAsync("JoinGroup");
+            await Clients.Client(Context.ConnectionId).SendAsync("JoinGroup");
         }
 
         public async Task LeaveGroup(string groupName)
         {
             await Groups.RemoveFromGroupAsync(Context.ConnectionId, groupName);
-            Clients.Client(Context.ConnectionId).SendAsync("LeaveGroup");
+            await Clients.Client(Context.ConnectionId).SendAsync("LeaveGroup");
         }
 
         public void SendToGroup(IDictionary<string, object> data)

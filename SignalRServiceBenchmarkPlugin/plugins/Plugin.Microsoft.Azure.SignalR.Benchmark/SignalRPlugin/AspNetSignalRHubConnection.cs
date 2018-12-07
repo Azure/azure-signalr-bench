@@ -22,6 +22,18 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             _hubConnection = hubConnection;
             _hubProxy = _hubConnection.CreateHubProxy(hubName);
             _transport = transport;
+            /*
+            _hubConnection.Closed += () =>
+            {
+                Console.WriteLine("Connection closed");
+            };
+            _hubConnection.Error += e =>
+            {
+                Console.WriteLine(e.Message);
+            };
+            _hubConnection.TraceLevel = TraceLevels.All;
+            _hubConnection.TraceWriter = Console.Out;
+            */
         }
 
         public IDisposable On<T1>(string methodName, Action<T1> handler)
@@ -36,7 +48,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
 
         public Task SendAsync(string methodName, object arg1, CancellationToken cancellationToken = default)
         {
-            return _hubProxy.Invoke(methodName, arg1, cancellationToken);
+            return _hubProxy.Invoke(methodName, arg1);
         }
 
         public Task StartAsync(CancellationToken cancellationToken = default)
@@ -49,11 +61,11 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         {
             switch (transport)
             {
-                case "WebSocketTransport":
+                case "Websockets":
                     return new WebSocketTransport();
-                case "LongPollingTransport":
+                case "LongPolling":
                     return new LongPollingTransport();
-                case "ServerSentEventsTransport":
+                case "ServerSentEvents":
                     return new ServerSentEventsTransport();
                 default:
                     throw new NotSupportedException($"wrong transport type {transport}");
