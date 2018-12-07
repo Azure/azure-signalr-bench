@@ -114,7 +114,7 @@ EOF
      export bench_type_list="${tag}_${Transport}"
      sh gen_html.sh $ConnectionString
    else
-     gMeetError="$tag"
+     gMeetError="${gMeetError} $tag"
    fi
 }
 
@@ -636,6 +636,7 @@ function mark_job_as_failure_if_meet_error()
 {
   if [ "$gMeetError" != "" ]
   then
+     echo "!!!! Failed for ${gMeetError}, so mark this job as failure !!!!"
      exit 1
   fi
 }
