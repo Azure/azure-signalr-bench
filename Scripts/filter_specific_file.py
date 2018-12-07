@@ -1,6 +1,7 @@
 import argparse
 import datetime
 import glob, os, re
+from filter_utils import *
 
 def ASRSLog(postfix,startDate, endDate):
     startIntValue = int(startDate+"000000")
@@ -16,17 +17,6 @@ def ASRSLog(postfix,startDate, endDate):
                   if (tgtDate >= startIntValue and tgtDate < endIntValue):
                      c = "{d} {unit} {path}".format(d=b[4], unit=b[5], path=a)
                      print(c)
-
-def yearMonthDayFmt(date):
-    return date.strftime("%Y") + date.strftime("%m") + date.strftime("%d")
-
-def today():
-    return yearMonthDayFmt(datetime.date.today())
-
-def aWeekAgo():
-    today = datetime.date.today()
-    weekago = today - datetime.timedelta(days=7)
-    return yearMonthDayFmt(weekago)
 
 if __name__=="__main__":
    parser = argparse.ArgumentParser()
