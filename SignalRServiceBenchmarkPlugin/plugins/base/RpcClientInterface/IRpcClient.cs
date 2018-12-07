@@ -10,7 +10,7 @@ namespace Rpc.Service
     {
         Task UpdateAsync(IDictionary<string, object> data);
         Task<IDictionary<string, object>> QueryAsync(IDictionary<string, object> data);
-        IRpcClient Create(string hostname, int port);
+
         bool TestConnection();
         Task<bool> InstallPluginAsync(string pluginName);
         bool CheckTypeAndMethod(IDictionary<string, object> data);

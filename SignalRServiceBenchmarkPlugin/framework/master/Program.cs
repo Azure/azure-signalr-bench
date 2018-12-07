@@ -61,7 +61,7 @@ namespace Rpc.Master
                                     select (Hostname: parts[0], Port: Convert.ToInt32(parts[1])));
 
             var clients = from item in hostnamePortList
-                          select new RpcClient().Create(item.Hostname, item.Port);
+                          select RpcClient.Create(item.Hostname, item.Port);
 
             return clients.ToList();
         }
