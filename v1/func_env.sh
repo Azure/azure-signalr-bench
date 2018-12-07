@@ -637,11 +637,12 @@ EOF
   sh gen_all_tabs.sh
   sh publish_report.sh
   sh gen_summary.sh # refresh summary.html in NginxRoot gen_summary
-  if [ -e ../Scripts/gen_asrs_warns.sh ]
+  if [ -e ../Scripts/gen_asrs_warns.sh ] && [ -e ../Scripts/gen_asrs_health_stat.sh ] && [ -e ../Scripts/gen_appserver_exception.sh ]
   then
     cd ../Scripts/
     sh gen_asrs_warns.sh $nginx_root $result_root
     sh gen_asrs_health_stat.sh $nginx_root $result_root
+    sh gen_appserver_exception.sh $nginx_root $result_root
     cd -
   fi
   sh send_mail.sh $nginx_root/$result_root/allunits.html
