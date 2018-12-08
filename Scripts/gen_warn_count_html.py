@@ -51,7 +51,7 @@ def gen_google_chart_table_details(input, sep):
    with open(input, 'r') as f:
       for i,line in enumerate(f):
           fields = line.rstrip().split(sep)
-          assert len(fields) == 2, "Invalid input file: the columns do not match requirement {len}".format(len=len(fields))
+          assert len(fields) >= 2, "Invalid input file: the columns do not match requirement {len}".format(len=len(fields))
           tmpl = fields[0]
           details = fields[1]
           content="""          ['{tmpl}', '{details}'],""".format(tmpl=tmpl, details=details)
