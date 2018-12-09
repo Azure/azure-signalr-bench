@@ -3,13 +3,13 @@ import datetime
 import glob, os, re
 from filter_utils import *
 
-def ASRSLog(postfix,startDate, endDate):
+def ASRSLog(prefix, startDate, endDate):
     startIntValue = int(startDate+"000000")
     endIntValue = int(endDate+"235959")
     pat = re.compile(r"[0-9]+")
     for root, dirs, files in os.walk("/mnt/Data/NginxRoot"):
         for file in files:
-            if file.endswith(postfix):
+            if file.startswith(prefix):
                a = os.path.join(root, file)
                b = a.split("/")
                if (len(b) >= 6 and pat.match(b[4])):
@@ -28,8 +28,8 @@ if __name__=="__main__":
           default=today())
    parser.add_argument("-p", "--postfix",
           type=str,
-          choices=["_connections.txt", "_ASRS.tgz"],
-          help="specify the file postfix, default is _ASRS.tgz",
-          default="_ASRS.tgz")
+          choices=["log_appserver"],
+          help="specify the file prefix, default is log_appserver",
+          default="log_appserver")
    args = parser.parse_args()
    ASRSLog(args.postfix, args.startDate, args.endDate)

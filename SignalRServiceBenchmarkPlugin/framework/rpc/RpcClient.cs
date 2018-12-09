@@ -18,6 +18,11 @@ namespace Rpc.Service
         public Func<IDictionary<string, object>, string> Serialize { get; set; } = null;
         public Func<string, IDictionary<string, object>> Deserialize { get; set; } = null;
 
+        private RpcClient(RpcService.RpcServiceClient client)
+        {
+            _client = client;
+        }
+
         public async Task<IDictionary<string, object>> QueryAsync(IDictionary<string, object> data)
         {
             if (!CheckTypeAndMethod(data))
@@ -71,11 +76,10 @@ namespace Rpc.Service
             return client;
         }
 
-        public IRpcClient Create(string hostname, int port)
+        public static IRpcClient Create(string hostname, int port)
         {
             var channel = CreateRpcChannel(hostname, port);
-            _client = CreateRpcClient(channel);
-            return this;
+            return new RpcClient(CreateRpcClient(channel));
         }
 
         public bool TestConnection()

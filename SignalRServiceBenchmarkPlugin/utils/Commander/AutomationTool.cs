@@ -176,15 +176,16 @@ namespace Commander
 
         private void CopyAppServerLog(List<SshCommand> appservers)
         {
+            if (!String.IsNullOrEmpty(_appserverLogDirPath) && !Directory.Exists(_appserverLogDirPath))
+            {
+                Directory.CreateDirectory(_appserverLogDirPath);
+            }
+            var logPrefix = "log_appserver";
             for (var i = 0; i < appservers.Count; i++)
             {
                 var cmd = appservers[i];
-                var logFileNameWithouExt = $"applog{i}";
+                var logFileNameWithouExt = $"{logPrefix}{i}";
                 var logFile = logFileNameWithouExt + ".log";
-                if (!String.IsNullOrEmpty(_appserverLogDirPath) && !Directory.Exists(_appserverLogDirPath))
-                {
-                    Directory.CreateDirectory(_appserverLogDirPath);
-                }
                 var logFilePath = Path.Combine(_appserverLogDirPath, logFile);
 
                 using (var reader = new StreamReader(cmd.OutputStream, Encoding.UTF8, true, 1024))
@@ -199,32 +200,34 @@ namespace Commander
                         }
                     }
                 }
-                // zip the applog because it may be big
-                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            }
+            // zip the applog because it may be big
+            /*
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                var zip = Command.Run("zip", new string[] { "-r", $"{logPrefix}.zip", $"{logPrefix}*.log" },
+                    o => o.WorkingDirectory(_appserverLogDirPath));
+                zip.Wait();
+                if (!zip.Result.Success)
                 {
-                    var zip = Command.Run("zip", new string[] { "-r", $"{logFileNameWithouExt}.zip", $"{logFile}" },
-                        o => o.WorkingDirectory(_appserverLogDirPath));
-                    zip.Wait();
-                    if (!zip.Result.Success)
-                    {
-                        Log.Error(zip.Result.StandardOutput);
-                    }
+                    Log.Error(zip.Result.StandardOutput);
+                }
+            }
+            else
+            {
+                var tar = Command.Run("tar", new string[] { "zcvf", $"{logPrefix}.tgz", $"{logPrefix}*.log" },
+                    o => o.WorkingDirectory(_appserverLogDirPath));
+                tar.Wait();
+                if (!tar.Result.Success)
+                {
+                    Log.Error(tar.Result.StandardOutput);
                 }
                 else
                 {
-                    var tar = Command.Run("tar", new string[] { "zcvf", $"{logFileNameWithouExt}.tgz", $"{logFile}" },
-                        o => o.WorkingDirectory(_appserverLogDirPath));
-                    tar.Wait();
-                    if (!tar.Result.Success)
-                    {
-                        Log.Error(tar.Result.StandardOutput);
-                    }
-                    else
-                    {
-                        Command.Run("rm", new string[] { $"{logFile}" }, o => o.WorkingDirectory(_appserverLogDirPath));
-                    }
+                    Command.Run("rm", new string[] { $"{logPrefix}*.log" }, o => o.WorkingDirectory(_appserverLogDirPath));
                 }
             }
+            */
         }
 
         private void RunBenchmark()
