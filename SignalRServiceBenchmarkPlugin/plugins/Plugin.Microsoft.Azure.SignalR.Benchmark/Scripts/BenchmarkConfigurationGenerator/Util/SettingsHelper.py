@@ -102,10 +102,11 @@ def determine_scenario_config(settings, unit, scenario, transport, protocol="jso
     step = cur_settings[para_key.step][index]
     step_length = cur_settings[para_key.step_length][index]
 
-    select_group_count = cur_settings[para_key.group_count][index] if use_max_connection is False else \
+    if scenario == scenario_type.send_to_group or scenario == scenario_type.frequent_join_leave_group:
+      group_count = cur_settings[para_key.group_count][index] if use_max_connection is False else \
                            cur_settings[para_key.max_group_count][index]
-    group_count = select_group_count if scenario == scenario_type.send_to_group or scenario == \
-                    scenario_type.frequent_join_leave_group else 0
+    else:
+      group_count = 0
 
     config = ScenarioConfig(scenario, connections, concurrent, base_step, step, step_length, group_count, group,
                             group_config_mode)
