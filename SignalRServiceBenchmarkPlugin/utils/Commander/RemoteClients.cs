@@ -23,18 +23,22 @@ namespace Commander
         public SshClient MasterSshClient { get; private set; }
         public IList<SshClient> SlaveSshClients { get; private set; }
 
-        public void CreateAll(string username, string password, IList<string> appserverHostnames, string masterHostname, IList<string> slaveHostnames)
+        public void CreateAll(string username, string password,
+            IList<string> appserverHostnames, string masterHostname,
+            IList<string> slaveHostnames)
         {
             Log.Information($"Create all remote clients...");
 
-            AppserverScpClients = (from hostname in appserverHostnames
-                                   select new ScpClient(hostname, username, password)).ToList();
+            if (appserverHostnames != null)
+            {
+                AppserverScpClients = (from hostname in appserverHostnames
+                                       select new ScpClient(hostname, username, password)).ToList();
+                AppserverSshClients = (from hostname in appserverHostnames
+                                       select new SshClient(hostname, username, password)).ToList();
+            }
             MasterScpClient = new ScpClient(masterHostname, username, password);
             SlaveScpClients = (from hostname in slaveHostnames
                                 select new ScpClient(hostname, username, password)).ToList();
-
-            AppserverSshClients = (from hostname in appserverHostnames
-                                  select new SshClient(hostname, username, password)).ToList();
             MasterSshClient = new SshClient(masterHostname, username, password);
             SlaveSshClients = (from hostname in slaveHostnames
                                 select new SshClient(hostname, username, password)).ToList();
@@ -77,8 +81,14 @@ namespace Commander
             tasks.Add(Connect(MasterSshClient));
             Task.WhenAll(tasks).Wait();
 
-            Util.BatchProcess(AppserverScpClients, Connect, 10).Wait();
-            Util.BatchProcess(AppserverSshClients, Connect, 10).Wait();
+            if (AppserverScpClients != null)
+            {
+                Util.BatchProcess(AppserverScpClients, Connect, 10).Wait();
+            }
+            if (AppserverSshClients != null)
+            {
+                Util.BatchProcess(AppserverSshClients, Connect, 10).Wait();
+            }
             Util.BatchProcess(SlaveScpClients, Connect, 10).Wait();
             Util.BatchProcess(SlaveSshClients, Connect, 10).Wait();
         }
@@ -106,10 +116,16 @@ namespace Commander
                 Log.Information($"Disconnect all remote clients...");
 
                 var disconnectTasks = new List<Task>();
-                disconnectTasks.AddRange(from client in AppserverScpClients select Disconnect(client));
+                if (AppserverScpClients != null)
+                {
+                    disconnectTasks.AddRange(from client in AppserverScpClients select Disconnect(client));
+                }
+                if (AppserverSshClients != null)
+                {
+                    disconnectTasks.AddRange(from client in AppserverSshClients select Disconnect(client));
+                }
                 disconnectTasks.Add(Disconnect(MasterScpClient));
                 disconnectTasks.AddRange(from client in SlaveScpClients select Disconnect(client));
-                disconnectTasks.AddRange(from client in AppserverSshClients select Disconnect(client));
                 disconnectTasks.Add(Disconnect(MasterSshClient));
                 disconnectTasks.AddRange(from client in SlaveSshClients select Disconnect(client));
                 Task.WhenAll(disconnectTasks).Wait(TimeSpan.FromSeconds(30));
@@ -118,10 +134,16 @@ namespace Commander
             {
                 Log.Information($"Dispose all remote clients...");
                 var disposeTasks = new List<Task>();
-                disposeTasks.AddRange(from client in AppserverScpClients select Dispose(client));
+                if (AppserverScpClients != null)
+                {
+                    disposeTasks.AddRange(from client in AppserverScpClients select Dispose(client));
+                }
                 disposeTasks.Add(Dispose(MasterScpClient));
                 disposeTasks.AddRange(from client in SlaveScpClients select Dispose(client));
-                disposeTasks.AddRange(from client in AppserverSshClients select Dispose(client));
+                if (AppserverSshClients != null)
+                {
+                    disposeTasks.AddRange(from client in AppserverSshClients select Dispose(client));
+                }
                 disposeTasks.Add(Dispose(MasterSshClient));
                 disposeTasks.AddRange(from client in SlaveSshClients select Dispose(client));
                 Task.WhenAll(disposeTasks).Wait();

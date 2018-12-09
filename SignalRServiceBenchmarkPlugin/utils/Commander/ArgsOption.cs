@@ -25,7 +25,8 @@ namespace Commander
         [Option("MasterHostname", Required = true, HelpText = "Hostname of master.")]
         public string MasterHostname { get; set; }
 
-        [Option("AppServerHostnames", Required = true, Separator = ',', HelpText = "Hostname of app server.")]
+        // AspNet server does not need to start here
+        [Option("AppServerHostnames", Required = false, Default = null, Separator = ',', HelpText = "Hostname of app server.")]
         public IList<string> AppServerHostnames { get; set; }
 
         [Option("AppServerCount", Default = 1000, Required = false, HelpText = "The most app server count you want to use. Default it is a max value: 1000")]
@@ -49,8 +50,9 @@ namespace Commander
             " Console: Output to console;" + " File: Output to file.")]
         public LogTargetEnum LogTarget { get; set; }
 
-        // Project 
-        [Option("AppserverProject", Required = true, HelpText = "App server project.")]
+        // Project
+        // AspNet server does not need to start here
+        [Option("AppserverProject", Required = false, HelpText = "App server project.")]
         public string AppserverProject { get; set; }
 
         [Option("AppserverLogDirectory", Required = false, Default = ".", HelpText = "Specify the directory path to save appserver log")]
@@ -62,7 +64,7 @@ namespace Commander
         [Option("SlaveProject", Required = true, HelpText = "Slave project.")]
         public string SlaveProject { get; set; }
 
-        [Option("AppserverTargetPath", Required = true, HelpText = "Target path for app server executable.")]
+        [Option("AppserverTargetPath", Required = false, Default = null, HelpText = "Target path for app server executable.")]
         public string AppserverTargetPath { get; set; }
 
         [Option("MasterTargetPath", Required = true, HelpText = "Target path for master executable.")]
@@ -81,6 +83,7 @@ namespace Commander
         [Option("UserMode", Required = false, HelpText = "User mode.")]
         public bool UserMode { get; set; }
 
-
+        [Option("NotStartAppServer", Required = false, Default = 0, HelpText = "Do not start app server, ApsNet server is started by another exe, default is 0")]
+        public int NotStartAppServer { get; set; }
     }
 }

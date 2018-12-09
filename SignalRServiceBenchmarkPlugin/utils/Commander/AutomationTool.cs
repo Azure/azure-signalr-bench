@@ -20,6 +20,7 @@ namespace Commander
         private readonly int _appserverPort;
         private readonly string _azureSignalRConnectionString;
         private readonly string _appserverLogDirPath;
+        private readonly bool _notStartAppServer;
 
         // Slave Information
         private readonly int _rpcPort;
@@ -50,6 +51,7 @@ namespace Commander
             // Initialize
             _appserverProject = argOption.AppserverProject;
             _appserverLogDirPath = argOption.AppserverLogDirectory;
+            _notStartAppServer = argOption.NotStartAppServer == 1;
             _masterProject = argOption.MasterProject;
             _slaveProject = argOption.SlaveProject;
             _appserverTargetPath = argOption.AppserverTargetPath;
@@ -64,8 +66,9 @@ namespace Commander
             _sshCmdCallback = new AsyncCallback(OnAsyncSshCommandComplete);
             var appServerCount = argOption.AppServerHostnames.Count();
             var appServerCountInUse = argOption.AppServerCountInUse;
-            var appServers = argOption.AppServerHostnames.Take(
-                appServerCountInUse < appServerCount ? appServerCountInUse: appServerCount).ToList();
+            var appServers = argOption.AppServerHostnames?.Take(
+                appServerCountInUse < appServerCount ?
+                appServerCountInUse: appServerCount).ToList();
             // Create clients
             var slaveHostnames = (from slave in argOption.SlaveList select slave.Split(':')[0]).ToList();
             _remoteClients = new RemoteClients();
@@ -109,10 +112,13 @@ namespace Commander
                 // Clients connect to host
                 _remoteClients.ConnectAll();
 
-                FileInfo appserverExecutable, masterExecutable, slaveExecutable;
-                appserverExecutable = File.Exists($"{_appserverProject}/{_baseName}.tgz") ?
-                    new FileInfo($"{_appserverProject}/{_baseName}.tgz") :
-                    new FileInfo($"{_appserverProject}/{_baseName}.zip");
+                FileInfo appserverExecutable = null, masterExecutable, slaveExecutable;
+                if (!_notStartAppServer)
+                {
+                    appserverExecutable = File.Exists($"{_appserverProject}/{_baseName}.tgz") ?
+                        new FileInfo($"{_appserverProject}/{_baseName}.tgz") :
+                        new FileInfo($"{_appserverProject}/{_baseName}.zip");
+                }
                 masterExecutable = File.Exists($"{_masterProject}/{_baseName}.tgz") ?
                     new FileInfo($"{_masterProject}/{_baseName}.tgz") :
                     new FileInfo($"{_masterProject}/{_baseName}.zip");
@@ -241,8 +247,7 @@ namespace Commander
                 KillallDotnet();
 
                 // Create SSH commands
-                var appserverDirectory = Path.Combine(Path.GetDirectoryName(_appserverTargetPath),
-                    Path.GetFileNameWithoutExtension(_appserverTargetPath), _baseName);
+                
                 var slaveDirectory = Path.Combine(Path.GetDirectoryName(_slaveTargetPath),
                     Path.GetFileNameWithoutExtension(_slaveTargetPath), _baseName);
                 var masterDirectory = Path.Combine(Path.GetDirectoryName(_masterTargetPath),
@@ -251,35 +256,48 @@ namespace Commander
                     Path.GetFileNameWithoutExtension(_masterTargetPath), _baseName, "master.dll");
                 var slaveExecutablePath = Path.Combine(Path.GetDirectoryName(_slaveTargetPath),
                     Path.GetFileNameWithoutExtension(_slaveTargetPath), _baseName, "slave.dll");
-                var appseverCommand = "";
-                if (_azureSignalRConnectionString == null)
-                {
-                    appseverCommand = $"export useLocalSignalR=true; " +
-                                      $"cd {appserverDirectory};" +
-                                      $"dotnet exec AppServer.dll --urls=http://*:{_appserverPort}";
-                }
-                else
-                {
-                    appseverCommand = $"export Azure__SignalR__ConnectionString='{_azureSignalRConnectionString}';" +
-                                      $"cd {appserverDirectory};" +
-                                      $"dotnet exec AppServer.dll --urls=http://*:{_appserverPort}";
-                }
+
+                
                 var masterCommand = $"cd {masterDirectory}; " +
                                     $"dotnet exec {masterExecutablePath} -- " +
                                     $"--BenchmarkConfiguration=\"{_benchmarkConfigurationTargetPath}\" " +
                                     $"--SlaveList=\"{string.Join(',', _slaveList)}\"";
                 var slaveCommand = $"cd {slaveDirectory}; dotnet exec {slaveExecutablePath} --HostName 0.0.0.0 --RpcPort {_rpcPort}";
-                var appserverSshCommands = (from client in _remoteClients.AppserverSshClients
-                                            select client.CreateCommand(appseverCommand.Replace('\\', '/'))).ToList();
+
                 var masterSshCommand = _remoteClients.MasterSshClient.CreateCommand(masterCommand.Replace('\\', '/'));
                 var slaveSshCommands = (from client in _remoteClients.SlaveSshClients
                                         select client.CreateCommand(slaveCommand.Replace('\\', '/'))).ToList();
 
                 // Start app server
-                Log.Information($"Start app server");
-                var appserverAsyncResults = (from command in appserverSshCommands
-                                             select command.BeginExecute(OnAsyncSshCommandComplete, command)).ToList();
-                WaitAppserverStarted(appserverSshCommands);
+                List<SshCommand> appserverSshCommands = null;
+                if (!_notStartAppServer)
+                {
+                    Log.Information($"Start app server");
+                    var appserverDirectory = Path.Combine(Path.GetDirectoryName(_appserverTargetPath),
+                        Path.GetFileNameWithoutExtension(_appserverTargetPath), _baseName);
+                    var appseverCommand = "";
+                    if (_azureSignalRConnectionString == null)
+                    {
+                        appseverCommand = $"export useLocalSignalR=true; " +
+                                          $"cd {appserverDirectory};" +
+                                          $"dotnet exec AppServer.dll --urls=http://*:{_appserverPort}";
+                    }
+                    else
+                    {
+                        appseverCommand = $"export Azure__SignalR__ConnectionString='{_azureSignalRConnectionString}';" +
+                                          $"cd {appserverDirectory};" +
+                                          $"dotnet exec AppServer.dll --urls=http://*:{_appserverPort}";
+                    }
+                    appserverSshCommands = (from client in _remoteClients.AppserverSshClients
+                                                select client.CreateCommand(appseverCommand.Replace('\\', '/'))).ToList();
+                    var appserverAsyncResults = (from command in appserverSshCommands
+                                                 select command.BeginExecute(OnAsyncSshCommandComplete, command)).ToList();
+                    WaitAppserverStarted(appserverSshCommands);
+                }
+                else
+                {
+                    Log.Information("Do not start appserver !");
+                }
                 // Start slaves
                 Log.Information($"Start slaves");
                 var slaveAsyncResults = (from command in slaveSshCommands
@@ -305,7 +323,10 @@ namespace Commander
                 }
 
                 masterSshCommand.EndExecute(masterResult);
-                CopyAppServerLog(appserverSshCommands);
+                if (!_notStartAppServer && appserverSshCommands != null)
+                {
+                    CopyAppServerLog(appserverSshCommands);
+                }
             }
             finally
             {
@@ -322,8 +343,10 @@ namespace Commander
                 var sshCommand = client.CreateCommand(command);
                 _ = sshCommand.Execute();
             }
-
-            _remoteClients.AppserverSshClients.ToList().ForEach(client => killDotnet(client));
+            if (!_notStartAppServer)
+            {
+                _remoteClients.AppserverSshClients.ToList().ForEach(client => killDotnet(client));
+            }
             killDotnet(_remoteClients.MasterSshClient);
             _remoteClients.SlaveSshClients.ToList().ForEach(client => killDotnet(client));
         }
@@ -337,17 +360,30 @@ namespace Commander
             // Make sure the remote path is available
             var makeDirTasks = new List<Task>();
             makeDirTasks.Add(Task.Run(() => _remoteClients.MasterSshClient.CreateCommand("mkdir -p " + GetDir(_masterTargetPath))));
-            makeDirTasks.AddRange(from client in _remoteClients.AppserverSshClients
-                                  select Task.Run(() => client.CreateCommand("mkdir -p " + GetDir(_appserverTargetPath)).Execute()));
+            if (!_notStartAppServer)
+            {
+                makeDirTasks.AddRange(from client in _remoteClients.AppserverSshClients
+                                      select Task.Run(() => client.CreateCommand(
+                                          "mkdir -p " +
+                                          GetDir(_appserverTargetPath)).Execute()));
+            }
+            
             makeDirTasks.AddRange(from client in _remoteClients.SlaveSshClients
-                                  select Task.Run(() => client.CreateCommand("mkdir -p " + GetDir(_slaveTargetPath)).Execute()));
+                                  select Task.Run(() => client.CreateCommand(
+                                      "mkdir -p " +
+                                      GetDir(_slaveTargetPath)).Execute()));
 
             Task.WhenAll(makeDirTasks).Wait();
 
             // Copy executables
             var copyTasks = new List<Task>();
-            copyTasks.AddRange(from client in _remoteClients.AppserverScpClients
-                               select Task.Run(() => client.Upload(appserverExecutable, _appserverTargetPath)));
+            if (!_notStartAppServer)
+            {
+                copyTasks.AddRange(from client in _remoteClients.AppserverScpClients
+                                   select Task.Run(() =>
+                                   client.Upload(appserverExecutable, _appserverTargetPath)));
+            }
+                
             copyTasks.Add(Task.Run(() => _remoteClients.MasterScpClient.Upload(masterExecutable, _masterTargetPath)));
             copyTasks.Add(Task.Run(() => _remoteClients.MasterScpClient.Upload(_benchmarkConfiguration, _benchmarkConfigurationTargetPath)));
             copyTasks.AddRange(from client in _remoteClients.SlaveScpClients
@@ -358,7 +394,12 @@ namespace Commander
         private (FileInfo appserverExecutable, FileInfo masterExecutable, FileInfo slaveExecutable) PubishExcutables()
         {
             Log.Information($"Generate executables...");
-            var appserverExecutable = PubishExcutable(_appserverProject, _baseName);
+
+            FileInfo appserverExecutable = null;
+            if (!_notStartAppServer)
+            {
+                appserverExecutable = PubishExcutable(_appserverProject, _baseName);
+            }
             var masterExecutable = PubishExcutable(_masterProject, _baseName);
             var slaveExecutable = PubishExcutable(_slaveProject, _baseName);
             return (appserverExecutable, masterExecutable, slaveExecutable); 
@@ -426,8 +467,11 @@ namespace Commander
             Log.Information($"Unzip executables");
 
             var tasks = new List<Task>();
-            tasks.AddRange(from client in _remoteClients.AppserverSshClients
-                           select Task.Run(() => Unzip(client, _appserverTargetPath)));
+            if (!_notStartAppServer)
+            {
+                tasks.AddRange(from client in _remoteClients.AppserverSshClients
+                               select Task.Run(() => Unzip(client, _appserverTargetPath)));
+            }
             tasks.Add(Task.Run(() => Unzip(_remoteClients.MasterSshClient, _masterTargetPath)));
             tasks.AddRange(from client in _remoteClients.SlaveSshClients
                            select Task.Run(() => Unzip(client, _slaveTargetPath)));
