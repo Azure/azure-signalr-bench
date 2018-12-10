@@ -27,13 +27,13 @@ filter_asrs_logs() {
   then
     startDate=$1
     endDate=$2
-    python filter_specific_file.py -p "_connections.txt" -s $startDate -e $endDate |sort -k 1 -n -r >$RAW_FILTER_RESULT
+    python filter_specific_file.py -p "*_connections.txt" -s $startDate -e $endDate |sort -k 1 -n -r >$RAW_FILTER_RESULT
   else if [ $# -eq 1 ]
        then
           startDate=$1
-          python filter_signalr_log.py -p "_connections.txt" -s $startDate |sort -k 1 -n -r >$RAW_FILTER_RESULT
+          python filter_specific_file.py -p "*_connections.txt" -s $startDate |sort -k 1 -n -r >$RAW_FILTER_RESULT
        else
-          python filter_signalr_log.py -p "_connections.txt" |sort -k 1 -n -r >$RAW_FILTER_RESULT
+          python filter_specific_file.py -p "*_connections.txt" |sort -k 1 -n -r >$RAW_FILTER_RESULT
        fi
   fi
 }
