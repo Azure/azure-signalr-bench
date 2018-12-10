@@ -28,6 +28,9 @@ namespace DeployWebApp
         [Option("webappCount", Required = true, Default = 1, HelpText = "Webapp count")]
         public int WebappCount { get; set; }
 
+        [Option("removeExistingResourceGroup", Required = false, Default = 0, HelpText = "Remove existing resource group")]
+        public int RemoveExistingResourceGroup { get; set; }
+
         [Option("githubRepo", Required = false, Default = "https://github.com/clovertrail/AspNetServer", HelpText = "github repo")]
         public string GitHubRepo { get; set; }
 

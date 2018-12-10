@@ -13,6 +13,33 @@ namespace DeployWebApp
     public class WebAppManagement
     {
         private ArgsOption _argsOption;
+        private IAzure _azure;
+
+        private IResourceGroup GetResourceGroup()
+        {
+            IResourceGroup resourceGroup = null;
+            if (_azure.ResourceGroups.Contain(_argsOption.GroupName))
+            {
+                if (_argsOption.RemoveExistingResourceGroup == 1)
+                {
+                    _azure.ResourceGroups.DeleteByName(_argsOption.GroupName);
+                    resourceGroup = _azure.ResourceGroups.Define(_argsOption.GroupName)
+                                     .WithRegion(_argsOption.Location)
+                                     .Create();
+                }
+                else
+                {
+                    resourceGroup = _azure.ResourceGroups.GetByName(_argsOption.GroupName);
+                }
+            }
+            else
+            {
+                resourceGroup = _azure.ResourceGroups.Define(_argsOption.GroupName)
+                                     .WithRegion(_argsOption.Location)
+                                     .Create();
+            }
+            return resourceGroup;
+        }
 
         public WebAppManagement(ArgsOption argsOption)
         {
@@ -27,7 +54,7 @@ namespace DeployWebApp
                     _argsOption.TenantId,
                     AzureEnvironment.AzureGlobalCloud);
 
-            var azure = Azure
+            _azure = Azure
                 .Configure()
                 .WithLogLevel(HttpLoggingDelegatingHandler.Level.Basic)
                 .Authenticate(credentials)
@@ -35,14 +62,7 @@ namespace DeployWebApp
 
             var sw = new Stopwatch();
             sw.Start();
-
-            if (azure.ResourceGroups.Contain(_argsOption.GroupName))
-            {
-                azure.ResourceGroups.DeleteByName(_argsOption.GroupName);
-            }
-            var resourceGroup = azure.ResourceGroups.Define(_argsOption.GroupName)
-                                    .WithRegion(_argsOption.Location)
-                                    .Create();
+            IResourceGroup resourceGroup = GetResourceGroup();
             // assign names
             var rootTimestamp = DateTime.Now.ToString("yyyyMMddHH");
             var webappNameList = new List<string>();
@@ -55,7 +75,7 @@ namespace DeployWebApp
             var planTaskList = new List<Task<IAppServicePlan>>();
             for (var i = 0; i < _argsOption.WebappCount; i++)
             {
-                var appServicePlan = azure.AppServices.AppServicePlans
+                var appServicePlan = _azure.AppServices.AppServicePlans
                                     .Define(webappNameList[i])
                                     .WithRegion(_argsOption.Location)
                                     .WithExistingResourceGroup(_argsOption.GroupName)
@@ -77,7 +97,7 @@ namespace DeployWebApp
             for (var i = 0; i < _argsOption.WebappCount; i++)
             {
                 var name = webappNameList[i];
-                var t = azure.WebApps.Define(name)
+                var t = _azure.WebApps.Define(name)
                          .WithExistingWindowsPlan(servicePlanList[i])
                          .WithExistingResourceGroup(resourceGroup)
                          .WithWebAppAlwaysOn(true)
