@@ -13,7 +13,7 @@ if __name__=="__main__":
           default=today())
    parser.add_argument("-w", "--wildcard",
           type=str,
-          choices=["*_connections.txt", "*_ASRS.tgz"],
+          choices=["*_connections.txt", "*_ASRS.tgz", "nginx*.log.tgz"],
           help="specify the file postfix, default is *_ASRS.tgz",
           default="*_ASRS.tgz")
    args = parser.parse_args()

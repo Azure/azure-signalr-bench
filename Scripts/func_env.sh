@@ -588,6 +588,8 @@ EOF
   sh gen_summary.sh # refresh summary.html in NginxRoot gen_summary
   sh gen_asrs_warns.sh $nginx_root $result_root
   sh gen_asrs_health_stat.sh $nginx_root $result_root
+  sh gen_appserver_exception.sh $nginx_root $result_root
+  sh gen_nginx_error.sh $nginx_root $result_root
   sh send_mail.sh $nginx_root/$result_root/allunits.html
 }
 

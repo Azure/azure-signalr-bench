@@ -40,27 +40,6 @@ filter_app_logs() {
   fi
 }
 
-parse_single_log() {
-  local tgz_log_path=$1
-  local output_dir=$2
-  local log_file=`echo "$tgz_log_path"|awk -F / '{print $NF}'|awk -F . '{print $1}'`
-  local log_ext=`echo "$tgz_log_path"|awk -F / '{print $NF}'|awk -F . '{print $2}'`
-  local counter_output=${log_file}${COUNT_POSTFIX}
-  local workdir=/tmp/appserver_pwd
-  mkdir -p $workdir
-  cd $workdir
-  if [ "$log_ext" == "tgz" ]
-  then
-    tar zxvf $tgz_log_path
-  else
-    cp $tgz_log_path .
-  fi
-  cd -
-  local exception_count=`grep Exception $workdir/${log_file}.txt|wc -l`
-  echo 
-  rm $workdir/${log_file}.txt
-}
-
 parse_all_logs() {
   local outdir=$1
   local datetime unit path
