@@ -19,6 +19,9 @@ namespace DeployWebApp
         [Option("resourceGroup", Required = false, Default = "aspnetSignalR2", HelpText = "Azure resource group name")]
         public string GroupName { get; set; }
 
+        [Option("removeResourceGroup", Required = false, Default = 0, HelpText = "Only remove existing resource group")]
+        public int RemoveResourceGroup { get; set; }
+
         [Option("location", Required = true, HelpText = "Azure region")]
         public string Location { get; set; }
 

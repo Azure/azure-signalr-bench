@@ -22,7 +22,7 @@ namespace DeployWebApp
             {
                 if (_argsOption.RemoveExistingResourceGroup == 1)
                 {
-                    _azure.ResourceGroups.DeleteByName(_argsOption.GroupName);
+                    RemoveResourceGroup();
                     resourceGroup = _azure.ResourceGroups.Define(_argsOption.GroupName)
                                      .WithRegion(_argsOption.Location)
                                      .Create();
@@ -41,12 +41,7 @@ namespace DeployWebApp
             return resourceGroup;
         }
 
-        public WebAppManagement(ArgsOption argsOption)
-        {
-            _argsOption = argsOption;
-        }
-
-        public async Task Deploy()
+        private void Login()
         {
             var credentials = SdkContext.AzureCredentialsFactory
                     .FromServicePrincipal(_argsOption.ClientId,
@@ -59,6 +54,27 @@ namespace DeployWebApp
                 .WithLogLevel(HttpLoggingDelegatingHandler.Level.Basic)
                 .Authenticate(credentials)
                 .WithSubscription(_argsOption.SubscriptionId);
+        }
+
+
+        private void RemoveResourceGroup()
+        {
+            _azure.ResourceGroups.DeleteByName(_argsOption.GroupName);
+        }
+
+        public WebAppManagement(ArgsOption argsOption)
+        {
+            _argsOption = argsOption;
+        }
+
+        public async Task Deploy()
+        {
+            Login();
+            if (_argsOption.RemoveResourceGroup == 1)
+            {
+                RemoveResourceGroup();
+                return;
+            }
 
             var sw = new Stopwatch();
             sw.Start();
