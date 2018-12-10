@@ -139,6 +139,11 @@ namespace DeployWebApp
             }
             else
             {
+                if (File.Exists(_argsOption.OutputFile))
+                {
+                    File.Delete(_argsOption.OutputFile);
+                }
+
                 using (var writer = new StreamWriter(_argsOption.OutputFile, true))
                 {
                     string result = "";
