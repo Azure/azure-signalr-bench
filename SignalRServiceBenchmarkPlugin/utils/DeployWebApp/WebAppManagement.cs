@@ -1,6 +1,7 @@
 ﻿using Microsoft.Azure.Management.AppService.Fluent;
 using Microsoft.Azure.Management.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent;
+using Microsoft.Azure.Management.ResourceManager.Fluent.Authentication;
 using Microsoft.Azure.Management.ResourceManager.Fluent.Core;
 using System;
 using System.Collections.Generic;
@@ -43,11 +44,26 @@ namespace DeployWebApp
 
         private void Login()
         {
-            var credentials = SdkContext.AzureCredentialsFactory
+            AzureCredentials credentials = null;
+            if (_argsOption.ServicePrincipal == null)
+            {
+                credentials = SdkContext.AzureCredentialsFactory
                     .FromServicePrincipal(_argsOption.ClientId,
                     _argsOption.ClientSecret,
                     _argsOption.TenantId,
                     AzureEnvironment.AzureGlobalCloud);
+            }
+            else
+            {
+                var configLoader = new ConfigurationLoader();
+                var sp = configLoader.Load<ServicePrincipalConfig>(_argsOption.ServicePrincipal);
+                credentials = SdkContext.AzureCredentialsFactory
+                    .FromServicePrincipal(sp.ClientId,
+                    sp.ClientSecret,
+                    sp.TenantId,
+                    AzureEnvironment.AzureGlobalCloud);
+                _argsOption.SubscriptionId = sp.Subscription;
+            }
 
             _azure = Azure
                 .Configure()

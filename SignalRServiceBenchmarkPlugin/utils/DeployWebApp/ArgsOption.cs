@@ -16,6 +16,9 @@ namespace DeployWebApp
         [Option("subscriptionId", Required = true, HelpText = "Azure tenant Id")]
         public string SubscriptionId { get; set; }
 
+        [Option("servicePrincipal", Required = false, HelpText = "Specify service principal file")]
+        public string ServicePrincipal { get; set; }
+
         [Option("resourceGroup", Required = false, Default = "aspnetSignalR2", HelpText = "Azure resource group name")]
         public string GroupName { get; set; }
 
