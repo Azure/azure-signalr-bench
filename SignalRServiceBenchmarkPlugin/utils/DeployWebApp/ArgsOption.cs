@@ -4,16 +4,16 @@ namespace DeployWebApp
 {
     public class ArgsOption
     {
-        [Option("clientId", Required = true, HelpText = "Azure client ID")]
+        [Option("clientId", Required = false, HelpText = "Azure client ID")]
         public string ClientId { get; set; }
 
-        [Option("clientSecret", Required = true, HelpText = "Azure client secret")]
+        [Option("clientSecret", Required = false, HelpText = "Azure client secret")]
         public string ClientSecret { get; set; }
 
-        [Option("tenantId", Required = true, HelpText = "Azure tenant Id")]
+        [Option("tenantId", Required = false, HelpText = "Azure tenant Id")]
         public string TenantId { get; set; }
 
-        [Option("subscriptionId", Required = true, HelpText = "Azure tenant Id")]
+        [Option("subscriptionId", Required = false, HelpText = "Azure tenant Id")]
         public string SubscriptionId { get; set; }
 
         [Option("servicePrincipal", Required = false, HelpText = "Specify service principal file")]
@@ -25,13 +25,13 @@ namespace DeployWebApp
         [Option("removeResourceGroup", Required = false, Default = 0, HelpText = "Only remove existing resource group")]
         public int RemoveResourceGroup { get; set; }
 
-        [Option("location", Required = true, HelpText = "Azure region")]
+        [Option("location", Required = false, Default = "southeastasia", HelpText = "Azure region")]
         public string Location { get; set; }
 
         [Option("webappNamePrefix", Required = false, Default = "signalrwebapp", HelpText = "Specify web app name")]
         public string WebAppNamePrefix { get; set; }
 
-        [Option("webappCount", Required = true, Default = 1, HelpText = "Webapp count")]
+        [Option("webappCount", Required = false, Default = 1, HelpText = "Webapp count")]
         public int WebappCount { get; set; }
 
         [Option("removeExistingResourceGroup", Required = false, Default = 0, HelpText = "Remove existing resource group")]
@@ -40,7 +40,7 @@ namespace DeployWebApp
         [Option("githubRepo", Required = false, Default = "https://github.com/clovertrail/AspNetServer", HelpText = "github repo")]
         public string GitHubRepo { get; set; }
 
-        [Option("connectionString", Required = true, HelpText = "ASRS connection string")]
+        [Option("connectionString", Required = false, Default = null, HelpText = "ASRS connection string")]
         public string ConnectionString { get; set; }
 
         [Option("outputFile", Required = false, HelpText = "Specify the output file, default is null and output to console")]

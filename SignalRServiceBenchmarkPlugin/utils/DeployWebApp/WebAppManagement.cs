@@ -83,6 +83,24 @@ namespace DeployWebApp
             _argsOption = argsOption;
         }
 
+        private bool ValidateDeployParameters()
+        {
+            if (_argsOption.ConnectionString == null)
+            {
+                Console.WriteLine("No connection string is specified!");
+                return false;
+            }
+            if (_argsOption.ServicePrincipal == null &&
+                (_argsOption.ClientId == null ||
+                _argsOption.ClientSecret == null ||
+                _argsOption.SubscriptionId == null ||
+                _argsOption.TenantId == null))
+            {
+                Console.WriteLine("No secret or credential is specified!");
+            }
+            return true;
+        }
+
         public async Task Deploy()
         {
             Login();
@@ -91,7 +109,10 @@ namespace DeployWebApp
                 RemoveResourceGroup();
                 return;
             }
-
+            if (!ValidateDeployParameters())
+            {
+                return;
+            }
             var sw = new Stopwatch();
             sw.Start();
             IResourceGroup resourceGroup = GetResourceGroup();

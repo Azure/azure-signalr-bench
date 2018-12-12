@@ -54,6 +54,7 @@ namespace JenkinsScript
                     try
                     {
                         _azure.ResourceGroups.DeleteByName(name);
+                        Util.Log($"resource group {name} has been removed");
                         return;
                     }
                     catch (Exception e)
