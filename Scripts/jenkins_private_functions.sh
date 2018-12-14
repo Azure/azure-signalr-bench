@@ -161,6 +161,55 @@ function RunCommonScenario()
   run_command_core $tag $Scenario $Transport $MessageEncoding $user "$passwd" "$connectionString" $outputDir $config_path $connection $concurrentConnection $send $serverUrl $unit
 }
 
+function RunAspNetCommonScenario()
+{
+  local tag=$1
+  local Scenario=$2
+  local Transport=$3
+  local MessageEncoding=$4
+  local user=$5
+  local passwd="$6"
+  local connectionString="$7"
+  local outputDir="$8"
+  local unit=$9
+  local appPrefix="aspnetwebapp"
+  local resGroup=$AspNetWebAppResGrp #"${appPrefix}"`date +%H%M%S`
+  local appserverCount=$AspNetWebAppCount
+
+  cd $AspNetWebMgrWorkingDir
+  dotnet run -- --servicePrincipal $ServicePrincipal \
+                --location ${VMLocation} \
+                --webappNamePrefix "${appPrefix}" \
+                --webappCount $appserverCount \
+                --connectionString "$connectionString" \
+                --outputFile "${appPrefix}.txt" --resourceGroup $resGroup
+  local appserverUrls=`cat ${appPrefix}.txt`
+
+  cd $PluginScriptWorkingDir
+  local config_path=$PluginScriptWorkingDir/${tag}_${Scenario}_${Transport}_${MessageEncoding}.config
+
+  local maxConnectionOption=""
+  if [ "$useMaxConnection" == "true" ]
+  then
+    maxConnectionOption="-m"
+  fi
+  python3 generate.py -u $unit -S $Scenario \
+                      -t $Transport -p $MessageEncoding \
+                      -U $appserverUrls -d $sigbench_run_duration \
+                      -c $config_path $maxConnectionOption
+  #TODO: Hard replacement
+  sed -i 's/CreateConnection/CreateAspNetConnection/g' $config_path
+  cat $config_path
+
+  local connection=`python3 get_sending_connection.py -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q totalConnections $maxConnectionOption`
+  local concurrentConnection=`python3 get_sending_connection.py -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q concurrentConnection $maxConnectionOption`
+  local send=`python3 get_sending_connection.py -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q sendingSteps $maxConnectionOption`
+  run_command_core $tag $Scenario $Transport $MessageEncoding $user "$passwd" "$connectionString" $outputDir $config_path $connection $concurrentConnection $send $serverUrl $unit
+
+  # remove appserver
+  $AspNetWebMgrWorkingDir/DeployWebApp --removeResourceGroup=1 --resourceGroup=${AspNetWebAppResGrp}
+}
+
 function SendToGroup()
 {
   local Scenario=$1
@@ -367,7 +416,12 @@ function run_and_gen_report() {
   local outputDir="$8"
   local unit=$9
 
-  RunCommonScenario $tag $Scenario $Transport $MessageEncoding $user $passwd "$connectionString" $outputDir $unit
+  if [ "$AspNetSignalR" == "" ]
+  then
+    RunCommonScenario $tag $Scenario $Transport $MessageEncoding $user $passwd "$connectionString" $outputDir $unit
+  else
+    RunAspNetCommonScenario $tag $Scenario $Transport $MessageEncoding $user $passwd "$connectionString" $outputDir $unit
+  fi
 }
 
 function build_rpc_master() {
@@ -545,20 +599,24 @@ function run_command() {
   local outputDir="$4"
   local configPath=$5
   local unit=$6
+
   cd $ScriptWorkingDir
-  local appserverInUse=$(get_reduced_appserverCount $unit)
   local master=`python extract_ip.py -i $PrivateIps -q master`
-  local appserver=`python extract_ip.py -i $PrivateIps -q appserver -c $appserverInUse`
   local slaves=`python extract_ip.py -i $PrivateIps -q slaves`
   local masterDir=$CommandWorkingDir/master
   local slaveDir=$CommandWorkingDir/slave
-  local appserverDir=$CommandWorkingDir/appserver
+  if [ "$AspNetSignalR" == "" ]
+  then
+    local appserverInUse=$(get_reduced_appserverCount $unit)
+    local appserver=`python extract_ip.py -i $PrivateIps -q appserver -c $appserverInUse`
+    local appserverDir=$CommandWorkingDir/appserver
+    mkdir -p $appserverDir
+    build_app_server $appserverDir
+  fi
   mkdir -p $masterDir
   mkdir -p $slaveDir
-  mkdir -p $appserverDir
   build_rpc_master $masterDir
   build_rpc_slave $slaveDir
-  build_app_server $appserverDir
   cd $CommandWorkingDir
   local remoteCmd="remove_counters.sh"
   cat << EOF > $remoteCmd
@@ -574,7 +632,9 @@ EOF
   disable_exit_immediately_when_fail
   start_collect_slaves_appserver_top ${user} $passwd ${outputDir}
   cd $CommandWorkingDir
-  dotnet run -- --RpcPort=5555 --SlaveList="$slaves" --MasterHostname="$master" --AppServerHostnames="$appserver" \
+  if [ "$AspNetSignalR" == "" ]
+  then
+    dotnet run -- --RpcPort=5555 --SlaveList="$slaves" --MasterHostname="$master" --AppServerHostnames="$appserver" \
          --Username=$user --Password=$passwd \
          --AppserverProject="$appserverDir" \
          --MasterProject="$masterDir" \
@@ -585,6 +645,18 @@ EOF
          --BenchmarkConfigurationTargetPath="/home/${user}/signalr.yaml" \
          --AzureSignalRConnectionString="$connectionString" \
          --AppserverLogDirectory="${outputDir}" --AppServerCount=$appserverInUse
+  else
+    dotnet run -- --RpcPort=5555 --SlaveList="$slaves" --MasterHostname="$master" \
+               --Username=$user --Password=$passwd \
+               --MasterProject="$masterDir" \
+               --SlaveProject="$slaveDir" \
+               --SlaveTargetPath="/home/${user}/slave.tgz" \
+               --MasterTargetPath="/home/${user}/master.tgz" \
+               --BenchmarkConfiguration="$configPath" \
+               --BenchmarkConfigurationTargetPath="/home/${user}/signalr.yaml" \
+               --AzureSignalRConnectionString="$connectionString" \
+               --NotStartAppServer=1
+  fi
   stop_collect_slaves_appserver_top ${user} $passwd ${outputDir}
   local counterPath=`sshpass -p $passwd ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR ${user}@${master} "find /home/${user}/master -iname counters.txt"`
   sshpass -p ${passwd} scp -o StrictHostKeyChecking=no -o LogLevel=ERROR ${user}@${master}:$counterPath ${outputDir}/
@@ -647,8 +719,14 @@ function remove_resource_group() {
   echo "!!Received EXIT!! and remove all created VMs"
 
   cd $CurrentWorkingDir
+  local clean_aspwebapp_daemon=daemon_${JOB_NAME}_cleanwebapp
   local clean_vm_daemon=daemon_${JOB_NAME}_cleanvms
   local clean_asrs_daemon=daemon_${JOB_NAME}_cleanasrs
+  ## remove webapp if they are not removed
+cat << EOF > /tmp/clean_webapp.sh
+${AspNetWebMgrDir}/DeployWebApp --removeResourceGroup=1 --resourceGroup=${AspNetWebAppResGrp} --servicePrincipal=$ServicePrincipal
+EOF
+  daemonize -v -o /tmp/${clean_aspwebapp_daemon}.out -e /tmp/${clean_aspwebapp_daemon}.err -E BUILD_ID=dontKillcenter /usr/bin/nohup /bin/sh /tmp/clean_webapp.sh &
   ## remove all test VMs
   local pid_file_path=/tmp/${result_root}_pid_remove_rsg.txt
 cat << EOF > /tmp/clean_vms.sh

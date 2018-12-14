@@ -17,6 +17,7 @@ function set_global_env() {
    export CurrentWorkingDir=$Jenkins_Workspace_Root/${relative_dir}/v2/JenkinsScript/     # workding directory
    export CommandWorkingDir=$Jenkins_Workspace_Root/${relative_dir}/SignalRServiceBenchmarkPlugin/utils/Commander
    export AppServerWorkingDir=$Jenkins_Workspace_Root/${relative_dir}/SignalRServiceBenchmarkPlugin/utils/AppServer
+   export AspNetWebMgrWorkingDir=$Jenkins_Workspace_Root/${relative_dir}/SignalRServiceBenchmarkPlugin/utils/DeployWebApp
 ############# those configurations are shared in Jenkins folder #####
    export AgentConfig=$JenkinsRootPath'/agent.yaml'
    export PrivateIps=$JenkinsRootPath'/privateIps.yaml'
@@ -30,6 +31,7 @@ function set_global_env() {
    export BenchConfig=$ConfigRoot'/bench.yaml'
    #export ResultFolderSuffix='suffix'
    export VMMgrDir=/tmp/VMMgr
+   export AspNetWebMgrDir=/tmp/AspNetWebMgr
    export nginx_root=/mnt/Data/NginxRoot
    export g_nginx_ns="ingress-nginx"
 }
@@ -38,6 +40,7 @@ function set_global_env() {
 function set_job_env() {
    export result_root=`date +%Y%m%d%H%M%S`
    export DogFoodResourceGroup="hzatpf"`date +%M%S`
+   export AspNetWebAppResGrp="hzperfwebapp"`date +%H%M%S`
    export serverUrl=`awk '{print $2}' $JenkinsRootPath/JobConfig.yaml`
 }
 # require global env:
@@ -74,6 +77,13 @@ function register_exit_handler() {
     rm -rf ${VMMgrDir}
   fi
   dotnet publish -c Release -f netcoreapp2.1 -o ${VMMgrDir} --self-contained -r linux-x64
+
+  cd $AspNetWebMgrWorkingDir
+  if [ -d ${AspNetWebMgrDir} ]
+  then
+    rm -rf ${AspNetWebMgrDir}
+  fi
+  dotnet publish -c Release -f netcoreapp2.1 -o ${AspNetWebMgrDir} --self-contained -r linux-x64
   trap remove_resource_group EXIT
 }
 

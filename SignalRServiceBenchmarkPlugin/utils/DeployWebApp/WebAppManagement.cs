@@ -1,6 +1,7 @@
 ﻿using Microsoft.Azure.Management.AppService.Fluent;
 using Microsoft.Azure.Management.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent;
+using Microsoft.Azure.Management.ResourceManager.Fluent.Authentication;
 using Microsoft.Azure.Management.ResourceManager.Fluent.Core;
 using System;
 using System.Collections.Generic;
@@ -43,11 +44,26 @@ namespace DeployWebApp
 
         private void Login()
         {
-            var credentials = SdkContext.AzureCredentialsFactory
+            AzureCredentials credentials = null;
+            if (_argsOption.ServicePrincipal == null)
+            {
+                credentials = SdkContext.AzureCredentialsFactory
                     .FromServicePrincipal(_argsOption.ClientId,
                     _argsOption.ClientSecret,
                     _argsOption.TenantId,
                     AzureEnvironment.AzureGlobalCloud);
+            }
+            else
+            {
+                var configLoader = new ConfigurationLoader();
+                var sp = configLoader.Load<ServicePrincipalConfig>(_argsOption.ServicePrincipal);
+                credentials = SdkContext.AzureCredentialsFactory
+                    .FromServicePrincipal(sp.ClientId,
+                    sp.ClientSecret,
+                    sp.TenantId,
+                    AzureEnvironment.AzureGlobalCloud);
+                _argsOption.SubscriptionId = sp.Subscription;
+            }
 
             _azure = Azure
                 .Configure()
@@ -67,6 +83,24 @@ namespace DeployWebApp
             _argsOption = argsOption;
         }
 
+        private bool ValidateDeployParameters()
+        {
+            if (_argsOption.ConnectionString == null)
+            {
+                Console.WriteLine("No connection string is specified!");
+                return false;
+            }
+            if (_argsOption.ServicePrincipal == null &&
+                (_argsOption.ClientId == null ||
+                _argsOption.ClientSecret == null ||
+                _argsOption.SubscriptionId == null ||
+                _argsOption.TenantId == null))
+            {
+                Console.WriteLine("No secret or credential is specified!");
+            }
+            return true;
+        }
+
         public async Task Deploy()
         {
             Login();
@@ -75,7 +109,10 @@ namespace DeployWebApp
                 RemoveResourceGroup();
                 return;
             }
-
+            if (!ValidateDeployParameters())
+            {
+                return;
+            }
             var sw = new Stopwatch();
             sw.Start();
             IResourceGroup resourceGroup = GetResourceGroup();

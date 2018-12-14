@@ -9,8 +9,12 @@
     <PackageReference Include="CommandLineParser" Version="2.3.0" />
     <PackageReference Include="Microsoft.Azure.Management.Fluent" Version="1.18.0" />
     <PackageReference Include="Microsoft.Azure.Management.Websites" Version="2.0.1" />
+    <PackageReference Include="YamlDotNet" Version="5.3.0" />
   </ItemGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <LangVersion>7.1</LangVersion>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
     <LangVersion>7.1</LangVersion>
   </PropertyGroup>
 </Project>
