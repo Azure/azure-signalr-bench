@@ -207,7 +207,7 @@ function RunAspNetCommonScenario()
   run_command_core $tag $Scenario $Transport $MessageEncoding $user "$passwd" "$connectionString" $outputDir $config_path $connection $concurrentConnection $send $serverUrl $unit
 
   # remove appserver
-  $AspNetWebMgrWorkingDir/DeployWebApp --removeResourceGroup=1 --resourceGroup=${AspNetWebAppResGrp}
+  $AspNetWebMgrDir/DeployWebApp --removeResourceGroup=1 --resourceGroup=${AspNetWebAppResGrp} --servicePrincipal $ServicePrincipal
 }
 
 function SendToGroup()
