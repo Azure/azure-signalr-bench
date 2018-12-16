@@ -35,7 +35,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionIndex}.{type}",
                     out List<int> connectionIndex, (obj) => (List<int>)obj);
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionSuccessFlag}.{type}",
-                    out List<SignalREnums.ConnectionState> connectionsSuccessFlag, (obj) => (List<SignalREnums.ConnectionState>)obj);
+                    out List<SignalREnums.ConnectionState> connectionsSuccessFlag,
+                    (obj) => (List<SignalREnums.ConnectionState>)obj);
 
                 // Generate necessary data
                 var data = new Dictionary<string, object>
