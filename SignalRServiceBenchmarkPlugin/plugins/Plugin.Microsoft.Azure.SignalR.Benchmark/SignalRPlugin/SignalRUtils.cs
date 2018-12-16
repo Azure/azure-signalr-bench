@@ -229,7 +229,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
 
             // Update epoch
             merged[SignalRConstants.StatisticsEpoch] = Min(results, SignalRConstants.StatisticsEpoch);
-
+            merged[SignalRConstants.StatisticsSendingStep] = Min(results, SignalRConstants.StatisticsSendingStep);
             merged = merged.Union(SumMessageLatencyStatistics).ToDictionary(entry => entry.Key, entry => entry.Value);
 
             return merged;
