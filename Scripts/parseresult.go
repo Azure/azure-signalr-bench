@@ -28,7 +28,7 @@ type Counters struct {
 	LT_900      int64 `json:"message:lt:900"`
 	LT_1000     int64 `json:"message:lt:1000"`
 	GE_1000     int64 `json:"message:ge:1000"`
-	Sending     int64 `json:"epoch"`
+	Sending     int64 `json:"sendingStep"`
         ConnError   int64 `json:"connection:connect:fail"`
         ReConn      int64 `json:"connection:reconnect"`
         ConnSucc    int64 `json:"connection:connect:success"`
