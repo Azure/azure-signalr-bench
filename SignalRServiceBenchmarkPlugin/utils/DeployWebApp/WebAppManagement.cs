@@ -179,7 +179,7 @@ namespace DeployWebApp
                                     pricingTier: PricingTier.PremiumP1v2,
                                     os : Microsoft.Azure.Management.AppService.Fluent.OperatingSystem.Windows)).ToList();
 
-            await BatchProcess(packages, CreateAppPlan, 4);
+            await BatchProcess(packages, CreateAppPlan, _argsOption.ConcurrentCountOfServicePlan);
 
             // create webapp
             var servicePlanList = new List<IAppServicePlan>();
