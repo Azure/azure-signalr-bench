@@ -182,18 +182,14 @@ namespace DeployWebApp
             await BatchProcess(packages, CreateAppPlan, _argsOption.ConcurrentCountOfServicePlan);
 
             // create webapp
-            var servicePlanList = new List<IAppServicePlan>();
-            for (var i = 0; i < _argsOption.WebappCount; i++)
-            {
-                var appService = _azure.AppServices.AppServicePlans.GetByResourceGroup(_argsOption.GroupName, webappNameList[i]);
-                servicePlanList.Add(appService);
-            }
             var tasks = new List<Task>();
             for (var i = 0; i < _argsOption.WebappCount; i++)
             {
                 var name = webappNameList[i];
+                var appService = _azure.AppServices.AppServicePlans.GetByResourceGroup(
+                    _argsOption.GroupName, webappNameList[i]);
                 var t = _azure.WebApps.Define(name)
-                         .WithExistingWindowsPlan(servicePlanList[i])
+                         .WithExistingWindowsPlan(appService)
                          .WithExistingResourceGroup(resourceGroup)
                          .WithWebAppAlwaysOn(true)
                          .DefineSourceControl()
