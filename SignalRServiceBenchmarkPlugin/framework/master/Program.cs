@@ -87,13 +87,16 @@ namespace Rpc.Master
             var tasks = new List<Task<bool>>();
 
             // Try to install plugin
-            var installResults = await Task.WhenAll(from client in clients select client.InstallPluginAsync(moduleName));
+            var installResults = await Task.WhenAll(from client in clients
+                                                    select client.InstallPluginAsync(moduleName));
             var success = installResults.All(result => result);
 
             if (!success) throw new Exception("Fail to install plugin in slaves.");
         }
 
-        private static async Task ProcessPipeline(IList<IList<MasterStep>> pipeline, IList<IRpcClient> clients)
+        private static async Task ProcessPipeline(
+            IList<IList<MasterStep>> pipeline,
+            IList<IRpcClient> clients)
         {
             foreach(var parallelStep in pipeline)
             {

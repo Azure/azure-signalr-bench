@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace DeployWebApp
@@ -101,6 +102,51 @@ namespace DeployWebApp
             return true;
         }
 
+        private static Task BatchProcess<T>(IList<T> source, Func<T, Task> f, int max)
+        {
+            var initial = (max >> 1);
+            var s = new System.Threading.SemaphoreSlim(initial, max);
+            _ = Task.Run(async () =>
+            {
+                for (int i = initial; i < max; i++)
+                {
+                    await Task.Delay(100);
+                    s.Release();
+                }
+            });
+
+            return Task.WhenAll(from item in source
+                                select Task.Run(async () =>
+                                {
+                                    await s.WaitAsync();
+                                    try
+                                    {
+                                        await f(item);
+                                    }
+                                    finally
+                                    {
+                                        s.Release();
+                                    }
+                                }));
+        }
+
+        public static Task CreateAppPlan(
+            (IAzure azure,
+            string name,
+            string region,
+            string groupName,
+            PricingTier pricingTier,
+            Microsoft.Azure.Management.AppService.Fluent.OperatingSystem os) package)
+        {
+            return package.azure.AppServices.AppServicePlans
+                                    .Define(package.name)
+                                    .WithRegion(package.region)
+                                    .WithExistingResourceGroup(package.groupName)
+                                    .WithPricingTier(package.pricingTier)
+                                    .WithOperatingSystem(package.os)
+                                    .CreateAsync();
+        }
+
         public async Task Deploy()
         {
             Login();
@@ -125,26 +171,22 @@ namespace DeployWebApp
                 webappNameList.Add(name);
             }
             // create app service plans
-            var planTaskList = new List<Task<IAppServicePlan>>();
-            for (var i = 0; i < _argsOption.WebappCount; i++)
-            {
-                var appServicePlan = _azure.AppServices.AppServicePlans
-                                    .Define(webappNameList[i])
-                                    .WithRegion(_argsOption.Location)
-                                    .WithExistingResourceGroup(_argsOption.GroupName)
-                                    .WithPricingTier(PricingTier.PremiumP1v2)
-                                    .WithOperatingSystem(Microsoft.Azure.Management.AppService.Fluent.OperatingSystem.Windows)
-                                    .CreateAsync();
-                planTaskList.Add(appServicePlan);
-            }
+            var packages = (from i in Enumerable.Range(0, _argsOption.WebappCount)
+                            select (azure : _azure,
+                                    name : webappNameList[i],
+                                    region : _argsOption.Location,
+                                    groupName : _argsOption.GroupName,
+                                    pricingTier: PricingTier.PremiumP1v2,
+                                    os : Microsoft.Azure.Management.AppService.Fluent.OperatingSystem.Windows)).ToList();
 
-            await Task.WhenAll(planTaskList);
+            await BatchProcess(packages, CreateAppPlan, 4);
 
             // create webapp
             var servicePlanList = new List<IAppServicePlan>();
-            foreach (var t in planTaskList)
+            for (var i = 0; i < _argsOption.WebappCount; i++)
             {
-                servicePlanList.Add(t.GetAwaiter().GetResult());
+                var appService = _azure.AppServices.AppServicePlans.GetByResourceGroup(_argsOption.GroupName, webappNameList[i]);
+                servicePlanList.Add(appService);
             }
             var tasks = new List<Task>();
             for (var i = 0; i < _argsOption.WebappCount; i++)

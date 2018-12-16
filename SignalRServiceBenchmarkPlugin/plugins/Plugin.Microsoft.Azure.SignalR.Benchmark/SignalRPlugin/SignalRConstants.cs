@@ -69,6 +69,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         public static readonly string StatisticsTimestamp = "Time";
         public static readonly string StatisticsCounters = "Counters";
         public static readonly string StatisticsEpoch = "epoch";
+        public static readonly string StatisticsSendingStep = "sendingStep";
         public static readonly string StatisticsMessageSent = "message:sent";
         public static readonly string StatisticsMessageReceived = "message:received";
         public static readonly string StatisticsGroupJoinSuccess = "group:join:success";

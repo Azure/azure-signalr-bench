@@ -1075,17 +1075,19 @@ namespace JenkinsScript
 
         static void WaitPortOpen(string ipAddr, int port)
         {
+            var seconds = 120;
             using (var cts = new CancellationTokenSource())
             {
                 Util.Log($"Check {ipAddr}:{port} open or not");
-                cts.CancelAfter(TimeSpan.FromSeconds(120));
+                cts.CancelAfter(TimeSpan.FromSeconds(seconds));
                 while (!cts.IsCancellationRequested)
                 {
                     if (isPortOpen(ipAddr, port))
                     {
-                        break;
+                        return;
                     }
                 }
+                Util.Log($"{ipAddr}:{port} is not reachable after {seconds} seconds.");
             }
         }
 
