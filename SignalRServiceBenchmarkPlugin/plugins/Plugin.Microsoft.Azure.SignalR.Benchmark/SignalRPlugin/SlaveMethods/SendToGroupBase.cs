@@ -103,7 +103,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
 
         protected void SetSendingSteps()
         {
-            StatisticsCollector.AddSendingStep(RemainderEnd == 0 ? GroupInternalRemainderEnd : RemainderEnd);
+            StatisticsCollector.SetSendingStep(RemainderEnd == 0 ? GroupInternalRemainderEnd : RemainderEnd);
         }
 
         protected virtual void LoadParameters(IDictionary<string, object> stepParameters)

@@ -43,10 +43,10 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods.Statistics
             ResetCounters("connection:");
         }
 
-        public void AddSendingStep(long sendingStep)
+        public void SetSendingStep(long sendingStep)
         {
             _statistics.AddOrUpdate(SignalRConstants.StatisticsSendingStep,
-                sendingStep, (k, v) => v + sendingStep);
+                sendingStep, (k, v) => sendingStep);
         }
 
         public void IncreaseEpoch()

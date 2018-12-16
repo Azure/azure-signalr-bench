@@ -45,7 +45,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
 
                 // Reset counters
                 SignalRUtils.ResetCounters(statisticsCollector);
-                statisticsCollector.AddSendingStep(remainderEnd);
+                statisticsCollector.SetSendingStep(remainderEnd);
                 // Send messages
                 await Task.WhenAll(from i in Enumerable.Range(0, connections.Count)
                                    where connectionIndex[i] % modulo >= remainderBegin && connectionIndex[i] % modulo < remainderEnd
