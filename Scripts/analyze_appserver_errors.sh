@@ -47,6 +47,11 @@ parse_all_logs() {
   then
     mkdir $outdir
   fi
+  if [ ! -e $RAW_FILETER_RESULT ]
+  then
+    return
+  fi
+
   while read line
   do
     datetime=`echo "$line"|awk '{print $1}'`
