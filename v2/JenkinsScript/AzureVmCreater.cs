@@ -358,8 +358,8 @@ namespace JenkinsScript
             return _azure.Networks.Define(name)
                 .WithRegion(location)
                 .WithExistingResourceGroup(groupName)
-                .WithAddressSpace("10.0.0.0/16")
-                .WithSubnet(subNetName, "10.0.0.0/24")
+                .WithAddressSpace("10.220.0.0/24")
+                .WithSubnet(subNetName, "10.220.0.0/24")
                 .Create();
         }
 
