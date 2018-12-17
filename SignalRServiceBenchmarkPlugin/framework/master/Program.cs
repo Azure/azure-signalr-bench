@@ -43,7 +43,14 @@ namespace Rpc.Master
             InstallSerializerAndDeserializer(_plugin, clients);
 
             // Process pipeline
-            await ProcessPipeline(benchmarkConfiguration.Pipeline, clients);
+            try
+            {
+                await ProcessPipeline(benchmarkConfiguration.Pipeline, clients);
+            }
+            catch (Exception e)
+            {
+                Log.Error($"Stop for {e.Message}");
+            }
         }
 
         private static void InstallSerializerAndDeserializer(IPlugin plugin, IList<IRpcClient> clients)
