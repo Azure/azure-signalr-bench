@@ -130,8 +130,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             {
                 package.connectionsSuccessFlag[package.LocalIndex] = package.AbnormalState;
                 var message = $"Fail to start connection: {ex}";
+                // only record error instead of throwing exception, allow reconnect
                 Log.Error(message);
-                throw;
             }
         }
 

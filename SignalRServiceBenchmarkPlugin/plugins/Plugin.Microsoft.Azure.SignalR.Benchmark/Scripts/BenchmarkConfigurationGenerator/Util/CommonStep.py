@@ -9,7 +9,10 @@ def pre_sending_steps(type_, connection_config, statistics_config, scenario_conf
         create_connection(type_, scenario_config.connections, connection_config.url, connection_config.protocol,
                           connection_config.transport),
         start_connection(type_, scenario_config.concurrent),
-        wait(type_, constant_config.wait_time)
+        wait(type_, constant_config.wait_time),
+        reconnect(scenario_config.type, scenario_config.connections, connection_config.url,
+                  connection_config.protocol, connection_config.transport,
+                  scenario_config.concurrent)
     ]
     return pre_send
 
