@@ -40,10 +40,10 @@ Pipeline:
 -
   - Type: P1
     Method: StartConnection
-    Parameter.ConcurrentConnetion: 100
+    Parameter.ConcurrentConnection: 100
   - Type: P2
     Method: StartConnection
-    Parameter.ConcurrentConnetion: 10
+    Parameter.ConcurrentConnection: 10
 # 5th parallel step
 -
   - Type: P1

@@ -10,7 +10,7 @@ Key = {
     'HubUrl': 'Parameter.HubUrl',
     'Protocol': 'Parameter.Protocol',
     'TransportType': 'Parameter.TransportType',
-    'ConcurrentConnetion': 'Parameter.ConcurrentConnetion',
+    'ConcurrentConnection': 'Parameter.ConcurrentConnection',
     'MessageSize': 'Parameter.MessageSize',
     'RemainderBegin': 'Parameter.RemainderBegin',
     'RemainderEnd': 'Parameter.RemainderEnd',
@@ -68,7 +68,7 @@ def reconnect(type_, connection_total, hub_url, protocol, transport_type, concur
             Key['HubUrl']: hub_url,
             Key['Protocol']: protocol,
             Key['TransportType']: transport_type,
-            Key['ConcurrentConnetion']: concurrent
+            Key['ConcurrentConnection']: concurrent
         }
     }]
 
@@ -125,7 +125,7 @@ def start_connection(type_, concurrent_connection):
     return [{
         **required(type_, "StartConnection"),
         **{
-            Key['ConcurrentConnetion']: concurrent_connection
+            Key['ConcurrentConnection']: concurrent_connection
         }
     }]
 

@@ -8,7 +8,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
     {
         // Configuration parameters
         public static readonly string Type = "Type";
-        public static readonly string ConcurrentConnection = "Parameter.ConcurrentConnetion";
+        public static readonly string ConcurrentConnection = "Parameter.ConcurrentConnection";
         public static readonly string ConnectionTotal = "Parameter.ConnectionTotal";
         public static readonly string ConnectionBegin = "Parameter.ConnectionBegin";
         public static readonly string ConnectionEnd = "Parameter.ConnectionEnd";
