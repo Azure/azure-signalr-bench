@@ -93,6 +93,7 @@ function run_unit() {
  local ConnectionString="$3"
  local service
  export RebootASRS="false"
+ clean_known_hosts
  for service in $bench_serviceunit_list
  do
    cd $ScriptWorkingDir
@@ -105,6 +106,7 @@ function run_all_units() {
  local passwd="$2"
  local service
  local signalrServiceName
+ clean_known_hosts
  for service in $bench_serviceunit_list
  do
    cd $ScriptWorkingDir

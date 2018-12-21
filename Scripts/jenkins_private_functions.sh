@@ -4,6 +4,11 @@
 
 declare -A ScenarioHandlerDict=([frequentJoinLeaveGroup]="SendToGroup" ["sendToGroup"]="SendToGroup" ["sendToClient"]="SendToClient")
 
+function clean_known_hosts()
+{
+  echo "" > ~/.ssh/known_hosts
+}
+
 function run_command_core()
 {
   local tag=$1
@@ -637,9 +642,11 @@ done
 EOF
   nohup sh $script_collect_slaves_top &
   collect_slaves_top_pid=$!
-
-  nohup sh $script_collect_appserver_top &
-  collect_appserver_top_pid=$!
+  if [ "$AspNetSignalR" == "" ]
+  then
+    nohup sh $script_collect_appserver_top &
+    collect_appserver_top_pid=$!
+  fi
 }
 
 stop_collect_slaves_appserver_top()
