@@ -51,5 +51,8 @@ namespace DeployWebApp
 
         [Option("hubName", Required = false, Default = "signalrbench", HelpText = "Specify the hubName which will show up in the end of URL, only for benchmark use")]
         public string HubName { get; set; }
+
+        [Option("priceTier", Required = false, Default = "StandardS3", HelpText = "Specify the price tier you want to run <StandardS1|StandardS2|StandardS3|PremiumP1v2|PremiumP1v2>, default is StandardS3")]
+        public string PriceTier { get; set; }
     }
 }

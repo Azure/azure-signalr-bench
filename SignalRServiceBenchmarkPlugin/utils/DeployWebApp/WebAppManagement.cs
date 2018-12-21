@@ -16,6 +16,7 @@ namespace DeployWebApp
     {
         private ArgsOption _argsOption;
         private IAzure _azure;
+        private IDictionary<string, PricingTier> _priceTierMapper;
 
         private IResourceGroup GetResourceGroup()
         {
@@ -82,6 +83,14 @@ namespace DeployWebApp
         public WebAppManagement(ArgsOption argsOption)
         {
             _argsOption = argsOption;
+            _priceTierMapper = new Dictionary<string, PricingTier>()
+            {
+                { "StandardS1", PricingTier.StandardS1},
+                { "StandardS2", PricingTier.StandardS2},
+                { "StandardS3", PricingTier.StandardS3},
+                { "PremiumP1v2", PricingTier.PremiumP1v2},
+                { "PremiumP1v2", PricingTier.PremiumP2v2}
+            };
         }
 
         private bool ValidateDeployParameters()
@@ -147,6 +156,13 @@ namespace DeployWebApp
                                     .CreateAsync();
         }
 
+        private bool FindPricingTier(string priceTierValue, out PricingTier result)
+        {
+            var found = _priceTierMapper.TryGetValue(priceTierValue, out PricingTier v);
+            result = v;
+            return found;
+        }
+
         public async Task Deploy()
         {
             Login();
@@ -170,13 +186,18 @@ namespace DeployWebApp
                 var name = _argsOption.WebAppNamePrefix + $"{rootTimestamp}{i}";
                 webappNameList.Add(name);
             }
+            if (!FindPricingTier(_argsOption.PriceTier, out PricingTier targetPricingTier))
+            {
+                Console.WriteLine($"Unsupported pricing tier: {_argsOption.PriceTier}");
+                return;
+            }
             // create app service plans
             var packages = (from i in Enumerable.Range(0, _argsOption.WebappCount)
                             select (azure : _azure,
                                     name : webappNameList[i],
                                     region : _argsOption.Location,
                                     groupName : _argsOption.GroupName,
-                                    pricingTier: PricingTier.PremiumP1v2,
+                                    pricingTier: targetPricingTier,
                                     os : Microsoft.Azure.Management.AppService.Fluent.OperatingSystem.Windows)).ToList();
 
             await BatchProcess(packages, CreateAppPlan, _argsOption.ConcurrentCountOfServicePlan);
@@ -204,6 +225,12 @@ namespace DeployWebApp
             await Task.WhenAll(tasks);
             sw.Stop();
             Console.WriteLine($"it takes {sw.ElapsedMilliseconds} ms");
+            for (var i = 0; i < _argsOption.WebappCount; i++)
+            {
+                var name = webappNameList[i];
+                var id = _azure.WebApps.GetByResourceGroup(_argsOption.GroupName, name).Id;
+                Console.WriteLine(id);
+            }
             // dump results
             if (_argsOption.OutputFile == null)
             {
