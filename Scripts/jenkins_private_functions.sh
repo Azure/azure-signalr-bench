@@ -666,7 +666,7 @@ stop_collect_slaves_appserver_top()
   fi
 }
 
-function copy_log_from_slaves()
+function copy_log_from_slaves_master()
 {
   local user=$1
   local passwd="$2"
@@ -675,21 +675,34 @@ function copy_log_from_slaves()
   local i j k
   for i in `python extract_ip.py -i $PrivateIps -q slaveList`
   do
-    local slaveLogPath=`sshpass -p $passwd ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $user@${i} "find /home/$user/slave -iname slave*.log"`
-    k=0
-    for j in $slaveLogPath
-    do
-      sshpass -p $passwd scp -o StrictHostKeyChecking=no -o LogLevel=ERROR $user@${i}:${j} $outputDir/slave_${i}_${k}.log
-      if [ $? -ne 0 ]
-      then
-        sshpass -p $passwd ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $user@${i} "find /home/$user/slave -iname slave*.log"
-      fi
-      k=$(($k+1))
-    done
+    sshpass -p $passwd scp -o StrictHostKeyChecking=no -o LogLevel=ERROR $user@${i}:/home/$user/slave/publish/slave*.log $outputDir/
+    if [ $? -ne 0 ]
+    then
+      sshpass -p $passwd ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $user@${i} "find /home/$user/slave -iname slave*.log"
+    fi
+    #local slaveLogPath=`sshpass -p $passwd ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $user@${i} "find /home/$user/slave -iname slave*.log"`
+    #k=0
+    #for j in $slaveLogPath
+    #do
+    #  sshpass -p $passwd scp -o StrictHostKeyChecking=no -o LogLevel=ERROR $user@${i}:${j} $outputDir/slave_${i}_${k}.log
+    #  if [ $? -ne 0 ]
+    #  then
+    #    sshpass -p $passwd ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $user@${i} "find /home/$user/slave -iname slave*.log"
+    #  fi
+    #  k=$(($k+1))
+    #done
+  done
+  for i in `python extract_ip.py -i $PrivateIps -q master`
+  do
+    sshpass -p $passwd scp -o StrictHostKeyChecking=no -o LogLevel=ERROR $user@${i}:/home/$user/master/publish/master*.log $outputDir/
+    if [ $? -ne 0 ]
+    then
+      sshpass -p $passwd ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $user@${i} "find /home/$user/master -iname master*.log"
+    fi
   done
   cd $outputDir
-  tar zcvf slavelog.tgz slave*.log
-  rm slave*.log
+  tar zcvf slave_master_log.tgz slave*.log master*.log
+  rm slave*.log master*.log
   cd -
 }
 
@@ -765,7 +778,7 @@ EOF
   then
     sshpass -p $passwd ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR ${user}@${master} "find /home/${user}/master -iname counters.txt"
   fi
-  copy_log_from_slaves ${user} $passwd ${outputDir}
+  copy_log_from_slaves_master ${user} $passwd ${outputDir}
   enable_exit_immediately_when_fail
 }
 
