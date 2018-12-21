@@ -89,7 +89,7 @@ namespace DeployWebApp
                 { "StandardS2", PricingTier.StandardS2},
                 { "StandardS3", PricingTier.StandardS3},
                 { "PremiumP1v2", PricingTier.PremiumP1v2},
-                { "PremiumP1v2", PricingTier.PremiumP2v2}
+                { "PremiumP2v2", PricingTier.PremiumP2v2}
             };
         }
 
