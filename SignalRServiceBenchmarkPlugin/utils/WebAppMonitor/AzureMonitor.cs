@@ -1,12 +1,8 @@
 ﻿using Microsoft.Azure.Management.Fluent;
 using Microsoft.Azure.Management.Monitor.Fluent;
-using Microsoft.Azure.Management.Monitor.Fluent.Models;
 using Microsoft.Azure.Management.ResourceManager.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent.Core;
 using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace azuremonitor
 {
@@ -39,10 +35,8 @@ namespace azuremonitor
         private void Dump(IMetricDefinition metricDefinition)
         {
             var metricCollection = metricDefinition.DefineQuery()
-                                .StartingFrom(DateTime.Now.AddMinutes(-20).ToUniversalTime()).EndsBefore(DateTime.Now.ToUniversalTime())
-                                //.WithAggregation("Average")
-                                //.WithInterval(TimeSpan.FromSeconds(5))
-                                //.WithOdataFilter("name.value eq 'CpuPercentage'")
+                                .StartingFrom(DateTime.Now.AddSeconds(-_argsOption.SecondsBeforeNow).ToUniversalTime())
+                                .EndsBefore(DateTime.Now.ToUniversalTime())
                                 .Execute();
             Console.WriteLine("Metrics for '" + _argsOption.ResourceId + "':");
             Console.WriteLine("Namespacse: " + metricCollection.Namespace);

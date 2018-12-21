@@ -23,7 +23,7 @@ namespace azuremonitor
             var argsOption = ParseArgs(args);
             var azureMonitor = new AzureMonitor(argsOption);
             azureMonitor.Login();
-            azureMonitor.ListMetricDefinitionsSample();
+            //azureMonitor.ListMetricDefinitionsSample();
             azureMonitor.QueryMetricDefinitionsSample();
         }
         /*
