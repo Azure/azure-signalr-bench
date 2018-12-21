@@ -292,12 +292,13 @@ function start_top_tracking() {
   local i
   local resName=$1
   local output_dir=$2
+  local duration=$3
   local ns=""
   g_config=""
   g_result=""
-  if [ $# -eq 3 ]
+  if [ $# -eq 4 ]
   then
-    ns=$3
+    ns=$4
   fi
   find_target_by_iterate_all_k8slist $resName k8s_query $ns
   local config_file=$g_config
@@ -305,7 +306,8 @@ function start_top_tracking() {
   echo "'$result'"
   if [ "$config_file" != "" ] && [ "$result" != "" ]
   then
-    while [ 1 ]
+    local end=$((SECONDS + $duration))
+    while [ $SECONDS -lt $end ]
     do
      for i in $result
      do
@@ -327,6 +329,7 @@ function start_connection_tracking() {
   local i
   local resName=$1
   local output_dir=$2
+  local duration=$3
   g_config=""
   g_result=""
   find_target_by_iterate_all_k8slist $resName k8s_query
@@ -338,8 +341,9 @@ function start_connection_tracking() {
   do
      kubectl exec --kubeconfig=$config_file $i apt-get install net-tools > /dev/null
   done
+  local end=$((SECONDS + $duration))
   # collect connections
-  while [ 1 ]
+  while [ $SECONDS -lt $end ]
   do
      for i in $result
      do
@@ -634,6 +638,7 @@ function track_nginx_top() {
   local res=$1
   local ns=$2
   local output_dir=$3
+  local duration=$4
   g_config=""
   g_result=""
   find_target_by_iterate_all_k8slist $res get_nginx_pod_internal $ns
@@ -641,7 +646,8 @@ function track_nginx_top() {
   local result=$g_result
   if [ "$config_file" != "" ] && [ "$result" != "" ]
   then
-    while [ 1 ]
+    local end=$((SECONDS + $duration))
+    while [ $SECONDS -lt $end ]
     do
      for i in $result
      do

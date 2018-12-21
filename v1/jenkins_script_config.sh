@@ -491,6 +491,7 @@ function run_unit() {
    local ConnectionString="$1"
    local callback=$2
    local service=$3
+   local monitorDuration=$(($sigbench_run_duration + 60))
    cd $ScriptWorkingDir
    if [ "$ConnectionString" == "" ]
    then
@@ -510,14 +511,14 @@ function run_unit() {
    local service_name=$(extract_servicename_from_connectionstring $ConnectionString)
    if [ "$service_name" != "" ]
    then
-     nohup sh collect_pod_top.sh $service_name $k8s_result_dir &
+     nohup sh collect_pod_top.sh $service_name $k8s_result_dir $monitorDuration &
      collect_pod_top_pid=$!
      if [ "$g_nginx_ns" != "" ]
      then
-        nohup sh collect_nginx_top.sh $service_name $g_nginx_ns $k8s_result_dir &
+        nohup sh collect_nginx_top.sh $service_name $g_nginx_ns $k8s_result_dir $monitorDuration &
         collect_nginx_top_pid=$!
      fi
-     nohup sh collect_connections.sh $service_name $k8s_result_dir &
+     nohup sh collect_connections.sh $service_name $k8s_result_dir $monitorDuration &
      collect_conn_pid=$!
    fi
    #############
