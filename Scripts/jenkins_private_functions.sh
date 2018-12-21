@@ -387,20 +387,21 @@ function prepare_result_folder_4_scenario()
 function start_collect_top_for_signalr_and_nginx()
 {
     local k8s_result_dir=$env_statistic_folder
+    local monitorDuration=$(($sigbench_run_duration + 60))
     cd $ScriptWorkingDir
     . ./func_env.sh
     . ./kubectl_utils.sh
     local service_name=$(extract_servicename_from_connectionstring $ConnectionString)
     if [ "$service_name" != "" ]
     then
-       nohup sh collect_pod_top.sh $service_name $k8s_result_dir &
+       nohup sh collect_pod_top.sh $service_name $k8s_result_dir $monitorDuration &
        collect_pod_top_pid=$!
        if [ "$g_nginx_ns" != "" ]
        then
-          nohup sh collect_nginx_top.sh $service_name $g_nginx_ns $k8s_result_dir &
+          nohup sh collect_nginx_top.sh $service_name $g_nginx_ns $k8s_result_dir $monitorDuration &
           collect_nginx_top_pid=$!
        fi
-       nohup sh collect_connections.sh $service_name $k8s_result_dir &
+       nohup sh collect_connections.sh $service_name $k8s_result_dir $monitorDuration &
        collect_conn_pid=$!
     fi
 }
@@ -520,12 +521,6 @@ function run_and_gen_report() {
   local unit=$9
 
   RunCommonScenario $tag $Scenario $Transport $MessageEncoding $user $passwd "$connectionString" $outputDir $unit
-  #if [ "$AspNetSignalR" == "" ]
-  #then
-  #  RunCommonScenario $tag $Scenario $Transport $MessageEncoding $user $passwd "$connectionString" $outputDir $unit
-  #else
-  #  RunAspNetCommonScenario $tag $Scenario $Transport $MessageEncoding $user $passwd "$connectionString" $outputDir $unit
-  #fi
 }
 
 function build_rpc_master() {
