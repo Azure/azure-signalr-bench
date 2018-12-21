@@ -3,10 +3,48 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Common
 {
+    public static class TimedoutTask
+    {
+        public static async Task TimeoutAfter(this Task task, TimeSpan timeout)
+        {
+            using (var timeoutCancellationTokenSource = new CancellationTokenSource())
+            {
+                var completedTask = await Task.WhenAny(task, Task.Delay(timeout, timeoutCancellationTokenSource.Token));
+                if (completedTask == task)
+                {
+                    timeoutCancellationTokenSource.Cancel();
+                    await task;  // Very important in order to propagate exceptions
+                }
+                else
+                {
+                    throw new TimeoutException("The operation has timed out.");
+                }
+            }
+        }
+
+        public static async Task<TResult> TimeoutAfter<TResult>(this Task<TResult> task, TimeSpan timeout)
+        {
+            using (var timeoutCancellationTokenSource = new CancellationTokenSource())
+            {
+                var completedTask = await Task.WhenAny(task, Task.Delay(timeout, timeoutCancellationTokenSource.Token));
+                if (completedTask == task)
+                {
+                    timeoutCancellationTokenSource.Cancel();
+                    return await task;  // Very important in order to propagate exceptions
+                }
+                else
+                {
+                    throw new TimeoutException("The operation has timed out.");
+                }
+            }
+        }
+    }
+
     public class Util
     {
         public static void CreateLogger(string directory, string name, LogTargetEnum logTarget)
@@ -141,6 +179,21 @@ namespace Common
                                         s.Release();
                                     }
                                 }));
+        }
+
+        public static Task TimeoutCheckedTask(Task task, long millisecondsToWait, string taskName = "timeout checked task")
+        {
+            try
+            {
+                var finalTask = TimedoutTask.TimeoutAfter(task, TimeSpan.FromMilliseconds(millisecondsToWait));
+                Log.Information($"Finish {taskName}");
+                return finalTask;
+            }
+            catch (TimeoutException)
+            {
+                Log.Error($"The '{taskName}' timedout after {millisecondsToWait} ms");
+            }
+            return Task.CompletedTask;
         }
     }
 }

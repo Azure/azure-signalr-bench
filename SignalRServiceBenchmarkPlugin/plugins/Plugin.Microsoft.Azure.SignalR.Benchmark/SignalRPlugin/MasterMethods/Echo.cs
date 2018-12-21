@@ -17,7 +17,12 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
         {
             Log.Information($"Echo...");
 
-            // Process on clients
+            if (stepParameters.TryGetValue(SignalRConstants.Duration, out object value))
+            {
+                stepParameters.TryGetTypedValue(SignalRConstants.Duration, out long duration, Convert.ToInt64);
+                var task = Task.WhenAll(from client in clients select client.QueryAsync(stepParameters));
+                return Util.TimeoutCheckedTask(task, duration * 2, nameof(Echo));
+            }
             return Task.WhenAll(from client in clients select client.QueryAsync(stepParameters));
         }
     }

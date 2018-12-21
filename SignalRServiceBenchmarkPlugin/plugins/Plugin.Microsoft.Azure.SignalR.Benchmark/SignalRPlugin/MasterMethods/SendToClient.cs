@@ -51,7 +51,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
             });
 
             // Process on clients
-            return Task.WhenAll(from package in packages select package.Client.QueryAsync(package.Data));
+            var task = Task.WhenAll(from package in packages select package.Client.QueryAsync(package.Data));
+            return Util.TimeoutCheckedTask(task, duration * 2, nameof(SendToClient));
         }
     }
 }

@@ -70,10 +70,6 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
                 Log.Information($"Type: {type} Client: {i}th statistics{Environment.NewLine}{statistics.GetContents()}");
             }
         }
-
-        
-
-        
         
         private void SaveToFile(IDictionary<string, int> mergedResult, string path)
         {
