@@ -163,6 +163,95 @@ namespace DeployWebApp
             return found;
         }
 
+        private void DumpAppServicePlanId(List<string> webappNameList)
+        {
+            string appServicePlanIdList = "";
+
+            for (var i = 0; i < _argsOption.WebappCount; i++)
+            {
+                var name = webappNameList[i];
+                var id = _azure.AppServices.AppServicePlans.GetByResourceGroup(_argsOption.GroupName, name).Id;
+                appServicePlanIdList += id + Environment.NewLine;
+            }
+            if (_argsOption.AppServicePlanIdOutputFile != null)
+            {
+                if (File.Exists(_argsOption.AppServicePlanIdOutputFile))
+                {
+                    File.Delete(_argsOption.AppServicePlanIdOutputFile);
+                }
+                using (var writer = new StreamWriter(_argsOption.AppServicePlanIdOutputFile, true))
+                {
+                    writer.WriteLine(appServicePlanIdList);
+                }
+            }
+            else
+            {
+                Console.WriteLine(appServicePlanIdList);
+            }
+        }
+
+        private void DumpWebAppId(List<string> webappNameList)
+        {
+            string webappIdList = "";
+
+            for (var i = 0; i < _argsOption.WebappCount; i++)
+            {
+                var name = webappNameList[i];
+                var id = _azure.WebApps.GetByResourceGroup(_argsOption.GroupName, name).Id;
+                webappIdList += id + Environment.NewLine;
+            }
+            if (_argsOption.WebAppIdOutputFile != null)
+            {
+                if (File.Exists(_argsOption.WebAppIdOutputFile))
+                {
+                    File.Delete(_argsOption.WebAppIdOutputFile);
+                }
+                using (var writer = new StreamWriter(_argsOption.WebAppIdOutputFile, true))
+                {
+                    writer.WriteLine(webappIdList);
+                }
+            }
+            else
+            {
+                Console.WriteLine(webappIdList);
+            }
+        }
+
+        private void DumpWebAppUrl(List<string> webappNameList)
+        {
+            if (_argsOption.OutputFile == null)
+            {
+                for (var i = 0; i < _argsOption.WebappCount; i++)
+                {
+                    Console.WriteLine($"https://{webappNameList[i]}.azurewebsites.net");
+                }
+            }
+            else
+            {
+                if (File.Exists(_argsOption.OutputFile))
+                {
+                    File.Delete(_argsOption.OutputFile);
+                }
+
+                using (var writer = new StreamWriter(_argsOption.OutputFile, true))
+                {
+                    string result = "";
+                    for (var i = 0; i < _argsOption.WebappCount; i++)
+                    {
+                        if (i == 0)
+                            result = $"https://{webappNameList[i]}.azurewebsites.net/{_argsOption.HubName}";
+                        else
+                            result = result + $"https://{webappNameList[i]}.azurewebsites.net/{_argsOption.HubName}";
+                        if (i + 1 < _argsOption.WebappCount)
+                        {
+                            result = result + ",";
+                        }
+                    }
+                    writer.WriteLine(result);
+                }
+            }
+        }
+
         public async Task Deploy()
         {
             Login();
@@ -225,44 +314,12 @@ namespace DeployWebApp
             await Task.WhenAll(tasks);
             sw.Stop();
             Console.WriteLine($"it takes {sw.ElapsedMilliseconds} ms");
-            for (var i = 0; i < _argsOption.WebappCount; i++)
-            {
-                var name = webappNameList[i];
-                var id = _azure.WebApps.GetByResourceGroup(_argsOption.GroupName, name).Id;
-                Console.WriteLine(id);
-            }
+            // output app service plan Id
+            DumpAppServicePlanId(webappNameList);
+            // output web app Id
+            DumpWebAppId(webappNameList);
             // dump results
-            if (_argsOption.OutputFile == null)
-            {
-                for (var i = 0; i < _argsOption.WebappCount; i++)
-                {
-                    Console.WriteLine($"https://{webappNameList[i]}.azurewebsites.net");
-                }
-            }
-            else
-            {
-                if (File.Exists(_argsOption.OutputFile))
-                {
-                    File.Delete(_argsOption.OutputFile);
-                }
-
-                using (var writer = new StreamWriter(_argsOption.OutputFile, true))
-                {
-                    string result = "";
-                    for (var i = 0; i < _argsOption.WebappCount; i++)
-                    {
-                        if (i == 0)
-                            result = $"https://{webappNameList[i]}.azurewebsites.net/{_argsOption.HubName}";
-                        else
-                            result = result + $"https://{webappNameList[i]}.azurewebsites.net/{_argsOption.HubName}";
-                        if (i + 1 < _argsOption.WebappCount)
-                        {
-                            result = result + ",";
-                        }
-                    }
-                    writer.WriteLine(result);
-                }
-            }
+            DumpWebAppUrl(webappNameList);
         }
 
     }

@@ -49,6 +49,14 @@ namespace DeployWebApp
         [Option("outputFile", Required = false, HelpText = "Specify the output file, default is null and output to console")]
         public string OutputFile { get; set; }
 
+        [Option("appServicePlanIdOutputFile", Required = false,
+            HelpText = "Specify the app service plan output file, default is null and output to console")]
+        public string AppServicePlanIdOutputFile { get; set; }
+
+        [Option("webAppIdOutputFile", Required = false,
+            HelpText = "Specify the web app output file, default is null and output to console")]
+        public string WebAppIdOutputFile { get; set; }
+
         [Option("hubName", Required = false, Default = "signalrbench", HelpText = "Specify the hubName which will show up in the end of URL, only for benchmark use")]
         public string HubName { get; set; }
 
