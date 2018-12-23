@@ -4,8 +4,8 @@ import argparse
 def Analyze(item):
    sendingStep = item['Counters']['sendingStep']
    received = item['Counters']['message:received']
-   successConn = item['Counters']['connection:success']
-   errConn = item['Counters']['connection:error']
+   successConn = item['Counters']['connection:connect:success']
+   errConn = item['Counters']['connection:connect:fail']
    totalConn = errConn + successConn
    ge1s = item['Counters']['message:ge:1000']
    ge1sRate = ge1s/float(received)
@@ -16,10 +16,10 @@ def Analyze(item):
 
 
 def GetConnection(item):
-   if ('connection:success' in item['Counters'] and
-       'connection:error' in item['Counters']):
-       successConn = item['Counters']['connection:success']
-       errConn = item['Counters']['connection:error']
+   if ('connection:connect:success' in item['Counters'] and
+       'connection:connect:fail' in item['Counters']):
+       successConn = item['Counters']['connection:connect:success']
+       errConn = item['Counters']['connection:connect:fail']
        return successConn + errConn
    return 0
 
