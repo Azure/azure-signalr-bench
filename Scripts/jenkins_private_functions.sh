@@ -75,6 +75,48 @@ function get_reduced_appserverUrl()
   echo $appserverUrls
 }
 
+function createWebApp()
+{
+  local unit=$1
+  local appPrefix=$2
+  local connectionString="$3"
+  local serverUrlOutFile=$4
+  local appPlanIdOutFile=$5
+  local webAppIdOutFile=$6
+
+  local resGroup=$AspNetWebAppResGrp #"${appPrefix}"`date +%H%M%S`
+  local appserverCount=$(get_reduced_appserverCount $unit)
+
+  cd $AspNetWebMgrWorkingDir
+  dotnet run -- --servicePrincipal $ServicePrincipal \
+              --location ${VMLocation} \
+              --webappNamePrefix "${appPrefix}" \
+              --webappCount $appserverCount \
+              --connectionString "$connectionString" \
+              --outputFile $serverUrlOutFile --resourceGroup $resGroup \
+              --appServicePlanIdOutputFile $appPlanIdOutFile \
+              --webAppIdOutputFile $webAppIdOutFile
+}
+
+function collectWebAppMetrics()
+{
+  local appPlanOut=$1
+  local webAppOut=$2
+  local outputDir=$3
+  cd $WebAppMonitorWorkingDir
+  local i
+  for i in `cat $appPlanOut`
+  do
+    local webname=`echo $i|awk -F / '{print $NF}'`
+    dotnet run -- --secondsBeforeNow $sigbench_run_duration --servicePrincipal $ServicePrincipal --resourceId $i > $outputDir/${webname}_appPlan_metrics.txt
+  done
+  for i in `cat $webAppOut`
+  do
+    local webname=`echo $i|awk -F / '{print $NF}'`
+    dotnet run -- --secondsBeforeNow $sigbench_run_duration --servicePrincipal $ServicePrincipal --resourceId $i > $outputDir/${webname}_webApp_metrics.txt
+  done
+}
+
 function RunSendToGroup()
 {
   local tag=$1
@@ -89,26 +131,22 @@ function RunSendToGroup()
   local groupType=${10}
   local appserverUrls
 
+  local appPrefix="aspnetwebapp"
+  local serverUrlOut=$outputDir/${appPrefix}.txt
+  local appPlanOut=$outputDir/${appPrefix}_appPlan.txt
+  local webAppOut=$outputDir/${appPrefix}_webApp.txt
+
   if [ "$AspNetSignalR" == "" ]
   then
     cd $ScriptWorkingDir
     appserverUrls=$(get_reduced_appserverUrl $unit)
   else
-    local appPrefix="aspnetwebapp"
-    local resGroup=$AspNetWebAppResGrp #"${appPrefix}"`date +%H%M%S`
-    local appserverCount=$(get_reduced_appserverCount $unit)
-
-    cd $AspNetWebMgrWorkingDir
-    dotnet run -- --servicePrincipal $ServicePrincipal \
-                --location ${VMLocation} \
-                --webappNamePrefix "${appPrefix}" \
-                --webappCount $appserverCount \
-                --connectionString "$connectionString" \
-                --outputFile "${appPrefix}.txt" --resourceGroup $resGroup
-    appserverUrls=`cat ${appPrefix}.txt`
+    createWebApp $unit $appPrefix "$connectionString" $serverUrlOut $appPlanOut $webAppOut
+    appserverUrls=`cat $serverUrlOut`
   fi
+
   cd $PluginScriptWorkingDir
-  local config_path=$PluginScriptWorkingDir/${tag}_${Scenario}_${Transport}_${MessageEncoding}.config
+  local config_path=$outputDir/${tag}_${Scenario}_${Transport}_${MessageEncoding}.config
 
   local maxConnectionOption=""
   if [ "$useMaxConnection" == "true" ]
@@ -132,6 +170,8 @@ function RunSendToGroup()
   run_command_core $tag $Scenario $Transport $MessageEncoding $user "$passwd" "$connectionString" $outputDir $config_path $connection $concurrentConnection $send $serverUrl $unit
   if [ "$AspNetSignalR" != "" ]
   then
+    # get the metrics
+    collectWebAppMetrics $appPlanOut $webAppOut $outputDir
     # remove appserver
     $AspNetWebMgrDir/DeployWebApp --removeResourceGroup=1 --resourceGroup=${AspNetWebAppResGrp} --servicePrincipal $ServicePrincipal
   fi
@@ -151,27 +191,22 @@ function RunSendToClient()
   local msgSize=${10}
   local appserverUrls
 
+  local appPrefix="aspnetwebapp"
+  local serverUrlOut=$outputDir/${appPrefix}.txt
+  local appPlanOut=$outputDir/${appPrefix}_appPlan.txt
+  local webAppOut=$outputDir/${appPrefix}_webApp.txt
+
   if [ "$AspNetSignalR" == "" ]
   then
     cd $ScriptWorkingDir
     appserverUrls=$(get_reduced_appserverUrl $unit)
   else
-    local appPrefix="aspnetwebapp"
-    local resGroup=$AspNetWebAppResGrp #"${appPrefix}"`date +%H%M%S`
-    local appserverCount=$(get_reduced_appserverCount $unit)
-
-    cd $AspNetWebMgrWorkingDir
-    dotnet run -- --servicePrincipal $ServicePrincipal \
-                --location ${VMLocation} \
-                --webappNamePrefix "${appPrefix}" \
-                --webappCount $appserverCount \
-                --connectionString "$connectionString" \
-                --outputFile "${appPrefix}.txt" --resourceGroup $resGroup
-    appserverUrls=`cat ${appPrefix}.txt`
+    createWebApp $unit $appPrefix "$connectionString" $serverUrlOut $appPlanOut $webAppOut
+    appserverUrls=`cat $serverUrlOut`
   fi
 
   cd $PluginScriptWorkingDir
-  local config_path=$PluginScriptWorkingDir/${tag}_${Scenario}_${Transport}_${MessageEncoding}.config
+  local config_path=$outputDir/${tag}_${Scenario}_${Transport}_${MessageEncoding}.config
 
   local maxConnectionOption=""
   if [ "$useMaxConnection" == "true" ]
@@ -196,6 +231,7 @@ function RunSendToClient()
   run_command_core $tag $Scenario $Transport $MessageEncoding $user "$passwd" "$connectionString" $outputDir $config_path $connection $concurrentConnection $send $serverUrl $unit
   if [ "$AspNetSignalR" != "" ]
   then
+    collectWebAppMetrics $appPlanOut $webAppOut $outputDir
     # remove appserver
     $AspNetWebMgrDir/DeployWebApp --removeResourceGroup=1 --resourceGroup=${AspNetWebAppResGrp} --servicePrincipal $ServicePrincipal
   fi
@@ -214,27 +250,22 @@ function RunCommonScenario()
   local unit=$9
   local appserverUrls
 
+  local appPrefix="aspnetwebapp"
+  local serverUrlOut=$outputDir/${appPrefix}.txt
+  local appPlanOut=$outputDir/${appPrefix}_appPlan.txt
+  local webAppOut=$outputDir/${appPrefix}_webApp.txt
+
   if [ "$AspNetSignalR" == "" ]
   then
     cd $ScriptWorkingDir
     appserverUrls=$(get_reduced_appserverUrl $unit)   
   else
-    local appPrefix="aspnetwebapp"
-    local resGroup=$AspNetWebAppResGrp #"${appPrefix}"`date +%H%M%S`
-    local appserverCount=$(get_reduced_appserverCount $unit)
-
-    cd $AspNetWebMgrWorkingDir
-    dotnet run -- --servicePrincipal $ServicePrincipal \
-                --location ${VMLocation} \
-                --webappNamePrefix "${appPrefix}" \
-                --webappCount $appserverCount \
-                --connectionString "$connectionString" \
-                --outputFile "${appPrefix}.txt" --resourceGroup $resGroup
-    appserverUrls=`cat ${appPrefix}.txt`
+    createWebApp $unit $appPrefix "$connectionString" $serverUrlOut $appPlanOut $webAppOut
+    appserverUrls=`cat $serverUrlOut`
   fi
 
   cd $PluginScriptWorkingDir
-  local config_path=$PluginScriptWorkingDir/${tag}_${Scenario}_${Transport}_${MessageEncoding}.config
+  local config_path=$outputDir/${tag}_${Scenario}_${Transport}_${MessageEncoding}.config
 
   local maxConnectionOption=""
   if [ "$useMaxConnection" == "true" ]
@@ -259,58 +290,10 @@ function RunCommonScenario()
 
   if [ "$AspNetSignalR" != "" ]
   then
+    collectWebAppMetrics $appPlanOut $webAppOut $outputDir
     # remove appserver
     $AspNetWebMgrDir/DeployWebApp --removeResourceGroup=1 --resourceGroup=${AspNetWebAppResGrp} --servicePrincipal $ServicePrincipal
   fi
-}
-
-function RunAspNetCommonScenario()
-{
-  local tag=$1
-  local Scenario=$2
-  local Transport=$3
-  local MessageEncoding=$4
-  local user=$5
-  local passwd="$6"
-  local connectionString="$7"
-  local outputDir="$8"
-  local unit=$9
-  local appPrefix="aspnetwebapp"
-  local resGroup=$AspNetWebAppResGrp #"${appPrefix}"`date +%H%M%S`
-  local appserverCount=$(get_reduced_appserverCount $unit)
-
-  cd $AspNetWebMgrWorkingDir
-  dotnet run -- --servicePrincipal $ServicePrincipal \
-                --location ${VMLocation} \
-                --webappNamePrefix "${appPrefix}" \
-                --webappCount $appserverCount \
-                --connectionString "$connectionString" \
-                --outputFile "${appPrefix}.txt" --resourceGroup $resGroup
-  local appserverUrls=`cat ${appPrefix}.txt`
-
-  cd $PluginScriptWorkingDir
-  local config_path=$PluginScriptWorkingDir/${tag}_${Scenario}_${Transport}_${MessageEncoding}.config
-
-  local maxConnectionOption=""
-  if [ "$useMaxConnection" == "true" ]
-  then
-    maxConnectionOption="-m"
-  fi
-  python3 generate.py -u $unit -S $Scenario \
-                      -t $Transport -p $MessageEncoding \
-                      -U $appserverUrls -d $sigbench_run_duration \
-                      -c $config_path $maxConnectionOption
-  #TODO: Hard replacement
-  sed -i 's/CreateConnection/CreateAspNetConnection/g' $config_path
-  cat $config_path
-
-  local connection=`python3 get_sending_connection.py -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q totalConnections $maxConnectionOption`
-  local concurrentConnection=`python3 get_sending_connection.py -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q concurrentConnection $maxConnectionOption`
-  local send=`python3 get_sending_connection.py -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q sendingSteps $maxConnectionOption`
-  run_command_core $tag $Scenario $Transport $MessageEncoding $user "$passwd" "$connectionString" $outputDir $config_path $connection $concurrentConnection $send $serverUrl $unit
-
-  # remove appserver
-  $AspNetWebMgrDir/DeployWebApp --removeResourceGroup=1 --resourceGroup=${AspNetWebAppResGrp} --servicePrincipal $ServicePrincipal
 }
 
 function SendToGroup()

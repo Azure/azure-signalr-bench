@@ -19,5 +19,5 @@ def unit50_webappserver():
    return 16
 
 def unit100_webappserver():
-   return 32
+   return 22
 
