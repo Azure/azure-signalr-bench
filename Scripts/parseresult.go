@@ -30,7 +30,7 @@ type Counters struct {
 	GE_1000     int64 `json:"message:ge:1000"`
 	Sending     int64 `json:"sendingStep"`
         ConnError   int64 `json:"connection:connect:fail"`
-        ReConn      int64 `json:"connection:reconnect"`
+        ReConn      int64 `json:"connection:connect:reconnect"`
         ConnSucc    int64 `json:"connection:connect:success"`
 }
 
@@ -263,6 +263,7 @@ func main() {
         data.addColumn('number', 'LT1000ms(%)');
         data.addColumn('number', 'GE1000ms(%)');
         data.addColumn('number', 'ConnectionDropped(%)');
+        data.addColumn('number', 'Reconnect(%)');
 		`
 		fmt.Printf("%s\n", chartfunc)
                 fmt.Printf("\tdata.addRows([\n")
@@ -277,14 +278,15 @@ func main() {
                         var sumfloat, totalConnFloat float64
                         sumfloat = float64(sum)
                         totalConnFloat = float64(totalConnection)
-                        fmt.Printf("\t [%d, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f],\n",
+                        fmt.Printf("\t [%d, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f],\n",
                                 curSendingStep, float64(v.Counters.LT_100)/sumfloat*100,
                                 float64(v.Counters.LT_200)/sumfloat*100,
                                 float64(v.Counters.LT_300)/sumfloat*100, float64(v.Counters.LT_400)/sumfloat*100,
                                 float64(v.Counters.LT_500)/sumfloat*100, float64(v.Counters.LT_600)/sumfloat*100,
                                 float64(v.Counters.LT_700)/sumfloat*100, float64(v.Counters.LT_800)/sumfloat*100,
                                 float64(v.Counters.LT_900)/sumfloat*100, float64(v.Counters.LT_1000)/sumfloat*100,
-                                float64(v.Counters.GE_1000)/sumfloat*100, float64(v.Counters.ConnError)/totalConnFloat*100)
+                                float64(v.Counters.GE_1000)/sumfloat*100, float64(v.Counters.ConnError)/totalConnFloat*100,
+                                float64(v.Counters.ReConn)/totalConnFloat*100)
                     }
                 }
                 v = monitors[len(monitors)-1]
@@ -294,13 +296,14 @@ func main() {
                         totalConnection = v.Counters.ConnError + v.Counters.ConnSucc
                         sumfloat = float64(sum)
                         totalConnFloat = float64(totalConnection)
-                        fmt.Printf("\t [%d, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f],\n", v.Counters.Sending,
+                        fmt.Printf("\t [%d, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f],\n", v.Counters.Sending,
                                 float64(v.Counters.LT_100)/sumfloat*100, float64(v.Counters.LT_200)/sumfloat*100,
                                 float64(v.Counters.LT_300)/sumfloat*100, float64(v.Counters.LT_400)/sumfloat*100,
                                 float64(v.Counters.LT_500)/sumfloat*100, float64(v.Counters.LT_600)/sumfloat*100,
                                 float64(v.Counters.LT_700)/sumfloat*100, float64(v.Counters.LT_800)/sumfloat*100,
                                 float64(v.Counters.LT_900)/sumfloat*100, float64(v.Counters.LT_1000)/sumfloat*100,
-                                float64(v.Counters.GE_1000)/sumfloat*100, float64(v.Counters.ConnError)/totalConnFloat*100)
+                                float64(v.Counters.GE_1000)/sumfloat*100, float64(v.Counters.ConnError)/totalConnFloat*100,
+                                float64(v.Counters.ReConn)/totalConnFloat*100)
                 }
 		chartfunc = `
         ]);
@@ -376,6 +379,7 @@ func main() {
         data.addColumn('number', 'LT500ms(%)');
         data.addColumn('number', 'GE500ms(%)');
         data.addColumn('number', 'ConnectionDropped(%)');
+        data.addColumn('number', 'Reconnect(%)');
 			`
 		fmt.Printf("%s\n", chartfunc)
 		fmt.Printf("\tdata.addRows([\n")
@@ -394,7 +398,11 @@ func main() {
 		        lt500 = v.Counters.LT_100 + v.Counters.LT_200 + v.Counters.LT_300 + v.Counters.LT_400 + v.Counters.LT_500
 		        ge500 = v.Counters.LT_600 + v.Counters.LT_700 + v.Counters.LT_800 + v.Counters.LT_900 + v.Counters.LT_1000 + v.Counters.GE_1000
 
-			fmt.Printf("\t [%d, %.2f, %.2f, %.2f],\n", curSendingStep, float64(lt500)/sumfloat*100, float64(ge500)/sumfloat*100, float64(v.Counters.ConnError)/totalConnFloat*100)
+			fmt.Printf("\t [%d, %.2f, %.2f, %.2f, %.2f],\n",
+                                  curSendingStep, float64(lt500)/sumfloat*100,
+                                  float64(ge500)/sumfloat*100,
+                                  float64(v.Counters.ConnError)/totalConnFloat*100,
+                                  float64(v.Counters.ReConn)/totalConnFloat*100)
                     }
                 }
                 v = monitors[len(monitors)-1]
@@ -406,7 +414,11 @@ func main() {
                         totalConnFloat = float64(totalConnection)
 		        lt500 = v.Counters.LT_100 + v.Counters.LT_200 + v.Counters.LT_300 + v.Counters.LT_400 + v.Counters.LT_500
 		        ge500 = v.Counters.LT_600 + v.Counters.LT_700 + v.Counters.LT_800 + v.Counters.LT_900 + v.Counters.LT_1000 + v.Counters.GE_1000
-                        fmt.Printf("\t [%d, %.2f, %.2f, %.2f],\n", v.Counters.Sending, float64(lt500)/sumfloat*100, float64(ge500)/sumfloat*100, float64(v.Counters.ConnError)/totalConnFloat*100)
+                        fmt.Printf("\t [%d, %.2f, %.2f, %.2f, %.2f],\n",
+                                   v.Counters.Sending, float64(lt500)/sumfloat*100,
+                                   float64(ge500)/sumfloat*100,
+                                   float64(v.Counters.ConnError)/totalConnFloat*100,
+                                   float64(v.Counters.ReConn)/totalConnFloat*100)
                 }
 			chartfunc = `
         ]);
@@ -471,6 +483,7 @@ func main() {
         data.addColumn('number', 'LT1s(%)');
         data.addColumn('number', 'GE1s(%)');
         data.addColumn('number', 'ConnectionDropped(%)');
+        data.addColumn('number', 'Reconnect(%)');
 			`
 		fmt.Printf("%s\n", chartfunc)
 		fmt.Printf("\tdata.addRows([\n")
@@ -488,7 +501,10 @@ func main() {
                         totalConnFloat = float64(totalConnection)
                         lt1 = v.Counters.LT_100 + v.Counters.LT_200 + v.Counters.LT_300 + v.Counters.LT_400 + v.Counters.LT_500 + v.Counters.LT_600 + v.Counters.LT_700 + v.Counters.LT_800 + v.Counters.LT_900 + v.Counters.LT_1000
                         ge1 = v.Counters.GE_1000
-                        fmt.Printf("\t [%d, %.2f, %.2f, %.2f],\n", curSendingStep, float64(lt1)/sumfloat*100, float64(ge1)/sumfloat*100, float64(v.Counters.ConnError)/totalConnFloat*100)
+                        fmt.Printf("\t [%d, %.2f, %.2f, %.2f, %.2f],\n",
+                                   curSendingStep, float64(lt1)/sumfloat*100,
+                                   float64(ge1)/sumfloat*100, float64(v.Counters.ConnError)/totalConnFloat*100,
+                                   float64(v.Counters.ReConn)/totalConnFloat*100)
                     }
                 }
                 v = monitors[len(monitors)-1]
@@ -500,7 +516,10 @@ func main() {
                         totalConnFloat = float64(totalConnection)
                         lt1 = v.Counters.LT_100 + v.Counters.LT_200 + v.Counters.LT_300 + v.Counters.LT_400 + v.Counters.LT_500 + v.Counters.LT_600 + v.Counters.LT_700 + v.Counters.LT_800 + v.Counters.LT_900 + v.Counters.LT_1000
                         ge1 = v.Counters.GE_1000
-                        fmt.Printf("\t [%d, %.2f, %.2f, %.2f],\n", v.Counters.Sending, float64(lt1)/sumfloat*100, float64(ge1)/sumfloat*100, float64(v.Counters.ConnError)/totalConnFloat*100)
+                        fmt.Printf("\t [%d, %.2f, %.2f, %.2f, %.2f],\n",
+                                   v.Counters.Sending, float64(lt1)/sumfloat*100,
+                                   float64(ge1)/sumfloat*100, float64(v.Counters.ConnError)/totalConnFloat*100,
+                                   float64(v.Counters.ReConn)/totalConnFloat*100)
                 }
 			chartfunc = `
         ]);

@@ -46,6 +46,7 @@ function set_job_env() {
    export result_root=`date +%Y%m%d%H%M%S`
    export DogFoodResourceGroup="honzhanatpf"`date +%M%S`
    export serverUrl=`awk '{print $2}' $JenkinsRootPath/JobConfig.yaml`
+   export MaxSendIteration=30 # we evaluate the total running time per this value
 }
 
 # depends on global env:
@@ -491,7 +492,7 @@ function run_unit() {
    local ConnectionString="$1"
    local callback=$2
    local service=$3
-   local monitorDuration=$(($sigbench_run_duration + 60))
+   local monitorDuration=$(($sigbench_run_duration * $MaxSendIteration))
    cd $ScriptWorkingDir
    if [ "$ConnectionString" == "" ]
    then

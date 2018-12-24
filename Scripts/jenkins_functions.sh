@@ -43,6 +43,7 @@ function set_job_env() {
    export DogFoodResourceGroup="hzatpf"`date +%M%S`
    export AspNetWebAppResGrp="hzperfwebapp"`date +%H%M%S`
    export serverUrl=`awk '{print $2}' $JenkinsRootPath/JobConfig.yaml`
+   export MaxSendIteration=30 # we evaluate the total running time per this value
 }
 # require global env:
 # ASRSEnv, DogFoodResourceGroup, ASRSLocation

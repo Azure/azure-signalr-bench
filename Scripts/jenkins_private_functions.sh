@@ -370,7 +370,7 @@ function prepare_result_folder_4_scenario()
 function start_collect_top_for_signalr_and_nginx()
 {
     local k8s_result_dir=$env_statistic_folder
-    local monitorDuration=$(($sigbench_run_duration + 60))
+    local monitorDuration=$(($sigbench_run_duration * $MaxSendIteration))
     cd $ScriptWorkingDir
     . ./func_env.sh
     . ./kubectl_utils.sh
