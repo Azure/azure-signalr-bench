@@ -1,10 +1,10 @@
 #!/bin/bash
-if [ $# -ne 2 ]
+if [ $# -ne 3 ]
 then
-  echo "usage: resourceName outputDir"
+  echo "usage: resourceName outputDir duration"
   exit 1
 fi
 
 . ./kubectl_utils.sh
 
-start_connection_tracking $1 $2
+start_connection_tracking $1 $2 $3
