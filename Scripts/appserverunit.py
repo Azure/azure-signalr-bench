@@ -10,7 +10,7 @@ def unit5_appserver():
    return 2
 
 def unit10_appserver():
-   return 2
+   return 3
 
 def unit20_appserver():
    return 3
