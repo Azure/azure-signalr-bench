@@ -121,7 +121,7 @@ scenario:sendToGroup,transport:Websockets,group:tiny:
 scenario:sendToGroup,transport:Websockets,group:small:
   normal_connection: [1000, 2000, 5000, 10000, 20000, 50000, 100000]
   max_connection: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
-  base_step: [500, 500, 500, 400, 3000, 5000, 5000]
+  base_step: [500, 500, 500, 300, 3000, 5000, 5000]
   step: [100, 100, 500, 100, 1000, 1000, 1000]
   step_length: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
   concurrent: [100, 100, 100, 200, 1000, 2500, 5000]
