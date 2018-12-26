@@ -61,7 +61,11 @@ function get_reduced_appserverCount()
     then
       appserverInUse=`python get_appserver_count.py -u $unit`
     else
-      appserverInUse=`python get_appserver_count.py -u $unit -q webappserver`
+      local limitedAppserver=`python get_appserver_count.py -u $unit -q webappserver`
+      if [ $limitedAppserver -lt $appserverInUse ]
+      then
+         appserverInUse=$limitedAppserver
+      fi
     fi
   fi
   echo $appserverInUse
@@ -153,10 +157,18 @@ function RunSendToGroup()
   then
     maxConnectionOption="-m"
   fi
+  local ms=2048
+  if [ "$bench_send_size" != "" ]
+  then
+     local re='^[0-9]+$'
+     if [[ $bench_send_size =~ $re ]] ; then
+        ms=$bench_send_size
+     fi
+  fi
   python3 generate.py -u $unit -S $Scenario \
                       -t $Transport -p $MessageEncoding \
                       -U $appserverUrls -d $sigbench_run_duration \
-                      -g $groupType \
+                      -g $groupType -ms $ms\
                       -c $config_path $maxConnectionOption
   if [ "$AspNetSignalR" != "" ]
   then
@@ -272,10 +284,18 @@ function RunCommonScenario()
   then
     maxConnectionOption="-m"
   fi
+  local ms=2048
+  if [ "$bench_send_size" != "" ]
+  then
+     local re='^[0-9]+$'
+     if [[ $bench_send_size =~ $re ]] ; then
+        ms=$bench_send_size
+     fi
+  fi
   python3 generate.py -u $unit -S $Scenario \
                       -t $Transport -p $MessageEncoding \
                       -U $appserverUrls -d $sigbench_run_duration \
-                      -c $config_path $maxConnectionOption
+                      -c $config_path $maxConnectionOption -ms $ms
   if [ "$AspNetSignalR" != "" ]
   then
     #TODO: Hard replacement

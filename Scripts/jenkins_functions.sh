@@ -40,8 +40,8 @@ function set_global_env() {
 # depends on set_global_env
 function set_job_env() {
    export result_root=`date +%Y%m%d%H%M%S`
-   export DogFoodResourceGroup="hzatpf"`date +%M%S`
-   export AspNetWebAppResGrp="hzperfwebapp"`date +%H%M%S`
+   export DogFoodResourceGroup="hzatpf"$result_root
+   export AspNetWebAppResGrp="hzperfwebapp"$result_root
    export serverUrl=`awk '{print $2}' $JenkinsRootPath/JobConfig.yaml`
    export MaxSendIteration=30 # we evaluate the total running time per this value
 }
@@ -113,7 +113,7 @@ function run_all_units() {
  do
    cd $ScriptWorkingDir
    ConnectionString="" # set it to be invalid first
-   signalrServiceName="atpf"`date +%H%M%S`
+   signalrServiceName="atpf"${result_root}
    create_asrs $DogFoodResourceGroup $signalrServiceName $service
    if [ "$ConnectionString" == "" ]
    then
