@@ -678,22 +678,22 @@ function copy_log_from_slaves_master()
   local i j k
   for i in `python extract_ip.py -i $PrivateIps -q slaveList`
   do
-    sshpass -p $passwd scp -o StrictHostKeyChecking=no -o LogLevel=ERROR $user@${i}:/home/$user/slave/publish/slave*.log $outputDir/
-    if [ $? -ne 0 ]
-    then
-      sshpass -p $passwd ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $user@${i} "find /home/$user/slave -iname slave*.log"
-    fi
-    #local slaveLogPath=`sshpass -p $passwd ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $user@${i} "find /home/$user/slave -iname slave*.log"`
-    #k=0
-    #for j in $slaveLogPath
-    #do
-    #  sshpass -p $passwd scp -o StrictHostKeyChecking=no -o LogLevel=ERROR $user@${i}:${j} $outputDir/slave_${i}_${k}.log
-    #  if [ $? -ne 0 ]
-    #  then
-    #    sshpass -p $passwd ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $user@${i} "find /home/$user/slave -iname slave*.log"
-    #  fi
-    #  k=$(($k+1))
-    #done
+    #sshpass -p $passwd scp -o StrictHostKeyChecking=no -o LogLevel=ERROR $user@${i}:/home/$user/slave/publish/slave*.log $outputDir/ # only 1 log was left
+    #if [ $? -ne 0 ]
+    #then
+    #  sshpass -p $passwd ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $user@${i} "find /home/$user/slave -iname slave*.log"
+    #fi
+    local slaveLogPath=`sshpass -p $passwd ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $user@${i} "find /home/$user/slave -iname slave*.log"`
+    k=0
+    for j in $slaveLogPath
+    do
+      sshpass -p $passwd scp -o StrictHostKeyChecking=no -o LogLevel=ERROR $user@${i}:${j} $outputDir/slave_${i}_${k}.log
+      if [ $? -ne 0 ]
+      then
+        sshpass -p $passwd ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $user@${i} "find /home/$user/slave -iname slave*.log"
+      fi
+      k=$(($k+1))
+    done
   done
   for i in `python extract_ip.py -i $PrivateIps -q master`
   do
