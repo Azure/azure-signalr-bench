@@ -265,8 +265,6 @@ namespace Commander
                 var slaveCommand = $"cd {slaveDirectory}; dotnet exec {slaveExecutablePath} --HostName 0.0.0.0 --RpcPort {_rpcPort}";
 
                 var masterSshCommand = _remoteClients.MasterSshClient.CreateCommand(masterCommand.Replace('\\', '/'));
-                var slaveSshCommands = (from client in _remoteClients.SlaveSshClients
-                                        select client.CreateCommand(slaveCommand.Replace('\\', '/'))).ToList();
 
                 // Start app server
                 List<SshCommand> appserverSshCommands = null;
@@ -299,6 +297,27 @@ namespace Commander
                     Log.Information("Do not start appserver !");
                 }
                 // Start slaves
+                // Check connection status
+                foreach (var sshClient in _remoteClients.SlaveSshClients)
+                {
+                    if (!sshClient.IsConnected)
+                    {
+                        var endpoint = $"{sshClient.ConnectionInfo.Host}:{sshClient.ConnectionInfo.Port}";
+                        Log.Warning($"a slave ssh {endpoint} dropped");
+                        try
+                        {
+                            sshClient.Connect();
+                        }
+                        catch (Exception e)
+                        {
+                            Log.Information($"reconnect failure: {e.Message}");
+                            throw;
+                        }
+                    }
+                }
+                Log.Information("All slaves connected");
+                var slaveSshCommands = (from client in _remoteClients.SlaveSshClients
+                                        select client.CreateCommand(slaveCommand.Replace('\\', '/'))).ToList();
                 Log.Information($"Start slaves");
                 var slaveAsyncResults = (from command in slaveSshCommands
                                          select command.BeginExecute(OnAsyncSshCommandComplete, command)).ToList();
