@@ -29,9 +29,9 @@ type Counters struct {
 	LT_1000     int64 `json:"message:lt:1000"`
 	GE_1000     int64 `json:"message:ge:1000"`
 	Sending     int64 `json:"sendingStep"`
-        ConnError   int64 `json:"connection:connect:fail"`
-        ReConn      int64 `json:"connection:connect:reconnect"`
-        ConnSucc    int64 `json:"connection:connect:success"`
+	ConnError   int64 `json:"connection:connect:fail"`
+	ReConn      int64 `json:"connection:connect:reconnect"`
+	ConnSucc    int64 `json:"connection:connect:success"`
 }
 
 type Monitor struct {
@@ -41,7 +41,7 @@ type Monitor struct {
 
 func main() {
 	var infile = flag.String("input", "", "Specify the input file")
-	var timeWindow, lastLatency, all, rate, sizerate, lastLatab, lastLatabPercent, category500ms, category1s, googlechart, areachart bool
+	var timeWindow, lastLatency, all, rate, sizerate, lastLatab, lastLatabPercent, category500ms, category1s, googlechart, areachart, connectrate bool
 	lastLatency = false
 	all = false
 	rate = false
@@ -52,6 +52,7 @@ func main() {
 	category1s = false
 	googlechart = true
 	areachart = false
+	connectrate = false
 	timeWindow = false
 	flag.BoolVar(&all, "all", false, "Print all information")
 	flag.BoolVar(&lastLatency, "lastlatency", false, "Print the last item of latency")
@@ -64,10 +65,11 @@ func main() {
 	flag.BoolVar(&googlechart, "googlechart", true, "Print Google chart function")
 	flag.BoolVar(&areachart, "areachart", false, "Print Area chart")
 	flag.BoolVar(&timeWindow, "timeWindow", false, "Print the time window for test [start_time - 1 minutes] and [end_time + 1 mintues]")
+	flag.BoolVar(&connectrate, "connectrate", false, "Print the connection rate")
 	flag.Usage = func() {
 		fmt.Println("-input <input_file> : specify the input file")
 		fmt.Println("-lastlatency        : print the last item of latency")
-		fmt.Println("-all		 : print all information")
+		fmt.Println("-all         : print all information")
 		fmt.Println("-rate               : print send/recv rate")
 		fmt.Println("-sizerate           : print send/recv message size rate")
 		fmt.Println("-lastlatab          : print a table for last latency")
@@ -76,6 +78,7 @@ func main() {
 		fmt.Println("-category1s         : print a table for last latency percentage with 1s as a boundry")
 		fmt.Println("-googlechart        : print Google chart function")
 		fmt.Println("-areachart          : print Area chart")
+		fmt.Println("-connectrate        : print connect rate chart")
 		fmt.Println("-timeWindow         : Print the time window for test [start_time - 1 minutes] and [end_time + 1 mintues]")
 	}
 	flag.Parse()
@@ -97,7 +100,7 @@ func main() {
 	}
 	if timeWindow && len(monitors) > 0 {
 		startTime, _ := time.Parse(time.RFC3339, monitors[0].Timestamp)
-		endTime, _ := time.Parse(time.RFC3339, monitors[len(monitors) - 1].Timestamp)
+		endTime, _ := time.Parse(time.RFC3339, monitors[len(monitors)-1].Timestamp)
 		//fmt.Printf("%s %s", startTime.Add(-2*time.Minute).Format(time.RFC3339), endTime.Add(2*time.Minute).Format(time.RFC3339))
 		fmt.Printf("%s %s", startTime.Format(time.RFC3339), endTime.Format(time.RFC3339))
 	}
@@ -125,30 +128,30 @@ func main() {
 	}
 	if areachart {
 		if googlechart {
-		var chartfunc string
-                        chartfunc = `
+			var chartfunc string
+			chartfunc = `
       google.charts.load("current", {packages:["corechart", "line", "table"]});
       google.charts.setOnLoadCallback(drawAreaChart);
       function drawAreaChart() {
         var data = google.visualization.arrayToDataTable([
 ['Send','LT100','LT200','LT300','LT400','LT500','LT600','LT700','LT800','LT900','LT1000','GE1000'],
-			`
-		fmt.Printf("%s\n", chartfunc)
-		for _, v := range monitors {
-			fmt.Printf("['%d', %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d],\n",
-				v.Counters.Send,
-				v.Counters.LT_100,
-				v.Counters.LT_200,
-				v.Counters.LT_300,
-				v.Counters.LT_400,
-				v.Counters.LT_500,
-				v.Counters.LT_600,
-				v.Counters.LT_700,
-				v.Counters.LT_800,
-				v.Counters.LT_900,
-				v.Counters.LT_1000,
-				v.Counters.GE_1000)
-		}
+            `
+			fmt.Printf("%s\n", chartfunc)
+			for _, v := range monitors {
+				fmt.Printf("['%d', %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d],\n",
+					v.Counters.Send,
+					v.Counters.LT_100,
+					v.Counters.LT_200,
+					v.Counters.LT_300,
+					v.Counters.LT_400,
+					v.Counters.LT_500,
+					v.Counters.LT_600,
+					v.Counters.LT_700,
+					v.Counters.LT_800,
+					v.Counters.LT_900,
+					v.Counters.LT_1000,
+					v.Counters.GE_1000)
+			}
 			chartfunc = `
         ]);
 
@@ -156,59 +159,59 @@ func main() {
           title: 'Latency distribution of the whole message sending',
           hAxis: {title: 'Send count',  titleTextStyle: {color: '#333'}},
           vAxis: {minValue: 0},
-	  isStacked: 'relative',
-	  width: 1200,
+      isStacked: 'relative',
+      width: 1200,
           height: 600,
-	  backgroundColor: 'transparent'
+      backgroundColor: 'transparent'
         };
 
         var chart = new google.visualization.AreaChart(document.getElementById('area_div'));
         chart.draw(data, options);
       }
-			`
-		fmt.Printf("%s\n", chartfunc)
+            `
+			fmt.Printf("%s\n", chartfunc)
 		}
 	}
 	if lastLatency {
 		var v Monitor
 		v = monitors[len(monitors)-1]
 		if googlechart {
-                        var chartfunc string
-                        chartfunc = `
+			var chartfunc string
+			chartfunc = `
       google.charts.load("current", {packages:["corechart", "line", "table"]});
       google.charts.setOnLoadCallback(drawDonut);
       function drawDonut() {
         var data = google.visualization.arrayToDataTable([
           ['Latency category', 'Counters'],
-			`
-		fmt.Printf("%s\n", chartfunc)
-		fmt.Printf("\t ['LT100', %d],\n", v.Counters.LT_100)
-		fmt.Printf("\t ['LT200', %d],\n", v.Counters.LT_200)
-		fmt.Printf("\t ['LT300', %d],\n", v.Counters.LT_300)
-		fmt.Printf("\t ['LT400', %d],\n", v.Counters.LT_400)
-		fmt.Printf("\t ['LT500', %d],\n", v.Counters.LT_500)
-		fmt.Printf("\t ['LT600', %d],\n", v.Counters.LT_600)
-		fmt.Printf("\t ['LT700', %d],\n", v.Counters.LT_700)
-		fmt.Printf("\t ['LT800', %d],\n", v.Counters.LT_800)
-		fmt.Printf("\t ['LT900', %d],\n", v.Counters.LT_900)
-		fmt.Printf("\t ['LT1000', %d],\n", v.Counters.LT_1000)
-		fmt.Printf("\t ['GE1000', %d],\n", v.Counters.GE_1000)
+            `
+			fmt.Printf("%s\n", chartfunc)
+			fmt.Printf("\t ['LT100', %d],\n", v.Counters.LT_100)
+			fmt.Printf("\t ['LT200', %d],\n", v.Counters.LT_200)
+			fmt.Printf("\t ['LT300', %d],\n", v.Counters.LT_300)
+			fmt.Printf("\t ['LT400', %d],\n", v.Counters.LT_400)
+			fmt.Printf("\t ['LT500', %d],\n", v.Counters.LT_500)
+			fmt.Printf("\t ['LT600', %d],\n", v.Counters.LT_600)
+			fmt.Printf("\t ['LT700', %d],\n", v.Counters.LT_700)
+			fmt.Printf("\t ['LT800', %d],\n", v.Counters.LT_800)
+			fmt.Printf("\t ['LT900', %d],\n", v.Counters.LT_900)
+			fmt.Printf("\t ['LT1000', %d],\n", v.Counters.LT_1000)
+			fmt.Printf("\t ['GE1000', %d],\n", v.Counters.GE_1000)
 			chartfunc = `
         ]);
 
         var options = {
           title: 'Latency distribution of the last second',
           is3D: true,
-	  width: 600,
+      width: 600,
           height: 400,
-	  backgroundColor: 'transparent'
+      backgroundColor: 'transparent'
         };
 
         var chart = new google.visualization.PieChart(document.getElementById('piechart_3d'));
         chart.draw(data, options);
       }
-			`
-		fmt.Printf("%s\n", chartfunc)
+            `
+			fmt.Printf("%s\n", chartfunc)
 		}
 	}
 	if lastLatab {
@@ -232,18 +235,18 @@ func main() {
 		fmt.Printf("\t]);\n")
 	}
 	if lastLatabPercent {
-            var sum int64
-            var totalConnection int64
-            var v Monitor
-            var hasSendingStep bool
-            for _, v := range monitors {
-                if v.Counters.Sending != 0 {
-                    hasSendingStep = true
-                }
-            }
-            if hasSendingStep {
-		var chartfunc string
-		chartfunc = `
+		var sum int64
+		var totalConnection int64
+		var v Monitor
+		var hasSendingStep bool
+		for _, v := range monitors {
+			if v.Counters.Sending != 0 {
+				hasSendingStep = true
+			}
+		}
+		if hasSendingStep {
+			var chartfunc string
+			chartfunc = `
       google.charts.load("current", {packages:["corechart", "line", "table"]});
       google.charts.setOnLoadCallback(drawLastLatencyPercent);
       function drawLastLatencyPercent() {
@@ -264,63 +267,63 @@ func main() {
         data.addColumn('number', 'GE1000ms(%)');
         data.addColumn('number', 'ConnectionDropped(%)');
         data.addColumn('number', 'Reconnect(%)');
-		`
-		fmt.Printf("%s\n", chartfunc)
-                fmt.Printf("\tdata.addRows([\n")
-                var curSendingStep int64
-                for i, v := range monitors {
-                    curSendingStep = v.Counters.Sending
-                    if i + 1 < len(monitors) &&
-                       monitors[i+1].Counters.Sending != curSendingStep &&
-                       v.Counters.Recv > 0 {
-                        sum = v.Counters.Recv
-                        totalConnection = v.Counters.ConnError + v.Counters.ConnSucc
-                        var sumfloat, totalConnFloat float64
-                        sumfloat = float64(sum)
-                        totalConnFloat = float64(totalConnection)
-                        fmt.Printf("\t [%d, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f],\n",
-                                curSendingStep, float64(v.Counters.LT_100)/sumfloat*100,
-                                float64(v.Counters.LT_200)/sumfloat*100,
-                                float64(v.Counters.LT_300)/sumfloat*100, float64(v.Counters.LT_400)/sumfloat*100,
-                                float64(v.Counters.LT_500)/sumfloat*100, float64(v.Counters.LT_600)/sumfloat*100,
-                                float64(v.Counters.LT_700)/sumfloat*100, float64(v.Counters.LT_800)/sumfloat*100,
-                                float64(v.Counters.LT_900)/sumfloat*100, float64(v.Counters.LT_1000)/sumfloat*100,
-                                float64(v.Counters.GE_1000)/sumfloat*100, float64(v.Counters.ConnError)/totalConnFloat*100,
-                                float64(v.Counters.ReConn)/totalConnFloat*100)
-                    }
-                }
-                v = monitors[len(monitors)-1]
-                if v.Counters.Recv != sum && v.Counters.Recv > 0 {
-                        var sumfloat, totalConnFloat float64
-                        sum = v.Counters.Recv
-                        totalConnection = v.Counters.ConnError + v.Counters.ConnSucc
-                        sumfloat = float64(sum)
-                        totalConnFloat = float64(totalConnection)
-                        fmt.Printf("\t [%d, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f],\n", v.Counters.Sending,
-                                float64(v.Counters.LT_100)/sumfloat*100, float64(v.Counters.LT_200)/sumfloat*100,
-                                float64(v.Counters.LT_300)/sumfloat*100, float64(v.Counters.LT_400)/sumfloat*100,
-                                float64(v.Counters.LT_500)/sumfloat*100, float64(v.Counters.LT_600)/sumfloat*100,
-                                float64(v.Counters.LT_700)/sumfloat*100, float64(v.Counters.LT_800)/sumfloat*100,
-                                float64(v.Counters.LT_900)/sumfloat*100, float64(v.Counters.LT_1000)/sumfloat*100,
-                                float64(v.Counters.GE_1000)/sumfloat*100, float64(v.Counters.ConnError)/totalConnFloat*100,
-                                float64(v.Counters.ReConn)/totalConnFloat*100)
-                }
-		chartfunc = `
+        `
+			fmt.Printf("%s\n", chartfunc)
+			fmt.Printf("\tdata.addRows([\n")
+			var curSendingStep int64
+			for i, v := range monitors {
+				curSendingStep = v.Counters.Sending
+				if i+1 < len(monitors) &&
+					monitors[i+1].Counters.Sending != curSendingStep &&
+					v.Counters.Recv > 0 {
+					sum = v.Counters.Recv
+					totalConnection = v.Counters.ConnError + v.Counters.ConnSucc
+					var sumfloat, totalConnFloat float64
+					sumfloat = float64(sum)
+					totalConnFloat = float64(totalConnection)
+					fmt.Printf("\t [%d, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f],\n",
+						curSendingStep, float64(v.Counters.LT_100)/sumfloat*100,
+						float64(v.Counters.LT_200)/sumfloat*100,
+						float64(v.Counters.LT_300)/sumfloat*100, float64(v.Counters.LT_400)/sumfloat*100,
+						float64(v.Counters.LT_500)/sumfloat*100, float64(v.Counters.LT_600)/sumfloat*100,
+						float64(v.Counters.LT_700)/sumfloat*100, float64(v.Counters.LT_800)/sumfloat*100,
+						float64(v.Counters.LT_900)/sumfloat*100, float64(v.Counters.LT_1000)/sumfloat*100,
+						float64(v.Counters.GE_1000)/sumfloat*100, float64(v.Counters.ConnError)/totalConnFloat*100,
+						float64(v.Counters.ReConn)/totalConnFloat*100)
+				}
+			}
+			v = monitors[len(monitors)-1]
+			if v.Counters.Recv != sum && v.Counters.Recv > 0 {
+				var sumfloat, totalConnFloat float64
+				sum = v.Counters.Recv
+				totalConnection = v.Counters.ConnError + v.Counters.ConnSucc
+				sumfloat = float64(sum)
+				totalConnFloat = float64(totalConnection)
+				fmt.Printf("\t [%d, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f],\n", v.Counters.Sending,
+					float64(v.Counters.LT_100)/sumfloat*100, float64(v.Counters.LT_200)/sumfloat*100,
+					float64(v.Counters.LT_300)/sumfloat*100, float64(v.Counters.LT_400)/sumfloat*100,
+					float64(v.Counters.LT_500)/sumfloat*100, float64(v.Counters.LT_600)/sumfloat*100,
+					float64(v.Counters.LT_700)/sumfloat*100, float64(v.Counters.LT_800)/sumfloat*100,
+					float64(v.Counters.LT_900)/sumfloat*100, float64(v.Counters.LT_1000)/sumfloat*100,
+					float64(v.Counters.GE_1000)/sumfloat*100, float64(v.Counters.ConnError)/totalConnFloat*100,
+					float64(v.Counters.ReConn)/totalConnFloat*100)
+			}
+			chartfunc = `
         ]);
         var table = new google.visualization.Table(document.getElementById('table_div'));
 
         table.draw(data, options);
       }
-		`
-		fmt.Printf("%s\n", chartfunc)
-	    } else {
-		v = monitors[len(monitors)-1]
-                sum = v.Counters.Recv
-		var sumfloat float64
-		sumfloat = float64(sum)
-		if googlechart {
-			var chartfunc string
-			chartfunc = `
+        `
+			fmt.Printf("%s\n", chartfunc)
+		} else {
+			v = monitors[len(monitors)-1]
+			sum = v.Counters.Recv
+			var sumfloat float64
+			sumfloat = float64(sum)
+			if googlechart {
+				var chartfunc string
+				chartfunc = `
       google.charts.load("current", {packages:["corechart", "line", "table"]});
       google.charts.setOnLoadCallback(drawLastLatencyPercent);
       function drawLastLatencyPercent() {
@@ -338,37 +341,37 @@ func main() {
         data.addColumn('number', 'LT900ms(%)');
         data.addColumn('number', 'LT1000ms(%)');
         data.addColumn('number', 'GE1000ms(%)');
-		`
-			fmt.Printf("%s\n", chartfunc)
-			fmt.Printf("\tdata.addRows([\n")
-			fmt.Printf("\t [%.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f],\n", float64(v.Counters.LT_100)/sumfloat*100, float64(v.Counters.LT_200)/sumfloat*100,
-				float64(v.Counters.LT_300)/sumfloat*100, float64(v.Counters.LT_400)/sumfloat*100,
-				float64(v.Counters.LT_500)/sumfloat*100, float64(v.Counters.LT_600)/sumfloat*100,
-				float64(v.Counters.LT_700)/sumfloat*100, float64(v.Counters.LT_800)/sumfloat*100,
-				float64(v.Counters.LT_900)/sumfloat*100, float64(v.Counters.LT_1000)/sumfloat*100, float64(v.Counters.GE_1000)/sumfloat*100)
-			chartfunc = `
+        `
+				fmt.Printf("%s\n", chartfunc)
+				fmt.Printf("\tdata.addRows([\n")
+				fmt.Printf("\t [%.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f, %.2f],\n", float64(v.Counters.LT_100)/sumfloat*100, float64(v.Counters.LT_200)/sumfloat*100,
+					float64(v.Counters.LT_300)/sumfloat*100, float64(v.Counters.LT_400)/sumfloat*100,
+					float64(v.Counters.LT_500)/sumfloat*100, float64(v.Counters.LT_600)/sumfloat*100,
+					float64(v.Counters.LT_700)/sumfloat*100, float64(v.Counters.LT_800)/sumfloat*100,
+					float64(v.Counters.LT_900)/sumfloat*100, float64(v.Counters.LT_1000)/sumfloat*100, float64(v.Counters.GE_1000)/sumfloat*100)
+				chartfunc = `
         ]);
         var table = new google.visualization.Table(document.getElementById('table_div'));
 
         table.draw(data, options);
       }
-			`
-			fmt.Printf("%s\n", chartfunc)
+            `
+				fmt.Printf("%s\n", chartfunc)
+			}
 		}
-            }
 	}
 	if category500ms {
-	    var sum, totalConnection, lt500, ge500 int64
-	    var v Monitor
-            var hasSendingStep bool
-            for _, v := range monitors {
-                if v.Counters.Sending != 0 {
-                    hasSendingStep = true
-                }
-            }
-            if hasSendingStep {
-		var chartfunc string
-		chartfunc = `
+		var sum, totalConnection, lt500, ge500 int64
+		var v Monitor
+		var hasSendingStep bool
+		for _, v := range monitors {
+			if v.Counters.Sending != 0 {
+				hasSendingStep = true
+			}
+		}
+		if hasSendingStep {
+			var chartfunc string
+			chartfunc = `
       google.charts.load("current", {packages:["corechart", "line", "table"]});
       google.charts.setOnLoadCallback(draw500msPercent);
       function draw500msPercent() {
@@ -380,64 +383,64 @@ func main() {
         data.addColumn('number', 'GE500ms(%)');
         data.addColumn('number', 'ConnectionDropped(%)');
         data.addColumn('number', 'Reconnect(%)');
-			`
-		fmt.Printf("%s\n", chartfunc)
-		fmt.Printf("\tdata.addRows([\n")
+            `
+			fmt.Printf("%s\n", chartfunc)
+			fmt.Printf("\tdata.addRows([\n")
 
-                var curSendingStep int64
-                for i, v := range monitors {
-                    curSendingStep = v.Counters.Sending
-                    if i + 1 < len(monitors) &&
-                       monitors[i+1].Counters.Sending != curSendingStep &&
-                       v.Counters.Recv > 0 {
-                        sum = v.Counters.Recv
-                        totalConnection = v.Counters.ConnError + v.Counters.ConnSucc
-                        var sumfloat, totalConnFloat float64
-                        sumfloat = float64(sum)
-                        totalConnFloat = float64(totalConnection)
-		        lt500 = v.Counters.LT_100 + v.Counters.LT_200 + v.Counters.LT_300 + v.Counters.LT_400 + v.Counters.LT_500
-		        ge500 = v.Counters.LT_600 + v.Counters.LT_700 + v.Counters.LT_800 + v.Counters.LT_900 + v.Counters.LT_1000 + v.Counters.GE_1000
+			var curSendingStep int64
+			for i, v := range monitors {
+				curSendingStep = v.Counters.Sending
+				if i+1 < len(monitors) &&
+					monitors[i+1].Counters.Sending != curSendingStep &&
+					v.Counters.Recv > 0 {
+					sum = v.Counters.Recv
+					totalConnection = v.Counters.ConnError + v.Counters.ConnSucc
+					var sumfloat, totalConnFloat float64
+					sumfloat = float64(sum)
+					totalConnFloat = float64(totalConnection)
+					lt500 = v.Counters.LT_100 + v.Counters.LT_200 + v.Counters.LT_300 + v.Counters.LT_400 + v.Counters.LT_500
+					ge500 = v.Counters.LT_600 + v.Counters.LT_700 + v.Counters.LT_800 + v.Counters.LT_900 + v.Counters.LT_1000 + v.Counters.GE_1000
 
-			fmt.Printf("\t [%d, %.2f, %.2f, %.2f, %.2f],\n",
-                                  curSendingStep, float64(lt500)/sumfloat*100,
-                                  float64(ge500)/sumfloat*100,
-                                  float64(v.Counters.ConnError)/totalConnFloat*100,
-                                  float64(v.Counters.ReConn)/totalConnFloat*100)
-                    }
-                }
-                v = monitors[len(monitors)-1]
-                if v.Counters.Recv != sum && v.Counters.Recv > 0 {
-                        sum = v.Counters.Recv
-                        totalConnection = v.Counters.ConnError + v.Counters.ConnSucc
-                        var sumfloat, totalConnFloat float64
-                        sumfloat = float64(sum)
-                        totalConnFloat = float64(totalConnection)
-		        lt500 = v.Counters.LT_100 + v.Counters.LT_200 + v.Counters.LT_300 + v.Counters.LT_400 + v.Counters.LT_500
-		        ge500 = v.Counters.LT_600 + v.Counters.LT_700 + v.Counters.LT_800 + v.Counters.LT_900 + v.Counters.LT_1000 + v.Counters.GE_1000
-                        fmt.Printf("\t [%d, %.2f, %.2f, %.2f, %.2f],\n",
-                                   v.Counters.Sending, float64(lt500)/sumfloat*100,
-                                   float64(ge500)/sumfloat*100,
-                                   float64(v.Counters.ConnError)/totalConnFloat*100,
-                                   float64(v.Counters.ReConn)/totalConnFloat*100)
-                }
+					fmt.Printf("\t [%d, %.2f, %.2f, %.2f, %.2f],\n",
+						curSendingStep, float64(lt500)/sumfloat*100,
+						float64(ge500)/sumfloat*100,
+						float64(v.Counters.ConnError)/totalConnFloat*100,
+						float64(v.Counters.ReConn)/totalConnFloat*100)
+				}
+			}
+			v = monitors[len(monitors)-1]
+			if v.Counters.Recv != sum && v.Counters.Recv > 0 {
+				sum = v.Counters.Recv
+				totalConnection = v.Counters.ConnError + v.Counters.ConnSucc
+				var sumfloat, totalConnFloat float64
+				sumfloat = float64(sum)
+				totalConnFloat = float64(totalConnection)
+				lt500 = v.Counters.LT_100 + v.Counters.LT_200 + v.Counters.LT_300 + v.Counters.LT_400 + v.Counters.LT_500
+				ge500 = v.Counters.LT_600 + v.Counters.LT_700 + v.Counters.LT_800 + v.Counters.LT_900 + v.Counters.LT_1000 + v.Counters.GE_1000
+				fmt.Printf("\t [%d, %.2f, %.2f, %.2f, %.2f],\n",
+					v.Counters.Sending, float64(lt500)/sumfloat*100,
+					float64(ge500)/sumfloat*100,
+					float64(v.Counters.ConnError)/totalConnFloat*100,
+					float64(v.Counters.ReConn)/totalConnFloat*100)
+			}
 			chartfunc = `
         ]);
         var table = new google.visualization.Table(document.getElementById('500ms_percent_table_div'));
 
         table.draw(data, options);
       }
-			`
+            `
 			fmt.Printf("%s\n", chartfunc)
-            } else {
-		v = monitors[len(monitors)-1]
-                sum = v.Counters.Recv
-		lt500 = v.Counters.LT_100 + v.Counters.LT_200 + v.Counters.LT_300 + v.Counters.LT_400 + v.Counters.LT_500
-		ge500 = v.Counters.LT_600 + v.Counters.LT_700 + v.Counters.LT_800 + v.Counters.LT_900 + v.Counters.LT_1000 + v.Counters.GE_1000
-		var sumfloat float64
-		sumfloat = float64(sum)
-		if googlechart {
-			var chartfunc string
-			chartfunc = `
+		} else {
+			v = monitors[len(monitors)-1]
+			sum = v.Counters.Recv
+			lt500 = v.Counters.LT_100 + v.Counters.LT_200 + v.Counters.LT_300 + v.Counters.LT_400 + v.Counters.LT_500
+			ge500 = v.Counters.LT_600 + v.Counters.LT_700 + v.Counters.LT_800 + v.Counters.LT_900 + v.Counters.LT_1000 + v.Counters.GE_1000
+			var sumfloat float64
+			sumfloat = float64(sum)
+			if googlechart {
+				var chartfunc string
+				chartfunc = `
       google.charts.load("current", {packages:["corechart", "line", "table"]});
       google.charts.setOnLoadCallback(draw500msPercent);
       function draw500msPercent() {
@@ -446,33 +449,33 @@ func main() {
         var data = new google.visualization.DataTable();
         data.addColumn('number', 'LT500ms(%)');
         data.addColumn('number', 'GE500ms(%)');
-			`
-			fmt.Printf("%s\n", chartfunc)
-			fmt.Printf("\tdata.addRows([\n")
-			fmt.Printf("\t [%.2f, %.2f],\n", float64(lt500)/sumfloat*100, float64(ge500)/sumfloat*100)
-			chartfunc = `
+            `
+				fmt.Printf("%s\n", chartfunc)
+				fmt.Printf("\tdata.addRows([\n")
+				fmt.Printf("\t [%.2f, %.2f],\n", float64(lt500)/sumfloat*100, float64(ge500)/sumfloat*100)
+				chartfunc = `
         ]);
         var table = new google.visualization.Table(document.getElementById('500ms_percent_table_div'));
 
         table.draw(data, options);
       }
-			`
-			fmt.Printf("%s\n", chartfunc)
+            `
+				fmt.Printf("%s\n", chartfunc)
+			}
 		}
-            }
 	}
 	if category1s {
-            var sum, totalConnection, lt1, ge1 int64
-            var v Monitor
-            var hasSendingStep bool
-            for _, v := range monitors {
-                if v.Counters.Sending != 0 {
-                    hasSendingStep = true
-                }
-            }
-            if hasSendingStep {
-		var chartfunc string
-		chartfunc = `
+		var sum, totalConnection, lt1, ge1 int64
+		var v Monitor
+		var hasSendingStep bool
+		for _, v := range monitors {
+			if v.Counters.Sending != 0 {
+				hasSendingStep = true
+			}
+		}
+		if hasSendingStep {
+			var chartfunc string
+			chartfunc = `
       google.charts.load("current", {packages:["corechart", "line", "table"]});
       google.charts.setOnLoadCallback(draw1sPercent);
       function draw1sPercent() {
@@ -484,61 +487,61 @@ func main() {
         data.addColumn('number', 'GE1s(%)');
         data.addColumn('number', 'ConnectionDropped(%)');
         data.addColumn('number', 'Reconnect(%)');
-			`
-		fmt.Printf("%s\n", chartfunc)
-		fmt.Printf("\tdata.addRows([\n")
+            `
+			fmt.Printf("%s\n", chartfunc)
+			fmt.Printf("\tdata.addRows([\n")
 
-                var curSendingStep int64
-                for i, v := range monitors {
-                    curSendingStep = v.Counters.Sending
-                    if i + 1 < len(monitors) &&
-                       monitors[i+1].Counters.Sending != curSendingStep &&
-                       v.Counters.Recv > 0 {
-                        sum = v.Counters.Recv
-                        totalConnection = v.Counters.ConnError + v.Counters.ConnSucc
-                        var sumfloat, totalConnFloat float64
-                        sumfloat = float64(sum)
-                        totalConnFloat = float64(totalConnection)
-                        lt1 = v.Counters.LT_100 + v.Counters.LT_200 + v.Counters.LT_300 + v.Counters.LT_400 + v.Counters.LT_500 + v.Counters.LT_600 + v.Counters.LT_700 + v.Counters.LT_800 + v.Counters.LT_900 + v.Counters.LT_1000
-                        ge1 = v.Counters.GE_1000
-                        fmt.Printf("\t [%d, %.2f, %.2f, %.2f, %.2f],\n",
-                                   curSendingStep, float64(lt1)/sumfloat*100,
-                                   float64(ge1)/sumfloat*100, float64(v.Counters.ConnError)/totalConnFloat*100,
-                                   float64(v.Counters.ReConn)/totalConnFloat*100)
-                    }
-                }
-                v = monitors[len(monitors)-1]
-                if sum != v.Counters.Recv && v.Counters.Recv > 0 {
-                        sum = v.Counters.Recv
-                        totalConnection = v.Counters.ConnError + v.Counters.ConnSucc
-                        var sumfloat, totalConnFloat float64
-                        sumfloat = float64(sum)
-                        totalConnFloat = float64(totalConnection)
-                        lt1 = v.Counters.LT_100 + v.Counters.LT_200 + v.Counters.LT_300 + v.Counters.LT_400 + v.Counters.LT_500 + v.Counters.LT_600 + v.Counters.LT_700 + v.Counters.LT_800 + v.Counters.LT_900 + v.Counters.LT_1000
-                        ge1 = v.Counters.GE_1000
-                        fmt.Printf("\t [%d, %.2f, %.2f, %.2f, %.2f],\n",
-                                   v.Counters.Sending, float64(lt1)/sumfloat*100,
-                                   float64(ge1)/sumfloat*100, float64(v.Counters.ConnError)/totalConnFloat*100,
-                                   float64(v.Counters.ReConn)/totalConnFloat*100)
-                }
+			var curSendingStep int64
+			for i, v := range monitors {
+				curSendingStep = v.Counters.Sending
+				if i+1 < len(monitors) &&
+					monitors[i+1].Counters.Sending != curSendingStep &&
+					v.Counters.Recv > 0 {
+					sum = v.Counters.Recv
+					totalConnection = v.Counters.ConnError + v.Counters.ConnSucc
+					var sumfloat, totalConnFloat float64
+					sumfloat = float64(sum)
+					totalConnFloat = float64(totalConnection)
+					lt1 = v.Counters.LT_100 + v.Counters.LT_200 + v.Counters.LT_300 + v.Counters.LT_400 + v.Counters.LT_500 + v.Counters.LT_600 + v.Counters.LT_700 + v.Counters.LT_800 + v.Counters.LT_900 + v.Counters.LT_1000
+					ge1 = v.Counters.GE_1000
+					fmt.Printf("\t [%d, %.2f, %.2f, %.2f, %.2f],\n",
+						curSendingStep, float64(lt1)/sumfloat*100,
+						float64(ge1)/sumfloat*100, float64(v.Counters.ConnError)/totalConnFloat*100,
+						float64(v.Counters.ReConn)/totalConnFloat*100)
+				}
+			}
+			v = monitors[len(monitors)-1]
+			if sum != v.Counters.Recv && v.Counters.Recv > 0 {
+				sum = v.Counters.Recv
+				totalConnection = v.Counters.ConnError + v.Counters.ConnSucc
+				var sumfloat, totalConnFloat float64
+				sumfloat = float64(sum)
+				totalConnFloat = float64(totalConnection)
+				lt1 = v.Counters.LT_100 + v.Counters.LT_200 + v.Counters.LT_300 + v.Counters.LT_400 + v.Counters.LT_500 + v.Counters.LT_600 + v.Counters.LT_700 + v.Counters.LT_800 + v.Counters.LT_900 + v.Counters.LT_1000
+				ge1 = v.Counters.GE_1000
+				fmt.Printf("\t [%d, %.2f, %.2f, %.2f, %.2f],\n",
+					v.Counters.Sending, float64(lt1)/sumfloat*100,
+					float64(ge1)/sumfloat*100, float64(v.Counters.ConnError)/totalConnFloat*100,
+					float64(v.Counters.ReConn)/totalConnFloat*100)
+			}
 			chartfunc = `
         ]);
         var table = new google.visualization.Table(document.getElementById('1s_percent_table_div'));
 
         table.draw(data, options);
       }
-			`
+            `
 			fmt.Printf("%s\n", chartfunc)
-            } else {
-		v = monitors[len(monitors)-1]
-                sum = v.Counters.Recv
-		lt1 = v.Counters.LT_100 + v.Counters.LT_200 + v.Counters.LT_300 + v.Counters.LT_400 + v.Counters.LT_500 + v.Counters.LT_600 + v.Counters.LT_700 + v.Counters.LT_800 + v.Counters.LT_900 + v.Counters.LT_1000
-		ge1 = v.Counters.GE_1000
-		var sumfloat float64
-		sumfloat = float64(sum)
-		if googlechart {
-			var chartfunc string
-			chartfunc = `
+		} else {
+			v = monitors[len(monitors)-1]
+			sum = v.Counters.Recv
+			lt1 = v.Counters.LT_100 + v.Counters.LT_200 + v.Counters.LT_300 + v.Counters.LT_400 + v.Counters.LT_500 + v.Counters.LT_600 + v.Counters.LT_700 + v.Counters.LT_800 + v.Counters.LT_900 + v.Counters.LT_1000
+			ge1 = v.Counters.GE_1000
+			var sumfloat float64
+			sumfloat = float64(sum)
+			if googlechart {
+				var chartfunc string
+				chartfunc = `
       google.charts.load("current", {packages:["corechart", "line", "table"]});
       google.charts.setOnLoadCallback(draw1sPercent);
       function draw1sPercent() {
@@ -547,20 +550,20 @@ func main() {
         var data = new google.visualization.DataTable();
         data.addColumn('number', 'LT1s(%)');
         data.addColumn('number', 'GE1s(%)');
-			`
-			fmt.Printf("%s\n", chartfunc)
-			fmt.Printf("\tdata.addRows([\n")
-			fmt.Printf("\t [%.2f, %.2f],\n", float64(lt1)/sumfloat*100, float64(ge1)/sumfloat*100)
-			chartfunc = `
+            `
+				fmt.Printf("%s\n", chartfunc)
+				fmt.Printf("\tdata.addRows([\n")
+				fmt.Printf("\t [%.2f, %.2f],\n", float64(lt1)/sumfloat*100, float64(ge1)/sumfloat*100)
+				chartfunc = `
         ]);
         var table = new google.visualization.Table(document.getElementById('1s_percent_table_div'));
 
         table.draw(data, options);
       }
-			`
-			fmt.Printf("%s\n", chartfunc)
+            `
+				fmt.Printf("%s\n", chartfunc)
+			}
 		}
-            }
 	}
 	if rate {
 		if googlechart {
@@ -574,17 +577,17 @@ func main() {
         data.addColumn('number', 'Send count rate');
         data.addColumn('number', 'Recv count rate');
         data.addRows([
-			`
-		fmt.Printf("%s\n", chartfunc)
-		for i, j := 0, 1; j < len(monitors); i, j = i+1, j+1 {
-			t1, _ := time.Parse(time.RFC3339, monitors[j].Timestamp)
-			// ignore invalid negative values
-			sdiff := monitors[j].Counters.Send-monitors[i].Counters.Send
-			rdiff := monitors[j].Counters.Recv-monitors[i].Counters.Recv
-			if (sdiff > 0 && rdiff > 0) {
-				fmt.Printf("\t [[%d, %d, %d], %d, %d],\n", t1.Hour(), t1.Minute(), t1.Second(), sdiff, rdiff)
+            `
+			fmt.Printf("%s\n", chartfunc)
+			for i, j := 0, 1; j < len(monitors); i, j = i+1, j+1 {
+				t1, _ := time.Parse(time.RFC3339, monitors[j].Timestamp)
+				// ignore invalid negative values
+				sdiff := monitors[j].Counters.Send - monitors[i].Counters.Send
+				rdiff := monitors[j].Counters.Recv - monitors[i].Counters.Recv
+				if sdiff > 0 && rdiff > 0 {
+					fmt.Printf("\t [[%d, %d, %d], %d, %d],\n", t1.Hour(), t1.Minute(), t1.Second(), sdiff, rdiff)
+				}
 			}
-		}
 			chartfunc = `
         ]);
       var options = {
@@ -594,7 +597,7 @@ func main() {
         },
         width: 1200,
         height: 400,
-	backgroundColor: 'transparent',
+    backgroundColor: 'transparent',
         axes: {
           x: {
             0: {side: 'bottom'}
@@ -606,8 +609,69 @@ func main() {
 
       chart.draw(data, google.charts.Line.convertOptions(options));
     }
-			`
-		fmt.Printf("%s\n", chartfunc)
+            `
+			fmt.Printf("%s\n", chartfunc)
+		}
+	}
+	if connectrate {
+		if googlechart {
+			var chartfunc string
+			chartfunc = `
+      google.charts.load("current", {packages:["corechart", "line", "table"]});
+      google.charts.setOnLoadCallback(drawConnectionRate);
+      function drawConnectionRate() {
+        var data = new google.visualization.DataTable();
+        data.addColumn('timeofday', 'Time');
+        data.addColumn('number', 'Connection rate');
+        data.addRows([
+            `
+			fmt.Printf("%s\n", chartfunc)
+			var repeatedCount int64
+			var connSucc int64
+			repeatedCount = 0
+			connSucc = 0
+			for i, j := 0, 1; j < len(monitors); i, j = i+1, j+1 {
+				if monitors[j].Counters.ConnSucc > 0 {
+					if monitors[j].Counters.ConnSucc != connSucc {
+						t1, _ := time.Parse(time.RFC3339, monitors[j].Timestamp)
+						// ignore invalid negative values
+						cdiff := monitors[j].Counters.ConnSucc - monitors[i].Counters.ConnSucc
+						if cdiff > 0 {
+							fmt.Printf("\t [[%d, %d, %d], %d],\n", t1.Hour(), t1.Minute(), t1.Second(), cdiff)
+						}
+					} else if repeatedCount < 10 {
+						repeatedCount++
+					} else {
+						// We saw cotinuous the same connection number,
+						// then we are sure all connections have been established
+						break
+					}
+					connSucc = monitors[j].Counters.ConnSucc
+				}
+			}
+			chartfunc = `
+        ]);
+      var options = {
+        chart: {
+          title: 'Concurrent connection rate',
+          subtitle: 'concurrent connection count per second'
+        },
+        width: 1200,
+        height: 400,
+    backgroundColor: 'transparent',
+        axes: {
+          x: {
+            0: {side: 'bottom'}
+          }
+        }
+      };
+
+      var chart = new google.charts.Line(document.getElementById('connect_rate'));
+
+      chart.draw(data, google.charts.Line.convertOptions(options));
+    }
+            `
+			fmt.Printf("%s\n", chartfunc)
 		}
 	}
 	if sizerate {
@@ -623,17 +687,17 @@ func main() {
         data.addColumn('number', 'Send message size (Byte/Sec)');
         data.addColumn('number', 'Recv message size (Byte/Sec)');
         data.addRows([
-			`
-		fmt.Printf("%s\n", chartfunc)
-		for i, j := 0, 1; j < len(monitors); i, j = i+1, j+1 {
-			t1, _ := time.Parse(time.RFC3339, monitors[j].Timestamp)
-			// ignore invalid (negative values) SendSizeDiff and RecvSizeDiff
-			sszdiff := monitors[j].Counters.SendSize-monitors[i].Counters.SendSize
-			rszdiff := monitors[j].Counters.RecvSize-monitors[i].Counters.RecvSize
-			if (sszdiff > 0 && rszdiff > 0) {
-				fmt.Printf("\t [[%d, %d, %d], %d, %d],\n", t1.Hour(), t1.Minute(), t1.Second(), sszdiff, rszdiff)
+            `
+			fmt.Printf("%s\n", chartfunc)
+			for i, j := 0, 1; j < len(monitors); i, j = i+1, j+1 {
+				t1, _ := time.Parse(time.RFC3339, monitors[j].Timestamp)
+				// ignore invalid (negative values) SendSizeDiff and RecvSizeDiff
+				sszdiff := monitors[j].Counters.SendSize - monitors[i].Counters.SendSize
+				rszdiff := monitors[j].Counters.RecvSize - monitors[i].Counters.RecvSize
+				if sszdiff > 0 && rszdiff > 0 {
+					fmt.Printf("\t [[%d, %d, %d], %d, %d],\n", t1.Hour(), t1.Minute(), t1.Second(), sszdiff, rszdiff)
+				}
 			}
-		}
 			chartfunc = `
         ]);
 
@@ -644,7 +708,7 @@ func main() {
         },
         width: 1200,
         height: 400,
-	backgroundColor: 'transparent',
+        backgroundColor: 'transparent',
         axes: {
           x: {
             0: {side: 'bottom'}
@@ -656,8 +720,8 @@ func main() {
 
       chart.draw(data, google.charts.Line.convertOptions(options));
     }
-			`
-		fmt.Printf("%s\n", chartfunc)
+            `
+			fmt.Printf("%s\n", chartfunc)
 		}
 	}
 }

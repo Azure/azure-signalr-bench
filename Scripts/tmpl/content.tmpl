@@ -15,7 +15,7 @@
     <script type="text/javascript" src="Memory_metrics2.js"></script>
     <script type="text/javascript" src="Memory_metrics3.js"></script>
     <script type="text/javascript" src="Memory_metrics4.js"></script>
-
+    <script type="text/javascript" src="connect_rate.js"></script>
 </head>
 <body>
   <div class="container">
@@ -35,7 +35,6 @@
 				<li>Connection duration: {{.Duration}} (s)</li>
 				<li>Hub: {{.Hub}}</li>
 				<li>Benchmark: {{.Benchmark}}</li>
-				<li><a href="cpuinfo.txt">CPU Information</a></li>
 			</ul>
 		    </div>
                 </section>
@@ -53,7 +52,8 @@
           </div>
 	  <div class="content">
                 <section>
-                    <h2>Sending/Receiving rate</h2>
+                    <h2>Connection/Sending/Receiving rate</h2>
+                    <div id="connect_rate"></div>
 		    <div id="send_recv_rate"></div>
 		    <div id="send_recv_size"></div>
                 </section>

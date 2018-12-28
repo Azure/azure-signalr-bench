@@ -25,7 +25,7 @@ function gen_single_html
 	go run parseresult.go -input $norm_file -lastlatabPercent > $html_dir/latency_table.js
 	go run parseresult.go -input $norm_file -category500ms > $html_dir/latency_table_500ms_category.js
 	go run parseresult.go -input $norm_file -category1s > $html_dir/latency_table_1s_category.js
-
+        go run parseresult.go -input $norm_file -connectrate > $html_dir/connect_rate.js
         if [ "$connectionString" != "" ]
 	then
 		serviceName=$(extract_servicename_from_connectionstring $connectionString)
