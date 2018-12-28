@@ -738,6 +738,7 @@ function run_command() {
   local remoteCmd="remove_counters.sh"
   cat << EOF > $remoteCmd
 #!/bin/bash
+cd /home/${user}/master
 if [ -e counters.txt ]
 then
   rm counters.txt
