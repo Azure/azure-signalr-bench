@@ -209,7 +209,6 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 ConnectionsSuccessFlag[localIndex] = SignalREnums.ConnectionState.Fail;
                 var message = $"Error in send to group: {ex}";
                 Log.Error(message);
-                //throw;
             }
         }
 

@@ -79,6 +79,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
             List<SignalREnums.ConnectionState> ConnectionsSuccessFlag,
             StatisticsCollector StatisticsCollector) package, IDictionary<string, object> data)
         {
+            // Is the connection is not active, then stop sending message
+            if (package.ConnectionsSuccessFlag[package.LocalIndex] != SignalREnums.ConnectionState.Success) return;
             try
             {
                 // Extract data
@@ -101,9 +103,9 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
             }
             catch (Exception ex)
             {
+                package.ConnectionsSuccessFlag[package.LocalIndex] = SignalREnums.ConnectionState.Fail;
                 var message = $"Error in send to client: {ex}";
                 Log.Error(message);
-                throw;
             }
         }
     }
