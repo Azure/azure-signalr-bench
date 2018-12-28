@@ -303,7 +303,7 @@ namespace Commander
                     if (!sshClient.IsConnected)
                     {
                         var endpoint = $"{sshClient.ConnectionInfo.Host}:{sshClient.ConnectionInfo.Port}";
-                        Log.Warning($"a slave ssh {endpoint} dropped");
+                        Log.Warning($"a slave ssh {endpoint} dropped, and try reconnect");
                         try
                         {
                             sshClient.Connect();
