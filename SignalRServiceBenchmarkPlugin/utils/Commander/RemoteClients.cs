@@ -15,6 +15,7 @@ namespace Commander
 {
     public class RemoteClients
     {
+        private static readonly TimeSpan KeepAliveSpan = TimeSpan.FromSeconds(15);
         public IList<ScpClient> AppserverScpClients { get; private set; }
         public ScpClient MasterScpClient { get; private set; }
         public IList<ScpClient> SlaveScpClients { get; private set; }
@@ -49,6 +50,7 @@ namespace Commander
                 {
                     try
                     {
+                        client.KeepAliveInterval = KeepAliveSpan; // avoid client drops
                         client.Connect();
                     }
                     catch (Exception ex)
