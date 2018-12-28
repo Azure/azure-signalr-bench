@@ -560,13 +560,28 @@ func main() {
         data.addRows([
 			`
 		fmt.Printf("%s\n", chartfunc)
+                var sendSum int64
+                var recvSum int64
+                var validCount int64
+                validCount = 0
+                sendSum = 0
+                recvSum = 0
 		for i, j := 0, 1; j < len(monitors); i, j = i+1, j+1 {
 			t1, _ := time.Parse(time.RFC3339, monitors[j].Timestamp)
 			// ignore invalid negative values
 			sdiff := monitors[j].Counters.Send-monitors[i].Counters.Send
 			rdiff := monitors[j].Counters.Recv-monitors[i].Counters.Recv
 			if (sdiff > 0 && rdiff > 0) {
+                                // ignore super huge number in the end. Not sure why it happens
+                                if (j + 30 > len(monitors) && validCount > 0 &&
+                                    ((sendSum / validCount) * 20 < sdiff ||
+                                     (recvSum / validCount) * 20 < rdiff)) {
+                                     continue
+                                }
 				fmt.Printf("\t [[%d, %d, %d], %d, %d],\n", t1.Hour(), t1.Minute(), t1.Second(), sdiff, rdiff)
+                                sendSum += sdiff
+                                recvSum += rdiff
+                                validCount++
 			}
 		}
 			chartfunc = `
@@ -609,13 +624,27 @@ func main() {
         data.addRows([
 			`
 		fmt.Printf("%s\n", chartfunc)
+                var sendSum int64
+                var recvSum int64
+                var validCount int64
+                validCount = 0
+                sendSum = 0
+                recvSum = 0
 		for i, j := 0, 1; j < len(monitors); i, j = i+1, j+1 {
 			t1, _ := time.Parse(time.RFC3339, monitors[j].Timestamp)
 			// ignore invalid (negative values) SendSizeDiff and RecvSizeDiff
 			sszdiff := monitors[j].Counters.SendSize-monitors[i].Counters.SendSize
 			rszdiff := monitors[j].Counters.RecvSize-monitors[i].Counters.RecvSize
 			if (sszdiff > 0 && rszdiff > 0) {
-				fmt.Printf("\t [[%d, %d, %d], %d, %d],\n", t1.Hour(), t1.Minute(), t1.Second(), sszdiff, rszdiff)
+                                if (j + 30 > len(monitors) && validCount > 0 &&
+                                    ((sendSum / validCount) * 20 < sszdiff ||
+                                     (recvSum / validCount) * 20 < rszdiff)) {
+                                     continue
+                                }
+                                fmt.Printf("\t [[%d, %d, %d], %d, %d],\n", t1.Hour(), t1.Minute(), t1.Second(), sszdiff, rszdiff)
+                                sendSum += sszdiff
+                                recvSum += rszdiff
+                                validCount++
 			}
 		}
 			chartfunc = `
