@@ -547,6 +547,7 @@ function build_rpc_master() {
   mv $tmpMaster $targetDir/publish
   cd $targetDir
   tar zcvf publish.tgz publish
+  rm -rf publish
   cd -
 }
 
@@ -571,6 +572,7 @@ function build_rpc_slave() {
   mv $tmpSlave $targetDir/publish
   cd $targetDir
   tar zcvf publish.tgz publish
+  rm -rf publish
   cd -
 }
 
@@ -595,6 +597,7 @@ build_app_server() {
   mv $tmpAppServer $targetDir/publish
   cd $targetDir
   tar zcvf publish.tgz publish
+  rm -rf publish
   cd -
 }
 
