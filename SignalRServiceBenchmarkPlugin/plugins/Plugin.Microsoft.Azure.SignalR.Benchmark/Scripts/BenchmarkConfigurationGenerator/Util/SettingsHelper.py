@@ -81,6 +81,7 @@ def determine_scenario_config(settings, unit, scenario, transport, protocol="jso
     else:
         key = "{}:{},{}:{}".format("scenario", scenario, "transport", transport)
 
+    #print(key)
     para_key = SettingParaKey()
     cur_settings = settings[key]
 
