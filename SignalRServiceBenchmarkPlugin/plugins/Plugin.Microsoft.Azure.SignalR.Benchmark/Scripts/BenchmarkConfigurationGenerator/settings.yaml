@@ -100,7 +100,7 @@ scenario:sendToClient,transport:Websockets,protocol:json,message_size:2048:
 scenario:sendToClient,transport:Websockets,protocol:json,message_size:256:
   normal_connection: [1000, 2000, 5000, 10000, 20000, 50000, 100000]
   max_connection: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
-  base_step: [1000, 2000, 5000, 10000, 10000, 14000, 14000]
+  base_step: [1000, 2000, 5000, 5000, 10000, 14000, 14000]
   step: [200, 200, 1000, 1000, 1000, 1000, 1000]
   step_length: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
   concurrent: [100, 100, 100, 100, 1000, 2500, 5000]
