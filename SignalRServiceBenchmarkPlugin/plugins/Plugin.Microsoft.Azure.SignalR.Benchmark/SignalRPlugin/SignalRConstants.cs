@@ -84,5 +84,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         // Constants
         public static readonly int ConnectionCloseTimeout = 100;
 
+        // Default RPC task timeout if there is no specific duration
+        public static readonly long MillisecondsToWait = 300000;
     }
 }

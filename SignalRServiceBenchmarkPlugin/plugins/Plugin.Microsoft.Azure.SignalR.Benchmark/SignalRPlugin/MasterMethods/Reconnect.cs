@@ -43,7 +43,16 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
 
             // Process on clients
             var results = from package in packages select package.Client.QueryAsync(package.Data);
-            return Task.WhenAll(results);
+            var task = Task.WhenAll(results);
+            if (stepParameters.TryGetValue(SignalRConstants.Duration, out object value))
+            {
+                stepParameters.TryGetTypedValue(SignalRConstants.Duration, out long duration, Convert.ToInt64);
+                return Util.TimeoutCheckedTask(task, duration * 2, nameof(Reconnect));
+            }
+            else
+            {
+                return Util.TimeoutCheckedTask(task, SignalRConstants.MillisecondsToWait, nameof(Reconnect));
+            }
         }
     }
 }

@@ -37,7 +37,9 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
 
             var results = from package in packages select package.Client.QueryAsync(package.Data);
 
-            return Task.WhenAll(results);
+            var task = Task.WhenAll(results);
+            // we wait until the default timeout reached
+            return Util.TimeoutCheckedTask(task, SignalRConstants.MillisecondsToWait, nameof(StartConnection));
         }
     }
 }
