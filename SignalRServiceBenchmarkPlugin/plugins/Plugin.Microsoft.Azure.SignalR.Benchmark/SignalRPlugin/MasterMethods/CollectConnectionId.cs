@@ -19,20 +19,27 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
 
             // Get parameters
             stepParameters.TryGetTypedValue(SignalRConstants.Type, out string type, Convert.ToString);
-            
+
+            var allTasks = from client in clients select client.QueryAsync(stepParameters);
             // Process on clients
-            var results = await Task.WhenAll(from client in clients select client.QueryAsync(stepParameters));
-
-            // Collect all connection Ids
-            var allConnectionIds = new List<string>();
-            foreach (var result in results)
+            try
             {
-                result.TryGetTypedValue(SignalRConstants.ConnectionId, out List<string> connectionIds, obj => ((JArray)obj).ToObject<List<string>>());
-                allConnectionIds.AddRange(connectionIds);
-            }
+                var results = await TimedoutTask.TimeoutAfter(Task.WhenAll(allTasks), TimeSpan.FromMilliseconds(SignalRConstants.MillisecondsToWait));
+                // Collect all connection Ids
+                var allConnectionIds = new List<string>();
+                foreach (var result in results)
+                {
+                    result.TryGetTypedValue(SignalRConstants.ConnectionId, out List<string> connectionIds, obj => ((JArray)obj).ToObject<List<string>>());
+                    allConnectionIds.AddRange(connectionIds);
+                }
 
-            // Store connection Ids
-            pluginParameters[$"{SignalRConstants.ConnectionIdStore}.{type}"] = allConnectionIds;
+                // Store connection Ids
+                pluginParameters[$"{SignalRConstants.ConnectionIdStore}.{type}"] = allConnectionIds;
+            }
+            catch (Exception e)
+            {
+                Log.Error($"Fail to collect connection Id for {e.Message}");
+            }
         }
     }
 }
