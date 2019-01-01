@@ -179,7 +179,7 @@ function RunSendToGroup()
   local connection=`python3 get_sending_connection.py -g $groupType -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q totalConnections $maxConnectionOption`
   local concurrentConnection=`python3 get_sending_connection.py -g $groupType -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q concurrentConnection $maxConnectionOption`
   local send=`python3 get_sending_connection.py -g $groupType -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q sendingSteps $maxConnectionOption`
-  run_command_core $tag $Scenario $Transport $MessageEncoding $user "$passwd" "$connectionString" $outputDir $config_path $connection $concurrentConnection $send $serverUrl $unit
+  run_command_core $tag $Scenario $Transport $MessageEncoding $user "$passwd" "$connectionString" $outputDir $config_path $connection $concurrentConnection $send $appserverUrls $unit
   if [ "$AspNetSignalR" != "" ]
   then
     # get the metrics
@@ -240,7 +240,7 @@ function RunSendToClient()
   local concurrentConnection=`python3 get_sending_connection.py -ms $msgSize -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q concurrentConnection $maxConnectionOption`
   local send=`python3 get_sending_connection.py -ms $msgSize -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q sendingSteps $maxConnectionOption`
 
-  run_command_core $tag $Scenario $Transport $MessageEncoding $user "$passwd" "$connectionString" $outputDir $config_path $connection $concurrentConnection $send $serverUrl $unit
+  run_command_core $tag $Scenario $Transport $MessageEncoding $user "$passwd" "$connectionString" $outputDir $config_path $connection $concurrentConnection $send $appserverUrls $unit
   if [ "$AspNetSignalR" != "" ]
   then
     collectWebAppMetrics $appPlanOut $webAppOut $outputDir
@@ -306,7 +306,7 @@ function RunCommonScenario()
   local connection=`python3 get_sending_connection.py -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q totalConnections $maxConnectionOption`
   local concurrentConnection=`python3 get_sending_connection.py -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q concurrentConnection $maxConnectionOption`
   local send=`python3 get_sending_connection.py -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q sendingSteps $maxConnectionOption`
-  run_command_core $tag $Scenario $Transport $MessageEncoding $user "$passwd" "$connectionString" $outputDir $config_path $connection $concurrentConnection $send $serverUrl $unit
+  run_command_core $tag $Scenario $Transport $MessageEncoding $user "$passwd" "$connectionString" $outputDir $config_path $connection $concurrentConnection $send $spperverUrls $unit
 
   if [ "$AspNetSignalR" != "" ]
   then
