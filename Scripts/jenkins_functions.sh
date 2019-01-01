@@ -45,9 +45,8 @@ function set_job_env() {
    export serverUrl=`awk '{print $2}' $JenkinsRootPath/JobConfig.yaml`
    export MaxSendIteration=30 # we evaluate the total running time per this value
 }
-# require global env:
-# ASRSEnv, DogFoodResourceGroup, ASRSLocation
-function prepare_ASRS_creation() {
+
+function azure_login() {
 cd $ScriptWorkingDir
 . ./az_signalr_service.sh
 
@@ -58,7 +57,13 @@ then
 else
   az_login_signalr_dev_sub
 fi
-create_group_if_not_exist $DogFoodResourceGroup $ASRSLocation
+}
+
+# require global env:
+# ASRSEnv, DogFoodResourceGroup, ASRSLocation
+function prepare_ASRS_creation() {
+  azure_login
+  create_group_if_not_exist $DogFoodResourceGroup $ASRSLocation
 }
 
 # global env: ScriptWorkingDir, DogFoodResourceGroup, ASRSEnv
@@ -122,7 +127,8 @@ function run_all_units() {
    fi
 
    run_benchmark $service $user "$passwd" "$ConnectionString"
-   
+
+   azure_login
    delete_signalr_service $signalrServiceName $DogFoodResourceGroup
  done
 }

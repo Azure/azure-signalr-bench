@@ -504,14 +504,13 @@ do
    fi
 
    run_unit "$ConnectionString" run_benchmark $service
-   
+
+   azure_login 
    delete_signalr_service $signalrServiceName $DogFoodResourceGroup
 done
 }
 
-# require global env:
-# ASRSEnv, DogFoodResourceGroup, ASRSLocation
-function prepare_ASRS_creation() {
+function azure_login() {
 cd $ScriptWorkingDir
 . ./az_signalr_service.sh
 
@@ -522,6 +521,12 @@ then
 else
   az_login_signalr_dev_sub
 fi
+}
+# require global env:
+# ASRSEnv, DogFoodResourceGroup, ASRSLocation
+function prepare_ASRS_creation() {
+azure_login
+
 create_group_if_not_exist $DogFoodResourceGroup $ASRSLocation
 }
 
