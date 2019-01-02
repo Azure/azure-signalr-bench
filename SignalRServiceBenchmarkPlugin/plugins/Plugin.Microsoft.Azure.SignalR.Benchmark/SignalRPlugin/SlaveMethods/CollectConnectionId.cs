@@ -41,7 +41,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
         {
 
             // Query connection Id
-            var connectionIds = await Util.BatchProcess(connections, CollectConnectionIdFromServer<string>, 100);
+            var connectionIds = await Util.BatchProcess(connections, CollectConnectionIdFromServer<string>, 50);
 
             return new Dictionary<string, object> { { SignalRConstants.ConnectionId, connectionIds } };
         }
