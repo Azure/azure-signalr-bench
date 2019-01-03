@@ -51,13 +51,13 @@ function get_reduced_appserverCount()
     appserverInUse=$serverVmCount
   fi
   # handle AspNet app server
-  if [ "$AspNetSignalR" != "" ] && [ "$AspNetWebAppCount" != "" ]
+  if [ "$AspNetSignalR" == "true" ] && [ "$AspNetWebAppCount" != "" ]
   then
     appserverInUse=$AspNetWebAppCount
   fi
   if [ "$DisableReduceServer" != "true" ]
   then
-    if [ "$AspNetSignalR" == "" ]
+    if [ "$AspNetSignalR" != "true" ]
     then
       appserverInUse=`python get_appserver_count.py -u $unit`
     else
@@ -140,7 +140,7 @@ function RunSendToGroup()
   local appPlanOut=$outputDir/${appPrefix}_appPlan.txt
   local webAppOut=$outputDir/${appPrefix}_webApp.txt
 
-  if [ "$AspNetSignalR" == "" ]
+  if [ "$AspNetSignalR" != "true" ]
   then
     cd $ScriptWorkingDir
     appserverUrls=$(get_reduced_appserverUrl $unit)
@@ -170,7 +170,7 @@ function RunSendToGroup()
                       -U $appserverUrls -d $sigbench_run_duration \
                       -g $groupType -ms $ms\
                       -c $config_path $maxConnectionOption
-  if [ "$AspNetSignalR" != "" ]
+  if [ "$AspNetSignalR" == "true" ]
   then
     #TODO: Hard replacement
     sed -i 's/CreateConnection/CreateAspNetConnection/g' $config_path
@@ -180,7 +180,7 @@ function RunSendToGroup()
   local concurrentConnection=`python3 get_sending_connection.py -g $groupType -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q concurrentConnection $maxConnectionOption`
   local send=`python3 get_sending_connection.py -g $groupType -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q sendingSteps $maxConnectionOption`
   run_command_core $tag $Scenario $Transport $MessageEncoding $user "$passwd" "$connectionString" $outputDir $config_path $connection $concurrentConnection $send $appserverUrls $unit
-  if [ "$AspNetSignalR" != "" ]
+  if [ "$AspNetSignalR" == "true" ]
   then
     # get the metrics
     collectWebAppMetrics $appPlanOut $webAppOut $outputDir
@@ -208,7 +208,7 @@ function RunSendToClient()
   local appPlanOut=$outputDir/${appPrefix}_appPlan.txt
   local webAppOut=$outputDir/${appPrefix}_webApp.txt
 
-  if [ "$AspNetSignalR" == "" ]
+  if [ "$AspNetSignalR" != "true" ]
   then
     cd $ScriptWorkingDir
     appserverUrls=$(get_reduced_appserverUrl $unit)
@@ -230,7 +230,7 @@ function RunSendToClient()
                       -U $appserverUrls -d $sigbench_run_duration \
                       -ms $msgSize \
                       -c $config_path $maxConnectionOption
-  if [ "$AspNetSignalR" != "" ]
+  if [ "$AspNetSignalR" == "true" ]
   then
     #TODO: Hard replacement
     sed -i 's/CreateConnection/CreateAspNetConnection/g' $config_path
@@ -241,7 +241,7 @@ function RunSendToClient()
   local send=`python3 get_sending_connection.py -ms $msgSize -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q sendingSteps $maxConnectionOption`
 
   run_command_core $tag $Scenario $Transport $MessageEncoding $user "$passwd" "$connectionString" $outputDir $config_path $connection $concurrentConnection $send $appserverUrls $unit
-  if [ "$AspNetSignalR" != "" ]
+  if [ "$AspNetSignalR" == "true" ]
   then
     collectWebAppMetrics $appPlanOut $webAppOut $outputDir
     # remove appserver
@@ -267,7 +267,7 @@ function RunCommonScenario()
   local appPlanOut=$outputDir/${appPrefix}_appPlan.txt
   local webAppOut=$outputDir/${appPrefix}_webApp.txt
 
-  if [ "$AspNetSignalR" == "" ]
+  if [ "$AspNetSignalR" != "true" ]
   then
     cd $ScriptWorkingDir
     appserverUrls=$(get_reduced_appserverUrl $unit)   
@@ -296,7 +296,7 @@ function RunCommonScenario()
                       -t $Transport -p $MessageEncoding \
                       -U $appserverUrls -d $sigbench_run_duration \
                       -c $config_path $maxConnectionOption -ms $ms
-  if [ "$AspNetSignalR" != "" ]
+  if [ "$AspNetSignalR" == "true" ]
   then
     #TODO: Hard replacement
     sed -i 's/CreateConnection/CreateAspNetConnection/g' $config_path
@@ -308,7 +308,7 @@ function RunCommonScenario()
   local send=`python3 get_sending_connection.py -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q sendingSteps $maxConnectionOption`
   run_command_core $tag $Scenario $Transport $MessageEncoding $user "$passwd" "$connectionString" $outputDir $config_path $connection $concurrentConnection $send $apperverUrls $unit
 
-  if [ "$AspNetSignalR" != "" ]
+  if [ "$AspNetSignalR" == "true" ]
   then
     collectWebAppMetrics $appPlanOut $webAppOut $outputDir
     # remove appserver
@@ -643,7 +643,7 @@ done
 EOF
   nohup sh $script_collect_slaves_top &
   collect_slaves_top_pid=$!
-  if [ "$AspNetSignalR" == "" ]
+  if [ "$AspNetSignalR" != "true" ]
   then
     nohup sh $script_collect_appserver_top &
     collect_appserver_top_pid=$!
@@ -725,7 +725,7 @@ function run_command() {
   local slaves=`python extract_ip.py -i $PrivateIps -q slaves`
   local masterDir=$CommandWorkingDir/master
   local slaveDir=$CommandWorkingDir/slave
-  if [ "$AspNetSignalR" == "" ]
+  if [ "$AspNetSignalR" != "true" ]
   then
     local appserverInUse=$(get_reduced_appserverCount $unit)
     local appserver=`python extract_ip.py -i $PrivateIps -q appserver -c $appserverInUse`
@@ -753,7 +753,7 @@ EOF
   disable_exit_immediately_when_fail
   start_collect_slaves_appserver_top ${user} $passwd ${outputDir}
   cd $CommandWorkingDir
-  if [ "$AspNetSignalR" == "" ]
+  if [ "$AspNetSignalR" != "true" ]
   then
     dotnet run -- --RpcPort=5555 --SlaveList="$slaves" --MasterHostname="$master" --AppServerHostnames="$appserver" \
          --Username=$user --Password=$passwd \
