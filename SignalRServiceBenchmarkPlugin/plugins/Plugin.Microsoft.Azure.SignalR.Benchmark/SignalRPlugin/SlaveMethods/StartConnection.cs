@@ -25,6 +25,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 stepParameters.TryGetTypedValue(SignalRConstants.ConcurrentConnection,
                     out int concurrentConnection, Convert.ToInt32);
                 stepParameters.TryGetTypedValue(SignalRConstants.Type, out string type, Convert.ToString);
+                // The following get connection Id needs the concurrent connection value
+                pluginParameters.TryAdd(SignalRConstants.ConcurrentConnection, concurrentConnection);
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionStore}.{type}",
                     out IList<IHubConnectionAdapter> connections, (obj) => (IList<IHubConnectionAdapter>)obj);
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.StatisticsStore}.{type}",

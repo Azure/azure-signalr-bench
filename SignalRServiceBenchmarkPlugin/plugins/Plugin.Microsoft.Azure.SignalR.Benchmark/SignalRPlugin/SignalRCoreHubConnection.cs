@@ -23,7 +23,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
 
         public Task<T> InvokeAsync<T>(string method)
         {
-            return _hubConnection.InvokeAsync<T>(method, SignalRConstants.DefaultCancellationToken);
+            return _hubConnection.InvokeAsync<T>(method);
         }
 
         public IDisposable On<T1>(string methodName, Action<T1> handler)
