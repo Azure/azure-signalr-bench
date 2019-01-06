@@ -1,4 +1,5 @@
 ﻿using Common;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.AspNetCore.SignalR.Client;
 using Plugin.Base;
 using Serilog;
@@ -41,14 +42,33 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
         {
 
             // Query connection Id
-            var connectionIds = await Util.BatchProcess(connections, CollectConnectionIdFromServer<string>, 50);
+            var connectionIds = await Util.BatchProcess(connections, CollectConnectionIdFromServer<string>, 20);
 
             return new Dictionary<string, object> { { SignalRConstants.ConnectionId, connectionIds } };
         }
 
         private Task<T> CollectConnectionIdFromServer<T>(IHubConnectionAdapter connection)
         {
-            return connection.InvokeAsync<T>(SignalRConstants.GetConnectionIdCallback);
+            var i = 0;
+            var maxTry = 3;
+            Task<T> result = null;
+            while (i < maxTry)
+            {
+                try
+                {
+                    result = connection.InvokeAsync<T>(SignalRConstants.GetConnectionIdCallback);
+                }
+                catch (HubException ex)
+                {
+                    Log.Error($"Encounter {ex.Message}");
+                    if (i < maxTry)
+                    {
+                        Log.Information($"Try to get connection Id again");
+                    }
+                }
+                i++;
+            }
+            return result;
         }
     }
 }

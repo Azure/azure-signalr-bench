@@ -157,6 +157,8 @@ namespace Commander
             var timeout = 600;
             for (var i = 0; i < appservers.Count; i++)
             {
+                var host = _remoteClients.AppserverSshClients[i].ConnectionInfo.Host;
+                var port = _remoteClients.AppserverSshClients[i].ConnectionInfo.Port;
                 var recheck = 0;
                 while (recheck < timeout)
                 {
@@ -171,11 +173,15 @@ namespace Commander
                         }
                         else
                         {
-                            Log.Information($"waiting for appserver '{appservers[i].CommandText}' starting...");
+                            Log.Information($"waiting for appserver {host}:{port} starting...");
                             recheck++;
                             Task.Delay(TimeSpan.FromSeconds(1)).Wait();
                         }
                     }
+                }
+                if (recheck == timeout)
+                {
+                    Log.Warning($"Fail to start appserver {host}:{port} after waiting for {timeout} seconds, the following tests will fail");
                 }
             }
         }
