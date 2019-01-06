@@ -56,26 +56,26 @@ namespace JenkinsScript
             CreateBenchServerCore(0, vnet);
         }
 
-        private bool CheckAllSSHPort(int appSvrVmCount, int svcVmCount)
+        private bool CheckAllSSHPort(int appSvrVmCount, int svcVmCount, TimeSpan timeSpan)
         {
             var portCheckTaskList = new List<Task>();
             for (var i = 0; i < _agentConfig.SlaveVmCount; i++)
             {
                 var privateIp = GetPrivateIp(NicBase + $"{i}");
-                portCheckTaskList.Add(Task.Run(() => WaitPortOpen(privateIp, 22)));
+                portCheckTaskList.Add(Task.Run(() => WaitPortOpen(privateIp, 22, timeSpan)));
             }
             // service
             for (var i = 0; i < svcVmCount; i++)
             {
                 var privateIp = GetPrivateIp(ServiceNicBase + $"{i}");
-                portCheckTaskList.Add(Task.Run(() => WaitPortOpen(privateIp, 22)));
+                portCheckTaskList.Add(Task.Run(() => WaitPortOpen(privateIp, 22, timeSpan)));
             }
 
             // app server
             for (var i = 0; i < appSvrVmCount; i++)
             {
                 var privateIp = GetPrivateIp(AppSvrNicBase + $"{i}");
-                portCheckTaskList.Add(Task.Run(() => WaitPortOpen(privateIp, 22)));
+                portCheckTaskList.Add(Task.Run(() => WaitPortOpen(privateIp, 22, timeSpan)));
             }
 
             if (Task.WaitAll(portCheckTaskList.ToArray(), TimeSpan.FromSeconds(300)))
@@ -101,7 +101,11 @@ namespace JenkinsScript
             tasks.Add(Task.Run(() => CreateAgentVmsCore(vnet, subnet)));
             Task.WhenAll(tasks).Wait();
 
-            CheckAllSSHPort(appSvrVmCount, svcVmCount);
+            var timeSpan = TimeSpan.FromSeconds(300);
+            if (!CheckAllSSHPort(appSvrVmCount, svcVmCount, timeSpan))
+            {
+                Util.Log($"Fail to access VMs after {timeSpan.Seconds} seconds");
+            }
 
             // debug: list all private ip
             var slvPvtIps = new List<string>();
@@ -1073,21 +1077,20 @@ namespace JenkinsScript
             throw new Exception("Fail to get private IP");
         }
 
-        static void WaitPortOpen(string ipAddr, int port)
+        static void WaitPortOpen(string ipAddr, int port, TimeSpan timeSpan)
         {
-            var seconds = 120;
-            using (var cts = new CancellationTokenSource())
+            using (var cts = new CancellationTokenSource(timeSpan))
             {
                 Util.Log($"Check {ipAddr}:{port} open or not");
-                cts.CancelAfter(TimeSpan.FromSeconds(seconds));
                 while (!cts.IsCancellationRequested)
                 {
                     if (isPortOpen(ipAddr, port))
                     {
+                        Util.Log($"{ipAddr}:{port} is ready");
                         return;
                     }
                 }
-                Util.Log($"{ipAddr}:{port} is not reachable after {seconds} seconds.");
+                Util.Log($"{ipAddr}:{port} is not reachable after {timeSpan.Seconds} seconds.");
             }
         }
 
