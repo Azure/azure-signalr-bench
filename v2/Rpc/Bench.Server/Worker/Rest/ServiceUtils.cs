@@ -67,12 +67,12 @@ namespace Bench.RpcSlave.Worker.Serverless
 
         public string GetSendToUserUrl(string hubName, string userId)
         {
-            return $"{GetBaseUrl(hubName)}/user/{userId}";
+            return $"{GetBaseUrl(hubName)}/users/{userId}";
         }
 
         private string GetBaseUrl(string hubName)
         {
-            return $"{Endpoint}:5002/api/v1-preview/hub/{hubName.ToLower()}";
+            return $"{Endpoint}/api/v1/hubs/{hubName.ToLower()}";
         }
 
         public static string GenerateServerName()
