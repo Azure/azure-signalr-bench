@@ -88,5 +88,10 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         {
             return _hubProxy.Invoke<T>(method);
         }
+
+        public Task SendAsync(string methodName, CancellationToken cancellationToken = default)
+        {
+            return _hubProxy.Invoke(methodName);
+        }
     }
 }

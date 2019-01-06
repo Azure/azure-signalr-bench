@@ -25,6 +25,11 @@ namespace Microsoft.Azure.SignalR.PerfTest.AppServer
             Clients.Client(targetId).SendAsync("RecordLatency", data);
         }
 
+        public void ConnectionId()
+        {
+            Clients.Client(Context.ConnectionId).SendAsync("ConnectionId", Context.ConnectionId);
+        }
+
         public string GetConnectionId()
         {
             return Context.ConnectionId;

@@ -57,6 +57,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         public static readonly string JoinGroupCallbackName = "JoinGroup";
         public static readonly string LeaveGroupCallbackName = "LeaveGroup";
         public static readonly string GetConnectionIdCallback = "GetConnectionId";
+        public static readonly string ConnectionIdCallback = "ConnectionId";
 
         // Message payload
         public static readonly string Timestamp = "payload.Timestamp";

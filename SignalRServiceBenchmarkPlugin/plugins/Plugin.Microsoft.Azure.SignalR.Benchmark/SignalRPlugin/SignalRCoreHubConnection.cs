@@ -41,6 +41,11 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             return _hubConnection.SendAsync(methodName, arg1, cancellationToken);
         }
 
+        public Task SendAsync(string methodName, CancellationToken cancellationToken = default)
+        {
+            return _hubConnection.SendAsync(methodName, cancellationToken);
+        }
+
         public Task StartAsync(CancellationToken cancellationToken = default)
         {
             return _hubConnection.StartAsync(cancellationToken);

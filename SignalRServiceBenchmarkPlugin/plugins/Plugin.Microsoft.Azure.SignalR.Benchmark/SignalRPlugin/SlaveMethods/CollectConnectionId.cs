@@ -24,17 +24,40 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionStore}.{type}",
                     out IList<IHubConnectionAdapter> connections, (obj) => (IList<IHubConnectionAdapter>)obj);
 
+                var connectionIdList = new List<string>();
+                SetConnectionIdCallback(connections, connectionIdList);
+
                 // Get connection Ids from app server
-                var connectionIds = await GetConnectionIds(connections);
-
-                return connectionIds;
-
+                // var connectionIds = await GetConnectionIds(connections);
+                await Util.BatchProcess(connections, ServerSendConnectionIdBack, 20);
+                // Wait for all connection Ids are received
+                var i = 0;
+                var maxTry = 5;
+                while (connectionIdList.Count < connections.Count && i < maxTry)
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(1));
+                    i++;
+                }
+                if (i == maxTry && connectionIdList.Count < connections.Count)
+                {
+                    Log.Warning($"Only get {connectionIdList.Count} connection Ids but expect to see {connections.Count}");
+                }
+                return new Dictionary<string, object> { { SignalRConstants.ConnectionId, connectionIdList.ToArray() } };
             }
             catch (Exception ex)
             {
                 var message = $"Fail to collect connection ID: {ex}";
                 Log.Error(message);
                 throw;
+            }
+        }
+
+        public void SetConnectionIdCallback(
+            IList<IHubConnectionAdapter> connections, IList<string> connectionIdList)
+        {
+            foreach (var connection in connections)
+            {
+                connection.On(SignalRConstants.ConnectionId, (string connectionId) => connectionIdList.Add(connectionId));
             }
         }
 
@@ -45,6 +68,11 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
             var connectionIds = await Util.BatchProcess(connections, CollectConnectionIdFromServer<string>, 20);
 
             return new Dictionary<string, object> { { SignalRConstants.ConnectionId, connectionIds } };
+        }
+
+        private Task ServerSendConnectionIdBack(IHubConnectionAdapter connection)
+        {
+            return connection.SendAsync(SignalRConstants.ConnectionIdCallback);
         }
 
         private Task<T> CollectConnectionIdFromServer<T>(IHubConnectionAdapter connection)

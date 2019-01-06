@@ -43,6 +43,11 @@ namespace ChatRoom
             return Context.ConnectionId;
         }
 
+	public void ConnectionId()
+        {
+            Clients.Client(Context.ConnectionId).SendAsync("ConnectionId", Context.ConnectionId);
+        }
+
         public async Task JoinGroup(string groupName)
         {
             await Groups.Add(Context.ConnectionId, groupName);
