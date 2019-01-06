@@ -86,5 +86,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
 
         // Default RPC task timeout if there is no specific duration
         public static readonly long MillisecondsToWait = 300000;
+        // Default cancellation token timeout
+        public static readonly TimeSpan DefaultCancellationToken = TimeSpan.FromSeconds(5);
     }
 }
