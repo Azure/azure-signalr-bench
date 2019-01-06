@@ -160,12 +160,13 @@ namespace Commander
                 var host = _remoteClients.AppserverSshClients[i].ConnectionInfo.Host;
                 var port = _remoteClients.AppserverSshClients[i].ConnectionInfo.Port;
                 var recheck = 0;
+                string applog = null;
                 while (recheck < timeout)
                 {
                     using (var reader =
                         new StreamReader(appservers[i].OutputStream, Encoding.UTF8, true, 4096, true))
                     {
-                        var applog = reader.ReadToEnd();
+                        applog = reader.ReadToEnd();
                         if (applog.Contains("HttpConnection Started"))
                         {
                             Log.Information($"appserver '{appservers[i].CommandText}' started");
@@ -181,7 +182,8 @@ namespace Commander
                 }
                 if (recheck == timeout)
                 {
-                    Log.Warning($"Fail to start appserver {host}:{port} after waiting for {timeout} seconds, the following tests will fail");
+                    Log.Information($"App log details: {applog}");
+                    Log.Warning($"Fail to start appserver {host}:{port} after waiting for {timeout} seconds");
                 }
             }
         }
@@ -335,7 +337,7 @@ namespace Commander
                 Log.Information($"Start master");
                 var masterResult = masterSshCommand.BeginExecute();
                 using (var reader =
-                   new StreamReader(masterSshCommand.OutputStream, Encoding.UTF8, true, 1024, true))
+                   new StreamReader(masterSshCommand.OutputStream, Encoding.UTF8, true, 4096, true))
                 {
                     while (!masterResult.IsCompleted || !reader.EndOfStream)
                     {
