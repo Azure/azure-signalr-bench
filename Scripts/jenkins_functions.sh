@@ -118,7 +118,8 @@ function run_all_units() {
  do
    cd $ScriptWorkingDir
    ConnectionString="" # set it to be invalid first
-   signalrServiceName="atpf"${result_root}
+   # always use a new name for every ASRS to avoid DNS refresh issue
+   signalrServiceName="atpf"${result_root}-`date +%H%M%S`
    create_asrs $DogFoodResourceGroup $signalrServiceName $service
    if [ "$ConnectionString" == "" ]
    then
