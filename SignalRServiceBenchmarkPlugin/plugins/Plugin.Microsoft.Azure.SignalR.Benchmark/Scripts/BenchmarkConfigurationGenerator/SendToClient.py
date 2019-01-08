@@ -16,7 +16,15 @@ class SendToClient:
         pre_sending += [register_callback_record_latency(self.scenario_config.type)]
 
         pre_sending += [collect_connection_id(self.scenario_config.type)]
-
+        pre_sending += [wait(self.scenario_config.type, self.constant_config.wait_time)]
+        pre_sending += [reconnect(self.scenario_config.type,
+                                  self.scenario_config.connections,
+                                  self.connection_config.url,
+                                  self.connection_config.protocol,
+                                  self.connection_config.transport,
+                                  self.scenario_config.concurrent)]
+        pre_sending += [wait(self.scenario_config.type, self.constant_config.wait_time)]
+        pre_sending += [collect_connection_id(self.scenario_config.type)]
         post_sending = CommonStep.post_sending_steps(self.scenario_config.type)
 
         remainder_begin = 0
