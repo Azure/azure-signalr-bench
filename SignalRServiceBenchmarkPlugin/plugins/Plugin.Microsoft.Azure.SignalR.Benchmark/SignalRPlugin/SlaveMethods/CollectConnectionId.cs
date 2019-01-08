@@ -34,14 +34,11 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 }
 
                 var connIdStoreKey = $"{SignalRConstants.ConnectionIdStore}.{type}";
-                if (pluginParameters.TryGetValue(connIdStoreKey, out _))
+                if (pluginParameters.TryGetValue(connIdStoreKey, out object v))
                 {
                     // check whether need re-get connection Ids
-                    pluginParameters.TryGetTypedValue(
-                        connIdStoreKey,
-                        out Dictionary<string, object> allConnIds,
-                        (obj) => (Dictionary<string, object>)obj);
-                    var existingConnIdList = (List<string>)allConnIds[SignalRConstants.ConnectionId];
+                    var allConnIds = (Dictionary<string, object>)v;
+                    var existingConnIdList = (string[])allConnIds[SignalRConstants.ConnectionId];
                     var hasMissingConnectionId = false;
                     foreach (var connId in existingConnIdList)
                     {
@@ -60,7 +57,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                     else
                     {
                         // prepare re-get missing connection Ids
-                        for (var m = 0; m < existingConnIdList.Count; m++)
+                        for (var m = 0; m < existingConnIdList.Length; m++)
                         {
                             connectionIdList[m] = existingConnIdList[m];
                         }
@@ -68,7 +65,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 }
 
                 // get connection Ids
-                int concurrentConnection = 100;
+                int concurrentConnection = connections.Count > 100 ? 100 : connections.Count;
                 if (pluginParameters.TryGetValue(SignalRConstants.ConcurrentConnection, out _))
                 {
                     pluginParameters.TryGetTypedValue(SignalRConstants.ConcurrentConnection, out int value, Convert.ToInt32);
