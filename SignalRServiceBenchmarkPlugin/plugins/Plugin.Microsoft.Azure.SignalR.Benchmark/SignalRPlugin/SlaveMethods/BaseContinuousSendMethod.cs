@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods.Statistics;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -9,6 +10,28 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
 {
     public class BaseContinuousSendMethod
     {
+        protected void UpdateEpoch(StatisticsCollector statisticsCollector)
+        {
+            // Update epoch at the end of 'Wait' to ensure all the messages are received and all clients stop sending
+            statisticsCollector.IncreaseEpoch();
+        }
+
+        protected void SetSendingStep(
+            StatisticsCollector statisticsCollector,
+            int sendingStep)
+        {
+            statisticsCollector.SetSendingStep(sendingStep);
+        }
+
+        protected void UpdateStatistics(
+            StatisticsCollector statisticsCollector,
+            int sendingStep)
+        {
+            SignalRUtils.ResetCounters(statisticsCollector);
+            UpdateEpoch(statisticsCollector);
+            SetSendingStep(statisticsCollector, sendingStep);
+        }
+
         protected async Task ContinuousSend<T, TKey, TValue>(
         T connection, IDictionary<TKey, TValue> data, 
         Func<T, IDictionary<TKey, TValue>, Task> f, 

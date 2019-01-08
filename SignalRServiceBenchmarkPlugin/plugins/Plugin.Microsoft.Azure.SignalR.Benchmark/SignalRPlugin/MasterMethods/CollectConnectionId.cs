@@ -24,12 +24,17 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
             // Process on clients
             try
             {
-                var results = await TimedoutTask.TimeoutAfter(Task.WhenAll(allTasks), TimeSpan.FromMilliseconds(SignalRConstants.MillisecondsToWait));
+                var results = await TimedoutTask.TimeoutAfter(
+                    Task.WhenAll(allTasks),
+                    TimeSpan.FromMilliseconds(SignalRConstants.MillisecondsToWait));
                 // Collect all connection Ids
                 var allConnectionIds = new List<string>();
                 foreach (var result in results)
                 {
-                    result.TryGetTypedValue(SignalRConstants.ConnectionId, out List<string> connectionIds, obj => ((JArray)obj).ToObject<List<string>>());
+                    result.TryGetTypedValue(
+                        SignalRConstants.ConnectionId,
+                        out List<string> connectionIds,
+                        obj => ((JArray)obj).ToObject<List<string>>());
                     allConnectionIds.AddRange(connectionIds);
                 }
 
