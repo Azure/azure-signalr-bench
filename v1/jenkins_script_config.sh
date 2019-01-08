@@ -433,7 +433,7 @@ function create_asrs()
 . ./kubectl_utils.sh  
 
   local signalr_service
-  if [ $separatedRedis != "" ]
+  if [ "$separatedRedis" != "" ]
   then
     signalr_service=$(create_signalr_service_with_specific_redis $rsg $name $sku $unit $separatedRedis)
   else
