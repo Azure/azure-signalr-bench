@@ -25,9 +25,6 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
 
                 await Task.Delay(TimeSpan.FromMilliseconds(duration));
 
-                // Update epoch at the end of 'Wait' to ensure all the messages are received and all clients stop sending
-                statisticsCollector.IncreaseEpoch();
-
                 // Update for reconnect statistics: change flag from reconnect to success
                 SignalRUtils.ChangeFlagConnectionFlag(connectionsSuccessFlag);
                 return null;

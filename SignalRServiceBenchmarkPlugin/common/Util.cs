@@ -140,14 +140,17 @@ namespace Common
             return Task.WhenAll(from item in source
                                 select Task.Run(async () =>
                                 {
-                                    await s.WaitAsync();
-                                    try
+                                    using (var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(60)))
                                     {
-                                        await f(item);
-                                    }
-                                    finally
-                                    {
-                                        s.Release();
+                                        await s.WaitAsync(cancellationTokenSource.Token);
+                                        try
+                                        {
+                                            await f(item);
+                                        }
+                                        finally
+                                        {
+                                            s.Release();
+                                        }
                                     }
                                 }));
         }
@@ -168,15 +171,18 @@ namespace Common
              return Task.WhenAll(from item in source
                                 select Task.Run(async () =>
                                 {
-                                    await s.WaitAsync();
-                                    try
+                                    using (var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(60)))
                                     {
-                                        var res = await f(item);
-                                        return res;
-                                    }
-                                    finally
-                                    {
-                                        s.Release();
+                                        await s.WaitAsync(cancellationTokenSource.Token);
+                                        try
+                                        {
+                                            var res = await f(item);
+                                            return res;
+                                        }
+                                        finally
+                                        {
+                                            s.Release();
+                                        }
                                     }
                                 }));
         }

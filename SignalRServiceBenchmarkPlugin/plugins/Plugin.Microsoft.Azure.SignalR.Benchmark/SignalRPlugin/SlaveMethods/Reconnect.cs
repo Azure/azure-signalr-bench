@@ -12,7 +12,9 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
 {
     public class Reconnect: ISlaveMethod
     {
-        public async Task<IDictionary<string, object>> Do(IDictionary<string, object> stepParameters, IDictionary<string, object> pluginParameters)
+        public async Task<IDictionary<string, object>> Do(
+            IDictionary<string, object> stepParameters,
+            IDictionary<string, object> pluginParameters)
         {
             try
             {
@@ -36,8 +38,11 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                     out StatisticsCollector statisticsCollector, obj => (StatisticsCollector)obj);
 
                 // Re-create broken connections
-                var newConnections = await RecreateBrokenConnections(connections, connectionIndex,
-                    connectionsSuccessFlag, urls, transportType, protocol, SignalRConstants.ConnectionCloseTimeout);
+                var newConnections = await RecreateBrokenConnections(
+                    connections, connectionIndex,
+                    connectionsSuccessFlag, urls,
+                    transportType, protocol,
+                    SignalRConstants.ConnectionCloseTimeout);
 
                 // Start connections
                 var packages = (from i in Enumerable.Range(0, connections.Count())
@@ -63,8 +68,14 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
             }
         }
 
-        private async Task<IList<IHubConnectionAdapter>> RecreateBrokenConnections(IList<IHubConnectionAdapter> connections, IList<int> connectionIndex, IList<SignalREnums.ConnectionState> connectionsSuccessFlag, 
-            string urls, string transportTypeString, string protocolString, int closeTimeout)
+        private async Task<IList<IHubConnectionAdapter>> RecreateBrokenConnections(
+            IList<IHubConnectionAdapter> connections,
+            IList<int> connectionIndex,
+            IList<SignalREnums.ConnectionState> connectionsSuccessFlag,
+            string urls,
+            string transportTypeString,
+            string protocolString,
+            int closeTimeout)
         {
             // Filter broken connections and local index
             var packages = (from i in Enumerable.Range(0, connections.Count)
@@ -79,7 +90,9 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
             }
 
             // Re-create connections
-            var newConnections = SignalRUtils.CreateConnections((from pkg in packages select pkg.GlobalIndex).ToList(), urls, transportTypeString, protocolString, closeTimeout);
+            var newConnections = SignalRUtils.CreateConnections(
+                (from pkg in packages select pkg.GlobalIndex).ToList(),
+                urls, transportTypeString, protocolString, closeTimeout);
 
             // Setup connection drop handler
             SignalRUtils.SetConnectionOnClose(connections, connectionsSuccessFlag);

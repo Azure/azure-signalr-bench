@@ -3,7 +3,6 @@ using Plugin.Base;
 using Serilog;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
@@ -20,6 +19,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
 
                 // Get parameters
                 stepParameters.TryGetTypedValue(SignalRConstants.Type, out string type, Convert.ToString);
+
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionStore}.{type}",
                     out IList<IHubConnectionAdapter> connections, (obj) => (IList<IHubConnectionAdapter>)obj);
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionSuccessFlag}.{type}",
@@ -33,35 +33,53 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                     connectionIdList.Add("");
                 }
 
+                var connIdStoreKey = $"{SignalRConstants.ConnectionIdStore}.{type}";
+                if (pluginParameters.TryGetValue(connIdStoreKey, out _))
+                {
+                    // check whether need re-get connection Ids
+                    pluginParameters.TryGetTypedValue(
+                        connIdStoreKey,
+                        out Dictionary<string, object> allConnIds,
+                        (obj) => (Dictionary<string, object>)obj);
+                    var existingConnIdList = (List<string>)allConnIds[SignalRConstants.ConnectionId];
+                    var hasMissingConnectionId = false;
+                    foreach (var connId in existingConnIdList)
+                    {
+                        if (String.IsNullOrEmpty(connId))
+                        {
+                            hasMissingConnectionId = true;
+                        }
+                    }
+
+                    if (!hasMissingConnectionId)
+                    {
+                        // all connection Ids are ready
+                        Log.Information("No missing connection Ids, skip try-re-get connection Ids");
+                        return allConnIds;
+                    }
+                    else
+                    {
+                        // prepare re-get missing connection Ids
+                        for (var m = 0; m < existingConnIdList.Count; m++)
+                        {
+                            connectionIdList[m] = existingConnIdList[m];
+                        }
+                    }
+                }
+
+                // get connection Ids
                 int concurrentConnection = 100;
-                if (pluginParameters.TryGetValue(SignalRConstants.ConcurrentConnection, out object v))
+                if (pluginParameters.TryGetValue(SignalRConstants.ConcurrentConnection, out _))
                 {
                     pluginParameters.TryGetTypedValue(SignalRConstants.ConcurrentConnection, out int value, Convert.ToInt32);
                     concurrentConnection = value;
                 }
 
                 await SendRequestToGetConnectionIds(connections, concurrentConnection, connectionIdList, connectionsSuccessFlag);
-                var failures = FailedConnectionId(connectionIdList);
-                if (failures > 0)
-                {
-                    var failureRate = (float)(failures * 100 / connections.Count);
-                    if (failureRate > 1.0)
-                    {
-                        Log.Error($"Too many failures, and we will abandon the reconnection");
-                    }
-                    else
-                    {
-                        // reconnect if connection drops
-                        var packages = (from i in Enumerable.Range(0, connections.Count())
-                                        select (Connection: connections[i], LocalIndex: i,
-                                        ConnectionsSuccessFlag: connectionsSuccessFlag,
-                                        NormalState: SignalREnums.ConnectionState.Success,
-                                        AbnormalState: SignalREnums.ConnectionState.Fail)).ToList();
-                        await Task.WhenAll(Util.BatchProcess(packages, SignalRUtils.StartConnect, concurrentConnection));
-                        await SendRequestToGetConnectionIds(connections, concurrentConnection, connectionIdList, connectionsSuccessFlag);
-                    }
-                }
-                return new Dictionary<string, object> { { SignalRConstants.ConnectionId, connectionIdList.ToArray() } };
+
+                var connectionIdDic = new Dictionary<string, object> { { SignalRConstants.ConnectionId, connectionIdList.ToArray() } };
+                pluginParameters[connIdStoreKey] = connectionIdDic;
+                return connectionIdDic;
             }
             catch (Exception ex)
             {

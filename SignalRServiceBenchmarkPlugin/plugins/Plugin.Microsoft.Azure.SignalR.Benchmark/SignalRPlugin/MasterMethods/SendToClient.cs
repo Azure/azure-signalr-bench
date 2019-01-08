@@ -30,7 +30,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
 
             // Shuffle connection Ids
             connectionIds.Shuffle();
-            
+
             // Prepare parameters
             var packages = clients.Select((client, i) =>
             {

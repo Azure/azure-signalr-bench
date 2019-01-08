@@ -77,8 +77,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 var packages = GenerateData();
 
                 // Reset counters
-                ResetCounters();
-                SetSendingSteps();
+                UpdateStatistics(StatisticsCollector, RemainderEnd == 0 ? GroupInternalRemainderEnd : RemainderEnd);
+
                 // Send messages
                 await SendMessages(packages);
 
@@ -95,16 +95,6 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
         protected abstract Task SendMessages(IEnumerable<Package> packages);
 
         protected virtual bool IsSending(int index, int modulo, int beg, int end) => (index % modulo) >= beg && (index % modulo) < end;
-
-        protected virtual void ResetCounters()
-        {
-            SignalRUtils.ResetCounters(StatisticsCollector);
-        }
-
-        protected void SetSendingSteps()
-        {
-            StatisticsCollector.SetSendingStep(RemainderEnd == 0 ? GroupInternalRemainderEnd : RemainderEnd);
-        }
 
         protected virtual void LoadParameters(IDictionary<string, object> stepParameters)
         {
