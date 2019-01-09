@@ -135,8 +135,12 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             }
         }
 
-        public static IList<IHubConnectionAdapter> CreateAspNetConnections(IList<int> connectionIndex,
-            string urls, string transportTypeString, string protocolString, int closeTimeout)
+        public static IList<IHubConnectionAdapter> CreateAspNetConnections(
+            IList<int> connectionIndex,
+            string urls,
+            string transportTypeString,
+            string protocolString,
+            int closeTimeout)
         {
             List<string> urlList = urls.Split(',').ToList();
             var connections = from i in Enumerable.Range(0, connectionIndex.Count)
@@ -148,8 +152,12 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             return connections.ToList();
         }
 
-        public static IList<IHubConnectionAdapter> CreateConnections(IList<int> connectionIndex,
-            string urls, string transportTypeString, string protocolString, int closeTimeout)
+        public static IList<IHubConnectionAdapter> CreateConnections(
+            IList<int> connectionIndex,
+            string urls,
+            string transportTypeString,
+            string protocolString,
+            int closeTimeout)
         {
             var success = true;
 

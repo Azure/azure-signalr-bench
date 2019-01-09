@@ -124,6 +124,9 @@ namespace Common
             return DateTimeOffset.FromUnixTimeMilliseconds(timestamp).ToString("yyyy-MM-ddThh:mm:ssZ");
         }
 
+        // TODO:
+        // Hardcode a time out value for cancellation token.
+        // For some time consuming operations, this time out needs to be tuned.
         public static Task BatchProcess<T>(IList<T> source, Func<T, Task> f, int max)
         {
             var initial = (max >> 1);
