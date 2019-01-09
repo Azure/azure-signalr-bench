@@ -121,6 +121,13 @@ function collectWebAppMetrics()
   done
 }
 
+function gen4AspNet()
+{
+  local configPath=$1
+  sed -i 's/CreateConnection/CreateAspNetConnection/g' $configPath
+  sed -i 's/Reconnect/AspNetReconnect/g' $configPath
+}
+
 function RunSendToGroup()
 {
   local tag=$1
@@ -173,7 +180,7 @@ function RunSendToGroup()
   if [ "$AspNetSignalR" == "true" ]
   then
     #TODO: Hard replacement
-    sed -i 's/CreateConnection/CreateAspNetConnection/g' $config_path
+    gen4AspNet $config_path
   fi
   cat $config_path
   local connection=`python3 get_sending_connection.py -g $groupType -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q totalConnections $maxConnectionOption`
@@ -233,7 +240,7 @@ function RunSendToClient()
   if [ "$AspNetSignalR" == "true" ]
   then
     #TODO: Hard replacement
-    sed -i 's/CreateConnection/CreateAspNetConnection/g' $config_path
+    gen4AspNet $config_path
   fi
   cat $config_path
   local connection=`python3 get_sending_connection.py -ms $msgSize -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q totalConnections $maxConnectionOption`
@@ -299,7 +306,7 @@ function RunCommonScenario()
   if [ "$AspNetSignalR" == "true" ]
   then
     #TODO: Hard replacement
-    sed -i 's/CreateConnection/CreateAspNetConnection/g' $config_path
+    gen4AspNet $config_path
   fi
 
   cat $config_path
