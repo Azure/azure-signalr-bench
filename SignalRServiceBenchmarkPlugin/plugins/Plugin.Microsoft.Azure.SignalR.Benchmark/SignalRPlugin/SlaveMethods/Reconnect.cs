@@ -1,16 +1,10 @@
-﻿using Common;
-using Microsoft.AspNetCore.SignalR.Client;
-using Plugin.Base;
-using Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods.Statistics;
-using Serilog;
-using System;
+﻿using Plugin.Base;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
 {
-    public class Reconnect: ReconnectBase, ISlaveMethod
+    public class Reconnect : ReconnectBase, ISlaveMethod
     {
         public async Task<IDictionary<string, object>> Do(
             IDictionary<string, object> stepParameters,
