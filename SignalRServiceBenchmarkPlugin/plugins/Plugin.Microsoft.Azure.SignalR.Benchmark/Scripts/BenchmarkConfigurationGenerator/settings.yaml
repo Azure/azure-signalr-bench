@@ -70,8 +70,8 @@ scenario:broadcast,transport:ServerSentEvents:
 scenario:sendToClient,transport:Websockets,protocol:json,message_size:131072:
   normal_connection: [1000, 2000, 5000, 10000, 20000, 50000, 100000]
   max_connection: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
-  base_step: [4, 4, 4, 30, 100, 200, 500]
-  step: [4, 4, 4, 10, 50, 100, 100]
+  base_step: [5, 5, 5, 30, 100, 200, 500]
+  step: [5, 5, 5, 10, 50, 100, 100]
   step_length: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
   concurrent: [100, 100, 100, 100, 1000, 2500, 5000]
 
@@ -79,7 +79,7 @@ scenario:sendToClient,transport:Websockets,protocol:json,message_size:131072:
 scenario:sendToClient,transport:Websockets,protocol:json,message_size:16384:
   normal_connection: [1000, 2000, 5000, 10000, 20000, 50000, 100000]
   max_connection: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
-  base_step: [100, 200, 500, 500, 800, 1000, 1000]
+  base_step: [100, 200, 500, 200, 800, 1000, 1000]
   step: [100, 100, 200, 200, 200, 1000, 1000]
   step_length: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
   concurrent: [100, 100, 100, 100, 1000, 2500, 5000]
