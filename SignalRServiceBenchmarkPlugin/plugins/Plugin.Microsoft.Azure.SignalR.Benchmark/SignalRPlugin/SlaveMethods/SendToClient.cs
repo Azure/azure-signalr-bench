@@ -61,7 +61,10 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                                    let connection = package.Connection
                                    let data = package.Data
                                    where connectionIndex[i] % modulo >= remainderBegin && connectionIndex[i] % modulo < remainderEnd
-                                   select ContinuousSend((Connection: connections[i], LocalIndex: i, ConnectionsSuccessFlag: connectionsSuccessFlag, StatisticsCollector: statisticsCollector), data, SendClient,
+                                   select ContinuousSend((Connection: connections[i],
+                                        LocalIndex: i,
+                                        ConnectionsSuccessFlag: connectionsSuccessFlag,
+                                        StatisticsCollector: statisticsCollector), data, SendClient,
                                         TimeSpan.FromMilliseconds(duration), TimeSpan.FromMilliseconds(interval),
                                         TimeSpan.FromMilliseconds(1), TimeSpan.FromMilliseconds(interval)));
 
