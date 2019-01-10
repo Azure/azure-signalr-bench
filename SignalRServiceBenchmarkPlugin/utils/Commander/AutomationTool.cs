@@ -21,6 +21,7 @@ namespace Commander
         private readonly string _azureSignalRConnectionString;
         private readonly string _appserverLogDirPath;
         private readonly bool _notStartAppServer;
+        private readonly bool _notStopAppServer;
 
         // Slave Information
         private readonly int _rpcPort;
@@ -52,6 +53,7 @@ namespace Commander
             _appserverProject = argOption.AppserverProject;
             _appserverLogDirPath = argOption.AppserverLogDirectory;
             _notStartAppServer = argOption.NotStartAppServer == 1;
+            _notStopAppServer = argOption.NotStopAppServer == 1;
             _masterProject = argOption.MasterProject;
             _slaveProject = argOption.SlaveProject;
             _appserverTargetPath = argOption.AppserverTargetPath;
@@ -372,7 +374,10 @@ namespace Commander
             }
             if (!_notStartAppServer)
             {
-                _remoteClients.AppserverSshClients.ToList().ForEach(client => killDotnet(client));
+                if (!_notStopAppServer)
+                {
+                    _remoteClients.AppserverSshClients.ToList().ForEach(client => killDotnet(client));
+                }
             }
             killDotnet(_remoteClients.MasterSshClient);
             _remoteClients.SlaveSshClients.ToList().ForEach(client => killDotnet(client));
