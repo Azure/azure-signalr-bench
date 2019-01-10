@@ -14,7 +14,17 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             _hubConnection = hubConnection;
         }
 
-        public event Func<Exception, Task> Closed;
+        public event Func<Exception, Task> Closed
+        {
+            add
+            {
+                _hubConnection.Closed += value;
+            }
+            remove
+            {
+                _hubConnection.Closed -= value;
+            }
+        }
 
         public Task DisposeAsync()
         {

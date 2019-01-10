@@ -1,9 +1,6 @@
 ﻿using Microsoft.AspNet.SignalR.Client;
-using Microsoft.AspNet.SignalR.Client.Hubs;
 using Microsoft.AspNet.SignalR.Client.Transports;
 using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -15,7 +12,24 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         private IHubProxy _hubProxy;
         private IClientTransport _clientTransport;
         private string _transport;
-        public event Func<Exception, Task> Closed;
+
+        public event Func<Exception, Task> Closed
+        {
+            add
+            {
+                _hubConnection.Closed += () =>
+                {
+                    value.Invoke(null);
+                };
+            }
+            remove
+            {
+                _hubConnection.Closed -= () =>
+                {
+                    value.Invoke(null);
+                };
+            }
+        }
 
         public AspNetSignalRHubConnection(HubConnection hubConnection, string hubName, string transport)
         {
