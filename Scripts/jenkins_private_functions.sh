@@ -128,6 +128,21 @@ function gen4AspNet()
   sed -i 's/Reconnect/AspNetReconnect/g' $configPath
 }
 
+function normalizeSendSize()
+{
+  local send_size=$1
+  local ms=2048
+  if [ "$send_size" != "" ]
+  then
+     local re='^[0-9]+$'
+     if [[ $send_size =~ $re ]] ; then
+        ms=$send_size
+     fi
+  fi
+  echo $ms
+}
+
+
 function RunSendToGroup()
 {
   local tag=$1
@@ -164,14 +179,8 @@ function RunSendToGroup()
   then
     maxConnectionOption="-m"
   fi
-  local ms=2048
-  if [ "$bench_send_size" != "" ]
-  then
-     local re='^[0-9]+$'
-     if [[ $bench_send_size =~ $re ]] ; then
-        ms=$bench_send_size
-     fi
-  fi
+  local ms=$(normalizeSendSize $bench_send_size)
+
   python3 generate.py -u $unit -S $Scenario \
                       -t $Transport -p $MessageEncoding \
                       -U $appserverUrls -d $sigbench_run_duration \
@@ -291,14 +300,7 @@ function RunCommonScenario()
   then
     maxConnectionOption="-m"
   fi
-  local ms=2048
-  if [ "$bench_send_size" != "" ]
-  then
-     local re='^[0-9]+$'
-     if [[ $bench_send_size =~ $re ]] ; then
-        ms=$bench_send_size
-     fi
-  fi
+  local ms=$(normalizeSendSize $bench_send_size)
   python3 generate.py -u $unit -S $Scenario \
                       -t $Transport -p $MessageEncoding \
                       -U $appserverUrls -d $sigbench_run_duration \
