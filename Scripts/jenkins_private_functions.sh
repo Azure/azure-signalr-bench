@@ -760,6 +760,13 @@ EOF
   disable_exit_immediately_when_fail
   start_collect_slaves_appserver_top ${user} $passwd ${outputDir}
   cd $CommandWorkingDir
+  # "never stop app server" is used for long run stress test
+  local neverStopAppServerOp
+  if [ "$NeverStopAppServer" == "true" ]
+  then
+    neverStopAppServerOp="--NotStopAppServer=1"
+  fi
+
   if [ "$AspNetSignalR" != "true" ]
   then
     dotnet run -- --RpcPort=5555 --SlaveList="$slaves" --MasterHostname="$master" --AppServerHostnames="$appserver" \
@@ -772,7 +779,7 @@ EOF
          --BenchmarkConfiguration="$configPath" \
          --BenchmarkConfigurationTargetPath="/home/${user}/signalr.yaml" \
          --AzureSignalRConnectionString="$connectionString" \
-         --AppserverLogDirectory="${outputDir}" --AppServerCount=$appserverInUse
+         --AppserverLogDirectory="${outputDir}" --AppServerCount=$appserverInUse $neverStopAppServerOp
   else
     dotnet run -- --RpcPort=5555 --SlaveList="$slaves" --MasterHostname="$master" \
                --Username=$user --Password=$passwd \
