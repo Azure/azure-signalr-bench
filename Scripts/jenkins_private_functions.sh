@@ -128,6 +128,21 @@ function gen4AspNet()
   sed -i 's/Reconnect/AspNetReconnect/g' $configPath
 }
 
+function normalizeSendSize()
+{
+  local send_size=$1
+  local ms=2048
+  if [ "$send_size" != "" ]
+  then
+     local re='^[0-9]+$'
+     if [[ $send_size =~ $re ]] ; then
+        ms=$send_size
+     fi
+  fi
+  echo $ms
+}
+
+
 function RunSendToGroup()
 {
   local tag=$1
@@ -164,14 +179,8 @@ function RunSendToGroup()
   then
     maxConnectionOption="-m"
   fi
-  local ms=2048
-  if [ "$bench_send_size" != "" ]
-  then
-     local re='^[0-9]+$'
-     if [[ $bench_send_size =~ $re ]] ; then
-        ms=$bench_send_size
-     fi
-  fi
+  local ms=$(normalizeSendSize $bench_send_size)
+
   python3 generate.py -u $unit -S $Scenario \
                       -t $Transport -p $MessageEncoding \
                       -U $appserverUrls -d $sigbench_run_duration \
@@ -291,14 +300,7 @@ function RunCommonScenario()
   then
     maxConnectionOption="-m"
   fi
-  local ms=2048
-  if [ "$bench_send_size" != "" ]
-  then
-     local re='^[0-9]+$'
-     if [[ $bench_send_size =~ $re ]] ; then
-        ms=$bench_send_size
-     fi
-  fi
+  local ms=$(normalizeSendSize $bench_send_size)
   python3 generate.py -u $unit -S $Scenario \
                       -t $Transport -p $MessageEncoding \
                       -U $appserverUrls -d $sigbench_run_duration \
@@ -760,6 +762,13 @@ EOF
   disable_exit_immediately_when_fail
   start_collect_slaves_appserver_top ${user} $passwd ${outputDir}
   cd $CommandWorkingDir
+  # "never stop app server" is used for long run stress test
+  local neverStopAppServerOp
+  if [ "$NeverStopAppServer" == "true" ]
+  then
+    neverStopAppServerOp="--NotStopAppServer=1"
+  fi
+
   if [ "$AspNetSignalR" != "true" ]
   then
     dotnet run -- --RpcPort=5555 --SlaveList="$slaves" --MasterHostname="$master" --AppServerHostnames="$appserver" \
@@ -772,7 +781,7 @@ EOF
          --BenchmarkConfiguration="$configPath" \
          --BenchmarkConfigurationTargetPath="/home/${user}/signalr.yaml" \
          --AzureSignalRConnectionString="$connectionString" \
-         --AppserverLogDirectory="${outputDir}" --AppServerCount=$appserverInUse
+         --AppserverLogDirectory="${outputDir}" --AppServerCount=$appserverInUse $neverStopAppServerOp
   else
     dotnet run -- --RpcPort=5555 --SlaveList="$slaves" --MasterHostname="$master" \
                --Username=$user --Password=$passwd \
@@ -845,7 +854,7 @@ function create_asrs()
 # CurrentWorkingDir, ServicePrincipal, AgentConfig, VMMgrDir
 function remove_resource_group() {
   echo "!!Received EXIT!! and remove all created VMs"
-
+  record_build_info
   cd $CurrentWorkingDir
   local clean_aspwebapp_daemon=daemon_${JOB_NAME}_cleanwebapp
   local clean_vm_daemon=daemon_${JOB_NAME}_cleanvms
