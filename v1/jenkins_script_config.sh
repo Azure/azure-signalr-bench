@@ -648,6 +648,8 @@ function mark_job_as_failure_if_meet_error()
 function remove_resource_group() {
   echo "!!Received EXIT!! and remove all created VMs"
 
+  record_build_info
+
   cd $CurrentWorkingDir
   local clean_vm_daemon=daemon_${JOB_NAME}_cleanvms
   local clean_asrs_daemon=daemon_${JOB_NAME}_cleanasrs
