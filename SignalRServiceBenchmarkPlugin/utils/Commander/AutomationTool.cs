@@ -150,7 +150,14 @@ namespace Commander
             if (command.ExitStatus != 0)
             {
                 Log.Error($"SshCommand '{command.CommandText}' occurs error: {command.Error}");
-                throw new Exception(command.Error);
+                if (_notStopAppServer && command.Error.Contains("address already in use"))
+                {
+                    Log.Information("Ignore this error since app server has started and never stopped");
+                }
+                else
+                {
+                    throw new Exception(command.Error);
+                }
             }
         }
 
