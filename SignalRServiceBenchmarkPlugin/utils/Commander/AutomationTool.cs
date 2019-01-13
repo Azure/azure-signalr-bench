@@ -22,7 +22,6 @@ namespace Commander
         private readonly string _appserverLogDirPath;
         private readonly bool _notStartAppServer;
         private readonly bool _notStopAppServer;
-
         // Slave Information
         private readonly int _rpcPort;
         private readonly IList<string> _slaveList;
@@ -45,7 +44,8 @@ namespace Commander
 
         // Scp/Ssh clients
         private RemoteClients _remoteClients;
-        private AsyncCallback _sshCmdCallback;
+        
+        private volatile int _hasServerStarted;
 
         public AutomationTool(ArgsOption argOption)
         {
@@ -65,7 +65,6 @@ namespace Commander
             _rpcPort = argOption.RpcPort;
             _appserverPort = argOption.AppserverPort;
             _azureSignalRConnectionString = argOption.AzureSignalRConnectionString;
-            _sshCmdCallback = new AsyncCallback(OnAsyncSshCommandComplete);
             var appServerCount = argOption.AppServerHostnames.Count();
             var appServerCountInUse = argOption.AppServerCountInUse;
             var appServers = argOption.AppServerHostnames?.Take(
@@ -144,7 +143,7 @@ namespace Commander
             }
         }
 
-        private void OnAsyncSshCommandComplete(IAsyncResult result)
+        private void OnAppServerAsyncSshCommandComplete(IAsyncResult result)
         {
             var command = (SshCommand)result.AsyncState;
             if (command.ExitStatus != 0)
@@ -153,12 +152,28 @@ namespace Commander
                 if (_notStopAppServer && command.Error.Contains("address already in use"))
                 {
                     Log.Information("Ignore this error since app server has started and never stopped");
+                    _hasServerStarted++;
                 }
                 else
                 {
                     throw new Exception(command.Error);
                 }
             }
+        }
+
+        private void OnAsyncSshCommandComplete(IAsyncResult result)
+        {
+            var command = (SshCommand)result.AsyncState;
+            if (command.ExitStatus != 0)
+            {
+                Log.Error($"SshCommand '{command.CommandText}' occurs error: {command.Error}");
+                throw new Exception(command.Error);
+            }
+        }
+
+        private bool AllServerStarted(int serverCount)
+        {
+            return _hasServerStarted == serverCount;
         }
 
         private void WaitAppserverStarted(List<SshCommand> appservers)
@@ -170,7 +185,7 @@ namespace Commander
                 var port = _remoteClients.AppserverSshClients[i].ConnectionInfo.Port;
                 var recheck = 0;
                 string applog = null;
-                while (recheck < timeout)
+                while (recheck < timeout && !AllServerStarted(appservers.Count))
                 {
                     using (var reader =
                         new StreamReader(appservers[i].OutputStream, Encoding.UTF8, true, 4096, true))
@@ -306,7 +321,7 @@ namespace Commander
                     appserverSshCommands = (from client in _remoteClients.AppserverSshClients
                                                 select client.CreateCommand(appseverCommand.Replace('\\', '/'))).ToList();
                     var appserverAsyncResults = (from command in appserverSshCommands
-                                                 select command.BeginExecute(OnAsyncSshCommandComplete, command)).ToList();
+                                                 select command.BeginExecute(OnAppServerAsyncSshCommandComplete, command)).ToList();
                     WaitAppserverStarted(appserverSshCommands);
                 }
                 else
