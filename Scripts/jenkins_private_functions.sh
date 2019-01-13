@@ -142,6 +142,19 @@ function normalizeSendSize()
   echo $ms
 }
 
+function normalizeSendInterval()
+{
+  local send_interval=$1
+  local interval=1000
+  if [ "$send_interval" != "" ]
+  then
+     local re='^[0-9]+$'
+     if [[ $send_interval =~ $re ]] ; then
+        ms=$send_interval
+     fi
+  fi
+  echo $interval
+}
 
 function RunSendToGroup()
 {
@@ -180,12 +193,13 @@ function RunSendToGroup()
     maxConnectionOption="-m"
   fi
   local ms=$(normalizeSendSize $bench_send_size)
+  local interval=$(normalizeSendInterval $send_interval)
 
   python3 generate.py -u $unit -S $Scenario \
                       -t $Transport -p $MessageEncoding \
                       -U $appserverUrls -d $sigbench_run_duration \
                       -g $groupType -ms $ms\
-                      -c $config_path $maxConnectionOption
+                      -c $config_path -i $interval $maxConnectionOption
   if [ "$AspNetSignalR" == "true" ]
   then
     #TODO: Hard replacement
@@ -241,10 +255,11 @@ function RunSendToClient()
   then
     maxConnectionOption="-m"
   fi
+  local interval=$(normalizeSendInterval $send_interval)
   python3 generate.py -u $unit -S $Scenario \
                       -t $Transport -p $MessageEncoding \
                       -U $appserverUrls -d $sigbench_run_duration \
-                      -ms $msgSize \
+                      -ms $msgSize -i $interval \
                       -c $config_path $maxConnectionOption
   if [ "$AspNetSignalR" == "true" ]
   then
@@ -301,10 +316,11 @@ function RunCommonScenario()
     maxConnectionOption="-m"
   fi
   local ms=$(normalizeSendSize $bench_send_size)
+  local interval=$(normalizeSendInterval $send_interval)
   python3 generate.py -u $unit -S $Scenario \
                       -t $Transport -p $MessageEncoding \
                       -U $appserverUrls -d $sigbench_run_duration \
-                      -c $config_path $maxConnectionOption -ms $ms
+                      -c $config_path -i $interval $maxConnectionOption -ms $ms
   if [ "$AspNetSignalR" == "true" ]
   then
     #TODO: Hard replacement
