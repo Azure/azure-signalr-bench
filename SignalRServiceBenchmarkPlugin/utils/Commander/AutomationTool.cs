@@ -15,7 +15,7 @@ namespace Commander
     {
         // Executable information
         private readonly string _baseName = "publish";
-
+        private readonly string _appLogFileName = "appserver.log";
         // App server information
         private readonly int _appserverPort;
         private readonly string _azureSignalRConnectionString;
@@ -44,8 +44,6 @@ namespace Commander
 
         // Scp/Ssh clients
         private RemoteClients _remoteClients;
-        
-        private volatile int _hasServerStarted;
 
         public AutomationTool(ArgsOption argOption)
         {
@@ -143,24 +141,6 @@ namespace Commander
             }
         }
 
-        private void OnAppServerAsyncSshCommandComplete(IAsyncResult result)
-        {
-            var command = (SshCommand)result.AsyncState;
-            if (command.ExitStatus != 0)
-            {
-                Log.Error($"SshCommand '{command.CommandText}' occurs error: {command.Error}");
-                if (_notStopAppServer && command.Error.Contains("address already in use"))
-                {
-                    Log.Information("Ignore this error since app server has started and never stopped");
-                    _hasServerStarted++;
-                }
-                else
-                {
-                    throw new Exception(command.Error);
-                }
-            }
-        }
-
         private void OnAsyncSshCommandComplete(IAsyncResult result)
         {
             var command = (SshCommand)result.AsyncState;
@@ -171,73 +151,70 @@ namespace Commander
             }
         }
 
-        private bool AllServerStarted(int serverCount)
+        private void WaitAppServerStarted()
         {
-            return _hasServerStarted == serverCount;
-        }
-
-        private void WaitAppserverStarted(List<SshCommand> appservers)
-        {
-            var timeout = 600;
-            for (var i = 0; i < appservers.Count; i++)
+            var recheckTimeout = 600;
+            var keyWords = "HttpConnection Started";
+            CreateAppServerLogDirIfNotExist();
+            var appserverDirectory = Path.Combine(Path.GetDirectoryName(_appserverTargetPath),
+                        Path.GetFileNameWithoutExtension(_appserverTargetPath), _baseName);
+            var appLogFilePath = Path.Combine(appserverDirectory, _appLogFileName);
+            string content = null;
+            foreach (var client in _remoteClients.AppserverScpClients)
             {
-                var host = _remoteClients.AppserverSshClients[i].ConnectionInfo.Host;
-                var port = _remoteClients.AppserverSshClients[i].ConnectionInfo.Port;
+                var host = client.ConnectionInfo.Host;
+                var localAppserverLog = $"{host}_{_appLogFileName}";
+                var logFilePath = Path.Combine(_appserverLogDirPath, localAppserverLog);
                 var recheck = 0;
-                string applog = null;
-                while (recheck < timeout && !AllServerStarted(appservers.Count))
+                while (recheck < recheckTimeout)
                 {
-                    using (var reader =
-                        new StreamReader(appservers[i].OutputStream, Encoding.UTF8, true, 4096, true))
+                    client.Download(appLogFilePath, new FileInfo(logFilePath));
+                    using (StreamReader sr = new StreamReader(appLogFilePath))
                     {
-                        applog = reader.ReadToEnd();
-                        if (applog.Contains("HttpConnection Started"))
+                        content = sr.ReadToEnd();
+                        if (content.Contains(keyWords))
                         {
-                            Log.Information($"appserver '{appservers[i].CommandText}' started");
+                            Log.Information($"app server {host} started!");
                             break;
                         }
-                        else
-                        {
-                            Log.Information($"waiting for appserver {host}:{port} starting...");
-                            recheck++;
-                            Task.Delay(TimeSpan.FromSeconds(1)).Wait();
-                        }
                     }
+                    recheck++;
+                    Log.Information($"waiting for appserver {host} starting...");
+                    Task.Delay(TimeSpan.FromSeconds(1)).Wait();
                 }
-                if (recheck == timeout)
+                if (recheck == recheckTimeout)
                 {
-                    Log.Information($"App log details: {applog}");
-                    Log.Warning($"Fail to start appserver {host}:{port} after waiting for {timeout} seconds");
+                    Log.Error($"Fail to start server {host}!!!");
+                    if (content != null)
+                    {
+                        Log.Information($"log content: {content}");
+                    }
                 }
             }
         }
 
-        private void CopyAppServerLog(List<SshCommand> appservers)
+        private void CreateAppServerLogDirIfNotExist()
         {
             if (!String.IsNullOrEmpty(_appserverLogDirPath) && !Directory.Exists(_appserverLogDirPath))
             {
                 Directory.CreateDirectory(_appserverLogDirPath);
             }
-            var logPrefix = "log_appserver";
-            for (var i = 0; i < appservers.Count; i++)
-            {
-                var cmd = appservers[i];
-                var logFileNameWithouExt = $"{logPrefix}{i}";
-                var logFile = logFileNameWithouExt + ".log";
-                var logFilePath = Path.Combine(_appserverLogDirPath, logFile);
+        }
 
-                using (var reader = new StreamReader(cmd.OutputStream, Encoding.UTF8, true, 1024))
-                using (var writer = new StreamWriter(logFilePath, true))
-                {
-                    while (!reader.EndOfStream)
-                    {
-                        string line = reader.ReadLine();
-                        if (line != null)
-                        {
-                            writer.WriteLine(line);
-                        }
-                    }
-                }
+        private void CopyAppServerLog()
+        {
+            CreateAppServerLogDirIfNotExist();
+            var appserverDirectory =
+                Path.Combine(Path.GetDirectoryName(_appserverTargetPath),
+                             Path.GetFileNameWithoutExtension(_appserverTargetPath),
+                             _baseName);
+            var appLogFilePath = Path.Combine(appserverDirectory, _appLogFileName);
+            foreach (var client in _remoteClients.AppserverScpClients)
+            {
+                var host = client.ConnectionInfo.Host;
+                var localAppserverLog = $"{host}_{_appLogFileName}";
+                var logFilePath = Path.Combine(_appserverLogDirPath, localAppserverLog);
+                client.Download(appLogFilePath, new FileInfo(logFilePath));
             }
             // zip the applog because it may be big
             /*
@@ -266,6 +243,69 @@ namespace Commander
                 }
             }
             */
+        }
+
+        private void StartAppServer()
+        {
+            var appserverDirectory = Path.Combine(Path.GetDirectoryName(_appserverTargetPath),
+                        Path.GetFileNameWithoutExtension(_appserverTargetPath), _baseName);
+            var appserverScript = "";
+            var cmdPrefix = "dotnet exec AppServer.dll";
+            var appLogFile = _appLogFileName;
+            if (_azureSignalRConnectionString == null)
+            {
+                appserverScript = $@"
+#!/bin/bash
+isRun=`ps axu|grep '{cmdPrefix}'|wc -l`
+if [ $isRun -eq 1 ]
+then
+    export useLocalSignalR=true
+    cd {appserverDirectory}
+    {cmdPrefix} --urls=http://*:{_appserverPort} > {appLogFile}
+else
+    echo 'AppServer has started'
+fi
+";
+            }
+            else
+            {
+                appserverScript = $@"
+#!/bin/bash
+isRun=`ps axu|grep '{cmdPrefix}'|wc -l`
+if [ $isRun -eq 1 ]
+then
+    export Azure__SignalR__ConnectionString='{_azureSignalRConnectionString}'
+    cd {appserverDirectory}
+    {cmdPrefix} --urls=http://*:{_appserverPort} > {appLogFile}
+else
+    echo 'AppServer has started'
+fi
+";
+            }
+            // Copy script to start appserver to every app server VM
+            var scriptName = "startRemoteAppServer.sh";
+            var startAppServerScript = new FileInfo(scriptName);
+            using (var writer = new StreamWriter(startAppServerScript.FullName, true))
+            {
+                writer.Write(appserverScript);
+            }
+            foreach (var client in _remoteClients.AppserverScpClients)
+            {
+                var host = client.ConnectionInfo.Host;
+            }
+
+            var remoteScriptPath = Path.Combine(appserverDirectory, scriptName);
+            var tasks = (from client in _remoteClients.AppserverScpClients
+             select Task.Run(()=> {
+                 client.Upload(startAppServerScript, remoteScriptPath);
+             })).ToList();
+            Task.WhenAll(tasks).Wait();
+            // launch those scripts
+            var launchAppserverCmd = $"chmod +x {scriptName}; ./{scriptName}";
+            var appserverSshCommands = (from client in _remoteClients.AppserverSshClients
+                                        select client.CreateCommand(launchAppserverCmd.Replace('\\', '/'))).ToList();
+            var appserverAsyncResults = (from command in appserverSshCommands
+                                         select command.BeginExecute(OnAsyncSshCommandComplete, command)).ToList();
         }
 
         private void RunBenchmark()
@@ -299,30 +339,11 @@ namespace Commander
                 var masterSshCommand = _remoteClients.MasterSshClient.CreateCommand(masterCommand.Replace('\\', '/'));
 
                 // Start app server
-                List<SshCommand> appserverSshCommands = null;
                 if (!_notStartAppServer)
                 {
                     Log.Information($"Start app server");
-                    var appserverDirectory = Path.Combine(Path.GetDirectoryName(_appserverTargetPath),
-                        Path.GetFileNameWithoutExtension(_appserverTargetPath), _baseName);
-                    var appseverCommand = "";
-                    if (_azureSignalRConnectionString == null)
-                    {
-                        appseverCommand = $"export useLocalSignalR=true; " +
-                                          $"cd {appserverDirectory};" +
-                                          $"dotnet exec AppServer.dll --urls=http://*:{_appserverPort}";
-                    }
-                    else
-                    {
-                        appseverCommand = $"export Azure__SignalR__ConnectionString='{_azureSignalRConnectionString}';" +
-                                          $"cd {appserverDirectory};" +
-                                          $"dotnet exec AppServer.dll --urls=http://*:{_appserverPort}";
-                    }
-                    appserverSshCommands = (from client in _remoteClients.AppserverSshClients
-                                                select client.CreateCommand(appseverCommand.Replace('\\', '/'))).ToList();
-                    var appserverAsyncResults = (from command in appserverSshCommands
-                                                 select command.BeginExecute(OnAppServerAsyncSshCommandComplete, command)).ToList();
-                    WaitAppserverStarted(appserverSshCommands);
+                    StartAppServer();
+                    WaitAppServerStarted();
                 }
                 else
                 {
@@ -354,9 +375,6 @@ namespace Commander
                 var slaveAsyncResults = (from command in slaveSshCommands
                                          select command.BeginExecute(OnAsyncSshCommandComplete, command)).ToList();
 
-                // Wait app server started
-                Task.Delay(TimeSpan.FromSeconds(30)).Wait();
-
                 // Start master
                 Log.Information($"Start master");
                 var masterResult = masterSshCommand.BeginExecute();
@@ -374,9 +392,9 @@ namespace Commander
                 }
 
                 masterSshCommand.EndExecute(masterResult);
-                if (!_notStartAppServer && appserverSshCommands != null)
+                if (!_notStartAppServer)
                 {
-                    CopyAppServerLog(appserverSshCommands);
+                    CopyAppServerLog();
                 }
             }
             finally
