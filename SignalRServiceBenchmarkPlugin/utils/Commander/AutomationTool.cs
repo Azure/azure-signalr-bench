@@ -297,12 +297,13 @@ fi
                              try
                              {
                                  client.Upload(startAppServerScript, remoteScriptPath);
+                                 Log.Information($"Successfully upload {remoteScriptPath} to {client.ConnectionInfo.Host}");
                              }
                              catch (Exception e)
                              {
                                  Log.Error($"Fail to upload startAppServer script: {e.Message}");
                              }
-                         })).ToList();
+                         }));
             Task.WhenAll(tasks).Wait();
             // launch those scripts
             var launchAppserverCmd = $"cd {appserverDirectory}; chmod +x {scriptName}; ./{scriptName}";
