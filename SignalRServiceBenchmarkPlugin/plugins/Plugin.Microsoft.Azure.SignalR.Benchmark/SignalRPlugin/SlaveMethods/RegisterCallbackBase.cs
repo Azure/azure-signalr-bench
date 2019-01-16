@@ -22,6 +22,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                     data.TryGetTypedValue(SignalRConstants.Timestamp, out long sendTimestamp, Convert.ToInt64);
                     var latency = receiveTimestamp - sendTimestamp;
                     statisticsCollector.RecordLatency(latency);
+                    SignalRUtils.RecordRecvSize(data, statisticsCollector);
                 });
             }
         }

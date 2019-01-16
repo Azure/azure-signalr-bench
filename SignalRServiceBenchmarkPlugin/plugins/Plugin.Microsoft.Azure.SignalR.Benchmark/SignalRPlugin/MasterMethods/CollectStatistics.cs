@@ -71,7 +71,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
             }
         }
         
-        private void SaveToFile(IDictionary<string, int> mergedResult, string path)
+        private void SaveToFile(IDictionary<string, long> mergedResult, string path)
         {
             var record = new JObject
             {

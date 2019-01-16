@@ -88,7 +88,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 await package.Connection.SendAsync(SignalRConstants.EchoCallbackName, payload);
 
                 // Update statistics
-                package.StatisticsCollector.IncreaseSentMessage();
+                SignalRUtils.RecordSend(payload, package.StatisticsCollector);
             }
             catch (Exception ex)
             {

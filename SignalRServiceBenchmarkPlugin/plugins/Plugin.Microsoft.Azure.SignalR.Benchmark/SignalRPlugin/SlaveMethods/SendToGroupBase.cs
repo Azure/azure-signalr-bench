@@ -192,7 +192,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 await Connections[localIndex].SendAsync(SignalRConstants.SendToGroupCallbackName, payload);
 
                 // Update statistics
-                StatisticsCollector.IncreaseSentMessage();
+                SignalRUtils.RecordSend(payload, StatisticsCollector);
             }
             catch (Exception ex)
             {
