@@ -210,8 +210,17 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             if (payload.ContainsKey(SignalRConstants.MessageBlob))
             {
                 payload.TryGetValue(SignalRConstants.MessageBlob, out var messageBlob);
-                var array = (byte[])messageBlob;
-                sz += array.Length;
+                if (messageBlob.GetType() == typeof (byte[]))
+                {
+                    var array = (byte[])messageBlob;
+                    sz += array.Length;
+                }
+                else if (messageBlob.GetType() == typeof (string))
+                {
+                    // received data type is changed to string
+                    var array = (string)messageBlob;
+                    sz += array.Length;
+                }
             }
             if (payload.ContainsKey(SignalRConstants.Timestamp))
             {
