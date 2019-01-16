@@ -291,26 +291,28 @@ fi
             }
 
             var remoteScriptPath = Path.Combine(appserverDirectory, scriptName);
-            var tasks = (from client in _remoteClients.AppserverScpClients
+            var startAppServerTasks = new List<Task>();
+            startAppServerTasks.AddRange(from client in _remoteClients.AppserverScpClients
                          select Task.Run(() =>
                          {
                              try
                              {
                                  client.Upload(startAppServerScript, remoteScriptPath);
-                                 Log.Information($"Successfully upload {remoteScriptPath} to {client.ConnectionInfo.Host}");
+                                 Log.Information($"Successfully upload {startAppServerScript} to {client.ConnectionInfo.Host}/{remoteScriptPath}");
                              }
                              catch (Exception e)
                              {
                                  Log.Error($"Fail to upload startAppServer script: {e.Message}");
                              }
                          }));
-            Task.WhenAll(tasks).Wait();
+            Task.WhenAll(startAppServerTasks).Wait();
             // launch those scripts
             var launchAppserverCmd = $"cd {appserverDirectory}; chmod +x {scriptName}; ./{scriptName}";
             var appserverSshCommands = (from client in _remoteClients.AppserverSshClients
                                         select client.CreateCommand(launchAppserverCmd.Replace('\\', '/'))).ToList();
             var appserverAsyncResults = (from command in appserverSshCommands
                                          select command.BeginExecute(OnAsyncSshCommandComplete, command)).ToList();
+            Task.Delay(TimeSpan.FromSeconds(30)).Wait();
         }
 
         private void RunBenchmark()
