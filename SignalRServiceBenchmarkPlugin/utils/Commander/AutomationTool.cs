@@ -301,7 +301,7 @@ fi
              })).ToList();
             Task.WhenAll(tasks).Wait();
             // launch those scripts
-            var launchAppserverCmd = $"chmod +x {scriptName}; ./{scriptName}";
+            var launchAppserverCmd = $"cd {appserverDirectory}; chmod +x {scriptName}; ./{scriptName}";
             var appserverSshCommands = (from client in _remoteClients.AppserverSshClients
                                         select client.CreateCommand(launchAppserverCmd.Replace('\\', '/'))).ToList();
             var appserverAsyncResults = (from command in appserverSshCommands
