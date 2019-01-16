@@ -151,25 +151,37 @@ namespace Commander
             }
         }
 
+        private string GetRemoteAppServerLogPath()
+        {
+            var appserverDirectory = Path.Combine(Path.GetDirectoryName(_appserverTargetPath),
+                        Path.GetFileNameWithoutExtension(_appserverTargetPath), _baseName);
+            var appLogFilePath = Path.Combine(appserverDirectory, _appLogFileName);
+            return appLogFilePath;
+        }
+
+        private string GetLocalAppServerLogPath(string tag)
+        {
+            var fileName = $"{tag}_{_appLogFileName}";
+            var path = Path.Combine(_appserverLogDirPath, fileName);
+            return path;
+        }
+
         private void WaitAppServerStarted()
         {
             var recheckTimeout = 600;
             var keyWords = "HttpConnection Started";
             CreateAppServerLogDirIfNotExist();
-            var appserverDirectory = Path.Combine(Path.GetDirectoryName(_appserverTargetPath),
-                        Path.GetFileNameWithoutExtension(_appserverTargetPath), _baseName);
-            var appLogFilePath = Path.Combine(appserverDirectory, _appLogFileName);
+            var remoteAppLogFilePath = GetRemoteAppServerLogPath();
             string content = null;
             foreach (var client in _remoteClients.AppserverScpClients)
             {
                 var host = client.ConnectionInfo.Host;
-                var localAppserverLog = $"{host}_{_appLogFileName}";
-                var logFilePath = Path.Combine(_appserverLogDirPath, localAppserverLog);
+                var localAppServerLogPath = GetLocalAppServerLogPath(host);
                 var recheck = 0;
                 while (recheck < recheckTimeout)
                 {
-                    client.Download(appLogFilePath, new FileInfo(logFilePath));
-                    using (StreamReader sr = new StreamReader(appLogFilePath))
+                    client.Download(remoteAppLogFilePath, new FileInfo(localAppServerLogPath));
+                    using (StreamReader sr = new StreamReader(localAppServerLogPath))
                     {
                         content = sr.ReadToEnd();
                         if (content.Contains(keyWords))
@@ -204,17 +216,12 @@ namespace Commander
         private void CopyAppServerLog()
         {
             CreateAppServerLogDirIfNotExist();
-            var appserverDirectory =
-                Path.Combine(Path.GetDirectoryName(_appserverTargetPath),
-                             Path.GetFileNameWithoutExtension(_appserverTargetPath),
-                             _baseName);
-            var appLogFilePath = Path.Combine(appserverDirectory, _appLogFileName);
+            var remoteAppLogFilePath = GetRemoteAppServerLogPath();
             foreach (var client in _remoteClients.AppserverScpClients)
             {
                 var host = client.ConnectionInfo.Host;
-                var localAppserverLog = $"{host}_{_appLogFileName}";
-                var logFilePath = Path.Combine(_appserverLogDirPath, localAppserverLog);
-                client.Download(appLogFilePath, new FileInfo(logFilePath));
+                var localAppServerLogPath = GetLocalAppServerLogPath(host);
+                client.Download(remoteAppLogFilePath, new FileInfo(localAppServerLogPath));
             }
             // zip the applog because it may be big
             /*
