@@ -283,22 +283,26 @@ fi
 ";
             }
             // Copy script to start appserver to every app server VM
-            var scriptName = "startRemoteAppServer.sh";
+            var scriptName = "startAppServer.sh";
             var startAppServerScript = new FileInfo(scriptName);
             using (var writer = new StreamWriter(startAppServerScript.FullName, true))
             {
                 writer.Write(appserverScript);
             }
-            foreach (var client in _remoteClients.AppserverScpClients)
-            {
-                var host = client.ConnectionInfo.Host;
-            }
 
             var remoteScriptPath = Path.Combine(appserverDirectory, scriptName);
             var tasks = (from client in _remoteClients.AppserverScpClients
-             select Task.Run(()=> {
-                 client.Upload(startAppServerScript, remoteScriptPath);
-             })).ToList();
+                         select Task.Run(() =>
+                         {
+                             try
+                             {
+                                 client.Upload(startAppServerScript, remoteScriptPath);
+                             }
+                             catch (Exception e)
+                             {
+                                 Log.Error($"Fail to upload startAppServer script: {e.Message}");
+                             }
+                         })).ToList();
             Task.WhenAll(tasks).Wait();
             // launch those scripts
             var launchAppserverCmd = $"cd {appserverDirectory}; chmod +x {scriptName}; ./{scriptName}";
