@@ -840,12 +840,24 @@ function create_asrs()
 {
   local rsg=$1
   local name=$2
-  local unit=$3
+  local sku=$3
+  local unit=$4
 
 . ./az_signalr_service.sh
 . ./kubectl_utils.sh
 
-  local signalr_service=$(create_signalr_service $rsg $name "Basic_DS2" $unit)
+  local signalr_service
+  if [ "$separatedRedis" != "" ] && [ "$separatedAcs" != "" ]
+  then
+    signalr_service=$(create_signalr_service_with_specific_acs_and_redis $rsg $name $sku $unit $separatedRedis $separatedAcs)
+  else
+    if [ "$separatedRedis" != "" ]
+    then
+      signalr_service=$(create_signalr_service_with_specific_redis $rsg $name $sku $unit $separatedRedis)
+    else
+      signalr_service=$(create_signalr_service $rsg $name $sku $unit)
+    fi
+  fi
   if [ "$signalr_service" == "" ]
   then
     echo "Fail to create SignalR Service"

@@ -76,6 +76,29 @@ function create_signalr_service()
   echo "$signalrHostName"
 }
 
+function create_signalr_service_with_specific_acs_and_redis()
+{
+  local rsg=$1
+  local name=$2
+  local sku=$3
+  local unitCount=$4
+  local redisRowKey=$5
+  local acsRowKey=$6
+  local signalrHostName
+  # add extension
+  #add_signalr_extension
+
+  signalrHostName=$(az signalr create \
+     --name $name                     \
+     --resource-group $rsg            \
+     --sku $sku                       \
+     --unit-count $unitCount          \
+     --query hostName                 \
+     --tags SIGNALR_REDIS_ROW_KEY=$redisRowKey SIGNALR_ACS_ROW_KEY=$acsRowKey \
+     -o tsv)
+  echo "$signalrHostName"
+}
+
 function create_signalr_service_with_specific_redis()
 {
   local rsg=$1
