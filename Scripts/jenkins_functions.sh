@@ -120,7 +120,7 @@ function run_all_units() {
    ConnectionString="" # set it to be invalid first
    # always use a new name for every ASRS to avoid DNS refresh issue
    signalrServiceName="atpf"${result_root}-`date +%H%M%S`
-   create_asrs $DogFoodResourceGroup $signalrServiceName $service
+   create_asrs $DogFoodResourceGroup $signalrServiceName $Sku $service
    if [ "$ConnectionString" == "" ]
    then
      echo "Skip the running on SignalR service unit'$service' since it was failed to create"

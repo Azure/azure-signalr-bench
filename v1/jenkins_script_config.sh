@@ -433,11 +433,16 @@ function create_asrs()
 . ./kubectl_utils.sh  
 
   local signalr_service
-  if [ "$separatedRedis" != "" ]
+  if [ "$separatedRedis" != "" ] && [ "$separatedAcs" != "" ]
   then
-    signalr_service=$(create_signalr_service_with_specific_redis $rsg $name $sku $unit $separatedRedis)
+    signalr_service=$(create_signalr_service_with_specific_acs_and_redis $rsg $name $sku $unit $separatedRedis $separatedAcs)
   else
-    signalr_service=$(create_signalr_service $rsg $name $sku $unit)
+    if [ "$separatedRedis" != "" ]
+    then
+      signalr_service=$(create_signalr_service_with_specific_redis $rsg $name $sku $unit $separatedRedis)
+    else
+      signalr_service=$(create_signalr_service $rsg $name $sku $unit)
+    fi
   fi
   if [ "$signalr_service" == "" ]
   then
@@ -615,9 +620,13 @@ function prepare_ASRS_creation() {
   if [ "$ASRSLocation" == "westus2" ] && [ "$ASRSEnv" == "production" ]
   then
      # on production environment, we use separate Redis for westus2 region
-     if [ -e westus2_redis_rawkey.txt ]
+     if [ -e westus2_redis_rowkey.txt ]
      then
-       separatedRedis=`cat westus2_redis_rawkey.txt`
+       separatedRedis=`cat westus2_redis_rowkey.txt`
+     fi
+     if [ -e westus2_acs_rowkey.txt ]
+     then
+       separatedAcs=`cat westus2_acs_rowkey.txt`
      fi
   fi
 }
