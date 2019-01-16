@@ -6,11 +6,11 @@ using System.Threading.Tasks;
 
 namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
 {
-    public class Reconnect : ReconnectBase, IMasterMethod
+    public class AspNetReconnect : ReconnectBase, IMasterMethod
     {
         public Task Do(IDictionary<string, object> stepParameters, IDictionary<string, object> pluginParameters, IList<IRpcClient> clients)
         {
-            Log.Information($"Reconnect connections...");
+            Log.Information($"AspNetReconnect connections...");
 
             return Reconnect(stepParameters, pluginParameters, clients);
         }

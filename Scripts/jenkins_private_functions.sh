@@ -142,6 +142,69 @@ function normalizeSendSize()
   echo $ms
 }
 
+function normalizeSendInterval()
+{
+  local send_interval=$1
+  local interval=1000
+  if [ "$send_interval" != "" ]
+  then
+     local re='^[0-9]+$'
+     if [[ $send_interval =~ $re ]] ; then
+        ms=$send_interval
+     fi
+  fi
+  echo $interval
+}
+# global parameters:
+#   bench_send_size, sigbench_run_duration, useMaxConnection
+#   ToleratedMaxConnectionFailCount
+#   ToleratedMaxConnectionFailPercentage
+#   ToleratedMaxLatencyPercentage
+function GenBenchmarkConfig()
+{
+  local unit=$1
+  local Scenario=$2
+  local Transport=$3
+  local MessageEncoding=$4
+  local appserverUrls=$5
+  local groupType=$6
+  local configPath=$7
+
+  local maxConnectionOption=""
+  if [ "$useMaxConnection" == "true" ]
+  then
+    maxConnectionOption="-m"
+  fi
+  local ms=$(normalizeSendSize $bench_send_size)
+  local interval=$(normalizeSendInterval $send_interval)
+
+  local groupTypeOp
+  local toleratedConnDropCountOp
+  local toleratedConnDropPercentageOp
+  local toleratedMaxLatencyPercentageOp
+  if [ "$ToleratedMaxConnectionFailCount" != "" ]
+  then
+    toleratedConnDropCountOp="-cc $ToleratedMaxConnectionFailCount"
+  fi
+  if [ "$ToleratedMaxConnectionFailPercentage" != "" ]
+  then
+    toleratedConnDropPercentageOp="-cp $ToleratedMaxConnectionFailPercentage"
+  fi
+  if [ "$ToleratedMaxLatencyPercentage" != "" ]
+  then
+    toleratedMaxLatencyPercentageOp="-cs $ToleratedMaxLatencyPercentage"
+  fi
+  if [ "$groupType" != "None" ]
+  then
+    groupTypeOp="-g $groupType"
+  fi
+  python3 generate.py -u $unit -S $Scenario \
+                      -t $Transport -p $MessageEncoding \
+                      -U $appserverUrls -d $sigbench_run_duration \
+                      $groupTypeOp -ms $ms -i $interval \
+                      -c $configPath $maxConnectionOption \
+                      $toleratedConnDropCountOp $toleratedConnDropPercentageOp $toleratedMaxLatencyPercentageOp
+}
 
 function RunSendToGroup()
 {
@@ -173,19 +236,7 @@ function RunSendToGroup()
 
   cd $PluginScriptWorkingDir
   local config_path=$outputDir/${tag}_${Scenario}_${Transport}_${MessageEncoding}.config
-
-  local maxConnectionOption=""
-  if [ "$useMaxConnection" == "true" ]
-  then
-    maxConnectionOption="-m"
-  fi
-  local ms=$(normalizeSendSize $bench_send_size)
-
-  python3 generate.py -u $unit -S $Scenario \
-                      -t $Transport -p $MessageEncoding \
-                      -U $appserverUrls -d $sigbench_run_duration \
-                      -g $groupType -ms $ms\
-                      -c $config_path $maxConnectionOption
+  GenBenchmarkConfig $unit $Scenario $Transport $MessageEncoding $appserverUrls $groupType $config_path
   if [ "$AspNetSignalR" == "true" ]
   then
     #TODO: Hard replacement
@@ -235,17 +286,7 @@ function RunSendToClient()
 
   cd $PluginScriptWorkingDir
   local config_path=$outputDir/${tag}_${Scenario}_${Transport}_${MessageEncoding}.config
-
-  local maxConnectionOption=""
-  if [ "$useMaxConnection" == "true" ]
-  then
-    maxConnectionOption="-m"
-  fi
-  python3 generate.py -u $unit -S $Scenario \
-                      -t $Transport -p $MessageEncoding \
-                      -U $appserverUrls -d $sigbench_run_duration \
-                      -ms $msgSize \
-                      -c $config_path $maxConnectionOption
+  GenBenchmarkConfig $unit $Scenario $Transport $MessageEncoding $appserverUrls None $config_path
   if [ "$AspNetSignalR" == "true" ]
   then
     #TODO: Hard replacement
@@ -294,17 +335,7 @@ function RunCommonScenario()
 
   cd $PluginScriptWorkingDir
   local config_path=$outputDir/${tag}_${Scenario}_${Transport}_${MessageEncoding}.config
-
-  local maxConnectionOption=""
-  if [ "$useMaxConnection" == "true" ]
-  then
-    maxConnectionOption="-m"
-  fi
-  local ms=$(normalizeSendSize $bench_send_size)
-  python3 generate.py -u $unit -S $Scenario \
-                      -t $Transport -p $MessageEncoding \
-                      -U $appserverUrls -d $sigbench_run_duration \
-                      -c $config_path $maxConnectionOption -ms $ms
+  GenBenchmarkConfig $unit $Scenario $Transport $MessageEncoding $appserverUrls None $config_path
   if [ "$AspNetSignalR" == "true" ]
   then
     #TODO: Hard replacement
