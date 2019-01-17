@@ -665,6 +665,8 @@ while [ true ]
 do
   for i in `python extract_ip.py -i $PrivateIps -q slaveList`
   do
+    local date_time=\`date --iso-8601='seconds'\`
+    echo "\${date_time} " >> $outputDir/slave_\${i}_top.txt
     sshpass -p $passwd ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $user@\${i} "top -b -n 1|head -n 17" >> $outputDir/slave_\${i}_top.txt
   done
   sleep 1
@@ -676,6 +678,8 @@ while [ true ]
 do
   for i in `python extract_ip.py -i $PrivateIps -q appserverList`
   do
+    local date_time=\`date --iso-8601='seconds'\`
+    echo "\${date_time} " >> $outputDir/appserver_\${i}_top.txt
     sshpass -p $passwd ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $user@\${i} "top -b -n 1|head -n 17" >> $outputDir/appserver_\${i}_top.txt
   done
   sleep 1
