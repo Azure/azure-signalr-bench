@@ -1,4 +1,5 @@
-﻿using Medallion.Shell;
+﻿using Common;
+using Medallion.Shell;
 using Renci.SshNet;
 using Serilog;
 using System;
@@ -44,6 +45,7 @@ namespace Commander
 
         // Scp/Ssh clients
         private RemoteClients _remoteClients;
+        private volatile int _startedAppServer;
 
         public AutomationTool(ArgsOption argOption)
         {
@@ -143,6 +145,17 @@ namespace Commander
 
         private void OnAsyncSshCommandComplete(IAsyncResult result)
         {
+            var command = (SshCommand)result.AsyncState;
+            if (command.ExitStatus != 0)
+            {
+                Log.Error($"SshCommand '{command.CommandText}' occurs error: {command.Error}");
+                throw new Exception(command.Error);
+            }
+        }
+
+        private void OnStartAppAsyncSshCommandComplete(IAsyncResult result)
+        {
+            _startedAppServer++;
             var command = (SshCommand)result.AsyncState;
             if (command.ExitStatus != 0)
             {
@@ -252,7 +265,7 @@ namespace Commander
             */
         }
 
-        private void StartAppServer()
+        private void StartAppServer(bool relaunch=true)
         {
             var appserverDirectory = Path.Combine(Path.GetDirectoryName(_appserverTargetPath),
                         Path.GetFileNameWithoutExtension(_appserverTargetPath), _baseName);
@@ -261,7 +274,23 @@ namespace Commander
             var appLogFile = _appLogFileName;
             if (_azureSignalRConnectionString == null)
             {
-                appserverScript = $@"
+                if (relaunch)
+                {
+                    appserverScript = $@"
+#!/bin/bash
+    isRun=`ps axu|grep '{cmdPrefix}'|wc -l`
+    if [ $isRun -gt 1 ]
+    then
+        killall dotnet
+    fi
+    export useLocalSignalR=true
+    cd {appserverDirectory}
+    {cmdPrefix} --urls=http://*:{_appserverPort} > {appLogFile}
+";
+                }
+                else
+                {
+                    appserverScript = $@"
 #!/bin/bash
 isRun=`ps axu|grep '{cmdPrefix}'|wc -l`
 if [ $isRun -eq 1 ]
@@ -273,21 +302,39 @@ else
     echo 'AppServer has started'
 fi
 ";
+                }
             }
             else
             {
-                appserverScript = $@"
+                if (relaunch)
+                {
+                    appserverScript = $@"
 #!/bin/bash
-isRun=`ps axu|grep '{cmdPrefix}'|wc -l`
-if [ $isRun -eq 1 ]
-then
-    export Azure__SignalR__ConnectionString='{_azureSignalRConnectionString}'
+    isRun=`ps axu|grep '{cmdPrefix}'|wc -l`
+    if [ $isRun -gt 1 ]
+    then
+        killall dotnet
+    fi
+    dotnet user-secrets set Azure:SignalR:ConnectionString '{_azureSignalRConnectionString}'
     cd {appserverDirectory}
     {cmdPrefix} --urls=http://*:{_appserverPort} > {appLogFile}
-else
-    echo 'AppServer has started'
-fi
 ";
+                }
+                else
+                {
+                    appserverScript = $@"
+#!/bin/bash
+    isRun=`ps axu|grep '{cmdPrefix}'|wc -l`
+    if [ $isRun -eq 1 ]
+    then
+        dotnet user-secrets set Azure:SignalR:ConnectionString '{_azureSignalRConnectionString}'
+        cd {appserverDirectory}
+        {cmdPrefix} --urls=http://*:{_appserverPort} > {appLogFile}
+    else
+        echo 'AppServer has started'
+    fi
+";
+                }
             }
             // Copy script to start appserver to every app server VM
             var scriptName = "startAppServer.sh";
@@ -296,7 +343,6 @@ fi
             {
                 writer.Write(appserverScript);
             }
-
             var remoteScriptPath = Path.Combine(appserverDirectory, scriptName);
             var startAppServerTasks = new List<Task>();
             startAppServerTasks.AddRange(from client in _remoteClients.AppserverScpClients
@@ -318,8 +364,16 @@ fi
             var appserverSshCommands = (from client in _remoteClients.AppserverSshClients
                                         select client.CreateCommand(launchAppserverCmd.Replace('\\', '/'))).ToList();
             var appserverAsyncResults = (from command in appserverSshCommands
-                                         select command.BeginExecute(OnAsyncSshCommandComplete, command)).ToList();
-            Task.Delay(TimeSpan.FromSeconds(30)).Wait();
+                                         select command.BeginExecute(OnStartAppAsyncSshCommandComplete, command)).ToList();
+            Util.TimeoutCheckedTask(Task.Run(async ()=>
+            {
+                while (_startedAppServer < _remoteClients.AppserverSshClients.Count)
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(1));
+                }
+                Log.Information("All app server launched");
+            }), 60000);
+            Task.Delay(TimeSpan.FromSeconds(60)).Wait();
         }
 
         private void RunBenchmark()
@@ -343,7 +397,6 @@ fi
                 var slaveExecutablePath = Path.Combine(Path.GetDirectoryName(_slaveTargetPath),
                     Path.GetFileNameWithoutExtension(_slaveTargetPath), _baseName, "slave.dll");
 
-                
                 var masterCommand = $"cd {masterDirectory}; " +
                                     $"dotnet exec {masterExecutablePath} -- " +
                                     $"--BenchmarkConfiguration=\"{_benchmarkConfigurationTargetPath}\" " +
@@ -356,7 +409,7 @@ fi
                 if (!_notStartAppServer)
                 {
                     Log.Information($"Start app server");
-                    StartAppServer();
+                    StartAppServer(!_notStopAppServer);
                     WaitAppServerStarted();
                 }
                 else
@@ -426,12 +479,9 @@ fi
                 var sshCommand = client.CreateCommand(command);
                 _ = sshCommand.Execute();
             }
-            if (!_notStartAppServer)
+            if (!_notStartAppServer && !_notStopAppServer)
             {
-                if (!_notStopAppServer)
-                {
-                    _remoteClients.AppserverSshClients.ToList().ForEach(client => killDotnet(client));
-                }
+                _remoteClients.AppserverSshClients.ToList().ForEach(client => killDotnet(client));
             }
             killDotnet(_remoteClients.MasterSshClient);
             _remoteClients.SlaveSshClients.ToList().ForEach(client => killDotnet(client));
