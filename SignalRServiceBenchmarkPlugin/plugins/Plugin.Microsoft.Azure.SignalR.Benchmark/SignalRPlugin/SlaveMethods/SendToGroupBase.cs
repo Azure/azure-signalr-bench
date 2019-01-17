@@ -149,7 +149,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
         protected virtual IEnumerable<Package> GenerateData()
         {
             // Generate necessary data
-            var messageBlob = new byte[MessageSize];
+            var messageBlob = SignalRUtils.GenerateRandomData(MessageSize);
 
             var packages = from i in Enumerable.Range(0, Connections.Count)
                            let groupName = SignalRUtils.GroupName(Type, i % GroupCount)

@@ -204,21 +204,34 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             }
         }
 
+        // Why shall we prefer 'string' rather than 'byte[]' data type?
+        // messagepack protocol supports both string and byte[], json protocol only supports string data type.
+        // So, if we define the data type is byte[], when using json protocol, there are potential issues,
+        // for example, non-ASCII data will miss. In addition, SignalR will convert byte[] to string, as a result,
+        // the data size changes without any notification.
+        public static string GenerateRandomData(int len)
+        {
+            var message = new byte[len];
+            Random rnd = new Random();
+            rnd.NextBytes(message);
+            return Convert.ToBase64String(message);
+        }
+
         private static long EvaluatePayloadSize(IDictionary<string, object> payload)
         {
             long sz = 0;
             if (payload.ContainsKey(SignalRConstants.MessageBlob))
             {
                 payload.TryGetValue(SignalRConstants.MessageBlob, out var messageBlob);
-                if (messageBlob.GetType() == typeof (byte[]))
+
+                if (messageBlob.GetType() == typeof(string))
                 {
-                    var array = (byte[])messageBlob;
+                    var array = (string)messageBlob;
                     sz += array.Length;
                 }
-                else if (messageBlob.GetType() == typeof (string))
+                else if (messageBlob.GetType() == typeof (byte[]))
                 {
-                    // received data type is changed to string
-                    var array = (string)messageBlob;
+                    var array = (byte[])messageBlob;
                     sz += array.Length;
                 }
             }
