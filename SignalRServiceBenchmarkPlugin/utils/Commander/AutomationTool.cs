@@ -315,8 +315,8 @@ fi
     then
         killall dotnet
     fi
-    dotnet user-secrets set Azure:SignalR:ConnectionString '{_azureSignalRConnectionString}'
     cd {appserverDirectory}
+    export Azure__SignalR__ConnectionString=""{_azureSignalRConnectionString}""
     {cmdPrefix} --urls=http://*:{_appserverPort} > {appLogFile}
 ";
                 }
@@ -327,8 +327,8 @@ fi
     isRun=`ps axu|grep '{cmdPrefix}'|wc -l`
     if [ $isRun -eq 1 ]
     then
-        dotnet user-secrets set Azure:SignalR:ConnectionString '{_azureSignalRConnectionString}'
         cd {appserverDirectory}
+        export Azure__SignalR__ConnectionString=""{_azureSignalRConnectionString}""
         {cmdPrefix} --urls=http://*:{_appserverPort} > {appLogFile}
     else
         echo 'AppServer has started'
@@ -339,7 +339,7 @@ fi
             // Copy script to start appserver to every app server VM
             var scriptName = "startAppServer.sh";
             var startAppServerScript = new FileInfo(scriptName);
-            using (var writer = new StreamWriter(startAppServerScript.FullName, true))
+            using (var writer = new StreamWriter(startAppServerScript.FullName, false))
             {
                 writer.Write(appserverScript);
             }
