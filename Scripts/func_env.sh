@@ -578,9 +578,13 @@ function extract_servicename_from_connectionstring() {
 }
 
 function record_build_info() {
-  cat << EOF > /tmp/send_mail.txt
-Details: $BUILD_URL/console
+  grep "$BUILD_URL" /tmp/send_mail.txt
+  if [ $? -ne 0 ]
+  then
+    cat << EOF > /tmp/send_mail.txt
+Jenkins job details: $BUILD_URL/console
 EOF
+  fi
 }
 
 function gen_final_report() {
