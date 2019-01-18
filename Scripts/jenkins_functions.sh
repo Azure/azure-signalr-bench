@@ -43,6 +43,7 @@ function set_job_env() {
    export DogFoodResourceGroup="hzatpf"$result_root
    export AspNetWebAppResGrp="hzperfwebapp"$result_root
    export MaxSendIteration=30 # we evaluate the total running time per this value
+   record_build_info # record the jenkins job to /tmp/send_mail.txt
 }
 
 function azure_login() {

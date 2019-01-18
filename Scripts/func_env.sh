@@ -578,19 +578,12 @@ function extract_servicename_from_connectionstring() {
 }
 
 function record_build_info() {
-  grep "$BUILD_URL" /tmp/send_mail.txt
-  if [ $? -ne 0 ]
-  then
-    cat << EOF > /tmp/send_mail.txt
+  cat << EOF > /tmp/send_mail.txt
 Jenkins job details: $BUILD_URL/console
 EOF
-  fi
 }
 
 function gen_final_report() {
-  # if there are errors blocking generating report,
-  # the error can also be found
-  record_build_info
   sh gen_all_tabs.sh
   sh publish_report.sh
   sh gen_summary.sh # refresh summary.html in NginxRoot gen_summary

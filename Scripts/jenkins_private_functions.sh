@@ -901,7 +901,6 @@ function create_asrs()
 # CurrentWorkingDir, ServicePrincipal, AgentConfig, VMMgrDir
 function remove_resource_group() {
   echo "!!Received EXIT!! and remove all created VMs"
-  record_build_info
   cd $CurrentWorkingDir
   local clean_aspwebapp_daemon=daemon_${JOB_NAME}_cleanwebapp
   local clean_vm_daemon=daemon_${JOB_NAME}_cleanvms
