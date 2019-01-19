@@ -501,11 +501,13 @@ function reboot_all_pods()
    local connectionString=$1
    cd $ScriptWorkingDir
    . ./kubectl_utils.sh
+   disable_exit_immediately_when_fail
    local service_name=$(extract_servicename_from_connectionstring $connectionString)
    if [ "$service_name" != "" ] && [ "$RebootASRS" != "false" ]
    then
      restart_all_pods $service_name
    fi
+   enable_exit_immediately_when_fail
 }
 
 function run_on_scenario() {
