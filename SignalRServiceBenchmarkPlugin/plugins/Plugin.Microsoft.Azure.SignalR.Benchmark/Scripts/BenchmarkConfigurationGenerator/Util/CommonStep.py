@@ -8,7 +8,7 @@ def pre_sending_steps(type_, connection_config, statistics_config, scenario_conf
         collect_statistics(type_, statistics_config.statistic_interval, statistics_config.statistics_output_path),
         create_connection(type_, scenario_config.connections, connection_config.url, connection_config.protocol,
                           connection_config.transport),
-        start_connection(type_, scenario_config.concurrent),
+        start_connection(type_, scenario_config.concurrent, scenario_config.batch_mode, scenario_config.batch_wait),
         wait(type_, constant_config.wait_time),
         reconnect(scenario_config.type, scenario_config.connections, connection_config.url,
                   connection_config.protocol, connection_config.transport,

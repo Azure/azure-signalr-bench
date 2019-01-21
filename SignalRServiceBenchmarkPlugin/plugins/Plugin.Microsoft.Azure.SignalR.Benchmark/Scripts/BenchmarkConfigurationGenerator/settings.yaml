@@ -36,7 +36,8 @@ scenario:echo,transport:ServerSentEvents:
   step: [50, 50, 50, 50, 50, 100, 1000]
   step_length: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
   concurrent: [100, 100, 100, 200, 200, 200, 200]
-
+  batch_mode: ["HighPress", "HighPress", "HighPress", "LowPress", "HighPress", "HighPress", "HighPress"]
+  batch_wait: [1000, 1000, 1000, 1000, 1000, 1000, 1000]
 
 # broadcast for all transport types
 scenario:broadcast,transport:Websockets:

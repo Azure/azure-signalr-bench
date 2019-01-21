@@ -3,8 +3,8 @@ from Util.Common import *
 
 
 class ScenarioConfig:
-    def __init__(self, type_, connections, concurrent, base_step, step, step_length, group_count=1, group_type="",
-                 group_config_mode=""):
+    def __init__(self, type_, connections, concurrent, base_step, step, step_length,
+                 batch_mode, batch_wait, group_count=1, group_type="", group_config_mode=""):
         self.connections = connections
         self.concurrent = concurrent
         self.base_step = base_step
@@ -14,6 +14,8 @@ class ScenarioConfig:
         self.group_count = group_count
         self.group_type = group_type
         self.group_config_mode = group_config_mode
+        self.batch_mode = batch_mode
+        self.batch_wait = batch_wait
 
 
 class StatisticsConfig:
@@ -60,6 +62,8 @@ class SettingParaKey:
         self.unit_map = "unit_map"
         self.group_count = "group_count"
         self.max_group_count = "max_group_count"
+        self.batch_mode = "batch_mode"
+        self.batch_wait = "batch_wait"
 
 
 def parse_settings(path):
@@ -102,6 +106,8 @@ def determine_scenario_config(settings, unit, scenario, transport, protocol="jso
     base_step = cur_settings[para_key.base_step][index]
     step = cur_settings[para_key.step][index]
     step_length = cur_settings[para_key.step_length][index]
+    batch_mode = cur_settings[para_key.batch_mode][index] if para_key.batch_mode in cur_settings else "HighPress"
+    batch_wait = cur_settings[para_key.batch_wait][index] if para_key.batch_wait in cur_settings else 1000
 
     if scenario == scenario_type.send_to_group or scenario == scenario_type.frequent_join_leave_group:
       group_count = cur_settings[para_key.group_count][index] if use_max_connection is False else \
@@ -109,8 +115,8 @@ def determine_scenario_config(settings, unit, scenario, transport, protocol="jso
     else:
       group_count = 0
 
-    config = ScenarioConfig(scenario, connections, concurrent, base_step, step, step_length, group_count, group,
-                            group_config_mode)
+    config = ScenarioConfig(scenario, connections, concurrent, base_step, step, step_length,
+                            batch_mode, batch_wait, group_count, group, group_config_mode)
 
     return config
 

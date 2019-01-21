@@ -27,7 +27,9 @@ Key = {
     'CriteriaMaxFailSendingPercentage': 'Parameter.CriteriaMaxFailSendingPercentage',
     'LatencyStep': 'Parameter.LatencyStep',
     'LatencyMax': 'Parameter.LatencyMax',
-    'GroupConfigMode': 'Parameter.Mode'
+    'GroupConfigMode': 'Parameter.Mode',
+    'BatchMode': 'Parameter.BatchMode',
+    'BatchWait': 'Parameter.BatchWait'
 }
 
 
@@ -121,11 +123,13 @@ def create_connection(type_, connection_total, hub_url, protocol, transport_type
     }]
 
 
-def start_connection(type_, concurrent_connection):
+def start_connection(type_, concurrent_connection, batch_mode='HighPress', batch_wait=1000):
     return [{
         **required(type_, "StartConnection"),
         **{
-            Key['ConcurrentConnection']: concurrent_connection
+            Key['ConcurrentConnection']: concurrent_connection,
+            Key['BatchMode']: batch_mode,
+            Key['BatchWait']: batch_wait
         }
     }]
 
