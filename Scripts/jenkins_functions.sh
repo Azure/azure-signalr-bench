@@ -59,11 +59,31 @@ else
 fi
 }
 
+function set_tags_for_production() {
+  if [ "$ASRSLocation" == "westus2" ] && [ "$ASRSEnv" == "production" ]
+  then
+     # on production environment, we use separate Redis for westus2 region
+     if [ -e westus2_redis_rowkey.txt ]
+     then
+       separatedRedis=`cat westus2_redis_rowkey.txt`
+     fi
+     if [ -e westus2_acs_rowkey.txt ]
+     then
+       separatedAcs=`cat westus2_acs_rowkey.txt`
+     fi
+     if [ -e westus2_vm_set.txt ]
+     then
+       separatedVmSet=`cat westus2_vm_set.txt`
+     fi
+  fi
+}
+
 # require global env:
 # ASRSEnv, DogFoodResourceGroup, ASRSLocation
 function prepare_ASRS_creation() {
   azure_login
   create_group_if_not_exist $DogFoodResourceGroup $ASRSLocation
+  set_tags_for_production
 }
 
 # global env: ScriptWorkingDir, DogFoodResourceGroup, ASRSEnv
