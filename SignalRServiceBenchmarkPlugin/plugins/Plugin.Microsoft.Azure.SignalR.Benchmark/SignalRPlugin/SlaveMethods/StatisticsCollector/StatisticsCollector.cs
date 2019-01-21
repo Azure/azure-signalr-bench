@@ -59,6 +59,16 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods.Statistics
             _statistics.AddOrUpdate(SignalRConstants.StatisticsMessageSent, 1, (k, v) => v + 1);
         }
 
+        public void IncreaseSendSize(long sz)
+        {
+            _statistics.AddOrUpdate(SignalRConstants.StatisticsMessageSentSize, sz, (k, v) => v + sz);
+        }
+
+        public void IncreaseRecvSize(long sz)
+        {
+            _statistics.AddOrUpdate(SignalRConstants.StatisticsMessageReceivedSize, sz, (k, v) => v + sz);
+        }
+
         public void RecordLatency(long latency)
         {
             var index = latency / LatencyStep;

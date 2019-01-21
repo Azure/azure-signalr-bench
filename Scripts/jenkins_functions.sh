@@ -42,8 +42,8 @@ function set_job_env() {
    export result_root=`date +%Y%m%d%H%M%S`
    export DogFoodResourceGroup="hzatpf"$result_root
    export AspNetWebAppResGrp="hzperfwebapp"$result_root
-   export serverUrl=`awk '{print $2}' $JenkinsRootPath/JobConfig.yaml`
    export MaxSendIteration=30 # we evaluate the total running time per this value
+   record_build_info # record the jenkins job to /tmp/send_mail.txt
 }
 
 function azure_login() {
@@ -59,11 +59,31 @@ else
 fi
 }
 
+function set_tags_for_production() {
+  if [ "$ASRSLocation" == "westus2" ] && [ "$ASRSEnv" == "production" ]
+  then
+     # on production environment, we use separate Redis for westus2 region
+     if [ -e westus2_redis_rowkey.txt ]
+     then
+       separatedRedis=`cat westus2_redis_rowkey.txt`
+     fi
+     if [ -e westus2_acs_rowkey.txt ]
+     then
+       separatedAcs=`cat westus2_acs_rowkey.txt`
+     fi
+     if [ -e westus2_vm_set.txt ]
+     then
+       separatedVmSet=`cat westus2_vm_set.txt`
+     fi
+  fi
+}
+
 # require global env:
 # ASRSEnv, DogFoodResourceGroup, ASRSLocation
 function prepare_ASRS_creation() {
   azure_login
   create_group_if_not_exist $DogFoodResourceGroup $ASRSLocation
+  set_tags_for_production
 }
 
 # global env: ScriptWorkingDir, DogFoodResourceGroup, ASRSEnv
@@ -120,7 +140,7 @@ function run_all_units() {
    ConnectionString="" # set it to be invalid first
    # always use a new name for every ASRS to avoid DNS refresh issue
    signalrServiceName="atpf"${result_root}-`date +%H%M%S`
-   create_asrs $DogFoodResourceGroup $signalrServiceName $service
+   create_asrs $DogFoodResourceGroup $signalrServiceName $Sku $service
    if [ "$ConnectionString" == "" ]
    then
      echo "Skip the running on SignalR service unit'$service' since it was failed to create"

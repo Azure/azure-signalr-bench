@@ -35,7 +35,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
         protected async Task ContinuousSend<T, TKey, TValue>(
         T connection, IDictionary<TKey, TValue> data, 
         Func<T, IDictionary<TKey, TValue>, Task> f, 
-        TimeSpan duration, TimeSpan interval, TimeSpan delayMin, TimeSpan delayMax)
+        TimeSpan duration, TimeSpan interval,
+        TimeSpan delayMin, TimeSpan delayMax)
         {
             // Random delay in [delayMin, delayMax) ms
             var rand = new Random();

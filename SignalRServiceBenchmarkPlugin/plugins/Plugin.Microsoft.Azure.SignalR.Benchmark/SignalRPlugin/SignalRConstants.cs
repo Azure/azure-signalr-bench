@@ -9,6 +9,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         // Configuration parameters
         public static readonly string Type = "Type";
         public static readonly string ConcurrentConnection = "Parameter.ConcurrentConnection";
+        public static readonly string BatchMode = "Parameter.BatchMode";
+        public static readonly string BatchWait = "Parameter.BatchWait";
         public static readonly string ConnectionTotal = "Parameter.ConnectionTotal";
         public static readonly string ConnectionBegin = "Parameter.ConnectionBegin";
         public static readonly string ConnectionEnd = "Parameter.ConnectionEnd";
@@ -72,7 +74,9 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         public static readonly string StatisticsEpoch = "epoch";
         public static readonly string StatisticsSendingStep = "sendingStep";
         public static readonly string StatisticsMessageSent = "message:sent";
+        public static readonly string StatisticsMessageSentSize = "message:sentSize";
         public static readonly string StatisticsMessageReceived = "message:received";
+        public static readonly string StatisticsMessageReceivedSize = "message:recvSize";
         public static readonly string StatisticsGroupJoinSuccess = "group:join:success";
         public static readonly string StatisticsGroupLeaveSuccess = "group:leave:success";
         public static readonly string StatisticsGroupJoinFail = "group:join:fail";

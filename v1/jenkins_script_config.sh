@@ -47,6 +47,7 @@ function set_job_env() {
    export DogFoodResourceGroup="honzhanatpf"`date +%M%S`
    export serverUrl=`awk '{print $2}' $JenkinsRootPath/JobConfig.yaml`
    export MaxSendIteration=30 # we evaluate the total running time per this value
+   record_build_info
 }
 
 # depends on global env:
@@ -433,11 +434,21 @@ function create_asrs()
 . ./kubectl_utils.sh  
 
   local signalr_service
-  if [ $separatedRedis != "" ]
+  if [ "$separatedRedis" != "" ] && [ "$separatedAcs" != "" ] && [ "$separatedVmSet" != "" ]
   then
-    signalr_service=$(create_signalr_service_with_specific_redis $rsg $name $sku $unit $separatedRedis)
+      signalr_service=$(create_signalr_service_with_specific_acs_vmset_redis $rsg $name $sku $unit $separatedRedis $separatedAcs $separatedVmSet)
   else
-    signalr_service=$(create_signalr_service $rsg $name $sku $unit)
+    if [ "$separatedRedis" != "" ] && [ "$separatedAcs" != "" ]
+    then
+      signalr_service=$(create_signalr_service_with_specific_acs_and_redis $rsg $name $sku $unit $separatedRedis $separatedAcs)
+    else
+      if [ "$separatedRedis" != "" ]
+      then
+        signalr_service=$(create_signalr_service_with_specific_redis $rsg $name $sku $unit $separatedRedis)
+      else
+        signalr_service=$(create_signalr_service $rsg $name $sku $unit)
+      fi
+    fi
   fi
   if [ "$signalr_service" == "" ]
   then
@@ -604,6 +615,25 @@ function azure_login() {
   fi
 }
 
+function set_tags_for_production() {
+  if [ "$ASRSLocation" == "westus2" ] && [ "$ASRSEnv" == "production" ]
+  then
+     # on production environment, we use separate Redis for westus2 region
+     if [ -e westus2_redis_rowkey.txt ]
+     then
+       separatedRedis=`cat westus2_redis_rowkey.txt`
+     fi
+     if [ -e westus2_acs_rowkey.txt ]
+     then
+       separatedAcs=`cat westus2_acs_rowkey.txt`
+     fi
+     if [ -e westus2_vm_set.txt ]
+     then
+       separatedVmSet=`cat westus2_vm_set.txt`
+     fi
+  fi
+}
+
 # require global env:
 # ASRSEnv, DogFoodResourceGroup, ASRSLocation
 function prepare_ASRS_creation() {
@@ -612,14 +642,7 @@ function prepare_ASRS_creation() {
 
   azure_login
   create_group_if_not_exist $DogFoodResourceGroup $ASRSLocation
-  if [ "$ASRSLocation" == "westus2" ] && [ "$ASRSEnv" == "production" ]
-  then
-     # on production environment, we use separate Redis for westus2 region
-     if [ -e westus2_redis_rawkey.txt ]
-     then
-       separatedRedis=`cat westus2_redis_rawkey.txt`
-     fi
-  fi
+  set_tags_for_production
 }
 
 # global env: ScriptWorkingDir, DogFoodResourceGroup, ASRSEnv

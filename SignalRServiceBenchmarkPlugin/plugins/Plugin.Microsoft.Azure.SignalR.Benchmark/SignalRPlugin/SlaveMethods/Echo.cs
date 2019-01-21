@@ -38,7 +38,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 // Generate necessary data
                 var data = new Dictionary<string, object>
                 {
-                    { SignalRConstants.MessageBlob, new byte[messageSize] } // message payload
+                    { SignalRConstants.MessageBlob, SignalRUtils.GenerateRandomData(messageSize) } // message payload
                 };
 
                 // Reset counters
@@ -88,7 +88,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 await package.Connection.SendAsync(SignalRConstants.EchoCallbackName, payload);
 
                 // Update statistics
-                package.StatisticsCollector.IncreaseSentMessage();
+                SignalRUtils.RecordSend(payload, package.StatisticsCollector);
             }
             catch (Exception ex)
             {

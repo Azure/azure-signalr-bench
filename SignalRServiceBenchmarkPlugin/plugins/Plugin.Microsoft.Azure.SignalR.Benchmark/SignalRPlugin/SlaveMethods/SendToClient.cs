@@ -38,7 +38,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                     out List<SignalREnums.ConnectionState> connectionsSuccessFlag, (obj) => (List<SignalREnums.ConnectionState>)obj);
 
                 // Generate necessary data
-                var messageBlob = new byte[messageSize];
+                var messageBlob = SignalRUtils.GenerateRandomData(messageSize);
 
                 var packages = from i in Enumerable.Range(0, connections.Count)
                                select new
@@ -61,7 +61,10 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                                    let connection = package.Connection
                                    let data = package.Data
                                    where connectionIndex[i] % modulo >= remainderBegin && connectionIndex[i] % modulo < remainderEnd
-                                   select ContinuousSend((Connection: connections[i], LocalIndex: i, ConnectionsSuccessFlag: connectionsSuccessFlag, StatisticsCollector: statisticsCollector), data, SendClient,
+                                   select ContinuousSend((Connection: connections[i],
+                                        LocalIndex: i,
+                                        ConnectionsSuccessFlag: connectionsSuccessFlag,
+                                        StatisticsCollector: statisticsCollector), data, SendClient,
                                         TimeSpan.FromMilliseconds(duration), TimeSpan.FromMilliseconds(interval),
                                         TimeSpan.FromMilliseconds(1), TimeSpan.FromMilliseconds(interval)));
 
@@ -99,7 +102,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 await package.Connection.SendAsync(SignalRConstants.SendToClientCallbackName, payload);
 
                 // Update statistics
-                package.StatisticsCollector.IncreaseSentMessage();
+                SignalRUtils.RecordSend(payload, package.StatisticsCollector);
             }
             catch (Exception ex)
             {

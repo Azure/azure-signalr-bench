@@ -124,6 +124,41 @@ namespace Common
             return DateTimeOffset.FromUnixTimeMilliseconds(timestamp).ToString("yyyy-MM-ddThh:mm:ssZ");
         }
 
+        public static async Task LowPressBatchProcess<T>(IList<T> source, Func<T, Task> f, int max, int milliseconds)
+        {
+            var nextBatch = max;
+            var left = source.Count;
+            if (nextBatch <= left)
+            {
+                var tasks = new List<Task>(left);
+                var i = 0;
+                do
+                {
+                    for (var j = 0; j < nextBatch; j++)
+                    {
+                        var index = i + j;
+                        var item = source[index];
+                        tasks.Add(Task.Run(async () =>
+                        {
+                            await f(item);
+                        }));
+                    }
+
+                    await Task.Delay(TimeSpan.FromMilliseconds(milliseconds));
+                    i += nextBatch;
+                    left = left - nextBatch;
+                    if (left < nextBatch)
+                    {
+                        nextBatch = left;
+                    }
+                } while (left > 0);
+                await Task.WhenAll(tasks);
+            }
+        }
+
+        // TODO:
+        // Hardcode a time out value for cancellation token.
+        // For some time consuming operations, this time out needs to be tuned.
         public static Task BatchProcess<T>(IList<T> source, Func<T, Task> f, int max)
         {
             var initial = (max >> 1);
@@ -140,17 +175,42 @@ namespace Common
             return Task.WhenAll(from item in source
                                 select Task.Run(async () =>
                                 {
-                                    using (var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(60)))
+                                    var retry = 0;
+                                    var maxRetry = 5;
+                                    var rand = new Random();
+                                    while (retry < maxRetry)
                                     {
-                                        await s.WaitAsync(cancellationTokenSource.Token);
                                         try
                                         {
-                                            await f(item);
+                                            using (var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(60)))
+                                            {
+                                                await s.WaitAsync(cancellationTokenSource.Token);
+                                                try
+                                                {
+                                                    await f(item);
+                                                    break;
+                                                }
+                                                catch (System.OperationCanceledException e)
+                                                {
+                                                    Log.Warning($"see cancellation in {f.Method.Name}: {e.Message}");
+                                                }
+                                                finally
+                                                {
+                                                    s.Release();
+                                                }
+                                            }
                                         }
-                                        finally
+                                        catch (System.OperationCanceledException)
                                         {
-                                            s.Release();
+                                            Log.Warning($"Waiting too long time to obtain the semaphore: current: {s.CurrentCount}, max: {max}");
                                         }
+                                        var randomDelay = TimeSpan.FromMilliseconds(rand.Next(1, 500));
+                                        await Task.Delay(randomDelay);
+                                        retry++;
+                                    }
+                                    if (retry == maxRetry)
+                                    {
+                                        Log.Error($"The operation {f.Method.Name} was canceled because of reaching max retry {maxRetry}");
                                     }
                                 }));
         }
@@ -168,22 +228,48 @@ namespace Common
                 }
             });
 
-             return Task.WhenAll(from item in source
+            return Task.WhenAll(from item in source
                                 select Task.Run(async () =>
                                 {
-                                    using (var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(60)))
+                                    TOut ret = default;
+                                    var retry = 0;
+                                    var maxRetry = 5;
+                                    while (retry < maxRetry)
                                     {
-                                        await s.WaitAsync(cancellationTokenSource.Token);
                                         try
                                         {
-                                            var res = await f(item);
-                                            return res;
+                                            using (var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(60)))
+                                            {
+                                                await s.WaitAsync(cancellationTokenSource.Token);
+                                                try
+                                                {
+                                                    ret = await f(item);
+                                                    break;
+                                                }
+                                                catch (System.OperationCanceledException e)
+                                                {
+                                                    Log.Warning($"see cancellation in {f.Method.Name}: {e.Message}");
+                                                }
+                                                finally
+                                                {
+                                                    s.Release();
+                                                }
+                                            }
                                         }
-                                        finally
+                                        catch (System.OperationCanceledException)
                                         {
-                                            s.Release();
+                                            Log.Warning($"Waiting too long time to obtain the semaphore: current: {s.CurrentCount}, max: {max}");
                                         }
+                                        var rand = new Random();
+                                        var randomDelay = TimeSpan.FromMilliseconds(rand.Next(1, 500));
+                                        await Task.Delay(randomDelay);
+                                        retry++;
                                     }
+                                    if (retry == maxRetry)
+                                    {
+                                        Log.Error($"The operation {f.Method.Name} was canceled because of reaching max retry {maxRetry}");
+                                    }
+                                    return ret;
                                 }));
         }
 

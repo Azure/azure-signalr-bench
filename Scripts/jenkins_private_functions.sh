@@ -121,6 +121,91 @@ function collectWebAppMetrics()
   done
 }
 
+function gen4AspNet()
+{
+  local configPath=$1
+  sed -i 's/CreateConnection/CreateAspNetConnection/g' $configPath
+  sed -i 's/Reconnect/AspNetReconnect/g' $configPath
+}
+
+function normalizeSendSize()
+{
+  local send_size=$1
+  local ms=2048
+  if [ "$send_size" != "" ]
+  then
+     local re='^[0-9]+$'
+     if [[ $send_size =~ $re ]] ; then
+        ms=$send_size
+     fi
+  fi
+  echo $ms
+}
+
+function normalizeSendInterval()
+{
+  local send_interval=$1
+  local interval=1000
+  if [ "$send_interval" != "" ]
+  then
+     local re='^[0-9]+$'
+     if [[ $send_interval =~ $re ]] ; then
+        ms=$send_interval
+     fi
+  fi
+  echo $interval
+}
+# global parameters:
+#   bench_send_size, sigbench_run_duration, useMaxConnection
+#   ToleratedMaxConnectionFailCount
+#   ToleratedMaxConnectionFailPercentage
+#   ToleratedMaxLatencyPercentage
+function GenBenchmarkConfig()
+{
+  local unit=$1
+  local Scenario=$2
+  local Transport=$3
+  local MessageEncoding=$4
+  local appserverUrls=$5
+  local groupType=$6
+  local configPath=$7
+
+  local maxConnectionOption=""
+  if [ "$useMaxConnection" == "true" ]
+  then
+    maxConnectionOption="-m"
+  fi
+  local ms=$(normalizeSendSize $bench_send_size)
+  local interval=$(normalizeSendInterval $send_interval)
+
+  local groupTypeOp
+  local toleratedConnDropCountOp
+  local toleratedConnDropPercentageOp
+  local toleratedMaxLatencyPercentageOp
+  if [ "$ToleratedMaxConnectionFailCount" != "" ]
+  then
+    toleratedConnDropCountOp="-cc $ToleratedMaxConnectionFailCount"
+  fi
+  if [ "$ToleratedMaxConnectionFailPercentage" != "" ]
+  then
+    toleratedConnDropPercentageOp="-cp $ToleratedMaxConnectionFailPercentage"
+  fi
+  if [ "$ToleratedMaxLatencyPercentage" != "" ]
+  then
+    toleratedMaxLatencyPercentageOp="-cs $ToleratedMaxLatencyPercentage"
+  fi
+  if [ "$groupType" != "None" ]
+  then
+    groupTypeOp="-g $groupType"
+  fi
+  python3 generate.py -u $unit -S $Scenario \
+                      -t $Transport -p $MessageEncoding \
+                      -U $appserverUrls -d $sigbench_run_duration \
+                      $groupTypeOp -ms $ms -i $interval \
+                      -c $configPath $maxConnectionOption \
+                      $toleratedConnDropCountOp $toleratedConnDropPercentageOp $toleratedMaxLatencyPercentageOp
+}
+
 function RunSendToGroup()
 {
   local tag=$1
@@ -151,29 +236,11 @@ function RunSendToGroup()
 
   cd $PluginScriptWorkingDir
   local config_path=$outputDir/${tag}_${Scenario}_${Transport}_${MessageEncoding}.config
-
-  local maxConnectionOption=""
-  if [ "$useMaxConnection" == "true" ]
-  then
-    maxConnectionOption="-m"
-  fi
-  local ms=2048
-  if [ "$bench_send_size" != "" ]
-  then
-     local re='^[0-9]+$'
-     if [[ $bench_send_size =~ $re ]] ; then
-        ms=$bench_send_size
-     fi
-  fi
-  python3 generate.py -u $unit -S $Scenario \
-                      -t $Transport -p $MessageEncoding \
-                      -U $appserverUrls -d $sigbench_run_duration \
-                      -g $groupType -ms $ms\
-                      -c $config_path $maxConnectionOption
+  GenBenchmarkConfig $unit $Scenario $Transport $MessageEncoding $appserverUrls $groupType $config_path
   if [ "$AspNetSignalR" == "true" ]
   then
     #TODO: Hard replacement
-    sed -i 's/CreateConnection/CreateAspNetConnection/g' $config_path
+    gen4AspNet $config_path
   fi
   cat $config_path
   local connection=`python3 get_sending_connection.py -g $groupType -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q totalConnections $maxConnectionOption`
@@ -219,21 +286,11 @@ function RunSendToClient()
 
   cd $PluginScriptWorkingDir
   local config_path=$outputDir/${tag}_${Scenario}_${Transport}_${MessageEncoding}.config
-
-  local maxConnectionOption=""
-  if [ "$useMaxConnection" == "true" ]
-  then
-    maxConnectionOption="-m"
-  fi
-  python3 generate.py -u $unit -S $Scenario \
-                      -t $Transport -p $MessageEncoding \
-                      -U $appserverUrls -d $sigbench_run_duration \
-                      -ms $msgSize \
-                      -c $config_path $maxConnectionOption
+  GenBenchmarkConfig $unit $Scenario $Transport $MessageEncoding $appserverUrls None $config_path
   if [ "$AspNetSignalR" == "true" ]
   then
     #TODO: Hard replacement
-    sed -i 's/CreateConnection/CreateAspNetConnection/g' $config_path
+    gen4AspNet $config_path
   fi
   cat $config_path
   local connection=`python3 get_sending_connection.py -ms $msgSize -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q totalConnections $maxConnectionOption`
@@ -278,28 +335,11 @@ function RunCommonScenario()
 
   cd $PluginScriptWorkingDir
   local config_path=$outputDir/${tag}_${Scenario}_${Transport}_${MessageEncoding}.config
-
-  local maxConnectionOption=""
-  if [ "$useMaxConnection" == "true" ]
-  then
-    maxConnectionOption="-m"
-  fi
-  local ms=2048
-  if [ "$bench_send_size" != "" ]
-  then
-     local re='^[0-9]+$'
-     if [[ $bench_send_size =~ $re ]] ; then
-        ms=$bench_send_size
-     fi
-  fi
-  python3 generate.py -u $unit -S $Scenario \
-                      -t $Transport -p $MessageEncoding \
-                      -U $appserverUrls -d $sigbench_run_duration \
-                      -c $config_path $maxConnectionOption -ms $ms
+  GenBenchmarkConfig $unit $Scenario $Transport $MessageEncoding $appserverUrls None $config_path
   if [ "$AspNetSignalR" == "true" ]
   then
     #TODO: Hard replacement
-    sed -i 's/CreateConnection/CreateAspNetConnection/g' $config_path
+    gen4AspNet $config_path
   fi
 
   cat $config_path
@@ -461,11 +501,13 @@ function reboot_all_pods()
    local connectionString=$1
    cd $ScriptWorkingDir
    . ./kubectl_utils.sh
+   disable_exit_immediately_when_fail
    local service_name=$(extract_servicename_from_connectionstring $connectionString)
    if [ "$service_name" != "" ] && [ "$RebootASRS" != "false" ]
    then
      restart_all_pods $service_name
    fi
+   enable_exit_immediately_when_fail
 }
 
 function run_on_scenario() {
@@ -625,6 +667,8 @@ while [ true ]
 do
   for i in `python extract_ip.py -i $PrivateIps -q slaveList`
   do
+    date_time=\`date --iso-8601='seconds'\`
+    echo "\${date_time} " >> $outputDir/slave_\${i}_top.txt
     sshpass -p $passwd ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $user@\${i} "top -b -n 1|head -n 17" >> $outputDir/slave_\${i}_top.txt
   done
   sleep 1
@@ -636,6 +680,8 @@ while [ true ]
 do
   for i in `python extract_ip.py -i $PrivateIps -q appserverList`
   do
+    date_time=\`date --iso-8601='seconds'\`
+    echo "\${date_time} " >> $outputDir/appserver_\${i}_top.txt
     sshpass -p $passwd ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $user@\${i} "top -b -n 1|head -n 17" >> $outputDir/appserver_\${i}_top.txt
   done
   sleep 1
@@ -753,6 +799,13 @@ EOF
   disable_exit_immediately_when_fail
   start_collect_slaves_appserver_top ${user} $passwd ${outputDir}
   cd $CommandWorkingDir
+  # "never stop app server" is used for long run stress test
+  local neverStopAppServerOp
+  if [ "$NeverStopAppServer" == "true" ]
+  then
+    neverStopAppServerOp="--NotStopAppServer=1"
+  fi
+
   if [ "$AspNetSignalR" != "true" ]
   then
     dotnet run -- --RpcPort=5555 --SlaveList="$slaves" --MasterHostname="$master" --AppServerHostnames="$appserver" \
@@ -765,7 +818,7 @@ EOF
          --BenchmarkConfiguration="$configPath" \
          --BenchmarkConfigurationTargetPath="/home/${user}/signalr.yaml" \
          --AzureSignalRConnectionString="$connectionString" \
-         --AppserverLogDirectory="${outputDir}" --AppServerCount=$appserverInUse
+         --AppserverLogDirectory="${outputDir}" --AppServerCount=$appserverInUse $neverStopAppServerOp
   else
     dotnet run -- --RpcPort=5555 --SlaveList="$slaves" --MasterHostname="$master" \
                --Username=$user --Password=$passwd \
@@ -793,12 +846,29 @@ function create_asrs()
 {
   local rsg=$1
   local name=$2
-  local unit=$3
+  local sku=$3
+  local unit=$4
 
 . ./az_signalr_service.sh
 . ./kubectl_utils.sh
 
-  local signalr_service=$(create_signalr_service $rsg $name "Basic_DS2" $unit)
+  local signalr_service
+  if [ "$separatedRedis" != "" ] && [ "$separatedAcs" != "" ] && [ "$separatedVmSet" != "" ]
+  then
+      signalr_service=$(create_signalr_service_with_specific_acs_vmset_redis $rsg $name $sku $unit $separatedRedis $separatedAcs $separatedVmSet)
+  else
+    if [ "$separatedRedis" != "" ] && [ "$separatedAcs" != "" ]
+    then
+      signalr_service=$(create_signalr_service_with_specific_acs_and_redis $rsg $name $sku $unit $separatedRedis $separatedAcs)
+    else
+      if [ "$separatedRedis" != "" ]
+      then
+        signalr_service=$(create_signalr_service_with_specific_redis $rsg $name $sku $unit $separatedRedis)
+      else
+        signalr_service=$(create_signalr_service $rsg $name $sku $unit)
+      fi
+    fi
+  fi
   if [ "$signalr_service" == "" ]
   then
     echo "Fail to create SignalR Service"
@@ -838,7 +908,6 @@ function create_asrs()
 # CurrentWorkingDir, ServicePrincipal, AgentConfig, VMMgrDir
 function remove_resource_group() {
   echo "!!Received EXIT!! and remove all created VMs"
-
   cd $CurrentWorkingDir
   local clean_aspwebapp_daemon=daemon_${JOB_NAME}_cleanwebapp
   local clean_vm_daemon=daemon_${JOB_NAME}_cleanvms

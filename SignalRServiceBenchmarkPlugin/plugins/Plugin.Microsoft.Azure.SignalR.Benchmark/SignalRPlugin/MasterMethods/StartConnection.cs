@@ -5,7 +5,6 @@ using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
@@ -21,9 +20,9 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
 
             if (concurrentConnection < clients.Count)
             {
-                var message = $"Concurrent connection {concurrentConnection} should be larger than the number of slaves {clients.Count}";
-                Log.Error(message);
-                throw new Exception(message);
+                concurrentConnection = clients.Count;
+                var message = $"Concurrent connection {concurrentConnection} should NOT be less than the number of slaves {clients.Count}, we force it to be {clients.Count}";
+                Log.Warning(message);
             }
 
             var packages = clients.Select((client, i) =>

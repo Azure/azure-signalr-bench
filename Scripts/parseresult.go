@@ -15,7 +15,7 @@ type Counters struct {
 	Success     int64 `json:"success"`
 	Send        int64 `json:"message:sent"`
 	Recv        int64 `json:"message:received"`
-	SendSize    int64 `json:"message:sendSize"`
+	SendSize    int64 `json:"message:sentSize"`
 	RecvSize    int64 `json:"message:recvSize"`
 	LT_100      int64 `json:"message:lt:100"`
 	LT_200      int64 `json:"message:lt:200"`

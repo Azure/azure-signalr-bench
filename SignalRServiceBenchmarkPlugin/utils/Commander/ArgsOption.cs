@@ -85,5 +85,8 @@ namespace Commander
 
         [Option("NotStartAppServer", Required = false, Default = 0, HelpText = "Do not start app server, ApsNet server is started by another exe, default is 0")]
         public int NotStartAppServer { get; set; }
+
+        [Option("NotStopAppServer", Required = false, Default = 0, HelpText = "Do not stop app server, default is 0")]
+        public int NotStopAppServer { get; set; }
     }
 }

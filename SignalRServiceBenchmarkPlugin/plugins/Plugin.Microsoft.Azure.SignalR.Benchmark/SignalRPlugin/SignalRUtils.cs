@@ -135,8 +135,12 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             }
         }
 
-        public static IList<IHubConnectionAdapter> CreateAspNetConnections(IList<int> connectionIndex,
-            string urls, string transportTypeString, string protocolString, int closeTimeout)
+        public static IList<IHubConnectionAdapter> CreateAspNetConnections(
+            IList<int> connectionIndex,
+            string urls,
+            string transportTypeString,
+            string protocolString,
+            int closeTimeout)
         {
             List<string> urlList = urls.Split(',').ToList();
             var connections = from i in Enumerable.Range(0, connectionIndex.Count)
@@ -148,8 +152,12 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             return connections.ToList();
         }
 
-        public static IList<IHubConnectionAdapter> CreateConnections(IList<int> connectionIndex,
-            string urls, string transportTypeString, string protocolString, int closeTimeout)
+        public static IList<IHubConnectionAdapter> CreateConnections(
+            IList<int> connectionIndex,
+            string urls,
+            string transportTypeString,
+            string protocolString,
+            int closeTimeout)
         {
             var success = true;
 
@@ -196,11 +204,76 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             }
         }
 
-        public static IDictionary<string, int> MergeStatistics(
+        // Why shall we prefer 'string' rather than 'byte[]' data type?
+        // messagepack protocol supports both string and byte[], json protocol only supports string data type.
+        // So, if we define the data type is byte[], when using json protocol, there are potential issues,
+        // for example, non-ASCII data will miss. In addition, SignalR will convert byte[] to string, as a result,
+        // the data size changes without any notification.
+        public static string GenerateRandomData(int len)
+        {
+            var message = new byte[len];
+            Random rnd = new Random();
+            rnd.NextBytes(message);
+            return Convert.ToBase64String(message);
+        }
+
+        private static long EvaluatePayloadSize(IDictionary<string, object> payload)
+        {
+            long sz = 0;
+            if (payload.ContainsKey(SignalRConstants.MessageBlob))
+            {
+                payload.TryGetValue(SignalRConstants.MessageBlob, out var messageBlob);
+
+                if (messageBlob.GetType() == typeof(string))
+                {
+                    var array = (string)messageBlob;
+                    sz += array.Length;
+                }
+                else if (messageBlob.GetType() == typeof (byte[]))
+                {
+                    var array = (byte[])messageBlob;
+                    sz += array.Length;
+                }
+            }
+            if (payload.ContainsKey(SignalRConstants.Timestamp))
+            {
+                sz += sizeof(long);
+            }
+            if (payload.ContainsKey(SignalRConstants.ConnectionId))
+            {
+                payload.TryGetValue(SignalRConstants.ConnectionId, out var connId);
+                sz += ((string)connId).Length;
+            }
+            if (payload.ContainsKey(SignalRConstants.GroupName))
+            {
+                payload.TryGetValue(SignalRConstants.GroupName, out var grpName);
+                sz += ((string)grpName).Length;
+            }
+            return sz;
+        }
+
+        public static void RecordSend(
+            IDictionary<string, object> payload,
+            StatisticsCollector StatisticsCollector)
+        {
+            var sz = EvaluatePayloadSize(payload);
+            StatisticsCollector.IncreaseSendSize(sz);
+            StatisticsCollector.IncreaseSentMessage();
+        }
+
+        public static void RecordRecvSize(
+            IDictionary<string, object> payload,
+            StatisticsCollector StatisticsCollector)
+        {
+            var sz = EvaluatePayloadSize(payload);
+            StatisticsCollector.IncreaseRecvSize(sz);
+        }
+
+        public static IDictionary<string, long> MergeStatistics(
             IDictionary<string, object>[] results,
             string type, long latencyMax, long latencyStep)
         {
-            var merged = new Dictionary<string, int>();
+            var merged = new Dictionary<string, long>();
 
             // Sum of connection statistics
             merged[SignalRConstants.StatisticsConnectionConnectSuccess] = Sum(results, SignalRConstants.StatisticsConnectionConnectSuccess);
@@ -217,7 +290,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             // Sum of "message:lt:latency"
             var SumMessageLatencyStatistics = (from i in Enumerable.Range(1, (int)latencyMax / (int)latencyStep)
                                                let latency = i * latencyStep
-                                               select new { Key = MessageLessThan(latency), Sum = Sum(results, MessageLessThan(latency)) }).ToDictionary(entry => entry.Key, entry => entry.Sum);
+                                               select new { Key = MessageLessThan(latency), Sum = Sum(results, MessageLessThan(latency)) })
+                                               .ToDictionary(entry => entry.Key, entry => entry.Sum);
             // Sum of "message:ge:latency"
             SumMessageLatencyStatistics[MessageGreaterOrEqaulTo(latencyMax)] = Sum(results, MessageGreaterOrEqaulTo(latencyMax));
 
@@ -226,6 +300,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
 
             // Sum of sent message statistics (should be calculated after "message:ge:latency")
             merged[SignalRConstants.StatisticsMessageSent] = Sum(results, SignalRConstants.StatisticsMessageSent);
+            merged[SignalRConstants.StatisticsMessageSentSize] = Sum(results, SignalRConstants.StatisticsMessageSentSize);
+            merged[SignalRConstants.StatisticsMessageReceivedSize] = Sum(results, SignalRConstants.StatisticsMessageReceivedSize);
 
             // Update epoch
             merged[SignalRConstants.StatisticsEpoch] = Min(results, SignalRConstants.StatisticsEpoch);
@@ -235,26 +311,26 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             return merged;
         }
 
-        private static int Sum(IDictionary<string, object>[] results, string key)
+        private static long Sum(IDictionary<string, object>[] results, string key)
         {
             return results.ToList().Select(statistics =>
             {
                 if (statistics.ContainsKey(key))
                 {
-                    statistics.TryGetTypedValue(key, out int item, Convert.ToInt32);
+                    statistics.TryGetTypedValue(key, out long item, Convert.ToInt64);
                     return item;
                 }
                 return 0;
             }).Sum();
         }
 
-        private static int Min(IDictionary<string, object>[] results, string key)
+        private static long Min(IDictionary<string, object>[] results, string key)
         {
             return results.ToList().Select(statistics =>
             {
                 if (statistics.ContainsKey(key))
                 {
-                    statistics.TryGetTypedValue(key, out int item, Convert.ToInt32);
+                    statistics.TryGetTypedValue(key, out long item, Convert.ToInt64);
                     return item;
                 }
                 return 0;
