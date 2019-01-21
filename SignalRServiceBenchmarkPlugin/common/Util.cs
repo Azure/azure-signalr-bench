@@ -124,6 +124,38 @@ namespace Common
             return DateTimeOffset.FromUnixTimeMilliseconds(timestamp).ToString("yyyy-MM-ddThh:mm:ssZ");
         }
 
+        public static async Task LowPressBatchProcess<T>(IList<T> source, Func<T, Task> f, int max, int milliseconds)
+        {
+            var nextBatch = max;
+            var left = source.Count;
+            if (nextBatch <= left)
+            {
+                var tasks = new List<Task>(left);
+                var i = 0;
+                do
+                {
+                    for (var j = 0; j < nextBatch; j++)
+                    {
+                        var index = i + j;
+                        var item = source[index];
+                        tasks.Add(Task.Run(async () =>
+                        {
+                            await f(item);
+                        }));
+                    }
+
+                    await Task.Delay(TimeSpan.FromMilliseconds(milliseconds));
+                    i += nextBatch;
+                    left = left - nextBatch;
+                    if (left < nextBatch)
+                    {
+                        nextBatch = left;
+                    }
+                } while (left > 0);
+                await Task.WhenAll(tasks);
+            }
+        }
+
         // TODO:
         // Hardcode a time out value for cancellation token.
         // For some time consuming operations, this time out needs to be tuned.
@@ -160,7 +192,7 @@ namespace Common
                                                 }
                                                 catch (System.OperationCanceledException e)
                                                 {
-                                                    Log.Warning($"see cancelation in {f.Method.Name}: {e.Message}");
+                                                    Log.Warning($"see cancellation in {f.Method.Name}: {e.Message}");
                                                 }
                                                 finally
                                                 {
@@ -216,7 +248,7 @@ namespace Common
                                                 }
                                                 catch (System.OperationCanceledException e)
                                                 {
-                                                    Log.Warning($"see cancelation in {f.Method.Name}: {e.Message}");
+                                                    Log.Warning($"see cancellation in {f.Method.Name}: {e.Message}");
                                                 }
                                                 finally
                                                 {

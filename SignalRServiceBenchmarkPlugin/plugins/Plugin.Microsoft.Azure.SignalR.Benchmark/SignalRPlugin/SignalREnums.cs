@@ -25,5 +25,11 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             AspNetCore,
             AspNet
         }
+
+        public enum BatchMode
+        {
+            LowPress,
+            HighPress
+        }
     }
 }
