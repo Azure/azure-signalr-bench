@@ -847,15 +847,20 @@ function create_asrs()
 . ./kubectl_utils.sh
 
   local signalr_service
-  if [ "$separatedRedis" != "" ] && [ "$separatedAcs" != "" ]
+  if [ "$separatedRedis" != "" ] && [ "$separatedAcs" != "" ] && [ "$separatedVmSet" != "" ]
   then
-    signalr_service=$(create_signalr_service_with_specific_acs_and_redis $rsg $name $sku $unit $separatedRedis $separatedAcs)
+      signalr_service=$(create_signalr_service_with_specific_acs_vmset_redis $rsg $name $sku $unit $separatedRedis $separatedAcs $separatedVmSet)
   else
-    if [ "$separatedRedis" != "" ]
+    if [ "$separatedRedis" != "" ] && [ "$separatedAcs" != "" ]
     then
-      signalr_service=$(create_signalr_service_with_specific_redis $rsg $name $sku $unit $separatedRedis)
+      signalr_service=$(create_signalr_service_with_specific_acs_and_redis $rsg $name $sku $unit $separatedRedis $separatedAcs)
     else
-      signalr_service=$(create_signalr_service $rsg $name $sku $unit)
+      if [ "$separatedRedis" != "" ]
+      then
+        signalr_service=$(create_signalr_service_with_specific_redis $rsg $name $sku $unit $separatedRedis)
+      else
+        signalr_service=$(create_signalr_service $rsg $name $sku $unit)
+      fi
     fi
   fi
   if [ "$signalr_service" == "" ]
