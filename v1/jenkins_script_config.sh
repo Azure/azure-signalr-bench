@@ -434,15 +434,20 @@ function create_asrs()
 . ./kubectl_utils.sh  
 
   local signalr_service
-  if [ "$separatedRedis" != "" ] && [ "$separatedAcs" != "" ]
+  if [ "$separatedRedis" != "" ] && [ "$separatedAcs" != "" ] && [ "$separatedVmSet" != "" ]
   then
-    signalr_service=$(create_signalr_service_with_specific_acs_and_redis $rsg $name $sku $unit $separatedRedis $separatedAcs)
+      signalr_service=$(create_signalr_service_with_specific_acs_vmset_redis $rsg $name $sku $unit $separatedRedis $separatedAcs $separatedVmSet)
   else
-    if [ "$separatedRedis" != "" ]
+    if [ "$separatedRedis" != "" ] && [ "$separatedAcs" != "" ]
     then
-      signalr_service=$(create_signalr_service_with_specific_redis $rsg $name $sku $unit $separatedRedis)
+      signalr_service=$(create_signalr_service_with_specific_acs_and_redis $rsg $name $sku $unit $separatedRedis $separatedAcs)
     else
-      signalr_service=$(create_signalr_service $rsg $name $sku $unit)
+      if [ "$separatedRedis" != "" ]
+      then
+        signalr_service=$(create_signalr_service_with_specific_redis $rsg $name $sku $unit $separatedRedis)
+      else
+        signalr_service=$(create_signalr_service $rsg $name $sku $unit)
+      fi
     fi
   fi
   if [ "$signalr_service" == "" ]
@@ -610,14 +615,7 @@ function azure_login() {
   fi
 }
 
-# require global env:
-# ASRSEnv, DogFoodResourceGroup, ASRSLocation
-function prepare_ASRS_creation() {
-  cd $ScriptWorkingDir
-  . ./az_signalr_service.sh
-
-  azure_login
-  create_group_if_not_exist $DogFoodResourceGroup $ASRSLocation
+function set_tags_for_production() {
   if [ "$ASRSLocation" == "westus2" ] && [ "$ASRSEnv" == "production" ]
   then
      # on production environment, we use separate Redis for westus2 region
@@ -629,7 +627,22 @@ function prepare_ASRS_creation() {
      then
        separatedAcs=`cat westus2_acs_rowkey.txt`
      fi
+     if [ -e westus2_vm_set.txt ]
+     then
+       separatedVmSet=`cat westus2_vm_set.txt`
+     fi
   fi
+}
+
+# require global env:
+# ASRSEnv, DogFoodResourceGroup, ASRSLocation
+function prepare_ASRS_creation() {
+  cd $ScriptWorkingDir
+  . ./az_signalr_service.sh
+
+  azure_login
+  create_group_if_not_exist $DogFoodResourceGroup $ASRSLocation
+  set_tags_for_production
 }
 
 # global env: ScriptWorkingDir, DogFoodResourceGroup, ASRSEnv

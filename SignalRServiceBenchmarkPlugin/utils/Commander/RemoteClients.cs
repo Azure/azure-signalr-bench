@@ -149,6 +149,7 @@ namespace Commander
                 disposeTasks.Add(Dispose(MasterSshClient));
                 disposeTasks.AddRange(from client in SlaveSshClients select Dispose(client));
                 Task.WhenAll(disposeTasks).Wait(TimeSpan.FromSeconds(60));
+                Log.Information("Finish destroying all");
             }
         }
     }
