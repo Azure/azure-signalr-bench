@@ -15,7 +15,7 @@ def gen_google_chart_table(input):
    print(head)
    with open(input, 'r') as f:
       for i,line in enumerate(f):
-          fields = line.rstrip().split(',')
+          fields = line.rstrip().split('|')
           assert len(fields) == 2, "Invalid input file: the columns do not match requirement"
           scenario = fields[0]
           trigger = fields[1]

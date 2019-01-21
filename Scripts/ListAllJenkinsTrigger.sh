@@ -9,7 +9,7 @@ FindAllConfig() {
     if [ "$trigger" != "" ]
     then
       normalTrigger=`echo "$trigger"|tr '\n' ' '`
-      echo "$job,$normalTrigger"
+      echo "$job|$normalTrigger"
     fi
   done
 }

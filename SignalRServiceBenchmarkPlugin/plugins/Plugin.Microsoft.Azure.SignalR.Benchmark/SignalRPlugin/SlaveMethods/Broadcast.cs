@@ -40,7 +40,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 // Generate necessary data
                 var data = new Dictionary<string, object>
                 {
-                    { SignalRConstants.MessageBlob, new byte[messageSize] } // message payload
+                    { SignalRConstants.MessageBlob, SignalRUtils.GenerateRandomData(messageSize) } // message payload
                 };
 
                 // Reset counters
@@ -65,7 +65,11 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
             }
         }
 
-        private async Task SendBroadcast((IHubConnectionAdapter Connection, int LocalIndex, List<SignalREnums.ConnectionState> ConnectionsSuccessFlag, StatisticsCollector StatisticsCollector) package, IDictionary<string, object> data)
+        private async Task SendBroadcast(
+            (IHubConnectionAdapter Connection,
+            int LocalIndex,
+            List<SignalREnums.ConnectionState> ConnectionsSuccessFlag,
+            StatisticsCollector StatisticsCollector) package, IDictionary<string, object> data)
         {
             try
             {
@@ -86,7 +90,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 await package.Connection.SendAsync(SignalRConstants.BroadcastCallbackName, payload);
 
                 // Update statistics
-                package.StatisticsCollector.IncreaseSentMessage();
+                SignalRUtils.RecordSend(payload, package.StatisticsCollector);
             }
             catch (Exception ex)
             {

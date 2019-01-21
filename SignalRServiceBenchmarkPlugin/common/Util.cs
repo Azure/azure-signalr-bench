@@ -143,17 +143,42 @@ namespace Common
             return Task.WhenAll(from item in source
                                 select Task.Run(async () =>
                                 {
-                                    using (var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(60)))
+                                    var retry = 0;
+                                    var maxRetry = 5;
+                                    var rand = new Random();
+                                    while (retry < maxRetry)
                                     {
-                                        await s.WaitAsync(cancellationTokenSource.Token);
                                         try
                                         {
-                                            await f(item);
+                                            using (var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(60)))
+                                            {
+                                                await s.WaitAsync(cancellationTokenSource.Token);
+                                                try
+                                                {
+                                                    await f(item);
+                                                    break;
+                                                }
+                                                catch (System.OperationCanceledException e)
+                                                {
+                                                    Log.Warning($"see cancelation in {f.Method.Name}: {e.Message}");
+                                                }
+                                                finally
+                                                {
+                                                    s.Release();
+                                                }
+                                            }
                                         }
-                                        finally
+                                        catch (System.OperationCanceledException)
                                         {
-                                            s.Release();
+                                            Log.Warning($"Waiting too long time to obtain the semaphore: current: {s.CurrentCount}, max: {max}");
                                         }
+                                        var randomDelay = TimeSpan.FromMilliseconds(rand.Next(1, 500));
+                                        await Task.Delay(randomDelay);
+                                        retry++;
+                                    }
+                                    if (retry == maxRetry)
+                                    {
+                                        Log.Error($"The operation {f.Method.Name} was canceled because of reaching max retry {maxRetry}");
                                     }
                                 }));
         }
@@ -171,22 +196,48 @@ namespace Common
                 }
             });
 
-             return Task.WhenAll(from item in source
+            return Task.WhenAll(from item in source
                                 select Task.Run(async () =>
                                 {
-                                    using (var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(60)))
+                                    TOut ret = default;
+                                    var retry = 0;
+                                    var maxRetry = 5;
+                                    while (retry < maxRetry)
                                     {
-                                        await s.WaitAsync(cancellationTokenSource.Token);
                                         try
                                         {
-                                            var res = await f(item);
-                                            return res;
+                                            using (var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(60)))
+                                            {
+                                                await s.WaitAsync(cancellationTokenSource.Token);
+                                                try
+                                                {
+                                                    ret = await f(item);
+                                                    break;
+                                                }
+                                                catch (System.OperationCanceledException e)
+                                                {
+                                                    Log.Warning($"see cancelation in {f.Method.Name}: {e.Message}");
+                                                }
+                                                finally
+                                                {
+                                                    s.Release();
+                                                }
+                                            }
                                         }
-                                        finally
+                                        catch (System.OperationCanceledException)
                                         {
-                                            s.Release();
+                                            Log.Warning($"Waiting too long time to obtain the semaphore: current: {s.CurrentCount}, max: {max}");
                                         }
+                                        var rand = new Random();
+                                        var randomDelay = TimeSpan.FromMilliseconds(rand.Next(1, 500));
+                                        await Task.Delay(randomDelay);
+                                        retry++;
                                     }
+                                    if (retry == maxRetry)
+                                    {
+                                        Log.Error($"The operation {f.Method.Name} was canceled because of reaching max retry {maxRetry}");
+                                    }
+                                    return ret;
                                 }));
         }
 

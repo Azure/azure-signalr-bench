@@ -501,11 +501,13 @@ function reboot_all_pods()
    local connectionString=$1
    cd $ScriptWorkingDir
    . ./kubectl_utils.sh
+   disable_exit_immediately_when_fail
    local service_name=$(extract_servicename_from_connectionstring $connectionString)
    if [ "$service_name" != "" ] && [ "$RebootASRS" != "false" ]
    then
      restart_all_pods $service_name
    fi
+   enable_exit_immediately_when_fail
 }
 
 function run_on_scenario() {
@@ -665,6 +667,8 @@ while [ true ]
 do
   for i in `python extract_ip.py -i $PrivateIps -q slaveList`
   do
+    date_time=\`date --iso-8601='seconds'\`
+    echo "\${date_time} " >> $outputDir/slave_\${i}_top.txt
     sshpass -p $passwd ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $user@\${i} "top -b -n 1|head -n 17" >> $outputDir/slave_\${i}_top.txt
   done
   sleep 1
@@ -676,6 +680,8 @@ while [ true ]
 do
   for i in `python extract_ip.py -i $PrivateIps -q appserverList`
   do
+    date_time=\`date --iso-8601='seconds'\`
+    echo "\${date_time} " >> $outputDir/appserver_\${i}_top.txt
     sshpass -p $passwd ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $user@\${i} "top -b -n 1|head -n 17" >> $outputDir/appserver_\${i}_top.txt
   done
   sleep 1
@@ -902,7 +908,6 @@ function create_asrs()
 # CurrentWorkingDir, ServicePrincipal, AgentConfig, VMMgrDir
 function remove_resource_group() {
   echo "!!Received EXIT!! and remove all created VMs"
-  record_build_info
   cd $CurrentWorkingDir
   local clean_aspwebapp_daemon=daemon_${JOB_NAME}_cleanwebapp
   local clean_vm_daemon=daemon_${JOB_NAME}_cleanvms

@@ -38,7 +38,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                     out List<SignalREnums.ConnectionState> connectionsSuccessFlag, (obj) => (List<SignalREnums.ConnectionState>)obj);
 
                 // Generate necessary data
-                var messageBlob = new byte[messageSize];
+                var messageBlob = SignalRUtils.GenerateRandomData(messageSize);
 
                 var packages = from i in Enumerable.Range(0, connections.Count)
                                select new
@@ -102,7 +102,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 await package.Connection.SendAsync(SignalRConstants.SendToClientCallbackName, payload);
 
                 // Update statistics
-                package.StatisticsCollector.IncreaseSentMessage();
+                SignalRUtils.RecordSend(payload, package.StatisticsCollector);
             }
             catch (Exception ex)
             {

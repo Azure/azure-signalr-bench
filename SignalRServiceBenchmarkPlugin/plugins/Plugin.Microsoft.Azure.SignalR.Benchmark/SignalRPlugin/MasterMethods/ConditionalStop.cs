@@ -39,9 +39,9 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
             var merged = SignalRUtils.MergeStatistics(results, type, latencyMax, latencyStep);
 
             merged.TryGetTypedValue(SignalRConstants.StatisticsConnectionConnectSuccess,
-                out int connectionSuccess, Convert.ToInt32);
+                out long connectionSuccess, Convert.ToInt64);
             merged.TryGetTypedValue(SignalRConstants.StatisticsConnectionConnectFail,
-                out int connectionFail, Convert.ToInt32);
+                out long connectionFail, Convert.ToInt64);
 
             var connectionTotal = connectionSuccess + connectionFail;
             var connectionFailPercentage = (double)connectionFail / connectionTotal;
@@ -70,7 +70,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
             }
         }
 
-        private double GetLargeLatencyPercentage(IDictionary<string, int> data, long latencyMax)
+        private double GetLargeLatencyPercentage(IDictionary<string, long> data, long latencyMax)
         {
             var largeLatencyMessageCount = data[SignalRUtils.MessageGreaterOrEqaulTo(latencyMax)];
             var receivedMessageCount = data[SignalRConstants.StatisticsMessageReceived];

@@ -156,9 +156,6 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 Log.Warning($"Fail to get connection Id because of {ex.Message}");
                 connectionsSuccessFlag[index] = SignalREnums.ConnectionState.Fail;
             }
-            //var t = connection.InvokeAsync<string>(SignalRConstants.GetConnectionIdCallback);
-            //await t;
-            //connectionIdList[index] = t.Result;
         }
     }
 }

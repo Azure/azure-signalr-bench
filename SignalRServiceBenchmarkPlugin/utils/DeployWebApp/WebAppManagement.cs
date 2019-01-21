@@ -268,7 +268,7 @@ namespace DeployWebApp
             sw.Start();
             IResourceGroup resourceGroup = GetResourceGroup();
             // assign names
-            var rootTimestamp = DateTime.Now.ToString("yyyyMMddHH");
+            var rootTimestamp = DateTime.Now.ToString("yyyyMMddHHmmss");
             var webappNameList = new List<string>();
             for (var i = 0; i < _argsOption.WebappCount; i++)
             {
