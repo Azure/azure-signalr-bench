@@ -47,6 +47,7 @@ function set_job_env() {
    export DogFoodResourceGroup="honzhanatpf"`date +%M%S`
    export serverUrl=`awk '{print $2}' $JenkinsRootPath/JobConfig.yaml`
    export MaxSendIteration=30 # we evaluate the total running time per this value
+   record_build_info
 }
 
 # depends on global env:
@@ -656,8 +657,6 @@ function mark_job_as_failure_if_meet_error()
 # CurrentWorkingDir, ServicePrincipal, AgentConfig, VMMgrDir
 function remove_resource_group() {
   echo "!!Received EXIT!! and remove all created VMs"
-
-  record_build_info
 
   cd $CurrentWorkingDir
   local clean_vm_daemon=daemon_${JOB_NAME}_cleanvms
