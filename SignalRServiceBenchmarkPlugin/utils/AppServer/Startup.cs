@@ -1,12 +1,12 @@
 // Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using System;
-using System.Linq;
-using System.Security.Claims;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Logging;
+using System;
 
 namespace Microsoft.Azure.SignalR.PerfTest.AppServer
 {
@@ -28,17 +28,15 @@ namespace Microsoft.Azure.SignalR.PerfTest.AppServer
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddMvc();
+
             if (useLocalSignalR)
                 services.AddSignalR().AddMessagePackProtocol();
             else
                 services.AddSignalR().AddMessagePackProtocol().AddAzureSignalR(option =>
                 {
                     option.ConnectionCount = Configuration.GetValue<int>("Azure:SignalR:ConnectionNumber");
-                    /*
-                    option.ClaimsProvider = httpContext => httpContext.User.Claims.Concat(
-                        new Claim[] { new Claim(ClaimTypes.NameIdentifier, Guid.NewGuid().ToString("N")) });
-                    */
                 });
+            services.Replace(ServiceDescriptor.Singleton(typeof(ILogger<>), typeof(TimedLogger<>)));
         }
 
         public void Configure(IApplicationBuilder app)
