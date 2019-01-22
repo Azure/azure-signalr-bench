@@ -521,11 +521,11 @@ function run_on_scenario() {
   local unit=$8
   if [ "${ScenarioHandlerDict[$Scenario]}" != "" ]
   then
-     eval "${ScenarioHandlerDict[$Scenario]} $Scenario $Transport $MessageEncoding $tag $user $passwd \"$connectStr\" $unit"
+     eval "${ScenarioHandlerDict[$Scenario]} $Scenario $Transport $MessageEncoding $origTag $user $passwd \"$connectStr\" $unit"
   else
-     prepare_result_folder_4_scenario $tag $Transport $MessageEncoding $Scenario
+     prepare_result_folder_4_scenario $origTag $Transport $MessageEncoding $Scenario
      start_collect_top_for_signalr_and_nginx
-     run_and_gen_report $tag $Scenario $Transport $MessageEncoding $user $passwd "$connectStr" $env_statistic_folder $unit
+     run_and_gen_report $origTag $Scenario $Transport $MessageEncoding $user $passwd "$connectStr" $env_statistic_folder $unit
      stop_collect_top_for_signalr_and_nginx
      copy_log_from_k8s
      reboot_all_pods "$connectStr"
@@ -538,6 +538,10 @@ function run_benchmark() {
   local passwd="$3"
   local connectStr="$4"
   local tag="unit"$unit
+  if [ "$AspNetSignalR" == "true" ]
+  then
+    tag="AspNet"$tag
+  fi
   local Scenario
   local Transport
   local MessageEncoding
