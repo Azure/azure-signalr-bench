@@ -112,17 +112,18 @@ function collectWebAppMetrics()
   local appPlanOut=$1
   local webAppOut=$2
   local outputDir=$3
+  local duration=$4
   cd $WebAppMonitorWorkingDir
   local i
   for i in `cat $appPlanOut`
   do
     local webname=`echo $i|awk -F / '{print $NF}'`
-    dotnet run -- --secondsBeforeNow $sigbench_run_duration --servicePrincipal $ServicePrincipal --resourceId $i > $outputDir/${webname}_appPlan_metrics.txt
+    dotnet run -- --secondsBeforeNow $duration --servicePrincipal $ServicePrincipal --resourceId $i > $outputDir/${webname}_appPlan_metrics.txt
   done
   for i in `cat $webAppOut`
   do
     local webname=`echo $i|awk -F / '{print $NF}'`
-    dotnet run -- --secondsBeforeNow $sigbench_run_duration --servicePrincipal $ServicePrincipal --resourceId $i > $outputDir/${webname}_webApp_metrics.txt
+    dotnet run -- --secondsBeforeNow $duration --servicePrincipal $ServicePrincipal --resourceId $i > $outputDir/${webname}_webApp_metrics.txt
   done
 }
 
@@ -230,6 +231,8 @@ function RunSendToGroup()
   local appPlanOut=$outputDir/${appPrefix}_appPlan.txt
   local webAppOut=$outputDir/${appPrefix}_webApp.txt
 
+  local startSeconds=$SECONDS
+
   if [ "$AspNetSignalR" != "true" ]
   then
     cd $ScriptWorkingDir
@@ -237,6 +240,7 @@ function RunSendToGroup()
   else
     createWebApp $unit $appPrefix "$connectionString" $serverUrlOut $appPlanOut $webAppOut
     appserverUrls=`cat $serverUrlOut`
+    startSeconds=$SECONDS
   fi
 
   cd $PluginScriptWorkingDir
@@ -254,8 +258,9 @@ function RunSendToGroup()
   run_command_core $tag $Scenario $Transport $MessageEncoding $user "$passwd" "$connectionString" $outputDir $config_path $connection $concurrentConnection $send $appserverUrls $unit
   if [ "$AspNetSignalR" == "true" ]
   then
+    local duration=$(($SECONDS-$startSeconds))
     # get the metrics
-    collectWebAppMetrics $appPlanOut $webAppOut $outputDir
+    collectWebAppMetrics $appPlanOut $webAppOut $outputDir $duration
     # remove appserver
     $AspNetWebMgrDir/DeployWebApp --removeResourceGroup=1 --resourceGroup=${AspNetWebAppResGrp} --servicePrincipal $ServicePrincipal
   fi
@@ -279,7 +284,7 @@ function RunSendToClient()
   local serverUrlOut=$outputDir/${appPrefix}.txt
   local appPlanOut=$outputDir/${appPrefix}_appPlan.txt
   local webAppOut=$outputDir/${appPrefix}_webApp.txt
-
+  local startSeconds
   if [ "$AspNetSignalR" != "true" ]
   then
     cd $ScriptWorkingDir
@@ -287,6 +292,7 @@ function RunSendToClient()
   else
     createWebApp $unit $appPrefix "$connectionString" $serverUrlOut $appPlanOut $webAppOut
     appserverUrls=`cat $serverUrlOut`
+    startSeconds=$SECONDS
   fi
 
   cd $PluginScriptWorkingDir
@@ -305,7 +311,8 @@ function RunSendToClient()
   run_command_core $tag $Scenario $Transport $MessageEncoding $user "$passwd" "$connectionString" $outputDir $config_path $connection $concurrentConnection $send $appserverUrls $unit
   if [ "$AspNetSignalR" == "true" ]
   then
-    collectWebAppMetrics $appPlanOut $webAppOut $outputDir
+    local duration=$(($SECONDS-$startSeconds))
+    collectWebAppMetrics $appPlanOut $webAppOut $outputDir $duration
     # remove appserver
     $AspNetWebMgrDir/DeployWebApp --removeResourceGroup=1 --resourceGroup=${AspNetWebAppResGrp} --servicePrincipal $ServicePrincipal
   fi
@@ -328,7 +335,7 @@ function RunCommonScenario()
   local serverUrlOut=$outputDir/${appPrefix}.txt
   local appPlanOut=$outputDir/${appPrefix}_appPlan.txt
   local webAppOut=$outputDir/${appPrefix}_webApp.txt
-
+  local startSeconds
   if [ "$AspNetSignalR" != "true" ]
   then
     cd $ScriptWorkingDir
@@ -336,6 +343,7 @@ function RunCommonScenario()
   else
     createWebApp $unit $appPrefix "$connectionString" $serverUrlOut $appPlanOut $webAppOut
     appserverUrls=`cat $serverUrlOut`
+    startSeconds=$SECONDS
   fi
 
   cd $PluginScriptWorkingDir
@@ -355,7 +363,8 @@ function RunCommonScenario()
 
   if [ "$AspNetSignalR" == "true" ]
   then
-    collectWebAppMetrics $appPlanOut $webAppOut $outputDir
+    local duration=$(($SECONDS-$startSeconds))
+    collectWebAppMetrics $appPlanOut $webAppOut $outputDir $duration
     # remove appserver
     $AspNetWebMgrDir/DeployWebApp --removeResourceGroup=1 --resourceGroup=${AspNetWebAppResGrp} --servicePrincipal $ServicePrincipal
   fi
