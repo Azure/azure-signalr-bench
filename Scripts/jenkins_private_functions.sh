@@ -204,12 +204,24 @@ function GenBenchmarkConfig()
   then
     groupTypeOp="-g $groupType"
   fi
+  local settings=settings.yaml
+  if [ "$AspNetSignalR" == "true" ]
+  then
+     settings=aspnet_settings.yaml
+  fi
   python3 generate.py -u $unit -S $Scenario \
                       -t $Transport -p $MessageEncoding \
                       -U $appserverUrls -d $sigbench_run_duration \
                       $groupTypeOp -ms $ms -i $interval \
                       -c $configPath $maxConnectionOption \
+                      -s $settings \
                       $toleratedConnDropCountOp $toleratedConnDropPercentageOp $toleratedMaxLatencyPercentageOp
+  if [ "$AspNetSignalR" == "true" ]
+  then
+    #TODO: Hard replacement
+    gen4AspNet $configPath
+  fi
+  cat $configPath
 }
 
 function RunSendToGroup()
@@ -246,12 +258,6 @@ function RunSendToGroup()
   cd $PluginScriptWorkingDir
   local config_path=$outputDir/${tag}_${Scenario}_${Transport}_${MessageEncoding}.config
   GenBenchmarkConfig $unit $Scenario $Transport $MessageEncoding $appserverUrls $groupType $config_path
-  if [ "$AspNetSignalR" == "true" ]
-  then
-    #TODO: Hard replacement
-    gen4AspNet $config_path
-  fi
-  cat $config_path
   local connection=`python3 get_sending_connection.py -g $groupType -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q totalConnections $maxConnectionOption`
   local concurrentConnection=`python3 get_sending_connection.py -g $groupType -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q concurrentConnection $maxConnectionOption`
   local send=`python3 get_sending_connection.py -g $groupType -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q sendingSteps $maxConnectionOption`
@@ -298,12 +304,6 @@ function RunSendToClient()
   cd $PluginScriptWorkingDir
   local config_path=$outputDir/${tag}_${Scenario}_${Transport}_${MessageEncoding}.config
   GenBenchmarkConfig $unit $Scenario $Transport $MessageEncoding $appserverUrls None $config_path
-  if [ "$AspNetSignalR" == "true" ]
-  then
-    #TODO: Hard replacement
-    gen4AspNet $config_path
-  fi
-  cat $config_path
   local connection=`python3 get_sending_connection.py -ms $msgSize -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q totalConnections $maxConnectionOption`
   local concurrentConnection=`python3 get_sending_connection.py -ms $msgSize -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q concurrentConnection $maxConnectionOption`
   local send=`python3 get_sending_connection.py -ms $msgSize -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q sendingSteps $maxConnectionOption`
@@ -349,13 +349,6 @@ function RunCommonScenario()
   cd $PluginScriptWorkingDir
   local config_path=$outputDir/${tag}_${Scenario}_${Transport}_${MessageEncoding}.config
   GenBenchmarkConfig $unit $Scenario $Transport $MessageEncoding $appserverUrls None $config_path
-  if [ "$AspNetSignalR" == "true" ]
-  then
-    #TODO: Hard replacement
-    gen4AspNet $config_path
-  fi
-
-  cat $config_path
   local connection=`python3 get_sending_connection.py -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q totalConnections $maxConnectionOption`
   local concurrentConnection=`python3 get_sending_connection.py -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q concurrentConnection $maxConnectionOption`
   local send=`python3 get_sending_connection.py -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q sendingSteps $maxConnectionOption`
