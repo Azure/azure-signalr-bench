@@ -45,8 +45,10 @@ EOF
 function get_reduced_appserverCount()
 {
   local unit=$1
-  local appserverInUse=13768
-  if [ "$serverVmCount" != "" ]
+  local appserverInUse=200
+  # for none AspNet, we cannot surpass serverVmCount,
+  # but for AspNet, we ignore serverVmCount because we use Azure WebApp
+  if [ "$AspNetSignalR" != "true" ] && [ "$serverVmCount" != "" ]
   then
     appserverInUse=$serverVmCount
   fi
@@ -57,16 +59,19 @@ function get_reduced_appserverCount()
   fi
   if [ "$DisableReduceServer" != "true" ]
   then
+    local limitedAppserver
     if [ "$AspNetSignalR" != "true" ]
     then
-      appserverInUse=`python get_appserver_count.py -u $unit`
+      limitedAppserver=`python get_appserver_count.py -u $unit`
     else
-      local limitedAppserver=`python get_appserver_count.py -u $unit -q webappserver`
-      if [ $limitedAppserver -lt $appserverInUse ]
-      then
-         appserverInUse=$limitedAppserver
-      fi
+      limitedAppserver=`python get_appserver_count.py -u $unit -q webappserver`
     fi
+    if [ $limitedAppserver -lt $appserverInUse ]
+    then
+       appserverInUse=$limitedAppserver
+    fi
+  else
+    echo "!! you use $appserverInUse app servers !!"
   fi
   echo $appserverInUse
 }
