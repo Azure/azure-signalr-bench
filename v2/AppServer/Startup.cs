@@ -7,6 +7,8 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Logging;
 
 namespace Microsoft.Azure.SignalR.PerfTest.AppServer
 {
@@ -36,6 +38,7 @@ namespace Microsoft.Azure.SignalR.PerfTest.AppServer
                     option.ClaimsProvider = httpContext => httpContext.User.Claims.Concat(
                         new Claim[] { new Claim(ClaimTypes.NameIdentifier, Guid.NewGuid().ToString("N")) });
                 });
+            services.Replace(ServiceDescriptor.Singleton(typeof(ILogger<>), typeof(TimedLogger<>)));
         }
 
         public void Configure(IApplicationBuilder app)
