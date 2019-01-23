@@ -36,6 +36,7 @@ namespace Microsoft.Azure.SignalR.PerfTest.AppServer
                 {
                     option.ConnectionCount = Configuration.GetValue<int>("Azure:SignalR:ConnectionNumber");
                 });
+            services.Replace(ServiceDescriptor.Singleton(typeof(ILoggerFactory), typeof(TimedLoggerFactory)));
             services.Replace(ServiceDescriptor.Singleton(typeof(ILogger<>), typeof(TimedLogger<>)));
         }
 
