@@ -39,7 +39,6 @@ namespace Microsoft.Azure.SignalR.PerfTest.AppServer
                         new Claim[] { new Claim(ClaimTypes.NameIdentifier, Guid.NewGuid().ToString("N")) });
                 });
             services.Replace(ServiceDescriptor.Singleton(typeof(ILoggerFactory), typeof(TimedLoggerFactory)));
-            services.Replace(ServiceDescriptor.Singleton(typeof(ILogger<>), typeof(TimedLogger<>)));
         }
 
         public void Configure(IApplicationBuilder app)
