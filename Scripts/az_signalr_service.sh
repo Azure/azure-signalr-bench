@@ -191,8 +191,9 @@ function query_connection_string()
      return
   fi
   #local signalrHostName=${signarl_service_name}.servicedev.signalr.net
-  local accessKey=`az signalr key list --name $signarl_service_name --resource-group $rsg --query primaryConnectionString -o tsv`
-  echo "Endpoint=https://${signalrHostName};AccessKey=${accessKey};Version=1.0"
+  local connectionString=`az signalr key list --name $signarl_service_name --resource-group $rsg --query primaryConnectionString -o tsv`
+  echo "$connectionString"
+  #echo "Endpoint=https://${signalrHostName};AccessKey=${accessKey};Version=1.0"
 }
 
 function delete_signalr_service()
