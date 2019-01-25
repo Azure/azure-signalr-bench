@@ -13,7 +13,7 @@ def unit10_webappserver():
    return 6
 
 def unit20_webappserver():
-   return 8
+   return 10
 
 def unit50_webappserver():
    return 16

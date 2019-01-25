@@ -117,7 +117,7 @@ scenario:sendToGroup,transport:Websockets,group:tiny:
   base_step: [800, 1000, 1000, 300, 1000, 1000, 1000]
   step: [100, 100, 500, 200, 200, 1000, 1000]
   step_length: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
-  concurrent: [50, 50, 50, 50, 1000, 2500, 5000]
+  concurrent: [50, 50, 50, 50, 500, 2500, 2500]
   group_count: [1000, 2000, 5000, 10000, 20000, 50000, 100000]
   max_group_count: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
 
@@ -128,7 +128,7 @@ scenario:sendToGroup,transport:Websockets,group:small:
   base_step: [300, 300, 300, 200, 3000, 5000, 5000]
   step: [100, 100, 100, 100, 1000, 1000, 1000]
   step_length: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
-  concurrent: [100, 100, 100, 100, 1000, 2500, 5000]
+  concurrent: [100, 100, 100, 10, 500, 2500, 2500]
   group_count: [100, 200, 500, 1000, 2000, 5000, 10000]
   max_group_count: [150, 300, 750, 1500, 3000, 7500, 15000]
 
@@ -139,7 +139,7 @@ scenario:sendToGroup,transport:Websockets,group:big:
   base_step: [20, 20, 10, 10, 10, 10, 10]
   step: [5, 5, 10, 10, 10, 10, 10]
   step_length: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
-  concurrent: [100, 100, 100, 200, 1000, 2500, 5000]
+  concurrent: [100, 100, 100, 100, 500, 2500, 2500]
   group_count: [10, 10, 10, 10, 10, 10, 10]
   max_group_count: [10, 10, 10, 10, 10, 10, 10]
 
