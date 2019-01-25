@@ -182,22 +182,19 @@ namespace Common
                                     {
                                         try
                                         {
-                                            using (var cancellationTokenSource = new CancellationTokenSource(TimeSpan.FromSeconds(60)))
+                                            await s.WaitAsync();
+                                            try
                                             {
-                                                await s.WaitAsync(cancellationTokenSource.Token);
-                                                try
-                                                {
-                                                    await f(item);
-                                                    break;
-                                                }
-                                                catch (System.OperationCanceledException e)
-                                                {
-                                                    Log.Warning($"see cancellation in {f.Method.Name}: {e.Message}");
-                                                }
-                                                finally
-                                                {
-                                                    s.Release();
-                                                }
+                                                await f(item);
+                                                break;
+                                            }
+                                            catch (System.OperationCanceledException e)
+                                            {
+                                                Log.Warning($"see cancellation in {f.Method.Name}: {e.Message}");
+                                            }
+                                            finally
+                                            {
+                                                s.Release();
                                             }
                                         }
                                         catch (System.OperationCanceledException)

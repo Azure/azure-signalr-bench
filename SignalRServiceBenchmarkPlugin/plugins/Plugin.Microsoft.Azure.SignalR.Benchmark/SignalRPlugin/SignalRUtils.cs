@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 using static Plugin.Microsoft.Azure.SignalR.Benchmark.SignalREnums;
 using AspNetHubConnection = Microsoft.AspNet.SignalR.Client.HubConnection;
@@ -123,7 +124,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
 
             try
             {
-                await package.Connection.StartAsync();
+                var c = new CancellationTokenSource(TimeSpan.FromSeconds(60));
+                await package.Connection.StartAsync(c.Token);
                 package.connectionsSuccessFlag[package.LocalIndex] = package.NormalState;
             }
             catch (Exception ex)
