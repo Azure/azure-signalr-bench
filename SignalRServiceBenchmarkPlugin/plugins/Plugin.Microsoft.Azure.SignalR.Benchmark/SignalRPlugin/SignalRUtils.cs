@@ -313,6 +313,36 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             return merged;
         }
 
+        public static bool TryGetBatchMode(
+            IDictionary<string, object> stepParameters,
+            out string batchConfigMode,
+            out int batchWaitMilliSeconds,
+            out SignalREnums.BatchMode mode)
+        {
+            batchConfigMode = "HighPress";
+            batchWaitMilliSeconds = SignalRConstants.BatchProcessDefaultWait;
+            if (stepParameters.TryGetValue(SignalRConstants.BatchMode, out _))
+            {
+                stepParameters.TryGetTypedValue(SignalRConstants.BatchMode,
+                    out string batchMode, Convert.ToString);
+                batchConfigMode = batchMode;
+            }
+            if (stepParameters.TryGetValue(SignalRConstants.BatchWait, out _))
+            {
+                stepParameters.TryGetTypedValue(SignalRConstants.BatchWait,
+                    out int batchWait, Convert.ToInt32);
+                batchWaitMilliSeconds = batchWait;
+            }
+            if (!Enum.TryParse(batchConfigMode, out SignalREnums.BatchMode m))
+            {
+                var message = $"Config mode not supported: {batchConfigMode}";
+                Log.Error(message);
+                throw new Exception(message);
+            }
+            mode = m;
+            return true;
+        }
+
         private static long Sum(IDictionary<string, object>[] results, string key)
         {
             return results.ToList().Select(statistics =>

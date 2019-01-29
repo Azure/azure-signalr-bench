@@ -38,6 +38,13 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.StatisticsStore}.{type}",
                     out StatisticsCollector statisticsCollector, obj => (StatisticsCollector)obj);
 
+                // Default use high pressure batch mode
+                SignalRUtils.TryGetBatchMode(
+                    stepParameters,
+                    out string batchConfigMode,
+                    out int batchWaitMilliSeconds,
+                    out SignalREnums.BatchMode mode);
+
                 // Re-create broken connections
                 var newConnections = await RecreateBrokenConnections(
                     connections, connectionIndex,
@@ -52,7 +59,23 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                                 ConnectionsSuccessFlag: connectionsSuccessFlag,
                                 NormalState: SignalREnums.ConnectionState.Reconnect,
                                 AbnormalState: SignalREnums.ConnectionState.Fail)).ToList();
-                await Task.WhenAll(Util.BatchProcess(packages, SignalRUtils.StartConnect, concurrentConnection));
+                switch (mode)
+                {
+                    case SignalREnums.BatchMode.LimitRatePress:
+                        var duration = SignalRConstants.RateLimitDefaultGranularity; // 100 milli-seconds is the default fine-grind
+                        var fillTokenPerDuration = concurrentConnection > duration ? concurrentConnection / duration : 1;
+                        await Task.WhenAll(Util.RateLimitBatchProces(packages,
+                            SignalRUtils.StartConnect, concurrentConnection, fillTokenPerDuration, duration));
+                        break;
+                    case SignalREnums.BatchMode.HighPress:
+                        await Task.WhenAll(Util.BatchProcess(packages,
+                            SignalRUtils.StartConnect, concurrentConnection));
+                        break;
+                    case SignalREnums.BatchMode.LowPress:
+                        await Task.WhenAll(Util.LowPressBatchProcess(packages,
+                            SignalRUtils.StartConnect, concurrentConnection, batchWaitMilliSeconds));
+                        break;
+                }
 
                 // Re-setCallbacks
                 foreach (var registerCallback in registeredCallbacks)

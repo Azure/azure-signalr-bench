@@ -29,7 +29,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         public enum BatchMode
         {
             LowPress,
-            HighPress
+            HighPress,
+            LimitRatePress
         }
     }
 }

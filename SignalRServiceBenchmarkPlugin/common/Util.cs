@@ -156,6 +156,46 @@ namespace Common
             }
         }
 
+        public static Task RateLimitBatchProces<T>(
+            IList<T> source,
+            Func<T, Task> f,
+            int capacity,
+            int tokenFillPerInterval,
+            int intervalMilliSeconds)
+        {
+            using (var tokenBucket =
+                SemaphoreTokenBucketBuilder.Builder()
+                .WithCapacity(capacity)
+                .WithRefill(tokenFillPerInterval, TimeSpan.FromMilliseconds(intervalMilliSeconds))
+                .Build())
+            {
+                return Task.WhenAll(from item in source
+                                 select Task.Run(async () =>
+                                 {
+                                     try
+                                     {
+                                         await tokenBucket.WaitAsync();
+                                         try
+                                         {
+                                             await f(item);
+                                         }
+                                         catch (System.OperationCanceledException e)
+                                         {
+                                             Log.Warning($"see cancellation in {f.Method.Name}: {e.Message}");
+                                         }
+                                         finally
+                                         {
+                                             tokenBucket.Release();
+                                         }
+                                     }
+                                     catch (Exception e)
+                                     {
+                                         Log.Error($"{e.Message}");
+                                     }
+                                 }));
+            }
+        }
+
         // TODO:
         // Hardcode a time out value for cancellation token.
         // For some time consuming operations, this time out needs to be tuned.

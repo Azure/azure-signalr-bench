@@ -25,26 +25,11 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 stepParameters.TryGetTypedValue(SignalRConstants.Type,
                     out string type, Convert.ToString);
                 // Default use high pressure batch mode
-                string batchConfigMode = "HighPress";
-                int batchWaitMilliSeconds = 1000;
-                if (stepParameters.TryGetValue(SignalRConstants.BatchMode, out _))
-                {
-                    stepParameters.TryGetTypedValue(SignalRConstants.BatchMode,
-                        out string batchMode, Convert.ToString);
-                    batchConfigMode = batchMode;
-                }
-                if (stepParameters.TryGetValue(SignalRConstants.BatchWait, out _))
-                {
-                    stepParameters.TryGetTypedValue(SignalRConstants.BatchWait,
-                        out int batchWait, Convert.ToInt32);
-                    batchWaitMilliSeconds = batchWait;
-                }
-                if (!Enum.TryParse(batchConfigMode, out SignalREnums.BatchMode mode))
-                {
-                    var message = $"Config mode not supported: {batchConfigMode}";
-                    Log.Error(message);
-                    throw new Exception(message);
-                }
+                SignalRUtils.TryGetBatchMode(
+                    stepParameters,
+                    out string batchConfigMode,
+                    out int batchWaitMilliSeconds,
+                    out SignalREnums.BatchMode mode);
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionStore}.{type}",
                     out IList<IHubConnectionAdapter> connections, (obj) => (IList<IHubConnectionAdapter>)obj);
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.StatisticsStore}.{type}",
@@ -63,6 +48,12 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                                 AbnormalState: SignalREnums.ConnectionState.Fail)).ToList();
                 switch (mode)
                 {
+                    case SignalREnums.BatchMode.LimitRatePress:
+                        var duration = SignalRConstants.RateLimitDefaultGranularity; // 100 milli-seconds is the default fine-grind
+                        var fillTokenPerDuration = concurrentConnection > duration ? concurrentConnection / duration : 1;
+                        await Task.WhenAll(Util.RateLimitBatchProces(packages,
+                            SignalRUtils.StartConnect, concurrentConnection, fillTokenPerDuration, duration));
+                        break;
                     case SignalREnums.BatchMode.HighPress:
                         await Task.WhenAll(Util.BatchProcess(packages,
                             SignalRUtils.StartConnect, concurrentConnection));

@@ -91,6 +91,16 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
 
         // Default RPC task timeout if there is no specific duration
         public static readonly long MillisecondsToWait = 300000;
+
+        // Default batch mode
+        public static readonly string DefaultBatchMode = "LimitRatePress";
+
+        // Default interval (milliseconds) for batch process
+        public static readonly int BatchProcessDefaultWait = 1000;
+
+        // Default granularity for rate limit processing (milliseconds)
+        public static readonly int RateLimitDefaultGranularity = 100;
+
         // Default cancellation token timeout
         public static readonly TimeSpan DefaultCancellationToken = TimeSpan.FromSeconds(5);
     }
