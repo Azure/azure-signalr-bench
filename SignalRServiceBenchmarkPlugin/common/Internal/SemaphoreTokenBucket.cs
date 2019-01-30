@@ -75,7 +75,7 @@ namespace Common
                     _s.Release(holdingCount);
                 }
                 Console.WriteLine($"semaphore available count before destroyed: {_s.CurrentCount}");
-                _s.Dispose();
+                //_s.Dispose();
             }
         }
 
