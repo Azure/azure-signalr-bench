@@ -28,7 +28,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
             var packages = clients.Select((client, i) =>
             {
                 int currentConcurrentConnection = Util.SplitNumber(concurrentConnection, i, clients.Count);
-                var data = new Dictionary<string, object> { { SignalRConstants.ConcurrentConnection, currentConcurrentConnection } };
+                var data = new Dictionary<string, object>(stepParameters);
+                data[SignalRConstants.ConcurrentConnection] = currentConcurrentConnection;
                 // Add method and type
                 PluginUtils.AddMethodAndType(data, stepParameters);
                 return new { Client = client, Data = data };
