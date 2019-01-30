@@ -77,7 +77,24 @@ namespace DeployWebApp
 
         private void RemoveResourceGroup()
         {
-            _azure.ResourceGroups.DeleteByName(_argsOption.GroupName);
+            var maxRetry = 3;
+            var i = 0;
+            while (i < maxRetry)
+            {
+                try
+                {
+                    if (_azure.ResourceGroups.Contain(_argsOption.GroupName))
+                    {
+                        _azure.ResourceGroups.DeleteByName(_argsOption.GroupName);
+                    }
+                    break;
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine($"Error occur: {e.Message}");
+                }
+                i++;
+            }
         }
 
         public WebAppManagement(ArgsOption argsOption)

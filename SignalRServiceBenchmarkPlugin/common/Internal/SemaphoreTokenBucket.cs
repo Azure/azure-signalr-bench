@@ -42,11 +42,14 @@ namespace Common
                             {
                                 var refillAmount = Math.Max((nowTicks - _nextRefillTime) / _periodInTicks, 1);
                                 _nextRefillTime += _periodInTicks * refillAmount;
-                                var refillCount = Math.Min(_capacity - _s.CurrentCount,
-                                                           Math.Min(Interlocked.Read(ref _releasedCount), _refillTokens * refillAmount));
+
+                                var releasedCount = Interlocked.Read(ref _releasedCount);
+                                var holdingCount = _capacity - _s.CurrentCount;
+                                var candidate = releasedCount > 0 ? Math.Min(releasedCount, holdingCount) : holdingCount;
+                                var refillCount = Math.Min(candidate, _refillTokens * refillAmount);
                                 if (refillCount > 0)
                                 {
-                                    _s.Release((int)refillCount);
+                                    var rel = _s.Release((int)refillCount);
                                 }
                                 _releasedCount = 0;
                             }
@@ -66,6 +69,10 @@ namespace Common
             if (!_disposed)
             {
                 _cs.Cancel();
+                var holdingCount = _capacity - _s.CurrentCount;
+                _s.Release(holdingCount);
+                Console.WriteLine($"semaphore available count before destroyed: {_s.CurrentCount}");
+                _s.Dispose();
             }
         }
 

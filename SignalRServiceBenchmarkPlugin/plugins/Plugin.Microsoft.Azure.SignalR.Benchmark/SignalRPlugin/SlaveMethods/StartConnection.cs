@@ -49,10 +49,12 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 switch (mode)
                 {
                     case SignalREnums.BatchMode.LimitRatePress:
-                        var duration = SignalRConstants.RateLimitDefaultGranularity; // 100 milli-seconds is the default fine-grind
-                        var fillTokenPerDuration = concurrentConnection > duration ? concurrentConnection / duration : 1;
+                        // 100 milliseconds is the default fine-granularity
+                        var period = SignalRConstants.RateLimitDefaultGranularity;
+                        var factor = 1000 / period;
+                        var fillTokenPerDuration = concurrentConnection > factor ? concurrentConnection / factor : 1;
                         await Task.WhenAll(Util.RateLimitBatchProces(packages,
-                            SignalRUtils.StartConnect, concurrentConnection, fillTokenPerDuration, duration));
+                            SignalRUtils.StartConnect, concurrentConnection, fillTokenPerDuration, period));
                         break;
                     case SignalREnums.BatchMode.HighPress:
                         await Task.WhenAll(Util.BatchProcess(packages,
