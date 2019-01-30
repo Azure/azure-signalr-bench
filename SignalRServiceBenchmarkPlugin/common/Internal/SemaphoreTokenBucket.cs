@@ -70,7 +70,10 @@ namespace Common
             {
                 _cs.Cancel();
                 var holdingCount = _capacity - _s.CurrentCount;
-                _s.Release(holdingCount);
+                if (holdingCount > 0)
+                {
+                    _s.Release(holdingCount);
+                }
                 Console.WriteLine($"semaphore available count before destroyed: {_s.CurrentCount}");
                 _s.Dispose();
             }
