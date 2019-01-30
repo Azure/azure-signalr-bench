@@ -30,7 +30,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         {
             LowPress,
             HighPress,
-            LimitRatePress
+            LimitRatePress,
+            ExtLimitRatePress
         }
     }
 }

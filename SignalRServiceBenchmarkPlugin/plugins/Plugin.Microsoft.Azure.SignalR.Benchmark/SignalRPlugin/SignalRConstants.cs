@@ -93,7 +93,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         public static readonly long MillisecondsToWait = 300000;
 
         // Default batch mode
-        public static readonly string DefaultBatchMode = "LimitRatePress";
+        public static readonly string DefaultBatchMode = SignalREnums.BatchMode.LimitRatePress.ToString(); //"LimitRatePress";
 
         // Default interval (milliseconds) for batch process
         public static readonly int BatchProcessDefaultWait = 1000;

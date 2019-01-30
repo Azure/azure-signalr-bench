@@ -156,6 +156,33 @@ namespace Common
             }
         }
 
+        public static Task ExternalRateLimitBatchProcess<T>(
+            IList<T> source,
+            Func<T, Task> f,
+            int capacity,
+            int tokenFillPerInterval,
+            int intervalMilliSeconds)
+        {
+            var tokenBucket = Esendex.TokenBucket.TokenBuckets
+                .Construct()
+                .WithCapacity(capacity)
+                .WithFixedIntervalRefillStrategy(tokenFillPerInterval, TimeSpan.FromMilliseconds(intervalMilliSeconds))
+                .WithBusyWaitSleepStrategy().Build();
+            return Task.WhenAll(from item in source
+                                select Task.Run(async () =>
+                                {
+                                    tokenBucket.Consume(1);
+                                    try
+                                    {
+                                        await f(item);
+                                    }
+                                    catch (System.OperationCanceledException e)
+                                    {
+                                        Log.Warning($"see cancellation in {f.Method.Name}: {e.Message}");
+                                    }
+                                }));
+        }
+
         public static Task RateLimitBatchProces<T>(
             IList<T> source,
             Func<T, Task> f,

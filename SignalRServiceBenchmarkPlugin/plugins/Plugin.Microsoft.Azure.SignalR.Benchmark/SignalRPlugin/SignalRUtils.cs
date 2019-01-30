@@ -319,7 +319,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             out int batchWaitMilliSeconds,
             out SignalREnums.BatchMode mode)
         {
-            batchConfigMode = "HighPress";
+            batchConfigMode = SignalRConstants.DefaultBatchMode;
             batchWaitMilliSeconds = SignalRConstants.BatchProcessDefaultWait;
             if (stepParameters.TryGetValue(SignalRConstants.BatchMode, out _))
             {

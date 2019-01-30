@@ -10,7 +10,7 @@ using static Plugin.Microsoft.Azure.SignalR.Benchmark.SignalREnums;
 
 namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
 {
-    public class ReconnectBase
+    public class ReconnectBase : BatchConnectionBase
     {
         protected async Task<IDictionary<string, object>> RunReconnect(
             IDictionary<string, object> stepParameters,
@@ -27,23 +27,16 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 stepParameters.TryGetTypedValue(SignalRConstants.ConcurrentConnection, out int concurrentConnection, Convert.ToInt32);
 
                 // Get context
+                pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionIndex}.{type}",
+                    out List<int> connectionIndex, (obj) => (List<int>)obj);
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionStore}.{type}",
                     out IList<IHubConnectionAdapter> connections, (obj) => (IList<IHubConnectionAdapter>)obj);
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionSuccessFlag}.{type}",
                     out List<SignalREnums.ConnectionState> connectionsSuccessFlag, (obj) => (List<SignalREnums.ConnectionState>)obj);
-                pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionIndex}.{type}",
-                    out List<int> connectionIndex, (obj) => (List<int>)obj);
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.RegisteredCallbacks}.{type}",
                     out var registeredCallbacks, obj => (IList<Action<IList<IHubConnectionAdapter>, StatisticsCollector, string>>)obj);
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.StatisticsStore}.{type}",
                     out StatisticsCollector statisticsCollector, obj => (StatisticsCollector)obj);
-
-                // Default use high pressure batch mode
-                SignalRUtils.TryGetBatchMode(
-                    stepParameters,
-                    out string batchConfigMode,
-                    out int batchWaitMilliSeconds,
-                    out SignalREnums.BatchMode mode);
 
                 // Re-create broken connections
                 var newConnections = await RecreateBrokenConnections(
@@ -53,30 +46,12 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                     SignalRConstants.ConnectionCloseTimeout,
                     clientType);
 
-                // Start connections
-                var packages = (from i in Enumerable.Range(0, connections.Count())
-                                select (Connection: connections[i], LocalIndex: i,
-                                ConnectionsSuccessFlag: connectionsSuccessFlag,
-                                NormalState: SignalREnums.ConnectionState.Reconnect,
-                                AbnormalState: SignalREnums.ConnectionState.Fail)).ToList();
-                switch (mode)
-                {
-                    case SignalREnums.BatchMode.LimitRatePress:
-                        var period = SignalRConstants.RateLimitDefaultGranularity; // 100 milliseconds is the default fine-granularity
-                        var factor = 1000 / period;
-                        var fillTokenPerDuration = concurrentConnection > factor ? concurrentConnection / factor : 1;
-                        await Task.WhenAll(Util.RateLimitBatchProces(packages,
-                            SignalRUtils.StartConnect, concurrentConnection, fillTokenPerDuration, period));
-                        break;
-                    case SignalREnums.BatchMode.HighPress:
-                        await Task.WhenAll(Util.BatchProcess(packages,
-                            SignalRUtils.StartConnect, concurrentConnection));
-                        break;
-                    case SignalREnums.BatchMode.LowPress:
-                        await Task.WhenAll(Util.LowPressBatchProcess(packages,
-                            SignalRUtils.StartConnect, concurrentConnection, batchWaitMilliSeconds));
-                        break;
-                }
+                await BatchConnection(
+                    stepParameters,
+                    pluginParameters,
+                    connections,
+                    concurrentConnection,
+                    connectionsSuccessFlag);
 
                 // Re-setCallbacks
                 foreach (var registerCallback in registeredCallbacks)

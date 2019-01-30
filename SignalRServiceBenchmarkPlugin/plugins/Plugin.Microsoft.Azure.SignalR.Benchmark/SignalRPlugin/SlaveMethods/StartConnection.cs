@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
 {
-    public class StartConnection : ISlaveMethod
+    public class StartConnection : BatchConnectionBase, ISlaveMethod
     {
         private StatisticsCollector _statisticsCollector;
 
@@ -24,47 +24,23 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                     out int concurrentConnection, Convert.ToInt32);
                 stepParameters.TryGetTypedValue(SignalRConstants.Type,
                     out string type, Convert.ToString);
-                // Default use high pressure batch mode
-                SignalRUtils.TryGetBatchMode(
-                    stepParameters,
-                    out string batchConfigMode,
-                    out int batchWaitMilliSeconds,
-                    out SignalREnums.BatchMode mode);
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionStore}.{type}",
                     out IList<IHubConnectionAdapter> connections, (obj) => (IList<IHubConnectionAdapter>)obj);
-                pluginParameters.TryGetTypedValue($"{SignalRConstants.StatisticsStore}.{type}",
-                    out _statisticsCollector, obj => (StatisticsCollector)obj);
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionSuccessFlag}.{type}",
                     out List<SignalREnums.ConnectionState> connectionsSuccessFlag,
                     (obj) => (List<SignalREnums.ConnectionState>)obj);
+                pluginParameters.TryGetTypedValue($"{SignalRConstants.StatisticsStore}.{type}",
+                    out _statisticsCollector, obj => (StatisticsCollector)obj);
 
                 // The following get connection Id needs the concurrent connection value
                 pluginParameters.TryAdd(SignalRConstants.ConcurrentConnection, concurrentConnection);
 
-                var packages = (from i in Enumerable.Range(0, connections.Count())
-                                select (Connection: connections[i], LocalIndex: i,
-                                ConnectionsSuccessFlag: connectionsSuccessFlag,
-                                NormalState: SignalREnums.ConnectionState.Success,
-                                AbnormalState: SignalREnums.ConnectionState.Fail)).ToList();
-                switch (mode)
-                {
-                    case SignalREnums.BatchMode.LimitRatePress:
-                        // 100 milliseconds is the default fine-granularity
-                        var period = SignalRConstants.RateLimitDefaultGranularity;
-                        var factor = 1000 / period;
-                        var fillTokenPerDuration = concurrentConnection > factor ? concurrentConnection / factor : 1;
-                        await Task.WhenAll(Util.RateLimitBatchProces(packages,
-                            SignalRUtils.StartConnect, concurrentConnection, fillTokenPerDuration, period));
-                        break;
-                    case SignalREnums.BatchMode.HighPress:
-                        await Task.WhenAll(Util.BatchProcess(packages,
-                            SignalRUtils.StartConnect, concurrentConnection));
-                        break;
-                    case SignalREnums.BatchMode.LowPress:
-                        await Task.WhenAll(Util.LowPressBatchProcess(packages,
-                            SignalRUtils.StartConnect, concurrentConnection, batchWaitMilliSeconds));
-                        break;
-                }
+                await BatchConnection(
+                    stepParameters,
+                    pluginParameters,
+                    connections,
+                    concurrentConnection,
+                    connectionsSuccessFlag);
                 return null;
             }
             catch (Exception ex)
