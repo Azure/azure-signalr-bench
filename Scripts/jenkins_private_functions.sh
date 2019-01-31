@@ -498,6 +498,7 @@ function copy_log_from_k8s()
     ############# copy pod log ############
        copy_syslog $service_name $k8s_result_dir
        get_nginx_log $service_name "$g_nginx_ns" $k8s_result_dir
+       get_nginx_pod_detail $service_name "$g_nginx_ns" $k8s_result_dir
        get_k8s_pod_status $service_name $k8s_result_dir
     fi
     enable_exit_immediately_when_fail

@@ -188,18 +188,23 @@ function get_kube_deployment()
 function get_k8s_pod_status() {
   local resName=$1
   local outdir=$2
+  local ns="default"
+  if [ $# -eq 3 ]
+  then
+     ns="$3"
+  fi
   g_config=""
   g_result=""
-  find_target_by_iterate_all_k8slist $resName get_kube_deployment
+  find_target_by_iterate_all_k8slist $resName get_kube_deployment "$ns"
   local config_file=$g_config
-  local kubeId=`kubectl get deploy -o=json --selector resourceName=$resName --kubeconfig=${config_file}|jq '.items[0].metadata.labels.resourceKubeId'|tr -d '"'`
+  local kubeId=`kubectl get deploy -o=json --selector resourceName=$resName --namespace=${ns} --kubeconfig=${config_file}|jq '.items[0].metadata.labels.resourceKubeId'|tr -d '"'`
   if [ "$kubeId" == "" ]
   then
     echo "Cannot find $resName"
     return
   fi
 
-  local len=`kubectl get pod -o=json --selector resourceKubeId=$kubeId --kubeconfig=${config_file}|jq '.items|length'`
+  local len=`kubectl get pod -o=json --namespace=${ns} --selector resourceKubeId=$kubeId --kubeconfig=${config_file}|jq '.items|length'`
   if [ $len == "0" ]
   then
      echo "Cannot find $resName"
@@ -208,9 +213,9 @@ function get_k8s_pod_status() {
   local i=0
   while [ $i -lt $len ]
   do
-     local podname=`kubectl get pod -o=json --selector resourceKubeId=$kubeId --kubeconfig=${config_file}|jq ".items[$i].metadata.name"|tr -d '"'`
-     kubectl get pod $podname --kubeconfig=${config_file} > $outdir/${podname}_pod.txt
-     kubectl get pod $podname -o=json --kubeconfig=${config_file} > $outdir/${podname}_pod.json
+     local podname=`kubectl get pod -o=json --selector resourceKubeId=$kubeId --namespace=${ns} --kubeconfig=${config_file}|jq ".items[$i].metadata.name"|tr -d '"'`
+     kubectl get pod $podname --kubeconfig=${config_file} --namespace=${ns} > $outdir/${podname}_${ns}_pod.txt
+     kubectl get pod $podname -o=json --kubeconfig=${config_file} --namespace=${ns} > $outdir/${podname}_${ns}_pod.json
      i=`expr $i + 1`
   done
 }
@@ -611,6 +616,40 @@ function patch_and_wait() {
   #patch_liveprobe_timeout ${name} 2
 }
 
+## use another method to get nginx selector label
+function get_ingress_pod_status() {
+  local resName=$1
+  local outdir=$2
+  local ns="ingress-nginx"
+  if [ $# -eq 3 ]
+  then
+     ns="$3"
+  fi
+  g_config=""
+  g_result=""
+  find_target_by_iterate_all_k8slist $resName get_kube_deployment "$ns"
+  local config_file=$g_config
+  local ingress=`kubectl get ingresses -o=json --selector resourceName=$resName  --kubeconfig=${config_file}|jq '.items[0].metadata.annotations["kubernetes.io/ingress.class"]'|tr -d '"'`
+  if [[ "$ingress" != "ingress*" ]]
+  then
+    ingress="ingress-${ingress}"
+  fi
+  local len=`kubectl get pod -o=json --namespace=${ns} --selector app=$ingress --kubeconfig=${config_file}|jq '.items|length'`
+  if [ $len == "0" ]
+  then
+     echo "Cannot find $resName"
+     return
+  fi
+  local i=0
+  while [ $i -lt $len ]
+  do
+     local podname=`kubectl get pod -o=json --selector app=$ingress --namespace=${ns} --kubeconfig=${config_file}|jq ".items[$i].metadata.name"|tr -d '"'`
+     kubectl get pod $podname --kubeconfig=${config_file} --namespace=${ns} > $outdir/${podname}_${ns}_pod.txt
+     kubectl get pod $podname -o=json --kubeconfig=${config_file} --namespace=${ns} > $outdir/${podname}_${ns}_pod.json
+     i=`expr $i + 1`
+  done
+}
+
 function get_nginx_pod_internal() {
   local res=$1
   local config=$2
@@ -658,6 +697,22 @@ function track_nginx_top() {
      sleep 1
     done
   fi
+}
+
+function get_nginx_pod_detail() {
+  local res=$1
+  local ns=$2
+  local outdir=$3
+  g_config=""
+  g_result=""
+  find_target_by_iterate_all_k8slist $res get_nginx_pod_internal $ns
+  local config_file=$g_config
+  local result=$g_result
+  for i in $result
+  do
+    kubectl get pod $i --kubeconfig=${config_file} --namespace=${ns} >$outdir/${i}_${ns}_pod.txt
+    kubectl get pod $i -o=json --kubeconfig=${config_file} --namespace=${ns} > $outdir/${i}_${ns}_pod.json
+  done
 }
 
 function get_nginx_log() {
