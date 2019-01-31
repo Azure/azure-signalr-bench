@@ -10,6 +10,9 @@ namespace Rpc.Slave
         [Option("RpcPort", Required = false, Default = 5050, HelpText = "Port to be conencted from remote hosts.")]
         public int RpcPort { get; set; }
 
+        [Option("PidFile", Required = false, Default = "slave-pid.txt")]
+        public string PidFile { get; set; }
+
         [Option("HostName", Required = false, Default = "localhost", HelpText = "Hostname.")]
         public string HostName{ get; set; }
 

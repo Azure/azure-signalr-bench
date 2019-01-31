@@ -1,6 +1,7 @@
 ﻿using Serilog;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -87,6 +88,23 @@ namespace Common
             {
                 Log.Error($"Fail to load benchmark configuration: {ex}");
                 throw ex;
+            }
+        }
+
+        public static void WriteFile(string content, string path, bool append=false)
+        {
+            using (StreamWriter sw = new StreamWriter(path, append))
+            {
+                sw.Write(content);
+            }
+        }
+
+        public static void SavePidToFile(string pidFile)
+        {
+            var pid = Process.GetCurrentProcess().Id;
+            if (pidFile != null)
+            {
+                WriteFile(Convert.ToString(pid), pidFile, false);
             }
         }
 
@@ -183,7 +201,7 @@ namespace Common
                                 }));
         }
 
-        public static Task RateLimitBatchProces<T>(
+        public static async Task RateLimitBatchProces<T>(
             IList<T> source,
             Func<T, Task> f,
             int capacity,
@@ -196,7 +214,7 @@ namespace Common
                 .WithRefill(tokenFillPerInterval, TimeSpan.FromMilliseconds(intervalMilliSeconds))
                 .Build())
             {
-                return Task.WhenAll(from item in source
+                await Task.WhenAll(from item in source
                                  select Task.Run(async () =>
                                  {
                                      try

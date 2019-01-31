@@ -85,17 +85,9 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             var connectionIndex = connectionIndexString.Split(',').Select(ind => Convert.ToInt32(ind)).ToList();
 
             // Create Connections
-            IList<IHubConnectionAdapter> connections;
-            if (clientType == ClientType.AspNetCore)
-            {
-                connections = CreateConnections(connectionIndex, urls,
-                    transportType, protocol, SignalRConstants.ConnectionCloseTimeout);
-            }
-            else
-            {
-                connections = CreateAspNetConnections(connectionIndex, urls,
-                    transportType, protocol, SignalRConstants.ConnectionCloseTimeout);
-            }
+            var connections = clientType == ClientType.AspNetCore ?
+                CreateConnections(connectionIndex, urls, transportType, protocol, SignalRConstants.ConnectionCloseTimeout) :
+                CreateAspNetConnections(connectionIndex, urls, transportType, protocol, SignalRConstants.ConnectionCloseTimeout);
 
             // Setup connection success flag
             var connectionsSuccessFlag = Enumerable.Repeat(ConnectionState.Init, connections.Count()).ToList();

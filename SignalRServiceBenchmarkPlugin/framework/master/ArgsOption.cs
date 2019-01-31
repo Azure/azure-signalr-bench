@@ -10,6 +10,9 @@ namespace Rpc.Master
         [Option("SlaveList", Required = false, Separator = ',', Default = new string[]{"localhost:5050", "localhost:6060"}, HelpText = "Target hosts to connect.")]
         public IList<string> SlaveList { get; set; }
 
+        [Option("PidFile", Required = false, Default = "master-pid.txt")]
+        public string PidFile { get; set; }
+
         // Log
         [Option("LogName", Required = false, Default = "master-.log", HelpText = "Log file name. Timestamp will insert into the position before dot. If the name is 'master-.log'. The final file name will be 'master-123456789.log' for example.")]
         public string LogName { get; set; }

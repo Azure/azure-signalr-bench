@@ -14,6 +14,8 @@ namespace Rpc.Slave
             // Parse args
             var argsOption = ParseArgs(args);
 
+            Util.SavePidToFile(argsOption.PidFile);
+
             // Create Logger
             Util.CreateLogger(argsOption.LogDirectory, argsOption.LogName, argsOption.LogTarget);
 

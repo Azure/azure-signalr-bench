@@ -4,7 +4,6 @@ using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using static Plugin.Microsoft.Azure.SignalR.Benchmark.SignalREnums;
 
@@ -45,14 +44,18 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                     transportType, protocol,
                     SignalRConstants.ConnectionCloseTimeout,
                     clientType);
-
+                if (newConnections.Count == 0)
+                {
+                    // skip reconnect because of no drop
+                    Log.Information("Skip reconnect");
+                    return null;
+                }
                 await BatchConnection(
                     stepParameters,
                     pluginParameters,
-                    connections,
+                    newConnections,
                     concurrentConnection,
                     connectionsSuccessFlag);
-
                 // Re-setCallbacks
                 foreach (var registerCallback in registeredCallbacks)
                 {
@@ -99,7 +102,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 SignalRUtils.CreateAspNetConnections(globalConnIndex, urls, transportTypeString, protocolString, closeTimeout);
 
             // Setup connection drop handler
-            SignalRUtils.SetConnectionOnClose(connections, connectionsSuccessFlag);
+            SignalRUtils.SetConnectionOnClose(newConnections, connectionsSuccessFlag);
 
             // Map new connections to orignal connection list
             for (var i = 0; i < newConnections.Count; i++)

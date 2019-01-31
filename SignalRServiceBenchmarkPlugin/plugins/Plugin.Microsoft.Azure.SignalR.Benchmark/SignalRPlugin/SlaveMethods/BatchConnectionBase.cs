@@ -36,8 +36,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                         SignalRUtils.StartConnect, concurrentConnection, fillTokenPerDuration, period));
                     break;
                 case SignalREnums.BatchMode.LimitRatePress:
-                    await Task.WhenAll(Util.RateLimitBatchProces(packages,
-                        SignalRUtils.StartConnect, concurrentConnection, fillTokenPerDuration, period));
+                    await Util.RateLimitBatchProces(packages,
+                        SignalRUtils.StartConnect, concurrentConnection, fillTokenPerDuration, period);
                     break;
                 case SignalREnums.BatchMode.HighPress:
                     await Task.WhenAll(Util.BatchProcess(packages,
