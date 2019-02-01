@@ -73,7 +73,7 @@ function set_tags_for_production() {
      fi
      if [ -e westus2_vm_set.txt ]
      then
-       separatedVmSet=`cat westus2_vm_set.txt`
+       separatedIngressVMSS=`cat westus2_vm_set.txt`
      fi
   fi
 }
