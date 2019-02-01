@@ -15,7 +15,7 @@ filter_app_log_a_single_run() {
   then
     rm $output_file
   fi
-  find $tgt_dir -iname "log_appserver*" |while read line
+  find $tgt_dir -iname "*appserver.log" |while read line
   do
     local d=`echo "$line"|awk -F / '{print $5}'`
     local unit=`echo "$line"|awk -F / '{print $6}'`
