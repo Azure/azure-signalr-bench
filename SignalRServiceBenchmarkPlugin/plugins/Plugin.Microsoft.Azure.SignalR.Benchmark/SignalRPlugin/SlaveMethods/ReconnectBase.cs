@@ -50,6 +50,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                     Log.Information("Skip reconnect");
                     return null;
                 }
+                Log.Information($"Start {newConnections.Count} reconnections");
                 await BatchConnection(
                     stepParameters,
                     pluginParameters,

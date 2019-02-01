@@ -1,12 +1,8 @@
-﻿using Common;
-using Grpc.Core;
-using Newtonsoft.Json;
+﻿using Grpc.Core;
 using Plugin.Base;
 using Serilog;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Rpc.Service
@@ -60,7 +56,7 @@ namespace Rpc.Service
         private static Channel CreateRpcChannel(string hostname, int port)
         {
             Log.Information("Open channel to rpc server...");
-                var channel = new Channel($"{hostname}:{port}", ChannelCredentials.Insecure,
+            var channel = new Channel($"{hostname}:{port}", ChannelCredentials.Insecure,
                     new ChannelOption[] {
                         // For Group, the received message size is very large, so here set 8000k
                         new ChannelOption(ChannelOptions.MaxReceiveMessageLength, 8192000)

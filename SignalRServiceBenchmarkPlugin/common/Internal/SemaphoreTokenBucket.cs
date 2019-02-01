@@ -24,8 +24,19 @@ namespace Common
             _refillTokens = refillTokens;
             _period = period;
             _periodInTicks = _period.Ticks;
-            _nextRefillTime = 0;
-            _s = new SemaphoreSlim(capacity);
+            // avoid the 1st filling fullfil the bucket
+            _nextRefillTime = DateTime.Now.Ticks;
+            var init = 0;
+            _s = new SemaphoreSlim(init, capacity);
+            // Smooth the burst in the beginning
+            _ = Task.Run(async () =>
+            {
+                for (int i = init; i < capacity; i++)
+                {
+                    await Task.Delay(100);
+                    _s.Release();
+                }
+            });
             _rootLock = new object();
             _cs = new CancellationTokenSource();
             _backgroudTask = Task.Run(async () =>
