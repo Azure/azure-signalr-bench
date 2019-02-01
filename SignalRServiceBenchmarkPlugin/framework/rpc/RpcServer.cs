@@ -1,8 +1,5 @@
 ﻿using Grpc.Core;
 using Serilog;
-using System;
-using System.Collections.Generic;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -14,6 +11,7 @@ namespace Rpc.Service
         public IRpcServer Create(string hostname, int port)
         {
             Log.Information("Create Rpc Server...");
+
             _server = new Grpc.Core.Server(new ChannelOption[]
             {
                 // For Group, the received message size is very large, so here set 8000k

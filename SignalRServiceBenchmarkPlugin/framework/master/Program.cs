@@ -7,6 +7,8 @@ using Serilog;
 using Common;
 using Plugin.Base;
 using System.Linq;
+using Grpc.Core;
+using Grpc.Core.Logging;
 
 namespace Rpc.Master
 {
@@ -53,6 +55,13 @@ namespace Rpc.Master
             {
                 Log.Error($"Stop for {e.Message}");
             }
+        }
+
+        private static void EnableTracing()
+        {
+            Environment.SetEnvironmentVariable("GRPC_TRACE", "tcp,channel,http,secure_endpoint");
+            Environment.SetEnvironmentVariable("GRPC_VERBOSITY", "DEBUG");
+            GrpcEnvironment.SetLogger(new ConsoleLogger());
         }
 
         private static void InstallSerializerAndDeserializer(IPlugin plugin, IList<IRpcClient> clients)

@@ -193,6 +193,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
                 connections[i].Closed += e =>
                 {
                     connectionsSuccessFlag[index] = ConnectionState.Fail;
+                    Log.Error($"connection closed for {e.Message}");
                     return Task.CompletedTask;
                 };
             }
