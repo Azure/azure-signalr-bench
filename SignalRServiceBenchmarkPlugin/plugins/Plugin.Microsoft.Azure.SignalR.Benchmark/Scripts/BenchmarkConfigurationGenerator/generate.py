@@ -76,7 +76,7 @@ for max failed sending percentage')
     parser.add_argument('-gm', '--group_config_mode', choices=[arg_type.group_config_mode_group,
                                                                arg_type.group_config_mode_connection],
                         default=arg_type.group_config_mode_connection, help='Group configuration mode')
-
+    parser.add_argument('-asp', '--asp_net_mode', type=int, default=0, help='If you want to generate config for AspNet, please set it to 1')
     # args
     args = parser.parse_args()
 
@@ -115,15 +115,15 @@ def main():
     sending_config = SendingConfig(args.duration, args.interval, args.message_size)
 
     if args.scenario == "echo":
-        Echo(sending_config, scenario_config, connection_config, statistics_config, constant_config).generate_config()
+        Echo(sending_config, scenario_config, connection_config, statistics_config, constant_config, args.asp_net_mode).generate_config()
     elif args.scenario == "broadcast":
-        Broadcast(sending_config, scenario_config, connection_config, statistics_config, constant_config)\
+        Broadcast(sending_config, scenario_config, connection_config, statistics_config, constant_config, args.asp_net_mode)\
             .generate_config()
     elif args.scenario == 'sendToClient':
-        SendToClient(sending_config, scenario_config, connection_config, statistics_config, constant_config)\
+        SendToClient(sending_config, scenario_config, connection_config, statistics_config, constant_config, args.asp_net_mode)\
             .generate_config()
     elif args.scenario == 'sendToGroup':
-        SendToGroup(sending_config, scenario_config, connection_config, statistics_config, constant_config) \
+        SendToGroup(sending_config, scenario_config, connection_config, statistics_config, constant_config, args.asp_net_mode) \
             .generate_config()
     elif args.scenario == 'frequentJoinLeaveGroup':
         FrequentJoinLeaveGroup(sending_config, scenario_config, connection_config, statistics_config, constant_config) \

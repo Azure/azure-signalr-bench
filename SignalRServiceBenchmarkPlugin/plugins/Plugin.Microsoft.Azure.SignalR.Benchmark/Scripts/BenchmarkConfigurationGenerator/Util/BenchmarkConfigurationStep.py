@@ -111,9 +111,12 @@ def stop_collector(type_):
     return [dict(required(type_, "StopCollector"))]
 
 
-def create_connection(type_, connection_total, hub_url, protocol, transport_type):
+def create_connection(type_, connection_total, hub_url, protocol, transport_type, useAspNet=0):
+    createConnectionName="CreateConnection"
+    if useAspNet==1:
+       createConnectionName="CreateAspNetConnection"
     return [{
-        **required(type_, "CreateConnection"),
+        **required(type_, createConnectionName),
         **{
             Key['ConnectionTotal']: connection_total,
             Key['HubUrl']: hub_url,
