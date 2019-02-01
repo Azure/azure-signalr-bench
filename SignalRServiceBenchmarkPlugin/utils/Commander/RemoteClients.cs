@@ -46,17 +46,30 @@ namespace Commander
         }
 
         private Task Connect(BaseClient client) =>
-                Task.Run(() =>
+                Task.Run(async () =>
                 {
-                    try
+                    var i = 0;
+                    var maxTry = 5;
+                    while (i < maxTry)
                     {
-                        client.KeepAliveInterval = KeepAliveSpan; // avoid client drops
-                        client.Connect();
-                    }
-                    catch (Exception ex)
-                    {
-                        Log.Error($"Connect to {client.ConnectionInfo.Host} error: {ex}");
-                        throw;
+                        try
+                        {
+                            client.KeepAliveInterval = KeepAliveSpan; // avoid client drops
+                            client.Connect();
+                            break;
+                        }
+                        catch (Exception ex)
+                        {
+                            Log.Error($"Connect to {client.ConnectionInfo.Host} error: {ex}");
+                            if (i == maxTry)
+                                throw;
+                            else
+                            {
+                                Log.Information($"retry connect to the client");
+                                await Task.Delay(TimeSpan.FromSeconds(5));
+                            }
+                        }
+                        i++;
                     }
                 });
 
