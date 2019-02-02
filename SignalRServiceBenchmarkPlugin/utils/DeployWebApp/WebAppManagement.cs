@@ -164,13 +164,33 @@ namespace DeployWebApp
             PricingTier pricingTier,
             Microsoft.Azure.Management.AppService.Fluent.OperatingSystem os) package)
         {
-            return package.azure.AppServices.AppServicePlans
+            var i = 0;
+            var retryMax = 5;
+            Exception exp = null;
+            while (i < retryMax)
+            {
+                try
+                {
+                    return package.azure.AppServices.AppServicePlans
                                     .Define(package.name)
                                     .WithRegion(package.region)
                                     .WithExistingResourceGroup(package.groupName)
                                     .WithPricingTier(package.pricingTier)
                                     .WithOperatingSystem(package.os)
                                     .CreateAsync();
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine($"fail for {e.Message}");
+                    exp = e;
+                }
+                i++;
+            }
+            if (exp != null)
+            {
+                throw exp;
+            }
+            return Task.CompletedTask;
         }
 
         private bool FindPricingTier(string priceTierValue, out PricingTier result)
