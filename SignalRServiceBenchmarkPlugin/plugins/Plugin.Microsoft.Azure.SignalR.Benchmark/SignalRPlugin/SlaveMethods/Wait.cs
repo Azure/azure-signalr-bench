@@ -20,7 +20,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 // Get parameters
                 stepParameters.TryGetTypedValue(SignalRConstants.Duration, out long duration, Convert.ToInt64);
                 stepParameters.TryGetTypedValue(SignalRConstants.Type, out string type, Convert.ToString);
-                pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionSuccessFlag}.{type}", out List<SignalREnums.ConnectionState> connectionsSuccessFlag, (obj) => (List<SignalREnums.ConnectionState>)obj);
+                pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionSuccessFlag}.{type}",
+                    out List<SignalREnums.ConnectionState> connectionsSuccessFlag, (obj) => (List<SignalREnums.ConnectionState>)obj);
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.StatisticsStore}.{type}", out var statisticsCollector, obj => (StatisticsCollector)obj);
 
                 await Task.Delay(TimeSpan.FromMilliseconds(duration));

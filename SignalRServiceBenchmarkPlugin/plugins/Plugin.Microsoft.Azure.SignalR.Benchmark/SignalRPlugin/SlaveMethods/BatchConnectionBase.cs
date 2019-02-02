@@ -1,4 +1,5 @@
 ﻿using Common;
+using Serilog;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -48,6 +49,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                         SignalRUtils.StartConnect, concurrentConnection, batchWaitMilliSeconds));
                     break;
             }
+            Log.Information("After finishing start connection");
+            SignalRUtils.DumpConnectionStatus(connectionsSuccessFlag);
         }
     }
 }

@@ -182,6 +182,34 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             return connections.ToList();
         }
 
+        public static void DumpConnectionStatus(IList<SignalREnums.ConnectionState> connectionsSuccessFlag)
+        {
+            int success = 0;
+            int failed = 0;
+            int init = 0;
+            int reconnect = 0;
+            for (var i = 0; i < connectionsSuccessFlag.Count; i++)
+            {
+                if (connectionsSuccessFlag[i] == SignalREnums.ConnectionState.Success)
+                {
+                    success++;
+                }
+                if (connectionsSuccessFlag[i] == SignalREnums.ConnectionState.Fail)
+                {
+                    failed++;
+                }
+                if (connectionsSuccessFlag[i] == SignalREnums.ConnectionState.Init)
+                {
+                    init++;
+                }
+                if (connectionsSuccessFlag[i] == SignalREnums.ConnectionState.Reconnect)
+                {
+                    reconnect++;
+                }
+            }
+            Log.Information($"Connection status: success: {success}, failed: {failed}, init: {init}, reconnect: {reconnect}");
+        }
+
         public static void SetConnectionOnClose(
             IList<IHubConnectionAdapter> connections,
             IList<ConnectionState> connectionsSuccessFlag)

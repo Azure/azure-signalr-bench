@@ -327,7 +327,6 @@ namespace DeployWebApp
                                     os : Microsoft.Azure.Management.AppService.Fluent.OperatingSystem.Windows)).ToList();
 
             await BatchProcess(packages, CreateAppPlan, _argsOption.ConcurrentCountOfServicePlan);
-
             // create webapp
             var tasks = new List<Task>();
             for (var i = 0; i < _argsOption.WebappCount; i++)

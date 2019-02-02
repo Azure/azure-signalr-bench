@@ -37,7 +37,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.StatisticsStore}.{type}",
                     out StatisticsCollector statisticsCollector, obj => (StatisticsCollector)obj);
 
-                DumpConnectionStatus(connectionsSuccessFlag);
+                SignalRUtils.DumpConnectionStatus(connectionsSuccessFlag);
                 // Re-create broken connections
                 var newConnections = await RecreateBrokenConnections(
                     connections, connectionIndex,
@@ -63,7 +63,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 {
                     registerCallback(newConnections, statisticsCollector, SignalRConstants.RecordLatencyCallbackName);
                 }
-
+                Log.Information($"Finish {newConnections.Count} reconnections");
+                SignalRUtils.DumpConnectionStatus(connectionsSuccessFlag);
                 return null;
             }
             catch (Exception ex)
@@ -72,34 +73,6 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 Log.Error(message);
                 throw;
             }
-        }
-
-        private void DumpConnectionStatus(IList<SignalREnums.ConnectionState> connectionsSuccessFlag)
-        {
-            int success = 0;
-            int failed = 0;
-            int init = 0;
-            int reconnect = 0;
-            for (var i = 0; i < connectionsSuccessFlag.Count; i++)
-            {
-                if (connectionsSuccessFlag[i] == SignalREnums.ConnectionState.Success)
-                {
-                    success++;
-                }
-                if (connectionsSuccessFlag[i] == SignalREnums.ConnectionState.Fail)
-                {
-                    failed++;
-                }
-                if (connectionsSuccessFlag[i] == SignalREnums.ConnectionState.Init)
-                {
-                    init++;
-                }
-                if (connectionsSuccessFlag[i] == SignalREnums.ConnectionState.Reconnect)
-                {
-                    reconnect++;
-                }
-            }
-            Log.Information($"Connection status: success: {success}, failed: {failed}, init: {init}, reconnect: {reconnect}");
         }
 
         private async Task<IList<IHubConnectionAdapter>> RecreateBrokenConnections(

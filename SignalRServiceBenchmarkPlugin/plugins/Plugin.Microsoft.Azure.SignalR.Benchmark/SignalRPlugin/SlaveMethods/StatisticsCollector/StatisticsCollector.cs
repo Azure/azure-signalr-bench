@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Plugin.Microsoft.Azure.SignalR.Benchmark;
 
 namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods.Statistics
 {
@@ -143,6 +139,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods.Statistics
             _statistics.AddOrUpdate(SignalRConstants.StatisticsConnectionConnectFail, fail, (k, v) => fail);
             _statistics.AddOrUpdate(SignalRConstants.StatisticsConnectionReconnect, reconnect, (k, v) => reconnect);
             _statistics.AddOrUpdate(SignalRConstants.StatisticsConnectionInit, init, (k, v) => init);
+
         }
     }
 }
