@@ -47,8 +47,6 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
 
                 // Merge statistics
                 var merged = SignalRUtils.MergeStatistics(results, type, latencyMax, latencyStep);
-                Log.Information($"Counters {Environment.NewLine}{merged.GetContents()}");
-
                 // Display merged statistics
                 Log.Information(Environment.NewLine + $"Statistic type: {type}" + Environment.NewLine + merged.GetContents());
 

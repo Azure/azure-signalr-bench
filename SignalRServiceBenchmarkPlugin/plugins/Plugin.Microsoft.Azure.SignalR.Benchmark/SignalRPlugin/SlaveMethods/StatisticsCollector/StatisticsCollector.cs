@@ -11,6 +11,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods.Statistics
 
         private ConcurrentDictionary<string, long> _statistics = new ConcurrentDictionary<string, long>();
 
+        private object _lock = new object();
+
         public StatisticsCollector(long latencyStep, long latencyMax)
         {
             LatencyStep = latencyStep;
@@ -82,7 +84,10 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods.Statistics
 
         public IDictionary<string, object> GetData()
         {
-            return _statistics.ToDictionary(entry => entry.Key, entry => (object)entry.Value);
+            lock(_lock)
+            {
+                return _statistics.ToDictionary(entry => entry.Key, entry => (object)entry.Value);
+            }
         }
 
         public void IncreaseJoinGroupSuccess()
@@ -134,12 +139,14 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods.Statistics
                         break;
                 }
             }
-
-            _statistics.AddOrUpdate(SignalRConstants.StatisticsConnectionConnectSuccess, success, (k, v) => success);
-            _statistics.AddOrUpdate(SignalRConstants.StatisticsConnectionConnectFail, fail, (k, v) => fail);
-            _statistics.AddOrUpdate(SignalRConstants.StatisticsConnectionReconnect, reconnect, (k, v) => reconnect);
-            _statistics.AddOrUpdate(SignalRConstants.StatisticsConnectionInit, init, (k, v) => init);
-
+            lock (_lock)
+            {
+                // update them together to avoid unconsistency
+                _statistics.AddOrUpdate(SignalRConstants.StatisticsConnectionConnectSuccess, success, (k, v) => success);
+                _statistics.AddOrUpdate(SignalRConstants.StatisticsConnectionConnectFail, fail, (k, v) => fail);
+                _statistics.AddOrUpdate(SignalRConstants.StatisticsConnectionReconnect, reconnect, (k, v) => reconnect);
+                _statistics.AddOrUpdate(SignalRConstants.StatisticsConnectionInit, init, (k, v) => init);
+            }
         }
     }
 }
