@@ -293,6 +293,25 @@ function install_nettools() {
   kubectl exec --kubeconfig=${config_file} ${pod_name} apt-get install net-tools
 }
 
+function get_k8s_cpu_info() {
+  local i
+  local resName=$1
+  local output_dir=$2
+  g_config=""
+  g_result=""
+  find_target_by_iterate_all_k8slist $resName k8s_query
+  local config_file=$g_config
+  local result=$g_result
+  #echo "'$result'"
+  if [ "$config_file" != "" ] && [ "$result" != "" ]
+  then
+     for i in $result
+     do
+       kubectl exec $i --kubeconfig=$config_file -- bash -c "cat /proc/cpuinfo" >> $output_dir/${i}_cpuinfo.txt
+     done
+  fi
+}
+
 function start_top_tracking() {
   local i
   local resName=$1
@@ -671,6 +690,24 @@ function get_nginx_pod() {
   g_result=""
   find_target_by_iterate_all_k8slist $res get_nginx_pod_internal "$ns"
   echo "$g_result"
+}
+
+function get_nginx_cpu_info() {
+  local res=$1
+  local ns=$2
+  local output_dir=$3
+  g_config=""
+  g_result=""
+  find_target_by_iterate_all_k8slist $res get_nginx_pod_internal $ns
+  local config_file=$g_config
+  local result=$g_result
+  if [ "$config_file" != "" ] && [ "$result" != "" ]
+  then
+     for i in $result
+     do
+       kubectl exec $i --namespace=$ns --kubeconfig=$config_file -- bash -c "cat /proc/cpuinfo" >> $output_dir/${i}_cpuinfo.txt
+     done
+  fi
 }
 
 function track_nginx_top() {
