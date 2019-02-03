@@ -98,6 +98,7 @@ function createWebApp()
   local resGroup=$AspNetWebAppResGrp #"${appPrefix}"`date +%H%M%S`
   local appserverCount=$(get_reduced_appserverCount $unit)
 
+  disable_exit_immediately_when_fail
   cd $AspNetWebMgrWorkingDir
   dotnet run -- --servicePrincipal $ServicePrincipal \
               --location ${VMLocation} \
@@ -107,6 +108,7 @@ function createWebApp()
               --outputFile $serverUrlOutFile --resourceGroup $resGroup \
               --appServicePlanIdOutputFile $appPlanIdOutFile \
               --webAppIdOutputFile $webAppIdOutFile
+  enable_exit_immediately_when_fail
 }
 
 function collectWebAppMetrics()
@@ -253,7 +255,13 @@ function RunSendToGroup()
     appserverUrls=$(get_reduced_appserverUrl $unit)
   else
     createWebApp $unit $appPrefix "$connectionString" $serverUrlOut $appPlanOut $webAppOut
-    appserverUrls=`cat $serverUrlOut`
+    if [ -e $serverUrlOut ]
+    then
+      appserverUrls=`cat $serverUrlOut`
+    else
+      echo "!!Fail to create web app!!"
+      return
+    fi
     startSeconds=$SECONDS
   fi
 
@@ -299,8 +307,13 @@ function RunSendToClient()
     appserverUrls=$(get_reduced_appserverUrl $unit)
   else
     createWebApp $unit $appPrefix "$connectionString" $serverUrlOut $appPlanOut $webAppOut
-    appserverUrls=`cat $serverUrlOut`
-    startSeconds=$SECONDS
+    if [ -e $serverUrlOut ]
+    then
+      appserverUrls=`cat $serverUrlOut`
+    else
+      echo "!!Fail to create web app!!"
+      return
+    fi
   fi
 
   cd $PluginScriptWorkingDir
@@ -344,8 +357,13 @@ function RunCommonScenario()
     appserverUrls=$(get_reduced_appserverUrl $unit)   
   else
     createWebApp $unit $appPrefix "$connectionString" $serverUrlOut $appPlanOut $webAppOut
-    appserverUrls=`cat $serverUrlOut`
-    startSeconds=$SECONDS
+    if [ -e $serverUrlOut ]
+    then
+      appserverUrls=`cat $serverUrlOut`
+    else
+      echo "!!Fail to create web app!!"
+      return
+    fi
   fi
 
   cd $PluginScriptWorkingDir
