@@ -38,7 +38,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                     out StatisticsCollector statisticsCollector, obj => (StatisticsCollector)obj);
 
                 SignalRUtils.DumpConnectionStatus(connectionsSuccessFlag);
-                // Re-create broken connections
+                // Re-create broken connections in their original index position
                 var newConnections = await RecreateBrokenConnections(
                     connections, connectionIndex,
                     connectionsSuccessFlag, urls,
@@ -52,10 +52,12 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                     return null;
                 }
                 Log.Information($"Start {newConnections.Count} reconnections");
-                await BatchConnection(
+                // It must use original connections instead of 'newConnections' here
+                // because the 'connectionSuccessFlag' is for original connections
+                await BatchReconnect(
                     stepParameters,
                     pluginParameters,
-                    newConnections,
+                    connections,
                     concurrentConnection,
                     connectionsSuccessFlag);
                 // Re-setCallbacks
