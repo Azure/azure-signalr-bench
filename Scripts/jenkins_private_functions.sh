@@ -39,7 +39,9 @@ EOF
   export bench_name_list="$Scenario"
   export bench_codec_list="$MessageEncoding"
   export bench_type_list="${tag}_${Transport}"
+  disable_exit_immediately_when_fail
   sh gen_html.sh $connectionString
+  enable_exit_immediately_when_fail
 }
 
 function get_reduced_appserverCount()
