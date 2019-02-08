@@ -2,7 +2,7 @@
 
 . ./func_env.sh
 
-declare -A ScenarioHandlerDict=([frequentJoinLeaveGroup]="SendToGroup" ["sendToGroup"]="SendToGroup" ["sendToClient"]="SendToClient")
+declare -A ScenarioHandlerDict=(["frequentJoinLeaveGroup"]="SendToGroup" ["sendToGroup"]="SendToGroup" ["sendToClient"]="SendToClient")
 
 function clean_known_hosts()
 {
@@ -562,6 +562,26 @@ function run_on_scenario() {
      copy_log_from_k8s
      reboot_all_pods "$connectStr"
   fi
+  mark_error_if_failed "$origTag"
+}
+
+function mark_error_if_failed()
+{
+  local tag="$1"
+  local counterPath=`find ${env_statistic_folder} -iname "counters.txt"`
+  if [ "$counterPath" == "" ]
+  then
+     gMeetError="${gMeetError} $tag"
+  fi
+}
+
+function mark_job_as_failure_if_meet_error()
+{
+  if [ "$gMeetError" != "" ]
+  then
+     echo "!!!! Failed for ${gMeetError}, so mark this job as failure !!!!"
+     exit 1
+  fi
 }
 
 function run_benchmark() {
@@ -984,4 +1004,5 @@ else
 fi
 EOF
   daemonize -v -o /tmp/${clean_asrs_daemon}.out -e /tmp/${clean_asrs_daemon}.err -E BUILD_ID=dontKillcenter /usr/bin/nohup /bin/sh /tmp/clean_asrs.sh &
+  mark_job_as_failure_if_meet_error
 }
