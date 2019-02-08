@@ -300,7 +300,7 @@ function RunSendToClient()
   local serverUrlOut=$outputDir/${appPrefix}.txt
   local appPlanOut=$outputDir/${appPrefix}_appPlan.txt
   local webAppOut=$outputDir/${appPrefix}_webApp.txt
-  local startSeconds
+  local startSeconds=$SECONDS
   if [ "$AspNetSignalR" != "true" ]
   then
     cd $ScriptWorkingDir
@@ -314,6 +314,7 @@ function RunSendToClient()
       echo "!!Fail to create web app!!"
       return
     fi
+    startSeconds=$SECONDS
   fi
 
   cd $PluginScriptWorkingDir
@@ -350,7 +351,7 @@ function RunCommonScenario()
   local serverUrlOut=$outputDir/${appPrefix}.txt
   local appPlanOut=$outputDir/${appPrefix}_appPlan.txt
   local webAppOut=$outputDir/${appPrefix}_webApp.txt
-  local startSeconds
+  local startSeconds=$SECONDS
   if [ "$AspNetSignalR" != "true" ]
   then
     cd $ScriptWorkingDir
@@ -364,6 +365,7 @@ function RunCommonScenario()
       echo "!!Fail to create web app!!"
       return
     fi
+    startSeconds=$SECONDS
   fi
 
   cd $PluginScriptWorkingDir
