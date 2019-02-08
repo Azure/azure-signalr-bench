@@ -221,7 +221,15 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
                 connections[i].Closed += e =>
                 {
                     connectionsSuccessFlag[index] = ConnectionState.Fail;
-                    Log.Error($"connection closed for {e.Message}");
+                    // AspNet SignalR does not pass exception object
+                    if (e != null)
+                    {
+                        Log.Error($"connection closed for {e.Message}");
+                    }
+                    else
+                    {
+                        Log.Error("connection closed");
+                    }
                     return Task.CompletedTask;
                 };
             }
