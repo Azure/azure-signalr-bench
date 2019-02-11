@@ -23,9 +23,11 @@ namespace Commander
         private readonly string _appserverLogDirPath;
         private readonly bool _notStartAppServer;
         private readonly bool _notStopAppServer;
+        private readonly IList<string> _appServerHostNameList;
         // Slave Information
         private readonly int _rpcPort;
         private readonly IList<string> _slaveList;
+        private readonly IList<string> _slaveHostNameList;
 
         // Local project path
         private readonly string _appserverProject;
@@ -43,6 +45,9 @@ namespace Commander
         // Remote benchmark configuration
         private readonly string _benchmarkConfigurationTargetPath;
 
+        private readonly string _username;
+        private readonly string _password;
+        private readonly string _masterHostName;
         // Scp/Ssh clients
         private RemoteClients _remoteClients;
         private volatile int _startedAppServer;
@@ -65,16 +70,19 @@ namespace Commander
             _rpcPort = argOption.RpcPort;
             _appserverPort = argOption.AppserverPort;
             _azureSignalRConnectionString = argOption.AzureSignalRConnectionString;
+            _username = argOption.Username;
+            _password = argOption.Password;
             var appServerCount = argOption.AppServerHostnames.Count();
             var appServerCountInUse = argOption.AppServerCountInUse;
-            var appServers = argOption.AppServerHostnames?.Take(
+            _appServerHostNameList = argOption.AppServerHostnames?.Take(
                 appServerCountInUse < appServerCount ?
                 appServerCountInUse: appServerCount).ToList();
             // Create clients
-            var slaveHostnames = (from slave in argOption.SlaveList select slave.Split(':')[0]).ToList();
+            _masterHostName = argOption.MasterHostname;
+            _slaveHostNameList = (from slave in argOption.SlaveList select slave.Split(':')[0]).ToList();
             _remoteClients = new RemoteClients();
-            _remoteClients.CreateAll(argOption.Username, argOption.Password, 
-                appServers, argOption.MasterHostname, slaveHostnames);
+            _remoteClients.CreateAll(argOption.Username, argOption.Password,
+                _appServerHostNameList, _masterHostName, _slaveHostNameList);
         }
 
         public void Start()
@@ -88,7 +96,7 @@ namespace Commander
                 var (appserverExecutable, masterExecutable, slaveExecutable) = PubishExcutables();
 
                 // Copy executables and configurations
-                CopyExcutables(appserverExecutable, masterExecutable, slaveExecutable);
+                CopyExecutables(appserverExecutable, masterExecutable, slaveExecutable);
 
                 // Unzip packages
                 UnzipExecutables();
@@ -128,7 +136,7 @@ namespace Commander
                     new FileInfo($"{_slaveProject}/{_baseName}.zip");
 
                 // Copy executables and configurations
-                CopyExcutables(appserverExecutable, masterExecutable, slaveExecutable);
+                CopyExecutables(appserverExecutable, masterExecutable, slaveExecutable);
 
                 // Unzip packages
                 UnzipExecutables();
@@ -350,7 +358,9 @@ fi
                          {
                              try
                              {
-                                 client.Upload(startAppServerScript, remoteScriptPath);
+                                 //client.Upload(startAppServerScript, remoteScriptPath);
+                                 var clientHost = client.ConnectionInfo.Host;
+                                 RetriableUploadFile(clientHost, startAppServerScript.FullName, remoteScriptPath);
                                  Log.Information($"Successfully upload {startAppServerScript} to {client.ConnectionInfo.Host}/{remoteScriptPath}");
                              }
                              catch (Exception e)
@@ -487,10 +497,8 @@ fi
             _remoteClients.SlaveSshClients.ToList().ForEach(client => killDotnet(client));
         }
 
-        private void CopyExcutables(FileInfo appserverExecutable, FileInfo masterExecutable, FileInfo slaveExecutable)
+        private void CreateDirIfNotExist(FileInfo appserverExecutable, FileInfo masterExecutable, FileInfo slaveExecutable)
         {
-            Log.Information($"Copy executables to hosts...");
-
             string GetDir(string path) => Path.GetDirectoryName(path).Replace('\\', '/');
 
             // Make sure the remote path is available
@@ -503,14 +511,62 @@ fi
                                           "mkdir -p " +
                                           GetDir(_appserverTargetPath)).Execute()));
             }
-            
+
             makeDirTasks.AddRange(from client in _remoteClients.SlaveSshClients
                                   select Task.Run(() => client.CreateCommand(
                                       "mkdir -p " +
                                       GetDir(_slaveTargetPath)).Execute()));
 
             Task.WhenAll(makeDirTasks).Wait();
+        }
 
+        private void RetriableUploadFile(string host, string srcPath, string dstPath)
+        {
+            int code, retry = 5;
+            string error;
+            for (var i = 0; i < retry; i++)
+            {
+                (code, error) = UploadFileToRemote(host, _username, _password, srcPath, dstPath);
+                if (code == 0)
+                {
+                    break;
+                }
+                else
+                {
+                    Log.Error($"will retry to upload file from {srcPath} to {dstPath} for {error}");
+                }
+            }
+        }
+
+        private void CopyExecutables(FileInfo appserverExecutable, FileInfo masterExecutable, FileInfo slaveExecutable)
+        {
+            Log.Information($"Copy executables to hosts...");
+
+            CreateDirIfNotExist(appserverExecutable, masterExecutable, slaveExecutable);
+            if (!_notStartAppServer)
+            {
+                foreach (var appserver in _appServerHostNameList)
+                {
+                    var srcFile = appserverExecutable.FullName;
+                    var dstFile = _appserverTargetPath;
+                    RetriableUploadFile(appserver, srcFile, dstFile);
+                }
+            }
+
+            RetriableUploadFile(_masterHostName, masterExecutable.FullName, _masterTargetPath);
+            foreach (var slaveHost in _slaveHostNameList)
+            {
+                var srcFile = slaveExecutable.FullName;
+                var dstFile = _slaveTargetPath;
+                RetriableUploadFile(slaveHost, srcFile, dstFile);
+            }
+        }
+
+        private void CopyExecutables2(FileInfo appserverExecutable, FileInfo masterExecutable, FileInfo slaveExecutable)
+        {
+            Log.Information($"Copy executables to hosts...");
+
+            CreateDirIfNotExist(appserverExecutable, masterExecutable, slaveExecutable);
             // Copy executables
             var copyTasks = new List<Task>();
             if (!_notStartAppServer)
@@ -525,6 +581,16 @@ fi
             copyTasks.AddRange(from client in _remoteClients.SlaveScpClients
                                 select Task.Run(() => client.Upload(slaveExecutable, _slaveTargetPath)));
             Task.WhenAll(copyTasks).Wait();
+        }
+
+        private (int, string) UploadFileToRemote(string host, string username, string password, string srcFile, string destFile)
+        {
+            int errCode = 0;
+            string result = "";
+            string cmd = $"sshpass -p {password} scp -o StrictHostKeyChecking=no  -o LogLevel=ERROR {srcFile} {username}@{host}:{destFile}";
+            Log.Information($"CMD: {cmd}");
+            (errCode, result) = BashUtils.Bash(cmd, wait: true, handleRes: true);
+            return (errCode, result);
         }
 
         private (FileInfo appserverExecutable, FileInfo masterExecutable, FileInfo slaveExecutable) PubishExcutables()
