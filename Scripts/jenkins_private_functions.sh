@@ -2,7 +2,7 @@
 
 . ./func_env.sh
 
-declare -A ScenarioHandlerDict=([frequentJoinLeaveGroup]="SendToGroup" ["sendToGroup"]="SendToGroup" ["sendToClient"]="SendToClient")
+declare -A ScenarioHandlerDict=(["frequentJoinLeaveGroup"]="SendToGroup" ["sendToGroup"]="SendToGroup" ["sendToClient"]="SendToClient")
 
 function clean_known_hosts()
 {
@@ -300,7 +300,7 @@ function RunSendToClient()
   local serverUrlOut=$outputDir/${appPrefix}.txt
   local appPlanOut=$outputDir/${appPrefix}_appPlan.txt
   local webAppOut=$outputDir/${appPrefix}_webApp.txt
-  local startSeconds
+  local startSeconds=$SECONDS
   if [ "$AspNetSignalR" != "true" ]
   then
     cd $ScriptWorkingDir
@@ -314,6 +314,7 @@ function RunSendToClient()
       echo "!!Fail to create web app!!"
       return
     fi
+    startSeconds=$SECONDS
   fi
 
   cd $PluginScriptWorkingDir
@@ -350,7 +351,7 @@ function RunCommonScenario()
   local serverUrlOut=$outputDir/${appPrefix}.txt
   local appPlanOut=$outputDir/${appPrefix}_appPlan.txt
   local webAppOut=$outputDir/${appPrefix}_webApp.txt
-  local startSeconds
+  local startSeconds=$SECONDS
   if [ "$AspNetSignalR" != "true" ]
   then
     cd $ScriptWorkingDir
@@ -364,6 +365,7 @@ function RunCommonScenario()
       echo "!!Fail to create web app!!"
       return
     fi
+    startSeconds=$SECONDS
   fi
 
   cd $PluginScriptWorkingDir
@@ -559,6 +561,26 @@ function run_on_scenario() {
      stop_collect_top_for_signalr_and_nginx
      copy_log_from_k8s
      reboot_all_pods "$connectStr"
+  fi
+  mark_error_if_failed "$origTag"
+}
+
+function mark_error_if_failed()
+{
+  local tag="$1"
+  local counterPath=`find ${env_statistic_folder} -iname "counters.txt"`
+  if [ "$counterPath" == "" ]
+  then
+     gMeetError="${gMeetError} $tag"
+  fi
+}
+
+function mark_job_as_failure_if_meet_error()
+{
+  if [ "$gMeetError" != "" ]
+  then
+     echo "!!!! Failed for ${gMeetError}, so mark this job as failure !!!!"
+     exit 1
   fi
 }
 
@@ -982,4 +1004,5 @@ else
 fi
 EOF
   daemonize -v -o /tmp/${clean_asrs_daemon}.out -e /tmp/${clean_asrs_daemon}.err -E BUILD_ID=dontKillcenter /usr/bin/nohup /bin/sh /tmp/clean_asrs.sh &
+  mark_job_as_failure_if_meet_error
 }
