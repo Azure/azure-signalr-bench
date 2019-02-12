@@ -554,6 +554,7 @@ fi
             }
 
             RetriableUploadFile(_masterHostName, masterExecutable.FullName, _masterTargetPath);
+            RetriableUploadFile(_masterHostName, _benchmarkConfiguration.FullName, _benchmarkConfigurationTargetPath);
             foreach (var slaveHost in _slaveHostNameList)
             {
                 var srcFile = slaveExecutable.FullName;
