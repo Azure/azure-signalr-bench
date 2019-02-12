@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Serilog;
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
@@ -50,6 +51,16 @@ namespace Commander
                 }
             }
 
+            return (errCode, result);
+        }
+
+        public static (int, string) UploadFileToRemote(string host, string username, string password, string srcFile, string destFile)
+        {
+            int errCode = 0;
+            string result = "";
+            string cmd = $"sshpass -p {password} scp -o StrictHostKeyChecking=no  -o LogLevel=ERROR {srcFile} {username}@{host}:{destFile}";
+            Log.Information($"CMD: {cmd}");
+            (errCode, result) = BashUtils.Bash(cmd, wait: true, handleRes: true);
             return (errCode, result);
         }
     }

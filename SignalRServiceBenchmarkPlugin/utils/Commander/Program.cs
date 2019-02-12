@@ -23,7 +23,8 @@ namespace Commander
             var automationTool = new AutomationTool(argsOption);
             if (argsOption.UserMode)
             {
-                automationTool.Start();
+                Log.Information("Does not support yet!");
+                //automationTool.Start();
             }
             else
             {
