@@ -1,11 +1,7 @@
-﻿using Common;
-using Microsoft.AspNetCore.SignalR.Client;
-using Plugin.Base;
-using Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods.Statistics;
+﻿using Plugin.Base;
 using Serilog;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 using static Plugin.Microsoft.Azure.SignalR.Benchmark.SignalREnums;
 
