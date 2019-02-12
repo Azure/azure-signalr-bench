@@ -99,6 +99,29 @@ function create_signalr_service_with_specific_acs_and_redis()
   echo "$signalrHostName"
 }
 
+function create_signalr_service_with_specific_ingress_vmss()
+{
+  local rsg=$1
+  local name=$2
+  local sku=$3
+  local unitCount=$4
+  local acsRowKey=$5
+  local vmSet=$6
+  local signalrHostName
+  # add extension
+  #add_signalr_extension
+
+  signalrHostName=$(az signalr create \
+     --name $name                     \
+     --resource-group $rsg            \
+     --sku $sku                       \
+     --unit-count $unitCount          \
+     --query hostName                 \
+     --tags SIGNALR_INGRESS_VM_SET=$vmSet SIGNALR_ACS_ROW_KEY=$acsRowKey \
+     -o tsv)
+  echo "$signalrHostName"
+}
+
 function create_signalr_service_with_specific_acs_vmset_redis()
 {
   local rsg=$1
@@ -191,8 +214,9 @@ function query_connection_string()
      return
   fi
   #local signalrHostName=${signarl_service_name}.servicedev.signalr.net
-  local accessKey=`az signalr key list --name $signarl_service_name --resource-group $rsg --query primaryKey -o tsv`
-  echo "Endpoint=https://${signalrHostName};AccessKey=${accessKey};Version=1.0"
+  local connectionString=`az signalr key list --name $signarl_service_name --resource-group $rsg --query primaryConnectionString -o tsv`
+  echo "$connectionString"
+  #echo "Endpoint=https://${signalrHostName};AccessKey=${accessKey};Version=1.0"
 }
 
 function delete_signalr_service()
