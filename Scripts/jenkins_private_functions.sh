@@ -843,10 +843,13 @@ function run_command() {
   local remoteCmd="remove_counters.sh"
   cat << EOF > $remoteCmd
 #!/bin/bash
-cd /home/${user}/master
-if [ -e counters.txt ]
+if [ -d /home/${user}/master ]
 then
-  rm counters.txt
+  cd /home/${user}/master
+  if [ -e counters.txt ]
+  then
+    rm counters.txt
+  fi
 fi
 EOF
   sshpass -p ${passwd} scp -o StrictHostKeyChecking=no -o LogLevel=ERROR $remoteCmd ${user}@${master}:/home/${user}/
