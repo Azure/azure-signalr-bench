@@ -105,7 +105,8 @@ function create_signalr_service_with_specific_ingress_vmss()
   local name=$2
   local sku=$3
   local unitCount=$4
-  local vmSet=$5
+  local acsRowKey=$5
+  local vmSet=$6
   local signalrHostName
   # add extension
   #add_signalr_extension
@@ -116,7 +117,7 @@ function create_signalr_service_with_specific_ingress_vmss()
      --sku $sku                       \
      --unit-count $unitCount          \
      --query hostName                 \
-     --tags SIGNALR_INGRESS_VM_SET=$vmSet \
+     --tags SIGNALR_INGRESS_VM_SET=$vmSet SIGNALR_ACS_ROW_KEY=$acsRowKey \
      -o tsv)
   echo "$signalrHostName"
 }

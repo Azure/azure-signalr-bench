@@ -909,9 +909,9 @@ function create_asrs()
 . ./kubectl_utils.sh
 
   local signalr_service
-  if [ "$separatedIngressVMSS" != "" ]
+  if [ "$separatedIngressVMSS" != "" ] && [ "$separatedAcs" != "" ]
   then
-      signalr_service=$(create_signalr_service_with_specific_ingress_vmss $rsg $name $sku $unit $separatedIngressVMSS)
+      signalr_service=$(create_signalr_service_with_specific_ingress_vmss $rsg $name $sku $unit $separatedAcs $separatedIngressVMSS)
   else
    if [ "$separatedRedis" != "" ] && [ "$separatedAcs" != "" ] && [ "$separatedIngressVMSS" != "" ]
    then
