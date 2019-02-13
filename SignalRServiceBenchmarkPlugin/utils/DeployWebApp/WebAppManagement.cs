@@ -195,6 +195,48 @@ namespace DeployWebApp
             }
         }
 
+        private static async Task CreateWebApp(
+            (IAzure azure,
+            string name,
+            IAppServicePlan appServicePlan,
+            IResourceGroup resourceGroup,
+            string connectionString,
+            string githubRepo) package)
+        {
+            var i = 0;
+            var retryMax = 5;
+            Exception exp = null;
+            while (i < retryMax)
+            {
+                try
+                {
+                    await package.azure.WebApps.Define(package.name)
+                         .WithExistingWindowsPlan(package.appServicePlan)
+                         .WithExistingResourceGroup(package.resourceGroup)
+                         .WithWebAppAlwaysOn(true)
+                         .DefineSourceControl()
+                         .WithPublicGitRepository(package.githubRepo)
+                         .WithBranch("master")
+                         .Attach()
+                         .WithConnectionString("Azure:SignalR:ConnectionString", package.connectionString,
+                         Microsoft.Azure.Management.AppService.Fluent.Models.ConnectionStringType.Custom)
+                         .CreateAsync();
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine($"fail to create webapp for {e.Message}");
+                    exp = e;
+                    var webapp = package.azure.WebApps.GetByResourceGroup(package.resourceGroup.Name, package.name);
+                    await package.azure.WebApps.DeleteByIdAsync(webapp.Id);
+                }
+                i++;
+            }
+            if (exp != null)
+            {
+                throw exp;
+            }
+        }
+
         private bool FindPricingTier(string priceTierValue, out PricingTier result)
         {
             var found = _priceTierMapper.TryGetValue(priceTierValue, out PricingTier v);
@@ -330,6 +372,16 @@ namespace DeployWebApp
 
             await BatchProcess(packages, CreateAppPlan, _argsOption.ConcurrentCountOfServicePlan);
             // create webapp
+            var packages2 = (from i in Enumerable.Range(0, _argsOption.WebappCount)
+                             select (azure: _azure,
+                                     name: webappNameList[i],
+                                     appServer: _azure.AppServices.AppServicePlans
+                                                 .GetByResourceGroup(_argsOption.GroupName, webappNameList[i]),
+                                     resourceGroup: resourceGroup,
+                                     connectionString: _argsOption.ConnectionString,
+                                     gitHubRepo : _argsOption.GitHubRepo)).ToList();
+            await BatchProcess(packages2, CreateWebApp, _argsOption.ConcurrentCountOfWebApp);
+            /*
             var tasks = new List<Task>();
             for (var i = 0; i < _argsOption.WebappCount; i++)
             {
@@ -350,6 +402,8 @@ namespace DeployWebApp
                 tasks.Add(t);
             }
             await Task.WhenAll(tasks);
+            */
+
             sw.Stop();
             Console.WriteLine($"it takes {sw.ElapsedMilliseconds} ms");
             // output app service plan Id

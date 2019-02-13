@@ -25,9 +25,9 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         private static readonly char[] PropertySeparator = { ';' };
         private static readonly char[] KeyValueSeparator = { '=' };
 
-        public int? Port { get; set; }
+        protected int? Port { get; set; }
 
-        public static (string endpoint, string accessKey, string version, int? port) Parse(string connectionString)
+        protected static (string endpoint, string accessKey, string version, int? port) Parse(string connectionString)
         {
             var properties = connectionString.Split(PropertySeparator, StringSplitOptions.RemoveEmptyEntries);
             if (properties.Length < 2)

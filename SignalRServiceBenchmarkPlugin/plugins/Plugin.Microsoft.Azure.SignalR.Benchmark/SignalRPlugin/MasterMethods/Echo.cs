@@ -1,13 +1,11 @@
-﻿using Microsoft.AspNetCore.SignalR.Client;
+﻿using Common;
 using Plugin.Base;
 using Rpc.Service;
-using System.Linq;
 using Serilog;
 using System;
 using System.Collections.Generic;
-using System.Text;
+using System.Linq;
 using System.Threading.Tasks;
-using Common;
 
 namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
 {

@@ -4,8 +4,11 @@ namespace DeployWebApp
 {
     public class ArgsOption
     {
-        [Option("concurrentCountOfServicePlan", Required = false, Default = 1, HelpText = "Azure client ID")]
+        [Option("concurrentCountOfServicePlan", Required = false, Default = 1, HelpText = "Concurrent count of creating service plan")]
         public int ConcurrentCountOfServicePlan { get; set; }
+
+        [Option("concurrentCountOfWebApp", Required = false, Default = 5, HelpText = "Concurrent count of creating webapp")]
+        public int ConcurrentCountOfWebApp { get; set; }
 
         [Option("clientId", Required = false, HelpText = "Azure client ID")]
         public string ClientId { get; set; }

@@ -369,5 +369,10 @@ namespace Common
             }
             return Task.CompletedTask;
         }
+
+        public static string GenerateServerName()
+        {
+            return $"{Environment.MachineName}_{Guid.NewGuid():N}";
+        }
     }
 }
