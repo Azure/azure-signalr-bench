@@ -846,9 +846,10 @@ function run_command() {
 if [ -d /home/${user}/master ]
 then
   cd /home/${user}/master
-  if [ -e counters.txt ]
+  a=\`find . -iname counters.txt\`
+  if [ "\$a" != "" ]
   then
-    rm counters.txt
+    rm \$a
   fi
 fi
 EOF
