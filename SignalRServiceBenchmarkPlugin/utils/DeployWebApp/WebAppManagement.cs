@@ -156,7 +156,7 @@ namespace DeployWebApp
                                 }));
         }
 
-        public static Task CreateAppPlan(
+        public static async Task CreateAppPlan(
             (IAzure azure,
             string name,
             string region,
@@ -171,7 +171,7 @@ namespace DeployWebApp
             {
                 try
                 {
-                    return package.azure.AppServices.AppServicePlans
+                    await package.azure.AppServices.AppServicePlans
                                     .Define(package.name)
                                     .WithRegion(package.region)
                                     .WithExistingResourceGroup(package.groupName)
@@ -183,6 +183,9 @@ namespace DeployWebApp
                 {
                     Console.WriteLine($"fail for {e.Message}");
                     exp = e;
+                    var iAppPlan = package.azure.AppServices.AppServicePlans.GetByResourceGroup(
+                        package.groupName, package.name);
+                    await package.azure.AppServices.AppServicePlans.DeleteByIdAsync(iAppPlan.Id);
                 }
                 i++;
             }
@@ -190,7 +193,6 @@ namespace DeployWebApp
             {
                 throw exp;
             }
-            return Task.CompletedTask;
         }
 
         private bool FindPricingTier(string priceTierValue, out PricingTier result)

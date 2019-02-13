@@ -7,7 +7,7 @@ using static Plugin.Microsoft.Azure.SignalR.Benchmark.SignalREnums;
 
 namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
 {
-    public class CreateConnection : ISlaveMethod
+    public class CreateDirectConnection : ISlaveMethod
     {
         public Task<IDictionary<string, object>> Do(
             IDictionary<string, object> stepParameters,
@@ -17,7 +17,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
             {
                 Log.Information($"Create connections...");
 
-                return SignalRUtils.SlaveCreateConnection(stepParameters, pluginParameters, ClientType.AspNetCore);
+                return SignalRUtils.SlaveCreateConnection(stepParameters, pluginParameters, ClientType.DirectConnect);
             }
             catch (Exception ex)
             {

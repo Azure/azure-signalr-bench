@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Plugin.Microsoft.Azure.SignalR.Benchmark
 {
@@ -44,11 +42,13 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         public static readonly string ConnectionSuccessFlag = "information.ConnectionSuccess";
 
         // Plugin parameters
-        public static readonly string ConnectionStore = "Plugin.ConnectionStore";
-        public static readonly string ConnectionOffset = "Plugin.ConnectionOffset";
-        public static readonly string StatisticsStore = "Plugin.StatisticsStore";
+
         public static readonly string ConnectionIdStore = "Plugin.ConnectionId";
+        public static readonly string ConnectionOffset = "Plugin.ConnectionOffset";
+        public static readonly string ConnectionStore = "Plugin.ConnectionStore";
+        public static readonly string ConnectionType = "Plugin.ConnectionType";
         public static readonly string RegisteredCallbacks = "Plugin.Callback";
+        public static readonly string StatisticsStore = "Plugin.StatisticsStore";
 
         // Callback Name
         public static readonly string EchoCallbackName = "Echo";
@@ -103,5 +103,9 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
 
         // Default cancellation token timeout
         public static readonly TimeSpan DefaultCancellationToken = TimeSpan.FromSeconds(5);
+
+        public static readonly string DefaultRestHubName = "RestBenchHub";
+
+        public static readonly string DefaultClientUserIdPrefix = "cli";
     }
 }

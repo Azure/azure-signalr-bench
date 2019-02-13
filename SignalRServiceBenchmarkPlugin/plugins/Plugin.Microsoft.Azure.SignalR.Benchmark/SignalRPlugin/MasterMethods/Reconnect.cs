@@ -8,7 +8,10 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
 {
     public class Reconnect : ReconnectBase, IMasterMethod
     {
-        public Task Do(IDictionary<string, object> stepParameters, IDictionary<string, object> pluginParameters, IList<IRpcClient> clients)
+        public Task Do(
+            IDictionary<string, object> stepParameters,
+            IDictionary<string, object> pluginParameters,
+            IList<IRpcClient> clients)
         {
             Log.Information($"Reconnect connections...");
 

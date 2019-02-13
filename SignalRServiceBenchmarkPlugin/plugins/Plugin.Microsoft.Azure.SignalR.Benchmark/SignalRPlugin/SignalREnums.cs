@@ -23,7 +23,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         public enum ClientType
         {
             AspNetCore,
-            AspNet
+            AspNet,
+            DirectConnect
         }
 
         public enum BatchMode

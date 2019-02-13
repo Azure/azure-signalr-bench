@@ -10,7 +10,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
             IDictionary<string, object> stepParameters,
             IDictionary<string, object> pluginParameters)
         {
-            var ret = await RunReconnect(stepParameters, pluginParameters, SignalREnums.ClientType.AspNetCore);
+            var ret = await RunReconnect(stepParameters, pluginParameters);
             return ret;
         }
     }

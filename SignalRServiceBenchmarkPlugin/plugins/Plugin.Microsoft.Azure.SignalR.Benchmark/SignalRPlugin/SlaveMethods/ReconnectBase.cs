@@ -13,8 +13,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
     {
         protected async Task<IDictionary<string, object>> RunReconnect(
             IDictionary<string, object> stepParameters,
-            IDictionary<string, object> pluginParameters,
-            ClientType clientType)
+            IDictionary<string, object> pluginParameters)
         {
             try
             {
@@ -37,6 +36,16 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.StatisticsStore}.{type}",
                     out StatisticsCollector statisticsCollector, obj => (StatisticsCollector)obj);
 
+                var clientType = SignalREnums.ClientType.AspNetCore;
+                if (pluginParameters.TryGetValue($"{SignalRConstants.ConnectionType}.{type}", out _))
+                {
+                    pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionType}.{type}",
+                        out var connectionType, Convert.ToString);
+                    if (Enum.TryParse(connectionType, out SignalREnums.ClientType ct))
+                    {
+                        clientType = ct;
+                    }
+                }
                 SignalRUtils.DumpConnectionStatus(connectionsSuccessFlag);
                 // Re-create broken connections in their original index position
                 var newConnections = await RecreateBrokenConnections(
@@ -101,10 +110,12 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
 
             var globalConnIndex = (from pkg in packages select pkg.GlobalIndex).ToList();
             // Re-create connections
-            var newConnections =
-                clientType == ClientType.AspNetCore ?
-                SignalRUtils.CreateConnections(globalConnIndex, urls, transportTypeString, protocolString, closeTimeout) :
-                SignalRUtils.CreateAspNetConnections(globalConnIndex, urls, transportTypeString, protocolString, closeTimeout);
+            var newConnections = SignalRUtils.CreateClientConnection(
+                transportTypeString,
+                protocolString,
+                urls,
+                globalConnIndex,
+                clientType);
 
             // Setup connection drop handler
             SignalRUtils.SetConnectionOnClose(newConnections, connectionsSuccessFlag);

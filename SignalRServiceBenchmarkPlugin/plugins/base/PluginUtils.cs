@@ -19,15 +19,5 @@ namespace Plugin.Base
         {
             Log.Information($"Handle step...{Environment.NewLine}Configuration: {Environment.NewLine}{dict.GetContents()}");
         }
-
-        public static void HandleParseEnumResult(bool success, string key)
-        {
-            if (!success)
-            {
-                var message = $"Fail to parse enum '{key}'.";
-                Log.Error(message);
-                throw new Exception(message);
-            }
-        }
     }
 }
