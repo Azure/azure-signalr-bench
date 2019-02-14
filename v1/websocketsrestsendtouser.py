@@ -3,8 +3,8 @@ import settings
 
 websockets_connection={1:1000, 2:2000, 5:5000, 10:10000, 20:20000, 50:50000, 100:100000}
 websockets_concurrentConnection={1:200, 2:200, 5:200, 10:200, 20:200, 50:200, 100:200}
-websockets_baseStep={1:20, 2:20, 5:50, 10:50, 20:100, 50:500, 100:500}
-websockets_step={1:20, 2:20, 5:20, 10:20, 20:50, 50:100, 100:1000}
+websockets_baseStep={1:10, 2:10, 5:50, 10:50, 20:100, 50:500, 100:500}
+websockets_step={1:10, 2:10, 5:20, 10:20, 20:50, 50:100, 100:1000}
 if settings.gPerfType == settings.gConstMax:
   websockets_connection={1:1500, 2:3000, 5:7500, 10:15000, 20:30000, 50:75000, 100:150000}
 
