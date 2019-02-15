@@ -307,7 +307,7 @@ function get_k8s_cpu_info() {
   then
      for i in $result
      do
-       kubectl exec $i --kubeconfig=$config_file -- bash -c "cat /proc/cpuinfo" >> $output_dir/${i}_cpuinfo.txt
+       kubectl exec $i --kubeconfig=$config_file -- bash -c "cat /proc/cpuinfo" >> $output_dir/${i}_cpuinfo.txt 2>/dev/null
      done
   fi
 }
@@ -337,7 +337,7 @@ function start_top_tracking() {
      do
        local date_time=`date --iso-8601='seconds'`
        echo "${date_time} " >> $output_dir/${i}_top.txt
-       kubectl exec $i --kubeconfig=$config_file -- bash -c "top -b -n 1" >> $output_dir/${i}_top.txt
+       kubectl exec $i --kubeconfig=$config_file -- bash -c "top -b -n 1" >> $output_dir/${i}_top.txt 2>/dev/null
      done
      sleep 1
     done
@@ -729,7 +729,7 @@ function track_nginx_top() {
      do
        local date_time=`date --iso-8601='seconds'`
        echo "${date_time} " >> $output_dir/${i}_top.txt
-       kubectl exec $i --namespace=$ns --kubeconfig=$config_file -- bash -c "top -b -n 1" >> $output_dir/${i}_top.txt
+       kubectl exec $i --namespace=$ns --kubeconfig=$config_file -- bash -c "top -b -n 1" >> $output_dir/${i}_top.txt 2>/dev/null
      done
      sleep 1
     done
