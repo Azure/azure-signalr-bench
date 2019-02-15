@@ -1,13 +1,11 @@
-﻿using Microsoft.AspNetCore.SignalR.Client;
+﻿using Common;
 using Plugin.Base;
 using Rpc.Service;
-using System.Linq;
 using Serilog;
 using System;
 using System.Collections.Generic;
-using System.Text;
+using System.Linq;
 using System.Threading.Tasks;
-using Common;
 
 namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
 {
@@ -15,7 +13,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
     {
         public Task Do(IDictionary<string, object> stepParameters, IDictionary<string, object> pluginParameters, IList<IRpcClient> clients)
         {
-            Log.Information($"Send to client...");
+            Log.Information($"{GetType().Name}...");
 
             // Get parameters
             stepParameters.TryGetTypedValue(SignalRConstants.Type, out string type, Convert.ToString);
@@ -52,7 +50,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
 
             // Process on clients
             var task = Task.WhenAll(from package in packages select package.Client.QueryAsync(package.Data));
-            return Util.TimeoutCheckedTask(task, duration * 2, nameof(SendToClient));
+            return Util.TimeoutCheckedTask(task, duration * 2, GetType().Name);
         }
     }
 }

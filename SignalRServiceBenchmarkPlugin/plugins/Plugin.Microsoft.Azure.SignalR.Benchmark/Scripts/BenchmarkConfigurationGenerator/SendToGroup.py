@@ -4,8 +4,8 @@ from Util.Common import *
 import BaseScenario as ParentClass
 
 class SendToGroup(ParentClass.BaseScenario):
-    def __init__(self, sending_config, scenario_config, connection_config, statistics_config, constant_config, useAspNet=0):
-        super().__init__(sending_config, scenario_config, connection_config, statistics_config, constant_config, useAspNet)
+    def __init__(self, sending_config, scenario_config, connection_config, statistics_config, constant_config, connection_type):
+        super().__init__(sending_config, scenario_config, connection_config, statistics_config, constant_config, connection_type)
 
     def BuildSending(self):
         remainder_end_dx = self.scenario_config.step

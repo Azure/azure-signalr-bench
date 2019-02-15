@@ -45,14 +45,19 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         private static JwtSecurityTokenHandler JwtTokenHandler { get; } = new JwtSecurityTokenHandler();
         private readonly string _baseEndpoint;
         private readonly string _hubName;
-        private readonly string _commonPrefix;
+        private readonly string _urlCommonPrefix;
+        private readonly string _audienceCommonPrefix;
         private readonly string _accessKey;
 
         public RestApiProvider(string connectionString, string hubName)
         {
             _hubName = hubName;
             (_baseEndpoint, _accessKey, _, Port) = Parse(connectionString);
-            _commonPrefix = $"{_baseEndpoint}/api/v1/hubs/{_hubName}";
+            var postfix = $"/api/v1/hubs/{_hubName}";
+            _audienceCommonPrefix = $"{_baseEndpoint}{postfix}";
+            _urlCommonPrefix = Port.HasValue ?
+                $"{_baseEndpoint}:{Port}{postfix}" :
+                _audienceCommonPrefix;   
         }
 
         public string GetClientUrl()
@@ -60,6 +65,11 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             return Port.HasValue ?
                 $"{_baseEndpoint}:{Port}/client/?hub={_hubName}" :
                 $"{_baseEndpoint}/client/?hub={_hubName}";
+        }
+
+        public string GetClientAudience()
+        {
+            return $"{_baseEndpoint}/client/?hub={_hubName}";
         }
 
         public string GenerateAccessToken(string audience, string userId, TimeSpan? lifetime = null)
@@ -82,8 +92,9 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             object[] args,
             CancellationToken cancellationToken = default)
         {
-            var sendToUserEndpoint = $"{_commonPrefix}/users/{userId}";
-            var token = GenerateAccessToken(sendToUserEndpoint, userId);
+            var sendToUserEndpoint = $"{_urlCommonPrefix}/users/{userId}";
+            var sendToUserAudience = $"{_audienceCommonPrefix}/users/{userId}";
+            var token = GenerateAccessToken(sendToUserAudience, userId);
             var payload = new PayloadMessage
             {
                 Target = methodName,
@@ -98,8 +109,9 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             object[] args,
             CancellationToken cancellationToken = default)
         {
-            var broadcastEndpoint = _commonPrefix;
-            var token = GenerateAccessToken(broadcastEndpoint, Util.GenerateServerName());
+            var broadcastEndpoint = _urlCommonPrefix;
+            var broadcastAudience = _audienceCommonPrefix;
+            var token = GenerateAccessToken(broadcastAudience, Util.GenerateServerName());
             var payload = new PayloadMessage
             {
                 Target = methodName,

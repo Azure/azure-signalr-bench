@@ -8,6 +8,11 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
 {
     public class SendToGroup : SendToGroupBase, ISlaveMethod
     {
+        protected override IDictionary<string, object> GenPayload(IDictionary<string, object> data)
+        {
+            return GenGroupPayload(data);
+        }
+
         protected override Task SendMessages(IEnumerable<Package> packages)
         {
             return Task.WhenAll(from package in packages
@@ -20,11 +25,19 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                                 where Mode == SignalREnums.GroupConfigMode.Group
                                       && IsSending(indexInGroup, GroupInternalModulo, GroupInternalRemainderBegin, GroupInternalRemainderEnd)
                                       && IsSending(groupIndex, GroupCount, GroupLevelRemainderBegin, GroupLevelRemainderEnd)
-                                      || Mode == SignalREnums.GroupConfigMode.Connection 
-                                      && IsSending(index, Modulo, RemainderBegin, RemainderEnd) 
-                                select ContinuousSend(package.LocalIndex, data, SendGroup,
-                                     TimeSpan.FromMilliseconds(Duration), TimeSpan.FromMilliseconds(Interval),
-                                     TimeSpan.FromMilliseconds(1), TimeSpan.FromMilliseconds(Interval)));
+                                      || Mode == SignalREnums.GroupConfigMode.Connection
+                                      && IsSending(index, Modulo, RemainderBegin, RemainderEnd)
+                                select ContinuousSend((Connection: package.Connection,
+                                                       LocalIndex: package.LocalIndex,
+                                                       ConnectionsSuccessFlag: ConnectionsSuccessFlag,
+                                                       StatisticsCollector: StatisticsCollector,
+                                                       CallbackMethod: SignalRConstants.SendToGroupCallbackName),
+                                                       data,
+                                                       BaseSendAsync,
+                                                       TimeSpan.FromMilliseconds(Duration),
+                                                       TimeSpan.FromMilliseconds(Interval),
+                                                       TimeSpan.FromMilliseconds(1),
+                                                       TimeSpan.FromMilliseconds(Interval)));
         }
     }
 }
