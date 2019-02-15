@@ -1,12 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Common;
-using Microsoft.AspNetCore.SignalR.Client;
+﻿using Common;
 using Plugin.Base;
 using Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods.Statistics;
 using Serilog;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
 {
@@ -177,16 +176,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 if (ConnectionsSuccessFlag[localIndex] != SignalREnums.ConnectionState.Success) return;
 
                 // Extract data
-                data.TryGetTypedValue(SignalRConstants.GroupName, out string groupName, Convert.ToString);
-                data.TryGetValue(SignalRConstants.MessageBlob, out var messageBlob);
-
-                // Generate payload
-                var payload = new Dictionary<string, object>
-                {
-                    { SignalRConstants.MessageBlob, messageBlob },
-                    { SignalRConstants.Timestamp, Util.Timestamp() },
-                    { SignalRConstants.GroupName, groupName }
-                };
+                var payload = GenPayload(data);
 
                 // Send message
                 await Connections[localIndex].SendAsync(SignalRConstants.SendToGroupCallbackName, payload);
@@ -200,6 +190,21 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 var message = $"Error in send to group: {ex}";
                 Log.Error(message);
             }
+        }
+
+        protected IDictionary<string, object> GenGroupPayload(IDictionary<string, object> data)
+        {
+            data.TryGetTypedValue(SignalRConstants.GroupName, out string groupName, Convert.ToString);
+            data.TryGetValue(SignalRConstants.MessageBlob, out var messageBlob);
+
+            // Generate payload
+            var payload = new Dictionary<string, object>
+                {
+                    { SignalRConstants.MessageBlob, messageBlob },
+                    { SignalRConstants.Timestamp, Util.Timestamp() },
+                    { SignalRConstants.GroupName, groupName }
+                };
+            return payload;
         }
 
         protected virtual async Task JoinLeaveGroup(int localIndex, IDictionary<string, object> data)

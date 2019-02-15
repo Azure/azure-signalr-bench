@@ -46,6 +46,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         public static readonly string ConnectionIdStore = "Plugin.ConnectionId";
         public static readonly string ConnectionOffset = "Plugin.ConnectionOffset";
         public static readonly string ConnectionStore = "Plugin.ConnectionStore";
+        public static readonly string ConnectionString = "Plugin.ConnectionString";
         public static readonly string ConnectionType = "Plugin.ConnectionType";
         public static readonly string RegisteredCallbacks = "Plugin.Callback";
         public static readonly string StatisticsStore = "Plugin.StatisticsStore";
@@ -93,7 +94,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         public static readonly long MillisecondsToWait = 300000;
 
         // Default batch mode: "LimitRatePress"
-        public static readonly string DefaultBatchMode = SignalREnums.BatchMode.LimitRatePress.ToString();
+        public static readonly string DefaultBatchMode = SignalREnums.BatchMode.HighPress.ToString();
 
         // Default interval (milliseconds) for batch process
         public static readonly int BatchProcessDefaultWait = 1000;

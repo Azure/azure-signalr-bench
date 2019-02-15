@@ -57,9 +57,17 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
         {
             if (isSendGroupLevel && isSendGroupInternal)
             {
-                return ContinuousSend(localIndex, data, SendGroup,
-                                TimeSpan.FromMilliseconds(Duration), TimeSpan.FromMilliseconds(Interval),
-                                TimeSpan.FromMilliseconds(1), TimeSpan.FromMilliseconds(Interval));
+                return ContinuousSend((Connection: Connections[localIndex],
+                                       LocalIndex: localIndex,
+                                       ConnectionsSuccessFlag: ConnectionsSuccessFlag,
+                                       StatisticsCollector: StatisticsCollector,
+                                       CallbackMethod: SignalRConstants.SendToGroupCallbackName),
+                                       data,
+                                       BaseSendAsync,
+                                       TimeSpan.FromMilliseconds(Duration),
+                                       TimeSpan.FromMilliseconds(Interval),
+                                       TimeSpan.FromMilliseconds(1),
+                                       TimeSpan.FromMilliseconds(Interval));
             }
             else if (isSendGroupLevel && !isSendGroupInternal)
             {
@@ -68,6 +76,11 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                                 TimeSpan.FromMilliseconds(1), TimeSpan.FromMilliseconds(Interval));
             }
             return Task.CompletedTask;
+        }
+
+        protected override IDictionary<string, object> GenPayload(IDictionary<string, object> data)
+        {
+            return GenGroupPayload(data);
         }
     }
 }
