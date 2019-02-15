@@ -40,34 +40,28 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 // Generate necessary data
                 var messageBlob = SignalRUtils.GenerateRandomData(messageSize);
 
-                var packages = from i in Enumerable.Range(0, connections.Count)
-                               select new
-                               {
-                                   Index = i,
-                                   Connection = connections[i],
-                                   Data = new Dictionary<string, object>
-                                   {
-                                       { SignalRConstants.MessageBlob, messageBlob }, // message payload
-                                       { SignalRConstants.ConnectionId, connectionIds[i]}
-                                   }
-                               };
-
                 // Reset counters
                 UpdateStatistics(statisticsCollector, remainderEnd);
 
                 // Send messages
-                await Task.WhenAll(from package in packages
-                                   let i = package.Index
-                                   let connection = package.Connection
-                                   let data = package.Data
+                await Task.WhenAll(from i in Enumerable.Range(0, connections.Count)
+                                   let data = new Dictionary<string, object>
+                                   {
+                                       { SignalRConstants.MessageBlob, messageBlob }, // message payload
+                                       { SignalRConstants.ConnectionId, connectionIds[i]}
+                                   }
                                    where connectionIndex[i] % modulo >= remainderBegin && connectionIndex[i] % modulo < remainderEnd
                                    select ContinuousSend((Connection: connections[i],
-                                        LocalIndex: i,
-                                        ConnectionsSuccessFlag: connectionsSuccessFlag,
-                                        StatisticsCollector: statisticsCollector), data, SendClient,
-                                        TimeSpan.FromMilliseconds(duration), TimeSpan.FromMilliseconds(interval),
-                                        TimeSpan.FromMilliseconds(1), TimeSpan.FromMilliseconds(interval)));
-
+                                                          LocalIndex: i,
+                                                          ConnectionsSuccessFlag: connectionsSuccessFlag,
+                                                          StatisticsCollector: statisticsCollector,
+                                                          CallbackMethod: SignalRConstants.SendToClientCallbackName),
+                                                          data,
+                                                          BaseSendAsync,
+                                                          TimeSpan.FromMilliseconds(duration),
+                                                          TimeSpan.FromMilliseconds(interval),
+                                                          TimeSpan.FromMilliseconds(1),
+                                                          TimeSpan.FromMilliseconds(interval)));
                 return null;
             }
             catch (Exception ex)
@@ -78,38 +72,19 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
             }
         }
 
-        private async Task SendClient((IHubConnectionAdapter Connection, int LocalIndex,
-            List<SignalREnums.ConnectionState> ConnectionsSuccessFlag,
-            StatisticsCollector StatisticsCollector) package, IDictionary<string, object> data)
+        protected override IDictionary<string, object> GenPayload(IDictionary<string, object> data)
         {
-            // Is the connection is not active, then stop sending message
-            if (package.ConnectionsSuccessFlag[package.LocalIndex] != SignalREnums.ConnectionState.Success) return;
-            try
+            data.TryGetTypedValue(SignalRConstants.ConnectionId, out string targetId, Convert.ToString);
+            data.TryGetValue(SignalRConstants.MessageBlob, out var messageBlob);
+
+            // Generate payload
+            var payload = new Dictionary<string, object>
             {
-                // Extract data
-                data.TryGetTypedValue(SignalRConstants.ConnectionId, out string targetId, Convert.ToString);
-                data.TryGetValue(SignalRConstants.MessageBlob, out var messageBlob);
-
-                // Generate payload
-                var payload = new Dictionary<string, object>
-                {
-                    { SignalRConstants.MessageBlob, messageBlob },
-                    { SignalRConstants.Timestamp, Util.Timestamp() },
-                    { SignalRConstants.ConnectionId, targetId }
-                };
-
-                // Send message
-                await package.Connection.SendAsync(SignalRConstants.SendToClientCallbackName, payload);
-
-                // Update statistics
-                SignalRUtils.RecordSend(payload, package.StatisticsCollector);
-            }
-            catch (Exception ex)
-            {
-                package.ConnectionsSuccessFlag[package.LocalIndex] = SignalREnums.ConnectionState.Fail;
-                var message = $"Error in send to client: {ex}";
-                Log.Error(message);
-            }
+                { SignalRConstants.MessageBlob, messageBlob },
+                { SignalRConstants.Timestamp, Util.Timestamp() },
+                { SignalRConstants.ConnectionId, targetId }
+            };
+            return payload;
         }
     }
 }

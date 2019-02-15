@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
 {
-    public class Broadcast : SimpleScenarioBase, IMasterMethod
+    public class RestBroadcast : SimpleScenarioBase, IMasterMethod
     {
         public Task Do(
             IDictionary<string, object> stepParameters,

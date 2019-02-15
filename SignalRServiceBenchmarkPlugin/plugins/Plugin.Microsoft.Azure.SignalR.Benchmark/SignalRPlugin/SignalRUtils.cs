@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Http.Connections;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Plugin.Base;
 using Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods.Statistics;
 using Rpc.Service;
@@ -136,6 +137,11 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
                 new List<Action<IList<IHubConnectionAdapter>, StatisticsCollector, string>>();
             // record the client type for reconnect
             MarkConnectionType(stepParameters, pluginParameters, clientType);
+            if (clientType == ClientType.DirectConnect)
+            {
+                // record the connection string for REST API send
+                pluginParameters[$"{SignalRConstants.ConnectionString}.{type}"] = urls;
+            }
             return Task.FromResult<IDictionary<string, object>>(null);
         }
 
@@ -163,6 +169,11 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             }
         }
 
+        public static string GenClientUserIdFromConnectionIndex(int connectionIndex)
+        {
+            return $"{SignalRConstants.DefaultClientUserIdPrefix}{connectionIndex}";
+        }
+
         public static IList<IHubConnectionAdapter> CreateDirectConnections(
             IList<int> connectionIndex,
             string connectionString,
@@ -173,6 +184,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             var transportType = GetTransportType(transportTypeString);
             var restApi = new RestApiProvider(connectionString, SignalRConstants.DefaultRestHubName);
             var clientUrl = restApi.GetClientUrl();
+            var audience = restApi.GetClientAudience();
             var connections = from i in Enumerable.Range(0, connectionIndex.Count)
                               let cookies = new CookieContainer()
                               let handler = new HttpClientHandler
@@ -180,8 +192,14 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
                                   ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator,
                                   CookieContainer = cookies,
                               }
-                              let userId = $"{SignalRConstants.DefaultClientUserIdPrefix}{connectionIndex[i]}"
+                              let userId = GenClientUserIdFromConnectionIndex(connectionIndex[i])
                               select new HubConnectionBuilder()
+                              .ConfigureLogging(logger =>
+                              {
+                                  logger.ClearProviders();
+                                  logger.AddSerilog(dispose: true);
+                                  logger.SetMinimumLevel(LogLevel.Error);
+                              })
                               .WithUrl(clientUrl, httpConnectionOptions =>
                               {
                                   httpConnectionOptions.HttpMessageHandlerFactory = _ => handler;
@@ -190,7 +208,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
                                   httpConnectionOptions.Cookies = cookies;
                                   httpConnectionOptions.AccessTokenProvider = () =>
                                   {
-                                      return Task.FromResult(restApi.GenerateAccessToken(clientUrl, userId));
+                                      return Task.FromResult(restApi.GenerateAccessToken(audience, userId));
                                   };
                               }) into builder
                               let hubConnection = protocolString.ToLower() == "messagepack" ?
@@ -481,17 +499,6 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         {
             statisticsCollecter.ResetGroupCounters();
             statisticsCollecter.ResetMessageCounters();
-        }
-
-        public static void ChangeFlagConnectionFlag(List<ConnectionState> connectionStates)
-        {
-            for (var i = 0; i < connectionStates.Count; i++)
-            {
-                if (connectionStates[i] == ConnectionState.Reconnect)
-                {
-                    connectionStates[i] = ConnectionState.Success;
-                }
-            }
         }
     }
 }
