@@ -307,6 +307,7 @@ function get_k8s_cpu_info() {
   then
      for i in $result
      do
+       # TODO. specify the container for exec command
        kubectl exec $i --kubeconfig=$config_file -- bash -c "cat /proc/cpuinfo" >> $output_dir/${i}_cpuinfo.txt 2>/dev/null
      done
   fi
@@ -337,6 +338,7 @@ function start_top_tracking() {
      do
        local date_time=`date --iso-8601='seconds'`
        echo "${date_time} " >> $output_dir/${i}_top.txt
+       # TODO. specify the container for exec command
        kubectl exec $i --kubeconfig=$config_file -- bash -c "top -b -n 1" >> $output_dir/${i}_top.txt 2>/dev/null
      done
      sleep 1
@@ -372,6 +374,7 @@ function start_connection_tracking() {
      for i in $result
      do
        local date_time=`date --iso-8601='seconds'`
+       # TODO. specify the container for exec command
        local cli_ser_stat=`kubectl exec $i --kubeconfig=$config_file -- bash -c "curl http://localhost:5003/health/stat" 2> /dev/null`
        echo "${date_time} ${cli_ser_stat}" >> $output_dir/${i}_connections.txt
        #local cli_connection=`kubectl exec $i --kubeconfig=$config_file -- bash -c "netstat -an|grep 5001|grep EST|wc -l"`
@@ -729,6 +732,7 @@ function track_nginx_top() {
      do
        local date_time=`date --iso-8601='seconds'`
        echo "${date_time} " >> $output_dir/${i}_top.txt
+       # TODO. specify the container for exec command
        kubectl exec $i --namespace=$ns --kubeconfig=$config_file -- bash -c "top -b -n 1" >> $output_dir/${i}_top.txt 2>/dev/null
      done
      sleep 1
