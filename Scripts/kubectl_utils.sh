@@ -293,9 +293,6 @@ function install_nettools() {
   kubectl exec --kubeconfig=${config_file} ${pod_name} apt-get install net-tools
 }
 
-function get_nginx_container_from_pod() {
-}
-
 function get_k8s_cpu_info() {
   local i
   local resName=$1
