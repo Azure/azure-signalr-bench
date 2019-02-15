@@ -25,7 +25,12 @@ function run_command_core()
   local send=${12}
   local serverUrl=${13}
   local unit=${14}
-  run_command $user $passwd $connectionString $outputDir $config_path $unit
+  local notStartAppServer=0
+  if [[ "$Scenario" == "rest"* ]]
+  then
+    notStartAppServer=1
+  fi
+  run_command $user $passwd $connectionString $outputDir $config_path $unit $notStartAppServer
   cd $ScriptWorkingDir
   #### generate the connection configuration for HTML ####
 cat << EOF > configs/cmd_4_${MessageEncoding}_${Scenario}_${tag}_${Transport}
@@ -179,6 +184,7 @@ function GenBenchmarkConfig()
   local appserverUrls=$5
   local groupType=$6
   local configPath=$7
+  local connectionString="$8"
 
   local maxConnectionOption=""
   if [ "$useMaxConnection" == "true" ]
@@ -209,22 +215,25 @@ function GenBenchmarkConfig()
     groupTypeOp="-g $groupType"
   fi
   local settings=settings.yaml
+  local connectionTypeOption="-ct Core"
   if [ "$AspNetSignalR" == "true" ]
   then
      settings=aspnet_settings.yaml
+     connectionTypeOption="-ct AspNet"
+  else if [[ "$Scenario" == "rest"* ]]
+       # it is rest API scenario
+       then
+            connectionTypeOption="-ct CoreDirect"
+            appserverUrls="$connectionString"
+       fi
   fi
   python3 generate.py -u $unit -S $Scenario \
                       -t $Transport -p $MessageEncoding \
                       -U $appserverUrls -d $sigbench_run_duration \
                       $groupTypeOp -ms $ms -i $interval \
                       -c $configPath $maxConnectionOption \
-                      -s $settings \
+                      -s $settings $connectionTypeOption \
                       $toleratedConnDropCountOp $toleratedConnDropPercentageOp $toleratedMaxLatencyPercentageOp
-  if [ "$AspNetSignalR" == "true" ]
-  then
-    #TODO: Hard replacement
-    gen4AspNet $configPath
-  fi
   cat $configPath
 }
 
@@ -267,7 +276,7 @@ function RunSendToGroup()
 
   cd $PluginScriptWorkingDir
   local config_path=$outputDir/${tag}_${Scenario}_${Transport}_${MessageEncoding}.config
-  GenBenchmarkConfig $unit $Scenario $Transport $MessageEncoding $appserverUrls $groupType $config_path
+  GenBenchmarkConfig $unit $Scenario $Transport $MessageEncoding $appserverUrls $groupType $config_path "$connectionString"
   local connection=`python3 get_sending_connection.py -g $groupType -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q totalConnections $maxConnectionOption`
   local concurrentConnection=`python3 get_sending_connection.py -g $groupType -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q concurrentConnection $maxConnectionOption`
   local send=`python3 get_sending_connection.py -g $groupType -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q sendingSteps $maxConnectionOption`
@@ -319,7 +328,7 @@ function RunSendToClient()
 
   cd $PluginScriptWorkingDir
   local config_path=$outputDir/${tag}_${Scenario}_${Transport}_${MessageEncoding}.config
-  GenBenchmarkConfig $unit $Scenario $Transport $MessageEncoding $appserverUrls None $config_path
+  GenBenchmarkConfig $unit $Scenario $Transport $MessageEncoding $appserverUrls None $config_path "$connectionString"
   local connection=`python3 get_sending_connection.py -ms $msgSize -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q totalConnections $maxConnectionOption`
   local concurrentConnection=`python3 get_sending_connection.py -ms $msgSize -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q concurrentConnection $maxConnectionOption`
   local send=`python3 get_sending_connection.py -ms $msgSize -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q sendingSteps $maxConnectionOption`
@@ -370,7 +379,7 @@ function RunCommonScenario()
 
   cd $PluginScriptWorkingDir
   local config_path=$outputDir/${tag}_${Scenario}_${Transport}_${MessageEncoding}.config
-  GenBenchmarkConfig $unit $Scenario $Transport $MessageEncoding $appserverUrls None $config_path
+  GenBenchmarkConfig $unit $Scenario $Transport $MessageEncoding $appserverUrls None $config_path "$connectionString"
   local connection=`python3 get_sending_connection.py -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q totalConnections $maxConnectionOption`
   local concurrentConnection=`python3 get_sending_connection.py -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q concurrentConnection $maxConnectionOption`
   local send=`python3 get_sending_connection.py -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q sendingSteps $maxConnectionOption`
@@ -821,6 +830,7 @@ function run_command() {
   local outputDir="$4"
   local configPath=$5
   local unit=$6
+  local notStartAppServer=$7
 
   cd $ScriptWorkingDir
   local master=`python extract_ip.py -i $PrivateIps -q master`
@@ -878,7 +888,8 @@ EOF
          --BenchmarkConfiguration="$configPath" \
          --BenchmarkConfigurationTargetPath="/home/${user}/signalr.yaml" \
          --AzureSignalRConnectionString="$connectionString" \
-         --AppserverLogDirectory="${outputDir}" --AppServerCount=$appserverInUse $neverStopAppServerOp
+         --AppserverLogDirectory="${outputDir}" \
+         --AppServerCount=$appserverInUse --NotStartAppServer=$notStartAppServer $neverStopAppServerOp
   else
     dotnet run -- --RpcPort=5555 --SlaveList="$slaves" --MasterHostname="$master" \
                --Username=$user --Password=$passwd \
