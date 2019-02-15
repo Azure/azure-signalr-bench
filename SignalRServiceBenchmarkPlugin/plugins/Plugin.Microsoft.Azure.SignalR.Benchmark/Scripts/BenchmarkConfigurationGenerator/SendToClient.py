@@ -3,8 +3,8 @@ from Util import TemplateSetter, ConfigSaver, CommonStep
 import BaseScenario as ParentClass
 
 class SendToClient(ParentClass.BaseScenario):
-    def __init__(self, sending_config, scenario_config, connection_config, statistics_config, constant_config, useAspNet=0):
-        super().__init__(sending_config, scenario_config, connection_config, statistics_config, constant_config, useAspNet)
+    def __init__(self, sending_config, scenario_config, connection_config, statistics_config, constant_config, connection_type):
+        super().__init__(sending_config, scenario_config, connection_config, statistics_config, constant_config, connection_type)
 
     def BuildSending(self):
         remainder_begin = 0

@@ -2,7 +2,7 @@ from Util.BenchmarkConfigurationStep import *
 from Util import TemplateSetter, ConfigSaver, CommonStep
 import BaseScenario as ParentClass
 
-class Broadcast(ParentClass.BaseScenario):
+class RestBroadcast(ParentClass.BaseScenario):
     def __init__(self, sending_config, scenario_config, connection_config, statistics_config, constant_config, connection_type):
         super().__init__(sending_config, scenario_config, connection_config, statistics_config, constant_config, connection_type)
 
@@ -19,12 +19,12 @@ class Broadcast(ParentClass.BaseScenario):
 
             # conditional stop and reconnect
             if epoch > 0:
-                self.sending += CommonStep.conditional_stop_and_reconnect_steps(self.sending, self.scenario_config, self.constant_config,
-                                            self.connection_config)
+                self.sending += CommonStep.conditional_stop_and_reconnect_steps(self.sending, self.scenario_config, self.constant_config, self.connection_config)
 
             self.sending += [
-                broadcast(self.scenario_config.type, self.sending_config.duration, self.sending_config.interval, remainder_begin,
-                          remainder_end, self.scenario_config.connections, self.sending_config.message_size),
+                restBroadcast(self.scenario_config.type, self.sending_config.duration, self.sending_config.interval,
+                     remainder_begin, remainder_end, self.scenario_config.connections,
+                     self.sending_config.message_size),
                 wait(self.scenario_config.type, self.constant_config.wait_time)
             ]
 

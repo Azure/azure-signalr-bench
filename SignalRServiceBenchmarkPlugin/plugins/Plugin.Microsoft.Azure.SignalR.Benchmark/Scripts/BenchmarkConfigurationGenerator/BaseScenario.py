@@ -2,13 +2,13 @@ from Util.BenchmarkConfigurationStep import *
 from Util import TemplateSetter, ConfigSaver, CommonStep
 
 class BaseScenario:
-    def __init__(self, sending_config, scenario_config, connection_config, statistics_config, constant_config, useAspNet=0):
+    def __init__(self, sending_config, scenario_config, connection_config, statistics_config, constant_config, connection_type):
         self.sending_config = sending_config
         self.scenario_config = scenario_config
         self.statistics_config = statistics_config
         self.connection_config = connection_config
         self.constant_config = constant_config
-        self.useAspNet = useAspNet
+        self.connection_type = connection_type
         self.pre_config = []
         self.post_config = []
         self.sending = []
@@ -25,7 +25,7 @@ class BaseScenario:
     def BuildCommonPreSending(self):
         self.pre_config += CommonStep.pre_sending_steps(self.scenario_config.type, self.connection_config,
                                                    self.statistics_config, self.scenario_config,
-                                                   self.constant_config, self.useAspNet)
+                                                   self.constant_config, self.connection_type)
 
     def BuildRegRecordLatency(self):
         self.pre_config += [register_callback_record_latency(self.scenario_config.type)]
