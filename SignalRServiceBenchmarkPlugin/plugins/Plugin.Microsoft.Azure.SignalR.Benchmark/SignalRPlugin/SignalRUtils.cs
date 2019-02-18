@@ -284,7 +284,6 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             int success = 0;
             int failed = 0;
             int init = 0;
-            int reconnect = 0;
             for (var i = 0; i < connectionsSuccessFlag.Count; i++)
             {
                 if (connectionsSuccessFlag[i] == SignalREnums.ConnectionState.Success)
@@ -299,12 +298,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
                 {
                     init++;
                 }
-                if (connectionsSuccessFlag[i] == SignalREnums.ConnectionState.Reconnect)
-                {
-                    reconnect++;
-                }
             }
-            Log.Information($"Connection status: success: {success}, failed: {failed}, init: {init}, reconnect: {reconnect}");
+            Log.Information($"Connection status: success: {success}, failed: {failed}, init: {init}");
         }
 
         public static void SetConnectionOnClose(

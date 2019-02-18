@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace DeployWebApp
@@ -171,13 +172,16 @@ namespace DeployWebApp
             {
                 try
                 {
-                    await package.azure.AppServices.AppServicePlans
+                    using (var cts = new CancellationTokenSource(TimeSpan.FromHours(1)))
+                    {
+                        await package.azure.AppServices.AppServicePlans
                                     .Define(package.name)
                                     .WithRegion(package.region)
                                     .WithExistingResourceGroup(package.groupName)
                                     .WithPricingTier(package.pricingTier)
                                     .WithOperatingSystem(package.os)
-                                    .CreateAsync();
+                                    .CreateAsync(cts.Token);
+                    }
                 }
                 catch (Exception e)
                 {
@@ -210,17 +214,20 @@ namespace DeployWebApp
             {
                 try
                 {
-                    await package.azure.WebApps.Define(package.name)
-                         .WithExistingWindowsPlan(package.appServicePlan)
-                         .WithExistingResourceGroup(package.resourceGroup)
-                         .WithWebAppAlwaysOn(true)
-                         .DefineSourceControl()
-                         .WithPublicGitRepository(package.githubRepo)
-                         .WithBranch("master")
-                         .Attach()
-                         .WithConnectionString("Azure:SignalR:ConnectionString", package.connectionString,
-                         Microsoft.Azure.Management.AppService.Fluent.Models.ConnectionStringType.Custom)
-                         .CreateAsync();
+                    using (var cts = new CancellationTokenSource(TimeSpan.FromHours(1)))
+                    {
+                        await package.azure.WebApps.Define(package.name)
+                             .WithExistingWindowsPlan(package.appServicePlan)
+                             .WithExistingResourceGroup(package.resourceGroup)
+                             .WithWebAppAlwaysOn(true)
+                             .DefineSourceControl()
+                             .WithPublicGitRepository(package.githubRepo)
+                             .WithBranch("master")
+                             .Attach()
+                             .WithConnectionString("Azure:SignalR:ConnectionString", package.connectionString,
+                             Microsoft.Azure.Management.AppService.Fluent.Models.ConnectionStringType.Custom)
+                             .CreateAsync(cts.Token);
+                    }
                 }
                 catch (Exception e)
                 {
