@@ -1,3 +1,5 @@
+from Util.Common import *
+
 Key = {
     'BatchMode': 'Parameter.BatchMode',
     'BatchWait': 'Parameter.BatchWait',
@@ -112,10 +114,9 @@ def stop_collector(type_):
     return [dict(required(type_, "StopCollector"))]
 
 
-def create_connection(type_, connection_total, hub_url, protocol, transport_type, useAspNet=0):
-    createConnectionName="CreateConnection"
-    if useAspNet==1:
-       createConnectionName="CreateAspNetConnection"
+def create_connection(type_, connection_total, hub_url, protocol, transport_type, connection_type):
+    argType = ArgType()
+    createConnectionName = argType.ConnectionTypeName(connection_type)
     return [{
         **required(type_, createConnectionName),
         **{
@@ -171,6 +172,14 @@ def echo(type_, duration, interval, remainder_begin, remainder_end, modulo, mess
 def broadcast(type_, duration, interval, remainder_begin, remainder_end, modulo, message_size):
     return [echo_broadcast(type_, "Broadcast", duration, interval, remainder_begin, remainder_end, modulo,
                            message_size)]
+
+
+def restSendToUser(type_, duration, interval, remainder_begin, remainder_end, modulo, message_size):
+    return [echo_broadcast(type_, "RestSendToUser", duration, interval, remainder_begin, remainder_end, modulo, message_size)]
+
+
+def restBroadcast(type_, duration, interval, remainder_begin, remainder_end, modulo, message_size):
+    return [echo_broadcast(type_, "RestBroadcast", duration, interval, remainder_begin, remainder_end, modulo, message_size)]
 
 
 def send_to_client(type_, connection_total, duration, interval, remainder_begin, remainder_end, modulo, message_size):

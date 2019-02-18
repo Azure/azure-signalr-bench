@@ -1,5 +1,7 @@
 from Echo import *
 from Broadcast import *
+from RestSendToUser import *
+from RestBroadcast import *
 from SendToClient import *
 from SendToGroup import *
 from FrequentJoinLeaveGroup import *
@@ -15,13 +17,18 @@ def parse_arguments():
 
     # required
     parser.add_argument('-u', '--unit', type=int, required=True, help="Azure SignalR service unit.")
-    parser.add_argument('-S', '--scenario', required=True, choices=[scenario_type.echo, scenario_type.broadcast,
+    parser.add_argument('-S', '--scenario', required=True, choices=[scenario_type.echo,
+                                                                    scenario_type.broadcast,
+                                                                    scenario_type.rest_broadcast,
+                                                                    scenario_type.rest_send_to_user,
                                                                     scenario_type.send_to_client,
                                                                     scenario_type.send_to_group,
                                                                     scenario_type.frequent_join_leave_group],
-                        help="Scenario, choose from <{}>|<{}>|<{}>|<{}>|<{}>"
+                        help="Scenario, choose from <{}>|<{}>|<{}>|<{}>|<{}>|<{}>|<{}>"
                         .format(scenario_type.echo,
                                 scenario_type.broadcast,
+                                scenario_type.rest_broadcast,
+                                scenario_type.rest_send_to_user,
                                 scenario_type.send_to_client,
                                 scenario_type.send_to_group,
                                 scenario_type.frequent_join_leave_group))
@@ -35,7 +42,7 @@ def parse_arguments():
                         help="SignalR connection transport type, choose from: <{}>|<{}>|<{}>".format(
                             arg_type.transport_websockets, arg_type.transport_long_polling,
                             arg_type.transport_server_sent_event))
-    parser.add_argument('-U', '--url', required=True, help="App server Url")
+    parser.add_argument('-U', '--url', required=True, help="App server Url or connection string (only for REST API test)")
     parser.add_argument('-m', '--use_max_connection', action='store_true',
                         help="Flag indicates using max connection or not. Set true to apply 1.5x on normal connections")
 
@@ -76,7 +83,12 @@ for max failed sending percentage')
     parser.add_argument('-gm', '--group_config_mode', choices=[arg_type.group_config_mode_group,
                                                                arg_type.group_config_mode_connection],
                         default=arg_type.group_config_mode_connection, help='Group configuration mode')
-    parser.add_argument('-asp', '--asp_net_mode', type=int, default=0, help='If you want to generate config for AspNet, please set it to 1')
+    parser.add_argument('-ct', '--connection_type', type=str,
+                         choices=[arg_type.connection_type_core,
+                                  arg_type.connection_type_aspnet,
+                                  arg_type.connection_type_rest_direct],
+                         default=arg_type.connection_type_core,
+                         help='Specify the connection type: Core, AspNet, or CoreDirect')
     # args
     args = parser.parse_args()
 
@@ -114,21 +126,11 @@ def main():
     # basic sending config
     sending_config = SendingConfig(args.duration, args.interval, args.message_size)
 
-    if args.scenario == "echo":
-        Echo(sending_config, scenario_config, connection_config, statistics_config, constant_config, args.asp_net_mode).generate_config()
-    elif args.scenario == "broadcast":
-        Broadcast(sending_config, scenario_config, connection_config, statistics_config, constant_config, args.asp_net_mode)\
-            .generate_config()
-    elif args.scenario == 'sendToClient':
-        SendToClient(sending_config, scenario_config, connection_config, statistics_config, constant_config, args.asp_net_mode)\
-            .generate_config()
-    elif args.scenario == 'sendToGroup':
-        SendToGroup(sending_config, scenario_config, connection_config, statistics_config, constant_config, args.asp_net_mode) \
-            .generate_config()
-    elif args.scenario == 'frequentJoinLeaveGroup':
-        FrequentJoinLeaveGroup(sending_config, scenario_config, connection_config, statistics_config, constant_config) \
-            .generate_config()
-
+    lst = [word[0].upper() + word[1:] for word in args.scenario.split()]
+    func = "".join(lst)
+    callfunc = "{func_name}(sending_config, scenario_config, connection_config, statistics_config, constant_config, args.connection_type).generate_config()".format(
+      func_name=func)
+    eval(callfunc)
 
 if __name__ == "__main__":
     main()

@@ -308,7 +308,7 @@ function get_k8s_cpu_info() {
      for i in $result
      do
        # TODO. specify the container for exec command
-       kubectl exec $i --kubeconfig=$config_file -- bash -c "cat /proc/cpuinfo" >> $output_dir/${i}_cpuinfo.txt 2>/dev/null
+       kubectl exec $i --kubeconfig=$config_file -- bash -c "cat /proc/cpuinfo" >> $output_dir/${i}_cpuinfo.txt
      done
   fi
 }
@@ -339,7 +339,7 @@ function start_top_tracking() {
        local date_time=`date --iso-8601='seconds'`
        echo "${date_time} " >> $output_dir/${i}_top.txt
        # TODO. specify the container for exec command
-       kubectl exec $i --kubeconfig=$config_file -- bash -c "top -b -n 1" >> $output_dir/${i}_top.txt 2>/dev/null
+       kubectl exec $i --kubeconfig=$config_file -- bash -c "top -b -n 1" >> $output_dir/${i}_top.txt
      done
      sleep 1
     done
@@ -713,6 +713,15 @@ function get_nginx_cpu_info() {
   fi
 }
 
+function get_nginx_container_from_pod() {
+  local pod=$1
+  local config=$2
+  local ns=$3
+  #TODO. hard code the nginx-ingress controller name here
+  local c=`kubectl describe pod/$pod -n $ns --kubeconfig=$config |grep "  nginx-ingress[0-9]*-controller[0-9]*:" |awk -F : '{print $1}'|tr -d '[:space:]'`
+  echo $c
+}
+
 function track_nginx_top() {
   local res=$1
   local ns=$2
@@ -732,8 +741,8 @@ function track_nginx_top() {
      do
        local date_time=`date --iso-8601='seconds'`
        echo "${date_time} " >> $output_dir/${i}_top.txt
-       # TODO. specify the container for exec command
-       kubectl exec $i --namespace=$ns --kubeconfig=$config_file -- bash -c "top -b -n 1" >> $output_dir/${i}_top.txt 2>/dev/null
+       local c=$(get_nginx_container_from_pod $i $config_file $ns)
+       kubectl exec $i --namespace=$ns --kubeconfig=$config_file -c $c -- bash -c "top -b -n 1" >> $output_dir/${i}_top.txt
      done
      sleep 1
     done
@@ -767,7 +776,8 @@ function get_nginx_log() {
   local result=$g_result
   for i in $result
   do
-    kubectl logs $i --namespace=$ns --kubeconfig=$config_file > $outdir/${i}.log
+    local c=$(get_nginx_container_from_pod $i $config_file $ns)
+    kubectl logs $i --namespace=$ns --kubeconfig=$config_file -c $c> $outdir/${i}.log
     if [ -e $outdir/${i}.log ]
     then
        cd $outdir

@@ -18,11 +18,26 @@ class ArgType:
         self.group_config_mode_group = "Group"
         self.group_config_mode_connection = "Connection"
 
+        # connection type
+        self.connection_type_core = "Core"
+        self.connection_type_aspnet = "AspNet"
+        self.connection_type_rest_direct = "CoreDirect"
+        self.connection_type_map = {
+            "Core": "CreateConnection",
+            "AspNet": "CreateAspNetConnection",
+            "CoreDirect": "CreateDirectConnection"
+        }
+
+    def ConnectionTypeName(self, connection_type):
+        return self.connection_type_map[connection_type]
+
 
 class ScenarioType:
     def __init__(self):
         self.echo = "echo"
         self.broadcast = "broadcast"
+        self.rest_broadcast = "restBroadcast"
+        self.rest_send_to_user = "restSendToUser"
         self.send_to_client = "sendToClient"
         self.send_to_group = "sendToGroup"
         self.frequent_join_leave_group = "frequentJoinLeaveGroup"
