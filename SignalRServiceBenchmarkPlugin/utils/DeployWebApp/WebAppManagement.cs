@@ -1,163 +1,22 @@
 ﻿using Microsoft.Azure.Management.AppService.Fluent;
 using Microsoft.Azure.Management.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent;
-using Microsoft.Azure.Management.ResourceManager.Fluent.Authentication;
-using Microsoft.Azure.Management.ResourceManager.Fluent.Core;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace DeployWebApp
 {
-    public class WebAppManagement
+    public class WebAppManagement : WebAppManagementBase
     {
-        private ArgsOption _argsOption;
-        private IAzure _azure;
-        private IDictionary<string, PricingTier> _priceTierMapper;
-
-        private IResourceGroup GetResourceGroup()
+        public WebAppManagement(ArgsOption argsOption) : base(argsOption)
         {
-            IResourceGroup resourceGroup = null;
-            if (_azure.ResourceGroups.Contain(_argsOption.GroupName))
-            {
-                if (_argsOption.RemoveExistingResourceGroup == 1)
-                {
-                    RemoveResourceGroup();
-                    resourceGroup = _azure.ResourceGroups.Define(_argsOption.GroupName)
-                                     .WithRegion(_argsOption.Location)
-                                     .Create();
-                }
-                else
-                {
-                    resourceGroup = _azure.ResourceGroups.GetByName(_argsOption.GroupName);
-                }
-            }
-            else
-            {
-                resourceGroup = _azure.ResourceGroups.Define(_argsOption.GroupName)
-                                     .WithRegion(_argsOption.Location)
-                                     .Create();
-            }
-            return resourceGroup;
         }
 
-        private void Login()
-        {
-            AzureCredentials credentials = null;
-            if (_argsOption.ServicePrincipal == null)
-            {
-                credentials = SdkContext.AzureCredentialsFactory
-                    .FromServicePrincipal(_argsOption.ClientId,
-                    _argsOption.ClientSecret,
-                    _argsOption.TenantId,
-                    AzureEnvironment.AzureGlobalCloud);
-            }
-            else
-            {
-                var configLoader = new ConfigurationLoader();
-                var sp = configLoader.Load<ServicePrincipalConfig>(_argsOption.ServicePrincipal);
-                credentials = SdkContext.AzureCredentialsFactory
-                    .FromServicePrincipal(sp.ClientId,
-                    sp.ClientSecret,
-                    sp.TenantId,
-                    AzureEnvironment.AzureGlobalCloud);
-                _argsOption.SubscriptionId = sp.Subscription;
-            }
-
-            _azure = Azure
-                .Configure()
-                .WithLogLevel(HttpLoggingDelegatingHandler.Level.Basic)
-                .Authenticate(credentials)
-                .WithSubscription(_argsOption.SubscriptionId);
-        }
-
-
-        private void RemoveResourceGroup()
-        {
-            var maxRetry = 3;
-            var i = 0;
-            while (i < maxRetry)
-            {
-                try
-                {
-                    if (_azure.ResourceGroups.Contain(_argsOption.GroupName))
-                    {
-                        _azure.ResourceGroups.DeleteByName(_argsOption.GroupName);
-                    }
-                    break;
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine($"Error occur: {e.Message}");
-                }
-                i++;
-            }
-        }
-
-        public WebAppManagement(ArgsOption argsOption)
-        {
-            _argsOption = argsOption;
-            _priceTierMapper = new Dictionary<string, PricingTier>()
-            {
-                { "StandardS1", PricingTier.StandardS1},
-                { "StandardS2", PricingTier.StandardS2},
-                { "StandardS3", PricingTier.StandardS3},
-                { "PremiumP1v2", PricingTier.PremiumP1v2},
-                { "PremiumP2v2", PricingTier.PremiumP2v2}
-            };
-        }
-
-        private bool ValidateDeployParameters()
-        {
-            if (_argsOption.ConnectionString == null)
-            {
-                Console.WriteLine("No connection string is specified!");
-                return false;
-            }
-            if (_argsOption.ServicePrincipal == null &&
-                (_argsOption.ClientId == null ||
-                _argsOption.ClientSecret == null ||
-                _argsOption.SubscriptionId == null ||
-                _argsOption.TenantId == null))
-            {
-                Console.WriteLine("No secret or credential is specified!");
-            }
-            return true;
-        }
-
-        private static Task BatchProcess<T>(IList<T> source, Func<T, Task> f, int max)
-        {
-            var initial = (max >> 1);
-            var s = new System.Threading.SemaphoreSlim(initial, max);
-            _ = Task.Run(async () =>
-            {
-                for (int i = initial; i < max; i++)
-                {
-                    await Task.Delay(100);
-                    s.Release();
-                }
-            });
-
-            return Task.WhenAll(from item in source
-                                select Task.Run(async () =>
-                                {
-                                    await s.WaitAsync();
-                                    try
-                                    {
-                                        await f(item);
-                                    }
-                                    finally
-                                    {
-                                        s.Release();
-                                    }
-                                }));
-        }
-
-        public static async Task CreateAppPlan(
+        protected static async Task CreateAppPlan(
             (IAzure azure,
             string name,
             string region,
@@ -165,41 +24,18 @@ namespace DeployWebApp
             PricingTier pricingTier,
             Microsoft.Azure.Management.AppService.Fluent.OperatingSystem os) package)
         {
-            var i = 0;
-            var retryMax = 5;
-            Exception exp = null;
-            while (i < retryMax)
+            var funcName = "CreateAppPlan";
+            try
             {
-                try
-                {
-                    using (var cts = new CancellationTokenSource(TimeSpan.FromHours(1)))
-                    {
-                        await package.azure.AppServices.AppServicePlans
-                                    .Define(package.name)
-                                    .WithRegion(package.region)
-                                    .WithExistingResourceGroup(package.groupName)
-                                    .WithPricingTier(package.pricingTier)
-                                    .WithOperatingSystem(package.os)
-                                    .CreateAsync(cts.Token);
-                    }
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine($"fail for {e.Message}");
-                    exp = e;
-                    var iAppPlan = package.azure.AppServices.AppServicePlans.GetByResourceGroup(
-                        package.groupName, package.name);
-                    await package.azure.AppServices.AppServicePlans.DeleteByIdAsync(iAppPlan.Id);
-                }
-                i++;
+                await CreateAppPlanCoreAsync(package);
             }
-            if (exp != null)
+            catch (Exception e)
             {
-                throw exp;
+                Console.WriteLine($"{DateTime.Now.ToString("yyyyMMddHHmmss")} {funcName} failed {package.name} for {e.ToString()}");
             }
         }
 
-        private static async Task CreateWebApp(
+        protected static async Task CreateWebApp(
             (IAzure azure,
             string name,
             IAppServicePlan appServicePlan,
@@ -207,136 +43,14 @@ namespace DeployWebApp
             string connectionString,
             string githubRepo) package)
         {
-            var i = 0;
-            var retryMax = 5;
-            Exception exp = null;
-            while (i < retryMax)
+            var funcName = "CreateWebApp";
+            try
             {
-                try
-                {
-                    using (var cts = new CancellationTokenSource(TimeSpan.FromHours(1)))
-                    {
-                        await package.azure.WebApps.Define(package.name)
-                             .WithExistingWindowsPlan(package.appServicePlan)
-                             .WithExistingResourceGroup(package.resourceGroup)
-                             .WithWebAppAlwaysOn(true)
-                             .DefineSourceControl()
-                             .WithPublicGitRepository(package.githubRepo)
-                             .WithBranch("master")
-                             .Attach()
-                             .WithConnectionString("Azure:SignalR:ConnectionString", package.connectionString,
-                             Microsoft.Azure.Management.AppService.Fluent.Models.ConnectionStringType.Custom)
-                             .CreateAsync(cts.Token);
-                    }
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine($"fail to create webapp for {e.Message}");
-                    exp = e;
-                    var webapp = package.azure.WebApps.GetByResourceGroup(package.resourceGroup.Name, package.name);
-                    await package.azure.WebApps.DeleteByIdAsync(webapp.Id);
-                }
-                i++;
+                await CreateWebAppCoreAsync(package);
             }
-            if (exp != null)
+            catch (Exception e)
             {
-                throw exp;
-            }
-        }
-
-        private bool FindPricingTier(string priceTierValue, out PricingTier result)
-        {
-            var found = _priceTierMapper.TryGetValue(priceTierValue, out PricingTier v);
-            result = v;
-            return found;
-        }
-
-        private void DumpAppServicePlanId(List<string> webappNameList)
-        {
-            string appServicePlanIdList = "";
-
-            for (var i = 0; i < _argsOption.WebappCount; i++)
-            {
-                var name = webappNameList[i];
-                var id = _azure.AppServices.AppServicePlans.GetByResourceGroup(_argsOption.GroupName, name).Id;
-                appServicePlanIdList += id + Environment.NewLine;
-            }
-            if (_argsOption.AppServicePlanIdOutputFile != null)
-            {
-                if (File.Exists(_argsOption.AppServicePlanIdOutputFile))
-                {
-                    File.Delete(_argsOption.AppServicePlanIdOutputFile);
-                }
-                using (var writer = new StreamWriter(_argsOption.AppServicePlanIdOutputFile, true))
-                {
-                    writer.WriteLine(appServicePlanIdList);
-                }
-            }
-            else
-            {
-                Console.WriteLine(appServicePlanIdList);
-            }
-        }
-
-        private void DumpWebAppId(List<string> webappNameList)
-        {
-            string webappIdList = "";
-
-            for (var i = 0; i < _argsOption.WebappCount; i++)
-            {
-                var name = webappNameList[i];
-                var id = _azure.WebApps.GetByResourceGroup(_argsOption.GroupName, name).Id;
-                webappIdList += id + Environment.NewLine;
-            }
-            if (_argsOption.WebAppIdOutputFile != null)
-            {
-                if (File.Exists(_argsOption.WebAppIdOutputFile))
-                {
-                    File.Delete(_argsOption.WebAppIdOutputFile);
-                }
-                using (var writer = new StreamWriter(_argsOption.WebAppIdOutputFile, true))
-                {
-                    writer.WriteLine(webappIdList);
-                }
-            }
-            else
-            {
-                Console.WriteLine(webappIdList);
-            }
-        }
-
-        private void DumpWebAppUrl(List<string> webappNameList)
-        {
-            if (_argsOption.OutputFile == null)
-            {
-                for (var i = 0; i < _argsOption.WebappCount; i++)
-                {
-                    Console.WriteLine($"https://{webappNameList[i]}.azurewebsites.net");
-                }
-            }
-            else
-            {
-                if (File.Exists(_argsOption.OutputFile))
-                {
-                    File.Delete(_argsOption.OutputFile);
-                }
-
-                using (var writer = new StreamWriter(_argsOption.OutputFile, true))
-                {
-                    string result = "";
-                    for (var i = 0; i < _argsOption.WebappCount; i++)
-                    {
-                        if (i == 0)
-                            result = $"https://{webappNameList[i]}.azurewebsites.net/{_argsOption.HubName}";
-                        else
-                            result = result + $"https://{webappNameList[i]}.azurewebsites.net/{_argsOption.HubName}";
-                        if (i + 1 < _argsOption.WebappCount)
-                        {
-                            result = result + ",";
-                        }
-                    }
-                    writer.WriteLine(result);
-                }
+                Console.WriteLine($"{DateTime.Now.ToString("yyyyMMddHHmmss")} {funcName} failed {package.name} for {e.ToString()}");
             }
         }
 
@@ -354,65 +68,56 @@ namespace DeployWebApp
             }
             var sw = new Stopwatch();
             sw.Start();
-            IResourceGroup resourceGroup = GetResourceGroup();
+            _resourceGroup = GetResourceGroup();
             // assign names
-            var rootTimestamp = DateTime.Now.ToString("yyyyMMddHHmmss");
-            var webappNameList = new List<string>();
-            for (var i = 0; i < _argsOption.WebappCount; i++)
-            {
-                var name = _argsOption.WebAppNamePrefix + $"{rootTimestamp}{i}";
-                webappNameList.Add(name);
-            }
+            var webappNameList = GenerateAppPlanNameList();
             if (!FindPricingTier(_argsOption.PriceTier, out PricingTier targetPricingTier))
             {
                 Console.WriteLine($"Unsupported pricing tier: {_argsOption.PriceTier}");
                 return;
             }
+            _targetPricingTier = targetPricingTier;
+            var groupName = _argsOption.GroupName;
+            var retry = 0;
+            var maxRetry = 3;
             // create app service plans
-            var packages = (from i in Enumerable.Range(0, _argsOption.WebappCount)
-                            select (azure : _azure,
-                                    name : webappNameList[i],
-                                    region : _argsOption.Location,
-                                    groupName : _argsOption.GroupName,
-                                    pricingTier: targetPricingTier,
-                                    os : Microsoft.Azure.Management.AppService.Fluent.OperatingSystem.Windows)).ToList();
-
-            await BatchProcess(packages, CreateAppPlan, _argsOption.ConcurrentCountOfServicePlan);
-            // create webapp
-            var packages2 = (from i in Enumerable.Range(0, _argsOption.WebappCount)
-                             select (azure: _azure,
-                                     name: webappNameList[i],
-                                     appServer: _azure.AppServices.AppServicePlans
-                                                 .GetByResourceGroup(_argsOption.GroupName, webappNameList[i]),
-                                     resourceGroup: resourceGroup,
-                                     connectionString: _argsOption.ConnectionString,
-                                     gitHubRepo : _argsOption.GitHubRepo)).ToList();
-            await BatchProcess(packages2, CreateWebApp, _argsOption.ConcurrentCountOfWebApp);
-            /*
-            var tasks = new List<Task>();
-            for (var i = 0; i < _argsOption.WebappCount; i++)
+            do
             {
-                var name = webappNameList[i];
-                var appService = _azure.AppServices.AppServicePlans.GetByResourceGroup(
-                    _argsOption.GroupName, webappNameList[i]);
-                var t = _azure.WebApps.Define(name)
-                         .WithExistingWindowsPlan(appService)
-                         .WithExistingResourceGroup(resourceGroup)
-                         .WithWebAppAlwaysOn(true)
-                         .DefineSourceControl()
-                         .WithPublicGitRepository(_argsOption.GitHubRepo)
-                         .WithBranch("master")
-                         .Attach()
-                         .WithConnectionString("Azure:SignalR:ConnectionString", _argsOption.ConnectionString,
-                         Microsoft.Azure.Management.AppService.Fluent.Models.ConnectionStringType.Custom)
-                         .CreateAsync();
-                tasks.Add(t);
-            }
-            await Task.WhenAll(tasks);
-            */
+                var packages = (from i in Enumerable.Range(0, webappNameList.Count)
+                                where _azure.AppServices.AppServicePlans.GetByResourceGroup(groupName, webappNameList[i]) == null
+                                select (azure: _azure,
+                                        name: webappNameList[i],
+                                        region: _argsOption.Location,
+                                        groupName: _argsOption.GroupName,
+                                        pricingTier: _targetPricingTier,
+                                        os: Microsoft.Azure.Management.AppService.Fluent.OperatingSystem.Windows)).ToList();
+                await BatchProcess(packages, CreateAppPlan, _argsOption.ConcurrentCountOfServicePlan);
+                retry++;
+            } while (!isAllServicePlanCreated(webappNameList, groupName) && retry < maxRetry);
+
+            sw.Stop();
+            Console.WriteLine($"it takes {sw.ElapsedMilliseconds} ms to create app plan");
+
+            sw.Start();
+            // create webapp
+            retry = 0;
+            do
+            {
+                var packages = (from i in Enumerable.Range(0, webappNameList.Count)
+                                 where _azure.WebApps.GetByResourceGroup(groupName, webappNameList[i]) == null
+                                 select (azure: _azure,
+                                         name: webappNameList[i],
+                                         appServer: _azure.AppServices.AppServicePlans.GetByResourceGroup(_argsOption.GroupName, webappNameList[i]),
+                                         resourceGroup: _resourceGroup,
+                                         connectionString: _argsOption.ConnectionString,
+                                         gitHubRepo: _argsOption.GitHubRepo)).ToList();
+                await BatchProcess(packages, CreateWebApp, _argsOption.ConcurrentCountOfWebApp);
+                retry++;
+            } while (!isAllWebAppCreated(webappNameList, groupName) && retry < maxRetry);
 
             sw.Stop();
             Console.WriteLine($"it takes {sw.ElapsedMilliseconds} ms");
+
             // output app service plan Id
             DumpAppServicePlanId(webappNameList);
             // output web app Id
@@ -420,6 +125,5 @@ namespace DeployWebApp
             // dump results
             DumpWebAppUrl(webappNameList);
         }
-
     }
 }
