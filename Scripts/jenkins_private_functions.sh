@@ -718,6 +718,68 @@ enable_exit_immediately_when_fail()
   set -e
 }
 
+try_catch_netstat_when_server_conn_drop()
+{
+  local user=$1
+  local passwd="$2"
+  local connectionString="$3"
+  local netstat_check_file="netstat_check.sh"
+  local remote_netstat_log="netstat.log"
+  local asrs_endpoint=`echo "$connectionString"|awk -F \; '{print $1}'|awk -F = '{print $2}'`
+cat << EOF > $netstat_check_file
+#!/bin/bash
+if [ -e \$remote_netstat_log ]
+then
+  rm \$remote_netstat_log
+fi
+
+appserver_log=`find . -iname "appserver.log"`
+if [ "\$appserver_log" == "" ]
+then
+  exit 0
+fi
+
+while [ true ]
+do
+  conn_drop=`grep "service was dropped" \$appserver_log`
+  if [ "\$conn_drop" != "" ]
+  then
+     date_time=\`date --iso-8601='seconds'\`
+     echo "\${date_time} " >> $remote_netstat_log
+     echo "\$conn_drop" >> $remote_netstat_log
+     curl -vvv $asrs_endpoint >> $remote_netstat_log
+     echo "------------------" >> $remote_netstat_log
+     curl -vvv http://www.bing.com >> $remote_netstat_log
+  fi
+  sleep 1
+done
+EOF
+  local i
+  for i in `python extract_ip.py -i $PrivateIps -q appserverList`
+  do
+    sshpass -p $passwd scp -o StrictHostKeyChecking=no -o LogLevel=ERROR $netstat_check_file $user@${i}:/home/$user/
+    sshpass -p $passwd ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $user@\${i} "chmod +x $netstat_check_file"
+    sshpass -p $passwd ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $user@\${i} "nohup ./$netstat_check_file &"
+  done
+}
+
+fetch_netstat_for_server_conn_drop()
+{
+  local user=$1
+  local passwd="$2"
+  local outputDir=$3
+  local i
+  local remote_netstat_log="netstat.log"
+  for i in `python extract_ip.py -i $PrivateIps -q appserverList`
+  do
+    local netstatLogPath=`sshpass -p $passwd ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $user@${i} "find . -iname $remote_netstat_log"`
+    if [ "$netstatLogPath" != "" ]
+    then
+      sshpass -p $passwd scp -o StrictHostKeyChecking=no -o LogLevel=ERROR $user@${i}:$netstatLogPath $outputDir/appserver_netstat_${i}.txt
+    fi
+  done
+}
+
 start_collect_slaves_appserver_top()
 {
   local user=$1
@@ -868,6 +930,7 @@ EOF
   sshpass -p ${passwd} ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR ${user}@${master} "./$remoteCmd"
   disable_exit_immediately_when_fail
   start_collect_slaves_appserver_top ${user} $passwd ${outputDir}
+  try_catch_netstat_when_server_conn_drop ${user} $passwd "$connectionString"
   cd $CommandWorkingDir
   # "never stop app server" is used for long run stress test
   local neverStopAppServerOp
@@ -910,6 +973,7 @@ EOF
     sshpass -p $passwd ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR ${user}@${master} "find /home/${user}/master -iname counters.txt"
   fi
   copy_log_from_slaves_master ${user} $passwd ${outputDir}
+  fetch_netstat_for_server_conn_drop ${user} $passwd ${outputDir}
   enable_exit_immediately_when_fail
 }
 
