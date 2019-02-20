@@ -52,6 +52,7 @@ EOF
 function get_reduced_appserverCount()
 {
   local unit=$1
+  local scenario=$2
   local appserverInUse=200
   # for none AspNet, we cannot surpass serverVmCount,
   # but for AspNet, we ignore serverVmCount because we use Azure WebApp
@@ -71,7 +72,7 @@ function get_reduced_appserverCount()
     then
       limitedAppserver=`python get_appserver_count.py -u $unit`
     else
-      limitedAppserver=`python get_appserver_count.py -u $unit -q webappserver`
+      limitedAppserver=`python get_appserver_count.py -u $unit -q webappserver -s $scenario`
     fi
     if [ $limitedAppserver -lt $appserverInUse ]
     then
@@ -86,7 +87,8 @@ function get_reduced_appserverCount()
 function get_reduced_appserverUrl()
 {
   local unit=$1
-  local appserverInUse=$(get_reduced_appserverCount $unit)
+  local scenario=$2
+  local appserverInUse=$(get_reduced_appserverCount $unit $scenario)
   local appserverUrls=`python extract_ip.py -i $PublicIps -q appserverPub -c $appserverInUse`
   echo $appserverUrls
 }
@@ -99,9 +101,10 @@ function createWebApp()
   local serverUrlOutFile=$4
   local appPlanIdOutFile=$5
   local webAppIdOutFile=$6
+  local scenario=$7
 
   local resGroup=$AspNetWebAppResGrp #"${appPrefix}"`date +%H%M%S`
-  local appserverCount=$(get_reduced_appserverCount $unit)
+  local appserverCount=$(get_reduced_appserverCount $unit $scenario)
 
   disable_exit_immediately_when_fail
   cd $AspNetWebMgrWorkingDir
@@ -261,9 +264,9 @@ function RunSendToGroup()
   if [ "$AspNetSignalR" != "true" ]
   then
     cd $ScriptWorkingDir
-    appserverUrls=$(get_reduced_appserverUrl $unit)
+    appserverUrls=$(get_reduced_appserverUrl $unit $Scenario)
   else
-    createWebApp $unit $appPrefix "$connectionString" $serverUrlOut $appPlanOut $webAppOut
+    createWebApp $unit $appPrefix "$connectionString" $serverUrlOut $appPlanOut $webAppOut $Scenario
     if [ -e $serverUrlOut ]
     then
       appserverUrls=`cat $serverUrlOut`
@@ -313,9 +316,9 @@ function RunSendToClient()
   if [ "$AspNetSignalR" != "true" ]
   then
     cd $ScriptWorkingDir
-    appserverUrls=$(get_reduced_appserverUrl $unit)
+    appserverUrls=$(get_reduced_appserverUrl $unit $Scenario)
   else
-    createWebApp $unit $appPrefix "$connectionString" $serverUrlOut $appPlanOut $webAppOut
+    createWebApp $unit $appPrefix "$connectionString" $serverUrlOut $appPlanOut $webAppOut $Scenario
     if [ -e $serverUrlOut ]
     then
       appserverUrls=`cat $serverUrlOut`
@@ -364,9 +367,9 @@ function RunCommonScenario()
   if [ "$AspNetSignalR" != "true" ]
   then
     cd $ScriptWorkingDir
-    appserverUrls=$(get_reduced_appserverUrl $unit)   
+    appserverUrls=$(get_reduced_appserverUrl $unit $Scenario)
   else
-    createWebApp $unit $appPrefix "$connectionString" $serverUrlOut $appPlanOut $webAppOut
+    createWebApp $unit $appPrefix "$connectionString" $serverUrlOut $appPlanOut $webAppOut $Scenario
     if [ -e $serverUrlOut ]
     then
       appserverUrls=`cat $serverUrlOut`
