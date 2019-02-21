@@ -188,13 +188,19 @@ function GenBenchmarkConfig()
   local groupType=$6
   local configPath=$7
   local connectionString="$8"
+  local sendSize="$9"
 
   local maxConnectionOption=""
   if [ "$useMaxConnection" == "true" ]
   then
     maxConnectionOption="-m"
   fi
-  local ms=$(normalizeSendSize $bench_send_size)
+  local sz=$bench_send_size
+  if [ "$sendSize" != "None" ]
+  then
+    sz=$sendSize
+  fi
+  local ms=$(normalizeSendSize $sz)
   local interval=$(normalizeSendInterval $send_interval)
 
   local groupTypeOp
@@ -259,6 +265,11 @@ function RunSendToGroup()
   local appPlanOut=$outputDir/${appPrefix}_appPlan.txt
   local webAppOut=$outputDir/${appPrefix}_webApp.txt
 
+  local maxConnectionOption
+  if [ "$useMaxConnection" == "true" ]
+  then
+    maxConnectionOption="-m"
+  fi
   local startSeconds=$SECONDS
 
   if [ "$AspNetSignalR" != "true" ]
@@ -279,7 +290,7 @@ function RunSendToGroup()
 
   cd $PluginScriptWorkingDir
   local config_path=$outputDir/${tag}_${Scenario}_${Transport}_${MessageEncoding}.config
-  GenBenchmarkConfig $unit $Scenario $Transport $MessageEncoding $appserverUrls $groupType $config_path "$connectionString"
+  GenBenchmarkConfig $unit $Scenario $Transport $MessageEncoding $appserverUrls $groupType $config_path "$connectionString" None
   local connection=`python3 get_sending_connection.py -g $groupType -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q totalConnections $maxConnectionOption`
   local concurrentConnection=`python3 get_sending_connection.py -g $groupType -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q concurrentConnection $maxConnectionOption`
   local send=`python3 get_sending_connection.py -g $groupType -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q sendingSteps $maxConnectionOption`
@@ -307,6 +318,11 @@ function RunSendToClient()
   local unit=$9
   local msgSize=${10}
   local appserverUrls
+  local maxConnectionOption
+  if [ "$useMaxConnection" == "true" ]
+  then
+    maxConnectionOption="-m"
+  fi
 
   local appPrefix="aspnetwebapp"
   local serverUrlOut=$outputDir/${appPrefix}.txt
@@ -331,7 +347,7 @@ function RunSendToClient()
 
   cd $PluginScriptWorkingDir
   local config_path=$outputDir/${tag}_${Scenario}_${Transport}_${MessageEncoding}.config
-  GenBenchmarkConfig $unit $Scenario $Transport $MessageEncoding $appserverUrls None $config_path "$connectionString"
+  GenBenchmarkConfig $unit $Scenario $Transport $MessageEncoding $appserverUrls None $config_path "$connectionString" $msgSize
   local connection=`python3 get_sending_connection.py -ms $msgSize -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q totalConnections $maxConnectionOption`
   local concurrentConnection=`python3 get_sending_connection.py -ms $msgSize -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q concurrentConnection $maxConnectionOption`
   local send=`python3 get_sending_connection.py -ms $msgSize -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q sendingSteps $maxConnectionOption`
@@ -358,7 +374,11 @@ function RunCommonScenario()
   local outputDir="$8"
   local unit=$9
   local appserverUrls
-
+  local maxConnectionOption
+  if [ "$useMaxConnection" == "true" ]
+  then
+    maxConnectionOption="-m"
+  fi
   local appPrefix="aspnetwebapp"
   local serverUrlOut=$outputDir/${appPrefix}.txt
   local appPlanOut=$outputDir/${appPrefix}_appPlan.txt
@@ -382,7 +402,7 @@ function RunCommonScenario()
 
   cd $PluginScriptWorkingDir
   local config_path=$outputDir/${tag}_${Scenario}_${Transport}_${MessageEncoding}.config
-  GenBenchmarkConfig $unit $Scenario $Transport $MessageEncoding $appserverUrls None $config_path "$connectionString"
+  GenBenchmarkConfig $unit $Scenario $Transport $MessageEncoding $appserverUrls None $config_path "$connectionString" None
   local connection=`python3 get_sending_connection.py -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q totalConnections $maxConnectionOption`
   local concurrentConnection=`python3 get_sending_connection.py -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q concurrentConnection $maxConnectionOption`
   local send=`python3 get_sending_connection.py -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q sendingSteps $maxConnectionOption`
@@ -761,8 +781,8 @@ EOF
   for i in `python extract_ip.py -i $PrivateIps -q appserverList`
   do
     sshpass -p $passwd scp -o StrictHostKeyChecking=no -o LogLevel=ERROR $netstat_check_file $user@${i}:/home/$user/
-    sshpass -p $passwd ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $user@\${i} "chmod +x $netstat_check_file"
-    sshpass -p $passwd ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $user@\${i} "nohup ./$netstat_check_file &"
+    sshpass -p $passwd ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $user@${i} "chmod +x $netstat_check_file"
+    sshpass -p $passwd ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $user@${i} "nohup ./$netstat_check_file &"
   done
 }
 
