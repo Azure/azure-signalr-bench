@@ -41,6 +41,11 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods.Statistics
             ResetCounters("connection:");
         }
 
+        public void ResetReconnectCounters()
+        {
+            ResetCounters(SignalRConstants.StatisticsConnectionReconnect);
+        }
+
         public void SetSendingStep(long sendingStep)
         {
             _statistics.AddOrUpdate(SignalRConstants.StatisticsSendingStep,

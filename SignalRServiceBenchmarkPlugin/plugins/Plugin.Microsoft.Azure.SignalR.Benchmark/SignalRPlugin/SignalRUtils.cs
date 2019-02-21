@@ -494,6 +494,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         {
             statisticsCollecter.ResetGroupCounters();
             statisticsCollecter.ResetMessageCounters();
+            statisticsCollecter.ResetReconnectCounters();
         }
     }
 }
