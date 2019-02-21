@@ -2,10 +2,8 @@
 using Microsoft.Azure.Management.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace DeployWebApp
@@ -83,6 +81,7 @@ namespace DeployWebApp
             // create app service plans
             do
             {
+                Console.WriteLine($"{DateTime.Now.ToString("yyyyMMddHHmmss")} {retry} : create app plan");
                 var packages = (from i in Enumerable.Range(0, webappNameList.Count)
                                 where _azure.AppServices.AppServicePlans.GetByResourceGroup(groupName, webappNameList[i]) == null
                                 select (azure: _azure,

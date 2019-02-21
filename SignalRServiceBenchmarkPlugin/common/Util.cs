@@ -23,7 +23,7 @@ namespace Common
                 }
                 else
                 {
-                    throw new TimeoutException("The operation has timed out.");
+                    throw new TimeoutException($"The operation has timed out after {timeout.Milliseconds} ms.");
                 }
             }
         }
@@ -40,7 +40,7 @@ namespace Common
                 }
                 else
                 {
-                    throw new TimeoutException("The operation has timed out.");
+                    throw new TimeoutException($"The operation has timed out after {timeout.Milliseconds} ms.");
                 }
             }
         }

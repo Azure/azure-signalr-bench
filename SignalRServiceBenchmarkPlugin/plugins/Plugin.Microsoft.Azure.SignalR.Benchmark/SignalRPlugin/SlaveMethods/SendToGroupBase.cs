@@ -75,12 +75,13 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 // Generate data
                 var packages = GenerateData();
 
+                var sendingStep = RemainderEnd == 0 ? GroupInternalRemainderEnd : RemainderEnd;
                 // Reset counters
-                UpdateStatistics(StatisticsCollector, RemainderEnd == 0 ? GroupInternalRemainderEnd : RemainderEnd);
+                UpdateStatistics(StatisticsCollector, sendingStep);
 
                 // Send messages
                 await SendMessages(packages);
-
+                Log.Information($"Finish sending message {sendingStep}");
                 return null;
             }
             catch (Exception ex)
