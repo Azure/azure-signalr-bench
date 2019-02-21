@@ -259,6 +259,11 @@ function RunSendToGroup()
   local appPlanOut=$outputDir/${appPrefix}_appPlan.txt
   local webAppOut=$outputDir/${appPrefix}_webApp.txt
 
+  local maxConnectionOption
+  if [ "$useMaxConnection" == "true" ]
+  then
+    maxConnectionOption="-m"
+  fi
   local startSeconds=$SECONDS
 
   if [ "$AspNetSignalR" != "true" ]
@@ -307,6 +312,11 @@ function RunSendToClient()
   local unit=$9
   local msgSize=${10}
   local appserverUrls
+  local maxConnectionOption
+  if [ "$useMaxConnection" == "true" ]
+  then
+    maxConnectionOption="-m"
+  fi
 
   local appPrefix="aspnetwebapp"
   local serverUrlOut=$outputDir/${appPrefix}.txt
@@ -358,7 +368,11 @@ function RunCommonScenario()
   local outputDir="$8"
   local unit=$9
   local appserverUrls
-
+  local maxConnectionOption
+  if [ "$useMaxConnection" == "true" ]
+  then
+    maxConnectionOption="-m"
+  fi
   local appPrefix="aspnetwebapp"
   local serverUrlOut=$outputDir/${appPrefix}.txt
   local appPlanOut=$outputDir/${appPrefix}_appPlan.txt
@@ -761,8 +775,8 @@ EOF
   for i in `python extract_ip.py -i $PrivateIps -q appserverList`
   do
     sshpass -p $passwd scp -o StrictHostKeyChecking=no -o LogLevel=ERROR $netstat_check_file $user@${i}:/home/$user/
-    sshpass -p $passwd ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $user@\${i} "chmod +x $netstat_check_file"
-    sshpass -p $passwd ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $user@\${i} "nohup ./$netstat_check_file &"
+    sshpass -p $passwd ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $user@${i} "chmod +x $netstat_check_file"
+    sshpass -p $passwd ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $user@${i} "nohup ./$netstat_check_file &"
   done
 }
 
