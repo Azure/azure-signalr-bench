@@ -72,12 +72,19 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
              StatisticsCollector StatisticsCollector) package,
              IDictionary<string, object> data)
         {
-            var payload = GenPayload(data);
-            await package.RestApiProvider.SendToUser(
-                package.UserId,
-                SignalRConstants.RecordLatencyCallbackName,
-                new[] { payload });
-            SignalRUtils.RecordSend(payload, package.StatisticsCollector);
+            try
+            {
+                var payload = GenPayload(data);
+                await package.RestApiProvider.SendToUser(
+                    package.UserId,
+                    SignalRConstants.RecordLatencyCallbackName,
+                    new[] { payload });
+                SignalRUtils.RecordSend(payload, package.StatisticsCollector);
+            }
+            catch (Exception e)
+            {
+                Log.Error($"Fail to send message to user for {e.Message}");
+            }
         }
 
         protected override IDictionary<string, object> GenPayload(IDictionary<string, object> data)

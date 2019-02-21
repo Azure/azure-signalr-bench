@@ -110,13 +110,19 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods.Statistics
             _statistics.AddOrUpdate(SignalRConstants.StatisticsGroupLeaveFail, 1, (k, v) => v + 1);
         }
 
+        public void UpdateReconnect(int reconnectCount)
+        {
+            _statistics.AddOrUpdate(
+                SignalRConstants.StatisticsConnectionReconnect,
+                reconnectCount, (k, v) => v + reconnectCount);
+        }
+
         public void UpdateConnectionsState(List<SignalREnums.ConnectionState> connectionsSuccessFlag)
         {
             if (connectionsSuccessFlag == null) return;
 
             var success = 0;
             var fail = 0;
-            var reconnect = 0;
             var init = 0;
 
             // Todo: make it thread save
@@ -131,9 +137,6 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods.Statistics
                     case SignalREnums.ConnectionState.Fail:
                         fail++;
                         break;
-                    case SignalREnums.ConnectionState.Reconnect:
-                        reconnect++;
-                        break;
                     case SignalREnums.ConnectionState.Init:
                         init++;
                         break;
@@ -144,7 +147,6 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods.Statistics
                 // update them together to avoid unconsistency
                 _statistics.AddOrUpdate(SignalRConstants.StatisticsConnectionConnectSuccess, success, (k, v) => success);
                 _statistics.AddOrUpdate(SignalRConstants.StatisticsConnectionConnectFail, fail, (k, v) => fail);
-                _statistics.AddOrUpdate(SignalRConstants.StatisticsConnectionReconnect, reconnect, (k, v) => reconnect);
                 _statistics.AddOrUpdate(SignalRConstants.StatisticsConnectionInit, init, (k, v) => init);
             }
         }

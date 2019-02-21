@@ -70,11 +70,18 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
              StatisticsCollector StatisticsCollector) package,
              IDictionary<string, object> data)
         {
-            var payload = GenPayload(data);
-            await package.RestApiProvider.SendToAll(
-                SignalRConstants.RecordLatencyCallbackName,
-                new[] { payload });
-            SignalRUtils.RecordSend(payload, package.StatisticsCollector);
+            try
+            {
+                var payload = GenPayload(data);
+                await package.RestApiProvider.SendToAll(
+                    SignalRConstants.RecordLatencyCallbackName,
+                    new[] { payload });
+                SignalRUtils.RecordSend(payload, package.StatisticsCollector);
+            }
+            catch (Exception e)
+            {
+                Log.Error($"Fail to broadcast message for {e.Message}");
+            }
         }
 
         protected override IDictionary<string, object> GenPayload(IDictionary<string, object> data)

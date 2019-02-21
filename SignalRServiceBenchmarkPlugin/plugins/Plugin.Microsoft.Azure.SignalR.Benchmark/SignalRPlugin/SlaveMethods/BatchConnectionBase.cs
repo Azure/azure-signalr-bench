@@ -1,6 +1,8 @@
 ﻿using Common;
 using Serilog;
+using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -44,27 +46,37 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
             var period = SignalRConstants.RateLimitDefaultGranularity;
             var factor = 1000 / period;
             var fillTokenPerDuration = concurrentConnection > factor ? concurrentConnection / factor : 1;
-            switch (mode)
+
+            var sw = new Stopwatch();
+            sw.Start();
+            Log.Information($"{DateTime.Now.ToString("yyyyMMddHHmmss")} Start connection");
+            try
             {
-                case SignalREnums.BatchMode.ExtLimitRatePress:
-                    await Task.WhenAll(Util.ExternalRateLimitBatchProcess(packages,
-                        SignalRUtils.StartConnect, concurrentConnection, fillTokenPerDuration, period));
-                    break;
-                case SignalREnums.BatchMode.LimitRatePress:
-                    await Util.RateLimitBatchProces(packages,
-                        SignalRUtils.StartConnect, concurrentConnection, fillTokenPerDuration, period);
-                    break;
-                case SignalREnums.BatchMode.HighPress:
-                    await Task.WhenAll(Util.BatchProcess(packages,
-                        SignalRUtils.StartConnect, concurrentConnection));
-                    break;
-                case SignalREnums.BatchMode.LowPress:
-                    await Task.WhenAll(Util.LowPressBatchProcess(packages,
-                        SignalRUtils.StartConnect, concurrentConnection, batchWaitMilliSeconds));
-                    break;
+                switch (mode)
+                {
+                    case SignalREnums.BatchMode.ExtLimitRatePress:
+                        await Task.WhenAll(Util.ExternalRateLimitBatchProcess(packages,
+                            SignalRUtils.StartConnect, concurrentConnection, fillTokenPerDuration, period));
+                        break;
+                    case SignalREnums.BatchMode.LimitRatePress:
+                        await Util.RateLimitBatchProces(packages,
+                            SignalRUtils.StartConnect, concurrentConnection, fillTokenPerDuration, period);
+                        break;
+                    case SignalREnums.BatchMode.HighPress:
+                        await Task.WhenAll(Util.BatchProcess(packages,
+                            SignalRUtils.StartConnect, concurrentConnection));
+                        break;
+                    case SignalREnums.BatchMode.LowPress:
+                        await Task.WhenAll(Util.LowPressBatchProcess(packages,
+                            SignalRUtils.StartConnect, concurrentConnection, batchWaitMilliSeconds));
+                        break;
+                }
             }
-            //Log.Information("After finishing start connection");
-            //SignalRUtils.DumpConnectionStatus(connectionsSuccessFlag);
+            finally
+            {
+                sw.Stop();
+                Log.Information($"{DateTime.Now.ToString("yyyyMMddHHmmss")} Finishing start connection with {sw.ElapsedMilliseconds} ms");
+            }
         }
     }
 }

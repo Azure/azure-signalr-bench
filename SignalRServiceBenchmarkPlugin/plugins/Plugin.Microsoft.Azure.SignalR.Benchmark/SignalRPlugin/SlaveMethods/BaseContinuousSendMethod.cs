@@ -55,7 +55,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
             }
         }
 
-        protected Task BaseSendAsync(
+        protected async Task BaseSendAsync(
             (IHubConnectionAdapter Connection,
             int LocalIndex,
             List<SignalREnums.ConnectionState> ConnectionsSuccessFlag,
@@ -66,9 +66,10 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
             try
             {
                 // Is the connection is not active, then stop sending message
-                if (package.ConnectionsSuccessFlag[package.LocalIndex] != SignalREnums.ConnectionState.Success) return Task.CompletedTask;
+                if (package.ConnectionsSuccessFlag[package.LocalIndex] != SignalREnums.ConnectionState.Success)
+                    return;
 
-                return BaseSendCoreAsync(
+                await BaseSendCoreAsync(
                     GenPayload(data),
                     package.Connection,
                     package.CallbackMethod,
@@ -80,7 +81,6 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 var message = $"Error in {GetType().Name}: {ex}";
                 Log.Error(message);
             }
-            return Task.CompletedTask;
         }
 
         protected async Task BaseSendCoreAsync(

@@ -25,7 +25,12 @@ function run_command_core()
   local send=${12}
   local serverUrl=${13}
   local unit=${14}
-  run_command $user $passwd $connectionString $outputDir $config_path $unit
+  local notStartAppServer=0
+  if [[ "$Scenario" == "rest"* ]]
+  then
+    notStartAppServer=1
+  fi
+  run_command $user $passwd $connectionString $outputDir $config_path $unit $notStartAppServer
   cd $ScriptWorkingDir
   #### generate the connection configuration for HTML ####
 cat << EOF > configs/cmd_4_${MessageEncoding}_${Scenario}_${tag}_${Transport}
@@ -47,6 +52,7 @@ EOF
 function get_reduced_appserverCount()
 {
   local unit=$1
+  local scenario=$2
   local appserverInUse=200
   # for none AspNet, we cannot surpass serverVmCount,
   # but for AspNet, we ignore serverVmCount because we use Azure WebApp
@@ -66,7 +72,7 @@ function get_reduced_appserverCount()
     then
       limitedAppserver=`python get_appserver_count.py -u $unit`
     else
-      limitedAppserver=`python get_appserver_count.py -u $unit -q webappserver`
+      limitedAppserver=`python get_appserver_count.py -u $unit -q webappserver -s $scenario`
     fi
     if [ $limitedAppserver -lt $appserverInUse ]
     then
@@ -81,7 +87,8 @@ function get_reduced_appserverCount()
 function get_reduced_appserverUrl()
 {
   local unit=$1
-  local appserverInUse=$(get_reduced_appserverCount $unit)
+  local scenario=$2
+  local appserverInUse=$(get_reduced_appserverCount $unit $scenario)
   local appserverUrls=`python extract_ip.py -i $PublicIps -q appserverPub -c $appserverInUse`
   echo $appserverUrls
 }
@@ -94,9 +101,10 @@ function createWebApp()
   local serverUrlOutFile=$4
   local appPlanIdOutFile=$5
   local webAppIdOutFile=$6
+  local scenario=$7
 
   local resGroup=$AspNetWebAppResGrp #"${appPrefix}"`date +%H%M%S`
-  local appserverCount=$(get_reduced_appserverCount $unit)
+  local appserverCount=$(get_reduced_appserverCount $unit $scenario)
 
   disable_exit_immediately_when_fail
   cd $AspNetWebMgrWorkingDir
@@ -179,13 +187,20 @@ function GenBenchmarkConfig()
   local appserverUrls=$5
   local groupType=$6
   local configPath=$7
+  local connectionString="$8"
+  local sendSize="$9"
 
   local maxConnectionOption=""
   if [ "$useMaxConnection" == "true" ]
   then
     maxConnectionOption="-m"
   fi
-  local ms=$(normalizeSendSize $bench_send_size)
+  local sz=$bench_send_size
+  if [ "$sendSize" != "None" ]
+  then
+    sz=$sendSize
+  fi
+  local ms=$(normalizeSendSize $sz)
   local interval=$(normalizeSendInterval $send_interval)
 
   local groupTypeOp
@@ -209,22 +224,25 @@ function GenBenchmarkConfig()
     groupTypeOp="-g $groupType"
   fi
   local settings=settings.yaml
+  local connectionTypeOption="-ct Core"
   if [ "$AspNetSignalR" == "true" ]
   then
      settings=aspnet_settings.yaml
+     connectionTypeOption="-ct AspNet"
+  else if [[ "$Scenario" == "rest"* ]]
+       # it is rest API scenario
+       then
+            connectionTypeOption="-ct CoreDirect"
+            appserverUrls="$connectionString"
+       fi
   fi
   python3 generate.py -u $unit -S $Scenario \
                       -t $Transport -p $MessageEncoding \
                       -U $appserverUrls -d $sigbench_run_duration \
                       $groupTypeOp -ms $ms -i $interval \
                       -c $configPath $maxConnectionOption \
-                      -s $settings \
+                      -s $settings $connectionTypeOption \
                       $toleratedConnDropCountOp $toleratedConnDropPercentageOp $toleratedMaxLatencyPercentageOp
-  if [ "$AspNetSignalR" == "true" ]
-  then
-    #TODO: Hard replacement
-    gen4AspNet $configPath
-  fi
   cat $configPath
 }
 
@@ -247,14 +265,19 @@ function RunSendToGroup()
   local appPlanOut=$outputDir/${appPrefix}_appPlan.txt
   local webAppOut=$outputDir/${appPrefix}_webApp.txt
 
+  local maxConnectionOption
+  if [ "$useMaxConnection" == "true" ]
+  then
+    maxConnectionOption="-m"
+  fi
   local startSeconds=$SECONDS
 
   if [ "$AspNetSignalR" != "true" ]
   then
     cd $ScriptWorkingDir
-    appserverUrls=$(get_reduced_appserverUrl $unit)
+    appserverUrls=$(get_reduced_appserverUrl $unit $Scenario)
   else
-    createWebApp $unit $appPrefix "$connectionString" $serverUrlOut $appPlanOut $webAppOut
+    createWebApp $unit $appPrefix "$connectionString" $serverUrlOut $appPlanOut $webAppOut $Scenario
     if [ -e $serverUrlOut ]
     then
       appserverUrls=`cat $serverUrlOut`
@@ -267,7 +290,7 @@ function RunSendToGroup()
 
   cd $PluginScriptWorkingDir
   local config_path=$outputDir/${tag}_${Scenario}_${Transport}_${MessageEncoding}.config
-  GenBenchmarkConfig $unit $Scenario $Transport $MessageEncoding $appserverUrls $groupType $config_path
+  GenBenchmarkConfig $unit $Scenario $Transport $MessageEncoding $appserverUrls $groupType $config_path "$connectionString" None
   local connection=`python3 get_sending_connection.py -g $groupType -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q totalConnections $maxConnectionOption`
   local concurrentConnection=`python3 get_sending_connection.py -g $groupType -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q concurrentConnection $maxConnectionOption`
   local send=`python3 get_sending_connection.py -g $groupType -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q sendingSteps $maxConnectionOption`
@@ -295,6 +318,11 @@ function RunSendToClient()
   local unit=$9
   local msgSize=${10}
   local appserverUrls
+  local maxConnectionOption
+  if [ "$useMaxConnection" == "true" ]
+  then
+    maxConnectionOption="-m"
+  fi
 
   local appPrefix="aspnetwebapp"
   local serverUrlOut=$outputDir/${appPrefix}.txt
@@ -304,9 +332,9 @@ function RunSendToClient()
   if [ "$AspNetSignalR" != "true" ]
   then
     cd $ScriptWorkingDir
-    appserverUrls=$(get_reduced_appserverUrl $unit)
+    appserverUrls=$(get_reduced_appserverUrl $unit $Scenario)
   else
-    createWebApp $unit $appPrefix "$connectionString" $serverUrlOut $appPlanOut $webAppOut
+    createWebApp $unit $appPrefix "$connectionString" $serverUrlOut $appPlanOut $webAppOut $Scenario
     if [ -e $serverUrlOut ]
     then
       appserverUrls=`cat $serverUrlOut`
@@ -319,7 +347,7 @@ function RunSendToClient()
 
   cd $PluginScriptWorkingDir
   local config_path=$outputDir/${tag}_${Scenario}_${Transport}_${MessageEncoding}.config
-  GenBenchmarkConfig $unit $Scenario $Transport $MessageEncoding $appserverUrls None $config_path
+  GenBenchmarkConfig $unit $Scenario $Transport $MessageEncoding $appserverUrls None $config_path "$connectionString" $msgSize
   local connection=`python3 get_sending_connection.py -ms $msgSize -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q totalConnections $maxConnectionOption`
   local concurrentConnection=`python3 get_sending_connection.py -ms $msgSize -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q concurrentConnection $maxConnectionOption`
   local send=`python3 get_sending_connection.py -ms $msgSize -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q sendingSteps $maxConnectionOption`
@@ -346,7 +374,11 @@ function RunCommonScenario()
   local outputDir="$8"
   local unit=$9
   local appserverUrls
-
+  local maxConnectionOption
+  if [ "$useMaxConnection" == "true" ]
+  then
+    maxConnectionOption="-m"
+  fi
   local appPrefix="aspnetwebapp"
   local serverUrlOut=$outputDir/${appPrefix}.txt
   local appPlanOut=$outputDir/${appPrefix}_appPlan.txt
@@ -355,9 +387,9 @@ function RunCommonScenario()
   if [ "$AspNetSignalR" != "true" ]
   then
     cd $ScriptWorkingDir
-    appserverUrls=$(get_reduced_appserverUrl $unit)   
+    appserverUrls=$(get_reduced_appserverUrl $unit $Scenario)
   else
-    createWebApp $unit $appPrefix "$connectionString" $serverUrlOut $appPlanOut $webAppOut
+    createWebApp $unit $appPrefix "$connectionString" $serverUrlOut $appPlanOut $webAppOut $Scenario
     if [ -e $serverUrlOut ]
     then
       appserverUrls=`cat $serverUrlOut`
@@ -370,7 +402,7 @@ function RunCommonScenario()
 
   cd $PluginScriptWorkingDir
   local config_path=$outputDir/${tag}_${Scenario}_${Transport}_${MessageEncoding}.config
-  GenBenchmarkConfig $unit $Scenario $Transport $MessageEncoding $appserverUrls None $config_path
+  GenBenchmarkConfig $unit $Scenario $Transport $MessageEncoding $appserverUrls None $config_path "$connectionString" None
   local connection=`python3 get_sending_connection.py -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q totalConnections $maxConnectionOption`
   local concurrentConnection=`python3 get_sending_connection.py -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q concurrentConnection $maxConnectionOption`
   local send=`python3 get_sending_connection.py -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q sendingSteps $maxConnectionOption`
@@ -709,6 +741,68 @@ enable_exit_immediately_when_fail()
   set -e
 }
 
+try_catch_netstat_when_server_conn_drop()
+{
+  local user=$1
+  local passwd="$2"
+  local connectionString="$3"
+  local netstat_check_file="netstat_check.sh"
+  local remote_netstat_log="netstat.log"
+  local asrs_endpoint=`echo "$connectionString"|awk -F \; '{print $1}'|awk -F = '{print $2}'`
+cat << EOF > $netstat_check_file
+#!/bin/bash
+if [ -e \$remote_netstat_log ]
+then
+  rm \$remote_netstat_log
+fi
+
+appserver_log=`find . -iname "appserver.log"`
+if [ "\$appserver_log" == "" ]
+then
+  exit 0
+fi
+
+while [ true ]
+do
+  conn_drop=`grep "service was dropped" \$appserver_log`
+  if [ "\$conn_drop" != "" ]
+  then
+     date_time=\`date --iso-8601='seconds'\`
+     echo "\${date_time} " >> $remote_netstat_log
+     echo "\$conn_drop" >> $remote_netstat_log
+     curl -vvv $asrs_endpoint >> $remote_netstat_log
+     echo "------------------" >> $remote_netstat_log
+     curl -vvv http://www.bing.com >> $remote_netstat_log
+  fi
+  sleep 1
+done
+EOF
+  local i
+  for i in `python extract_ip.py -i $PrivateIps -q appserverList`
+  do
+    sshpass -p $passwd scp -o StrictHostKeyChecking=no -o LogLevel=ERROR $netstat_check_file $user@${i}:/home/$user/
+    sshpass -p $passwd ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $user@${i} "chmod +x $netstat_check_file"
+    sshpass -p $passwd ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $user@${i} "nohup ./$netstat_check_file &"
+  done
+}
+
+fetch_netstat_for_server_conn_drop()
+{
+  local user=$1
+  local passwd="$2"
+  local outputDir=$3
+  local i
+  local remote_netstat_log="netstat.log"
+  for i in `python extract_ip.py -i $PrivateIps -q appserverList`
+  do
+    local netstatLogPath=`sshpass -p $passwd ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $user@${i} "find . -iname $remote_netstat_log"`
+    if [ "$netstatLogPath" != "" ]
+    then
+      sshpass -p $passwd scp -o StrictHostKeyChecking=no -o LogLevel=ERROR $user@${i}:$netstatLogPath $outputDir/appserver_netstat_${i}.txt
+    fi
+  done
+}
+
 start_collect_slaves_appserver_top()
 {
   local user=$1
@@ -821,6 +915,7 @@ function run_command() {
   local outputDir="$4"
   local configPath=$5
   local unit=$6
+  local notStartAppServer=$7
 
   cd $ScriptWorkingDir
   local master=`python extract_ip.py -i $PrivateIps -q master`
@@ -858,6 +953,7 @@ EOF
   sshpass -p ${passwd} ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR ${user}@${master} "./$remoteCmd"
   disable_exit_immediately_when_fail
   start_collect_slaves_appserver_top ${user} $passwd ${outputDir}
+  try_catch_netstat_when_server_conn_drop ${user} $passwd "$connectionString"
   cd $CommandWorkingDir
   # "never stop app server" is used for long run stress test
   local neverStopAppServerOp
@@ -878,7 +974,8 @@ EOF
          --BenchmarkConfiguration="$configPath" \
          --BenchmarkConfigurationTargetPath="/home/${user}/signalr.yaml" \
          --AzureSignalRConnectionString="$connectionString" \
-         --AppserverLogDirectory="${outputDir}" --AppServerCount=$appserverInUse $neverStopAppServerOp
+         --AppserverLogDirectory="${outputDir}" \
+         --AppServerCount=$appserverInUse --NotStartAppServer=$notStartAppServer $neverStopAppServerOp
   else
     dotnet run -- --RpcPort=5555 --SlaveList="$slaves" --MasterHostname="$master" \
                --Username=$user --Password=$passwd \
@@ -899,6 +996,7 @@ EOF
     sshpass -p $passwd ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR ${user}@${master} "find /home/${user}/master -iname counters.txt"
   fi
   copy_log_from_slaves_master ${user} $passwd ${outputDir}
+  fetch_netstat_for_server_conn_drop ${user} $passwd ${outputDir}
   enable_exit_immediately_when_fail
 }
 
