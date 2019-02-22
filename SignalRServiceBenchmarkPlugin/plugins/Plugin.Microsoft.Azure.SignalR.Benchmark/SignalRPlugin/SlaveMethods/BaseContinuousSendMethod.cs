@@ -90,9 +90,19 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
             StatisticsCollector statisticsCollector
             )
         {
-            await connection.SendAsync(callbackMethod, payload);
-            // Update statistics
-            SignalRUtils.RecordSend(payload, statisticsCollector);
+            try
+            {
+                using (var c = new CancellationTokenSource(TimeSpan.FromSeconds(60)))
+                {
+                    await connection.SendAsync(callbackMethod, payload, c.Token);
+                }
+                // Update statistics
+                SignalRUtils.RecordSend(payload, statisticsCollector);
+            }
+            catch (Exception e)
+            {
+                Log.Error($"Fail to send message for {e.ToString()}");
+            }
         }
 
         protected IDictionary<string, object> GenCommonPayload(IDictionary<string, object> data)
