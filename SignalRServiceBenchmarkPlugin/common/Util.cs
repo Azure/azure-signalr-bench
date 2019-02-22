@@ -148,29 +148,36 @@ namespace Common
             var left = source.Count;
             if (nextBatch <= left)
             {
-                var tasks = new List<Task>(left);
-                var i = 0;
-                do
+                try
                 {
-                    for (var j = 0; j < nextBatch; j++)
+                    var tasks = new List<Task>(left);
+                    var i = 0;
+                    do
                     {
-                        var index = i + j;
-                        var item = source[index];
-                        tasks.Add(Task.Run(async () =>
+                        for (var j = 0; j < nextBatch; j++)
                         {
-                            await f(item);
-                        }));
-                    }
+                            var index = i + j;
+                            var item = source[index];
+                            tasks.Add(Task.Run(async () =>
+                            {
+                                await f(item);
+                            }));
+                        }
 
-                    await Task.Delay(TimeSpan.FromMilliseconds(milliseconds));
-                    i += nextBatch;
-                    left = left - nextBatch;
-                    if (left < nextBatch)
-                    {
-                        nextBatch = left;
-                    }
-                } while (left > 0);
-                await Task.WhenAll(tasks);
+                        await Task.Delay(TimeSpan.FromMilliseconds(milliseconds));
+                        i += nextBatch;
+                        left = left - nextBatch;
+                        if (left < nextBatch)
+                        {
+                            nextBatch = left;
+                        }
+                    } while (left > 0);
+                    await Task.WhenAll(tasks).OrTimeout();
+                }
+                catch (Exception e)
+                {
+                    Log.Error($"Fail in LowPressBatchProcess: {e.Message}");
+                }
             }
         }
 
