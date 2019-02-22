@@ -4,7 +4,7 @@ others={1:2, 2:2, 5:2, 10:2, 20:3, 50:10, 100:20}
 echo=others
 sendToClient=others
 sendToGroup=others
-broadcast=others
+broadcast={1:2, 2:2, 5:2, 10:2, 20:2, 50:2, 100:2}
 
 def unit1_appserver(s):
    return s[1]

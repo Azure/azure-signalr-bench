@@ -30,7 +30,7 @@ function run_command_core()
   then
     notStartAppServer=1
   fi
-  run_command $user $passwd $connectionString $outputDir $config_path $unit $notStartAppServer
+  run_command $user $passwd $connectionString $outputDir $config_path $unit $notStartAppServer $Scenario
   cd $ScriptWorkingDir
   #### generate the connection configuration for HTML ####
 cat << EOF > configs/cmd_4_${MessageEncoding}_${Scenario}_${tag}_${Transport}
@@ -70,7 +70,7 @@ function get_reduced_appserverCount()
     local limitedAppserver
     if [ "$AspNetSignalR" != "true" ]
     then
-      limitedAppserver=`python get_appserver_count.py -u $unit`
+      limitedAppserver=`python get_appserver_count.py -u $unit -s $scenario`
     else
       limitedAppserver=`python get_appserver_count.py -u $unit -q webappserver -s $scenario`
     fi
@@ -916,6 +916,7 @@ function run_command() {
   local configPath=$5
   local unit=$6
   local notStartAppServer=$7
+  local scenario=$8
 
   cd $ScriptWorkingDir
   local master=`python extract_ip.py -i $PrivateIps -q master`
@@ -924,7 +925,7 @@ function run_command() {
   local slaveDir=$CommandWorkingDir/slave
   if [ "$AspNetSignalR" != "true" ]
   then
-    local appserverInUse=$(get_reduced_appserverCount $unit)
+    local appserverInUse=$(get_reduced_appserverCount $unit $scenario)
     local appserver=`python extract_ip.py -i $PrivateIps -q appserver -c $appserverInUse`
     local appserverDir=$CommandWorkingDir/appserver
     mkdir -p $appserverDir
