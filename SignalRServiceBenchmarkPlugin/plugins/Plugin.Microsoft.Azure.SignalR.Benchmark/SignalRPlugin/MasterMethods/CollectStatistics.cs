@@ -80,7 +80,13 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
             string oneLineRecord = Regex.Replace(record.ToString(), @"\s+", "");
             oneLineRecord = Regex.Replace(oneLineRecord, @"\t|\n|\r", "");
             oneLineRecord += Environment.NewLine;
-            File.AppendAllText(path, oneLineRecord);
+            lock(this)
+            {
+                using (StreamWriter sw = new StreamWriter(path, true))
+                {
+                    sw.Write(oneLineRecord);
+                }
+            }
         }
     }
 }

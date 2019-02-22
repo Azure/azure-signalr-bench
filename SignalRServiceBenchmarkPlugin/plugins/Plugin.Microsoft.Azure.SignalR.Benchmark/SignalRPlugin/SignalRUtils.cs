@@ -156,7 +156,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
 
             try
             {
-                using (var c = new CancellationTokenSource(TimeSpan.FromSeconds(60)))
+                using (var c = new CancellationTokenSource(TimeSpan.FromSeconds(5)))
                 {
                     await package.Connection.StartAsync(c.Token);
                 }
