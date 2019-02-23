@@ -50,7 +50,13 @@ namespace Common
     {
         public static void CreateLogger(string directory, string name, LogTargetEnum logTarget)
         {
-            switch(logTarget)
+            // remove history logs
+            foreach (string f in Directory.EnumerateFiles(directory, name.Replace(".", "*")))
+            {
+                Console.WriteLine($"removing file {f}");
+                File.Delete(f);
+            }
+            switch (logTarget)
             {
                 
                 case LogTargetEnum.File:
@@ -73,7 +79,6 @@ namespace Common
                     .WriteTo.File(Path.Combine(directory, name), rollingInterval: RollingInterval.Day)
                     .CreateLogger();
                     break;
-
             }
         }
 
