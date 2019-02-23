@@ -48,7 +48,7 @@ scenario:broadcast,transport:Websockets:
   max_connection: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
   base_step: [1, 1, 1, 1, 1, 1, 1]
   step: [1, 1, 1, 1, 1, 1, 1]
-  step_length: [2, 10, 10, 10, 10, 10, 10]
+  step_length: [10, 10, 10, 10, 10, 10, 10]
   concurrent: [100, 100, 100, 200, 1000, 2500, 5000]
 
 
