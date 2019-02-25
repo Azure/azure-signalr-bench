@@ -19,8 +19,11 @@ namespace DeployWebApp
         protected IDictionary<string, PricingTier> _priceTierMapper;
         protected PricingTier _targetPricingTier;
         protected IResourceGroup _resourceGroup;
-        protected int _webAppCount;
+        //protected int _webAppCount;
         protected int _appPlanCount;
+        protected int _appInstanceCount;
+        protected int _scaleOut;
+        protected static int MAX_SCALE_OUT = 10;
 
         public WebAppManagementBase(ArgsOption argsOption)
         {
@@ -33,13 +36,54 @@ namespace DeployWebApp
                 { "PremiumP1v2", PricingTier.PremiumP1v2},
                 { "PremiumP2v2", PricingTier.PremiumP2v2}
             };
+            _appInstanceCount = _argsOption.WebappCount;
+            var grp = _argsOption.WebappCount / MAX_SCALE_OUT;
+            var left = _argsOption.WebappCount % MAX_SCALE_OUT;
+            if (grp == 0)
+            {
+                // less than 10 instance
+                _appPlanCount = 1;
+                _scaleOut = _appInstanceCount;
+            }
+            else if (left == 0)
+            {
+                _appPlanCount = grp;
+                _scaleOut = MAX_SCALE_OUT;
+            }
+            else
+            {
+                if (_argsOption.WebappCount % 7 == 0)
+                {
+                    _appPlanCount = _argsOption.WebappCount / 7;
+                    _scaleOut = 7;
+                }
+                else if (_argsOption.WebappCount % 5 == 0)
+                {
+                    _appPlanCount = _argsOption.WebappCount / 5;
+                    _scaleOut = 5;
+                }
+                else if (_argsOption.WebappCount % 3 == 0)
+                {
+                    _appPlanCount = _argsOption.WebappCount / 3;
+                    _scaleOut = 3;
+                }
+                else if (_argsOption.WebappCount % 2 == 0)
+                {
+                    _appPlanCount = _argsOption.WebappCount / 2;
+                    _scaleOut = 2;
+                }
+                else
+                {
+                    throw new InvalidDataException("The web app instance count should be divided by 2 or 3 or 5 or 7");
+                }
+            }
         }
 
         protected List<string> GenerateAppPlanNameList()
         {
             var rootTimestamp = DateTime.Now.ToString("yyyyMMddHHmmss");
             var webappNameList = new List<string>();
-            for (var i = 0; i < _argsOption.WebappCount; i++)
+            for (var i = 0; i < _appPlanCount; i++)
             {
                 var name = _argsOption.WebAppNamePrefix + $"{rootTimestamp}{i}";
                 webappNameList.Add(name);
@@ -154,7 +198,7 @@ namespace DeployWebApp
         {
             string appServicePlanIdList = "";
 
-            for (var i = 0; i < _argsOption.WebappCount; i++)
+            for (var i = 0; i < _appPlanCount; i++)
             {
                 var name = webappNameList[i];
                 var id = _azure.AppServices.AppServicePlans.GetByResourceGroup(_argsOption.GroupName, name).Id;
@@ -181,7 +225,7 @@ namespace DeployWebApp
         {
             string webappIdList = "";
 
-            for (var i = 0; i < _argsOption.WebappCount; i++)
+            for (var i = 0; i < _appPlanCount; i++)
             {
                 var name = webappNameList[i];
                 var id = _azure.WebApps.GetByResourceGroup(_argsOption.GroupName, name).Id;
@@ -208,7 +252,7 @@ namespace DeployWebApp
         {
             if (_argsOption.OutputFile == null)
             {
-                for (var i = 0; i < _argsOption.WebappCount; i++)
+                for (var i = 0; i < _appPlanCount; i++)
                 {
                     Console.WriteLine($"https://{webappNameList[i]}.azurewebsites.net");
                 }
@@ -223,13 +267,13 @@ namespace DeployWebApp
                 using (var writer = new StreamWriter(_argsOption.OutputFile, true))
                 {
                     string result = "";
-                    for (var i = 0; i < _argsOption.WebappCount; i++)
+                    for (var i = 0; i < _appPlanCount; i++)
                     {
                         if (i == 0)
                             result = $"https://{webappNameList[i]}.azurewebsites.net/{_argsOption.HubName}";
                         else
                             result = result + $"https://{webappNameList[i]}.azurewebsites.net/{_argsOption.HubName}";
-                        if (i + 1 < _argsOption.WebappCount)
+                        if (i + 1 < _appPlanCount)
                         {
                             result = result + ",";
                         }
@@ -271,6 +315,7 @@ namespace DeployWebApp
             string region,
             string groupName,
             PricingTier pricingTier,
+            int scaleOut,
             Microsoft.Azure.Management.AppService.Fluent.OperatingSystem os) package)
         {
             var funcName = "CreateAppPlanCoreAsync";
@@ -285,6 +330,7 @@ namespace DeployWebApp
                             .WithExistingResourceGroup(package.groupName)
                             .WithPricingTier(package.pricingTier)
                             .WithOperatingSystem(package.os)
+                            .WithCapacity(package.scaleOut)
                             .CreateAsync(cts.Token);
                     Console.WriteLine($"{DateTime.Now.ToString("yyyyMMddHHmmss")} Successfully {funcName} for {package.name}");
                 }
@@ -312,6 +358,7 @@ namespace DeployWebApp
                     await package.azure.WebApps.Define(package.name)
                      .WithExistingWindowsPlan(package.appServicePlan)
                      .WithExistingResourceGroup(package.resourceGroup)
+                     .WithWebSocketsEnabled(true)
                      .WithWebAppAlwaysOn(true)
                      .DefineSourceControl()
                      .WithPublicGitRepository(package.githubRepo)

@@ -20,6 +20,7 @@ namespace DeployWebApp
             string region,
             string groupName,
             PricingTier pricingTier,
+            int scaleOut,
             Microsoft.Azure.Management.AppService.Fluent.OperatingSystem os) package)
         {
             var funcName = "CreateAppPlan";
@@ -49,6 +50,18 @@ namespace DeployWebApp
             catch (Exception e)
             {
                 Console.WriteLine($"{DateTime.Now.ToString("yyyyMMddHHmmss")} {funcName} failed {package.name} for {e.ToString()}");
+            }
+        }
+
+        public void GetAppPlanInformation()
+        {
+            Login();
+            var iAppPlan = _azure.AppServices.AppServicePlans.GetByResourceGroup(_argsOption.GroupName, _argsOption.AppPlanName);
+            if (iAppPlan != null)
+            {
+                Console.WriteLine($"number of webapps: {iAppPlan.NumberOfWebApps}");
+                Console.WriteLine($"capacity: {iAppPlan.Capacity}");
+                Console.WriteLine($"max instance: {iAppPlan.MaxInstances}");
             }
         }
 
@@ -89,6 +102,7 @@ namespace DeployWebApp
                                         region: _argsOption.Location,
                                         groupName: _argsOption.GroupName,
                                         pricingTier: _targetPricingTier,
+                                        scaleOut: _scaleOut,
                                         os: Microsoft.Azure.Management.AppService.Fluent.OperatingSystem.Windows)).ToList();
                 await BatchProcess(packages, CreateAppPlan, _argsOption.ConcurrentCountOfServicePlan);
                 retry++;

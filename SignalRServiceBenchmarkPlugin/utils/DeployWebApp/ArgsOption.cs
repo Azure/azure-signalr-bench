@@ -37,7 +37,7 @@ namespace DeployWebApp
         [Option("webappNamePrefix", Required = false, Default = "signalrwebapp", HelpText = "Specify web app name")]
         public string WebAppNamePrefix { get; set; }
 
-        [Option("webappCount", Required = false, Default = 1, HelpText = "Webapp count")]
+        [Option("webappCount", Required = false, Default = 1, HelpText = "Webapp instance count")]
         public int WebappCount { get; set; }
 
         [Option("removeExistingResourceGroup", Required = false, Default = 0, HelpText = "Remove existing resource group")]
@@ -65,5 +65,8 @@ namespace DeployWebApp
 
         [Option("priceTier", Required = false, Default = "StandardS3", HelpText = "Specify the price tier you want to run <StandardS1|StandardS2|StandardS3|PremiumP1v2|PremiumP1v2>, default is StandardS3")]
         public string PriceTier { get; set; }
+
+        [Option("appPlanName", Required = false, Default = "myAppPlan", HelpText = "Specify the app plan name you want to query")]
+        public string AppPlanName { get; set; }
     }
 }
