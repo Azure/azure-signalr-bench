@@ -201,8 +201,12 @@ namespace DeployWebApp
             for (var i = 0; i < _appPlanCount; i++)
             {
                 var name = webappNameList[i];
-                var id = _azure.AppServices.AppServicePlans.GetByResourceGroup(_argsOption.GroupName, name).Id;
-                appServicePlanIdList += id + Environment.NewLine;
+                var appPlan = _azure.AppServices.AppServicePlans.GetByResourceGroup(_argsOption.GroupName, name);
+                if (appPlan != null)
+                {
+                    var id = appPlan.Id;
+                    appServicePlanIdList += id + Environment.NewLine;
+                }
             }
             if (_argsOption.AppServicePlanIdOutputFile != null)
             {
@@ -228,8 +232,12 @@ namespace DeployWebApp
             for (var i = 0; i < _appPlanCount; i++)
             {
                 var name = webappNameList[i];
-                var id = _azure.WebApps.GetByResourceGroup(_argsOption.GroupName, name).Id;
-                webappIdList += id + Environment.NewLine;
+                var webApp = _azure.WebApps.GetByResourceGroup(_argsOption.GroupName, name);
+                if (webApp != null)
+                {
+                    var id = webApp.Id;
+                    webappIdList += id + Environment.NewLine;
+                }
             }
             if (_argsOption.WebAppIdOutputFile != null)
             {
@@ -254,7 +262,11 @@ namespace DeployWebApp
             {
                 for (var i = 0; i < _appPlanCount; i++)
                 {
-                    Console.WriteLine($"https://{webappNameList[i]}.azurewebsites.net");
+                    var webApp = _azure.WebApps.GetByResourceGroup(_argsOption.GroupName, webappNameList[i]);
+                    if (webApp != null)
+                    {
+                        Console.WriteLine($"https://{webappNameList[i]}.azurewebsites.net");
+                    }
                 }
             }
             else
@@ -269,13 +281,17 @@ namespace DeployWebApp
                     string result = "";
                     for (var i = 0; i < _appPlanCount; i++)
                     {
-                        if (i == 0)
-                            result = $"https://{webappNameList[i]}.azurewebsites.net/{_argsOption.HubName}";
-                        else
-                            result = result + $"https://{webappNameList[i]}.azurewebsites.net/{_argsOption.HubName}";
-                        if (i + 1 < _appPlanCount)
+                        var webApp = _azure.WebApps.GetByResourceGroup(_argsOption.GroupName, webappNameList[i]);
+                        if (webApp != null)
                         {
-                            result = result + ",";
+                            if (i == 0)
+                                result = $"https://{webappNameList[i]}.azurewebsites.net/{_argsOption.HubName}";
+                            else
+                                result = result + $"https://{webappNameList[i]}.azurewebsites.net/{_argsOption.HubName}";
+                            if (i + 1 < _appPlanCount)
+                            {
+                                result = result + ",";
+                            }
                         }
                     }
                     writer.WriteLine(result);
@@ -355,19 +371,26 @@ namespace DeployWebApp
                 var webapp = package.azure.WebApps.GetByResourceGroup(package.resourceGroup.Name, package.name);
                 if (webapp == null)
                 {
-                    await package.azure.WebApps.Define(package.name)
-                     .WithExistingWindowsPlan(package.appServicePlan)
-                     .WithExistingResourceGroup(package.resourceGroup)
-                     .WithWebSocketsEnabled(true)
-                     .WithWebAppAlwaysOn(true)
-                     .DefineSourceControl()
-                     .WithPublicGitRepository(package.githubRepo)
-                     .WithBranch("master")
-                     .Attach()
-                     .WithConnectionString("Azure:SignalR:ConnectionString", package.connectionString,
-                     Microsoft.Azure.Management.AppService.Fluent.Models.ConnectionStringType.Custom)
-                     .CreateAsync(cts.Token);
-                    Console.WriteLine($"{DateTime.Now.ToString("yyyyMMddHHmmss")} Successfully {funcName} for {package.name}");
+                    if (package.appServicePlan != null)
+                    {
+                        await package.azure.WebApps.Define(package.name)
+                                                   .WithExistingWindowsPlan(package.appServicePlan)
+                                                   .WithExistingResourceGroup(package.resourceGroup)
+                                                   .WithWebSocketsEnabled(true)
+                                                   .WithWebAppAlwaysOn(true)
+                                                   .DefineSourceControl()
+                                                   .WithPublicGitRepository(package.githubRepo)
+                                                   .WithBranch("master")
+                                                   .Attach()
+                                                   .WithConnectionString("Azure:SignalR:ConnectionString", package.connectionString,
+                                                    Microsoft.Azure.Management.AppService.Fluent.Models.ConnectionStringType.Custom)
+                                                   .CreateAsync(cts.Token);
+                        Console.WriteLine($"{DateTime.Now.ToString("yyyyMMddHHmmss")} Successfully {funcName} for {package.name}");
+                    }
+                    else
+                    {
+                        Console.WriteLine($"{DateTime.Now.ToString("yyyyMMddHHmmss")} Fail to create {funcName} for {package.name} because app plan is not available");
+                    }
                 }
                 else
                 {

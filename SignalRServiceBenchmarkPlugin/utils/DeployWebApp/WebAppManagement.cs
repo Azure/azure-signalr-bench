@@ -105,6 +105,10 @@ namespace DeployWebApp
                                         scaleOut: _scaleOut,
                                         os: Microsoft.Azure.Management.AppService.Fluent.OperatingSystem.Windows)).ToList();
                 await BatchProcess(packages, CreateAppPlan, _argsOption.ConcurrentCountOfServicePlan);
+                if (retry > 0)
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(5));
+                }
                 retry++;
             } while (!isAllServicePlanCreated(webappNameList, groupName) && retry < maxRetry);
 
@@ -125,6 +129,10 @@ namespace DeployWebApp
                                          connectionString: _argsOption.ConnectionString,
                                          gitHubRepo: _argsOption.GitHubRepo)).ToList();
                 await BatchProcess(packages, CreateWebApp, _argsOption.ConcurrentCountOfWebApp);
+                if (retry > 0)
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(5));
+                }
                 retry++;
             } while (!isAllWebAppCreated(webappNameList, groupName) && retry < maxRetry);
 
