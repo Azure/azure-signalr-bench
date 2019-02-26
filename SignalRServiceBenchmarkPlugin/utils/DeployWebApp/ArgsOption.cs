@@ -68,5 +68,8 @@ namespace DeployWebApp
 
         [Option("appPlanName", Required = false, Default = "myAppPlan", HelpText = "Specify the app plan name you want to query")]
         public string AppPlanName { get; set; }
+
+        [Option("serverConnectionCount", Required = false, Default = "15", HelpText = "Specify the server connection count")]
+        public string ServerConnectionCount { get; set; }
     }
 }

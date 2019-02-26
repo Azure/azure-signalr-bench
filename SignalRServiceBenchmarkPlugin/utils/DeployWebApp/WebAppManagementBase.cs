@@ -359,7 +359,8 @@ namespace DeployWebApp
             IAppServicePlan appServicePlan,
             IResourceGroup resourceGroup,
             string connectionString,
-            string githubRepo) package)
+            string githubRepo,
+            string serverConnectionCount) package)
         {
             var funcName = "CreateWebAppCoreAsync";
             using (var cts = new CancellationTokenSource(TimeSpan.FromHours(1)))
@@ -380,6 +381,7 @@ namespace DeployWebApp
                                                    .Attach()
                                                    .WithConnectionString("Azure:SignalR:ConnectionString", package.connectionString,
                                                     Microsoft.Azure.Management.AppService.Fluent.Models.ConnectionStringType.Custom)
+                                                   .WithAppSetting("ConnectionCount", package.serverConnectionCount)
                                                    .CreateAsync(cts.Token);
                         Console.WriteLine($"{DateTime.Now.ToString("yyyyMMddHHmmss")} Successfully {funcName} for {package.name}");
                     }

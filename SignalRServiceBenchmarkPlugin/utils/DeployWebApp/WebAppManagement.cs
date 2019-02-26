@@ -40,7 +40,8 @@ namespace DeployWebApp
             IAppServicePlan appServicePlan,
             IResourceGroup resourceGroup,
             string connectionString,
-            string githubRepo) package)
+            string githubRepo,
+            string serverConnectionCount) package)
         {
             var funcName = "CreateWebApp";
             try
@@ -127,7 +128,8 @@ namespace DeployWebApp
                                          appServer: _azure.AppServices.AppServicePlans.GetByResourceGroup(_argsOption.GroupName, webappNameList[i]),
                                          resourceGroup: _resourceGroup,
                                          connectionString: _argsOption.ConnectionString,
-                                         gitHubRepo: _argsOption.GitHubRepo)).ToList();
+                                         gitHubRepo: _argsOption.GitHubRepo,
+                                         serverConnectionCount: _argsOption.ServerConnectionCount)).ToList();
                 await BatchProcess(packages, CreateWebApp, _argsOption.ConcurrentCountOfWebApp);
                 if (retry > 0)
                 {
