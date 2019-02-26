@@ -284,14 +284,10 @@ namespace DeployWebApp
                         var webApp = _azure.WebApps.GetByResourceGroup(_argsOption.GroupName, webappNameList[i]);
                         if (webApp != null)
                         {
-                            if (i == 0)
+                            if (result.Length == 0)
                                 result = $"https://{webappNameList[i]}.azurewebsites.net/{_argsOption.HubName}";
                             else
-                                result = result + $"https://{webappNameList[i]}.azurewebsites.net/{_argsOption.HubName}";
-                            if (i + 1 < _appPlanCount)
-                            {
-                                result = result + ",";
-                            }
+                                result = result + "," + $"https://{webappNameList[i]}.azurewebsites.net/{_argsOption.HubName}";
                         }
                     }
                     writer.WriteLine(result);
