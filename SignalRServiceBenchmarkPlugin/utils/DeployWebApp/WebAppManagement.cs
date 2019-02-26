@@ -108,7 +108,7 @@ namespace DeployWebApp
                 await BatchProcess(packages, CreateAppPlan, _argsOption.ConcurrentCountOfServicePlan);
                 if (retry > 0)
                 {
-                    await Task.Delay(TimeSpan.FromSeconds(5));
+                    await Task.Delay(TimeSpan.FromSeconds(60));
                 }
                 retry++;
             } while (!isAllServicePlanCreated(webappNameList, groupName) && retry < maxRetry);
