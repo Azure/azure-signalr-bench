@@ -14,13 +14,29 @@ namespace DeployWebApp
         {
         }
 
+        protected static async Task ScaleOutAppPlanAsync(
+            (IAzure azure,
+            string name,
+            string groupName,
+            int scaleOut) package)
+        {
+            var funcName = "ScaleOutAppPlanAsync";
+            try
+            {
+                await ScaleOutAppPlanCoreAsync(package);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"{DateTime.Now.ToString("yyyyMMddHHmmss")} {funcName} failed {package.name} for {e.ToString()}");
+            }
+
+        }
         protected static async Task CreateAppPlan(
             (IAzure azure,
             string name,
             string region,
             string groupName,
             PricingTier pricingTier,
-            int scaleOut,
             Microsoft.Azure.Management.AppService.Fluent.OperatingSystem os) package)
         {
             var funcName = "CreateAppPlan";
@@ -103,7 +119,6 @@ namespace DeployWebApp
                                         region: _argsOption.Location,
                                         groupName: _argsOption.GroupName,
                                         pricingTier: _targetPricingTier,
-                                        scaleOut: _scaleOut,
                                         os: Microsoft.Azure.Management.AppService.Fluent.OperatingSystem.Windows)).ToList();
                 await BatchProcess(packages, CreateAppPlan, _argsOption.ConcurrentCountOfServicePlan);
                 if (retry > 0)
@@ -139,8 +154,30 @@ namespace DeployWebApp
             } while (!isAllWebAppCreated(webappNameList, groupName) && retry < maxRetry);
 
             sw.Stop();
-            Console.WriteLine($"it takes {sw.ElapsedMilliseconds} ms");
+            Console.WriteLine($"it takes {sw.ElapsedMilliseconds} ms to create webapp");
 
+            sw.Start();
+            //scale outwebapp
+            retry = 0;
+            do
+            {
+                Console.WriteLine($"{DateTime.Now.ToString("yyyyMMddHHmmss")} {retry} : scale out app plan");
+                var packages = (from i in Enumerable.Range(0, webappNameList.Count)
+                                where _azure.AppServices.AppServicePlans.GetByResourceGroup(groupName, webappNameList[i]) != null
+                                select (azure: _azure,
+                                        name: webappNameList[i],
+                                        groupName: _argsOption.GroupName,
+                                        scaleOut: _scaleOut)).ToList();
+                await BatchProcess(packages, ScaleOutAppPlanAsync, _argsOption.ConcurrentCountOfServicePlan);
+                if (retry > 0)
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(10));
+                }
+                retry++;
+            } while (!isAllServicePlanScaleOut(webappNameList, groupName) && retry < maxRetry);
+
+            sw.Stop();
+            Console.WriteLine($"it takes {sw.ElapsedMilliseconds} ms to scale out");
             // output app service plan Id
             DumpAppServicePlanId(webappNameList);
             // output web app Id

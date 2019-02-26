@@ -37,45 +37,19 @@ namespace DeployWebApp
                 { "PremiumP2v2", PricingTier.PremiumP2v2}
             };
             _appInstanceCount = _argsOption.WebappCount;
-            var grp = _argsOption.WebappCount / MAX_SCALE_OUT;
-            var left = _argsOption.WebappCount % MAX_SCALE_OUT;
-            if (grp == 0)
+            var i = MAX_SCALE_OUT;
+            for (; i > 1; i--)
             {
-                // less than 10 instance
-                _appPlanCount = 1;
-                _scaleOut = _appInstanceCount;
+                if (_argsOption.WebappCount % i == 0)
+                {
+                    _appPlanCount = _argsOption.WebappCount / i;
+                    _scaleOut = i;
+                    break;
+                }
             }
-            else if (left == 0)
+            if (i == 1)
             {
-                _appPlanCount = grp;
-                _scaleOut = MAX_SCALE_OUT;
-            }
-            else
-            {
-                if (_argsOption.WebappCount % 7 == 0)
-                {
-                    _appPlanCount = _argsOption.WebappCount / 7;
-                    _scaleOut = 7;
-                }
-                else if (_argsOption.WebappCount % 5 == 0)
-                {
-                    _appPlanCount = _argsOption.WebappCount / 5;
-                    _scaleOut = 5;
-                }
-                else if (_argsOption.WebappCount % 3 == 0)
-                {
-                    _appPlanCount = _argsOption.WebappCount / 3;
-                    _scaleOut = 3;
-                }
-                else if (_argsOption.WebappCount % 2 == 0)
-                {
-                    _appPlanCount = _argsOption.WebappCount / 2;
-                    _scaleOut = 2;
-                }
-                else
-                {
-                    throw new InvalidDataException("The web app instance count should be divided by 2 or 3 or 5 or 7");
-                }
+                throw new InvalidDataException("The web app instance count should be divided by 2 or 3 or 5 or 7");
             }
         }
 
@@ -308,6 +282,25 @@ namespace DeployWebApp
             return true;
         }
 
+        protected bool isAllServicePlanScaleOut(List<string> names, string resourceGroup)
+        {
+            foreach (var n in names)
+            {
+                var iAppPlan = _azure.AppServices.AppServicePlans.GetByResourceGroup(resourceGroup, n);
+                if (iAppPlan != null)
+                {
+                    if (iAppPlan.Capacity != _scaleOut)
+                    {
+                        return false;
+                    }
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
         protected bool isAllWebAppCreated(List<string> names, string resourceGroup)
         {
             foreach (var n in names)
@@ -321,13 +314,32 @@ namespace DeployWebApp
             return true;
         }
 
+        protected static async Task ScaleOutAppPlanCoreAsync(
+            (IAzure azure,
+            string name,
+            string groupName,
+            int scaleOut) package)
+        {
+            using (var cts = new CancellationTokenSource(TimeSpan.FromMinutes(2)))
+            {
+                var iAppPlan = package.azure.AppServices.AppServicePlans.GetByResourceGroup(package.groupName, package.name);
+                if (iAppPlan != null)
+                {
+                    if (iAppPlan.Capacity != package.scaleOut)
+                    {
+                        await iAppPlan.Update().WithCapacity(package.scaleOut).ApplyAsync();
+                        Console.WriteLine($"{DateTime.Now.ToString("yyyyMMddHHmmss")} Successfully scale out {package.name} to {package.scaleOut}");
+                    }
+                }
+            }
+        }
+
         protected static async Task CreateAppPlanCoreAsync(
             (IAzure azure,
             string name,
             string region,
             string groupName,
             PricingTier pricingTier,
-            int scaleOut,
             Microsoft.Azure.Management.AppService.Fluent.OperatingSystem os) package)
         {
             var funcName = "CreateAppPlanCoreAsync";
@@ -342,7 +354,7 @@ namespace DeployWebApp
                             .WithExistingResourceGroup(package.groupName)
                             .WithPricingTier(package.pricingTier)
                             .WithOperatingSystem(package.os)
-                            .WithCapacity(package.scaleOut)
+                            //.WithCapacity(package.scaleOut)
                             .CreateAsync(cts.Token);
                     Console.WriteLine($"{DateTime.Now.ToString("yyyyMMddHHmmss")} Successfully {funcName} for {package.name}");
                 }
