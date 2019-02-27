@@ -37,7 +37,7 @@ namespace DeployWebApp
         [Option("webappNamePrefix", Required = false, Default = "signalrwebapp", HelpText = "Specify web app name")]
         public string WebAppNamePrefix { get; set; }
 
-        [Option("webappCount", Required = false, Default = 1, HelpText = "Webapp instance count")]
+        [Option("webappCount", Required = false, Default = 2, HelpText = "Webapp instance count")]
         public int WebappCount { get; set; }
 
         [Option("removeExistingResourceGroup", Required = false, Default = 0, HelpText = "Remove existing resource group")]
