@@ -210,7 +210,7 @@ namespace DeployWebApp
                 {
                     var id = appPlan.Id;
                     var scaleOut = appPlan.Capacity;
-                    appServicePlanScaleOutList += id + " ${scaleOut}" + Environment.NewLine;
+                    appServicePlanScaleOutList += id + $" {scaleOut}" + Environment.NewLine;
                 }
             }
             if (_argsOption.AppServicePlanScaleOutputFile != null)
