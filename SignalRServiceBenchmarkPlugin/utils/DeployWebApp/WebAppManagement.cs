@@ -2,6 +2,7 @@
 using Microsoft.Azure.Management.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
@@ -82,6 +83,50 @@ namespace DeployWebApp
             }
         }
 
+        private async Task CreateAppPlanAsync(List<string> appNameList)
+        {
+            var packages = (from i in Enumerable.Range(0, appNameList.Count)
+                            where _azure.AppServices.AppServicePlans.GetByResourceGroup(_argsOption.GroupName, appNameList[i]) == null
+                            select (azure: _azure,
+                                    name: appNameList[i],
+                                    region: _argsOption.Location,
+                                    groupName: _argsOption.GroupName,
+                                    pricingTier: _targetPricingTier,
+                                    os: Microsoft.Azure.Management.AppService.Fluent.OperatingSystem.Windows)).ToList();
+            Task Process<T>(T p) => BatchProcess(packages, CreateAppPlan, _argsOption.ConcurrentCountOfServicePlan);
+            bool NotReadyCheck<T>(T t) => isAnyServicePlanNotReady(appNameList, _argsOption.GroupName);
+            await RetriableRun(packages, Process, NotReadyCheck, 60, "create app plan");
+        }
+
+        private async Task CreateWebAppAsync(List<string> appNameList)
+        {
+            var packages = (from i in Enumerable.Range(0, appNameList.Count)
+                            where _azure.WebApps.GetByResourceGroup(_argsOption.GroupName, appNameList[i]) == null
+                            select (azure: _azure,
+                                    name: appNameList[i],
+                                    appServer: _azure.AppServices.AppServicePlans.GetByResourceGroup(_argsOption.GroupName, appNameList[i]),
+                                    resourceGroup: _resourceGroup,
+                                    connectionString: _argsOption.ConnectionString,
+                                    gitHubRepo: _argsOption.GitHubRepo,
+                                    serverConnectionCount: _argsOption.ServerConnectionCount)).ToList();
+            Task Process<T>(T p) => BatchProcess(packages, CreateWebApp, _argsOption.ConcurrentCountOfWebApp);
+            bool NotReadyCheck<T>(T t) => isAnyWebAppNotReady(appNameList, _argsOption.GroupName);
+            await RetriableRun(packages, Process, NotReadyCheck, 5, "create webapp");
+        }
+
+        private async Task ScaleOutAppPlan(List<string> appNameList)
+        {
+            var packages = (from i in Enumerable.Range(0, appNameList.Count)
+                            where _azure.AppServices.AppServicePlans.GetByResourceGroup(_argsOption.GroupName, appNameList[i]) != null
+                            select (azure: _azure,
+                                    name: appNameList[i],
+                                    groupName: _argsOption.GroupName,
+                                    scaleOut: _scaleOut)).ToList();
+            Task Process<T>(T p) => BatchProcess(packages, ScaleOutAppPlanAsync, _argsOption.ConcurrentCountOfServicePlan);
+            bool NotReadyCheck<T>(T t) => isAnyServicePlanScaleOutNotReady(appNameList, _argsOption.GroupName);
+            await RetriableRun(packages, Process, NotReadyCheck, 60, "scale out app plan", 5);
+        }
+
         public async Task Deploy()
         {
             Login();
@@ -106,76 +151,19 @@ namespace DeployWebApp
             }
             _targetPricingTier = targetPricingTier;
             var groupName = _argsOption.GroupName;
-            var retry = 0;
-            var maxRetry = 3;
-            // create app service plans
-            do
-            {
-                Console.WriteLine($"{DateTime.Now.ToString("yyyyMMddHHmmss")} {retry} : create app plan");
-                var packages = (from i in Enumerable.Range(0, webappNameList.Count)
-                                where _azure.AppServices.AppServicePlans.GetByResourceGroup(groupName, webappNameList[i]) == null
-                                select (azure: _azure,
-                                        name: webappNameList[i],
-                                        region: _argsOption.Location,
-                                        groupName: _argsOption.GroupName,
-                                        pricingTier: _targetPricingTier,
-                                        os: Microsoft.Azure.Management.AppService.Fluent.OperatingSystem.Windows)).ToList();
-                await BatchProcess(packages, CreateAppPlan, _argsOption.ConcurrentCountOfServicePlan);
-                if (retry > 0)
-                {
-                    await Task.Delay(TimeSpan.FromSeconds(60));
-                }
-                retry++;
-            } while (!isAllServicePlanCreated(webappNameList, groupName) && retry < maxRetry);
 
+            await CreateAppPlanAsync(webappNameList);
             sw.Stop();
             Console.WriteLine($"it takes {sw.ElapsedMilliseconds} ms to create app plan");
 
             sw.Start();
-            // create webapp
-            retry = 0;
-            do
-            {
-                var packages = (from i in Enumerable.Range(0, webappNameList.Count)
-                                 where _azure.WebApps.GetByResourceGroup(groupName, webappNameList[i]) == null
-                                 select (azure: _azure,
-                                         name: webappNameList[i],
-                                         appServer: _azure.AppServices.AppServicePlans.GetByResourceGroup(_argsOption.GroupName, webappNameList[i]),
-                                         resourceGroup: _resourceGroup,
-                                         connectionString: _argsOption.ConnectionString,
-                                         gitHubRepo: _argsOption.GitHubRepo,
-                                         serverConnectionCount: _argsOption.ServerConnectionCount)).ToList();
-                await BatchProcess(packages, CreateWebApp, _argsOption.ConcurrentCountOfWebApp);
-                if (retry > 0)
-                {
-                    await Task.Delay(TimeSpan.FromSeconds(5));
-                }
-                retry++;
-            } while (!isAllWebAppCreated(webappNameList, groupName) && retry < maxRetry);
-
+            await CreateWebAppAsync(webappNameList);
             sw.Stop();
             Console.WriteLine($"it takes {sw.ElapsedMilliseconds} ms to create webapp");
 
             sw.Start();
+            await ScaleOutAppPlan(webappNameList);
             //scale outwebapp
-            retry = 0;
-            do
-            {
-                Console.WriteLine($"{DateTime.Now.ToString("yyyyMMddHHmmss")} {retry} : scale out app plan");
-                var packages = (from i in Enumerable.Range(0, webappNameList.Count)
-                                where _azure.AppServices.AppServicePlans.GetByResourceGroup(groupName, webappNameList[i]) != null
-                                select (azure: _azure,
-                                        name: webappNameList[i],
-                                        groupName: _argsOption.GroupName,
-                                        scaleOut: _scaleOut)).ToList();
-                await BatchProcess(packages, ScaleOutAppPlanAsync, _argsOption.ConcurrentCountOfServicePlan);
-                if (retry > 0)
-                {
-                    await Task.Delay(TimeSpan.FromSeconds(10));
-                }
-                retry++;
-            } while (!isAllServicePlanScaleOut(webappNameList, groupName) && retry < maxRetry);
-
             sw.Stop();
             Console.WriteLine($"it takes {sw.ElapsedMilliseconds} ms to scale out");
             // output app service plan Id

@@ -19,7 +19,6 @@ namespace DeployWebApp
         protected IDictionary<string, PricingTier> _priceTierMapper;
         protected PricingTier _targetPricingTier;
         protected IResourceGroup _resourceGroup;
-        //protected int _webAppCount;
         protected int _appPlanCount;
         protected int _appInstanceCount;
         protected int _scaleOut;
@@ -179,7 +178,8 @@ namespace DeployWebApp
                 if (appPlan != null)
                 {
                     var id = appPlan.Id;
-                    appServicePlanIdList += id + Environment.NewLine;
+                    var scaleOut = appPlan.Capacity;
+                    appServicePlanIdList += id + $" {scaleOut}" + Environment.NewLine;
                 }
             }
             if (_argsOption.AppServicePlanIdOutputFile != null)
@@ -269,49 +269,43 @@ namespace DeployWebApp
             }
         }
 
-        protected bool isAllServicePlanCreated(List<string> names, string resourceGroup)
+        protected bool isAnyServicePlanNotReady(List<string> names, string resourceGroup)
         {
-            foreach (var n in names)
-            {
-                var iAppPlan = _azure.AppServices.AppServicePlans.GetByResourceGroup(resourceGroup, n);
-                if (iAppPlan == null)
-                {
-                    return false;
-                }
-            }
-            return true;
+            return names.Any(n => { return _azure.AppServices.AppServicePlans.GetByResourceGroup(resourceGroup, n) == null; });
         }
 
-        protected bool isAllServicePlanScaleOut(List<string> names, string resourceGroup)
+        protected bool isAnyServicePlanScaleOutNotReady(List<string> names, string resourceGroup)
         {
-            foreach (var n in names)
-            {
-                var iAppPlan = _azure.AppServices.AppServicePlans.GetByResourceGroup(resourceGroup, n);
-                if (iAppPlan != null)
-                {
-                    if (iAppPlan.Capacity != _scaleOut)
-                    {
-                        return false;
-                    }
-                }
-                else
-                {
-                    return false;
-                }
-            }
-            return true;
+            return names.Any(n => {
+                var p = _azure.AppServices.AppServicePlans.GetByResourceGroup(resourceGroup, n);
+                return p != null && p.Capacity != _scaleOut;
+            });
         }
-        protected bool isAllWebAppCreated(List<string> names, string resourceGroup)
+
+        protected bool isAnyWebAppNotReady(List<string> names, string resourceGroup)
         {
-            foreach (var n in names)
+            return names.Any(n => { return _azure.WebApps.GetByResourceGroup(resourceGroup, n) == null; });
+        }
+
+        public static async Task RetriableRun<T>(
+            T items,
+            Func<T, Task> Run,
+            Func<T, bool> NotReadyCheck,
+            int delayInSeconds = 5,
+            string taskName = "RetriableRun",
+            int maxRetry = 3)
+        {
+            var retry = 0;
+            do
             {
-                var webApp = _azure.WebApps.GetByResourceGroup(resourceGroup, n);
-                if (webApp == null)
+                Console.WriteLine($"{DateTime.Now.ToString("yyyyMMddHHmmss")} {retry} : {taskName}");
+                await Run(items);
+                if (retry > 0)
                 {
-                    return false;
+                    await Task.Delay(TimeSpan.FromSeconds(60));
                 }
-            }
-            return true;
+                retry++;
+            } while (NotReadyCheck(items) && retry < maxRetry);
         }
 
         protected static async Task ScaleOutAppPlanCoreAsync(
@@ -354,7 +348,6 @@ namespace DeployWebApp
                             .WithExistingResourceGroup(package.groupName)
                             .WithPricingTier(package.pricingTier)
                             .WithOperatingSystem(package.os)
-                            //.WithCapacity(package.scaleOut)
                             .CreateAsync(cts.Token);
                     Console.WriteLine($"{DateTime.Now.ToString("yyyyMMddHHmmss")} Successfully {funcName} for {package.name}");
                 }
