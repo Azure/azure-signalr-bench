@@ -168,6 +168,8 @@ namespace DeployWebApp
             Console.WriteLine($"it takes {sw.ElapsedMilliseconds} ms to scale out");
             // output app service plan Id
             DumpAppServicePlanId(webappNameList);
+            // output scale out count
+            DumpAppServicePlanScaleOutCount(webappNameList);
             // output web app Id
             DumpWebAppId(webappNameList);
             // dump results

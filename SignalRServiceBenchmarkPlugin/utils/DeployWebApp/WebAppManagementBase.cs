@@ -178,8 +178,7 @@ namespace DeployWebApp
                 if (appPlan != null)
                 {
                     var id = appPlan.Id;
-                    var scaleOut = appPlan.Capacity;
-                    appServicePlanIdList += id + $" {scaleOut}" + Environment.NewLine;
+                    appServicePlanIdList += id + Environment.NewLine;
                 }
             }
             if (_argsOption.AppServicePlanIdOutputFile != null)
@@ -196,6 +195,38 @@ namespace DeployWebApp
             else
             {
                 Console.WriteLine(appServicePlanIdList);
+            }
+        }
+
+        protected void DumpAppServicePlanScaleOutCount(List<string> webappNameList)
+        {
+            string appServicePlanScaleOutList = "";
+
+            for (var i = 0; i < _appPlanCount; i++)
+            {
+                var name = webappNameList[i];
+                var appPlan = _azure.AppServices.AppServicePlans.GetByResourceGroup(_argsOption.GroupName, name);
+                if (appPlan != null)
+                {
+                    var id = appPlan.Id;
+                    var scaleOut = appPlan.Capacity;
+                    appServicePlanScaleOutList += id + " ${scaleOut}" + Environment.NewLine;
+                }
+            }
+            if (_argsOption.AppServicePlanScaleOutputFile != null)
+            {
+                if (File.Exists(_argsOption.AppServicePlanScaleOutputFile))
+                {
+                    File.Delete(_argsOption.AppServicePlanScaleOutputFile);
+                }
+                using (var writer = new StreamWriter(_argsOption.AppServicePlanScaleOutputFile, true))
+                {
+                    writer.WriteLine(appServicePlanScaleOutList);
+                }
+            }
+            else
+            {
+                Console.WriteLine(appServicePlanScaleOutList);
             }
         }
 
