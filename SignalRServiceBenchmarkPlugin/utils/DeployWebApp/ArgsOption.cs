@@ -37,7 +37,7 @@ namespace DeployWebApp
         [Option("webappNamePrefix", Required = false, Default = "signalrwebapp", HelpText = "Specify web app name")]
         public string WebAppNamePrefix { get; set; }
 
-        [Option("webappCount", Required = false, Default = 1, HelpText = "Webapp instance count")]
+        [Option("webappCount", Required = false, Default = 2, HelpText = "Webapp instance count")]
         public int WebappCount { get; set; }
 
         [Option("removeExistingResourceGroup", Required = false, Default = 0, HelpText = "Remove existing resource group")]
@@ -59,6 +59,10 @@ namespace DeployWebApp
         [Option("webAppIdOutputFile", Required = false,
             HelpText = "Specify the web app output file, default is null and output to console")]
         public string WebAppIdOutputFile { get; set; }
+
+        [Option("appServicePlanScaleOutputFile", Required = false,
+            HelpText = "Specify the output file for app service plan scale out count, default is null and output to console")]
+        public string AppServicePlanScaleOutputFile { get; set; }
 
         [Option("hubName", Required = false, Default = "signalrbench", HelpText = "Specify the hubName which will show up in the end of URL, only for benchmark use")]
         public string HubName { get; set; }

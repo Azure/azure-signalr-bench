@@ -101,7 +101,8 @@ function createWebApp()
   local serverUrlOutFile=$4
   local appPlanIdOutFile=$5
   local webAppIdOutFile=$6
-  local scenario=$7
+  local appPlanScaleOutFile=$7
+  local scenario=$8
 
   local resGroup=$AspNetWebAppResGrp #"${appPrefix}"`date +%H%M%S`
   local appserverCount=$(get_reduced_appserverCount $unit $scenario)
@@ -115,6 +116,7 @@ function createWebApp()
               --connectionString "$connectionString" \
               --outputFile $serverUrlOutFile --resourceGroup $resGroup \
               --appServicePlanIdOutputFile $appPlanIdOutFile \
+              --appServicePlanScaleOutputFile $appPlanScaleOutFile \
               --webAppIdOutputFile $webAppIdOutFile
   enable_exit_immediately_when_fail
 }
@@ -264,6 +266,7 @@ function RunSendToGroup()
   local serverUrlOut=$outputDir/${appPrefix}.txt
   local appPlanOut=$outputDir/${appPrefix}_appPlan.txt
   local webAppOut=$outputDir/${appPrefix}_webApp.txt
+  local appPlanScaleOut=$outputDir/${appPrefix}_appPlanScaleOut.txt
 
   local maxConnectionOption
   if [ "$useMaxConnection" == "true" ]
@@ -277,7 +280,7 @@ function RunSendToGroup()
     cd $ScriptWorkingDir
     appserverUrls=$(get_reduced_appserverUrl $unit $Scenario)
   else
-    createWebApp $unit $appPrefix "$connectionString" $serverUrlOut $appPlanOut $webAppOut $Scenario
+    createWebApp $unit $appPrefix "$connectionString" $serverUrlOut $appPlanOut $webAppOut $appPlanScaleOut $Scenario
     if [ -e $serverUrlOut ]
     then
       appserverUrls=`cat $serverUrlOut`
@@ -328,13 +331,14 @@ function RunSendToClient()
   local serverUrlOut=$outputDir/${appPrefix}.txt
   local appPlanOut=$outputDir/${appPrefix}_appPlan.txt
   local webAppOut=$outputDir/${appPrefix}_webApp.txt
+  local appPlanScaleOut=$outputDir/${appPrefix}_appPlanScaleOut.txt
   local startSeconds=$SECONDS
   if [ "$AspNetSignalR" != "true" ]
   then
     cd $ScriptWorkingDir
     appserverUrls=$(get_reduced_appserverUrl $unit $Scenario)
   else
-    createWebApp $unit $appPrefix "$connectionString" $serverUrlOut $appPlanOut $webAppOut $Scenario
+    createWebApp $unit $appPrefix "$connectionString" $serverUrlOut $appPlanOut $webAppOut $appPlanScaleOut $Scenario
     if [ -e $serverUrlOut ]
     then
       appserverUrls=`cat $serverUrlOut`
@@ -383,13 +387,14 @@ function RunCommonScenario()
   local serverUrlOut=$outputDir/${appPrefix}.txt
   local appPlanOut=$outputDir/${appPrefix}_appPlan.txt
   local webAppOut=$outputDir/${appPrefix}_webApp.txt
+  local appPlanScaleOut=$outputDir/${appPrefix}_appPlanScaleOut.txt
   local startSeconds=$SECONDS
   if [ "$AspNetSignalR" != "true" ]
   then
     cd $ScriptWorkingDir
     appserverUrls=$(get_reduced_appserverUrl $unit $Scenario)
   else
-    createWebApp $unit $appPrefix "$connectionString" $serverUrlOut $appPlanOut $webAppOut $Scenario
+    createWebApp $unit $appPrefix "$connectionString" $serverUrlOut $appPlanOut $webAppOut $appPlanScaleOut $Scenario
     if [ -e $serverUrlOut ]
     then
       appserverUrls=`cat $serverUrlOut`
