@@ -391,8 +391,13 @@ function RunCommonScenario()
   local startSeconds=$SECONDS
   if [ "$AspNetSignalR" != "true" ]
   then
-    cd $ScriptWorkingDir
-    appserverUrls=$(get_reduced_appserverUrl $unit $Scenario)
+    if [[ "$Scenario" == "rest"* ]]
+    then
+       appserverUrls="ignored" ## rest API does not need app server
+    else
+       cd $ScriptWorkingDir
+       appserverUrls=$(get_reduced_appserverUrl $unit $Scenario)
+    fi
   else
     createWebApp $unit $appPrefix "$connectionString" $serverUrlOut $appPlanOut $webAppOut $appPlanScaleOut $Scenario
     if [ -e $serverUrlOut ]
