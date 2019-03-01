@@ -25,12 +25,7 @@ function run_command_core()
   local send=${12}
   local serverUrl=${13}
   local unit=${14}
-  local notStartAppServer=0
-  if [[ "$Scenario" == "rest"* ]]
-  then
-    notStartAppServer=1
-  fi
-  run_command $user $passwd $connectionString $outputDir $config_path $unit $notStartAppServer $Scenario
+  run_command $user $passwd $connectionString $outputDir $config_path $unit $Scenario
   cd $ScriptWorkingDir
   #### generate the connection configuration for HTML ####
 cat << EOF > configs/cmd_4_${MessageEncoding}_${Scenario}_${tag}_${Transport}
@@ -925,8 +920,12 @@ function run_command() {
   local outputDir="$4"
   local configPath=$5
   local unit=$6
-  local notStartAppServer=$7
-  local scenario=$8
+  local scenario=$7
+  local notStartAppServer=0
+  local startAppServerOption
+  local appserverInUse
+  local appserver
+  local appserverDir
 
   cd $ScriptWorkingDir
   local master=`python extract_ip.py -i $PrivateIps -q master`
@@ -935,11 +934,19 @@ function run_command() {
   local slaveDir=$CommandWorkingDir/slave
   if [ "$AspNetSignalR" != "true" ]
   then
-    local appserverInUse=$(get_reduced_appserverCount $unit $scenario)
-    local appserver=`python extract_ip.py -i $PrivateIps -q appserver -c $appserverInUse`
-    local appserverDir=$CommandWorkingDir/appserver
-    mkdir -p $appserverDir
-    build_app_server $appserverDir
+    if [[ "$Scenario" != "rest"* ]]
+    then
+      appserverInUse=$(get_reduced_appserverCount $unit $scenario)
+      appserver=`python extract_ip.py -i $PrivateIps -q appserver -c $appserverInUse`
+      appserverDir=$CommandWorkingDir/appserver
+      mkdir -p $appserverDir
+      build_app_server $appserverDir
+      startAppServerOption="--AppServerHostnames=$appserver --AppserverProject=$appserverDir --AppserverTargetPath=/home/${user}/appserver.tgz --MasterTargetPath=/home/${user}/master.tgz"
+    else
+      notStartAppServer=1
+    fi
+  else
+    notStartAppServer=1
   fi
   mkdir -p $masterDir
   mkdir -p $slaveDir
@@ -975,12 +982,10 @@ EOF
 
   if [ "$AspNetSignalR" != "true" ]
   then
-    dotnet run -- --RpcPort=5555 --SlaveList="$slaves" --MasterHostname="$master" --AppServerHostnames="$appserver" \
+    dotnet run -- --RpcPort=5555 --SlaveList="$slaves" --MasterHostname="$master" $startAppServerOption \
          --Username=$user --Password=$passwd \
-         --AppserverProject="$appserverDir" \
          --MasterProject="$masterDir" \
          --SlaveProject="$slaveDir" \
-         --AppserverTargetPath="/home/${user}/appserver.tgz" --MasterTargetPath="/home/${user}/master.tgz" \
          --SlaveTargetPath="/home/${user}/slave.tgz" \
          --BenchmarkConfiguration="$configPath" \
          --BenchmarkConfigurationTargetPath="/home/${user}/signalr.yaml" \
