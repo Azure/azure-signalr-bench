@@ -941,7 +941,7 @@ function run_command() {
       appserverDir=$CommandWorkingDir/appserver
       mkdir -p $appserverDir
       build_app_server $appserverDir
-      startAppServerOption="--AppServerHostnames=$appserver --AppserverProject=$appserverDir --AppserverTargetPath=/home/${user}/appserver.tgz --MasterTargetPath=/home/${user}/master.tgz"
+      startAppServerOption="--AppServerHostnames=$appserver --AppserverProject=$appserverDir --AppserverTargetPath=/home/${user}/appserver.tgz --MasterTargetPath=/home/${user}/master.tgz --AppServerCount=$appserverInUse"
     else
       notStartAppServer=1
     fi
@@ -982,16 +982,17 @@ EOF
 
   if [ "$AspNetSignalR" != "true" ]
   then
-    dotnet run -- --RpcPort=5555 --SlaveList="$slaves" --MasterHostname="$master" $startAppServerOption \
-         --Username=$user --Password=$passwd \
+    dotnet run -- --RpcPort=5555 --Username=$user --Password=$passwd \
+         --SlaveList="$slaves" --MasterHostname="$master" $startAppServerOption \
          --MasterProject="$masterDir" \
+         --MasterTargetPath="/home/${user}/master.tgz" \
          --SlaveProject="$slaveDir" \
          --SlaveTargetPath="/home/${user}/slave.tgz" \
          --BenchmarkConfiguration="$configPath" \
          --BenchmarkConfigurationTargetPath="/home/${user}/signalr.yaml" \
          --AzureSignalRConnectionString="$connectionString" \
          --AppserverLogDirectory="${outputDir}" \
-         --AppServerCount=$appserverInUse --NotStartAppServer=$notStartAppServer $neverStopAppServerOp
+         --NotStartAppServer=$notStartAppServer $neverStopAppServerOp
   else
     dotnet run -- --RpcPort=5555 --SlaveList="$slaves" --MasterHostname="$master" \
                --Username=$user --Password=$passwd \
