@@ -50,6 +50,7 @@ namespace azuremonitor
                 Console.WriteLine("\tType: " + metric.Type);
                 Console.WriteLine("\tUnit: " + metric.Unit);
                 Console.WriteLine("\tTime Series: ");
+
                 foreach (var timeElement in metric.Timeseries)
                 {
                     Console.WriteLine("\t\tMetadata: ");

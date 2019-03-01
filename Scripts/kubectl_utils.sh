@@ -375,7 +375,7 @@ function start_connection_tracking() {
      do
        local date_time=`date --iso-8601='seconds'`
        # TODO. specify the container for exec command
-       local cli_ser_stat=`kubectl exec $i --kubeconfig=$config_file -- bash -c "curl http://localhost:5003/health/stat"`
+       local cli_ser_stat=`kubectl exec $i --kubeconfig=$config_file -- bash -c "curl http://localhost:5003/health/stat" 2> /dev/null`
        echo "${date_time} ${cli_ser_stat}" >> $output_dir/${i}_connections.txt
        #local cli_connection=`kubectl exec $i --kubeconfig=$config_file -- bash -c "netstat -an|grep 5001|grep EST|wc -l"`
        #local ser_connection=`kubectl exec $i --kubeconfig=$config_file -- bash -c "netstat -an|grep 5002|grep EST|wc -l"`
@@ -718,7 +718,7 @@ function get_nginx_container_from_pod() {
   local config=$2
   local ns=$3
   #TODO. hard code the nginx-ingress controller name here
-  local c=`kubectl describe pod/$pod -n $ns --kubeconfig=$config |grep "  nginx-ingress-controller[0-9]*:" /tmp/d |awk -F : '{print $1}'|tr -d '[:space:]'`
+  local c=`kubectl describe pod/$pod -n $ns --kubeconfig=$config |grep "  nginx-ingress[0-9]*-controller[0-9]*:" |awk -F : '{print $1}'|tr -d '[:space:]'`
   echo $c
 }
 
@@ -742,7 +742,7 @@ function track_nginx_top() {
        local date_time=`date --iso-8601='seconds'`
        echo "${date_time} " >> $output_dir/${i}_top.txt
        local c=$(get_nginx_container_from_pod $i $config_file $ns)
-       kubectl exec $i --namespace=$ns --kubeconfig=$config_file -- bash -c "top -b -n 1" >> $output_dir/${i}_top.txt
+       kubectl exec $i --namespace=$ns --kubeconfig=$config_file -c $c -- bash -c "top -b -n 1" >> $output_dir/${i}_top.txt
      done
      sleep 1
     done

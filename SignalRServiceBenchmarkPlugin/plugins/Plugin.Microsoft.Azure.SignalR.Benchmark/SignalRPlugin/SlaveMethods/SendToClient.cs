@@ -15,7 +15,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
         {
             try
             {
-                Log.Information($"Send to client...");
+                Log.Information($"Send {GetType().Name}...");
 
                 // Get parameters
                 stepParameters.TryGetTypedValue(SignalRConstants.Type, out string type, Convert.ToString);
@@ -62,6 +62,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                                                           TimeSpan.FromMilliseconds(interval),
                                                           TimeSpan.FromMilliseconds(1),
                                                           TimeSpan.FromMilliseconds(interval)));
+                Log.Information($"Finish {GetType().Name} {remainderEnd}");
                 return null;
             }
             catch (Exception ex)

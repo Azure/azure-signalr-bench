@@ -23,7 +23,7 @@ namespace Common
                 }
                 else
                 {
-                    throw new TimeoutException("The operation has timed out.");
+                    throw new TimeoutException($"The operation has timed out after {timeout.TotalMilliseconds} ms.");
                 }
             }
         }
@@ -40,7 +40,7 @@ namespace Common
                 }
                 else
                 {
-                    throw new TimeoutException("The operation has timed out.");
+                    throw new TimeoutException($"The operation has timed out after {timeout.TotalMilliseconds} ms.");
                 }
             }
         }
@@ -50,7 +50,13 @@ namespace Common
     {
         public static void CreateLogger(string directory, string name, LogTargetEnum logTarget)
         {
-            switch(logTarget)
+            // remove history logs
+            foreach (string f in Directory.EnumerateFiles(directory, name.Replace(".", "*")))
+            {
+                Console.WriteLine($"removing file {f}");
+                File.Delete(f);
+            }
+            switch (logTarget)
             {
                 
                 case LogTargetEnum.File:
@@ -73,7 +79,6 @@ namespace Common
                     .WriteTo.File(Path.Combine(directory, name), rollingInterval: RollingInterval.Day)
                     .CreateLogger();
                     break;
-
             }
         }
 
@@ -148,29 +153,36 @@ namespace Common
             var left = source.Count;
             if (nextBatch <= left)
             {
-                var tasks = new List<Task>(left);
-                var i = 0;
-                do
+                try
                 {
-                    for (var j = 0; j < nextBatch; j++)
+                    var tasks = new List<Task>(left);
+                    var i = 0;
+                    do
                     {
-                        var index = i + j;
-                        var item = source[index];
-                        tasks.Add(Task.Run(async () =>
+                        for (var j = 0; j < nextBatch; j++)
                         {
-                            await f(item);
-                        }));
-                    }
+                            var index = i + j;
+                            var item = source[index];
+                            tasks.Add(Task.Run(async () =>
+                            {
+                                await f(item);
+                            }));
+                        }
 
-                    await Task.Delay(TimeSpan.FromMilliseconds(milliseconds));
-                    i += nextBatch;
-                    left = left - nextBatch;
-                    if (left < nextBatch)
-                    {
-                        nextBatch = left;
-                    }
-                } while (left > 0);
-                await Task.WhenAll(tasks);
+                        await Task.Delay(TimeSpan.FromMilliseconds(milliseconds));
+                        i += nextBatch;
+                        left = left - nextBatch;
+                        if (left < nextBatch)
+                        {
+                            nextBatch = left;
+                        }
+                    } while (left > 0);
+                    await Task.WhenAll(tasks).OrTimeout();
+                }
+                catch (Exception e)
+                {
+                    Log.Error($"Fail in LowPressBatchProcess: {e.Message}");
+                }
             }
         }
 

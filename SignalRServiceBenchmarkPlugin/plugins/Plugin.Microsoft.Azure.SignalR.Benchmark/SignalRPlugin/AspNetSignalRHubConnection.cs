@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNet.SignalR.Client;
+﻿using Common;
+using Microsoft.AspNet.SignalR.Client;
 using Microsoft.AspNet.SignalR.Client.Transports;
 using System;
 using System.Threading;
@@ -62,13 +63,13 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
 
         public Task SendAsync(string methodName, object arg1, CancellationToken cancellationToken = default)
         {
-            return _hubProxy.Invoke(methodName, arg1);
+            return _hubProxy.Invoke(methodName, arg1).OrTimeout();
         }
 
         public Task StartAsync(CancellationToken cancellationToken = default)
         {
             _clientTransport = createClientTransport(_transport);
-            return _hubConnection.Start(_clientTransport);
+            return _hubConnection.Start(_clientTransport).OrTimeout();
         }
 
         private IClientTransport createClientTransport(string transport)
@@ -105,7 +106,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
 
         public Task SendAsync(string methodName, CancellationToken cancellationToken = default)
         {
-            return _hubProxy.Invoke(methodName);
+            return _hubProxy.Invoke(methodName).OrTimeout();
         }
     }
 }

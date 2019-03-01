@@ -100,8 +100,10 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
                 Target = methodName,
                 Arguments = args
             };
-            var request = BuildHttpRequest(sendToUserEndpoint, token, methodName, args);
-            await SendHttpRequestAsync(request, cancellationToken);
+            using (var request = BuildHttpRequest(sendToUserEndpoint, token, methodName, args))
+            {
+                await SendHttpRequestAsync(request, cancellationToken);
+            }
         }
 
         public async Task SendToAll(
@@ -117,8 +119,10 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
                 Target = methodName,
                 Arguments = args
             };
-            var request = BuildHttpRequest(broadcastEndpoint, token, methodName, args);
-            await SendHttpRequestAsync(request, cancellationToken);
+            using (var request = BuildHttpRequest(broadcastEndpoint, token, methodName, args))
+            {
+                await SendHttpRequestAsync(request, cancellationToken);
+            }
         }
 
         private async Task SendHttpRequestAsync(

@@ -7,7 +7,7 @@ namespace DeployWebApp
         [Option("concurrentCountOfServicePlan", Required = false, Default = 1, HelpText = "Concurrent count of creating service plan")]
         public int ConcurrentCountOfServicePlan { get; set; }
 
-        [Option("concurrentCountOfWebApp", Required = false, Default = 5, HelpText = "Concurrent count of creating webapp")]
+        [Option("concurrentCountOfWebApp", Required = false, Default = 2, HelpText = "Concurrent count of creating webapp")]
         public int ConcurrentCountOfWebApp { get; set; }
 
         [Option("clientId", Required = false, HelpText = "Azure client ID")]
@@ -37,7 +37,7 @@ namespace DeployWebApp
         [Option("webappNamePrefix", Required = false, Default = "signalrwebapp", HelpText = "Specify web app name")]
         public string WebAppNamePrefix { get; set; }
 
-        [Option("webappCount", Required = false, Default = 1, HelpText = "Webapp count")]
+        [Option("webappCount", Required = false, Default = 2, HelpText = "Webapp instance count")]
         public int WebappCount { get; set; }
 
         [Option("removeExistingResourceGroup", Required = false, Default = 0, HelpText = "Remove existing resource group")]
@@ -60,10 +60,20 @@ namespace DeployWebApp
             HelpText = "Specify the web app output file, default is null and output to console")]
         public string WebAppIdOutputFile { get; set; }
 
+        [Option("appServicePlanScaleOutputFile", Required = false,
+            HelpText = "Specify the output file for app service plan scale out count, default is null and output to console")]
+        public string AppServicePlanScaleOutputFile { get; set; }
+
         [Option("hubName", Required = false, Default = "signalrbench", HelpText = "Specify the hubName which will show up in the end of URL, only for benchmark use")]
         public string HubName { get; set; }
 
         [Option("priceTier", Required = false, Default = "StandardS3", HelpText = "Specify the price tier you want to run <StandardS1|StandardS2|StandardS3|PremiumP1v2|PremiumP1v2>, default is StandardS3")]
         public string PriceTier { get; set; }
+
+        [Option("appPlanName", Required = false, Default = "myAppPlan", HelpText = "Specify the app plan name you want to query")]
+        public string AppPlanName { get; set; }
+
+        [Option("serverConnectionCount", Required = false, Default = "15", HelpText = "Specify the server connection count")]
+        public string ServerConnectionCount { get; set; }
     }
 }

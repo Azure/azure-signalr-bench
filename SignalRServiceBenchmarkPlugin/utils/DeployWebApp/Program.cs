@@ -10,6 +10,7 @@ namespace DeployWebApp
         {
             var argsOption = ParseArgs(args);
             var webappMgt = new WebAppManagement(argsOption);
+            //webappMgt.GetAppPlanInformation();
             await webappMgt.Deploy();
         }
 

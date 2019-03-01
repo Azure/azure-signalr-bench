@@ -55,7 +55,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
             }
         }
 
-        protected Task BaseSendAsync(
+        protected async Task BaseSendAsync(
             (IHubConnectionAdapter Connection,
             int LocalIndex,
             List<SignalREnums.ConnectionState> ConnectionsSuccessFlag,
@@ -66,9 +66,10 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
             try
             {
                 // Is the connection is not active, then stop sending message
-                if (package.ConnectionsSuccessFlag[package.LocalIndex] != SignalREnums.ConnectionState.Success) return Task.CompletedTask;
+                if (package.ConnectionsSuccessFlag[package.LocalIndex] != SignalREnums.ConnectionState.Success)
+                    return;
 
-                return BaseSendCoreAsync(
+                await BaseSendCoreAsync(
                     GenPayload(data),
                     package.Connection,
                     package.CallbackMethod,
@@ -80,7 +81,6 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 var message = $"Error in {GetType().Name}: {ex}";
                 Log.Error(message);
             }
-            return Task.CompletedTask;
         }
 
         protected async Task BaseSendCoreAsync(
@@ -90,9 +90,19 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
             StatisticsCollector statisticsCollector
             )
         {
-            await connection.SendAsync(callbackMethod, payload);
-            // Update statistics
-            SignalRUtils.RecordSend(payload, statisticsCollector);
+            try
+            {
+                using (var c = new CancellationTokenSource(TimeSpan.FromSeconds(60)))
+                {
+                    await connection.SendAsync(callbackMethod, payload, c.Token);
+                }
+                // Update statistics
+                SignalRUtils.RecordSend(payload, statisticsCollector);
+            }
+            catch (Exception e)
+            {
+                Log.Error($"Fail to send message for {e.ToString()}");
+            }
         }
 
         protected IDictionary<string, object> GenCommonPayload(IDictionary<string, object> data)
@@ -116,7 +126,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
         {
             try
             {
-                Log.Information($"{GetType().Name}...");
+                Log.Information($"Start {GetType().Name}...");
 
                 // Get parameters
                 stepParameters.TryGetTypedValue(SignalRConstants.Type, out string type, Convert.ToString);
@@ -159,6 +169,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                                                           TimeSpan.FromMilliseconds(interval),
                                                           TimeSpan.FromMilliseconds(1),
                                                           TimeSpan.FromMilliseconds(interval)));
+                Log.Information($"Finish {GetType().Name} {remainderEnd}");
                 return null;
             }
             catch (Exception ex)

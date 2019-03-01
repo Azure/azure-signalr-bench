@@ -40,6 +40,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                     connections,
                     concurrentConnection,
                     connectionsSuccessFlag);
+                Log.Information($"Finish starting connection {connections.Count}");
                 return null;
             }
             catch (Exception ex)
