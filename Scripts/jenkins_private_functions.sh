@@ -941,7 +941,7 @@ function run_command() {
       appserverDir=$CommandWorkingDir/appserver
       mkdir -p $appserverDir
       build_app_server $appserverDir
-      startAppServerOption="--AppServerHostnames=$appserver --AppserverProject=$appserverDir --AppserverTargetPath=/home/${user}/appserver.tgz --MasterTargetPath=/home/${user}/master.tgz --AppServerCount=$appserverInUse"
+      startAppServerOption="--AppServerHostnames=$appserver --AppserverProject=$appserverDir --AppserverTargetPath=/home/${user}/appserver.tgz --AppServerCount=$appserverInUse"
     else
       notStartAppServer=1
     fi
