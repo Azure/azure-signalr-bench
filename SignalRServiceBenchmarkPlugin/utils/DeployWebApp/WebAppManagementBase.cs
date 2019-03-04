@@ -333,7 +333,7 @@ namespace DeployWebApp
                 await Run(items);
                 if (retry > 0)
                 {
-                    await Task.Delay(TimeSpan.FromSeconds(60));
+                    await Task.Delay(TimeSpan.FromSeconds(delayInSeconds));
                 }
                 retry++;
             } while (NotReadyCheck(items) && retry < maxRetry);

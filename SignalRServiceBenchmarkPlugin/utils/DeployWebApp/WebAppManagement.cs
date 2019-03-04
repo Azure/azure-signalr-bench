@@ -124,7 +124,7 @@ namespace DeployWebApp
                                     scaleOut: _scaleOut)).ToList();
             Task Process<T>(T p) => BatchProcess(packages, ScaleOutAppPlanAsync, _argsOption.ConcurrentCountOfServicePlan);
             bool NotReadyCheck<T>(T t) => isAnyServicePlanScaleOutNotReady(appNameList, _argsOption.GroupName);
-            await RetriableRun(packages, Process, NotReadyCheck, 100, "scale out app plan", 5);
+            await RetriableRun(packages, Process, NotReadyCheck, 120, "scale out app plan", 5);
         }
 
         public async Task Deploy()
