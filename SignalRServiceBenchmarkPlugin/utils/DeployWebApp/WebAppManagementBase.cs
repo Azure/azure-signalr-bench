@@ -1,4 +1,5 @@
 ﻿using Microsoft.Azure.Management.AppService.Fluent;
+using Microsoft.Azure.Management.AppService.Fluent.Models;
 using Microsoft.Azure.Management.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent.Authentication;
@@ -23,6 +24,7 @@ namespace DeployWebApp
         protected int _appInstanceCount;
         protected int _scaleOut;
         protected static int MAX_SCALE_OUT = 10;
+        protected LogLevel _appLogLevel = LogLevel.Information;
 
         public WebAppManagementBase(ArgsOption argsOption)
         {
@@ -36,19 +38,30 @@ namespace DeployWebApp
                 { "PremiumP2v2", PricingTier.PremiumP2v2}
             };
             _appInstanceCount = _argsOption.WebappCount;
-            var i = MAX_SCALE_OUT;
-            for (; i > 1; i--)
+            if (_appInstanceCount > 1)
             {
-                if (_argsOption.WebappCount % i == 0)
+                var i = MAX_SCALE_OUT;
+                for (; i > 1; i--)
                 {
-                    _appPlanCount = _argsOption.WebappCount / i;
-                    _scaleOut = i;
-                    break;
+                    if (_argsOption.WebappCount % i == 0)
+                    {
+                        _appPlanCount = _argsOption.WebappCount / i;
+                        _scaleOut = i;
+                        break;
+                    }
+                }
+                if (i == 1)
+                {
+                    throw new InvalidDataException("The web app instance count should be 1 or divided by 2 or 3 or 5 or 7");
                 }
             }
-            if (i == 1)
+            else if (_appInstanceCount == 1)
             {
-                throw new InvalidDataException("The web app instance count should be divided by 2 or 3 or 5 or 7");
+                _appPlanCount = _scaleOut = 1;
+            }
+            else
+            {
+                throw new InvalidDataException("The web app instance count should be 1 or divided by 2 or 3 or 5 or 7");
             }
         }
 
@@ -313,6 +326,17 @@ namespace DeployWebApp
             });
         }
 
+        protected bool isDiagnosticLogNotReady(List<string> names, string resourceGroup)
+        {
+            return names.Any(n =>
+            {
+                var p = _azure.WebApps.GetByResourceGroup(resourceGroup, n);
+                return p.DiagnosticLogsConfig.ApplicationLoggingFileSystemLogLevel != _appLogLevel ||
+                       !p.DiagnosticLogsConfig.DetailedErrorMessages ||
+                       !p.DiagnosticLogsConfig.FailedRequestsTracing;
+            });
+        }
+
         protected bool isAnyWebAppNotReady(List<string> names, string resourceGroup)
         {
             return names.Any(n => { return _azure.WebApps.GetByResourceGroup(resourceGroup, n) == null; });
@@ -433,6 +457,34 @@ namespace DeployWebApp
             }
         }
 
+        protected static async Task WebAppEnableLog(
+            (IAzure azure,
+            string name,
+            string resourceGroup) package)
+        {
+            using (var cts = new CancellationTokenSource(TimeSpan.FromMinutes(5)))
+            {
+                var webapp = package.azure.WebApps.GetByResourceGroup(package.resourceGroup, package.name);
+                if (webapp != null)
+                {
+                    var update = webapp.Update();
+                    update.UpdateDiagnosticLogsConfiguration()
+                        .WithApplicationLogging()
+                        .WithLogLevel(LogLevel.Information)
+                        .WithApplicationLogsStoredOnFileSystem()
+                        .WithDetailedErrorMessages(true)
+                        .WithFailedRequestTracing(true);
+                    update.UpdateDiagnosticLogsConfiguration()
+                        .WithWebServerLogging()
+                        .WithWebServerLogsStoredOnFileSystem()
+                        .WithWebServerFileSystemQuotaInMB(30)
+                        .WithLogRetentionDays(1)
+                        .WithDetailedErrorMessages(true)
+                        .WithFailedRequestTracing(true);
+                    await update.ApplyAsync(cts.Token);
+                }
+            }
+        }
 
         protected static Task BatchProcess<T>(IList<T> source, Func<T, Task> f, int max)
         {
