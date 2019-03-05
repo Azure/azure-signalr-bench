@@ -127,18 +127,6 @@ namespace DeployWebApp
             await RetriableRun(packages, Process, NotReadyCheck, 120, "scale out app plan", 5);
         }
 
-        private async Task EnableWebAppLogs(List<string> appNameList)
-        {
-            var packages = (from i in Enumerable.Range(0, appNameList.Count)
-                            where _azure.WebApps.GetByResourceGroup(_argsOption.GroupName, appNameList[i]) != null
-                            select (azure: _azure,
-                                    name: appNameList[i],
-                                    groupName: _argsOption.GroupName)).ToList();
-            Task Process<T>(T p) => BatchProcess(packages, WebAppEnableLog, _argsOption.ConcurrentCountOfWebApp);
-            bool NotReadyCheck<T>(T t) => isDiagnosticLogNotReady(appNameList, _argsOption.GroupName);
-            await RetriableRun(packages, Process, NotReadyCheck, 60, "enable diagnostic log", 5);
-        }
-
         public async Task Deploy()
         {
             Login();
@@ -177,7 +165,6 @@ namespace DeployWebApp
             await ScaleOutAppPlan(webappNameList);
             //scale outwebapp
             sw.Stop();
-            await EnableWebAppLogs(webappNameList);
             Console.WriteLine($"it takes {sw.ElapsedMilliseconds} ms to scale out");
             // output app service plan Id
             DumpAppServicePlanId(webappNameList);

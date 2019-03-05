@@ -435,10 +435,25 @@ namespace DeployWebApp
                                                    .WithExistingResourceGroup(package.resourceGroup)
                                                    .WithWebSocketsEnabled(true)
                                                    .WithWebAppAlwaysOn(true)
+                                                   .DefineDiagnosticLogsConfiguration()
+                                                       .WithApplicationLogging()
+                                                       .WithLogLevel(LogLevel.Information)
+                                                       .WithApplicationLogsStoredOnFileSystem()
+                                                       .WithDetailedErrorMessages(true)
+                                                       .WithFailedRequestTracing(true)
+                                                       .Attach()
+                                                   .DefineDiagnosticLogsConfiguration()
+                                                       .WithWebServerLogging()
+                                                       .WithWebServerLogsStoredOnFileSystem()
+                                                       .WithWebServerFileSystemQuotaInMB(30)
+                                                       .WithLogRetentionDays(1)
+                                                       .WithDetailedErrorMessages(true)
+                                                       .WithFailedRequestTracing(true)
+                                                       .Attach()
                                                    .DefineSourceControl()
-                                                   .WithPublicGitRepository(package.githubRepo)
-                                                   .WithBranch("master")
-                                                   .Attach()
+                                                       .WithPublicGitRepository(package.githubRepo)
+                                                       .WithBranch("master")
+                                                       .Attach()
                                                    .WithConnectionString("Azure:SignalR:ConnectionString", package.connectionString,
                                                     Microsoft.Azure.Management.AppService.Fluent.Models.ConnectionStringType.Custom)
                                                    .WithAppSetting("ConnectionCount", package.serverConnectionCount)
@@ -453,35 +468,6 @@ namespace DeployWebApp
                 else
                 {
                     Console.WriteLine($"{DateTime.Now.ToString("yyyyMMddHHmmss")} {funcName} for {package.name} already existed");
-                }
-            }
-        }
-
-        protected static async Task WebAppEnableLog(
-            (IAzure azure,
-            string name,
-            string resourceGroup) package)
-        {
-            using (var cts = new CancellationTokenSource(TimeSpan.FromMinutes(5)))
-            {
-                var webapp = package.azure.WebApps.GetByResourceGroup(package.resourceGroup, package.name);
-                if (webapp != null)
-                {
-                    var update = webapp.Update();
-                    update.UpdateDiagnosticLogsConfiguration()
-                        .WithApplicationLogging()
-                        .WithLogLevel(LogLevel.Information)
-                        .WithApplicationLogsStoredOnFileSystem()
-                        .WithDetailedErrorMessages(true)
-                        .WithFailedRequestTracing(true);
-                    update.UpdateDiagnosticLogsConfiguration()
-                        .WithWebServerLogging()
-                        .WithWebServerLogsStoredOnFileSystem()
-                        .WithWebServerFileSystemQuotaInMB(30)
-                        .WithLogRetentionDays(1)
-                        .WithDetailedErrorMessages(true)
-                        .WithFailedRequestTracing(true);
-                    await update.ApplyAsync(cts.Token);
                 }
             }
         }
