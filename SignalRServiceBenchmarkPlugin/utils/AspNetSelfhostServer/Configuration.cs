@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Configuration;
 using System.Net;
 using System.Net.Sockets;
 
@@ -19,12 +20,16 @@ namespace AspNetSelfhostServer
 
         public Configuration()
         {
-            var localSignalR = Environment.GetEnvironmentVariable("UseLocalSignalR");
-            if (!String.IsNullOrEmpty(localSignalR) && Boolean.TryParse(localSignalR, out bool useLocalSignalR))
+            var settings = ConfigurationManager.ConnectionStrings;
+            _connectionString = settings != null ?
+                                settings["Azure:SignalR:ConnectionString"].ConnectionString :
+                                Environment.GetEnvironmentVariable("Azure:SignalR:ConnectionString");
+            var localSignalR = ConfigurationManager.AppSettings["UseLocalSignalR"];
+            var signalRType = localSignalR != null ? localSignalR : Environment.GetEnvironmentVariable("UseLocalSignalR");
+            if (!String.IsNullOrEmpty(signalRType) && Boolean.TryParse(signalRType, out bool useLocalSignalR))
             {
                 UseLocalSignalR = useLocalSignalR;
             }
-            _connectionString = Environment.GetEnvironmentVariable("ASRSConnectionString");
             var url = Environment.GetEnvironmentVariable("WebServerUrl");
             if (String.IsNullOrEmpty(url))
             {

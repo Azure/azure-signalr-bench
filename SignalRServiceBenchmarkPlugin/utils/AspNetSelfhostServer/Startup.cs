@@ -23,7 +23,7 @@ namespace AspNetSelfhostServer
             }
             else
             {
-                app.RunAzureSignalR(GetType().FullName, config.ConnectionString);
+                app.RunAzureSignalR(GetType().FullName, option => { option.ConnectionCount = 15; });
             }
             GlobalHost.TraceManager.Switch.Level = SourceLevels.Information;
         }
