@@ -1,6 +1,7 @@
 ﻿using Common;
 using Microsoft.AspNet.SignalR.Client;
 using Microsoft.AspNet.SignalR.Client.Transports;
+using Serilog;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
@@ -89,7 +90,16 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
 
         public Task StopAsync()
         {
-            _hubConnection.Stop();
+            try
+            {
+                // If connection fails to start, its internal state is not complete.
+                // Exception will thrown if invoking Stop.
+                _hubConnection.Stop();
+            }
+            catch (Exception e)
+            {
+                Log.Error($"Fail to stop: {e.Message}");
+            }
             return Task.CompletedTask;
         }
 

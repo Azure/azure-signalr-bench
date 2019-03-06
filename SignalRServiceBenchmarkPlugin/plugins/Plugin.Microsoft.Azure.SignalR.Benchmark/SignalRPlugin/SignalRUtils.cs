@@ -108,7 +108,6 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             ClientType clientType)
         {
             // Get parameters
-            // Get parameters
             stepParameters.TryGetTypedValue(SignalRConstants.HubUrls,
                 out string urls, Convert.ToString);
             stepParameters.TryGetTypedValue(SignalRConstants.HubProtocol,

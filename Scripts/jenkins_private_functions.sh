@@ -25,12 +25,7 @@ function run_command_core()
   local send=${12}
   local serverUrl=${13}
   local unit=${14}
-  local notStartAppServer=0
-  if [[ "$Scenario" == "rest"* ]]
-  then
-    notStartAppServer=1
-  fi
-  run_command $user $passwd $connectionString $outputDir $config_path $unit $notStartAppServer $Scenario
+  run_command $user $passwd $connectionString $outputDir $config_path $unit $Scenario
   cd $ScriptWorkingDir
   #### generate the connection configuration for HTML ####
 cat << EOF > configs/cmd_4_${MessageEncoding}_${Scenario}_${tag}_${Transport}
@@ -101,7 +96,8 @@ function createWebApp()
   local serverUrlOutFile=$4
   local appPlanIdOutFile=$5
   local webAppIdOutFile=$6
-  local scenario=$7
+  local appPlanScaleOutFile=$7
+  local scenario=$8
 
   local resGroup=$AspNetWebAppResGrp #"${appPrefix}"`date +%H%M%S`
   local appserverCount=$(get_reduced_appserverCount $unit $scenario)
@@ -115,6 +111,7 @@ function createWebApp()
               --connectionString "$connectionString" \
               --outputFile $serverUrlOutFile --resourceGroup $resGroup \
               --appServicePlanIdOutputFile $appPlanIdOutFile \
+              --appServicePlanScaleOutputFile $appPlanScaleOutFile \
               --webAppIdOutputFile $webAppIdOutFile
   enable_exit_immediately_when_fail
 }
@@ -264,6 +261,7 @@ function RunSendToGroup()
   local serverUrlOut=$outputDir/${appPrefix}.txt
   local appPlanOut=$outputDir/${appPrefix}_appPlan.txt
   local webAppOut=$outputDir/${appPrefix}_webApp.txt
+  local appPlanScaleOut=$outputDir/${appPrefix}_appPlanScaleOut.txt
 
   local maxConnectionOption
   if [ "$useMaxConnection" == "true" ]
@@ -277,7 +275,7 @@ function RunSendToGroup()
     cd $ScriptWorkingDir
     appserverUrls=$(get_reduced_appserverUrl $unit $Scenario)
   else
-    createWebApp $unit $appPrefix "$connectionString" $serverUrlOut $appPlanOut $webAppOut $Scenario
+    createWebApp $unit $appPrefix "$connectionString" $serverUrlOut $appPlanOut $webAppOut $appPlanScaleOut $Scenario
     if [ -e $serverUrlOut ]
     then
       appserverUrls=`cat $serverUrlOut`
@@ -328,13 +326,14 @@ function RunSendToClient()
   local serverUrlOut=$outputDir/${appPrefix}.txt
   local appPlanOut=$outputDir/${appPrefix}_appPlan.txt
   local webAppOut=$outputDir/${appPrefix}_webApp.txt
+  local appPlanScaleOut=$outputDir/${appPrefix}_appPlanScaleOut.txt
   local startSeconds=$SECONDS
   if [ "$AspNetSignalR" != "true" ]
   then
     cd $ScriptWorkingDir
     appserverUrls=$(get_reduced_appserverUrl $unit $Scenario)
   else
-    createWebApp $unit $appPrefix "$connectionString" $serverUrlOut $appPlanOut $webAppOut $Scenario
+    createWebApp $unit $appPrefix "$connectionString" $serverUrlOut $appPlanOut $webAppOut $appPlanScaleOut $Scenario
     if [ -e $serverUrlOut ]
     then
       appserverUrls=`cat $serverUrlOut`
@@ -383,13 +382,19 @@ function RunCommonScenario()
   local serverUrlOut=$outputDir/${appPrefix}.txt
   local appPlanOut=$outputDir/${appPrefix}_appPlan.txt
   local webAppOut=$outputDir/${appPrefix}_webApp.txt
+  local appPlanScaleOut=$outputDir/${appPrefix}_appPlanScaleOut.txt
   local startSeconds=$SECONDS
   if [ "$AspNetSignalR" != "true" ]
   then
-    cd $ScriptWorkingDir
-    appserverUrls=$(get_reduced_appserverUrl $unit $Scenario)
+    if [[ "$Scenario" == "rest"* ]]
+    then
+       appserverUrls="ignored" ## rest API does not need app server
+    else
+       cd $ScriptWorkingDir
+       appserverUrls=$(get_reduced_appserverUrl $unit $Scenario)
+    fi
   else
-    createWebApp $unit $appPrefix "$connectionString" $serverUrlOut $appPlanOut $webAppOut $Scenario
+    createWebApp $unit $appPrefix "$connectionString" $serverUrlOut $appPlanOut $webAppOut $appPlanScaleOut $Scenario
     if [ -e $serverUrlOut ]
     then
       appserverUrls=`cat $serverUrlOut`
@@ -915,8 +920,12 @@ function run_command() {
   local outputDir="$4"
   local configPath=$5
   local unit=$6
-  local notStartAppServer=$7
-  local scenario=$8
+  local scenario=$7
+  local notStartAppServer=0
+  local startAppServerOption
+  local appserverInUse
+  local appserver
+  local appserverDir
 
   cd $ScriptWorkingDir
   local master=`python extract_ip.py -i $PrivateIps -q master`
@@ -925,11 +934,19 @@ function run_command() {
   local slaveDir=$CommandWorkingDir/slave
   if [ "$AspNetSignalR" != "true" ]
   then
-    local appserverInUse=$(get_reduced_appserverCount $unit $scenario)
-    local appserver=`python extract_ip.py -i $PrivateIps -q appserver -c $appserverInUse`
-    local appserverDir=$CommandWorkingDir/appserver
-    mkdir -p $appserverDir
-    build_app_server $appserverDir
+    if [[ "$Scenario" != "rest"* ]]
+    then
+      appserverInUse=$(get_reduced_appserverCount $unit $scenario)
+      appserver=`python extract_ip.py -i $PrivateIps -q appserver -c $appserverInUse`
+      appserverDir=$CommandWorkingDir/appserver
+      mkdir -p $appserverDir
+      build_app_server $appserverDir
+      startAppServerOption="--AppServerHostnames=$appserver --AppserverProject=$appserverDir --AppserverTargetPath=/home/${user}/appserver.tgz --AppServerCount=$appserverInUse"
+    else
+      notStartAppServer=1
+    fi
+  else
+    notStartAppServer=1
   fi
   mkdir -p $masterDir
   mkdir -p $slaveDir
@@ -965,18 +982,17 @@ EOF
 
   if [ "$AspNetSignalR" != "true" ]
   then
-    dotnet run -- --RpcPort=5555 --SlaveList="$slaves" --MasterHostname="$master" --AppServerHostnames="$appserver" \
-         --Username=$user --Password=$passwd \
-         --AppserverProject="$appserverDir" \
+    dotnet run -- --RpcPort=5555 --Username=$user --Password=$passwd \
+         --SlaveList="$slaves" --MasterHostname="$master" $startAppServerOption \
          --MasterProject="$masterDir" \
+         --MasterTargetPath="/home/${user}/master.tgz" \
          --SlaveProject="$slaveDir" \
-         --AppserverTargetPath="/home/${user}/appserver.tgz" --MasterTargetPath="/home/${user}/master.tgz" \
          --SlaveTargetPath="/home/${user}/slave.tgz" \
          --BenchmarkConfiguration="$configPath" \
          --BenchmarkConfigurationTargetPath="/home/${user}/signalr.yaml" \
          --AzureSignalRConnectionString="$connectionString" \
          --AppserverLogDirectory="${outputDir}" \
-         --AppServerCount=$appserverInUse --NotStartAppServer=$notStartAppServer $neverStopAppServerOp
+         --NotStartAppServer=$notStartAppServer $neverStopAppServerOp
   else
     dotnet run -- --RpcPort=5555 --SlaveList="$slaves" --MasterHostname="$master" \
                --Username=$user --Password=$passwd \
