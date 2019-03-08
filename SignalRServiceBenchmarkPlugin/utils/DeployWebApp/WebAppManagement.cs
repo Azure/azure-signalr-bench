@@ -111,7 +111,7 @@ namespace DeployWebApp
                                     serverConnectionCount: _argsOption.ServerConnectionCount)).ToList();
             Task Process<T>(T p) => BatchProcess(packages, CreateWebApp, _argsOption.ConcurrentCountOfWebApp);
             bool NotReadyCheck<T>(T t) => isAnyWebAppNotReady(appNameList, _argsOption.GroupName);
-            await RetriableRun(packages, Process, NotReadyCheck, 5, "create webapp");
+            await RetriableRun(packages, Process, NotReadyCheck, 60, "create webapp");
         }
 
         private async Task ScaleOutAppPlan(List<string> appNameList)
@@ -124,7 +124,7 @@ namespace DeployWebApp
                                     scaleOut: _scaleOut)).ToList();
             Task Process<T>(T p) => BatchProcess(packages, ScaleOutAppPlanAsync, _argsOption.ConcurrentCountOfServicePlan);
             bool NotReadyCheck<T>(T t) => isAnyServicePlanScaleOutNotReady(appNameList, _argsOption.GroupName);
-            await RetriableRun(packages, Process, NotReadyCheck, 60, "scale out app plan", 5);
+            await RetriableRun(packages, Process, NotReadyCheck, 120, "scale out app plan", 5);
         }
 
         public async Task Deploy()

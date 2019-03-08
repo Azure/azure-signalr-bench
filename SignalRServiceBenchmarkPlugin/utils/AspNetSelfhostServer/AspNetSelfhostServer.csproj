@@ -13,7 +13,7 @@
     <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
     <PackageReference Include="Owin" Version="1.0.0" />
     <PackageReference Include="Microsoft.AspNet.SignalR" Version="2.4.0" />
-    <PackageReference Include="Microsoft.Azure.SignalR.AspNet" Version="1.0.0-preview1-10259" />
+    <PackageReference Include="Microsoft.Azure.SignalR.AspNet" Version="1.0.0-preview1-10330" />
 
     <Reference Include="System" />
     <Reference Include="System.Core" />

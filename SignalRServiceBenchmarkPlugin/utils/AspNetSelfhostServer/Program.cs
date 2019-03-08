@@ -8,7 +8,9 @@ namespace AspNetSelfhostServer
         static void Main(string[] args)
         {
             var config = new Configuration();
-            using (WebApp.Start<Startup>(config.Url))
+            var options = new StartOptions();
+            options.Urls.Add(config.Url);
+            using (WebApp.Start<Startup>(options))
             {
                 Console.WriteLine($"Server running at {config.Url}");
                 Console.ReadLine();
