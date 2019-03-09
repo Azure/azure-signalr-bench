@@ -1,4 +1,5 @@
 ﻿using Microsoft.Azure.Management.AppService.Fluent;
+using Microsoft.Azure.Management.AppService.Fluent.Models;
 using Microsoft.Azure.Management.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent.Authentication;
@@ -19,11 +20,11 @@ namespace DeployWebApp
         protected IDictionary<string, PricingTier> _priceTierMapper;
         protected PricingTier _targetPricingTier;
         protected IResourceGroup _resourceGroup;
-        //protected int _webAppCount;
         protected int _appPlanCount;
         protected int _appInstanceCount;
         protected int _scaleOut;
         protected static int MAX_SCALE_OUT = 10;
+        protected LogLevel _appLogLevel = LogLevel.Information;
 
         public WebAppManagementBase(ArgsOption argsOption)
         {
@@ -37,19 +38,30 @@ namespace DeployWebApp
                 { "PremiumP2v2", PricingTier.PremiumP2v2}
             };
             _appInstanceCount = _argsOption.WebappCount;
-            var i = MAX_SCALE_OUT;
-            for (; i > 1; i--)
+            if (_appInstanceCount > 1)
             {
-                if (_argsOption.WebappCount % i == 0)
+                var i = MAX_SCALE_OUT;
+                for (; i > 1; i--)
                 {
-                    _appPlanCount = _argsOption.WebappCount / i;
-                    _scaleOut = i;
-                    break;
+                    if (_argsOption.WebappCount % i == 0)
+                    {
+                        _appPlanCount = _argsOption.WebappCount / i;
+                        _scaleOut = i;
+                        break;
+                    }
+                }
+                if (i == 1)
+                {
+                    throw new InvalidDataException("The web app instance count should be 1 or divided by 2 or 3 or 5 or 7");
                 }
             }
-            if (i == 1)
+            else if (_appInstanceCount == 1)
             {
-                throw new InvalidDataException("The web app instance count should be divided by 2 or 3 or 5 or 7");
+                _appPlanCount = _scaleOut = 1;
+            }
+            else
+            {
+                throw new InvalidDataException("The web app instance count should be 1 or divided by 2 or 3 or 5 or 7");
             }
         }
 
@@ -199,6 +211,38 @@ namespace DeployWebApp
             }
         }
 
+        protected void DumpAppServicePlanScaleOutCount(List<string> webappNameList)
+        {
+            string appServicePlanScaleOutList = "";
+
+            for (var i = 0; i < _appPlanCount; i++)
+            {
+                var name = webappNameList[i];
+                var appPlan = _azure.AppServices.AppServicePlans.GetByResourceGroup(_argsOption.GroupName, name);
+                if (appPlan != null)
+                {
+                    var id = appPlan.Id;
+                    var scaleOut = appPlan.Capacity;
+                    appServicePlanScaleOutList += id + $" {scaleOut}" + Environment.NewLine;
+                }
+            }
+            if (_argsOption.AppServicePlanScaleOutputFile != null)
+            {
+                if (File.Exists(_argsOption.AppServicePlanScaleOutputFile))
+                {
+                    File.Delete(_argsOption.AppServicePlanScaleOutputFile);
+                }
+                using (var writer = new StreamWriter(_argsOption.AppServicePlanScaleOutputFile, true))
+                {
+                    writer.WriteLine(appServicePlanScaleOutList);
+                }
+            }
+            else
+            {
+                Console.WriteLine(appServicePlanScaleOutList);
+            }
+        }
+
         protected void DumpWebAppId(List<string> webappNameList)
         {
             string webappIdList = "";
@@ -269,49 +313,54 @@ namespace DeployWebApp
             }
         }
 
-        protected bool isAllServicePlanCreated(List<string> names, string resourceGroup)
+        protected bool isAnyServicePlanNotReady(List<string> names, string resourceGroup)
         {
-            foreach (var n in names)
-            {
-                var iAppPlan = _azure.AppServices.AppServicePlans.GetByResourceGroup(resourceGroup, n);
-                if (iAppPlan == null)
-                {
-                    return false;
-                }
-            }
-            return true;
+            return names.Any(n => { return _azure.AppServices.AppServicePlans.GetByResourceGroup(resourceGroup, n) == null; });
         }
 
-        protected bool isAllServicePlanScaleOut(List<string> names, string resourceGroup)
+        protected bool isAnyServicePlanScaleOutNotReady(List<string> names, string resourceGroup)
         {
-            foreach (var n in names)
-            {
-                var iAppPlan = _azure.AppServices.AppServicePlans.GetByResourceGroup(resourceGroup, n);
-                if (iAppPlan != null)
-                {
-                    if (iAppPlan.Capacity != _scaleOut)
-                    {
-                        return false;
-                    }
-                }
-                else
-                {
-                    return false;
-                }
-            }
-            return true;
+            return names.Any(n => {
+                var p = _azure.AppServices.AppServicePlans.GetByResourceGroup(resourceGroup, n);
+                return p != null && p.Capacity != _scaleOut;
+            });
         }
-        protected bool isAllWebAppCreated(List<string> names, string resourceGroup)
+
+        protected bool isDiagnosticLogNotReady(List<string> names, string resourceGroup)
         {
-            foreach (var n in names)
+            return names.Any(n =>
             {
-                var webApp = _azure.WebApps.GetByResourceGroup(resourceGroup, n);
-                if (webApp == null)
+                var p = _azure.WebApps.GetByResourceGroup(resourceGroup, n);
+                return p.DiagnosticLogsConfig.ApplicationLoggingFileSystemLogLevel != _appLogLevel ||
+                       !p.DiagnosticLogsConfig.DetailedErrorMessages ||
+                       !p.DiagnosticLogsConfig.FailedRequestsTracing;
+            });
+        }
+
+        protected bool isAnyWebAppNotReady(List<string> names, string resourceGroup)
+        {
+            return names.Any(n => { return _azure.WebApps.GetByResourceGroup(resourceGroup, n) == null; });
+        }
+
+        public static async Task RetriableRun<T>(
+            T items,
+            Func<T, Task> Run,
+            Func<T, bool> NotReadyCheck,
+            int delayInSeconds = 5,
+            string taskName = "RetriableRun",
+            int maxRetry = 3)
+        {
+            var retry = 0;
+            do
+            {
+                Console.WriteLine($"{DateTime.Now.ToString("yyyyMMddHHmmss")} {retry} : {taskName}");
+                await Run(items);
+                if (retry > 0)
                 {
-                    return false;
+                    await Task.Delay(TimeSpan.FromSeconds(delayInSeconds));
                 }
-            }
-            return true;
+                retry++;
+            } while (NotReadyCheck(items) && retry < maxRetry);
         }
 
         protected static async Task ScaleOutAppPlanCoreAsync(
@@ -354,7 +403,6 @@ namespace DeployWebApp
                             .WithExistingResourceGroup(package.groupName)
                             .WithPricingTier(package.pricingTier)
                             .WithOperatingSystem(package.os)
-                            //.WithCapacity(package.scaleOut)
                             .CreateAsync(cts.Token);
                     Console.WriteLine($"{DateTime.Now.ToString("yyyyMMddHHmmss")} Successfully {funcName} for {package.name}");
                 }
@@ -387,10 +435,25 @@ namespace DeployWebApp
                                                    .WithExistingResourceGroup(package.resourceGroup)
                                                    .WithWebSocketsEnabled(true)
                                                    .WithWebAppAlwaysOn(true)
+                                                   .DefineDiagnosticLogsConfiguration()
+                                                       .WithApplicationLogging()
+                                                       .WithLogLevel(LogLevel.Information)
+                                                       .WithApplicationLogsStoredOnFileSystem()
+                                                       .WithDetailedErrorMessages(true)
+                                                       .WithFailedRequestTracing(true)
+                                                       .Attach()
+                                                   .DefineDiagnosticLogsConfiguration()
+                                                       .WithWebServerLogging()
+                                                       .WithWebServerLogsStoredOnFileSystem()
+                                                       .WithWebServerFileSystemQuotaInMB(30)
+                                                       .WithLogRetentionDays(1)
+                                                       .WithDetailedErrorMessages(true)
+                                                       .WithFailedRequestTracing(true)
+                                                       .Attach()
                                                    .DefineSourceControl()
-                                                   .WithPublicGitRepository(package.githubRepo)
-                                                   .WithBranch("master")
-                                                   .Attach()
+                                                       .WithPublicGitRepository(package.githubRepo)
+                                                       .WithBranch("master")
+                                                       .Attach()
                                                    .WithConnectionString("Azure:SignalR:ConnectionString", package.connectionString,
                                                     Microsoft.Azure.Management.AppService.Fluent.Models.ConnectionStringType.Custom)
                                                    .WithAppSetting("ConnectionCount", package.serverConnectionCount)
@@ -408,7 +471,6 @@ namespace DeployWebApp
                 }
             }
         }
-
 
         protected static Task BatchProcess<T>(IList<T> source, Func<T, Task> f, int max)
         {

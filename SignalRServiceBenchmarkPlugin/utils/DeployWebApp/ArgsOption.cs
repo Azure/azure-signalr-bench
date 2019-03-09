@@ -60,6 +60,10 @@ namespace DeployWebApp
             HelpText = "Specify the web app output file, default is null and output to console")]
         public string WebAppIdOutputFile { get; set; }
 
+        [Option("appServicePlanScaleOutputFile", Required = false,
+            HelpText = "Specify the output file for app service plan scale out count, default is null and output to console")]
+        public string AppServicePlanScaleOutputFile { get; set; }
+
         [Option("hubName", Required = false, Default = "signalrbench", HelpText = "Specify the hubName which will show up in the end of URL, only for benchmark use")]
         public string HubName { get; set; }
 

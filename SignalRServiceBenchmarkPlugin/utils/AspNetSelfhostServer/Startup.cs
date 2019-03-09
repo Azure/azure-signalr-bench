@@ -4,6 +4,7 @@
 using Microsoft.AspNet.SignalR;
 using Microsoft.Owin;
 using Owin;
+using System;
 using System.Diagnostics;
 
 [assembly: OwinStartup(typeof(AspNetSelfhostServer.Startup))]
@@ -15,7 +16,15 @@ namespace AspNetSelfhostServer
         {
             var config = new Configuration();
             // Any connection or hub wire up and configuration should go here
-            app.RunAzureSignalR(this.GetType().FullName, config.ConnectionString);
+            if (config.UseLocalSignalR)
+            {
+                Console.WriteLine("Using local SignalR");
+                app.RunSignalR();
+            }
+            else
+            {
+                app.RunAzureSignalR(GetType().FullName, option => { option.ConnectionCount = 15; });
+            }
             GlobalHost.TraceManager.Switch.Level = SourceLevels.Information;
         }
     }
