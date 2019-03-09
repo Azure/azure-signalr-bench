@@ -736,3 +736,13 @@ function install_ntp_on_all_vm() {
   local port=$3
   iterate_all_vms "$vm_list" $user $port install_ntp_on_single_vm
 }
+
+disable_exit_immediately_when_fail()
+{
+  set +e
+}
+
+enable_exit_immediately_when_fail()
+{
+  set -e
+}

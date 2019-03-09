@@ -731,16 +731,6 @@ build_app_server() {
   cd -
 }
 
-disable_exit_immediately_when_fail()
-{
-  set +e
-}
-
-enable_exit_immediately_when_fail()
-{
-  set -e
-}
-
 try_catch_netstat_when_server_conn_drop()
 {
   local user=$1
