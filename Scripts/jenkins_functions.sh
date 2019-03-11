@@ -98,6 +98,8 @@ fi
 }
 
 function register_exit_handler() {
+  disable_exit_immediately_when_fail
+  trap remove_resource_group EXIT
   cd $CurrentWorkingDir
   if [ -d ${VMMgrDir} ]
   then
@@ -111,7 +113,7 @@ function register_exit_handler() {
     rm -rf ${AspNetWebMgrDir}
   fi
   dotnet publish -c Release -f netcoreapp2.1 -o ${AspNetWebMgrDir} --self-contained -r linux-x64
-  trap remove_resource_group EXIT
+  enable_exit_immediately_when_fail
 }
 
 function run_unit() {
