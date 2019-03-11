@@ -44,7 +44,7 @@ function set_global_env() {
 # depends on set_global_env
 function set_job_env() {
    export result_root=`date +%Y%m%d%H%M%S`
-   export DogFoodResourceGroup="honzhanatpf"`date +%M%S`
+   export DogFoodResourceGroup="hzatpf"$result_root
    export serverUrl=`awk '{print $2}' $JenkinsRootPath/JobConfig.yaml`
    export MaxSendIteration=30 # we evaluate the total running time per this value
    record_build_info
