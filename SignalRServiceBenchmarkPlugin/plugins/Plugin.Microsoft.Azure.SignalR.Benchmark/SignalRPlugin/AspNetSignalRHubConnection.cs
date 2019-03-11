@@ -105,7 +105,16 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
 
         public Task DisposeAsync()
         {
-            _hubConnection.Dispose();
+            try
+            {
+                // If connection fails to start, its internal state is not complete.
+                // Exception will thrown if invoking Dispose.
+                _hubConnection.Dispose();
+            }
+            catch (Exception e)
+            {
+                Log.Error($"Fail to dispose: {e.Message}");
+            }
             return Task.CompletedTask;
         }
 
