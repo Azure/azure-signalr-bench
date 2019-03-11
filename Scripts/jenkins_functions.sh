@@ -150,8 +150,7 @@ function run_all_units() {
    fi
 
    run_benchmark $service $user "$passwd" "$ConnectionString"
-
-   azure_login
-   delete_signalr_service $signalrServiceName $DogFoodResourceGroup
  done
+ azure_login
+ delete_signalr_service $signalrServiceName $DogFoodResourceGroup
 }
