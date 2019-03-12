@@ -148,7 +148,8 @@ function run_all_units() {
      echo "Skip the running on SignalR service unit'$service' since it was failed to create"
      continue
    fi
-
+   # wait for the instance to be ready
+   sleep 120
    run_benchmark $service $user "$passwd" "$ConnectionString"
  done
  azure_login
