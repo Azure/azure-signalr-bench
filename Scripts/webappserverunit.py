@@ -1,10 +1,10 @@
 import sys
 
-others={1:4, 2:4, 5:6, 10:6, 20:10, 50:20, 100:30}
-echo={1:4, 2:4, 5:6, 10:6, 20:10, 50:36, 100:40}
+others={1:2, 2:2, 5:4, 10:4, 20:8, 50:20, 100:30}
+echo={1:2, 2:2, 5:4, 10:4, 20:8, 50:32, 100:40}
 sendToClient=others
 sendToGroup=others
-broadcast={1:4, 2:4, 5:4, 10:4, 20:4, 50:4, 100:4}
+broadcast={1:2, 2:2, 5:2, 10:2, 20:2, 50:2, 100:2}
 
 def unit1_webappserver(s):
    return s[1]
