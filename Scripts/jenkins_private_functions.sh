@@ -759,7 +759,7 @@ fi
 
 while [ true ]
 do
-  conn_drop=`grep "service was dropped" \$appserver_log`
+  conn_drop=\`grep "service was dropped" \$appserver_log\`
   if [ "\$conn_drop" != "" ]
   then
      date_time=\`date --iso-8601='seconds'\`
