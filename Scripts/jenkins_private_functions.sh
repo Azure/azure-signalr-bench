@@ -136,6 +136,13 @@ function collectWebAppMetrics()
   done
 }
 
+function gen4AspNet()
+{
+  local configPath=$1
+  sed -i 's/CreateConnection/CreateAspNetConnection/g' $configPath
+  sed -i 's/Reconnect/AspNetReconnect/g' $configPath
+}
+
 function normalizeSendSize()
 {
   local send_size=$1
@@ -662,9 +669,7 @@ function build_rpc_master() {
      rm -rf $tmpMaster
   fi
   cd $PluginRpcBuildWorkingDir
-  disable_exit_immediately_when_fail
   ./build.sh master $tmpMaster
-  enable_exit_immediately_when_fail
   if [ ! -e $tmpMaster/master ]
   then
     echo "!!! Fail to build master: the '$tmpMaster/master' does not exist!!!"
@@ -689,9 +694,7 @@ function build_rpc_slave() {
      rm -rf $tmpSlave
   fi
   cd $PluginRpcBuildWorkingDir
-  disable_exit_immediately_when_fail
   ./build.sh slave $tmpSlave
-  enable_exit_immediately_when_fail
   if [ ! -e $tmpSlave/slave ]
   then
     echo "!!! Fail to build slave: the '$tmpSlave/slave' does not exist!!!"
@@ -716,9 +719,7 @@ build_app_server() {
      rm -rf $tmpAppServer
   fi
   cd $AppServerWorkingDir
-  disable_exit_immediately_when_fail
   ./build.sh $tmpAppServer
-  enable_exit_immediately_when_fail
   if [ ! -e $tmpAppServer/AppServer ]
   then
     echo "!!! Fail to build appserver: the '$tmpAppServer/AppServer' does not exist!!!"
@@ -745,12 +746,12 @@ try_catch_netstat_when_server_conn_drop()
   local asrs_endpoint=`echo "$connectionString"|awk -F \; '{print $1}'|awk -F = '{print $2}'`
 cat << EOF > $netstat_check_file
 #!/bin/bash
-if [ -e \$remote_netstat_log ]
+if [ -e $remote_netstat_log ]
 then
-  rm \$remote_netstat_log
+  rm $remote_netstat_log
 fi
 
-appserver_log=`find . -iname "appserver.log"`
+appserver_log=\`find . -iname "appserver.log"\`
 if [ "\$appserver_log" == "" ]
 then
   exit 0
