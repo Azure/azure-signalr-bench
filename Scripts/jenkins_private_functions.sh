@@ -761,7 +761,9 @@ if [ -e $remote_netstat_log ]
 then
   rm $remote_netstat_log
 fi
-while [ true ]
+i=0
+max=3600
+while [ \$i -lt \$max ]
 do
   conn_drop=\`grep "service was dropped" \$appserver_log\`
   if [ "\$conn_drop" != "" ]
@@ -774,6 +776,7 @@ do
      curl -I http://www.bing.com >> $remote_netstat_log
   fi
   sleep 1
+  i=\$((\$i+1))
 done
 EOF
   local i
