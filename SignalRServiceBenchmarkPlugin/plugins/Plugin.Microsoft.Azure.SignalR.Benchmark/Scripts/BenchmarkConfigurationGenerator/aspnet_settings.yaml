@@ -17,7 +17,7 @@ scenario:echo,transport:Websockets:
   base_step: [1000, 2000, 5000, 5000, 5000, 5000, 5000]
   step: [500, 1000, 2500, 5000, 5000, 5000, 5000]
   step_length: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
-  concurrent: [100, 100, 100, 50, 500, 500, 1000]
+  concurrent: [100, 100, 100, 50, 500, 100, 100]
   #batch_mode: ["HighPress", "HighPress", "HighPress", "LowPress", "LowPress", "LowPress", "LowPress"]
   #batch_wait: [1000, 1000, 1000, 1000, 1000, 1000, 1000]
 

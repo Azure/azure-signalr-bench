@@ -44,11 +44,10 @@ function create_group_if_not_exist() {
   local location=$2
   local grps=`az group list -o json|jq .[].name|grep $resgrp`
 
-  if [ "$grps" != "" ]
+  if [ "$grps" == "" ]
   then
-    delete_group $resgrp
+    az group create --name $resgrp --location $location
   fi
-  az group create --name $resgrp --location $location
 }
 
 function delete_group() {
