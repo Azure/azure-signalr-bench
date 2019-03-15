@@ -800,6 +800,12 @@ fetch_netstat_for_server_conn_drop()
     if [ "$netstatLogPath" != "" ]
     then
       sshpass -p $passwd scp -o StrictHostKeyChecking=no -o LogLevel=ERROR $user@${i}:$netstatLogPath $outputDir/appserver_netstat_${i}.txt
+      if [ -e $outputDir/appserver_netstat_${i}.txt ]
+      then
+         cd $outputDir
+         tar zcvf appserver_netstat_${i}.txt.tgz appserver_netstat_${i}.txt
+         cd -
+      fi
     fi
   done
 }
