@@ -770,10 +770,9 @@ do
   then
      date_time=\`date --iso-8601='seconds'\`
      echo "\${date_time} " >> $remote_netstat_log
-     echo "\$conn_drop" >> $remote_netstat_log
-     curl -I $asrs_endpoint >> $remote_netstat_log
+     curl -I $asrs_endpoint 2>/dev/null|head -n 3 >> $remote_netstat_log
      echo "------------------" >> $remote_netstat_log
-     curl -I http://www.bing.com >> $remote_netstat_log
+     curl -I http://www.bing.com 2>/dev/null|head -n 3 >> $remote_netstat_log
   fi
   sleep 1
   i=\$((\$i+1))
