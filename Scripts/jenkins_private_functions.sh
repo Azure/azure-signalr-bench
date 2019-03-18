@@ -746,30 +746,36 @@ try_catch_netstat_when_server_conn_drop()
   local asrs_endpoint=`echo "$connectionString"|awk -F \; '{print $1}'|awk -F = '{print $2}'`
 cat << EOF > $netstat_check_file
 #!/bin/bash
-if [ -e \$remote_netstat_log ]
+if [ -e $remote_netstat_log ]
 then
-  rm \$remote_netstat_log
+  rm $remote_netstat_log
 fi
 
-appserver_log=`find . -iname "appserver.log"`
+appserver_log=\`find . -iname "appserver.log"\`
 if [ "\$appserver_log" == "" ]
 then
   exit 0
 fi
 
-while [ true ]
+if [ -e $remote_netstat_log ]
+then
+  rm $remote_netstat_log
+fi
+i=0
+max=3600
+while [ \$i -lt \$max ]
 do
-  conn_drop=`grep "service was dropped" \$appserver_log`
+  conn_drop=\`grep "service was dropped" \$appserver_log\`
   if [ "\$conn_drop" != "" ]
   then
      date_time=\`date --iso-8601='seconds'\`
      echo "\${date_time} " >> $remote_netstat_log
-     echo "\$conn_drop" >> $remote_netstat_log
-     curl -vvv $asrs_endpoint >> $remote_netstat_log
+     curl -I $asrs_endpoint 2>/dev/null|head -n 3 >> $remote_netstat_log
      echo "------------------" >> $remote_netstat_log
-     curl -vvv http://www.bing.com >> $remote_netstat_log
+     curl -I http://www.bing.com 2>/dev/null|head -n 3 >> $remote_netstat_log
   fi
   sleep 1
+  i=\$((\$i+1))
 done
 EOF
   local i
@@ -777,7 +783,7 @@ EOF
   do
     sshpass -p $passwd scp -o StrictHostKeyChecking=no -o LogLevel=ERROR $netstat_check_file $user@${i}:/home/$user/
     sshpass -p $passwd ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $user@${i} "chmod +x $netstat_check_file"
-    sshpass -p $passwd ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $user@${i} "nohup ./$netstat_check_file &"
+    sshpass -p $passwd ssh -f -o StrictHostKeyChecking=no -o LogLevel=ERROR $user@${i} "killall $netstat_check_file; nohup ./$netstat_check_file &"
   done
 }
 
@@ -794,6 +800,12 @@ fetch_netstat_for_server_conn_drop()
     if [ "$netstatLogPath" != "" ]
     then
       sshpass -p $passwd scp -o StrictHostKeyChecking=no -o LogLevel=ERROR $user@${i}:$netstatLogPath $outputDir/appserver_netstat_${i}.txt
+      if [ -e $outputDir/appserver_netstat_${i}.txt ]
+      then
+         cd $outputDir
+         tar zcvf appserver_netstat_${i}.txt.tgz appserver_netstat_${i}.txt
+         cd -
+      fi
     fi
   done
 }

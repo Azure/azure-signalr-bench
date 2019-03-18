@@ -17,7 +17,6 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
         {
             return Task.WhenAll(from package in packages
                                 let index = ConnectionIndex[package.LocalIndex]
-                                let groupSize = TotalConnection / GroupCount
                                 let groupIndex = index % GroupCount
                                 let indexInGroup = index / GroupCount
                                 let connection = package.Connection

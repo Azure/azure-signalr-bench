@@ -15,8 +15,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         
         public enum GroupConfigMode
         {
-            Group,
-            Connection
+            Group, // select connections from every group
+            Connection // randomly select the connections
         }
 
         public enum ClientType

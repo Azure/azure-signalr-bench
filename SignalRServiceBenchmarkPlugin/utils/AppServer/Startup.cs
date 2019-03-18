@@ -34,6 +34,7 @@ namespace Microsoft.Azure.SignalR.PerfTest.AppServer
             else
                 services.AddSignalR().AddMessagePackProtocol().AddAzureSignalR(option =>
                 {
+                    option.AccessTokenLifetime = TimeSpan.FromDays(1);
                     option.ConnectionCount = Configuration.GetValue<int>("Azure:SignalR:ConnectionNumber");
                 });
             services.Replace(ServiceDescriptor.Singleton(typeof(ILoggerFactory), typeof(TimedLoggerFactory)));

@@ -55,20 +55,19 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 switch (mode)
                 {
                     case SignalREnums.BatchMode.ExtLimitRatePress:
-                        await Task.WhenAll(Util.ExternalRateLimitBatchProcess(packages,
-                            SignalRUtils.StartConnect, concurrentConnection, fillTokenPerDuration, period));
+                        await Util.ExternalRateLimitBatchProcess(packages, SignalRUtils.StartConnect,
+                            concurrentConnection, fillTokenPerDuration, period);
                         break;
                     case SignalREnums.BatchMode.LimitRatePress:
                         await Util.RateLimitBatchProces(packages,
                             SignalRUtils.StartConnect, concurrentConnection, fillTokenPerDuration, period);
                         break;
                     case SignalREnums.BatchMode.HighPress:
-                        await Task.WhenAll(Util.BatchProcess(packages,
-                            SignalRUtils.StartConnect, concurrentConnection));
+                        await Util.BatchProcess(packages, SignalRUtils.StartConnect, concurrentConnection);
                         break;
                     case SignalREnums.BatchMode.LowPress:
-                        await Task.WhenAll(Util.LowPressBatchProcess(packages,
-                            SignalRUtils.StartConnect, concurrentConnection, batchWaitMilliSeconds));
+                        await Util.LowPressBatchProcess(packages, SignalRUtils.StartConnect,
+                            concurrentConnection, batchWaitMilliSeconds);
                         break;
                 }
             }

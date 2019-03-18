@@ -1,9 +1,11 @@
-﻿using Renci.SshNet;
+﻿using Medallion.Shell;
+using Renci.SshNet;
 using Serilog;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 
 namespace Commander
@@ -180,34 +182,32 @@ namespace Commander
                 var host = client.ConnectionInfo.Host;
                 var localAppServerLogPath = GetLocalAppServerLogPath(host);
                 client.Download(remoteAppLogFilePath, new FileInfo(localAppServerLogPath));
-            }
-            // zip the applog because it may be big
-            /*
-            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-            {
-                var zip = Command.Run("zip", new string[] { "-r", $"{logPrefix}.zip", $"{logPrefix}*.log" },
+                // zip the applog because it may be big
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                {
+                    var zip = Command.Run("zip", new string[] { "-r", $"{localAppServerLogPath}.tgz", $"{localAppServerLogPath}" },
                     o => o.WorkingDirectory(_appserverLogDirPath));
-                zip.Wait();
-                if (!zip.Result.Success)
-                {
-                    Log.Error(zip.Result.StandardOutput);
+                    zip.Wait();
+                    if (!zip.Result.Success)
+                    {
+                        Log.Error(zip.Result.StandardOutput);
+                    }
                 }
-            }
-            else
-            {
-                var tar = Command.Run("tar", new string[] { "zcvf", $"{logPrefix}.tgz", $"{logPrefix}*.log" },
+                else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
+                {
+                    var tar = Command.Run("tar", new string[] { "zcvf", $"{localAppServerLogPath}.tgz", $"{localAppServerLogPath}" },
                     o => o.WorkingDirectory(_appserverLogDirPath));
-                tar.Wait();
-                if (!tar.Result.Success)
-                {
-                    Log.Error(tar.Result.StandardOutput);
-                }
-                else
-                {
-                    Command.Run("rm", new string[] { $"{logPrefix}*.log" }, o => o.WorkingDirectory(_appserverLogDirPath));
+                    tar.Wait();
+                    if (!tar.Result.Success)
+                    {
+                        Log.Error(tar.Result.StandardOutput);
+                    }
+                    else
+                    {
+                        Command.Run("rm", new string[] { $"{localAppServerLogPath}" }, o => o.WorkingDirectory(_appserverLogDirPath));
+                    }
                 }
             }
-            */
         }
 
         protected void RetriableUploadFile(string host, string srcPath, string dstPath)

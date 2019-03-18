@@ -41,8 +41,9 @@ function set_global_env() {
 function set_job_env() {
    export result_root=`date +%Y%m%d%H%M%S`
    export DogFoodResourceGroup="hzatpf"$result_root
+   export SignalrServiceName="atpf"${result_root} #-`date +%H%M%S`
    export AspNetWebAppResGrp="hzperfwebapp"$result_root
-   export MaxSendIteration=30 # we evaluate the total running time per this value
+   export MaxSendIteration=120 # we evaluate the total running time per this value
    record_build_info # record the jenkins job to /tmp/send_mail.txt
 }
 
@@ -134,24 +135,22 @@ function run_all_units() {
  local user=$1
  local passwd="$2"
  local service
- local signalrServiceName
  clean_known_hosts
  for service in $bench_serviceunit_list
  do
    cd $ScriptWorkingDir
    ConnectionString="" # set it to be invalid first
    # always use a new name for every ASRS to avoid DNS refresh issue
-   signalrServiceName="atpf"${result_root}-`date +%H%M%S`
-   create_asrs $DogFoodResourceGroup $signalrServiceName $Sku $service
+   create_asrs $DogFoodResourceGroup $SignalrServiceName $Sku $service
    if [ "$ConnectionString" == "" ]
    then
      echo "Skip the running on SignalR service unit'$service' since it was failed to create"
      continue
    fi
-
+   # wait for the instance to be ready
+   sleep 120
    run_benchmark $service $user "$passwd" "$ConnectionString"
-
-   azure_login
-   delete_signalr_service $signalrServiceName $DogFoodResourceGroup
  done
+ azure_login
+ delete_signalr_service $SignalrServiceName $DogFoodResourceGroup
 }

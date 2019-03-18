@@ -15,7 +15,7 @@ filter_app_log_a_single_run() {
   then
     rm $output_file
   fi
-  find $tgt_dir -iname "*appserver.log" |while read line
+  find $tgt_dir -iname "*appserver.log.tgz" |while read line
   do
     local d=`echo "$line"|awk -F / '{print $5}'`
     local unit=`echo "$line"|awk -F / '{print $6}'`
@@ -51,7 +51,7 @@ parse_all_logs() {
   then
     return
   fi
-
+  local exception_count
   while read line
   do
     datetime=`echo "$line"|awk '{print $1}'`
@@ -62,7 +62,16 @@ parse_all_logs() {
     cp $path $scenario_outdir/
     local log_file=`echo "$path"|awk -F / '{print $NF}'`
     ## exception count
-    local exception_count=`grep Exception ${path}|wc -l`
+    if [[ $log_file == "*.tgz" ]]
+    then
+       cd $scenario_outdir/
+       local log_raw_file=`tar zxvf $log_file`
+       exception_count=`grep -i Exception $log_raw_file|wc -l`
+       rm $log_raw_file
+       cd -
+    else
+       exception_count=`grep -i Exception ${path}|wc -l`
+    fi
     echo "${datetime},${unit},${exception_count},$datetime/$unit/${log_file}" >>$outdir/$ASRS_WARN_SUMMARY_TABLE
   done < $RAW_FILETER_RESULT
   python gen_appserver_exception_html.py -s ',' -i $outdir/$ASRS_WARN_SUMMARY_TABLE > $outdir/latency_table_1s_category.js 
