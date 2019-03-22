@@ -1115,13 +1115,13 @@ cd $ScriptWorkingDir
 if [ "$ASRSEnv" == "dogfood" ]
 then
   az_login_ASRS_dogfood
-  delete_group $DogFoodResourceGroup
-  delete_group $DogFoodResourceGroup
+  delete_group $ASRSResourceGroup
+  delete_group $ASRSResourceGroup
   unregister_signalr_service_dogfood
 else
   az_login_signalr_dev_sub
-  delete_group $DogFoodResourceGroup
-  delete_group $DogFoodResourceGroup
+  delete_group $ASRSResourceGroup
+  delete_group $ASRSResourceGroup
 fi
 EOF
   daemonize -v -o /tmp/${clean_asrs_daemon}.out -e /tmp/${clean_asrs_daemon}.err -E BUILD_ID=dontKillcenter /usr/bin/nohup /bin/sh /tmp/clean_asrs.sh &
