@@ -195,7 +195,7 @@ namespace Commander
                 }
                 else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux))
                 {
-                    var tar = Command.Run("tar", new string[] { "zcvf", $"{localAppServerLogPath}.tgz", $"{localAppServerLogPath}" },
+                    var tar = Command.Run("tar", new string[] { "-C", _appserverLogDirPath, "zcvf", $"{localAppServerLogPath}.tgz", $"{host}_{_appLogFileName}" },
                     o => o.WorkingDirectory(_appserverLogDirPath));
                     tar.Wait();
                     if (!tar.Result.Success)
