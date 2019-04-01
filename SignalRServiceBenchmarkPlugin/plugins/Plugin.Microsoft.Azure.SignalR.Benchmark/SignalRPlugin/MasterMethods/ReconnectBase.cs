@@ -24,7 +24,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
             {
                 int currentConcurrentConnection = Util.SplitNumber(concurrentConnection, i, clients.Count);
                 (int beg, int end) = Util.GetConnectionRange(connectionTotal, i, clients.Count);
-                var data = new Dictionary<string, object>
+                var data = new Dictionary<string, object>(stepParameters)
                 {
                     { SignalRConstants.HubUrls, hubUrl },
                     { SignalRConstants.TransportType, transportType },

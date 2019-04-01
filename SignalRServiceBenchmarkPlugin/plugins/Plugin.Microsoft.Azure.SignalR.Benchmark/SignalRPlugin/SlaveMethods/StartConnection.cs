@@ -4,6 +4,7 @@ using Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods.Statistics;
 using Serilog;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading.Tasks;
 
 namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
@@ -34,13 +35,23 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 // The following get connection Id needs the concurrent connection value
                 pluginParameters.TryAdd(SignalRConstants.ConcurrentConnection, concurrentConnection);
 
-                await BatchConnect(
+                var sw = new Stopwatch();
+                sw.Start();
+                Log.Information($"{DateTime.Now.ToString("yyyyMMddHHmmss")} Start connection");
+                try
+                {
+                    await BatchConnect(
                     stepParameters,
                     pluginParameters,
                     connections,
                     concurrentConnection,
                     connectionsSuccessFlag);
-                Log.Information($"Finish starting connection {connections.Count}");
+                }
+                finally
+                {
+                    sw.Stop();
+                    Log.Information($"{DateTime.Now.ToString("yyyyMMddHHmmss")} Finishing connection {connections.Count} with {sw.ElapsedMilliseconds} ms");
+                }
                 return null;
             }
             catch (Exception ex)

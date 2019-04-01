@@ -272,39 +272,18 @@ namespace Common
             return Task.WhenAll(from item in source
                                 select Task.Run(async () =>
                                 {
-                                    var retry = 0;
-                                    var maxRetry = 5;
-                                    var rand = new Random();
-                                    while (retry < maxRetry)
+                                    await s.WaitAsync();
+                                    try
                                     {
-                                        try
-                                        {
-                                            await s.WaitAsync();
-                                            try
-                                            {
-                                                await f(item);
-                                                break;
-                                            }
-                                            catch (System.OperationCanceledException e)
-                                            {
-                                                Log.Warning($"see cancellation in {f.Method.Name}: {e.Message}");
-                                            }
-                                            finally
-                                            {
-                                                s.Release();
-                                            }
-                                        }
-                                        catch (System.OperationCanceledException)
-                                        {
-                                            Log.Warning($"Waiting too long time to obtain the semaphore: current: {s.CurrentCount}, max: {max}");
-                                        }
-                                        var randomDelay = TimeSpan.FromMilliseconds(rand.Next(1, 500));
-                                        await Task.Delay(randomDelay);
-                                        retry++;
+                                        await f(item);
                                     }
-                                    if (retry == maxRetry)
+                                    catch (Exception e)
                                     {
-                                        Log.Error($"The operation {f.Method.Name} was canceled because of reaching max retry {maxRetry}");
+                                        Log.Warning($"see exception in {f.Method.Name}: {e.Message}");
+                                    }
+                                    finally
+                                    {
+                                        s.Release();
                                     }
                                 }));
         }

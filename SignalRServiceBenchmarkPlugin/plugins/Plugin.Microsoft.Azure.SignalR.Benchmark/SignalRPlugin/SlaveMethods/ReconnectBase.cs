@@ -64,7 +64,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 Log.Information($"Start {newConnections.Count} reconnections");
                 // It must use original connections instead of 'newConnections' here
                 // because the 'connectionSuccessFlag' is for original connections
-                await BatchReconnect(
+                await BatchConnect(
                     stepParameters,
                     pluginParameters,
                     connections,
