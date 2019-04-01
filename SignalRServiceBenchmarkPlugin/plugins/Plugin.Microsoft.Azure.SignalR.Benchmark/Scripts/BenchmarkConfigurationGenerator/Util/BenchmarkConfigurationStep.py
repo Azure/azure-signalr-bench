@@ -65,7 +65,8 @@ def conditional_stop(type_, criteria_max_fail_connection_percentage, criteria_ma
     }]
 
 
-def reconnect(type_, connection_total, hub_url, protocol, transport_type, concurrent):
+def reconnect(type_, connection_total, hub_url, protocol,
+              transport_type, concurrent, batch_mode, batch_wait):
     return [{
         **required(type_, "Reconnect"),
         **{
@@ -73,7 +74,9 @@ def reconnect(type_, connection_total, hub_url, protocol, transport_type, concur
             Key['HubUrl']: hub_url,
             Key['Protocol']: protocol,
             Key['TransportType']: transport_type,
-            Key['ConcurrentConnection']: concurrent
+            Key['ConcurrentConnection']: concurrent,
+            Key['BatchMode']: batch_mode,
+            Key['BatchWait']: batch_wait
         }
     }]
 

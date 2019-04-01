@@ -12,7 +12,7 @@ def pre_sending_steps(type_, connection_config, statistics_config, scenario_conf
         wait(type_, constant_config.wait_time),
         reconnect(scenario_config.type, scenario_config.connections, connection_config.url,
                   connection_config.protocol, connection_config.transport,
-                  scenario_config.concurrent)
+                  scenario_config.concurrent, scenario_config.batch_mode, scenario_config.batch_wait)
     ]
     return pre_send
 
@@ -34,7 +34,7 @@ def conditional_stop_and_reconnect_steps(sending, scenario_config, constant_conf
                          constant_config.criteria_max_fail_sending_percentage),
         reconnect(scenario_config.type, scenario_config.connections, connection_config.url,
                   connection_config.protocol, connection_config.transport,
-                  scenario_config.concurrent),
+                  scenario_config.concurrent, scenario_config.batch_mode, scenario_config.batch_wait),
         conditional_stop(scenario_config.type,
                          constant_config.criteria_max_fail_connection_percentage,
                          scenario_config.connections + 1, 2.00)

@@ -48,7 +48,9 @@ class BaseScenario:
                                   self.connection_config.url,
                                   self.connection_config.protocol,
                                   self.connection_config.transport,
-                                  self.scenario_config.concurrent)]
+                                  self.scenario_config.concurrent,
+                                  self.scenario_config.batch_mode,
+                                  self.scenario_config.batch_wait)]
 
     def BuildPostSending(self):
         self.post_config += CommonStep.post_sending_steps(self.scenario_config.type)
