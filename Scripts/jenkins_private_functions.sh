@@ -165,7 +165,7 @@ function normalizeSendInterval()
   then
      local re='^[0-9]+$'
      if [[ $send_interval =~ $re ]] ; then
-        ms=$send_interval
+        interval=$send_interval
      fi
   fi
   echo $interval
