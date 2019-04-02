@@ -1,7 +1,0 @@
-- hosts: linux
-  tasks:
-  - replace:
-      dest: /home/{{ansible_user}}/signalr-bench/AzureSignalRChatSample/ChatSample/Properties/launchSettings.json
-      regexp: 'localhost'
-      replace: "{{'*'}}"
-      backup: yes
