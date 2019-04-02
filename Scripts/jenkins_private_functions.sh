@@ -1032,7 +1032,7 @@ function create_asrs()
   local signalr_service
   if [ "$separatedRedis" != "" ] && [ "$separatedRouteRedis" != "" ] && [ "$separatedAcs" != "" ] && [ "$separatedIngressVMSS" != "" ]
   then
-   signalr_service=$(create_asrs_with_acs_redises $rsg $name $sku $unit $separatedRedis $separatedRouteRedis separatedAcs $separatedIngressVMSS)
+   signalr_service=$(create_asrs_with_acs_redises $rsg $name $sku $unit $separatedRedis $separatedRouteRedis $separatedAcs $separatedIngressVMSS)
   else
    if [ "$separatedRedis" != "" ] && [ "$separatedAcs" != "" ] && [ "$separatedIngressVMSS" != "" ]
    then
