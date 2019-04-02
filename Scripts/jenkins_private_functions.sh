@@ -1030,24 +1030,29 @@ function create_asrs()
 . ./kubectl_utils.sh
 
   local signalr_service
-  if [ "$separatedRedis" != "" ] && [ "$separatedAcs" != "" ] && [ "$separatedIngressVMSS" != "" ]
+  if [ "$separatedRedis" != "" ] && [ "$separatedRouteRedis" != "" ] && [ "$separatedAcs" != "" ] && [ "$separatedIngressVMSS" != "" ]
   then
-      signalr_service=$(create_signalr_service_with_specific_acs_vmset_redis $rsg $name $sku $unit $separatedRedis $separatedAcs $separatedIngressVMSS)
+   signalr_service=$(create_asrs_with_acs_redises $rsg $name $sku $unit $separatedRedis $separatedRouteRedis separatedAcs $separatedIngressVMSS)
   else
-   if [ "$separatedIngressVMSS" != "" ] && [ "$separatedAcs" != "" ]
+   if [ "$separatedRedis" != "" ] && [ "$separatedAcs" != "" ] && [ "$separatedIngressVMSS" != "" ]
    then
-      signalr_service=$(create_signalr_service_with_specific_ingress_vmss $rsg $name $sku $unit $separatedAcs $separatedIngressVMSS)
+      signalr_service=$(create_signalr_service_with_specific_acs_vmset_redis $rsg $name $sku $unit $separatedRedis $separatedAcs $separatedIngressVMSS)
    else
-    if [ "$separatedRedis" != "" ] && [ "$separatedAcs" != "" ]
+    if [ "$separatedIngressVMSS" != "" ] && [ "$separatedAcs" != "" ]
     then
-      signalr_service=$(create_signalr_service_with_specific_acs_and_redis $rsg $name $sku $unit $separatedRedis $separatedAcs)
+      signalr_service=$(create_signalr_service_with_specific_ingress_vmss $rsg $name $sku $unit $separatedAcs $separatedIngressVMSS)
     else
+     if [ "$separatedRedis" != "" ] && [ "$separatedAcs" != "" ]
+     then
+      signalr_service=$(create_signalr_service_with_specific_acs_and_redis $rsg $name $sku $unit $separatedRedis $separatedAcs)
+     else
       if [ "$separatedRedis" != "" ]
       then
         signalr_service=$(create_signalr_service_with_specific_redis $rsg $name $sku $unit $separatedRedis)
       else
         signalr_service=$(create_signalr_service $rsg $name $sku $unit)
       fi
+     fi
     fi
    fi
   fi
