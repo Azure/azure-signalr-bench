@@ -264,54 +264,6 @@ w $sigbench_run_duration
 EOF
 }
 
-function update_jenkins_command_configs()
-{
-	local bench_type=$1
-	local bench_codec=$2
-	local bench_name=$3
-	local cmd_prefix="cmd_4"
-	# echo and broadcast have different connection_number, concurrent_connection_number and send_number
-	# we first find connection_number, connection_concurrent, and send_number from customized setting,
-	# if they are empty, then we fallback to default values
-	local customized_connection=$(derefer_2vars $bench_name "connection_number")
-	local customized_concurrent=$(derefer_2vars $bench_name "connection_concurrent")
-	local customized_send=$(derefer_2vars $bench_name "send_number")
-	local customized_send_interval=$(derefer_2vars $bench_name "send_interval")
-
-	local connection_num=$connection_number
-	local concurrent_num=$connection_concurrent
-	local send_num=$send_number
-	local send_interval=1000 # 1000 ms
-
-	if [ "$customized_connection" != "" ]
-	then
-		connection_num=$customized_connection
-	fi
-	if [ "$customized_concurrent" != "" ]
-	then
-		concurrent_num=$customized_concurrent
-	fi
-	if [ "$customized_send" != "" ]
-	then
-		send_num=$customized_send
-	fi
-	if [ "$customized_send_interval" != "" ]
-	then
-		send_interval=$customized_send_interval
-	fi
-cat << EOF > $sigbench_config_dir/${cmd_prefix}_${bench_codec}_${bench_name}_${bench_type}
-connection=$connection_num
-connection_concurrent=$concurrent_num
-send=$send_num
-send_interval=$send_interval
-EOF
-}
-
-function gen_jenkins_command_config()
-{
-	iterate_all_scenarios update_jenkins_command_configs
-}
-
 function gen_cmd_files()
 {
 	iterate_all_scenarios gen_single_cmd_file

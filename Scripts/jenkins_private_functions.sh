@@ -28,7 +28,7 @@ function run_command_core()
   run_command $user $passwd $connectionString $outputDir $config_path $unit $Scenario
   cd $ScriptWorkingDir
   #### generate the connection configuration for HTML ####
-cat << EOF > configs/cmd_4_${MessageEncoding}_${Scenario}_${tag}_${Transport}
+cat << EOF > ${cmd_config_prefix}_${MessageEncoding}_${Scenario}_${tag}_${Transport}
 connection=${connection}
 connection_concurrent=${concurrentConnection}
 send=${send}
