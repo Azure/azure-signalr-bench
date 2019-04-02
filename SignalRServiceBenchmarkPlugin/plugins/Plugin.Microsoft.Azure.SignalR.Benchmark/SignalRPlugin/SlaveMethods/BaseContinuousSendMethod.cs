@@ -68,40 +68,19 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 // Is the connection is not active, then stop sending message
                 if (package.ConnectionsSuccessFlag[package.LocalIndex] != SignalREnums.ConnectionState.Success)
                     return;
-
-                await BaseSendCoreAsync(
-                    GenPayload(data),
-                    package.Connection,
-                    package.CallbackMethod,
-                    package.StatisticsCollector);
+                var payload = GenPayload(data);
+                using (var c = new CancellationTokenSource(TimeSpan.FromSeconds(60)))
+                {
+                    await package.Connection.SendAsync(package.CallbackMethod, payload, c.Token);
+                }
+                // Update statistics
+                SignalRUtils.RecordSend(payload, package.StatisticsCollector);
             }
             catch (Exception ex)
             {
                 package.ConnectionsSuccessFlag[package.LocalIndex] = SignalREnums.ConnectionState.Fail;
                 var message = $"Error in {GetType().Name}: {ex}";
                 Log.Error(message);
-            }
-        }
-
-        protected async Task BaseSendCoreAsync(
-            IDictionary<string, object> payload,
-            IHubConnectionAdapter connection,
-            string callbackMethod,
-            StatisticsCollector statisticsCollector
-            )
-        {
-            try
-            {
-                using (var c = new CancellationTokenSource(TimeSpan.FromSeconds(60)))
-                {
-                    await connection.SendAsync(callbackMethod, payload, c.Token);
-                }
-                // Update statistics
-                SignalRUtils.RecordSend(payload, statisticsCollector);
-            }
-            catch (Exception e)
-            {
-                Log.Error($"Fail to send message for {e.ToString()}");
             }
         }
 
