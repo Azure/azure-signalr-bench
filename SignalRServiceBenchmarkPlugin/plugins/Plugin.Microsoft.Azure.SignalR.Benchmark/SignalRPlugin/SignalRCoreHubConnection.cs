@@ -8,6 +8,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
     public class SignalRCoreHubConnection : IHubConnectionAdapter
     {
         private HubConnection _hubConnection;
+        private SignalREnums.ConnectionInternalStat _stat = SignalREnums.ConnectionInternalStat.Init;
 
         public SignalRCoreHubConnection(HubConnection hubConnection)
         {
@@ -28,7 +29,13 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
 
         public Task DisposeAsync()
         {
+            _stat = SignalREnums.ConnectionInternalStat.Disposed;
             return _hubConnection.DisposeAsync();
+        }
+
+        public SignalREnums.ConnectionInternalStat GetStat()
+        {
+            return _stat;
         }
 
         public Task<T> InvokeAsync<T>(string method)
@@ -56,13 +63,15 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             return _hubConnection.SendAsync(methodName, cancellationToken);
         }
 
-        public Task StartAsync(CancellationToken cancellationToken = default)
+        public async Task StartAsync(CancellationToken cancellationToken = default)
         {
-            return _hubConnection.StartAsync(cancellationToken);
+            await _hubConnection.StartAsync(cancellationToken);
+            _stat = SignalREnums.ConnectionInternalStat.Active;
         }
 
         public Task StopAsync()
         {
+            _stat = SignalREnums.ConnectionInternalStat.Stopped;
             return _hubConnection.StopAsync();
         }
     }

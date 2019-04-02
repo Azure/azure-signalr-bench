@@ -14,6 +14,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         private IHubProxy _hubProxy;
         private IClientTransport _clientTransport;
         private string _transport;
+        private SignalREnums.ConnectionInternalStat _stat = SignalREnums.ConnectionInternalStat.Init;
 
         public event Func<Exception, Task> Closed
         {
@@ -67,10 +68,11 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             return _hubProxy.Invoke(methodName, arg1).OrTimeout();
         }
 
-        public Task StartAsync(CancellationToken cancellationToken = default)
+        public async Task StartAsync(CancellationToken cancellationToken = default)
         {
             _clientTransport = createClientTransport(_transport);
-            return _hubConnection.Start(_clientTransport).OrTimeout();
+            await _hubConnection.Start(_clientTransport).OrTimeout();
+            _stat = SignalREnums.ConnectionInternalStat.Active;
         }
 
         private IClientTransport createClientTransport(string transport)
@@ -95,6 +97,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
                 // If connection fails to start, its internal state is not complete.
                 // Exception will thrown if invoking Stop.
                 _hubConnection.Stop();
+                _stat = SignalREnums.ConnectionInternalStat.Stopped;
             }
             catch (Exception e)
             {
@@ -105,6 +108,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
 
         public Task DisposeAsync()
         {
+            _stat = SignalREnums.ConnectionInternalStat.Disposed;
             try
             {
                 // If connection fails to start, its internal state is not complete.
@@ -126,6 +130,11 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         public Task SendAsync(string methodName, CancellationToken cancellationToken = default)
         {
             return _hubProxy.Invoke(methodName).OrTimeout();
+        }
+
+        public SignalREnums.ConnectionInternalStat GetStat()
+        {
+            return _stat;
         }
     }
 }

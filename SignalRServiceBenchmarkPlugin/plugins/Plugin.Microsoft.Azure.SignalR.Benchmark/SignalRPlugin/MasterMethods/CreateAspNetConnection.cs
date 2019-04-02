@@ -15,7 +15,6 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
         {
             Log.Information($"Create AspNet connections...");
             var ret = SignalRUtils.MasterCreateConnection(stepParameters, pluginParameters, clients);
-            SignalRUtils.MarkConnectionType(stepParameters, pluginParameters, SignalREnums.ClientType.AspNet);
             return ret;
         }
     }

@@ -18,7 +18,6 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
             Log.Information($"Create direct connections...");
 
             var ret = SignalRUtils.MasterCreateConnection(stepParameters, pluginParameters, clients);
-            SignalRUtils.MarkConnectionType(stepParameters, pluginParameters, SignalREnums.ClientType.DirectConnect);
             return ret;
         }
     }

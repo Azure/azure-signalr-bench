@@ -23,8 +23,6 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
                 (int beg, int end) = Util.GetConnectionRange(connectionTotal, i, clients.Count);
                 var data = new Dictionary<string, object>(stepParameters);
                 data[SignalRConstants.ConcurrentConnection] = currentConcurrentConnection > 0 ? currentConcurrentConnection : 1;
-                // Add method and type
-                PluginUtils.AddMethodAndType(data, stepParameters);
                 return new { Client = client, Data = data };
             });
 

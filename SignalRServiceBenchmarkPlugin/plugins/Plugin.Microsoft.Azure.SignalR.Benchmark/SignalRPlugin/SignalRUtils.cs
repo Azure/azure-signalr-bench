@@ -34,13 +34,6 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             // Get parameters
             stepParameters.TryGetTypedValue(SignalRConstants.ConnectionTotal,
                 out int connectionTotal, Convert.ToInt32);
-            stepParameters.TryGetTypedValue(SignalRConstants.HubUrls,
-                out string hubUrl, Convert.ToString);
-            stepParameters.TryGetTypedValue(SignalRConstants.TransportType,
-                out string transportType, Convert.ToString);
-            stepParameters.TryGetTypedValue(SignalRConstants.HubProtocol,
-                out string hubProtocol, Convert.ToString);
-
             // Shuffle connection indexes
             var indexes = Enumerable.Range(0, connectionTotal).ToList();
             indexes.Shuffle();
@@ -49,15 +42,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             var packages = clients.Select((client, i) =>
             {
                 (int beg, int end) = Util.GetConnectionRange(connectionTotal, i, clients.Count);
-                var data = new Dictionary<string, object>
-                {
-                    { SignalRConstants.HubUrls, hubUrl },
-                    { SignalRConstants.TransportType, transportType },
-                    { SignalRConstants.HubProtocol, hubProtocol },
-                    { SignalRConstants.ConnectionIndex, string.Join(',', indexes.GetRange(beg, end - beg)) }
-                };
-                // Add method and type
-                PluginUtils.AddMethodAndType(data, stepParameters);
+                var data = new Dictionary<string, object>(stepParameters);
+                data[SignalRConstants.ConnectionIndex] = string.Join(',', indexes.GetRange(beg, end - beg));
                 return new { Client = client, Data = data };
             });
 
@@ -313,15 +299,18 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
                 var index = i;
                 connections[i].Closed += e =>
                 {
-                    connectionsSuccessFlag[index] = ConnectionState.Fail;
-                    // AspNet SignalR does not pass exception object
-                    if (e != null)
+                    if (connections[i].GetStat() != ConnectionInternalStat.Stopped)
                     {
-                        Log.Error($"connection closed for {e.Message}");
-                    }
-                    else
-                    {
-                        Log.Error("connection closed");
+                        connectionsSuccessFlag[index] = ConnectionState.Fail;
+                        // AspNet SignalR does not pass exception object
+                        if (e != null)
+                        {
+                            Log.Error($"connection closed for {e.Message}");
+                        }
+                        else
+                        {
+                            Log.Error("connection closed");
+                        }
                     }
                     return Task.CompletedTask;
                 };
