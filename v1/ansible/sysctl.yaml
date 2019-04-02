@@ -1,9 +1,0 @@
-- hosts: linux
-  become: true
-  become_user: root
-  become_method: sudo
-  tasks:
-  - sysctl:
-      name: net.core.somaxconn
-      value: 32768
-      state: present

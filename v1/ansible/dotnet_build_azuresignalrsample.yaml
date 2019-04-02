@@ -1,9 +1,0 @@
-- name: Build Azure SignalR Sample
-  hosts: linux 
-  vars:
-    azure_signalr_sample_home: "/home/{{ansible_ssh_user}}/signalr-bench/AzureSignalRChatSample/"
-  tasks:
-    - name: "Build if above step fails"
-      shell: |
-        cd "{{azure_signalr_sample_home}}/ChatSample"
-        /home/{{ansible_ssh_user}}/.dotnet/dotnet build
