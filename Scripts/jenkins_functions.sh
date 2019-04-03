@@ -68,6 +68,10 @@ function set_tags_for_production() {
      then
        separatedRedis=`cat westus2_redis_rowkey.txt`
      fi
+     if [ -e westus2_route_redis_rowkey.txt ]
+     then
+       separatedRouteRedis=`cat westus2_route_redis_rowkey.txt`
+     fi
      if [ -e westus2_acs_rowkey.txt ]
      then
        separatedAcs=`cat westus2_acs_rowkey.txt`
