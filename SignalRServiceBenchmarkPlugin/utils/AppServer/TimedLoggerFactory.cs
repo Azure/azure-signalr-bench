@@ -20,9 +20,6 @@ namespace Microsoft.Azure.SignalR.PerfTest.AppServer
             });
             var serviceProvider = serviceCollection.BuildServiceProvider();
             _loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
-            var loggerProvider = serviceProvider.GetRequiredService<ILoggerProvider>();
-            _loggerFactory.AddProvider(loggerProvider);
-            _loggerFactory = serviceProvider.GetService<ILoggerFactory>();
         }
 
         public void AddProvider(ILoggerProvider provider)
