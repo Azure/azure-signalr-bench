@@ -22,6 +22,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
 
         Task DisposeAsync();
 
+        SignalREnums.ConnectionInternalStat GetStat();
+
         event Func<Exception, Task> Closed;
     }
 }

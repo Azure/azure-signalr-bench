@@ -41,11 +41,11 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 try
                 {
                     await BatchConnect(
-                    stepParameters,
-                    pluginParameters,
-                    connections,
-                    concurrentConnection,
-                    connectionsSuccessFlag);
+                        stepParameters,
+                        pluginParameters,
+                        connections,
+                        concurrentConnection,
+                        connectionsSuccessFlag);
                 }
                 finally
                 {
