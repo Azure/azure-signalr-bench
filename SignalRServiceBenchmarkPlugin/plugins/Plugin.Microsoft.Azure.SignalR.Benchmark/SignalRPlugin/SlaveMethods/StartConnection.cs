@@ -26,14 +26,14 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                     out string type, Convert.ToString);
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionStore}.{type}",
                     out IList<IHubConnectionAdapter> connections, (obj) => (IList<IHubConnectionAdapter>)obj);
-                pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionSuccessFlag}.{type}",
-                    out List<SignalREnums.ConnectionState> connectionsSuccessFlag,
-                    (obj) => (List<SignalREnums.ConnectionState>)obj);
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.StatisticsStore}.{type}",
                     out _statisticsCollector, obj => (StatisticsCollector)obj);
 
                 // The following get connection Id needs the concurrent connection value
-                pluginParameters.TryAdd(SignalRConstants.ConcurrentConnection, concurrentConnection);
+                SignalRUtils.SaveConcurrentConnectionCountToContext(
+                    pluginParameters,
+                    type,
+                    concurrentConnection);
 
                 var sw = new Stopwatch();
                 sw.Start();
@@ -44,8 +44,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                         stepParameters,
                         pluginParameters,
                         connections,
-                        concurrentConnection,
-                        connectionsSuccessFlag);
+                        concurrentConnection);
                 }
                 finally
                 {

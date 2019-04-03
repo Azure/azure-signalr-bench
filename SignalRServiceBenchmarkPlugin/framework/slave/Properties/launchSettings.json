@@ -2,7 +2,7 @@
   "profiles": {
     "slave": {
       "commandName": "Project",
-      "commandLineArgs": "-- --RpcPort 7000 --HostName 0.0.0.0"
+      "commandLineArgs": "-- --RpcPort 5555 --HostName 0.0.0.0"
     }
   }
 }

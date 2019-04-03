@@ -34,8 +34,6 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                     out StatisticsCollector statisticsCollector, obj => (StatisticsCollector) obj);
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionIndex}.{type}",
                     out List<int> connectionIndex, (obj) => (List<int>)obj);
-                pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionSuccessFlag}.{type}",
-                    out List<SignalREnums.ConnectionState> connectionsSuccessFlag, (obj) => (List<SignalREnums.ConnectionState>)obj);
 
                 // Generate necessary data
                 var messageBlob = SignalRUtils.GenerateRandomData(messageSize);
@@ -53,7 +51,6 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                                    where connectionIndex[i] % modulo >= remainderBegin && connectionIndex[i] % modulo < remainderEnd
                                    select ContinuousSend((Connection: connections[i],
                                                           LocalIndex: i,
-                                                          ConnectionsSuccessFlag: connectionsSuccessFlag,
                                                           StatisticsCollector: statisticsCollector,
                                                           CallbackMethod: SignalRConstants.SendToClientCallbackName),
                                                           data,

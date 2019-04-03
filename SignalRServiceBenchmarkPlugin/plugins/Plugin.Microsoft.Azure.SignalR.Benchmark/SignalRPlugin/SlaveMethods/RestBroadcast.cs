@@ -46,7 +46,6 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 await Task.WhenAll(from i in Enumerable.Range(0, connectionIndex.Count)
                                    where connectionIndex[i] % modulo >= remainderBegin && connectionIndex[i] % modulo < remainderEnd
                                    let restApiClient = new RestApiProvider(connectionString, SignalRConstants.DefaultRestHubName)
-                                   let userId = SignalRUtils.GenClientUserIdFromConnectionIndex(connectionIndex[i])
                                    select ContinuousSend((RestApiClient: restApiClient,
                                                           StatisticsCollector: statisticsCollector),
                                                           data,

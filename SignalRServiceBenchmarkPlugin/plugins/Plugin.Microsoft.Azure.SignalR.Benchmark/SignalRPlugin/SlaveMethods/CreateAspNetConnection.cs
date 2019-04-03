@@ -9,7 +9,9 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
 {
     public class CreateAspNetConnection : ISlaveMethod
     {
-        public Task<IDictionary<string, object>> Do(IDictionary<string, object> stepParameters, IDictionary<string, object> pluginParameters)
+        public Task<IDictionary<string, object>> Do(
+            IDictionary<string, object> stepParameters,
+            IDictionary<string, object> pluginParameters)
         {
             try
             {

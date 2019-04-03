@@ -7,13 +7,14 @@ using System.Threading.Tasks;
 
 namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
 {
-    public class RegisterCallbackRecordLatency : IMasterMethod
+    public class RepairConnections : IMasterMethod
     {
-        public Task Do(IDictionary<string, object> stepParameters, IDictionary<string, object> pluginParameters, IList<IRpcClient> clients)
+        public Task Do(
+            IDictionary<string, object> stepParameters,
+            IDictionary<string, object> pluginParameters,
+            IList<IRpcClient> clients)
         {
-            Log.Information($"Register callback for recording latency...");
-
-            // Process on clients
+            Log.Information($"{GetType().Name}...");
             return Task.WhenAll(from client in clients select client.QueryAsync(stepParameters));
         }
     }

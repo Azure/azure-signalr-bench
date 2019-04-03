@@ -151,38 +151,39 @@ namespace Common
         {
             var nextBatch = max;
             var left = source.Count;
-            if (nextBatch <= left)
+            if (left < nextBatch)
             {
-                try
+                nextBatch = left;
+            }
+            try
+            {
+                var tasks = new List<Task>(left);
+                var i = 0;
+                do
                 {
-                    var tasks = new List<Task>(left);
-                    var i = 0;
-                    do
+                    for (var j = 0; j < nextBatch; j++)
                     {
-                        for (var j = 0; j < nextBatch; j++)
+                        var index = i + j;
+                        var item = source[index];
+                        tasks.Add(Task.Run(async () =>
                         {
-                            var index = i + j;
-                            var item = source[index];
-                            tasks.Add(Task.Run(async () =>
-                            {
-                                await f(item);
-                            }));
-                        }
+                            await f(item);
+                        }));
+                    }
 
-                        await Task.Delay(TimeSpan.FromMilliseconds(milliseconds));
-                        i += nextBatch;
-                        left = left - nextBatch;
-                        if (left < nextBatch)
-                        {
-                            nextBatch = left;
-                        }
-                    } while (left > 0);
-                    await Task.WhenAll(tasks).OrTimeout();
-                }
-                catch (Exception e)
-                {
-                    Log.Error($"Fail in LowPressBatchProcess: {e.Message}");
-                }
+                    await Task.Delay(TimeSpan.FromMilliseconds(milliseconds));
+                    i += nextBatch;
+                    left = left - nextBatch;
+                    if (left < nextBatch)
+                    {
+                        nextBatch = left;
+                    }
+                } while (left > 0);
+                await Task.WhenAll(tasks).OrTimeout();
+            }
+            catch (Exception e)
+            {
+                Log.Error($"Fail in LowPressBatchProcess: {e.Message}");
             }
         }
 

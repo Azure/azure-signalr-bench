@@ -21,7 +21,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
             {
                 stepParameters.TryGetTypedValue(SignalRConstants.Duration, out long duration, Convert.ToInt64);
                 var task = Task.WhenAll(from client in clients select client.QueryAsync(stepParameters));
-                return Util.TimeoutCheckedTask(task, duration * 2, GetType().Name);
+                return Util.TimeoutCheckedTask(task, duration * 5, GetType().Name);
             }
             return Task.WhenAll(from client in clients select client.QueryAsync(stepParameters));
         }
