@@ -254,8 +254,8 @@ function gen_single_cmd_file() {
 	local bench_codec=$2
 	local bench_name=$3
 	local cmd_prefix="cmd_4"
-	
-	. $sigbench_config_dir/${cmd_prefix}_${bench_codec}_${bench_name}_${bench_type}
+	local dir=`dirname $0`
+	. $dir/${cmd_prefix}_${bench_codec}_${bench_name}_${bench_type}
 cat << EOF > ${cmd_file_prefix}_${bench_codec}_${bench_name}_${bench_type}
 c $connection $connection_concurrent
 s $send $send_interval

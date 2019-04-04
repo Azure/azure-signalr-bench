@@ -1,6 +1,8 @@
 #!/bin/bash
 . ./func_env.sh
 
+dir=`dirname $0`
+
 connectionString=""
 
 function gen_single_html
@@ -49,7 +51,7 @@ function gen_single_html
 	local cmd_prefix=$cmd_config_prefix
 	if [ -e ${cmd_prefix}_${bench_codec}_${bench_name}_${bench_type} ]
 	then
-	. ${cmd_prefix}_${bench_codec}_${bench_name}_${bench_type}
+	  . ${dir}/${cmd_prefix}_${bench_codec}_${bench_name}_${bench_type}
 	fi
 	export OnlineConnections=$connection
 	export ActiveConnections=$send
