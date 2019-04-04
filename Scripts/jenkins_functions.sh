@@ -33,13 +33,29 @@ function set_global_env() {
    #export ResultFolderSuffix='suffix'
    export VMMgrDir=/tmp/VMMgr
    export AspNetWebMgrDir=/tmp/AspNetWebMgr
-   export nginx_root=/mnt/Data/NginxRoot
-   export g_nginx_ns="ingress-nginx"
+   set_job_env
 }
 
 # depends on set_global_env
 function set_job_env() {
-   export result_root=`date +%Y%m%d%H%M%S`
+   if [ "$nginx_root" == "" ]
+   then
+     export nginx_root=/mnt/Data/NginxRoot
+   else
+     export nginx_root=$nginx_root
+   fi
+   if [ "$g_nginx_ns" == "" ]
+   then
+     export g_nginx_ns="ingress-nginx"
+   else
+     export g_nginx_ns=$g_nginx_ns
+   fi
+   if [ "$result_root" == "" ]
+   then
+     export result_root=`date +%Y%m%d%H%M%S`
+   else
+     export result_root=$result_root
+   fi
    export ASRSResourceGroup="hzatpf"$result_root
    export SignalrServiceName="atpf"${result_root} #-`date +%H%M%S`
    export AspNetWebAppResGrp="hzperfwebapp"$result_root
