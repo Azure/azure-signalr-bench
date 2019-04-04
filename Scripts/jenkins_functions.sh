@@ -56,6 +56,12 @@ function set_job_env() {
    else
      export result_root=$result_root
    fi
+   if [ "$Sku" == "" ]
+   then
+     export Sku="Basic_DS2"
+   else
+     export Sku=$Sku
+   fi
    export ASRSResourceGroup="hzatpf"$result_root
    export SignalrServiceName="atpf"${result_root} #-`date +%H%M%S`
    export AspNetWebAppResGrp="hzperfwebapp"$result_root
