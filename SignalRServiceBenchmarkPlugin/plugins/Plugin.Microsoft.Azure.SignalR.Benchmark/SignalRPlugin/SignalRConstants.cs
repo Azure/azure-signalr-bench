@@ -91,7 +91,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         public static readonly int ConnectionCloseTimeout = 100;
 
         // Default RPC task timeout if there is no specific duration
-        public static readonly long MillisecondsToWait = 300000;
+        public static readonly long MillisecondsToWait = 600000;
 
         // Default batch mode: "LimitRatePress"
         public static readonly string DefaultBatchMode = SignalREnums.BatchMode.HighPress.ToString();
