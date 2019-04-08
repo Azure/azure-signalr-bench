@@ -973,7 +973,7 @@ EOF
   sshpass -p ${passwd} ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR ${user}@${master} "./$remoteCmd"
   disable_exit_immediately_when_fail
   start_collect_slaves_appserver_top ${user} $passwd ${outputDir}
-  try_catch_netstat_when_server_conn_drop ${user} $passwd "$connectionString"
+  #try_catch_netstat_when_server_conn_drop ${user} $passwd "$connectionString"
   cd $CommandWorkingDir
   # "never stop app server" is used for long run stress test
   local neverStopAppServerOp
@@ -1007,7 +1007,7 @@ EOF
                --AzureSignalRConnectionString="$connectionString" \
                --NotStartAppServer=1
   fi
-  stop_collect_slaves_appserver_top ${user} $passwd ${outputDir}
+  #stop_collect_slaves_appserver_top ${user} $passwd ${outputDir}
   local counterPath=`sshpass -p $passwd ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR ${user}@${master} "find /home/${user}/master -iname counters.txt"`
   sshpass -p ${passwd} scp -o StrictHostKeyChecking=no -o LogLevel=ERROR ${user}@${master}:$counterPath ${outputDir}/
   if [ $? -ne 0 ]
@@ -1015,7 +1015,7 @@ EOF
     sshpass -p $passwd ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR ${user}@${master} "find /home/${user}/master -iname counters.txt"
   fi
   copy_log_from_slaves_master ${user} $passwd ${outputDir}
-  fetch_netstat_for_server_conn_drop ${user} $passwd ${outputDir}
+  #fetch_netstat_for_server_conn_drop ${user} $passwd ${outputDir}
   enable_exit_immediately_when_fail
 }
 
