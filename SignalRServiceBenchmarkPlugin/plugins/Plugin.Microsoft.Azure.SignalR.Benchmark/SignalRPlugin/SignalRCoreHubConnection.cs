@@ -1,18 +1,79 @@
-﻿using Microsoft.AspNetCore.SignalR.Client;
+﻿using Common;
+using Microsoft.AspNetCore.SignalR.Client;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace Plugin.Microsoft.Azure.SignalR.Benchmark
 {
-    public class SignalRCoreHubConnection : IHubConnectionAdapter
+    public class SignalRCoreHubConnection : HubConnectionBase, IHubConnectionAdapter
     {
         private HubConnection _hubConnection;
-        private SignalREnums.ConnectionInternalStat _stat = SignalREnums.ConnectionInternalStat.Init;
+
+        public long ConnectionBornTimestamp
+        {
+            get
+            {
+                return ConnectionBornTime;
+            }
+            set
+            {
+                ConnectionBornTime = value;
+            }
+        }
+
+        public long ConnectedTimestamp
+        {
+            get
+            {
+                return ConnectedTime;
+            }
+            set
+            {
+                ConnectedTime = value;
+            }
+        }
+
+        public long DowntimePeriod
+        {
+            get
+            {
+                return DownTime;
+            }
+            set
+            {
+                DownTime = value;
+            }
+        }
+
+        public long LastDisconnectedTimestamp
+        {
+            get
+            {
+                return LastDisconnectedTime;
+            }
+            set
+            {
+                LastDisconnectedTime = value;
+            }
+        }
+
+        public long StartConnectingTimestamp
+        {
+            get
+            {
+                return StartConnectingTime;
+            }
+            set
+            {
+                StartConnectingTime = value;
+            }
+        }
 
         public SignalRCoreHubConnection(HubConnection hubConnection)
         {
             _hubConnection = hubConnection;
+            ResetTimestamps();
         }
 
         public event Func<Exception, Task> Closed
@@ -27,20 +88,28 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             }
         }
 
-        public Task DisposeAsync()
+        public async Task DisposeAsync()
         {
-            _stat = SignalREnums.ConnectionInternalStat.Disposed;
-            return _hubConnection.DisposeAsync();
+            Volatile.Write(ref _stat, (long)SignalREnums.ConnectionInternalStat.Disposed);
+            await _hubConnection.DisposeAsync();
         }
 
         public SignalREnums.ConnectionInternalStat GetStat()
         {
-            return _stat;
+            return GetStatCore();
         }
 
-        public Task<T> InvokeAsync<T>(string method)
+        public async Task<T> InvokeAsync<T>(string method)
         {
-            return _hubConnection.InvokeAsync<T>(method);
+            try
+            {
+                return await _hubConnection.InvokeAsync<T>(method);
+            }
+            catch
+            {
+                await MarkAsStopped();
+                throw;
+            }
         }
 
         public IDisposable On<T1>(string methodName, Action<T1> handler)
@@ -53,26 +122,76 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             return _hubConnection.On(methodName, handler);
         }
 
-        public Task SendAsync(string methodName, object arg1, CancellationToken cancellationToken = default)
+        public async Task SendAsync(string methodName, object arg1, CancellationToken cancellationToken = default)
         {
-            return _hubConnection.SendAsync(methodName, arg1, cancellationToken);
+            try
+            {
+                await _hubConnection.SendAsync(methodName, arg1, cancellationToken);
+            }
+            catch
+            {
+                await MarkAsStopped();
+                throw;
+            }
         }
 
-        public Task SendAsync(string methodName, CancellationToken cancellationToken = default)
+        public async Task SendAsync(string methodName, CancellationToken cancellationToken = default)
         {
-            return _hubConnection.SendAsync(methodName, cancellationToken);
+            try
+            {
+                await _hubConnection.SendAsync(methodName, cancellationToken);
+            }
+            catch
+            {
+                await MarkAsStopped();
+                throw;
+            }
         }
 
         public async Task StartAsync(CancellationToken cancellationToken = default)
         {
-            await _hubConnection.StartAsync(cancellationToken);
-            _stat = SignalREnums.ConnectionInternalStat.Active;
+            if (!_connectionLock.Wait(0))
+            {
+                // avoid multiple try to reconnect
+                return;
+            }
+            try
+            {
+                StartConnectingTimestamp = Util.Timestamp();
+                await _hubConnection.StartAsync(cancellationToken);
+                Volatile.Write(ref _stat, (long)SignalREnums.ConnectionInternalStat.Active);
+                ConnectedTimestamp = Util.Timestamp();
+                if (!_born)
+                {
+                    _born = true;
+                    ConnectionBornTimestamp = Util.Timestamp();
+                }
+            }
+            catch
+            {
+                await MarkAsStopped();
+                throw;
+            }
+            finally
+            {
+                _connectionLock.Release();
+            }
         }
 
-        public Task StopAsync()
+        public async Task StopAsync()
         {
-            _stat = SignalREnums.ConnectionInternalStat.Stopped;
-            return _hubConnection.StopAsync();
+            await MarkAsStopped();
+            await _hubConnection.StopAsync();
+        }
+
+        public async Task OnClosed(Exception e)
+        {
+            await OnClosedCore(e);
+        }
+
+        public void UpdateTimestampWhenConnected()
+        {
+            LockedUpdate();
         }
     }
 }

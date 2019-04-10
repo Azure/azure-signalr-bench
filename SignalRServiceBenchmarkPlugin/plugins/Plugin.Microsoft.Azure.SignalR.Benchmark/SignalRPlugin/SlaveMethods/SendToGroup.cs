@@ -28,7 +28,6 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                                       && IsSending(index, Modulo, RemainderBegin, RemainderEnd)
                                 select ContinuousSend((Connection: package.Connection,
                                                        LocalIndex: package.LocalIndex,
-                                                       ConnectionsSuccessFlag: ConnectionsSuccessFlag,
                                                        StatisticsCollector: StatisticsCollector,
                                                        CallbackMethod: SignalRConstants.SendToGroupCallbackName),
                                                        data,

@@ -21,6 +21,12 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             Disposed
         }
 
+        public enum ActionAfterConnection
+        {
+            None,
+            JoinToGroup
+        }
+
         public enum GroupConfigMode
         {
             Group, // select connections from every group

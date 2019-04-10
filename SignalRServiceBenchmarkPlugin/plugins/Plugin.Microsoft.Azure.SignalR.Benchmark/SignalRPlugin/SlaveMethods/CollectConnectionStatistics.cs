@@ -5,14 +5,14 @@ using System.Threading.Tasks;
 
 namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
 {
-    public class InitStatisticsCollector : InitStatisticsCollectorBase, ISlaveMethod
+    public class CollectConnectionStatistics : CollectStatisticBase, ISlaveMethod
     {
         public Task<IDictionary<string, object>> Do(
             IDictionary<string, object> stepParameters,
             IDictionary<string, object> pluginParameters)
         {
-            Log.Information($"Init statistic collector...");
-            return Run(stepParameters, pluginParameters, RegisterLatencyStatistics);
+            Log.Information($"Collect statistics...");
+            return Run(stepParameters, pluginParameters);
         }
     }
 }

@@ -59,7 +59,6 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
             {
                 return ContinuousSend((Connection: Connections[localIndex],
                                        LocalIndex: localIndex,
-                                       ConnectionsSuccessFlag: ConnectionsSuccessFlag,
                                        StatisticsCollector: StatisticsCollector,
                                        CallbackMethod: SignalRConstants.SendToGroupCallbackName),
                                        data,

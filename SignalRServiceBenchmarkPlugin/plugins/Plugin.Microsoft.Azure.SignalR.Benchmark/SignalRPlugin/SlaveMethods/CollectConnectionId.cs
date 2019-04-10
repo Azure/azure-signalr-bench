@@ -23,9 +23,6 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
 
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionStore}.{type}",
                     out IList<IHubConnectionAdapter> connections, (obj) => (IList<IHubConnectionAdapter>)obj);
-                pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionSuccessFlag}.{type}",
-                    out List<SignalREnums.ConnectionState> connectionsSuccessFlag,
-                    (obj) => (List<SignalREnums.ConnectionState>)obj);
 
                 // Init the connection Id list
                 var connectionIdList = new List<string>();
@@ -66,14 +63,12 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 }
 
                 // get connection Ids
-                int concurrentConnection = connections.Count > 100 ? 100 : connections.Count;
-                if (pluginParameters.TryGetValue(SignalRConstants.ConcurrentConnection, out _))
-                {
-                    pluginParameters.TryGetTypedValue(SignalRConstants.ConcurrentConnection, out int value, Convert.ToInt32);
-                    concurrentConnection = value;
-                }
-
-                await SendRequestToGetConnectionIds(connections, concurrentConnection, connectionIdList, connectionsSuccessFlag);
+                int concurrentConnection =
+                    SignalRUtils.FetchConcurrentConnectionCountFromContext(
+                    pluginParameters,
+                    type,
+                    connections.Count);
+                await SendRequestToGetConnectionIds(connections, concurrentConnection, connectionIdList);
 
                 var connectionIdDic = new Dictionary<string, object> { { SignalRConstants.ConnectionId, connectionIdList.ToArray() } };
                 pluginParameters[connIdStoreKey] = connectionIdDic;
@@ -103,18 +98,16 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
         private async Task SendRequestToGetConnectionIds(
             IList<IHubConnectionAdapter> connections,
             int concurrentSend,
-            IList<string> connectionIdList,
-            List<SignalREnums.ConnectionState> connectionsSuccessFlag)
+            IList<string> connectionIdList)
         {
             var packages = (from i in Enumerable.Range(0, connections.Count())
-                            select (Connection: connections[i], connectionIdList, connectionsSuccessFlag, i)).ToList();
+                            select (Connection: connections[i], connectionIdList, i)).ToList();
             await Util.LowPressBatchProcess(packages, SaveConnectionId, concurrentSend, 1000);
         }
 
         private async Task SaveConnectionId(
             (IHubConnectionAdapter connection,
             IList<string> connectionIdList,
-            List<SignalREnums.ConnectionState> connectionsSuccessFlag,
             int index) package)
         {
             try
@@ -127,10 +120,9 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                     await package.connection.SendAsync(SignalRConstants.ConnectionIdCallback);
                 }
             }
-            catch (System.InvalidOperationException ex)
+            catch (Exception ex)
             {
                 Log.Warning($"Fail to get connection Id because of {ex.Message}");
-                package.connectionsSuccessFlag[package.index] = SignalREnums.ConnectionState.Fail;
             }
         }
     }

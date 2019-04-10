@@ -8,13 +8,72 @@ using System.Threading.Tasks;
 
 namespace Plugin.Microsoft.Azure.SignalR.Benchmark
 {
-    public class AspNetSignalRHubConnection : IHubConnectionAdapter
+    public class AspNetSignalRHubConnection : HubConnectionBase, IHubConnectionAdapter
     {
         private HubConnection _hubConnection;
         private IHubProxy _hubProxy;
         private IClientTransport _clientTransport;
         private string _transport;
-        private SignalREnums.ConnectionInternalStat _stat = SignalREnums.ConnectionInternalStat.Init;
+
+        public long ConnectionBornTimestamp
+        {
+            get
+            {
+                return ConnectionBornTime;
+            }
+            set
+            {
+                ConnectionBornTime = value;
+            }
+        }
+
+        public long ConnectedTimestamp
+        {
+            get
+            {
+                return ConnectedTime;
+            }
+            set
+            {
+                ConnectedTime = value;
+            }
+        }
+
+        public long DowntimePeriod
+        {
+            get
+            {
+                return DownTime;
+            }
+            set
+            {
+                DownTime = value;
+            }
+        }
+
+        public long LastDisconnectedTimestamp
+        {
+            get
+            {
+                return LastDisconnectedTime;
+            }
+            set
+            {
+                LastDisconnectedTime = value;
+            }
+        }
+
+        public long StartConnectingTimestamp
+        {
+            get
+            {
+                return StartConnectingTime;
+            }
+            set
+            {
+                StartConnectingTime = value;
+            }
+        }
 
         public event Func<Exception, Task> Closed
         {
@@ -36,6 +95,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
 
         public AspNetSignalRHubConnection(HubConnection hubConnection, string hubName, string transport)
         {
+            ResetTimestamps();
+
             _hubConnection = hubConnection;
             _hubProxy = _hubConnection.CreateHubProxy(hubName);
             _transport = transport;
@@ -63,16 +124,43 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             return _hubProxy.On(methodName, handler);
         }
 
-        public Task SendAsync(string methodName, object arg1, CancellationToken cancellationToken = default)
+        public async Task SendAsync(string methodName, object arg1, CancellationToken cancellationToken = default)
         {
-            return _hubProxy.Invoke(methodName, arg1).OrTimeout();
+            try
+            {
+                await _hubProxy.Invoke(methodName, arg1).OrTimeout();
+            }
+            catch
+            {
+                await MarkAsStopped();
+                throw;
+            }
         }
 
         public async Task StartAsync(CancellationToken cancellationToken = default)
         {
-            _clientTransport = createClientTransport(_transport);
-            await _hubConnection.Start(_clientTransport).OrTimeout();
-            _stat = SignalREnums.ConnectionInternalStat.Active;
+            if (!_connectionLock.Wait(0))
+            {
+                // avoid multiple try to reconnect
+                return;
+            }
+            try
+            {
+                _clientTransport = createClientTransport(_transport);
+                StartConnectingTimestamp = Util.Timestamp();
+                await _hubConnection.Start(_clientTransport).OrTimeout();
+                Volatile.Write(ref _stat, (long)SignalREnums.ConnectionInternalStat.Active);
+                ConnectedTimestamp = Util.Timestamp();
+            }
+            catch
+            {
+                await MarkAsStopped();
+                throw;
+            }
+            finally
+            {
+                _connectionLock.Release();
+            }
         }
 
         private IClientTransport createClientTransport(string transport)
@@ -90,25 +178,24 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             }
         }
 
-        public Task StopAsync()
+        public async Task StopAsync()
         {
             try
             {
                 // If connection fails to start, its internal state is not complete.
                 // Exception will thrown if invoking Stop.
                 _hubConnection.Stop();
-                _stat = SignalREnums.ConnectionInternalStat.Stopped;
             }
             catch (Exception e)
             {
                 Log.Error($"Fail to stop: {e.Message}");
             }
-            return Task.CompletedTask;
+            await MarkAsStopped();
         }
 
         public Task DisposeAsync()
         {
-            _stat = SignalREnums.ConnectionInternalStat.Disposed;
+            Volatile.Write(ref _stat, (long)SignalREnums.ConnectionInternalStat.Disposed);
             try
             {
                 // If connection fails to start, its internal state is not complete.
@@ -119,22 +206,51 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             {
                 Log.Error($"Fail to dispose: {e.Message}");
             }
+            finally
+            {
+            }
             return Task.CompletedTask;
         }
 
-        public Task<T> InvokeAsync<T>(string method)
+        public async Task<T> InvokeAsync<T>(string method)
         {
-            return _hubProxy.Invoke<T>(method);
+            try
+            {
+                return await _hubProxy.Invoke<T>(method);
+            }
+            catch
+            {
+                await MarkAsStopped();
+                throw;
+            }
         }
 
-        public Task SendAsync(string methodName, CancellationToken cancellationToken = default)
+        public async Task SendAsync(string methodName, CancellationToken cancellationToken = default)
         {
-            return _hubProxy.Invoke(methodName).OrTimeout();
+            try
+            {
+                await _hubProxy.Invoke(methodName).OrTimeout();
+            }
+            catch
+            {
+                await MarkAsStopped();
+                throw;
+            }
         }
 
         public SignalREnums.ConnectionInternalStat GetStat()
         {
-            return _stat;
+            return GetStatCore();
+        }
+
+        public Task OnClosed(Exception e)
+        {
+            return OnClosedCore(e);
+        }
+
+        public void UpdateTimestampWhenConnected()
+        {
+            LockedUpdate();
         }
     }
 }

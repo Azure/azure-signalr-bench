@@ -6,12 +6,12 @@ using System.Threading.Tasks;
 
 namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
 {
-    public class InitStatisticsCollector : InitStatisticsCollectorBase, IMasterMethod
+    public class InitConnectionStatisticsCollector : InitStatisticsCollectorBase, IMasterMethod
     {
         public Task Do(IDictionary<string, object> stepParameters,
             IDictionary<string, object> pluginParameters, IList<IRpcClient> clients)
         {
-            Log.Information($"Start statistic collector...");
+            Log.Information($"Start connection statistic collector...");
             return Run(stepParameters, pluginParameters, clients);
         }
     }

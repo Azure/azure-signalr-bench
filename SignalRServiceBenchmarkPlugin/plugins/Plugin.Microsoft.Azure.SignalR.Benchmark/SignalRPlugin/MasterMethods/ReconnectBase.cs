@@ -1,5 +1,4 @@
 ﻿using Common;
-using Plugin.Base;
 using Rpc.Service;
 using System;
 using System.Collections.Generic;
@@ -10,7 +9,10 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
 {
     public class ReconnectBase
     {
-        protected Task Reconnect(IDictionary<string, object> stepParameters, IDictionary<string, object> pluginParameters, IList<IRpcClient> clients)
+        protected Task Reconnect(
+            IDictionary<string, object> stepParameters,
+            IDictionary<string, object> pluginParameters,
+            IList<IRpcClient> clients)
         {
             // Get parameters
             stepParameters.TryGetTypedValue(SignalRConstants.ConnectionTotal, out int connectionTotal, Convert.ToInt32);

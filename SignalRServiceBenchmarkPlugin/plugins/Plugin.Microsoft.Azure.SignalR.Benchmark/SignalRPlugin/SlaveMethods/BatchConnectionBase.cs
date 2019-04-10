@@ -11,8 +11,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
             IDictionary<string, object> stepParameters,
             IDictionary<string, object> pluginParameters,
             IList<IHubConnectionAdapter> connections,
-            int concurrentConnection,
-            List<SignalREnums.ConnectionState> connectionsSuccessFlag)
+            int concurrentConnection)
         {
             SignalRUtils.TryGetBatchMode(
                 stepParameters,
@@ -20,10 +19,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 out int batchWaitMilliSeconds,
                 out SignalREnums.BatchMode mode);
             var packages = (from i in Enumerable.Range(0, connections.Count())
-                            select (Connection: connections[i], LocalIndex: i,
-                            ConnectionsSuccessFlag: connectionsSuccessFlag,
-                            NormalState: SignalREnums.ConnectionState.Success,
-                            AbnormalState: SignalREnums.ConnectionState.Fail)).ToList();
+                            select (Connection: connections[i], LocalIndex: i)).ToList();
             // 100 milliseconds is the default fine-granularity
             var period = SignalRConstants.RateLimitDefaultGranularity;
             var factor = 1000 / period;

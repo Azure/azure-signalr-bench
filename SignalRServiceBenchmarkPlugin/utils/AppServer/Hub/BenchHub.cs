@@ -9,6 +9,11 @@ namespace Microsoft.Azure.SignalR.PerfTest.AppServer
 {
     public class BenchHub : Hub
     {
+        public override async Task OnConnectedAsync()
+        {
+            await Clients.Client(Context.ConnectionId).SendAsync("OnConnected", Context.ConnectionId);
+        }
+
         public void Echo(IDictionary<string, object> data)
         {
             Clients.Client(Context.ConnectionId).SendAsync("RecordLatency", data);

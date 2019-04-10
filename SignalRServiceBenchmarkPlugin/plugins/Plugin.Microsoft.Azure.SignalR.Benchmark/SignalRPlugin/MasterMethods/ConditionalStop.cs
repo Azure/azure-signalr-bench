@@ -36,7 +36,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
                                              select client.QueryAsync(stepParameters));
 
             // Merge statistics
-            var merged = SignalRUtils.MergeStatistics(results, type, latencyMax, latencyStep);
+            var merged = SignalRUtils.MergeStatistics(results, latencyMax, latencyStep);
 
             merged.TryGetTypedValue(SignalRConstants.StatisticsConnectionConnectSuccess,
                 out long connectionSuccess, Convert.ToInt64);
@@ -72,7 +72,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
 
         private double GetLargeLatencyPercentage(IDictionary<string, long> data, long latencyMax)
         {
-            var largeLatencyMessageCount = data[SignalRUtils.MessageGreaterOrEqaulTo(latencyMax)];
+            var largeLatencyMessageCount = data[SignalRUtils.MessageGreaterOrEqualTo(latencyMax)];
             var receivedMessageCount = data[SignalRConstants.StatisticsMessageReceived];
             return (double)largeLatencyMessageCount / receivedMessageCount;
         }

@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Http.Connections;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Plugin.Base;
 using Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods.Statistics;
 using Rpc.Service;
 using Serilog;
@@ -25,7 +24,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
 
         public static string MessageLessThan(long latency) => $"message:lt:{latency}";
 
-        public static string MessageGreaterOrEqaulTo(long latency) => $"message:ge:{latency}";
+        public static string MessageGreaterOrEqualTo(long latency) => $"message:ge:{latency}";
 
         public static Task MasterCreateConnection(
             IDictionary<string, object> stepParameters,
@@ -50,6 +49,66 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             // Process on clients
             var results = from package in packages select package.Client.QueryAsync(package.Data);
             return Task.WhenAll(results);
+        }
+
+        public static async Task JoinToGroup(
+            IHubConnectionAdapter connection,
+            string groupName,
+            StatisticsCollector statisticsCollector)
+        {
+            try
+            {
+                await connection.SendAsync(SignalRConstants.JoinGroupCallbackName, groupName);
+            }
+            catch
+            {
+                statisticsCollector.IncreaseJoinGroupFail();
+            }
+        }
+
+        public static void SaveGroupInfoToContext(
+           IDictionary<string, object> pluginParameters,
+           string type,
+           int groupCount,
+           int totalConnection)
+        {
+            pluginParameters[$"{SignalRConstants.GroupCount}.{type}"] = groupCount;
+            pluginParameters[$"{SignalRConstants.ConnectionTotal}.{type}"] = totalConnection;
+        }
+
+        public static void SaveConnectionInfoToContext(
+            IDictionary<string, object> pluginParameters,
+            string type,
+            IList<IHubConnectionAdapter> connections,
+            List<int> connectionIndex)
+        {
+            pluginParameters[$"{SignalRConstants.ConnectionStore}.{type}"] = connections;
+            pluginParameters[$"{SignalRConstants.ConnectionIndex}.{type}"] = connectionIndex;
+            pluginParameters[$"{SignalRConstants.RegisteredCallbacks}.{type}"] =
+                new List<Action<IList<IHubConnectionAdapter>, StatisticsCollector, string>>();
+        }
+
+        public static void SaveConcurrentConnectionCountToContext(
+            IDictionary<string, object> pluginParameters,
+            string type,
+            int concurrentConnection)
+        {
+            pluginParameters.TryAdd("{SignalRConstants.ConcurrentConnection}.{type}", concurrentConnection);
+        }
+
+        public static int FetchConcurrentConnectionCountFromContext(
+            IDictionary<string, object> pluginParameters,
+            string type,
+            int connectionCount)
+        {
+            var concurrentConnection = connectionCount > 100 ? 100 : connectionCount;
+            if (pluginParameters.TryGetValue($"{SignalRConstants.ConcurrentConnection}.{type}", out _))
+            {
+                pluginParameters.TryGetTypedValue($"{SignalRConstants.ConcurrentConnection}.{type}",
+                    out int value, Convert.ToInt32);
+                concurrentConnection = value;
+            }
+            return concurrentConnection;
         }
 
         public static void MarkConnectionType(
@@ -108,18 +167,12 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             var connectionIndex = connectionIndexString.Split(',').Select(ind => Convert.ToInt32(ind)).ToList();
             // Create Connections
             var connections = CreateClientConnection(transportType, protocol, urls, connectionIndex, clientType);
-            // Setup connection success flag
-            var connectionsSuccessFlag = Enumerable.Repeat(ConnectionState.Init, connections.Count()).ToList();
 
             // Setup connection drop handler
-            SetConnectionOnClose(connections, connectionsSuccessFlag);
+            SetConnectionOnClose(connections);
 
             // Prepare plugin parameters
-            pluginParameters[$"{SignalRConstants.ConnectionStore}.{type}"] = connections;
-            pluginParameters[$"{SignalRConstants.ConnectionIndex}.{type}"] = connectionIndex;
-            pluginParameters[$"{SignalRConstants.ConnectionSuccessFlag}.{type}"] = connectionsSuccessFlag;
-            pluginParameters[$"{SignalRConstants.RegisteredCallbacks}.{type}"] =
-                new List<Action<IList<IHubConnectionAdapter>, StatisticsCollector, string>>();
+            SaveConnectionInfoToContext(pluginParameters, type, connections, connectionIndex);
             // record the client type for reconnect
             MarkConnectionType(stepParameters, pluginParameters, clientType);
             if (clientType == ClientType.DirectConnect)
@@ -130,26 +183,68 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             return Task.FromResult<IDictionary<string, object>>(null);
         }
 
-        public static async Task StartConnect((IHubConnectionAdapter Connection, int LocalIndex,
-            List<ConnectionState> connectionsSuccessFlag,
-            ConnectionState NormalState,
-            ConnectionState AbnormalState) package)
+        public static async Task StartConnect((IHubConnectionAdapter Connection, int LocalIndex) package)
         {
             if (package.Connection == null ||
-                package.connectionsSuccessFlag[package.LocalIndex] != ConnectionState.Init)
+                package.Connection.GetStat() == ConnectionInternalStat.Active)
                 return;
 
             try
             {
-                using (var c = new CancellationTokenSource(TimeSpan.FromSeconds(4)))
+                using (var c = new CancellationTokenSource(TimeSpan.FromSeconds(3)))
                 {
                     await package.Connection.StartAsync(c.Token);
                 }
-                package.connectionsSuccessFlag[package.LocalIndex] = package.NormalState;
             }
             catch (Exception ex)
             {
-                package.connectionsSuccessFlag[package.LocalIndex] = package.AbnormalState;
+                var message = $"Fail to start connection: {ex}";
+                // only record error instead of throwing exception, allow reconnect
+                Log.Error(message);
+            }
+        }
+
+        public static async Task TakeActionAfterStartingConnect(
+            (IHubConnectionAdapter Connection,
+            int LocalIndex,
+            SignalREnums.ActionAfterConnection Action,
+            IDictionary<string, object> Context,
+            string Type) package)
+        {
+            if (package.Connection == null ||
+                package.Connection.GetStat() == ConnectionInternalStat.Active)
+                return;
+
+            try
+            {
+                using (var c = new CancellationTokenSource(TimeSpan.FromSeconds(3)))
+                {
+                    await package.Connection.StartAsync(c.Token);
+                    if (package.Action == ActionAfterConnection.JoinToGroup)
+                    {
+                        if (package.Context.ContainsKey($"{SignalRConstants.GroupCount}.{package.Type}") &&
+                            package.Context.ContainsKey($"{SignalRConstants.ConnectionTotal}.{package.Type}") &&
+                            package.Context.ContainsKey($"{SignalRConstants.StatisticsStore}.{package.Type}"))
+                        {
+                            package.Context.TryGetTypedValue($"{SignalRConstants.GroupCount}.{package.Type}",
+                                out int groupCount, Convert.ToInt32);
+                            package.Context.TryGetTypedValue($"{SignalRConstants.ConnectionTotal}.{package.Type}",
+                                out int connectionCount, Convert.ToInt32);
+                            package.Context.TryGetTypedValue($"{SignalRConstants.StatisticsStore}.{package.Type}",
+                                out StatisticsCollector statisticsCollector, (obj) => (StatisticsCollector)obj);
+                            package.Context.TryGetTypedValue($"{SignalRConstants.ConnectionIndex}.{package.Type}",
+                                out List<int> connectionIndex, (obj) => (List<int>)obj);
+                            var grp = GroupName(package.Type, connectionIndex[package.LocalIndex] % groupCount);
+                            //Log.Information($"connection {package.LocalIndex} joins group {grp}");
+                            await JoinToGroup(package.Connection,
+                                grp,
+                                statisticsCollector);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
                 var message = $"Fail to start connection: {ex}";
                 // only record error instead of throwing exception, allow reconnect
                 Log.Error(message);
@@ -173,12 +268,12 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             var clientUrl = restApi.GetClientUrl();
             var audience = restApi.GetClientAudience();
             var connections = from i in Enumerable.Range(0, connectionIndex.Count)
-                              let cookies = new CookieContainer()
-                              let handler = new HttpClientHandler
-                              {
-                                  ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator,
-                                  CookieContainer = cookies,
-                              }
+                              //let cookies = new CookieContainer()
+                              //let handler = new HttpClientHandler
+                              //{
+                              //    ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator,
+                              //    CookieContainer = cookies,
+                              //}
                               let userId = GenClientUserIdFromConnectionIndex(connectionIndex[i])
                               select new HubConnectionBuilder()
                               .ConfigureLogging(logger =>
@@ -189,10 +284,10 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
                               })
                               .WithUrl(clientUrl, httpConnectionOptions =>
                               {
-                                  httpConnectionOptions.HttpMessageHandlerFactory = _ => handler;
+                                  //httpConnectionOptions.HttpMessageHandlerFactory = _ => handler;
+                                  //httpConnectionOptions.Cookies = cookies;
                                   httpConnectionOptions.Transports = transportType;
                                   httpConnectionOptions.CloseTimeout = TimeSpan.FromMinutes(closeTimeout);
-                                  httpConnectionOptions.Cookies = cookies;
                                   httpConnectionOptions.AccessTokenProvider = () =>
                                   {
                                       return Task.FromResult(restApi.GenerateAccessToken(audience, userId));
@@ -245,25 +340,49 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             List<string> urlList = urls.Split(',').ToList();
 
             var connections = from i in Enumerable.Range(0, connectionIndex.Count)
-                              let cookies = new CookieContainer()
-                              let handler = new HttpClientHandler
-                              {
-                                  ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator,
-                                  CookieContainer = cookies,
-                              }
+                              //let cookies = new CookieContainer()
+                              //let handler = new HttpClientHandler
+                              //{
+                              //    ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator,
+                              //    CookieContainer = cookies,
+                              //}
                               select new HubConnectionBuilder()
                               .WithUrl(urlList[connectionIndex[i] % urlList.Count()], httpConnectionOptions =>
                               {
-                                  httpConnectionOptions.HttpMessageHandlerFactory = _ => handler;
+                                  //httpConnectionOptions.HttpMessageHandlerFactory = _ => handler;
+                                  //httpConnectionOptions.Cookies = cookies;
                                   httpConnectionOptions.Transports = transportType;
                                   httpConnectionOptions.CloseTimeout = TimeSpan.FromMinutes(closeTimeout);
-                                  httpConnectionOptions.Cookies = cookies;
                               }) into builder
                               let hubConnection = protocolString.ToLower() == "messagepack" ?
                                                   builder.AddMessagePackProtocol().Build() : builder.Build()
                               select (IHubConnectionAdapter)(new SignalRCoreHubConnection(hubConnection));
 
             return connections.ToList();
+        }
+
+        public static void DumpConnectionInternalStat(IList<IHubConnectionAdapter> connections)
+        {
+            var success = 0;
+            var failed = 0;
+            var init = 0;
+            for (var i = 0; i < connections.Count; i++)
+            {
+                switch (connections[i].GetStat())
+                {
+                    case ConnectionInternalStat.Active:
+                        success++;
+                        break;
+                    case ConnectionInternalStat.Disposed:
+                    case ConnectionInternalStat.Stopped:
+                        failed++;
+                        break;
+                    case ConnectionInternalStat.Init:
+                        init++;
+                        break;
+                }
+            }
+            Log.Information($"Connection status: success: {success}, failed: {failed}, init: {init}");
         }
 
         public static void DumpConnectionStatus(IList<SignalREnums.ConnectionState> connectionsSuccessFlag)
@@ -290,30 +409,12 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         }
 
         public static void SetConnectionOnClose(
-            IList<IHubConnectionAdapter> connections,
-            IList<ConnectionState> connectionsSuccessFlag)
+            IList<IHubConnectionAdapter> connections)
         {
             // Setup connection drop handler
             for (var i = 0; i < connections.Count(); i++)
             {
-                var index = i;
-                connections[i].Closed += e =>
-                {
-                    if (connections[i].GetStat() != ConnectionInternalStat.Stopped)
-                    {
-                        connectionsSuccessFlag[index] = ConnectionState.Fail;
-                        // AspNet SignalR does not pass exception object
-                        if (e != null)
-                        {
-                            Log.Error($"connection closed for {e.Message}");
-                        }
-                        else
-                        {
-                            Log.Error("connection closed");
-                        }
-                    }
-                    return Task.CompletedTask;
-                };
+                connections[i].Closed += connections[i].OnClosed;
             }
         }
 
@@ -382,23 +483,104 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             StatisticsCollector.IncreaseRecvSize(sz);
         }
 
+        public static IDictionary<string, long> MergeConnectionStatistics(
+            IDictionary<string, object>[] results, double[] percentileList)
+        {
+            var merged = new Dictionary<string, long>();
+            var arr1 = MergeConnectionDistribution(results, SignalRConstants.StatisticsConnectionLifeSpan);
+            var arr2 = MergeConnectionDistribution(results, SignalRConstants.StatisticsConnectionCost);
+            var arr3 = MergeConnectionDistribution(results, SignalRConstants.StatisticsConnectionReconnectCost);
+            var arr4 = MergeConnectionDistribution(results, SignalRConstants.StatisticsConnectionSLA);
+            var dic1 = (from i in percentileList
+                        select new { Key = $"{SignalRConstants.StatisticsConnectionLifeSpan}:{i}", Value = Percentile(arr1, i) })
+                        .ToDictionary(entry => entry.Key, entry => entry.Value);
+            var dic2 = (from i in percentileList
+                        select new { Key = $"{SignalRConstants.StatisticsConnectionCost}:{i}", Value = Percentile(arr2, i) })
+                        .ToDictionary(entry => entry.Key, entry => entry.Value);
+            var dic3 = (from i in percentileList
+                        select new { Key = $"{SignalRConstants.StatisticsConnectionReconnectCost}:{i}", Value = Percentile(arr3, i) })
+                        .ToDictionary(entry => entry.Key, entry => entry.Value);
+            var dic4 = (from i in percentileList
+                        select new { Key = $"{SignalRConstants.StatisticsConnectionSLA}:{i}", Value = Percentile(arr4, i) })
+                        .ToDictionary(entry => entry.Key, entry => entry.Value);
+            merged = merged.Union(dic1).Union(dic2).Union(dic3).Union(dic4).ToDictionary(entry => entry.Key, entry => entry.Value);
+            return merged;
+        }
+
+        public static long Percentile(int[] sequence, double excelPercentile)
+        {
+            var N = sequence.Length;
+            if (N == 0)
+            {
+                return 0;
+            }
+            Array.Sort(sequence);
+            double n = (N - 1) * excelPercentile + 1;
+            // Another method: double n = (N + 1) * excelPercentile;
+            if (n == 1d) return sequence[0];
+            else if (n == N) return sequence[N - 1];
+            else
+            {
+                int k = (int)n;
+                int d = (int)(n - k);
+                return sequence[k - 1] + d * (sequence[k] - sequence[k - 1]);
+            }
+        }
+
+        private static int[] MergeConnectionDistribution(
+            IDictionary<string, object>[] results, string key)
+        {
+
+            var arrays = results.ToList().Select(statistics =>
+            {
+                if (statistics.ContainsKey(key))
+                {
+                    statistics.TryGetTypedValue(key, out string item, Convert.ToString);
+                    var values = item.Split(',').Select(ind => Convert.ToInt32(ind)).ToArray();
+                    return values;
+                }
+                return null;
+            });
+            int finalLen = 0;
+            foreach (var arr in arrays)
+            {
+                finalLen += arr.Length;
+            }
+            var result = new int[finalLen];
+            int curPos = 0;
+            foreach (var arr in arrays)
+            {
+                Array.Copy(arr, 0, result, curPos, arr.Length);
+                curPos += arr.Length;
+            }
+            Array.Sort(result);
+            return result;
+        }
+
         public static IDictionary<string, long> MergeStatistics(
             IDictionary<string, object>[] results,
-            string type, long latencyMax, long latencyStep)
+            long latencyMax, long latencyStep)
         {
             var merged = new Dictionary<string, long>();
 
             // Sum of connection statistics
-            merged[SignalRConstants.StatisticsConnectionConnectSuccess] = Sum(results, SignalRConstants.StatisticsConnectionConnectSuccess);
-            merged[SignalRConstants.StatisticsConnectionConnectFail] = Sum(results, SignalRConstants.StatisticsConnectionConnectFail);
-            merged[SignalRConstants.StatisticsConnectionReconnect] = Sum(results, SignalRConstants.StatisticsConnectionReconnect);
+            merged[SignalRConstants.StatisticsConnectionConnectSuccess] =
+                Sum(results, SignalRConstants.StatisticsConnectionConnectSuccess);
+            merged[SignalRConstants.StatisticsConnectionConnectFail] =
+                Sum(results, SignalRConstants.StatisticsConnectionConnectFail);
+            merged[SignalRConstants.StatisticsConnectionReconnect] =
+                Sum(results, SignalRConstants.StatisticsConnectionReconnect);
             //merged[SignalRConstants.StatisticsConnectionInit] = Sum(results, SignalRConstants.StatisticsConnectionInit);
 
             // Sum of group statistics
-            merged[SignalRConstants.StatisticsGroupJoinSuccess] = Sum(results, SignalRConstants.StatisticsGroupJoinSuccess);
-            merged[SignalRConstants.StatisticsGroupJoinFail] = Sum(results, SignalRConstants.StatisticsGroupJoinFail);
-            merged[SignalRConstants.StatisticsGroupLeaveSuccess] = Sum(results, SignalRConstants.StatisticsGroupLeaveSuccess);
-            merged[SignalRConstants.StatisticsGroupLeaveFail] = Sum(results, SignalRConstants.StatisticsGroupLeaveFail);
+            merged[SignalRConstants.StatisticsGroupJoinSuccess] =
+                Sum(results, SignalRConstants.StatisticsGroupJoinSuccess);
+            merged[SignalRConstants.StatisticsGroupJoinFail] =
+                Sum(results, SignalRConstants.StatisticsGroupJoinFail);
+            merged[SignalRConstants.StatisticsGroupLeaveSuccess] =
+                Sum(results, SignalRConstants.StatisticsGroupLeaveSuccess);
+            merged[SignalRConstants.StatisticsGroupLeaveFail] =
+                Sum(results, SignalRConstants.StatisticsGroupLeaveFail);
 
             // Sum of "message:lt:latency"
             var SumMessageLatencyStatistics = (from i in Enumerable.Range(1, (int)latencyMax / (int)latencyStep)
@@ -406,15 +588,20 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
                                                select new { Key = MessageLessThan(latency), Sum = Sum(results, MessageLessThan(latency)) })
                                                .ToDictionary(entry => entry.Key, entry => entry.Sum);
             // Sum of "message:ge:latency"
-            SumMessageLatencyStatistics[MessageGreaterOrEqaulTo(latencyMax)] = Sum(results, MessageGreaterOrEqaulTo(latencyMax));
+            SumMessageLatencyStatistics[MessageGreaterOrEqualTo(latencyMax)] =
+                Sum(results, MessageGreaterOrEqualTo(latencyMax));
 
             // Sum of total received message count
-            merged[SignalRConstants.StatisticsMessageReceived] = SumMessageLatencyStatistics.Select(entry => entry.Value).Sum();
+            merged[SignalRConstants.StatisticsMessageReceived] =
+                SumMessageLatencyStatistics.Select(entry => entry.Value).Sum();
 
             // Sum of sent message statistics (should be calculated after "message:ge:latency")
-            merged[SignalRConstants.StatisticsMessageSent] = Sum(results, SignalRConstants.StatisticsMessageSent);
-            merged[SignalRConstants.StatisticsMessageSentSize] = Sum(results, SignalRConstants.StatisticsMessageSentSize);
-            merged[SignalRConstants.StatisticsMessageReceivedSize] = Sum(results, SignalRConstants.StatisticsMessageReceivedSize);
+            merged[SignalRConstants.StatisticsMessageSent] =
+                Sum(results, SignalRConstants.StatisticsMessageSent);
+            merged[SignalRConstants.StatisticsMessageSentSize] =
+                Sum(results, SignalRConstants.StatisticsMessageSentSize);
+            merged[SignalRConstants.StatisticsMessageReceivedSize] =
+                Sum(results, SignalRConstants.StatisticsMessageReceivedSize);
 
             // Update epoch
             merged[SignalRConstants.StatisticsEpoch] = Min(results, SignalRConstants.StatisticsEpoch);

@@ -58,7 +58,6 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
         protected async Task BaseSendAsync(
             (IHubConnectionAdapter Connection,
             int LocalIndex,
-            List<SignalREnums.ConnectionState> ConnectionsSuccessFlag,
             StatisticsCollector StatisticsCollector,
             string CallbackMethod) package,
             IDictionary<string, object> data)
@@ -66,10 +65,10 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
             try
             {
                 // Is the connection is not active, then stop sending message
-                if (package.ConnectionsSuccessFlag[package.LocalIndex] != SignalREnums.ConnectionState.Success)
+                if (package.Connection.GetStat() != SignalREnums.ConnectionInternalStat.Active)
                     return;
                 var payload = GenPayload(data);
-                using (var c = new CancellationTokenSource(TimeSpan.FromSeconds(60)))
+                using (var c = new CancellationTokenSource(TimeSpan.FromSeconds(5)))
                 {
                     await package.Connection.SendAsync(package.CallbackMethod, payload, c.Token);
                 }
@@ -78,7 +77,6 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
             }
             catch (Exception ex)
             {
-                package.ConnectionsSuccessFlag[package.LocalIndex] = SignalREnums.ConnectionState.Fail;
                 var message = $"Error in {GetType().Name}: {ex}";
                 Log.Error(message);
             }
@@ -121,9 +119,6 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                     out StatisticsCollector statisticsCollector, obj => (StatisticsCollector)obj);
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionIndex}.{type}",
                     out List<int> connectionIndex, (obj) => (List<int>)obj);
-                pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionSuccessFlag}.{type}",
-                    out List<SignalREnums.ConnectionState> connectionsSuccessFlag,
-                    (obj) => (List<SignalREnums.ConnectionState>)obj);
 
                 // Generate necessary data
                 var data = new Dictionary<string, object>
@@ -139,7 +134,6 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                                    where connectionIndex[i] % modulo >= remainderBegin && connectionIndex[i] % modulo < remainderEnd
                                    select ContinuousSend((Connection: connections[i],
                                                           LocalIndex: i,
-                                                          ConnectionsSuccessFlag: connectionsSuccessFlag,
                                                           StatisticsCollector: statisticsCollector,
                                                           CallbackMethod: callbackMethod),
                                                           data,
