@@ -240,7 +240,9 @@ function GenBenchmarkConfig()
                       -c $configPath $maxConnectionOption \
                       -s $settings $connectionTypeOption \
                       $toleratedConnDropCountOp $toleratedConnDropPercentageOp $toleratedMaxLatencyPercentageOp
-  cat $configPath
+  # display part of the configuration to avoid 'write error: Resource temporarily unavailable'
+  head -n 200 $configPath
+  echo "......"
 }
 
 function RunSendToGroup()
