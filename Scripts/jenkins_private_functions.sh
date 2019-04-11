@@ -1009,7 +1009,7 @@ EOF
                --AzureSignalRConnectionString="$connectionString" \
                --NotStartAppServer=1
   fi
-  #stop_collect_slaves_appserver_top ${user} $passwd ${outputDir}
+  stop_collect_slaves_appserver_top ${user} $passwd ${outputDir}
   local counterPath=`sshpass -p $passwd ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR ${user}@${master} "find /home/${user}/master -iname counters.txt"`
   sshpass -p ${passwd} scp -o StrictHostKeyChecking=no -o LogLevel=ERROR ${user}@${master}:$counterPath ${outputDir}/
   if [ $? -ne 0 ]
