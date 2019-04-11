@@ -25,7 +25,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 stepParameters.TryGetTypedValue(SignalRConstants.Duration, out long duration, Convert.ToInt64);
                 stepParameters.TryGetTypedValue(SignalRConstants.Interval, out long interval, Convert.ToInt64);
                 stepParameters.TryGetTypedValue(SignalRConstants.MessageSize, out int messageSize, Convert.ToInt32);
-                stepParameters.TryGetTypedValue(SignalRConstants.ConnectionIdStore, out string[] connectionIds, obj => Convert.ToString(obj).Split(' '));
+                stepParameters.TryGetTypedValue(SignalRConstants.ConnectionIdStore, out string[] connectionIds,
+                    obj => Convert.ToString(obj).Split(' '));
 
                 // Get context
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionStore}.{type}",

@@ -67,13 +67,30 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         }
 
         public static void SaveGroupInfoToContext(
-           IDictionary<string, object> pluginParameters,
-           string type,
-           int groupCount,
-           int totalConnection)
+            IDictionary<string, object> pluginParameters,
+            string type,
+            int groupCount,
+            int totalConnection)
         {
             pluginParameters[$"{SignalRConstants.GroupCount}.{type}"] = groupCount;
             pluginParameters[$"{SignalRConstants.ConnectionTotal}.{type}"] = totalConnection;
+        }
+
+        public static void SaveConnectionStringToContext(
+            IDictionary<string, object> pluginParameters,
+            string type,
+            string urls)
+        {
+            pluginParameters[$"{SignalRConstants.ConnectionString}.{type}"] = urls;
+        }
+
+        public static string FetchConnectionStringFromContext(
+            IDictionary<string, object> pluginParameters,
+            string type)
+        {
+            pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionString}.{type}",
+                    out string connectionString, Convert.ToString);
+            return connectionString;
         }
 
         public static void SaveConnectionInfoToContext(
@@ -178,7 +195,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             if (clientType == ClientType.DirectConnect)
             {
                 // record the connection string for REST API send
-                pluginParameters[$"{SignalRConstants.ConnectionString}.{type}"] = urls;
+                SaveConnectionStringToContext(pluginParameters, type, urls);
             }
             return Task.FromResult<IDictionary<string, object>>(null);
         }

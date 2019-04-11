@@ -32,6 +32,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 }
 
                 var connIdStoreKey = $"{SignalRConstants.ConnectionIdStore}.{type}";
+                /*
                 if (pluginParameters.TryGetValue(connIdStoreKey, out object v))
                 {
                     // check whether need re-get connection Ids
@@ -61,7 +62,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                         }
                     }
                 }
-
+                */
                 // get connection Ids
                 int concurrentConnection =
                     SignalRUtils.FetchConcurrentConnectionCountFromContext(
@@ -102,7 +103,11 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
         {
             var packages = (from i in Enumerable.Range(0, connections.Count())
                             select (Connection: connections[i], connectionIdList, i)).ToList();
-            await Util.LowPressBatchProcess(packages, SaveConnectionId, concurrentSend, 1000);
+            await Util.LowPressBatchProcess(
+                packages,
+                SaveConnectionId,
+                concurrentSend,
+                SignalRConstants.BatchProcessDefaultWait);
         }
 
         private async Task SaveConnectionId(
@@ -112,13 +117,10 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
         {
             try
             {
-                if (String.IsNullOrEmpty(package.connectionIdList[package.index]))
-                {
-                    package.connection.On(
+                package.connection.On(
                         SignalRConstants.ConnectionIdCallback,
                         (string connectionId) => package.connectionIdList[package.index] = connectionId);
-                    await package.connection.SendAsync(SignalRConstants.ConnectionIdCallback);
-                }
+                await package.connection.SendAsync(SignalRConstants.ConnectionIdCallback);
             }
             catch (Exception ex)
             {
