@@ -117,6 +117,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
         {
             try
             {
+                if (package.connection.GetStat() != SignalREnums.ConnectionInternalStat.Active)
+                    return;
                 package.connection.On(
                         SignalRConstants.ConnectionIdCallback,
                         (string connectionId) => package.connectionIdList[package.index] = connectionId);

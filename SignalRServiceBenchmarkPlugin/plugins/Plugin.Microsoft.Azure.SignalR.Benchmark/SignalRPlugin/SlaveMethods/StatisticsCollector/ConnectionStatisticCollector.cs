@@ -58,7 +58,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods.Statistics
                     if (lifeSpanArray[i] > 0)
                     {
 
-                        double sla = 1.0;
+                        double sla = 100.0;
                         if (downTimePeriod > 0)
                         {
                             sla = (lifeSpanArray[i] - downTimePeriod) * 100.0 / lifeSpanArray[i];
