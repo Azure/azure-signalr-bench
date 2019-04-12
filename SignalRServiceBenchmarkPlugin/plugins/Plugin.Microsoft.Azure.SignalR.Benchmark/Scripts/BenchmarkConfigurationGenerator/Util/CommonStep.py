@@ -14,14 +14,19 @@ def longrun_pre_sending_steps(
                           connection_config.protocol,
                           connection_config.transport,
                           connection_type),
-        init_statistics_collector(type_,
+        init_connection_statistics_collector(type_,
                                   statistics_config.statistic_latency_max,
                                   statistics_config.statistic_latency_step),
         collect_connection_statistics(type_,
                                       statistics_config.statistic_interval,
                                       statistics_config.statistics_output_path,
                                       statistics_config.connection_percentile_list),
-        register_callback_on_connected(type_)
+        register_callback_on_connected(type_),
+        register_callback_record_latency(scenario_config.type),
+        start_connection(type_,
+                         scenario_config.concurrent,
+                         scenario_config.batch_mode,
+                         scenario_config.batch_wait)
     ]
     return pre_send
 
@@ -49,6 +54,7 @@ def pre_sending_steps(type_,
                          scenario_config.batch_mode,
                          scenario_config.batch_wait),
         wait(type_, constant_config.wait_time),
+        register_callback_record_latency(scenario_config.type),
         reconnect(scenario_config.type,
                   scenario_config.connections,
                   connection_config.url,
@@ -56,8 +62,7 @@ def pre_sending_steps(type_,
                   connection_config.transport,
                   scenario_config.concurrent,
                   scenario_config.batch_mode,
-                  scenario_config.batch_wait),
-        register_callback_record_latency(scenario_config.type)
+                  scenario_config.batch_wait)
     ]
     return pre_send
 

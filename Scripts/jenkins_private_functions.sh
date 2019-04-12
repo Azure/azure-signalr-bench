@@ -171,6 +171,7 @@ function normalizeSendInterval()
   echo $interval
 }
 # global parameters:
+#   kind,
 #   bench_send_size, sigbench_run_duration, useMaxConnection
 #   ToleratedMaxConnectionFailCount
 #   ToleratedMaxConnectionFailPercentage
@@ -233,12 +234,18 @@ function GenBenchmarkConfig()
             appserverUrls="$connectionString"
        fi
   fi
+  local benchKind="perf"
+  if [ "$kind" == "longrun" ]
+  then
+     $benchKind="longrun"
+  fi
   python3 generate.py -u $unit -S $Scenario \
                       -t $Transport -p $MessageEncoding \
                       -U $appserverUrls -d $sigbench_run_duration \
                       $groupTypeOp -ms $ms -i $interval \
                       -c $configPath $maxConnectionOption \
                       -s $settings $connectionTypeOption \
+                      -k $benchKind \
                       $toleratedConnDropCountOp $toleratedConnDropPercentageOp $toleratedMaxLatencyPercentageOp
   # display part of the configuration to avoid 'write error: Resource temporarily unavailable'
   head -n 200 $configPath
