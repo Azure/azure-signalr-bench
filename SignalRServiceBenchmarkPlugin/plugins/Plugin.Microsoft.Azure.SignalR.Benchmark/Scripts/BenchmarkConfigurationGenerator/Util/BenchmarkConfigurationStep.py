@@ -1,6 +1,7 @@
 from Util.Common import *
 
 Key = {
+    'ActionAfterConnect': 'Parameter.ActionAfterConnect',
     'BatchMode': 'Parameter.BatchMode',
     'BatchWait': 'Parameter.BatchWait',
     'ConcurrentConnection': 'Parameter.ConcurrentConnection',
@@ -24,6 +25,7 @@ Key = {
     'Method': 'Method',
     'ModuleName': 'ModuleName',
     'Modulo': 'Parameter.Modulo',
+    'PercentileList': 'Parameter.PercentileList',
     'Pipeline': 'Pipeline',
     'Protocol': 'Parameter.Protocol',
     'RemainderBegin': 'Parameter.RemainderBegin',
@@ -53,7 +55,9 @@ def wait(type_, duration):
     }]
 
 
-def conditional_stop(type_, criteria_max_fail_connection_percentage, criteria_max_fail_connection_amount,
+def conditional_stop(type_,
+                     criteria_max_fail_connection_percentage,
+                     criteria_max_fail_connection_amount,
                      criteria_max_fail_sending_percentage):
     return [{
         **required(type_, "ConditionalStop"),
@@ -80,6 +84,8 @@ def reconnect(type_, connection_total, hub_url, protocol,
         }
     }]
 
+def register_callback_on_connected(type_):
+    return [dict(required(type_, "RegisterCallbackOnConnected"))]
 
 def register_callback_record_latency(type_):
     return [dict(required(type_, "RegisterCallbackRecordLatency"))]
@@ -102,6 +108,14 @@ def init_statistics_collector(type_, latency_max, latency_step):
         }
     }]
 
+def init_connection_statistics_collector(type_, latency_max, latency_step):
+    return [{
+        **required(type_, "InitConnectionStatisticsCollector"),
+        **{
+            Key['LatencyMax']: latency_max,
+            Key['LatencyStep']: latency_step
+        }
+    }]
 
 def collect_statistics(type_, interval, output_path):
     return [{
@@ -112,6 +126,15 @@ def collect_statistics(type_, interval, output_path):
         }
     }]
 
+def collect_connection_statistics(type_, interval, output_path, percentileList):
+    return [{
+        **required(type_, "CollectConnectionStatistics"),
+        **{
+            Key['Interval']: interval,
+            Key['PercentileList']: percentileList,
+            Key['StatisticsOutputPath']: output_path
+        }
+    }]
 
 def stop_collector(type_):
     return [dict(required(type_, "StopCollector"))]
@@ -153,8 +176,15 @@ def dispose_connection(type_):
 def collect_connection_id(type_):
     return [required(type_, "CollectConnectionId")]
 
+def repair_connection(type_, post_action="None"):
+    return [{
+        **required(type_, "RepairConnections"),
+        **{
+            Key['ActionAfterConnect']: post_action
+        }
+    }]
 
-def echo_broadcast(type_, method, duration, interval, remainder_begin, remainder_end, modulo, message_size):
+def generate_send(type_, method, duration, interval, remainder_begin, remainder_end, modulo, message_size):
     return {
         **required(type_, method),
         **{
@@ -168,26 +198,9 @@ def echo_broadcast(type_, method, duration, interval, remainder_begin, remainder
     }
 
 
-def echo(type_, duration, interval, remainder_begin, remainder_end, modulo, message_size):
-    return [echo_broadcast(type_, "Echo", duration, interval, remainder_begin, remainder_end, modulo, message_size)]
-
-
-def broadcast(type_, duration, interval, remainder_begin, remainder_end, modulo, message_size):
-    return [echo_broadcast(type_, "Broadcast", duration, interval, remainder_begin, remainder_end, modulo,
-                           message_size)]
-
-
-def restSendToUser(type_, duration, interval, remainder_begin, remainder_end, modulo, message_size):
-    return [echo_broadcast(type_, "RestSendToUser", duration, interval, remainder_begin, remainder_end, modulo, message_size)]
-
-
-def restBroadcast(type_, duration, interval, remainder_begin, remainder_end, modulo, message_size):
-    return [echo_broadcast(type_, "RestBroadcast", duration, interval, remainder_begin, remainder_end, modulo, message_size)]
-
-
-def send_to_client(type_, connection_total, duration, interval, remainder_begin, remainder_end, modulo, message_size):
+def send_to_client(type_, method, connection_total, duration, interval, remainder_begin, remainder_end, modulo, message_size):
     return [{
-        **echo_broadcast(type_, "SendToClient", duration, interval, remainder_begin, remainder_end, modulo,
+        **generate_send(type_, method, duration, interval, remainder_begin, remainder_end, modulo,
                          message_size),
         **{
             Key['ConnectionTotal']: connection_total
@@ -252,30 +265,30 @@ def group_connection_mode(type_, method, duration, interval, message_size, conne
     }
 
 
-def send_to_group_group_mode(type_, duration, interval, message_size, connection_total, group_count,
+def send_to_group_group_mode(type_, method, duration, interval, message_size, connection_total, group_count,
                              group_level_remainder_begin, group_level_remainder_end, group_internal_remainder_begin,
                              group_internal_remainder_end, group_internal_modulo):
-    return [group_group_mode(type_, "SendToGroup", duration, interval, message_size, connection_total, group_count,
+    return [group_group_mode(type_, method, duration, interval, message_size, connection_total, group_count,
                              group_level_remainder_begin, group_level_remainder_end, group_internal_remainder_begin,
                              group_internal_remainder_end, group_internal_modulo)]
 
 
-def send_to_group_connection_mode(type_, duration, interval, message_size, connection_total, group_count,
+def send_to_group_connection_mode(type_, method, duration, interval, message_size, connection_total, group_count,
                                   remainder_begin, remainder_end, modulo):
-    return [group_connection_mode(type_, "SendToGroup", duration, interval, message_size, connection_total, group_count,
+    return [group_connection_mode(type_, method, duration, interval, message_size, connection_total, group_count,
                                   remainder_begin, remainder_end, modulo)]
 
 
-def frequent_join_leave_group_group_mode(type_, duration, interval, message_size, connection_total, group_count,
+def frequent_join_leave_group_group_mode(type_, method, duration, interval, message_size, connection_total, group_count,
                                          group_level_remainder_begin, group_level_remainder_end,
                                          group_internal_remainder_begin, group_internal_remainder_end,
                                          group_internal_modulo):
-    return [group_group_mode(type_, "FrequentJoinLeaveGroup", duration, interval, message_size, connection_total,
+    return [group_group_mode(type_, method, duration, interval, message_size, connection_total,
                              group_count, group_level_remainder_begin, group_level_remainder_end,
                              group_internal_remainder_begin, group_internal_remainder_end, group_internal_modulo)]
 
 
-def frequent_join_leave_group_connection_mode(type_, duration, interval, message_size, connection_total, group_count,
+def frequent_join_leave_group_connection_mode(type_, method, duration, interval, message_size, connection_total, group_count,
                                               remainder_begin, remainder_end, modulo):
-    return [group_connection_mode(type_, "FrequentJoinLeaveGroup", duration, interval, message_size, connection_total,
+    return [group_connection_mode(type_, method, duration, interval, message_size, connection_total,
                                   group_count, remainder_begin, remainder_end, modulo)]
