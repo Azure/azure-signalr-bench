@@ -1,3 +1,4 @@
+
 class ArgType:
     def __init__(self):
         # group type
@@ -31,6 +32,13 @@ class ArgType:
     def ConnectionTypeName(self, connection_type):
         return self.connection_type_map[connection_type]
 
+PERF_KIND = 0
+LONGRUN_KIND = 1
+
+class KindType:
+    def __init__(self):
+        self.perf = "perf"
+        self.longrun = "longrun"
 
 class ScenarioType:
     def __init__(self):

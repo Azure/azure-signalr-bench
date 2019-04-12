@@ -19,11 +19,18 @@ class ScenarioConfig:
 
 
 class StatisticsConfig:
-    def __init__(self, statistics_output_path, statistic_interval, statistic_latency_max, statistic_latency_step):
+    def __init__(
+            self,
+            statistics_output_path,
+            statistic_interval,
+            statistic_latency_max,
+            statistic_latency_step,
+            connection_percentile_list):
         self.statistic_interval = statistic_interval
         self.statistics_output_path = statistics_output_path
         self.statistic_latency_max = statistic_latency_max
         self.statistic_latency_step = statistic_latency_step
+        self.connection_percentile_list = connection_percentile_list
 
 
 class ConnectionConfig:

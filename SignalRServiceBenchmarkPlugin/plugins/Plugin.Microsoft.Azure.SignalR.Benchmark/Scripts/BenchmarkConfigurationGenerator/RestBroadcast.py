@@ -3,8 +3,8 @@ from Util import TemplateSetter, ConfigSaver, CommonStep
 import BaseScenario as ParentClass
 
 class RestBroadcast(ParentClass.BaseScenario):
-    def __init__(self, sending_config, scenario_config, connection_config, statistics_config, constant_config, connection_type):
-        super().__init__(sending_config, scenario_config, connection_config, statistics_config, constant_config, connection_type)
+    def __init__(self, sending_config, scenario_config, connection_config, statistics_config, constant_config, connection_type, kind_type):
+        super().__init__(sending_config, scenario_config, connection_config, statistics_config, constant_config, connection_type, kind_type)
 
     def BuildSending(self):
         remainder_begin = 0
@@ -19,19 +19,24 @@ class RestBroadcast(ParentClass.BaseScenario):
 
             # conditional stop and reconnect
             if epoch > 0:
-                self.sending += CommonStep.conditional_stop_and_reconnect_steps(self.sending, self.scenario_config, self.constant_config, self.connection_config)
+                super().SimpleConditionalStopReconnect()
 
             self.sending += [
-                restBroadcast(self.scenario_config.type, self.sending_config.duration, self.sending_config.interval,
-                     remainder_begin, remainder_end, self.scenario_config.connections,
-                     self.sending_config.message_size),
+                [generate_send(self.scenario_config.type,
+                               self.__class__.__name__,
+                               self.sending_config.duration,
+                               self.sending_config.interval,
+                               remainder_begin,
+                               remainder_end,
+                               self.scenario_config.connections,
+                               self.sending_config.message_size)],
                 wait(self.scenario_config.type, self.constant_config.wait_time)
             ]
 
-    def generate_config(self):
+    def generate_config_4_perf(self):
         super().BuildCommonPreSending()
-        super().BuildRegRecordLatency()
-        super().BuildPostSending()
         self.BuildSending()
-        super().GenerateConfig()
 
+    def generate_config_4_longrun(self):
+        super().BuildLongrunCommonPreSending()
+        super().BuildLongrunSending()
