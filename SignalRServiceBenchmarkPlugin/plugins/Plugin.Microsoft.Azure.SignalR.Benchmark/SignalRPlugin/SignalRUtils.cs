@@ -561,14 +561,20 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             int finalLen = 0;
             foreach (var arr in arrays)
             {
-                finalLen += arr.Length;
+                if (arr != null)
+                {
+                    finalLen += arr.Length;
+                }
             }
             var result = new int[finalLen];
             int curPos = 0;
             foreach (var arr in arrays)
             {
-                Array.Copy(arr, 0, result, curPos, arr.Length);
-                curPos += arr.Length;
+                if (arr != null)
+                {
+                    Array.Copy(arr, 0, result, curPos, arr.Length);
+                    curPos += arr.Length;
+                }
             }
             Array.Sort(result);
             return result;
