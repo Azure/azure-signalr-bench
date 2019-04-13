@@ -237,7 +237,7 @@ function GenBenchmarkConfig()
   local benchKind="perf"
   if [ "$kind" == "longrun" ]
   then
-     $benchKind="longrun"
+     benchKind="$kind"
   fi
   python3 generate.py -u $unit -S $Scenario \
                       -t $Transport -p $MessageEncoding \
@@ -630,6 +630,8 @@ function mark_job_as_failure_if_meet_error()
   fi
 }
 
+# global environment:
+# AspNetSignalR
 function run_benchmark() {
   local unit=$1
   local user=$2
@@ -639,6 +641,10 @@ function run_benchmark() {
   if [ "$AspNetSignalR" == "true" ]
   then
     tag="AspNet"$tag
+  fi
+  if [ "kind" == "longrun" ]
+  then
+    tag="Longrun"$tag
   fi
   local Scenario
   local Transport

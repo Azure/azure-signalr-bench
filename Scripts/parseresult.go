@@ -32,6 +32,22 @@ type Counters struct {
 	ConnError   int64 `json:"connection:connect:fail"`
 	ReConn      int64 `json:"connection:connect:reconnect"`
 	ConnSucc    int64 `json:"connection:connect:success"`
+	LS_50       int64 `json:"connection:connect:lifespan:0.5"`
+	LS_90       int64 `json:"connection:connect:lifespan:0.9"`
+	LS_95       int64 `json:"connection:connect:lifespan:0.95"`
+	LS_99       int64 `json:"connection:connect:lifespan:0.99"`
+	CC_50       int64 `json:"connection:connect:cost:0.5"`
+	CC_90       int64 `json:"connection:connect:cost:0.9"`
+	CC_95       int64 `json:"connection:connect:cost:0.95"`
+	CC_99       int64 `json:"connection:connect:cost:0.99"`
+	RC_50       int64 `json:"connection:reconnect:cost:0.5"`
+	RC_90       int64 `json:"connection:reconnect:cost:0.9"`
+	RC_95       int64 `json:"connection:reconnect:cost:0.95"`
+	RC_99       int64 `json:"connection:reconnect:cost:0.99"`
+	CSLA_50     int64 `json:"connection:sla:0.5"`
+	CSLA_90     int64 `json:"connection:sla:0.9"`
+	CSLA_95     int64 `json:"connection:sla:0.95"`
+	CSLA_99     int64 `json:"connection:sla:0.99"`
 }
 
 type Monitor struct {
@@ -41,7 +57,13 @@ type Monitor struct {
 
 func main() {
 	var infile = flag.String("input", "", "Specify the input file")
+	var connStatSum, slaChart, lifeSpanChart, connCostChart, reconnCostChart bool
 	var timeWindow, lastLatency, all, rate, sizerate, lastLatab, lastLatabPercent, category500ms, category1s, areachart, connectrate bool
+	connStatSum = false
+	slaChart = false
+	lifeSpanChart = false
+	connCostChart = false
+	reconnCostChart = false
 	lastLatency = false
 	all = false
 	rate = false
@@ -64,6 +86,11 @@ func main() {
 	flag.BoolVar(&areachart, "areachart", false, "Print Area chart")
 	flag.BoolVar(&timeWindow, "timeWindow", false, "Print the time window for test [start_time - 1 minutes] and [end_time + 1 mintues]")
 	flag.BoolVar(&connectrate, "connectrate", false, "Print the connection rate")
+	flag.BoolVar(&connStatSum, "connStatSum", false, "Print the connection stat summary")
+	flag.BoolVar(&slaChart, "slaChart", false, "Print connections SLA chart")
+	flag.BoolVar(&lifeSpanChart, "lifeSpanChart", false, "Print connections lifespan distribution chart")
+	flag.BoolVar(&connCostChart, "connCostChart", false, "Print connect cost distribution chart")
+	flag.BoolVar(&reconnCostChart, "reconnCostChart", false, "Print reconnection cost distribution chart")
 	flag.Usage = func() {
 		fmt.Println("-input <input_file> : specify the input file")
 		fmt.Println("-lastlatency        : print the last item of latency")
@@ -76,6 +103,11 @@ func main() {
 		fmt.Println("-category1s         : print a table for last latency percentage with 1s as a boundry")
 		fmt.Println("-areachart          : print Area chart")
 		fmt.Println("-connectrate        : print connect rate chart")
+		fmt.Println("-connStatSum        : print connect stat summary")
+		fmt.Println("-slaChart           : print connection SLA chart")
+		fmt.Println("-lifeSpanChart      : print connection life span chart")
+		fmt.Println("-connCostChart      : print connect cost chart")
+		fmt.Println("-reconnCostChart    : print reconnect cost chart")
 		fmt.Println("-timeWindow         : Print the time window for test [start_time - 1 minutes] and [end_time + 1 mintues]")
 	}
 	flag.Parse()
@@ -128,6 +160,270 @@ func main() {
 	if sizerate {
 		PrintSizeRate(monitors)
 	}
+	if connStatSum {
+		PrintConnectionStatSummary(monitors)
+	}
+	if slaChart {
+		PrintSLAChart(monitors)
+	}
+	if connCostChart {
+		PrintConnectCostChart(monitors)
+	}
+	if reconnCostChart {
+		PrintReconnectCostChart(monitors)
+	}
+	if lifeSpanChart {
+		PrintLifeSpanChart(monitors)
+	}
+}
+
+func PrintConnectionStatSummary(monitors []Monitor) {
+	var lifeSpan99 int64
+	var connectionCost99 int64
+	var reconnectionCost99 int64
+	var sla99 int64
+	for _, v := range monitors {
+		if v.Counters.LS_99 > 0 {
+			lifeSpan99 = v.Counters.LS_99
+		}
+		if v.Counters.CC_99 > 0 {
+			connectionCost99 = v.Counters.CC_99
+		}
+		if v.Counters.RC_99 > 0 {
+			reconnectionCost99 = v.Counters.RC_99
+		}
+		if v.Counters.CSLA_99 > 0 {
+			sla99 = v.Counters.CSLA_99
+		}
+	}
+	var chartfunc string
+	chartfunc = `
+      google.charts.load("current", {packages:["corechart", "line", "table"]});
+      google.charts.setOnLoadCallback(drawConnectionStatSummary);
+      function drawConnectionStatSummary() {
+        var cssClassNames = {headerCell: 'headerCell', tableCell: 'tableCell'};
+        var options = {showRowNumber: true,'allowHtml': true, 'cssClassNames': cssClassNames, 'alternatingRowStyle': true};
+        var data = new google.visualization.DataTable();
+        data.addColumn('number', '99% SLA (%)');
+        data.addColumn('number', '99% ReconnectCost (ms)');
+        data.addColumn('number', '99% ConnectCost (ms)');
+        data.addColumn('number', '99% LifeSpan (ms)');
+        `
+	fmt.Printf("%s\n", chartfunc)
+	fmt.Printf("\tdata.addRows([\n")
+	fmt.Printf("\t [%d, %d, %d, %d],\n", sla99, reconnectionCost99, connectionCost99, lifeSpan99)
+	chartfunc = `
+        ]);
+        var table = new google.visualization.Table(document.getElementById('tab_for_sum'));
+
+        table.draw(data, options);
+      }
+        `
+	fmt.Printf("%s\n", chartfunc)
+}
+
+func PrintConnectCostChart(monitors []Monitor) {
+	var chartfunc string
+	chartfunc = `
+    google.charts.load("current", {packages:["corechart", "line", "table"]});
+    google.charts.setOnLoadCallback(drawConnectCostChart);
+    function drawConnectCostChart() {
+
+      var data = new google.visualization.DataTable();
+        data.addColumn('timeofday', 'Time');
+        data.addColumn('number', '99% connect cost (ms)');
+        data.addColumn('number', '95% connect cost (ms)');
+        data.addColumn('number', '90% connect cost (ms)');
+        data.addColumn('number', '50% connect cost (ms)');
+        data.addRows([
+            `
+	fmt.Printf("%s\n", chartfunc)
+	for i := 0; i < len(monitors); i++ {
+		t1, _ := time.Parse(time.RFC3339, monitors[i].Timestamp)
+		fmt.Printf("\t [[%d, %d, %d], %d, %d, %d, %d],\n",
+			t1.Hour(), t1.Minute(), t1.Second(),
+			monitors[i].Counters.CC_99,
+			monitors[i].Counters.CC_95,
+			monitors[i].Counters.CC_90,
+			monitors[i].Counters.CC_50)
+	}
+	chartfunc = `
+        ]);
+
+      var options = {
+        chart: {
+          title: 'Connect cost distribution',
+          subtitle: 'The duration for 99%, 95%, 90% and 50% connections connect cost'
+        },
+        width: 1200,
+        height: 400,
+        backgroundColor: 'transparent',
+        axes: {
+          x: {
+            0: {side: 'bottom'}
+          }
+        }
+      };
+
+      var chart = new google.charts.Line(document.getElementById('connect_cost_chart'));
+
+      chart.draw(data, google.charts.Line.convertOptions(options));
+    }
+            `
+	fmt.Printf("%s\n", chartfunc)
+}
+
+func PrintReconnectCostChart(monitors []Monitor) {
+	var chartfunc string
+	chartfunc = `
+    google.charts.load("current", {packages:["corechart", "line", "table"]});
+    google.charts.setOnLoadCallback(drawReconnectCostChart);
+    function drawReconnectCostChart() {
+
+      var data = new google.visualization.DataTable();
+        data.addColumn('timeofday', 'Time');
+        data.addColumn('number', '99% reconnect cost (ms)');
+        data.addColumn('number', '95% reconnect cost (ms)');
+        data.addColumn('number', '90% reconnect cost (ms)');
+        data.addColumn('number', '50% reconnect cost (ms)');
+        data.addRows([
+            `
+	fmt.Printf("%s\n", chartfunc)
+	for i := 0; i < len(monitors); i++ {
+		t1, _ := time.Parse(time.RFC3339, monitors[i].Timestamp)
+		fmt.Printf("\t [[%d, %d, %d], %d, %d, %d, %d],\n",
+			t1.Hour(), t1.Minute(), t1.Second(),
+			monitors[i].Counters.RC_99,
+			monitors[i].Counters.RC_95,
+			monitors[i].Counters.RC_90,
+			monitors[i].Counters.RC_50)
+	}
+	chartfunc = `
+        ]);
+
+      var options = {
+        chart: {
+          title: 'Reconnect cost distribution',
+          subtitle: 'The duration for 99%, 95%, 90% and 50% connections reconnect cost'
+        },
+        width: 1200,
+        height: 400,
+        backgroundColor: 'transparent',
+        axes: {
+          x: {
+            0: {side: 'bottom'}
+          }
+        }
+      };
+
+      var chart = new google.charts.Line(document.getElementById('reconnect_cost_chart'));
+
+      chart.draw(data, google.charts.Line.convertOptions(options));
+    }
+            `
+	fmt.Printf("%s\n", chartfunc)
+}
+
+func PrintLifeSpanChart(monitors []Monitor) {
+	var chartfunc string
+	chartfunc = `
+    google.charts.load("current", {packages:["corechart", "line", "table"]});
+    google.charts.setOnLoadCallback(drawLifeSpanChart);
+    function drawLifeSpanChart() {
+
+      var data = new google.visualization.DataTable();
+        data.addColumn('timeofday', 'Time');
+        data.addColumn('number', '99% Life span (ms)');
+        data.addColumn('number', '95% Life span (ms)');
+        data.addColumn('number', '90% Life span (ms)');
+        data.addColumn('number', '50% Life span (ms)');
+        data.addRows([
+            `
+	fmt.Printf("%s\n", chartfunc)
+	for i := 0; i < len(monitors); i++ {
+		t1, _ := time.Parse(time.RFC3339, monitors[i].Timestamp)
+		fmt.Printf("\t [[%d, %d, %d], %d, %d, %d, %d],\n",
+			t1.Hour(), t1.Minute(), t1.Second(),
+			monitors[i].Counters.LS_99,
+			monitors[i].Counters.LS_95,
+			monitors[i].Counters.LS_90,
+			monitors[i].Counters.LS_50)
+	}
+	chartfunc = `
+        ]);
+
+      var options = {
+        chart: {
+          title: 'Connection life span distribution',
+          subtitle: 'The duration for 99%, 95%, 90% and 50% connections life span'
+        },
+        width: 1200,
+        height: 400,
+        backgroundColor: 'transparent',
+        axes: {
+          x: {
+            0: {side: 'bottom'}
+          }
+        }
+      };
+
+      var chart = new google.charts.Line(document.getElementById('lifespan_chart'));
+
+      chart.draw(data, google.charts.Line.convertOptions(options));
+    }
+            `
+	fmt.Printf("%s\n", chartfunc)
+}
+
+func PrintSLAChart(monitors []Monitor) {
+	var chartfunc string
+	chartfunc = `
+    google.charts.load("current", {packages:["corechart", "line", "table"]});
+    google.charts.setOnLoadCallback(drawSLAChart);
+    function drawSLAChart() {
+
+      var data = new google.visualization.DataTable();
+        data.addColumn('timeofday', 'Time');
+        data.addColumn('number', '99% SLA (%)');
+        data.addColumn('number', '95% SLA (%)');
+        data.addColumn('number', '90% SLA (%)');
+        data.addColumn('number', '50% SLA (%)');
+        data.addRows([
+            `
+	fmt.Printf("%s\n", chartfunc)
+	for i := 0; i < len(monitors); i++ {
+		t1, _ := time.Parse(time.RFC3339, monitors[i].Timestamp)
+		fmt.Printf("\t [[%d, %d, %d], %d, %d, %d, %d],\n",
+			t1.Hour(), t1.Minute(), t1.Second(),
+			monitors[i].Counters.CSLA_99,
+			monitors[i].Counters.CSLA_95,
+			monitors[i].Counters.CSLA_90,
+			monitors[i].Counters.CSLA_50)
+	}
+	chartfunc = `
+        ]);
+
+      var options = {
+        chart: {
+          title: 'Connection SLA distribution',
+          subtitle: 'The percentile for SLA 99%, 95%, 90% and 50%'
+        },
+        width: 1200,
+        height: 400,
+        backgroundColor: 'transparent',
+        axes: {
+          x: {
+            0: {side: 'bottom'}
+          }
+        }
+      };
+
+      var chart = new google.charts.Line(document.getElementById('sla_chart'));
+
+      chart.draw(data, google.charts.Line.convertOptions(options));
+    }
+            `
+	fmt.Printf("%s\n", chartfunc)
 }
 
 func PrintAll(monitors []Monitor) {

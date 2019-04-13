@@ -28,6 +28,12 @@ function gen_single_html
 	go run parseresult.go -input $norm_file -category500ms > $html_dir/latency_table_500ms_category.js
 	go run parseresult.go -input $norm_file -category1s > $html_dir/latency_table_1s_category.js
         go run parseresult.go -input $norm_file -connectrate > $html_dir/connect_rate.js
+        # connection stat
+        go run parseresult.go -input $norm_file -connStatSum > $html_dir/connect_stat_sum.js
+        go run parseresult.go -input $norm_file -slaChart > $html_dir/sla_chart.js
+        go run parseresult.go -input $norm_file -lifeSpanChart > $html_dir/lifespan_chart.js
+        go run parseresult.go -input $norm_file -connCostChart > $html_dir/connect_cost_chart.js
+        go run parseresult.go -input $norm_file -reconnCostChart > $html_dir/reconnect_cost_chart.js
         if [ "$connectionString" != "" ]
 	then
 		serviceName=$(extract_servicename_from_connectionstring $connectionString)
