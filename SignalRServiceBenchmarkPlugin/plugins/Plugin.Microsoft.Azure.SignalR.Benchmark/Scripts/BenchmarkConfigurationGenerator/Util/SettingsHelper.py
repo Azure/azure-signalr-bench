@@ -116,7 +116,7 @@ def determine_scenario_config(settings, unit, scenario, transport, protocol="jso
     batch_mode = cur_settings[para_key.batch_mode][index] if para_key.batch_mode in cur_settings else "HighPress"
     batch_wait = cur_settings[para_key.batch_wait][index] if para_key.batch_wait in cur_settings else 1000
 
-    if scenario == scenario_type.send_to_group or scenario == scenario_type.frequent_join_leave_group:
+    if scenario.endswith("Group"):
       group_count = cur_settings[para_key.group_count][index] if use_max_connection is False else \
                            cur_settings[para_key.max_group_count][index]
     else:
