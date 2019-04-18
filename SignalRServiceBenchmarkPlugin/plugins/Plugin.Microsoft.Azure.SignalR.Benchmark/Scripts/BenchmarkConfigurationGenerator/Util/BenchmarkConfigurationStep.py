@@ -279,16 +279,3 @@ def send_to_group_connection_mode(type_, method, duration, interval, message_siz
                                   remainder_begin, remainder_end, modulo)]
 
 
-def frequent_join_leave_group_group_mode(type_, method, duration, interval, message_size, connection_total, group_count,
-                                         group_level_remainder_begin, group_level_remainder_end,
-                                         group_internal_remainder_begin, group_internal_remainder_end,
-                                         group_internal_modulo):
-    return [group_group_mode(type_, method, duration, interval, message_size, connection_total,
-                             group_count, group_level_remainder_begin, group_level_remainder_end,
-                             group_internal_remainder_begin, group_internal_remainder_end, group_internal_modulo)]
-
-
-def frequent_join_leave_group_connection_mode(type_, method, duration, interval, message_size, connection_total, group_count,
-                                              remainder_begin, remainder_end, modulo):
-    return [group_connection_mode(type_, method, duration, interval, message_size, connection_total,
-                                  group_count, remainder_begin, remainder_end, modulo)]

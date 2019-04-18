@@ -31,7 +31,7 @@ class FrequentJoinLeaveGroup(ParentClass.BaseScenario):
             if self.scenario_config.group_config_mode == arg_type.group_config_mode_group:
                 group_member = 3 if self.scenario_config.group_type == arg_type.group_big \
                     else self.scenario_config.connections // self.scenario_config.group_count
-                self.sending += [frequent_join_leave_group_group_mode(self.scenario_config.type,
+                self.sending += [send_to_group_group_mode(self.scenario_config.type,
                                                                  self.__class__.__name__,
                                                                  self.sending_config.duration,
                                                                  self.sending_config.interval,
@@ -42,7 +42,7 @@ class FrequentJoinLeaveGroup(ParentClass.BaseScenario):
                                                                  0, group_member,
                                                                  self.scenario_config.connections // self.scenario_config.group_count)]
             else:
-                self.sending += [frequent_join_leave_group_connection_mode(self.scenario_config.type,
+                self.sending += [send_to_group_connection_mode(self.scenario_config.type,
                                                                       self.__class__.__name__,
                                                                       self.sending_config.duration,
                                                                       self.sending_config.interval,
