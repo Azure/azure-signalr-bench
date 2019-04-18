@@ -87,7 +87,7 @@ def determine_scenario_config(settings, unit, scenario, transport, protocol="jso
     if scenario == scenario_type.send_to_client:
         key = "{}:{},{}:{},{}:{},{}:{}".format("scenario", scenario, "transport", transport, "protocol", protocol,
                                                "message_size", message_size)
-    elif scenario == scenario_type.send_to_group or scenario == scenario_type.frequent_join_leave_group:
+    elif scenario.endswith("Group"): # scenarios end with "Group" will automatically check group value
         key = "{}:{},{}:{},{}:{}".format("scenario", scenario, "transport", transport, "group", group)
     else:
         key = "{}:{},{}:{}".format("scenario", scenario, "transport", transport)
