@@ -6,12 +6,14 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods.Statistics
 {
     public class StatisticsCollector
     {
-        public static long LatencyStep { get; private set; } = 100;
-        public static long LatencyMax { get; private set; } = 1000;
+        public const long LATENCY_STEP = 100;
+        public const long LATENCY_MAX = 1000;
+        public static long LatencyStep = LATENCY_STEP;
+        public static long LatencyMax  = LATENCY_MAX;
 
-        private ConcurrentDictionary<string, long> _statistics = new ConcurrentDictionary<string, long>();
+        protected ConcurrentDictionary<string, long> _statistics = new ConcurrentDictionary<string, long>();
 
-        private object _lock = new object();
+        protected object _lock = new object();
 
         public StatisticsCollector(long latencyStep, long latencyMax)
         {
@@ -83,11 +85,11 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods.Statistics
             }
             else
             {
-                _statistics.AddOrUpdate(SignalRUtils.MessageGreaterOrEqaulTo(LatencyMax), 1, (k, v) => v + 1);
+                _statistics.AddOrUpdate(SignalRUtils.MessageGreaterOrEqualTo(LatencyMax), 1, (k, v) => v + 1);
             }
         }
 
-        public IDictionary<string, object> GetData()
+        public virtual IDictionary<string, object> GetData()
         {
             lock(_lock)
             {
@@ -117,32 +119,31 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods.Statistics
 
         public void UpdateReconnect(int reconnectCount)
         {
-            _statistics.AddOrUpdate(
+            lock (_lock)
+            {
+                _statistics.AddOrUpdate(
                 SignalRConstants.StatisticsConnectionReconnect,
                 reconnectCount, (k, v) => v + reconnectCount);
+            }
         }
 
-        public void UpdateConnectionsState(List<SignalREnums.ConnectionState> connectionsSuccessFlag)
+        public void UpdateConnectionsInternalStat(IList<IHubConnectionAdapter> connections)
         {
-            if (connectionsSuccessFlag == null) return;
-
             var success = 0;
             var fail = 0;
             var init = 0;
-
-            // Todo: make it thread save
-            var copyedFlags = new List<SignalREnums.ConnectionState>(connectionsSuccessFlag);
-            foreach (var state in copyedFlags)
+            foreach (var connection in connections)
             {
-                switch (state)
+                switch (connection.GetStat())
                 {
-                    case SignalREnums.ConnectionState.Success:
+                    case SignalREnums.ConnectionInternalStat.Active:
                         success++;
                         break;
-                    case SignalREnums.ConnectionState.Fail:
+                    case SignalREnums.ConnectionInternalStat.Stopped:
+                    case SignalREnums.ConnectionInternalStat.Disposed:
                         fail++;
                         break;
-                    case SignalREnums.ConnectionState.Init:
+                    case SignalREnums.ConnectionInternalStat.Init:
                         init++;
                         break;
                 }

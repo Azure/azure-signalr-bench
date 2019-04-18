@@ -1,11 +1,10 @@
 ﻿using Common;
-using Microsoft.AspNetCore.SignalR.Client;
 using Plugin.Base;
 using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
@@ -20,13 +19,14 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
 
                 // Get parameters
                 stepParameters.TryGetTypedValue(SignalRConstants.Type, out string type, Convert.ToString);
+                
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionStore}.{type}",
                     out IList<IHubConnectionAdapter> connections, (obj) => (IList<IHubConnectionAdapter>) obj);
-
+                // Stop the possible scanner
+                StopRapirConnectionScanner(stepParameters, pluginParameters);
                 // Stop connections
                 await Task.WhenAll(from connection in connections
-                                    select connection.StopAsync());
-
+                                   select connection.StopAsync());
                 return null;
             }
             catch (Exception ex)
@@ -34,6 +34,20 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 var message = $"Fail to stop connections: {ex}";
                 Log.Error(message);
                 throw;
+            }
+        }
+
+        private void StopRapirConnectionScanner(
+            IDictionary<string, object> stepParameters,
+            IDictionary<string, object> pluginParameters)
+        {
+            stepParameters.TryGetTypedValue(SignalRConstants.Type, out string type, Convert.ToString);
+            if (pluginParameters.TryGetValue($"{SignalRConstants.RepairConnectionCTS}.{type}", out _))
+            {
+                pluginParameters.TryGetTypedValue($"{SignalRConstants.RepairConnectionCTS}.{type}",
+                    out CancellationTokenSource cts, (obj) => (CancellationTokenSource) obj);
+                cts.Cancel();
+                cts.Dispose();
             }
         }
     }

@@ -1,13 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using Common;
 using Grpc.Core;
-using Newtonsoft.Json;
 using Plugin.Base;
 using Serilog;
-using Common;
+using System;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace Rpc.Service
 {
@@ -31,12 +28,11 @@ namespace Rpc.Service
             // Extract method name
             parameters.TryGetTypedValue(Constants.Method, out string method, Convert.ToString);
 
-            // Create Instance
-            ISlaveMethod methodInstance = _plugin.CreateSlaveMethodInstance(method);
-
             // Do action
             try
             {
+                // Create Instance
+                var methodInstance = _plugin.CreateSlaveMethodInstance(method);
                 var result = await methodInstance.Do(parameters, _plugin.PluginSlaveParamaters);
                 return new Result { Success = true, Message = "", Json = result != null ? _plugin.Serialize(result) : ""};
             }

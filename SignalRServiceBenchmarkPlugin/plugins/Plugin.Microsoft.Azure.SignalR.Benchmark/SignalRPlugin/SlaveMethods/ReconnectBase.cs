@@ -29,8 +29,6 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                     out List<int> connectionIndex, (obj) => (List<int>)obj);
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionStore}.{type}",
                     out IList<IHubConnectionAdapter> connections, (obj) => (IList<IHubConnectionAdapter>)obj);
-                pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionSuccessFlag}.{type}",
-                    out List<SignalREnums.ConnectionState> connectionsSuccessFlag, (obj) => (List<SignalREnums.ConnectionState>)obj);
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.RegisteredCallbacks}.{type}",
                     out var registeredCallbacks, obj => (IList<Action<IList<IHubConnectionAdapter>, StatisticsCollector, string>>)obj);
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.StatisticsStore}.{type}",
@@ -46,11 +44,10 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                         clientType = ct;
                     }
                 }
-                SignalRUtils.DumpConnectionStatus(connectionsSuccessFlag);
+                SignalRUtils.DumpConnectionInternalStat(connections);
                 // Re-create broken connections in their original index position
                 var newConnections = await RecreateBrokenConnections(
-                    connections, connectionIndex,
-                    connectionsSuccessFlag, urls,
+                    connections, connectionIndex, urls,
                     transportType, protocol,
                     SignalRConstants.ConnectionCloseTimeout,
                     clientType);
@@ -64,19 +61,18 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 Log.Information($"Start {newConnections.Count} reconnections");
                 // It must use original connections instead of 'newConnections' here
                 // because the 'connectionSuccessFlag' is for original connections
-                await BatchReconnect(
+                await BatchConnect(
                     stepParameters,
                     pluginParameters,
                     connections,
-                    concurrentConnection,
-                    connectionsSuccessFlag);
+                    concurrentConnection);
                 // Re-setCallbacks
                 foreach (var registerCallback in registeredCallbacks)
                 {
                     registerCallback(newConnections, statisticsCollector, SignalRConstants.RecordLatencyCallbackName);
                 }
                 Log.Information($"Finish {newConnections.Count} reconnections");
-                SignalRUtils.DumpConnectionStatus(connectionsSuccessFlag);
+                SignalRUtils.DumpConnectionInternalStat(connections);
                 return null;
             }
             catch (Exception ex)
@@ -90,7 +86,6 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
         private async Task<IList<IHubConnectionAdapter>> RecreateBrokenConnections(
             IList<IHubConnectionAdapter> connections,
             IList<int> connectionIndex,
-            IList<SignalREnums.ConnectionState> connectionsSuccessFlag,
             string urls,
             string transportTypeString,
             string protocolString,
@@ -99,7 +94,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
         {
             // Filter broken connections and local index
             var packages = (from i in Enumerable.Range(0, connections.Count)
-                            where connectionsSuccessFlag[i] == SignalREnums.ConnectionState.Fail
+                            where connections[i].GetStat() == SignalREnums.ConnectionInternalStat.Stopped
                             select new { Connection = connections[i], LocalIndex = i, GlobalIndex = connectionIndex[i] }).ToList();
 
             // Destroy broken connections
@@ -119,17 +114,12 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 clientType);
 
             // Setup connection drop handler
-            SignalRUtils.SetConnectionOnClose(newConnections, connectionsSuccessFlag);
+            SignalRUtils.SetConnectionOnClose(newConnections);
 
             // Map new connections to orignal connection list
             for (var i = 0; i < newConnections.Count; i++)
             {
                 connections[packages[i].LocalIndex] = newConnections[i];
-            }
-
-            for (var i = 0; i < newConnections.Count; i++)
-            {
-                connectionsSuccessFlag[packages[i].LocalIndex] = SignalREnums.ConnectionState.Init;
             }
 
             return newConnections;

@@ -254,62 +254,14 @@ function gen_single_cmd_file() {
 	local bench_codec=$2
 	local bench_name=$3
 	local cmd_prefix="cmd_4"
-	
-	. $sigbench_config_dir/${cmd_prefix}_${bench_codec}_${bench_name}_${bench_type}
+	local dir=`dirname $0`
+	. $dir/${cmd_prefix}_${bench_codec}_${bench_name}_${bench_type}
 cat << EOF > ${cmd_file_prefix}_${bench_codec}_${bench_name}_${bench_type}
 c $connection $connection_concurrent
 s $send $send_interval
 wr
 w $sigbench_run_duration
 EOF
-}
-
-function update_jenkins_command_configs()
-{
-	local bench_type=$1
-	local bench_codec=$2
-	local bench_name=$3
-	local cmd_prefix="cmd_4"
-	# echo and broadcast have different connection_number, concurrent_connection_number and send_number
-	# we first find connection_number, connection_concurrent, and send_number from customized setting,
-	# if they are empty, then we fallback to default values
-	local customized_connection=$(derefer_2vars $bench_name "connection_number")
-	local customized_concurrent=$(derefer_2vars $bench_name "connection_concurrent")
-	local customized_send=$(derefer_2vars $bench_name "send_number")
-	local customized_send_interval=$(derefer_2vars $bench_name "send_interval")
-
-	local connection_num=$connection_number
-	local concurrent_num=$connection_concurrent
-	local send_num=$send_number
-	local send_interval=1000 # 1000 ms
-
-	if [ "$customized_connection" != "" ]
-	then
-		connection_num=$customized_connection
-	fi
-	if [ "$customized_concurrent" != "" ]
-	then
-		concurrent_num=$customized_concurrent
-	fi
-	if [ "$customized_send" != "" ]
-	then
-		send_num=$customized_send
-	fi
-	if [ "$customized_send_interval" != "" ]
-	then
-		send_interval=$customized_send_interval
-	fi
-cat << EOF > $sigbench_config_dir/${cmd_prefix}_${bench_codec}_${bench_name}_${bench_type}
-connection=$connection_num
-connection_concurrent=$concurrent_num
-send=$send_num
-send_interval=$send_interval
-EOF
-}
-
-function gen_jenkins_command_config()
-{
-	iterate_all_scenarios update_jenkins_command_configs
 }
 
 function gen_cmd_files()
@@ -583,8 +535,15 @@ Jenkins job details: $BUILD_URL/console
 EOF
 }
 
+
 function gen_final_report() {
-  sh gen_all_tabs.sh
+  #sh gen_all_tabs.sh
+  if [ "$kind" == "" ]
+  then
+    gen_all_tabs_4_report $result_dir ${html_dir} "1s_percent_table_div" latency_table_1s_category.js "1s latency"
+  else
+    gen_all_tabs_4_report $result_dir ${html_dir} "tab_for_sum" connect_stat_sum.js "connection stat"
+  fi
   sh publish_report.sh
   sh gen_summary.sh # refresh summary.html in NginxRoot gen_summary
   sh gen_asrs_warns.sh $nginx_root $result_root
@@ -745,4 +704,61 @@ disable_exit_immediately_when_fail()
 enable_exit_immediately_when_fail()
 {
   set -e
+}
+
+gen_all_tabs_4_report() {
+  local in_dir=$1
+  local out_dir=$2
+  local html_id=$3
+  local js_tgt_file=$4
+  local desc="$5"
+  local postfix=`date +%Y%m%d%H%M%S`
+  local tmp_tabs=/tmp/tabs_${postfix}
+  local js_refer_tmpl_file=/tmp/tabs_js_refer_${postfix}
+  local i j
+
+  echo "{{define \"allunitsjs\"}}" > $js_refer_tmpl_file
+
+  for i in `ls $in_dir`
+  do
+    if [ -e $in_dir/$i/${js_tgt_file} ]
+    then
+      sed "s/${html_id}/${i}_${html_id}/g" $in_dir/$i/${js_tgt_file} > $in_dir/${i}_${js_tgt_file}
+      echo "   <script type='text/javascript' src='${i}_${js_tgt_file}'></script>" >> $js_refer_tmpl_file
+      echo $i|awk -F _ '{print $1}' >>$tmp_tabs
+    fi
+  done
+  echo "{{end}}" >> $js_refer_tmpl_file
+
+  local tmp_tabs_tmpl=/tmp/tabs_tmpl_${postfix}
+  local tmp_tabs_tmpl_single=/tmp/tabs_tmpl_single_${postfix}
+  local tabs_list_gen=/tmp/tabs_list_tmpl_${postfix}
+  local tabs_tmpl_gen=/tmp/tabs_content_tmpl_${postfix}
+ 
+  echo "{{define \"tablist\"}}" > $tabs_list_gen
+  echo "{{define \"tabcontents\"}}" > $tabs_tmpl_gen
+  for i in `sort $tmp_tabs|uniq`
+  do
+    echo "                <li><a href='#${i}'>${i}</a></li>" >>$tabs_list_gen
+
+    echo "{{define \"tabcontentlist\"}}" > $tmp_tabs_tmpl_single
+    for j in $in_dir/${i}_*
+    do
+      if [ -e $j/${js_tgt_file} ]
+      then
+        local item=`echo $j|awk -F / '{print $2}'`
+        echo "                                <li><a href='$item/index.html'>$item $desc</a><div id='${item}_${html_id}'></div></li>" >> $tmp_tabs_tmpl_single
+      fi
+    done
+    echo "{{end}}" >> $tmp_tabs_tmpl_single
+    export TabID="$i"
+    export TabHeadline="$i $desc"
+    go run gentabcontent.go -content=tmpl/tabitem.tmpl -tabcontentlist=$tmp_tabs_tmpl_single > $tmp_tabs_tmpl
+    cat $tmp_tabs_tmpl >> $tabs_tmpl_gen
+  done
+  echo "{{end}}" >> $tabs_tmpl_gen
+  echo "{{end}}" >> $tabs_list_gen
+
+  go run gen5tmpl.go -content=tmpl/alltabs.tmpl -t1=tmpl/header.tmpl -t2=${js_refer_tmpl_file} -t3=$tabs_list_gen -t4=$tabs_tmpl_gen > $out_dir/allunits.html
+  rm /tmp/tabs*${postfix}
 }

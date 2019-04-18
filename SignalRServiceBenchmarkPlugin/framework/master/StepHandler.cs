@@ -1,10 +1,8 @@
-﻿using Common;
-using Plugin.Base;
+﻿using Plugin.Base;
 using Rpc.Service;
 using Serilog;
 using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Rpc.Master

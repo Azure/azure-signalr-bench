@@ -151,38 +151,39 @@ namespace Common
         {
             var nextBatch = max;
             var left = source.Count;
-            if (nextBatch <= left)
+            if (left < nextBatch)
             {
-                try
+                nextBatch = left;
+            }
+            try
+            {
+                var tasks = new List<Task>(left);
+                var i = 0;
+                do
                 {
-                    var tasks = new List<Task>(left);
-                    var i = 0;
-                    do
+                    for (var j = 0; j < nextBatch; j++)
                     {
-                        for (var j = 0; j < nextBatch; j++)
+                        var index = i + j;
+                        var item = source[index];
+                        tasks.Add(Task.Run(async () =>
                         {
-                            var index = i + j;
-                            var item = source[index];
-                            tasks.Add(Task.Run(async () =>
-                            {
-                                await f(item);
-                            }));
-                        }
+                            await f(item);
+                        }));
+                    }
 
-                        await Task.Delay(TimeSpan.FromMilliseconds(milliseconds));
-                        i += nextBatch;
-                        left = left - nextBatch;
-                        if (left < nextBatch)
-                        {
-                            nextBatch = left;
-                        }
-                    } while (left > 0);
-                    await Task.WhenAll(tasks).OrTimeout();
-                }
-                catch (Exception e)
-                {
-                    Log.Error($"Fail in LowPressBatchProcess: {e.Message}");
-                }
+                    await Task.Delay(TimeSpan.FromMilliseconds(milliseconds));
+                    i += nextBatch;
+                    left = left - nextBatch;
+                    if (left < nextBatch)
+                    {
+                        nextBatch = left;
+                    }
+                } while (left > 0);
+                await Task.WhenAll(tasks).OrTimeout();
+            }
+            catch (Exception e)
+            {
+                Log.Error($"Fail in LowPressBatchProcess: {e.Message}");
             }
         }
 
@@ -272,39 +273,18 @@ namespace Common
             return Task.WhenAll(from item in source
                                 select Task.Run(async () =>
                                 {
-                                    var retry = 0;
-                                    var maxRetry = 5;
-                                    var rand = new Random();
-                                    while (retry < maxRetry)
+                                    await s.WaitAsync();
+                                    try
                                     {
-                                        try
-                                        {
-                                            await s.WaitAsync();
-                                            try
-                                            {
-                                                await f(item);
-                                                break;
-                                            }
-                                            catch (System.OperationCanceledException e)
-                                            {
-                                                Log.Warning($"see cancellation in {f.Method.Name}: {e.Message}");
-                                            }
-                                            finally
-                                            {
-                                                s.Release();
-                                            }
-                                        }
-                                        catch (System.OperationCanceledException)
-                                        {
-                                            Log.Warning($"Waiting too long time to obtain the semaphore: current: {s.CurrentCount}, max: {max}");
-                                        }
-                                        var randomDelay = TimeSpan.FromMilliseconds(rand.Next(1, 500));
-                                        await Task.Delay(randomDelay);
-                                        retry++;
+                                        await f(item);
                                     }
-                                    if (retry == maxRetry)
+                                    catch (Exception e)
                                     {
-                                        Log.Error($"The operation {f.Method.Name} was canceled because of reaching max retry {maxRetry}");
+                                        Log.Warning($"see exception in {f.Method.Name}: {e.Message}");
+                                    }
+                                    finally
+                                    {
+                                        s.Release();
                                     }
                                 }));
         }

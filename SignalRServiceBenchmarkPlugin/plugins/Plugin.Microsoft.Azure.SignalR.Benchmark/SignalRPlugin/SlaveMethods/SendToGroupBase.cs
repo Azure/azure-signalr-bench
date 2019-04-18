@@ -33,7 +33,6 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
         protected IList<IHubConnectionAdapter> Connections;
         protected StatisticsCollector StatisticsCollector;
         protected List<int> ConnectionIndex;
-        protected List<SignalREnums.ConnectionState> ConnectionsSuccessFlag;
 
         // Key
         protected static readonly string _isIngroup = "IsInGroup";
@@ -46,7 +45,9 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
             public Dictionary<string, object> Data;
         }
 
-        public async Task<IDictionary<string, object>> Do(IDictionary<string, object> stepParameters, IDictionary<string, object> pluginParameters)
+        public async Task<IDictionary<string, object>> Do(
+            IDictionary<string, object> stepParameters,
+            IDictionary<string, object> pluginParameters)
         {
             try
             {
@@ -66,7 +67,6 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 {
                     var groupMember = GroupCount != 0 ? TotalConnection / GroupCount : 0;
                     Log.Warning($"Total {TotalConnection} connections cannot be divided by group count {GroupCount}, the number of members in a group may be different from {groupMember}, may be {groupMember - 1} or {groupMember + 1}");
-                    //throw new Exception("Not supported: Total connections cannot be divided by group count");
                 }
 
                 // Load context
@@ -142,8 +142,6 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 out StatisticsCollector, obj => (StatisticsCollector)obj);
             pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionIndex}.{Type}",
                 out ConnectionIndex, (obj) => (List<int>)obj);
-            pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionSuccessFlag}.{Type}",
-                out ConnectionsSuccessFlag, (obj) => (List<SignalREnums.ConnectionState>)obj);
         }
 
         protected virtual IEnumerable<Package> GenerateData()
@@ -167,30 +165,6 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                            };
 
             return packages;
-        }
-
-        protected virtual async Task SendGroup(int localIndex, IDictionary<string, object> data)
-        {
-            try
-            {
-                // Is the connection is not active, then stop sending message
-                if (ConnectionsSuccessFlag[localIndex] != SignalREnums.ConnectionState.Success) return;
-
-                // Extract data
-                var payload = GenPayload(data);
-
-                // Send message
-                await Connections[localIndex].SendAsync(SignalRConstants.SendToGroupCallbackName, payload);
-
-                // Update statistics
-                SignalRUtils.RecordSend(payload, StatisticsCollector);
-            }
-            catch (Exception ex)
-            {
-                ConnectionsSuccessFlag[localIndex] = SignalREnums.ConnectionState.Fail;
-                var message = $"Error in send to group: {ex}";
-                Log.Error(message);
-            }
         }
 
         protected IDictionary<string, object> GenGroupPayload(IDictionary<string, object> data)

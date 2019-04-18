@@ -1,3 +1,0 @@
-connection=5000
-connection_concurrent=200
-send=5000

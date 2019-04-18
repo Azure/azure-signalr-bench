@@ -4,6 +4,7 @@ using Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods.Statistics;
 using Serilog;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading.Tasks;
 
 namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
@@ -25,22 +26,31 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                     out string type, Convert.ToString);
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionStore}.{type}",
                     out IList<IHubConnectionAdapter> connections, (obj) => (IList<IHubConnectionAdapter>)obj);
-                pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionSuccessFlag}.{type}",
-                    out List<SignalREnums.ConnectionState> connectionsSuccessFlag,
-                    (obj) => (List<SignalREnums.ConnectionState>)obj);
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.StatisticsStore}.{type}",
                     out _statisticsCollector, obj => (StatisticsCollector)obj);
 
                 // The following get connection Id needs the concurrent connection value
-                pluginParameters.TryAdd(SignalRConstants.ConcurrentConnection, concurrentConnection);
-
-                await BatchConnect(
-                    stepParameters,
+                SignalRUtils.SaveConcurrentConnectionCountToContext(
                     pluginParameters,
-                    connections,
-                    concurrentConnection,
-                    connectionsSuccessFlag);
-                Log.Information($"Finish starting connection {connections.Count}");
+                    type,
+                    concurrentConnection);
+
+                var sw = new Stopwatch();
+                sw.Start();
+                Log.Information($"{DateTime.Now.ToString("yyyyMMddHHmmss")} Start connection");
+                try
+                {
+                    await BatchConnect(
+                        stepParameters,
+                        pluginParameters,
+                        connections,
+                        concurrentConnection);
+                }
+                finally
+                {
+                    sw.Stop();
+                    Log.Information($"{DateTime.Now.ToString("yyyyMMddHHmmss")} Finishing connection {connections.Count} with {sw.ElapsedMilliseconds} ms");
+                }
                 return null;
             }
             catch (Exception ex)

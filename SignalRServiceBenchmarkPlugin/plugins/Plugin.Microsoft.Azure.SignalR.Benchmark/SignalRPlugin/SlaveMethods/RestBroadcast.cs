@@ -31,8 +31,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionIndex}.{type}",
                     out List<int> connectionIndex, (obj) => (List<int>)obj);
                 // The connection string is saved in context after finishing creating connection
-                pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionString}.{type}",
-                    out string connectionString, Convert.ToString);
+                var connectionString = SignalRUtils.FetchConnectionStringFromContext(pluginParameters, type);
                 // Generate necessary data
                 var data = new Dictionary<string, object>
                 {
@@ -46,7 +45,6 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 await Task.WhenAll(from i in Enumerable.Range(0, connectionIndex.Count)
                                    where connectionIndex[i] % modulo >= remainderBegin && connectionIndex[i] % modulo < remainderEnd
                                    let restApiClient = new RestApiProvider(connectionString, SignalRConstants.DefaultRestHubName)
-                                   let userId = SignalRUtils.GenClientUserIdFromConnectionIndex(connectionIndex[i])
                                    select ContinuousSend((RestApiClient: restApiClient,
                                                           StatisticsCollector: statisticsCollector),
                                                           data,

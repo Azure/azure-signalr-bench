@@ -3,6 +3,8 @@ using Microsoft.Azure.Management.Monitor.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent.Core;
 using System;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace azuremonitor
 {
@@ -33,6 +35,32 @@ namespace azuremonitor
         }
 
         private void Dump(IMetricDefinition metricDefinition)
+        {
+            var i = 0;
+            var maxTry = 3;
+            while (i < maxTry)
+            {
+                try
+                {
+                    DumpWithErr(metricDefinition);
+                    return;
+                }
+                catch (Exception e)
+                {
+                    if (i+1 < maxTry)
+                    {
+                        Console.WriteLine($"retry even see {e.Message}");
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Fail for {e.Message} after {maxTry}");
+                    }
+                }
+                i++;
+            }
+        }
+
+        private void DumpWithErr(IMetricDefinition metricDefinition)
         {
             var metricCollection = metricDefinition.DefineQuery()
                                 .StartingFrom(DateTime.Now.AddSeconds(-_argsOption.SecondsBeforeNow).ToUniversalTime())

@@ -12,18 +12,26 @@ from Util.Common import *
 
 def parse_arguments():
     arg_type = ArgType()
+    kind_type = KindType()
     scenario_type = ScenarioType()
     parser = argparse.ArgumentParser(description='Generate benchmark configuration')
 
     # required
-    parser.add_argument('-u', '--unit', type=int, required=True, help="Azure SignalR service unit.")
-    parser.add_argument('-S', '--scenario', required=True, choices=[scenario_type.echo,
-                                                                    scenario_type.broadcast,
-                                                                    scenario_type.rest_broadcast,
-                                                                    scenario_type.rest_send_to_user,
-                                                                    scenario_type.send_to_client,
-                                                                    scenario_type.send_to_group,
-                                                                    scenario_type.frequent_join_leave_group],
+    parser.add_argument('-u',
+                        '--unit',
+                        type=int,
+                        required=True,
+                        help="Azure SignalR service unit.")
+    parser.add_argument('-S',
+                        '--scenario',
+                        required=True,
+                        choices=[scenario_type.echo,
+                                 scenario_type.broadcast,
+                                 scenario_type.rest_broadcast,
+                                 scenario_type.rest_send_to_user,
+                                 scenario_type.send_to_client,
+                                 scenario_type.send_to_group,
+                                 scenario_type.frequent_join_leave_group],
                         help="Scenario, choose from <{}>|<{}>|<{}>|<{}>|<{}>|<{}>|<{}>"
                         .format(scenario_type.echo,
                                 scenario_type.broadcast,
@@ -32,18 +40,32 @@ def parse_arguments():
                                 scenario_type.send_to_client,
                                 scenario_type.send_to_group,
                                 scenario_type.frequent_join_leave_group))
-    parser.add_argument('-p', '--protocol', required=False, default=arg_type.protocol_json, choices=[arg_type.protocol_json,
-                                                                    arg_type.protocol_messagepack],
-                        help="SignalR Hub protocol, choose from <{}>|<{}>".format(arg_type.protocol_json,
-                                                                                  arg_type.protocol_messagepack))
-    parser.add_argument('-t', '--transport', required=False, default=arg_type.transport_websockets, choices=[arg_type.transport_websockets,
-                                                                     arg_type.transport_long_polling,
-                                                                     arg_type.transport_server_sent_event],
+    parser.add_argument('-p',
+                        '--protocol',
+                        required=False,
+                        default=arg_type.protocol_json,
+                        choices=[arg_type.protocol_json,
+                                 arg_type.protocol_messagepack],
+                        help="SignalR Hub protocol, choose from <{}>|<{}>"
+                             .format(arg_type.protocol_json,
+                                     arg_type.protocol_messagepack))
+    parser.add_argument('-t',
+                        '--transport',
+                        required=False,
+                        default=arg_type.transport_websockets,
+                        choices=[arg_type.transport_websockets,
+                                 arg_type.transport_long_polling,
+                                 arg_type.transport_server_sent_event],
                         help="SignalR connection transport type, choose from: <{}>|<{}>|<{}>".format(
                             arg_type.transport_websockets, arg_type.transport_long_polling,
                             arg_type.transport_server_sent_event))
-    parser.add_argument('-U', '--url', required=True, help="App server Url or connection string (only for REST API test)")
-    parser.add_argument('-m', '--use_max_connection', action='store_true',
+    parser.add_argument('-U',
+                        '--url',
+                        required=True,
+                        help="App server Url or connection string (only for REST API test)")
+    parser.add_argument('-m',
+                        '--use_max_connection',
+                        action='store_true',
                         help="Flag indicates using max connection or not. Set true to apply 1.5x on normal connections")
 
     # todo: add default value
@@ -78,7 +100,7 @@ for max failed sending percentage')
     parser.add_argument('-w', '--wait_time', type=int, default=15000, help='Waiting time for each epoch')
     parser.add_argument('-lm', '--statistic_latency_max', type=int, default=1000, help='Latency max of statistics')
     parser.add_argument('-ls', '--statistic_latency_step', type=int, default=100, help='Latency step of statistics')
-
+    parser.add_argument('-csp', '--connection_percentile_list', type=str, default='0.5,0.9,0.95,0.99', help='Specify the percentile list for connection stat')
     # group config mode
     parser.add_argument('-gm', '--group_config_mode', choices=[arg_type.group_config_mode_group,
                                                                arg_type.group_config_mode_connection],
@@ -89,6 +111,11 @@ for max failed sending percentage')
                                   arg_type.connection_type_rest_direct],
                          default=arg_type.connection_type_core,
                          help='Specify the connection type: Core, AspNet, or CoreDirect')
+    # kinds: perf, longrun
+    parser.add_argument('-k', '--kind', type=str,
+                        choices=[kind_type.perf, kind_type.longrun],
+                        default=kind_type.perf,
+                        help="Specify the kind of benchmark: perf or longrun, default is perf")
     # args
     args = parser.parse_args()
 
@@ -106,30 +133,49 @@ def main():
     scenario_config_collection = parse_settings(args.settings)
 
     # constant config
-    constant_config = ConstantConfig(args.module, args.wait_time, args.config_save_path,
+    constant_config = ConstantConfig(args.module,
+                                     args.wait_time,
+                                     args.config_save_path,
                                      args.criteria_max_fail_connection_amount,
                                      args.criteria_max_fail_connection_percentage,
                                      args.criteria_max_fail_sending_percentage)
 
     # statistics config
-    statistics_config = StatisticsConfig(args.statistics_output_path, args.statistic_interval,
-                                         args.statistic_latency_max, args.statistic_latency_step)
+    statistics_config = StatisticsConfig(args.statistics_output_path,
+                                         args.statistic_interval,
+                                         args.statistic_latency_max,
+                                         args.statistic_latency_step,
+                                         args.connection_percentile_list)
 
     # connection config
     connection_config = ConnectionConfig(args.url, args.protocol, args.transport)
 
     # determine settings
-    scenario_config = determine_scenario_config(scenario_config_collection, args.unit, args.scenario, args.transport,
-                                                args.protocol, args.use_max_connection, args.message_size,
-                                                args.group_type, args.group_config_mode)
+    scenario_config = determine_scenario_config(scenario_config_collection,
+                                                args.unit,
+                                                args.scenario,
+                                                args.transport,
+                                                args.protocol,
+                                                args.use_max_connection,
+                                                args.message_size,
+                                                args.group_type,
+                                                args.group_config_mode)
 
     # basic sending config
     sending_config = SendingConfig(args.duration, args.interval, args.message_size)
 
+    kind = PERF_KIND
+    if args.kind == "longrun":
+       kind = LONGRUN_KIND
     lst = [word[0].upper() + word[1:] for word in args.scenario.split()]
     func = "".join(lst)
-    callfunc = "{func_name}(sending_config, scenario_config, connection_config, statistics_config, constant_config, args.connection_type).generate_config()".format(
-      func_name=func)
+    callfunc='''{func_name}(sending_config,
+                   scenario_config,
+                   connection_config,
+                   statistics_config,
+                   constant_config,
+                   args.connection_type,
+                   {kind}).generate_config()'''.format(func_name=func, kind=kind)
     eval(callfunc)
 
 if __name__ == "__main__":

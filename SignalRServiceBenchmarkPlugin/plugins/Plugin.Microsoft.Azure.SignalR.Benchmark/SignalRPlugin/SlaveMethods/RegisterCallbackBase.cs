@@ -7,6 +7,20 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
 {
     public class RegisterCallbackBase
     {
+        public static void SetCallbackOnConnected(
+            IList<IHubConnectionAdapter> connections,
+            StatisticsCollector statisticsCollector,
+            string methodName)
+        {
+            foreach (var connection in connections)
+            {
+                connection.On(methodName, (string connectionId) =>
+                {
+                    connection.UpdateTimestampWhenConnected();
+                });
+            }
+        }
+
         public static void SetCallback(IList<IHubConnectionAdapter> connections, StatisticsCollector statisticsCollector, string methodName)
         {
             foreach (var connection in connections)

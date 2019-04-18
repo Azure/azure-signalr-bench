@@ -25,7 +25,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 stepParameters.TryGetTypedValue(SignalRConstants.Duration, out long duration, Convert.ToInt64);
                 stepParameters.TryGetTypedValue(SignalRConstants.Interval, out long interval, Convert.ToInt64);
                 stepParameters.TryGetTypedValue(SignalRConstants.MessageSize, out int messageSize, Convert.ToInt32);
-                stepParameters.TryGetTypedValue(SignalRConstants.ConnectionIdStore, out string[] connectionIds, obj => Convert.ToString(obj).Split(' '));
+                stepParameters.TryGetTypedValue(SignalRConstants.ConnectionIdStore, out string[] connectionIds,
+                    obj => Convert.ToString(obj).Split(' '));
 
                 // Get context
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionStore}.{type}",
@@ -34,8 +35,6 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                     out StatisticsCollector statisticsCollector, obj => (StatisticsCollector) obj);
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionIndex}.{type}",
                     out List<int> connectionIndex, (obj) => (List<int>)obj);
-                pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionSuccessFlag}.{type}",
-                    out List<SignalREnums.ConnectionState> connectionsSuccessFlag, (obj) => (List<SignalREnums.ConnectionState>)obj);
 
                 // Generate necessary data
                 var messageBlob = SignalRUtils.GenerateRandomData(messageSize);
@@ -53,7 +52,6 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                                    where connectionIndex[i] % modulo >= remainderBegin && connectionIndex[i] % modulo < remainderEnd
                                    select ContinuousSend((Connection: connections[i],
                                                           LocalIndex: i,
-                                                          ConnectionsSuccessFlag: connectionsSuccessFlag,
                                                           StatisticsCollector: statisticsCollector,
                                                           CallbackMethod: SignalRConstants.SendToClientCallbackName),
                                                           data,

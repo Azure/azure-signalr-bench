@@ -28,7 +28,7 @@ function run_command_core()
   run_command $user $passwd $connectionString $outputDir $config_path $unit $Scenario
   cd $ScriptWorkingDir
   #### generate the connection configuration for HTML ####
-cat << EOF > configs/cmd_4_${MessageEncoding}_${Scenario}_${tag}_${Transport}
+cat << EOF > ${cmd_config_prefix}_${MessageEncoding}_${Scenario}_${tag}_${Transport}
 connection=${connection}
 connection_concurrent=${concurrentConnection}
 send=${send}
@@ -165,12 +165,13 @@ function normalizeSendInterval()
   then
      local re='^[0-9]+$'
      if [[ $send_interval =~ $re ]] ; then
-        ms=$send_interval
+        interval=$send_interval
      fi
   fi
   echo $interval
 }
 # global parameters:
+#   kind,
 #   bench_send_size, sigbench_run_duration, useMaxConnection
 #   ToleratedMaxConnectionFailCount
 #   ToleratedMaxConnectionFailPercentage
@@ -233,14 +234,22 @@ function GenBenchmarkConfig()
             appserverUrls="$connectionString"
        fi
   fi
+  local benchKind="perf"
+  if [ "$kind" == "longrun" ]
+  then
+     benchKind="$kind"
+  fi
   python3 generate.py -u $unit -S $Scenario \
                       -t $Transport -p $MessageEncoding \
                       -U $appserverUrls -d $sigbench_run_duration \
                       $groupTypeOp -ms $ms -i $interval \
                       -c $configPath $maxConnectionOption \
                       -s $settings $connectionTypeOption \
+                      -k $benchKind \
                       $toleratedConnDropCountOp $toleratedConnDropPercentageOp $toleratedMaxLatencyPercentageOp
-  cat $configPath
+  # display part of the configuration to avoid 'write error: Resource temporarily unavailable'
+  head -n 200 $configPath
+  echo "......"
 }
 
 function RunSendToGroup()
@@ -621,6 +630,8 @@ function mark_job_as_failure_if_meet_error()
   fi
 }
 
+# global environment:
+# AspNetSignalR
 function run_benchmark() {
   local unit=$1
   local user=$2
@@ -630,6 +641,10 @@ function run_benchmark() {
   if [ "$AspNetSignalR" == "true" ]
   then
     tag="AspNet"$tag
+  fi
+  if [ "kind" == "longrun" ]
+  then
+    tag="Longrun"$tag
   fi
   local Scenario
   local Transport
@@ -973,7 +988,7 @@ EOF
   sshpass -p ${passwd} ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR ${user}@${master} "./$remoteCmd"
   disable_exit_immediately_when_fail
   start_collect_slaves_appserver_top ${user} $passwd ${outputDir}
-  try_catch_netstat_when_server_conn_drop ${user} $passwd "$connectionString"
+  #try_catch_netstat_when_server_conn_drop ${user} $passwd "$connectionString"
   cd $CommandWorkingDir
   # "never stop app server" is used for long run stress test
   local neverStopAppServerOp
@@ -1015,7 +1030,7 @@ EOF
     sshpass -p $passwd ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR ${user}@${master} "find /home/${user}/master -iname counters.txt"
   fi
   copy_log_from_slaves_master ${user} $passwd ${outputDir}
-  fetch_netstat_for_server_conn_drop ${user} $passwd ${outputDir}
+  #fetch_netstat_for_server_conn_drop ${user} $passwd ${outputDir}
   enable_exit_immediately_when_fail
 }
 
@@ -1030,24 +1045,29 @@ function create_asrs()
 . ./kubectl_utils.sh
 
   local signalr_service
-  if [ "$separatedIngressVMSS" != "" ] && [ "$separatedAcs" != "" ]
+  if [ "$separatedRedis" != "" ] && [ "$separatedRouteRedis" != "" ] && [ "$separatedAcs" != "" ] && [ "$separatedIngressVMSS" != "" ]
   then
-      signalr_service=$(create_signalr_service_with_specific_ingress_vmss $rsg $name $sku $unit $separatedAcs $separatedIngressVMSS)
+   signalr_service=$(create_asrs_with_acs_redises $rsg $name $sku $unit $separatedRedis $separatedRouteRedis $separatedAcs $separatedIngressVMSS)
   else
    if [ "$separatedRedis" != "" ] && [ "$separatedAcs" != "" ] && [ "$separatedIngressVMSS" != "" ]
    then
       signalr_service=$(create_signalr_service_with_specific_acs_vmset_redis $rsg $name $sku $unit $separatedRedis $separatedAcs $separatedIngressVMSS)
    else
-    if [ "$separatedRedis" != "" ] && [ "$separatedAcs" != "" ]
+    if [ "$separatedIngressVMSS" != "" ] && [ "$separatedAcs" != "" ]
     then
-      signalr_service=$(create_signalr_service_with_specific_acs_and_redis $rsg $name $sku $unit $separatedRedis $separatedAcs)
+      signalr_service=$(create_signalr_service_with_specific_ingress_vmss $rsg $name $sku $unit $separatedAcs $separatedIngressVMSS)
     else
+     if [ "$separatedRedis" != "" ] && [ "$separatedAcs" != "" ]
+     then
+      signalr_service=$(create_signalr_service_with_specific_acs_and_redis $rsg $name $sku $unit $separatedRedis $separatedAcs)
+     else
       if [ "$separatedRedis" != "" ]
       then
         signalr_service=$(create_signalr_service_with_specific_redis $rsg $name $sku $unit $separatedRedis)
       else
         signalr_service=$(create_signalr_service $rsg $name $sku $unit)
       fi
+     fi
     fi
    fi
   fi
@@ -1115,13 +1135,13 @@ cd $ScriptWorkingDir
 if [ "$ASRSEnv" == "dogfood" ]
 then
   az_login_ASRS_dogfood
-  delete_group $DogFoodResourceGroup
-  delete_group $DogFoodResourceGroup
+  delete_group $ASRSResourceGroup
+  delete_group $ASRSResourceGroup
   unregister_signalr_service_dogfood
 else
   az_login_signalr_dev_sub
-  delete_group $DogFoodResourceGroup
-  delete_group $DogFoodResourceGroup
+  delete_group $ASRSResourceGroup
+  delete_group $ASRSResourceGroup
 fi
 EOF
   daemonize -v -o /tmp/${clean_asrs_daemon}.out -e /tmp/${clean_asrs_daemon}.err -E BUILD_ID=dontKillcenter /usr/bin/nohup /bin/sh /tmp/clean_asrs.sh &

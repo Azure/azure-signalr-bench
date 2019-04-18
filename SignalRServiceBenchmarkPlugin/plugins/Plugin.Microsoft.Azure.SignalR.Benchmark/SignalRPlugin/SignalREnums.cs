@@ -13,6 +13,20 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             Fail
         }
         
+        public enum ConnectionInternalStat
+        {
+            Init,
+            Active,
+            Stopped,
+            Disposed
+        }
+
+        public enum ActionAfterConnection
+        {
+            None,
+            JoinToGroup
+        }
+
         public enum GroupConfigMode
         {
             Group, // select connections from every group

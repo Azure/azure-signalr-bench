@@ -1,6 +1,8 @@
 #!/bin/bash
 . ./func_env.sh
 
+dir=`dirname $0`
+
 connectionString=""
 
 function gen_single_html
@@ -26,6 +28,12 @@ function gen_single_html
 	go run parseresult.go -input $norm_file -category500ms > $html_dir/latency_table_500ms_category.js
 	go run parseresult.go -input $norm_file -category1s > $html_dir/latency_table_1s_category.js
         go run parseresult.go -input $norm_file -connectrate > $html_dir/connect_rate.js
+        # connection stat
+        go run parseresult.go -input $norm_file -connStatSum > $html_dir/connect_stat_sum.js
+        go run parseresult.go -input $norm_file -slaChart > $html_dir/sla_chart.js
+        go run parseresult.go -input $norm_file -lifeSpanChart > $html_dir/lifespan_chart.js
+        go run parseresult.go -input $norm_file -connCostChart > $html_dir/connect_cost_chart.js
+        go run parseresult.go -input $norm_file -reconnCostChart > $html_dir/reconnect_cost_chart.js
         if [ "$connectionString" != "" ]
 	then
 		serviceName=$(extract_servicename_from_connectionstring $connectionString)
@@ -47,9 +55,9 @@ function gen_single_html
 	fi
 
 	local cmd_prefix=$cmd_config_prefix
-	if [ -e $sigbench_config_dir/${cmd_prefix}_${bench_codec}_${bench_name}_${bench_type} ]
+	if [ -e ${cmd_prefix}_${bench_codec}_${bench_name}_${bench_type} ]
 	then
-	. $sigbench_config_dir/${cmd_prefix}_${bench_codec}_${bench_name}_${bench_type}
+	  . ${dir}/${cmd_prefix}_${bench_codec}_${bench_name}_${bench_type}
 	fi
 	export OnlineConnections=$connection
 	export ActiveConnections=$send

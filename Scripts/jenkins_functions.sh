@@ -14,7 +14,7 @@ function set_global_env() {
    export PluginScriptWorkingDir=$Jenkins_Workspace_Root/${relative_dir}/SignalRServiceBenchmarkPlugin/plugins/Plugin.Microsoft.Azure.SignalR.Benchmark/Scripts/BenchmarkConfigurationGenerator/
    export PluginRpcBuildWorkingDir=$Jenkins_Workspace_Root/${relative_dir}/SignalRServiceBenchmarkPlugin/framework/rpc/
    export ScriptWorkingDir=$Jenkins_Workspace_Root/${relative_dir}/Scripts/                     # folders to find all scripts
-   export CurrentWorkingDir=$Jenkins_Workspace_Root/${relative_dir}/v2/JenkinsScript/     # workding directory
+   export CurrentWorkingDir=$Jenkins_Workspace_Root/${relative_dir}/Scripts/JenkinsScript/     # workding directory
    export CommandWorkingDir=$Jenkins_Workspace_Root/${relative_dir}/SignalRServiceBenchmarkPlugin/utils/Commander
    export AppServerWorkingDir=$Jenkins_Workspace_Root/${relative_dir}/SignalRServiceBenchmarkPlugin/utils/AppServer
    export AspNetWebMgrWorkingDir=$Jenkins_Workspace_Root/${relative_dir}/SignalRServiceBenchmarkPlugin/utils/DeployWebApp
@@ -33,14 +33,36 @@ function set_global_env() {
    #export ResultFolderSuffix='suffix'
    export VMMgrDir=/tmp/VMMgr
    export AspNetWebMgrDir=/tmp/AspNetWebMgr
-   export nginx_root=/mnt/Data/NginxRoot
-   export g_nginx_ns="ingress-nginx"
+   set_job_env
 }
 
 # depends on set_global_env
 function set_job_env() {
-   export result_root=`date +%Y%m%d%H%M%S`
-   export DogFoodResourceGroup="hzatpf"$result_root
+   if [ "$nginx_root" == "" ]
+   then
+     export nginx_root=/mnt/Data/NginxRoot
+   else
+     export nginx_root=$nginx_root
+   fi
+   if [ "$g_nginx_ns" == "" ]
+   then
+     export g_nginx_ns="ingress-nginx"
+   else
+     export g_nginx_ns=$g_nginx_ns
+   fi
+   if [ "$result_root" == "" ]
+   then
+     export result_root=`date +%Y%m%d%H%M%S`
+   else
+     export result_root=$result_root
+   fi
+   if [ "$Sku" == "" ]
+   then
+     export Sku="Basic_DS2"
+   else
+     export Sku=$Sku
+   fi
+   export ASRSResourceGroup="hzatpf"$result_root
    export SignalrServiceName="atpf"${result_root} #-`date +%H%M%S`
    export AspNetWebAppResGrp="hzperfwebapp"$result_root
    export MaxSendIteration=120 # we evaluate the total running time per this value
@@ -68,6 +90,10 @@ function set_tags_for_production() {
      then
        separatedRedis=`cat westus2_redis_rowkey.txt`
      fi
+     if [ -e westus2_route_redis_rowkey.txt ]
+     then
+       separatedRouteRedis=`cat westus2_route_redis_rowkey.txt`
+     fi
      if [ -e westus2_acs_rowkey.txt ]
      then
        separatedAcs=`cat westus2_acs_rowkey.txt`
@@ -80,18 +106,18 @@ function set_tags_for_production() {
 }
 
 # require global env:
-# ASRSEnv, DogFoodResourceGroup, ASRSLocation
+# ASRSEnv, ASRSResourceGroup, ASRSLocation
 function prepare_ASRS_creation() {
   azure_login
-  create_group_if_not_exist $DogFoodResourceGroup $ASRSLocation
+  create_group_if_not_exist $ASRSResourceGroup $ASRSLocation
   set_tags_for_production
 }
 
-# global env: ScriptWorkingDir, DogFoodResourceGroup, ASRSEnv
+# global env: ScriptWorkingDir, ASRSResourceGroup, ASRSEnv
 function clean_ASRS_group() {
 ############# remove SignalR Service Resource Group #########
 cd $ScriptWorkingDir
-delete_group $DogFoodResourceGroup
+delete_group $ASRSResourceGroup
 if [ "$ASRSEnv" == "dogfood" ]
 then
   unregister_signalr_service_dogfood
@@ -140,8 +166,8 @@ function run_all_units() {
  do
    cd $ScriptWorkingDir
    ConnectionString="" # set it to be invalid first
-   # always use a new name for every ASRS to avoid DNS refresh issue
-   create_asrs $DogFoodResourceGroup $SignalrServiceName $Sku $service
+   azure_login
+   create_asrs $ASRSResourceGroup $SignalrServiceName $Sku $service
    if [ "$ConnectionString" == "" ]
    then
      echo "Skip the running on SignalR service unit'$service' since it was failed to create"
@@ -152,5 +178,5 @@ function run_all_units() {
    run_benchmark $service $user "$passwd" "$ConnectionString"
  done
  azure_login
- delete_signalr_service $SignalrServiceName $DogFoodResourceGroup
+ delete_signalr_service $SignalrServiceName $ASRSResourceGroup
 }

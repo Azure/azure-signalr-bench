@@ -34,6 +34,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         public static readonly string LatencyStep = "Parameter.LatencyStep";
         public static readonly string LatencyMax = "Parameter.LatencyMax";
         public static readonly string GroupConfigMode = "Parameter.Mode";
+        public static readonly string PercentileList = "Parameter.PercentileList";
+        public static readonly string ActionAfterConnect = "Parameter.ActionAfterConnect";
 
         // Connection/group information
         public static readonly string ConnectionId = "information.ConnectionId";
@@ -50,6 +52,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         public static readonly string ConnectionType = "Plugin.ConnectionType";
         public static readonly string RegisteredCallbacks = "Plugin.Callback";
         public static readonly string StatisticsStore = "Plugin.StatisticsStore";
+        public static readonly string RepairConnectionCTS = "Plugin.RepairConnectionCTS";
 
         // Callback Name
         public static readonly string EchoCallbackName = "Echo";
@@ -61,6 +64,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         public static readonly string LeaveGroupCallbackName = "LeaveGroup";
         public static readonly string GetConnectionIdCallback = "GetConnectionId";
         public static readonly string ConnectionIdCallback = "ConnectionId";
+        public static readonly string OnConnectedCallback = "OnConnected";
 
         // Message payload
         public static readonly string Timestamp = "payload.Timestamp";
@@ -86,12 +90,15 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         public static readonly string StatisticsConnectionConnectFail = "connection:connect:fail";
         public static readonly string StatisticsConnectionReconnect = "connection:connect:reconnect";
         public static readonly string StatisticsConnectionInit = "connection:connect:init";
-
+        public static readonly string StatisticsConnectionLifeSpan = "connection:connect:lifespan";
+        public static readonly string StatisticsConnectionCost = "connection:connect:cost";
+        public static readonly string StatisticsConnectionReconnectCost = "connection:reconnect:cost";
+        public static readonly string StatisticsConnectionSLA = "connection:sla";
         // Constants
         public static readonly int ConnectionCloseTimeout = 100;
 
         // Default RPC task timeout if there is no specific duration
-        public static readonly long MillisecondsToWait = 300000;
+        public static readonly long MillisecondsToWait = 600000;
 
         // Default batch mode: "LimitRatePress"
         public static readonly string DefaultBatchMode = SignalREnums.BatchMode.HighPress.ToString();
