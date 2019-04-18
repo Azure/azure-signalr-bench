@@ -18,6 +18,7 @@
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="1.0.4" />
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Protocols.MessagePack" Version="1.0.4" />
     <PackageReference Include="Microsoft.AspNet.SignalR.Client" Version="2.4.0" />
+    <PackageReference Include="Microsoft.Azure.SignalR.Management" Version="1.0.0-preview1-*" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="2.2.0" />
     <PackageReference Include="Microsoft.Extensions.Http" Version="2.2.0" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="2.2.0" />

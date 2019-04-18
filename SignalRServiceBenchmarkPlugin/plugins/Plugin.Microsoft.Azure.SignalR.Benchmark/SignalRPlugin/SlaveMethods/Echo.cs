@@ -12,10 +12,5 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
         {
             return SimpleScenarioSend(stepParameters, pluginParameters, SignalRConstants.EchoCallbackName);
         }
-
-        protected override IDictionary<string, object> GenPayload(IDictionary<string, object> data)
-        {
-            return GenCommonPayload(data);
-        }
     }
 }

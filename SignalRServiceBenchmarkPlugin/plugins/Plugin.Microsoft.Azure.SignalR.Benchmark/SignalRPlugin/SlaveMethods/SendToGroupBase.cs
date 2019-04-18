@@ -12,27 +12,13 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
     public abstract class SendToGroupBase : BaseContinuousSendMethod, ISlaveMethod
     {
         // Step parameters
-        protected string Type;
-        protected long Duration;
-        protected long Interval;
-        protected int MessageSize;
-        protected int TotalConnection;
         protected int GroupCount;
         protected int GroupLevelRemainderBegin;
         protected int GroupLevelRemainderEnd;
         protected int GroupInternalRemainderBegin;
         protected int GroupInternalRemainderEnd;
         protected int GroupInternalModulo;
-        protected int RemainderBegin;
-        protected int RemainderEnd;
-        protected int Modulo;
-
         protected SignalREnums.GroupConfigMode Mode;
-
-        // Context
-        protected IList<IHubConnectionAdapter> Connections;
-        protected StatisticsCollector StatisticsCollector;
-        protected List<int> ConnectionIndex;
 
         // Key
         protected static readonly string _isIngroup = "IsInGroup";
@@ -54,7 +40,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 Log.Information($"Send to group...");
 
                 // Load parameters
-                LoadParameters(stepParameters);
+                LoadParametersAndContext(stepParameters, pluginParameters);
 
                 if (GroupCount == 0)
                 {
@@ -69,16 +55,12 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                     Log.Warning($"Total {TotalConnection} connections cannot be divided by group count {GroupCount}, the number of members in a group may be different from {groupMember}, may be {groupMember - 1} or {groupMember + 1}");
                 }
 
-                // Load context
-                LoadContext(pluginParameters);
-
-                // Generate data
-                var packages = GenerateData();
-
                 var sendingStep = RemainderEnd == 0 ? GroupInternalRemainderEnd : RemainderEnd;
                 // Reset counters
                 UpdateStatistics(StatisticsCollector, sendingStep);
 
+                // Generate data
+                var packages = GenerateData();
                 // Send messages
                 await SendMessages(packages);
                 Log.Information($"Finish sending message {sendingStep}");
@@ -96,14 +78,12 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
 
         protected virtual bool IsSending(int index, int modulo, int beg, int end) => (index % modulo) >= beg && (index % modulo) < end;
 
-        protected virtual void LoadParameters(IDictionary<string, object> stepParameters)
+        protected override void LoadParametersAndContext(
+            IDictionary<string, object> stepParameters,
+            IDictionary<string, object> pluginParameters)
         {
             // Get parameters
-            stepParameters.TryGetTypedValue(SignalRConstants.Type, out Type, Convert.ToString);
-            stepParameters.TryGetTypedValue(SignalRConstants.Duration, out Duration, Convert.ToInt64);
-            stepParameters.TryGetTypedValue(SignalRConstants.Interval, out Interval, Convert.ToInt64);
-            stepParameters.TryGetTypedValue(SignalRConstants.MessageSize, out MessageSize, Convert.ToInt32);
-            stepParameters.TryGetTypedValue(SignalRConstants.ConnectionTotal, out TotalConnection, Convert.ToInt32);
+            base.LoadParametersAndContext(stepParameters, pluginParameters);
             stepParameters.TryGetTypedValue(SignalRConstants.GroupCount, out GroupCount, Convert.ToInt32);
             stepParameters.TryGetTypedValue(SignalRConstants.GroupConfigMode, out string groupConfigMode, Convert.ToString);
 
@@ -133,17 +113,6 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
             }
         }
 
-        protected virtual void LoadContext(IDictionary<string, object> pluginParameters)
-        {
-            // Get context
-            pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionStore}.{Type}",
-                out Connections, (obj) => (IList<IHubConnectionAdapter>)obj);
-            pluginParameters.TryGetTypedValue($"{SignalRConstants.StatisticsStore}.{Type}",
-                out StatisticsCollector, obj => (StatisticsCollector)obj);
-            pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionIndex}.{Type}",
-                out ConnectionIndex, (obj) => (List<int>)obj);
-        }
-
         protected virtual IEnumerable<Package> GenerateData()
         {
             // Generate necessary data
@@ -158,28 +127,12 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                                Connection = Connections[i],
                                GroupName = groupName,
                                Data = new Dictionary<string, object>
-                                   {
-                                       { SignalRConstants.MessageBlob, messageBlob }, // message payload
-                                       { SignalRConstants.GroupName, groupName}
-                                  }
+                               {
+                                   { SignalRConstants.MessageBlob, messageBlob },
+                                   { SignalRConstants.GroupName, groupName }
+                               }
                            };
-
             return packages;
-        }
-
-        protected IDictionary<string, object> GenGroupPayload(IDictionary<string, object> data)
-        {
-            data.TryGetTypedValue(SignalRConstants.GroupName, out string groupName, Convert.ToString);
-            data.TryGetValue(SignalRConstants.MessageBlob, out var messageBlob);
-
-            // Generate payload
-            var payload = new Dictionary<string, object>
-                {
-                    { SignalRConstants.MessageBlob, messageBlob },
-                    { SignalRConstants.Timestamp, Util.Timestamp() },
-                    { SignalRConstants.GroupName, groupName }
-                };
-            return payload;
         }
 
         protected virtual async Task JoinLeaveGroup(int localIndex, IDictionary<string, object> data)

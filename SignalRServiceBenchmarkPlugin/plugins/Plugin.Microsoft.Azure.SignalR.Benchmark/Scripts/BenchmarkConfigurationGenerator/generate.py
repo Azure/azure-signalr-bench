@@ -1,5 +1,9 @@
 from Echo import *
 from Broadcast import *
+from PersistBroadcast import *
+from PersistSendToGroup import *
+from PersistSendToUser import *
+from RestSendToGroup import *
 from RestSendToUser import *
 from RestBroadcast import *
 from SendToClient import *
@@ -27,15 +31,23 @@ def parse_arguments():
                         required=True,
                         choices=[scenario_type.echo,
                                  scenario_type.broadcast,
+                                 scenario_type.persist_broadcast,
+                                 scenario_type.persist_send_to_group,
+                                 scenario_type.persist_send_to_user,
                                  scenario_type.rest_broadcast,
+                                 scenario_type.rest_send_to_group,
                                  scenario_type.rest_send_to_user,
                                  scenario_type.send_to_client,
                                  scenario_type.send_to_group,
                                  scenario_type.frequent_join_leave_group],
-                        help="Scenario, choose from <{}>|<{}>|<{}>|<{}>|<{}>|<{}>|<{}>"
+                        help="Scenario, choose from <{}>|<{}>|<{}>|<{}>|<{}>|<{}>|<{}>|<{}>|<{}>|<{}>|<{}>"
                         .format(scenario_type.echo,
                                 scenario_type.broadcast,
+                                scenario_type.persist_broadcast,
+                                scenario_type.persist_send_to_group,
+                                scenario_type.persist_send_to_user,
                                 scenario_type.rest_broadcast,
+                                scenario_type.rest_send_to_group,
                                 scenario_type.rest_send_to_user,
                                 scenario_type.send_to_client,
                                 scenario_type.send_to_group,

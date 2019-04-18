@@ -4,16 +4,16 @@ using System.Threading.Tasks;
 
 namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
 {
-    public class RestSendToUser : RestBase, ISlaveMethod
+    public class PersistBroadcast : RestBase, ISlaveMethod
     {
         protected override Task<IServiceHubContext> CreateHubContextAsync()
         {
-            return CreateHubContextHelperAsync(ServiceTransportType.Transient);
+            return CreateHubContextHelperAsync(ServiceTransportType.Persistent);
         }
 
         protected override async Task RestSendMessage(IServiceHubContext hubContext)
         {
-            await RestSendUserMessage(hubContext);
+            await RestBroadcastMessage(hubContext);
         }
     }
 }

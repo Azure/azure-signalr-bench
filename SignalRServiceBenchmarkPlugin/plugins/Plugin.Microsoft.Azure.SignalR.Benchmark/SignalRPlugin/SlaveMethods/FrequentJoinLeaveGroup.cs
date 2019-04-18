@@ -59,7 +59,6 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
             {
                 return ContinuousSend((Connection: Connections[localIndex],
                                        LocalIndex: localIndex,
-                                       StatisticsCollector: StatisticsCollector,
                                        CallbackMethod: SignalRConstants.SendToGroupCallbackName),
                                        data,
                                        BaseSendAsync,
@@ -75,11 +74,6 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                                 TimeSpan.FromMilliseconds(1), TimeSpan.FromMilliseconds(Interval));
             }
             return Task.CompletedTask;
-        }
-
-        protected override IDictionary<string, object> GenPayload(IDictionary<string, object> data)
-        {
-            return GenGroupPayload(data);
         }
     }
 }

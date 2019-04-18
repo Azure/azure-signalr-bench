@@ -8,11 +8,6 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
 {
     public class SendToGroup : SendToGroupBase, ISlaveMethod
     {
-        protected override IDictionary<string, object> GenPayload(IDictionary<string, object> data)
-        {
-            return GenGroupPayload(data);
-        }
-
         protected override Task SendMessages(IEnumerable<Package> packages)
         {
             return Task.WhenAll(from package in packages
@@ -28,7 +23,6 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                                       && IsSending(index, Modulo, RemainderBegin, RemainderEnd)
                                 select ContinuousSend((Connection: package.Connection,
                                                        LocalIndex: package.LocalIndex,
-                                                       StatisticsCollector: StatisticsCollector,
                                                        CallbackMethod: SignalRConstants.SendToGroupCallbackName),
                                                        data,
                                                        BaseSendAsync,

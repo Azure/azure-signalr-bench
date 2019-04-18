@@ -9,8 +9,44 @@ using System.Threading.Tasks;
 
 namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
 {
-    abstract public class BaseContinuousSendMethod
+    public class BaseContinuousSendMethod
     {
+        protected string Type;
+        protected long Duration;
+        protected long Interval;
+        protected int MessageSize;
+        protected int TotalConnection;
+        protected int RemainderBegin;
+        protected int RemainderEnd;
+        protected int Modulo;
+
+        protected StatisticsCollector StatisticsCollector;
+        protected List<int> ConnectionIndex;
+        protected IList<IHubConnectionAdapter> Connections;
+        protected IDictionary<string, object> PluginParameters;
+
+        protected virtual void LoadParametersAndContext(
+            IDictionary<string, object> stepParameters,
+            IDictionary<string, object> pluginParameters)
+        {
+            // Get parameters
+            stepParameters.TryGetTypedValue(SignalRConstants.Type, out Type, Convert.ToString);
+            stepParameters.TryGetTypedValue(SignalRConstants.RemainderBegin, out RemainderBegin, Convert.ToInt32);
+            stepParameters.TryGetTypedValue(SignalRConstants.RemainderEnd, out RemainderEnd, Convert.ToInt32);
+            stepParameters.TryGetTypedValue(SignalRConstants.Modulo, out Modulo, Convert.ToInt32);
+            stepParameters.TryGetTypedValue(SignalRConstants.Duration, out Duration, Convert.ToInt64);
+            stepParameters.TryGetTypedValue(SignalRConstants.Interval, out Interval, Convert.ToInt64);
+            stepParameters.TryGetTypedValue(SignalRConstants.MessageSize, out MessageSize, Convert.ToInt32);
+
+            pluginParameters.TryGetTypedValue($"{SignalRConstants.StatisticsStore}.{Type}",
+                out StatisticsCollector, obj => (StatisticsCollector)obj);
+            pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionStore}.{Type}",
+                out Connections, (obj) => (IList<IHubConnectionAdapter>)obj);
+            pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionIndex}.{Type}",
+                out ConnectionIndex, (obj) => (List<int>)obj);
+            PluginParameters = pluginParameters;
+        }
+
         protected void UpdateEpoch(StatisticsCollector statisticsCollector)
         {
             // Update epoch at the end of 'Wait' to ensure all the messages are received and all clients stop sending
@@ -58,7 +94,6 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
         protected async Task BaseSendAsync(
             (IHubConnectionAdapter Connection,
             int LocalIndex,
-            StatisticsCollector StatisticsCollector,
             string CallbackMethod) package,
             IDictionary<string, object> data)
         {
@@ -73,27 +108,13 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                     await package.Connection.SendAsync(package.CallbackMethod, payload, c.Token);
                 }
                 // Update statistics
-                SignalRUtils.RecordSend(payload, package.StatisticsCollector);
+                SignalRUtils.RecordSend(payload, StatisticsCollector);
             }
             catch (Exception ex)
             {
                 var message = $"Error in {GetType().Name}: {ex}";
                 Log.Error(message);
             }
-        }
-
-        protected IDictionary<string, object> GenCommonPayload(IDictionary<string, object> data)
-        {
-            // Extract data
-            data.TryGetValue(SignalRConstants.MessageBlob, out var messageBlob);
-
-            // Prepare payload
-            var payload = new Dictionary<string, object>
-            {
-                { SignalRConstants.MessageBlob, messageBlob },
-                { SignalRConstants.Timestamp, Util.Timestamp() }
-            };
-            return payload;
         }
 
         protected async Task<IDictionary<string, object>> SimpleScenarioSend(
@@ -134,7 +155,6 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                                    where connectionIndex[i] % modulo >= remainderBegin && connectionIndex[i] % modulo < remainderEnd
                                    select ContinuousSend((Connection: connections[i],
                                                           LocalIndex: i,
-                                                          StatisticsCollector: statisticsCollector,
                                                           CallbackMethod: callbackMethod),
                                                           data,
                                                           BaseSendAsync,
@@ -153,6 +173,12 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
             }
         }
 
-        abstract protected IDictionary<string, object> GenPayload(IDictionary<string, object> data);
+        protected IDictionary<string, object> GenPayload(IDictionary<string, object> data)
+        {
+            // Prepare payload
+            var payload = new Dictionary<string, object>(data);
+            payload[SignalRConstants.Timestamp] = Util.Timestamp();
+            return payload;
+        }
     }
 }

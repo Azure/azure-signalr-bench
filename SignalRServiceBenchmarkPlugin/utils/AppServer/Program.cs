@@ -3,6 +3,8 @@
 
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
+using System;
 
 namespace Microsoft.Azure.SignalR.PerfTest.AppServer
 {
@@ -14,7 +16,13 @@ namespace Microsoft.Azure.SignalR.PerfTest.AppServer
         }
 
         public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
-            WebHost.CreateDefaultBuilder(args)
+            WebHost.CreateDefaultBuilder(args).UseKestrel(KestrelConfig)
                 .UseStartup<Startup>();
+
+        public static readonly Action<WebHostBuilderContext, KestrelServerOptions> KestrelConfig =
+            (context, options) =>
+            {
+                options.
+            };
     }
 }

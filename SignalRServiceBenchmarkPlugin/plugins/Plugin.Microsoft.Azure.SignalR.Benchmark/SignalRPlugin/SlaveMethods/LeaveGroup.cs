@@ -1,12 +1,11 @@
 ﻿using Common;
-using Microsoft.AspNetCore.SignalR.Client;
+using Microsoft.Azure.SignalR.Management;
 using Plugin.Base;
 using Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods.Statistics;
 using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
@@ -14,35 +13,54 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
     public class LeaveGroup : ISlaveMethod
     {
         private StatisticsCollector _statisticsCollector;
+        private IList<IHubConnectionAdapter> _connections;
+        private List<int> _connectionIndex;
+        private string _type;
+        private int _groupCount;
 
-        public async Task<IDictionary<string, object>> Do(IDictionary<string, object> stepParameters, IDictionary<string, object> pluginParameters)
+        public async Task<IDictionary<string, object>> Do(
+            IDictionary<string, object> stepParameters,
+            IDictionary<string, object> pluginParameters)
         {
             try
             {
                 Log.Information($"Leave groups...");
 
                 // Get parameters
-                stepParameters.TryGetTypedValue(SignalRConstants.Type, out string type, Convert.ToString);
-                stepParameters.TryGetTypedValue(SignalRConstants.GroupCount, out int groupCount, Convert.ToInt32);
+                stepParameters.TryGetTypedValue(SignalRConstants.Type, out _type, Convert.ToString);
+                stepParameters.TryGetTypedValue(SignalRConstants.GroupCount, out _groupCount, Convert.ToInt32);
                 stepParameters.TryGetTypedValue(SignalRConstants.ConnectionTotal, out int totalConnection, Convert.ToInt32);
 
-                if (totalConnection % groupCount != 0) throw new Exception("Not supported: Total connections cannot be divided by group count");
+                if (totalConnection % _groupCount != 0)
+                {
+                    throw new Exception("Not supported: Total connections cannot be divided by group count");
+                }
 
                 // Get context
-                pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionStore}.{type}",
-                    out IList<IHubConnectionAdapter> connections, (obj) => (IList<IHubConnectionAdapter>)obj);
-                pluginParameters.TryGetTypedValue($"{SignalRConstants.StatisticsStore}.{type}",
+                pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionStore}.{_type}",
+                    out _connections, (obj) => (IList<IHubConnectionAdapter>)obj);
+                pluginParameters.TryGetTypedValue($"{SignalRConstants.StatisticsStore}.{_type}",
                     out _statisticsCollector, obj => (StatisticsCollector)obj);
-                pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionIndex}.{type}",
-                    out List<int> connectionIndex, (obj) => (List<int>)obj);
+                pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionIndex}.{_type}",
+                    out _connectionIndex, (obj) => (List<int>)obj);
 
                 // Reset counters
                 SignalRUtils.ResetCounters(_statisticsCollector);
-
-                // Join group
-                await Task.WhenAll(from i in Enumerable.Range(0, connections.Count)
-                                   select LeaveFromGroup(connections[i], SignalRUtils.GroupName(type, connectionIndex[i] % groupCount)));
-
+                // Leave group
+                var connectionType = SignalRUtils.GetClientTypeFromContext(pluginParameters, _type);
+                if (connectionType == SignalREnums.ClientType.DirectConnect)
+                {
+                    var connectionString = SignalRUtils.FetchConnectionStringFromContext(pluginParameters, _type);
+                    await DirectConnectionLeaveGroup(connectionString);
+                }
+                else
+                {
+                    await Task.WhenAll(from i in Enumerable.Range(0, _connections.Count)
+                                       select SignalRUtils.LeaveFromGroup(_connections[i],
+                                                             SignalRUtils.GroupName(_type,
+                                                                         _connectionIndex[i] % _groupCount),
+                                                             _statisticsCollector));
+                }
                 return null;
             }
             catch (Exception ex)
@@ -53,17 +71,30 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
             }
         }
 
-        private async Task LeaveFromGroup(IHubConnectionAdapter connection, string groupName)
+        private async Task DirectConnectionLeaveGroup(string connectionString)
         {
-            try
+            var serviceManager = new ServiceManagerBuilder().WithOptions(option =>
             {
-                await connection.SendAsync(SignalRConstants.LeaveGroupCallbackName, groupName);
-            }
-            catch
+                option.ConnectionString = connectionString;
+                option.ServiceTransportType = ServiceTransportType.Transient;
+            }).Build();
+
+            var hubContext = await serviceManager.CreateHubContextAsync(SignalRConstants.DefaultRestHubName);
+            for (var i = 0; i < _connections.Count; i++)
             {
-                _statisticsCollector.IncreaseLeaveGroupFail();
+                var userId = SignalRUtils.GenClientUserIdFromConnectionIndex(_connectionIndex[i]);
+                try
+                {
+                    await hubContext.UserGroups.RemoveFromGroupAsync(userId,
+                        SignalRUtils.GroupName(_type, _connectionIndex[i] % _groupCount));
+                    _statisticsCollector.IncreaseLeaveGroupSuccess();
+                }
+                catch (Exception e)
+                {
+                    _statisticsCollector.IncreaseLeaveGroupFail();
+                    Log.Error($"Fail to leave group: {e.Message}");
+                }
             }
         }
-
     }
 }
