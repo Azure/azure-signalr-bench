@@ -4,12 +4,11 @@ using Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods.Statistics;
 using Serilog;
 using System;
 using System.Collections.Generic;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
 {
-    public class RegisterCallbackOnConnected : RegisterCallbackBase, ISlaveMethod
+    public class RegisterCallbackOnConnected : ISlaveMethod
     {
         public Task<IDictionary<string, object>> Do(
             IDictionary<string, object> stepParameters,
@@ -28,8 +27,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.RegisteredCallbacks}.{type}",
                     out var registeredCallbacks, obj => (IList<Action<IList<IHubConnectionAdapter>, StatisticsCollector, string>>)obj);
                 // Set callback
-                SetCallbackOnConnected(connections, statisticsCollector, SignalRConstants.OnConnectedCallback);
-                registeredCallbacks.Add(SetCallbackOnConnected);
+                RegisterCallbackBase.SetCallbackOnConnected(connections, statisticsCollector, SignalRConstants.OnConnectedCallback);
+                registeredCallbacks.Add(RegisterCallbackBase.SetCallbackOnConnected);
 
                 return Task.FromResult<IDictionary<string, object>>(null);
             }

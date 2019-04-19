@@ -25,7 +25,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
             stepParameters.TryGetTypedValue(SignalRConstants.Type,
                 out string type, Convert.ToString);
             pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionStore}.{type}",
-                    out IList<IHubConnectionAdapter> connections, (obj) => (IList<IHubConnectionAdapter>)obj);
+                out IList<IHubConnectionAdapter> connections, (obj) => (IList<IHubConnectionAdapter>)obj);
 
             if (stepParameters.TryGetValue(SignalRConstants.ActionAfterConnect, out _))
             {
@@ -73,7 +73,6 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                             select (Connection: connections[i], LocalIndex: i)).ToList();
             Log.Information($"Waiting for dropped {packages.Count} connections recover");
             await Util.BatchProcess(packages, SignalRUtils.StartConnect, _concurrentConnection);
-            //await Util.LowPressBatchProcess(packages, SignalRUtils.StartConnect, _concurrentConnection, SignalRConstants.BatchProcessDefaultWait);
             var recoverred = (from i in Enumerable.Range(0, packages.Count)
                               where packages[i].Connection.GetStat() == SignalREnums.ConnectionInternalStat.Active
                               select packages[i].Connection).ToList();

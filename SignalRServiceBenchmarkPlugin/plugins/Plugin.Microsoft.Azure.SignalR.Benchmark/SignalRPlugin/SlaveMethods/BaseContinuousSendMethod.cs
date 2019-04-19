@@ -126,43 +126,30 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
             {
                 Log.Information($"Start {GetType().Name}...");
 
-                // Get parameters
-                stepParameters.TryGetTypedValue(SignalRConstants.Type, out string type, Convert.ToString);
-                stepParameters.TryGetTypedValue(SignalRConstants.RemainderBegin, out int remainderBegin, Convert.ToInt32);
-                stepParameters.TryGetTypedValue(SignalRConstants.RemainderEnd, out int remainderEnd, Convert.ToInt32);
-                stepParameters.TryGetTypedValue(SignalRConstants.Modulo, out int modulo, Convert.ToInt32);
-                stepParameters.TryGetTypedValue(SignalRConstants.Duration, out long duration, Convert.ToInt64);
-                stepParameters.TryGetTypedValue(SignalRConstants.Interval, out long interval, Convert.ToInt64);
-                stepParameters.TryGetTypedValue(SignalRConstants.MessageSize, out int messageSize, Convert.ToInt32);
-                pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionStore}.{type}",
-                    out IList<IHubConnectionAdapter> connections, (obj) => (IList<IHubConnectionAdapter>)obj);
-                pluginParameters.TryGetTypedValue($"{SignalRConstants.StatisticsStore}.{type}",
-                    out StatisticsCollector statisticsCollector, obj => (StatisticsCollector)obj);
-                pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionIndex}.{type}",
-                    out List<int> connectionIndex, (obj) => (List<int>)obj);
+                LoadParametersAndContext(stepParameters, pluginParameters);
 
                 // Generate necessary data
                 var data = new Dictionary<string, object>
                 {
-                    { SignalRConstants.MessageBlob, SignalRUtils.GenerateRandomData(messageSize) } // message payload
+                    { SignalRConstants.MessageBlob, SignalRUtils.GenerateRandomData(MessageSize) } // message payload
                 };
 
                 // Reset counters
-                UpdateStatistics(statisticsCollector, remainderEnd);
+                UpdateStatistics(StatisticsCollector, RemainderEnd);
 
                 // Send messages
-                await Task.WhenAll(from i in Enumerable.Range(0, connections.Count)
-                                   where connectionIndex[i] % modulo >= remainderBegin && connectionIndex[i] % modulo < remainderEnd
-                                   select ContinuousSend((Connection: connections[i],
+                await Task.WhenAll(from i in Enumerable.Range(0, Connections.Count)
+                                   where ConnectionIndex[i] % Modulo >= RemainderBegin && ConnectionIndex[i] % Modulo < RemainderEnd
+                                   select ContinuousSend((Connection: Connections[i],
                                                           LocalIndex: i,
                                                           CallbackMethod: callbackMethod),
                                                           data,
                                                           BaseSendAsync,
-                                                          TimeSpan.FromMilliseconds(duration),
-                                                          TimeSpan.FromMilliseconds(interval),
+                                                          TimeSpan.FromMilliseconds(Duration),
+                                                          TimeSpan.FromMilliseconds(Interval),
                                                           TimeSpan.FromMilliseconds(1),
-                                                          TimeSpan.FromMilliseconds(interval)));
-                Log.Information($"Finish {GetType().Name} {remainderEnd}");
+                                                          TimeSpan.FromMilliseconds(Interval)));
+                Log.Information($"Finish {GetType().Name} {RemainderEnd}");
                 return null;
             }
             catch (Exception ex)

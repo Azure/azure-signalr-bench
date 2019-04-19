@@ -1,5 +1,6 @@
 ﻿using Common;
 using Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods.Statistics;
+using Serilog;
 using System;
 using System.Collections.Generic;
 
@@ -17,6 +18,20 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 connection.On(methodName, (string connectionId) =>
                 {
                     connection.UpdateTimestampWhenConnected();
+                });
+            }
+        }
+
+        public static void SetDummyCallbackOnConnected(
+            IList<IHubConnectionAdapter> connections,
+            StatisticsCollector statisticsCollector,
+            string methodName)
+        {
+            foreach (var connection in connections)
+            {
+                connection.On(methodName, (string connectionId) =>
+                {
+                    Log.Information($"Connection Id: {connectionId}");
                 });
             }
         }

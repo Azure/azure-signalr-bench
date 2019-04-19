@@ -28,7 +28,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                     out IList<IHubConnectionAdapter> connections, (obj) => (IList<IHubConnectionAdapter>)obj);
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.StatisticsStore}.{type}",
                     out _statisticsCollector, obj => (StatisticsCollector)obj);
-
+                SignalRUtils.FilterOnConnectedNotification(pluginParameters, type);
                 // The following get connection Id needs the concurrent connection value
                 SignalRUtils.SaveConcurrentConnectionCountToContext(
                     pluginParameters,
