@@ -49,10 +49,6 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
 
                 // Reset counters
                 SignalRUtils.ResetCounters(_statisticsCollector);
-                // Set callback
-                var registeredCallbacks = SignalRUtils.FetchCallbacksFromContext(pluginParameters, _type);
-                SetCallbackJoinGroup(_connections, _statisticsCollector);
-                registeredCallbacks.Add(SetCallbackJoinGroup);
                 // Join group
                 var connectionType = SignalRUtils.GetClientTypeFromContext(pluginParameters, _type);
                 if (connectionType == SignalREnums.ClientType.DirectConnect)
