@@ -229,7 +229,7 @@ scenario:restSendToGroup,transport:Websockets,group:big:
   group_count: [10, 10, 10, 10, 10, 10, 10]
   max_group_count: [10, 10, 10, 10, 10, 10, 10]
 
-scenario:persistSendToUser,transport:Websockets:
+scenario:restPersistSendToUser,transport:Websockets:
   normal_connection: [1000, 2000, 5000, 10000, 20000, 50000, 100000]
   max_connection: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
   base_step: [1000, 2000, 5000, 5000, 5000, 5000, 5000]
@@ -240,7 +240,7 @@ scenario:persistSendToUser,transport:Websockets:
   batch_wait: [1000, 1000, 1000, 1000, 1000, 1000, 1000]
 
 
-scenario:persistBroadcast,transport:Websockets:
+scenario:restPersistBroadcast,transport:Websockets:
   normal_connection: [1000, 2000, 5000, 10000, 20000, 50000, 100000]
   max_connection: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
   base_step: [1, 1, 1, 1, 1, 1, 1]
@@ -250,7 +250,7 @@ scenario:persistBroadcast,transport:Websockets:
   batch_mode: ["LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress"]
   batch_wait: [1000, 1000, 1000, 1000, 1000, 1000, 1000]
 
-scenario:persistSendToGroup,transport:Websockets,group:tiny:
+scenario:restPersistSendToGroup,transport:Websockets,group:tiny:
   normal_connection: [1000, 2000, 5000, 10000, 20000, 50000, 100000]
   max_connection: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
   base_step: [800, 1000, 1000, 1000, 5000, 5000, 5000]
@@ -261,7 +261,7 @@ scenario:persistSendToGroup,transport:Websockets,group:tiny:
   batch_wait: [1000, 1000, 1000, 1000, 1000, 1000, 1000]
   group_count: [1000, 2000, 5000, 10000, 20000, 50000, 100000]
 
-scenario:persistSendToGroup,transport:Websockets,group:small:
+scenario:restPersistSendToGroup,transport:Websockets,group:small:
   normal_connection: [1000, 2000, 5000, 10000, 20000, 50000, 100000]
   max_connection: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
   base_step: [300, 300, 300, 200, 3000, 5000, 5000]
@@ -274,7 +274,7 @@ scenario:persistSendToGroup,transport:Websockets,group:small:
   max_group_count: [150, 300, 750, 1500, 3000, 7500, 15000]
 
 
-scenario:persistSendToGroup,transport:Websockets,group:big:
+scenario:restPersistSendToGroup,transport:Websockets,group:big:
   normal_connection: [1000, 2000, 5000, 10000, 20000, 50000, 100000]
   max_connection: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
   base_step: [20, 20, 10, 10, 10, 10, 10]

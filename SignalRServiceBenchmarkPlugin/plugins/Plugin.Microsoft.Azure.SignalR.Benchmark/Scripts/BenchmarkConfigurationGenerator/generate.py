@@ -1,8 +1,8 @@
 from Echo import *
 from Broadcast import *
-from PersistBroadcast import *
-from PersistSendToGroup import *
-from PersistSendToUser import *
+from RestPersistBroadcast import *
+from RestPersistSendToGroup import *
+from RestPersistSendToUser import *
 from RestSendToGroup import *
 from RestSendToUser import *
 from RestBroadcast import *
@@ -31,9 +31,9 @@ def parse_arguments():
                         required=True,
                         choices=[scenario_type.echo,
                                  scenario_type.broadcast,
-                                 scenario_type.persist_broadcast,
-                                 scenario_type.persist_send_to_group,
-                                 scenario_type.persist_send_to_user,
+                                 scenario_type.rest_persist_broadcast,
+                                 scenario_type.rest_persist_send_to_group,
+                                 scenario_type.rest_persist_send_to_user,
                                  scenario_type.rest_broadcast,
                                  scenario_type.rest_send_to_group,
                                  scenario_type.rest_send_to_user,
@@ -43,9 +43,9 @@ def parse_arguments():
                         help="Scenario, choose from <{}>|<{}>|<{}>|<{}>|<{}>|<{}>|<{}>|<{}>|<{}>|<{}>|<{}>"
                         .format(scenario_type.echo,
                                 scenario_type.broadcast,
-                                scenario_type.persist_broadcast,
-                                scenario_type.persist_send_to_group,
-                                scenario_type.persist_send_to_user,
+                                scenario_type.rest_persist_broadcast,
+                                scenario_type.rest_persist_send_to_group,
+                                scenario_type.rest_persist_send_to_user,
                                 scenario_type.rest_broadcast,
                                 scenario_type.rest_send_to_group,
                                 scenario_type.rest_send_to_user,

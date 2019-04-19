@@ -44,9 +44,9 @@ class ScenarioType:
     def __init__(self):
         self.echo = "echo"
         self.broadcast = "broadcast"
-        self.persist_broadcast = "persistBroadcast"
-        self.persist_send_to_user = "persistSendToUser"
-        self.persist_send_to_group = "persistSendToGroup"
+        self.rest_persist_broadcast = "restPersistBroadcast"
+        self.rest_persist_send_to_user = "restPersistSendToUser"
+        self.rest_persist_send_to_group = "restPersistSendToGroup"
         self.rest_broadcast = "restBroadcast"
         self.rest_send_to_group = "restSendToGroup"
         self.rest_send_to_user = "restSendToUser"
