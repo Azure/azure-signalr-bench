@@ -95,11 +95,6 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             var sendToUserEndpoint = $"{_urlCommonPrefix}/users/{userId}";
             var sendToUserAudience = $"{_audienceCommonPrefix}/users/{userId}";
             var token = GenerateAccessToken(sendToUserAudience, userId);
-            var payload = new PayloadMessage
-            {
-                Target = methodName,
-                Arguments = args
-            };
             using (var request = BuildHttpRequest(sendToUserEndpoint, token, methodName, args))
             {
                 await SendHttpRequestAsync(request, cancellationToken);
@@ -114,11 +109,6 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             var broadcastEndpoint = _urlCommonPrefix;
             var broadcastAudience = _audienceCommonPrefix;
             var token = GenerateAccessToken(broadcastAudience, Util.GenerateServerName());
-            var payload = new PayloadMessage
-            {
-                Target = methodName,
-                Arguments = args
-            };
             using (var request = BuildHttpRequest(broadcastEndpoint, token, methodName, args))
             {
                 await SendHttpRequestAsync(request, cancellationToken);

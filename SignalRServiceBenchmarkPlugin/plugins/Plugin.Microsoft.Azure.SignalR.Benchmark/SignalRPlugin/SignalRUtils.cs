@@ -1,15 +1,16 @@
 ﻿using Common;
 using Microsoft.AspNetCore.Http.Connections;
 using Microsoft.AspNetCore.SignalR.Client;
+using Microsoft.Azure.SignalR.Management;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods;
 using Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods.Statistics;
 using Rpc.Service;
 using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -66,6 +67,21 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             }
         }
 
+        public static async Task LeaveFromGroup(
+            IHubConnectionAdapter connection,
+            string groupName,
+            StatisticsCollector statisticsCollector)
+        {
+            try
+            {
+                await connection.SendAsync(SignalRConstants.LeaveGroupCallbackName, groupName);
+            }
+            catch
+            {
+                statisticsCollector.IncreaseLeaveGroupFail();
+            }
+        }
+
         public static void SaveGroupInfoToContext(
             IDictionary<string, object> pluginParameters,
             string type,
@@ -105,12 +121,20 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
                 new List<Action<IList<IHubConnectionAdapter>, StatisticsCollector, string>>();
         }
 
+        public static IList<Action<IList<IHubConnectionAdapter>, StatisticsCollector, string>>
+            FetchCallbacksFromContext(IDictionary<string, object> pluginParameters, string type)
+        {
+            pluginParameters.TryGetTypedValue($"{SignalRConstants.RegisteredCallbacks}.{type}",
+                    out var registeredCallbacks, obj => (IList<Action<IList<IHubConnectionAdapter>, StatisticsCollector, string>>)obj);
+            return registeredCallbacks;
+        }
+
         public static void SaveConcurrentConnectionCountToContext(
             IDictionary<string, object> pluginParameters,
             string type,
             int concurrentConnection)
         {
-            pluginParameters.TryAdd("{SignalRConstants.ConcurrentConnection}.{type}", concurrentConnection);
+            pluginParameters.TryAdd($"{SignalRConstants.ConcurrentConnection}.{type}", concurrentConnection);
         }
 
         public static int FetchConcurrentConnectionCountFromContext(
@@ -135,6 +159,23 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         {
             stepParameters.TryGetTypedValue(SignalRConstants.Type, out string type, Convert.ToString);
             pluginParameters[$"{SignalRConstants.ConnectionType}.{type}"] = clientType.ToString();
+        }
+
+        public static ClientType GetClientTypeFromContext(
+            IDictionary<string, object> pluginParameters,
+            string type)
+        {
+            var ret = ClientType.AspNetCore;
+            if (pluginParameters.TryGetValue($"{SignalRConstants.ConnectionType}.{type}", out _))
+            {
+                pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionType}.{type}",
+                    out string ctype, Convert.ToString);
+                if (Enum.TryParse(ctype, out SignalREnums.ClientType ct))
+                {
+                    ret = ct;
+                }
+            }
+            return ret;
         }
 
         public static IList<IHubConnectionAdapter> CreateClientConnection(
@@ -198,6 +239,34 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
                 SaveConnectionStringToContext(pluginParameters, type, urls);
             }
             return Task.FromResult<IDictionary<string, object>>(null);
+        }
+
+        public static void FilterOnConnectedNotification(
+            IDictionary<string, object> pluginParameters,
+            string type)
+        {
+            pluginParameters.TryGetTypedValue($"{SignalRConstants.RegisteredCallbacks}.{type}",
+                out var registeredCallbacks,
+                obj => (IList<Action<IList<IHubConnectionAdapter>, StatisticsCollector, string>>)obj);
+            pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionType}.{type}",
+                out string connectionType, Convert.ToString);
+            pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionStore}.{type}",
+                out IList<IHubConnectionAdapter> connections, (obj) => (IList<IHubConnectionAdapter>)obj);
+            pluginParameters.TryGetTypedValue($"{SignalRConstants.StatisticsStore}.{type}",
+                            out StatisticsCollector statisticsCollector, (obj) => (StatisticsCollector)obj);
+            if (!Enum.TryParse<ClientType>(connectionType, out ClientType connType))
+            {
+                Log.Error($"Fail to parse {connectionType} to enum");
+                return;
+            }
+            if (connType == ClientType.AspNetCore)
+            {
+                if (!registeredCallbacks.Contains(RegisterCallbackBase.SetDummyCallbackOnConnected))
+                {
+                    RegisterCallbackBase.SetCallbackOnConnected(connections, statisticsCollector, SignalRConstants.OnConnectedCallback);
+                    registeredCallbacks.Add(RegisterCallbackBase.SetDummyCallbackOnConnected);
+                }
+            }
         }
 
         public static async Task StartConnect((IHubConnectionAdapter Connection, int LocalIndex) package)
@@ -281,16 +350,13 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             int closeTimeout)
         {
             var transportType = GetTransportType(transportTypeString);
-            var restApi = new RestApiProvider(connectionString, SignalRConstants.DefaultRestHubName);
-            var clientUrl = restApi.GetClientUrl();
-            var audience = restApi.GetClientAudience();
+            var serviceManager = new ServiceManagerBuilder().WithOptions(option =>
+            {
+                option.ConnectionString = connectionString;
+                option.ServiceTransportType = ServiceTransportType.Persistent;
+            }).Build();
+            var clientUrl = serviceManager.GetClientEndpoint(SignalRConstants.DefaultRestHubName);
             var connections = from i in Enumerable.Range(0, connectionIndex.Count)
-                              //let cookies = new CookieContainer()
-                              //let handler = new HttpClientHandler
-                              //{
-                              //    ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator,
-                              //    CookieContainer = cookies,
-                              //}
                               let userId = GenClientUserIdFromConnectionIndex(connectionIndex[i])
                               select new HubConnectionBuilder()
                               .ConfigureLogging(logger =>
@@ -301,13 +367,12 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
                               })
                               .WithUrl(clientUrl, httpConnectionOptions =>
                               {
-                                  //httpConnectionOptions.HttpMessageHandlerFactory = _ => handler;
-                                  //httpConnectionOptions.Cookies = cookies;
                                   httpConnectionOptions.Transports = transportType;
                                   httpConnectionOptions.CloseTimeout = TimeSpan.FromMinutes(closeTimeout);
                                   httpConnectionOptions.AccessTokenProvider = () =>
                                   {
-                                      return Task.FromResult(restApi.GenerateAccessToken(audience, userId));
+                                      return Task.FromResult(
+                                          serviceManager.GenerateClientAccessToken(SignalRConstants.DefaultRestHubName, userId));
                                   };
                               }) into builder
                               let hubConnection = protocolString.ToLower() == "messagepack" ?
@@ -334,6 +399,33 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             return connections.ToList();
         }
 
+        public static async Task<IServiceHubContext> CreateHubContextHelperAsync(
+            ServiceTransportType serviceTransportType,
+            IDictionary<string, object> pluginParameters,
+            string type)
+        {
+            // The connection string is saved in context after finishing creating connection
+            var connectionString = SignalRUtils.FetchConnectionStringFromContext(pluginParameters, type);
+            var serviceManager = new ServiceManagerBuilder().WithOptions(option =>
+            {
+                option.ConnectionString = connectionString;
+                option.ServiceTransportType = serviceTransportType;
+            }).Build();
+
+            var serviceCollection = new ServiceCollection();
+            serviceCollection.AddLogging(logger =>
+            {
+                logger.ClearProviders();
+                logger.AddSerilog(dispose: true);
+                logger.SetMinimumLevel(LogLevel.Error);
+            });
+
+            var serviceProvider = serviceCollection.BuildServiceProvider();
+            var logFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
+            var hubContext = await serviceManager.CreateHubContextAsync(SignalRConstants.DefaultRestHubName, logFactory);
+            return hubContext;
+        }
+
         private static HttpTransportType GetTransportType(string transportTypeString)
         {
             var success = Enum.TryParse<HttpTransportType>(transportTypeString, true, out var transportType);
@@ -355,19 +447,25 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         {
             var transportType = GetTransportType(transportTypeString);
             List<string> urlList = urls.Split(',').ToList();
-
+            //var httpClientHandler = new HttpClientHandler
+            //{
+            //    ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator,
+            //};
             var connections = from i in Enumerable.Range(0, connectionIndex.Count)
-                              //let cookies = new CookieContainer()
-                              //let handler = new HttpClientHandler
-                              //{
-                              //    ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator,
-                              //    CookieContainer = cookies,
-                              //}
+                              //let handler = httpClientHandler
                               select new HubConnectionBuilder()
+                              .ConfigureLogging(logger =>
+                              {
+                                  logger.ClearProviders();
+                                  logger.AddSerilog(dispose: true);
+                                  logger.SetMinimumLevel(LogLevel.Error);
+                              })
                               .WithUrl(urlList[connectionIndex[i] % urlList.Count()], httpConnectionOptions =>
                               {
-                                  //httpConnectionOptions.HttpMessageHandlerFactory = _ => handler;
-                                  //httpConnectionOptions.Cookies = cookies;
+                                  //httpConnectionOptions.HttpMessageHandlerFactory = h =>
+                                  //{
+                                  //    return urlList[connectionIndex[i] % urlList.Count()].StartsWith("https") ? handler : h;
+                                  //};
                                   httpConnectionOptions.Transports = transportType;
                                   httpConnectionOptions.CloseTimeout = TimeSpan.FromMinutes(closeTimeout);
                               }) into builder

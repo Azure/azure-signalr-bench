@@ -2,7 +2,7 @@
 
 . ./func_env.sh
 
-declare -A ScenarioHandlerDict=(["frequentJoinLeaveGroup"]="SendToGroup" ["sendToGroup"]="SendToGroup" ["sendToClient"]="SendToClient")
+declare -A ScenarioHandlerDict=(["frequentJoinLeaveGroup"]="SendToGroup" ["sendToGroup"]="SendToGroup" ["restSendToGroup"]="SendToGroup" ["restPersistSendToGroup"]="SendToGroup" ["sendToClient"]="SendToClient")
 
 function clean_known_hosts()
 {

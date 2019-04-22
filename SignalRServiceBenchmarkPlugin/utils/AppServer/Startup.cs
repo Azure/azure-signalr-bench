@@ -15,7 +15,10 @@ namespace Microsoft.Azure.SignalR.PerfTest.AppServer
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
-            useLocalSignalR = Environment.GetEnvironmentVariable("useLocalSignalR") == null || Environment.GetEnvironmentVariable("useLocalSignalR") == "" || Environment.GetEnvironmentVariable("useLocalSignalR") == "false" ? false : true;
+            useLocalSignalR =
+                Environment.GetEnvironmentVariable("useLocalSignalR") == null ||
+                Environment.GetEnvironmentVariable("useLocalSignalR") == "" ||
+                Environment.GetEnvironmentVariable("useLocalSignalR") == "false" ? false : true;
 
             Console.BackgroundColor = ConsoleColor.DarkMagenta;
             Console.WriteLine($"use local signalr: {useLocalSignalR}");

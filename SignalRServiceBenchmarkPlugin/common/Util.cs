@@ -138,13 +138,14 @@ namespace Common
 
         public static long Timestamp()
         {
-            var unixDateTime = (long)(DateTime.UtcNow.Subtract(new DateTime(1970, 1, 1))).TotalMilliseconds;
+            var unixDateTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
             return unixDateTime;
         }
 
         public static string Timestamp2DateTimeStr(long timestamp)
         {
-            return DateTimeOffset.FromUnixTimeMilliseconds(timestamp).ToString("yyyy-MM-ddThh:mm:ssZ");
+            // display datetime in 24 hours format
+            return DateTimeOffset.FromUnixTimeMilliseconds(timestamp).ToString("yyyy-MM-ddTHH:mm:ssZ");
         }
 
         public static async Task LowPressBatchProcess<T>(IList<T> source, Func<T, Task> f, int max, int milliseconds)

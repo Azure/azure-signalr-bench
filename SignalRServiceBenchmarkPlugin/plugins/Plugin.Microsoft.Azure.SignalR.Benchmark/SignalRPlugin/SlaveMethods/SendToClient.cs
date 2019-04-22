@@ -17,50 +17,35 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
             {
                 Log.Information($"Send {GetType().Name}...");
 
+                LoadParametersAndContext(stepParameters, pluginParameters);
                 // Get parameters
-                stepParameters.TryGetTypedValue(SignalRConstants.Type, out string type, Convert.ToString);
-                stepParameters.TryGetTypedValue(SignalRConstants.RemainderBegin, out int remainderBegin, Convert.ToInt32);
-                stepParameters.TryGetTypedValue(SignalRConstants.RemainderEnd, out int remainderEnd, Convert.ToInt32);
-                stepParameters.TryGetTypedValue(SignalRConstants.Modulo, out int modulo, Convert.ToInt32);
-                stepParameters.TryGetTypedValue(SignalRConstants.Duration, out long duration, Convert.ToInt64);
-                stepParameters.TryGetTypedValue(SignalRConstants.Interval, out long interval, Convert.ToInt64);
-                stepParameters.TryGetTypedValue(SignalRConstants.MessageSize, out int messageSize, Convert.ToInt32);
                 stepParameters.TryGetTypedValue(SignalRConstants.ConnectionIdStore, out string[] connectionIds,
                     obj => Convert.ToString(obj).Split(' '));
 
-                // Get context
-                pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionStore}.{type}",
-                    out IList<IHubConnectionAdapter> connections, (obj) => (IList<IHubConnectionAdapter>)obj);
-                pluginParameters.TryGetTypedValue($"{SignalRConstants.StatisticsStore}.{type}",
-                    out StatisticsCollector statisticsCollector, obj => (StatisticsCollector) obj);
-                pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionIndex}.{type}",
-                    out List<int> connectionIndex, (obj) => (List<int>)obj);
-
                 // Generate necessary data
-                var messageBlob = SignalRUtils.GenerateRandomData(messageSize);
+                var messageBlob = SignalRUtils.GenerateRandomData(MessageSize);
 
                 // Reset counters
-                UpdateStatistics(statisticsCollector, remainderEnd);
+                UpdateStatistics(StatisticsCollector, RemainderEnd);
 
                 // Send messages
-                await Task.WhenAll(from i in Enumerable.Range(0, connections.Count)
+                await Task.WhenAll(from i in Enumerable.Range(0, Connections.Count)
                                    let data = new Dictionary<string, object>
                                    {
                                        { SignalRConstants.MessageBlob, messageBlob }, // message payload
                                        { SignalRConstants.ConnectionId, connectionIds[i]}
                                    }
-                                   where connectionIndex[i] % modulo >= remainderBegin && connectionIndex[i] % modulo < remainderEnd
-                                   select ContinuousSend((Connection: connections[i],
+                                   where ConnectionIndex[i] % Modulo >= RemainderBegin && ConnectionIndex[i] % Modulo < RemainderEnd
+                                   select ContinuousSend((Connection: Connections[i],
                                                           LocalIndex: i,
-                                                          StatisticsCollector: statisticsCollector,
                                                           CallbackMethod: SignalRConstants.SendToClientCallbackName),
                                                           data,
                                                           BaseSendAsync,
-                                                          TimeSpan.FromMilliseconds(duration),
-                                                          TimeSpan.FromMilliseconds(interval),
+                                                          TimeSpan.FromMilliseconds(Duration),
+                                                          TimeSpan.FromMilliseconds(Interval),
                                                           TimeSpan.FromMilliseconds(1),
-                                                          TimeSpan.FromMilliseconds(interval)));
-                Log.Information($"Finish {GetType().Name} {remainderEnd}");
+                                                          TimeSpan.FromMilliseconds(Interval)));
+                Log.Information($"Finish {GetType().Name} {RemainderEnd}");
                 return null;
             }
             catch (Exception ex)
@@ -69,21 +54,6 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 Log.Error(message);
                 throw;
             }
-        }
-
-        protected override IDictionary<string, object> GenPayload(IDictionary<string, object> data)
-        {
-            data.TryGetTypedValue(SignalRConstants.ConnectionId, out string targetId, Convert.ToString);
-            data.TryGetValue(SignalRConstants.MessageBlob, out var messageBlob);
-
-            // Generate payload
-            var payload = new Dictionary<string, object>
-            {
-                { SignalRConstants.MessageBlob, messageBlob },
-                { SignalRConstants.Timestamp, Util.Timestamp() },
-                { SignalRConstants.ConnectionId, targetId }
-            };
-            return payload;
         }
     }
 }

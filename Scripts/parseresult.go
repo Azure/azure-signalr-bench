@@ -222,6 +222,21 @@ func PrintConnectionStatSummary(monitors []Monitor) {
 	fmt.Printf("%s\n", chartfunc)
 }
 
+func StepReducedIterate(monitors []Monitor, ProcessItem func(index int, monitors []Monitor)) {
+	if len(monitors) > 1000 {
+		step := len(monitors) / 300
+		for i, _ := range monitors {
+			if i % step == 0 {
+				ProcessItem(i, monitors)
+			}
+		}
+	} else {
+		for i, _ := range monitors {
+			ProcessItem(i, monitors)
+		}
+	}
+}
+
 func PrintConnectCostChart(monitors []Monitor) {
 	var chartfunc string
 	chartfunc = `
@@ -230,7 +245,7 @@ func PrintConnectCostChart(monitors []Monitor) {
     function drawConnectCostChart() {
 
       var data = new google.visualization.DataTable();
-        data.addColumn('timeofday', 'Time');
+        data.addColumn('date', 'Time');
         data.addColumn('number', '99% connect cost (ms)');
         data.addColumn('number', '95% connect cost (ms)');
         data.addColumn('number', '90% connect cost (ms)');
@@ -238,15 +253,16 @@ func PrintConnectCostChart(monitors []Monitor) {
         data.addRows([
             `
 	fmt.Printf("%s\n", chartfunc)
-	for i := 0; i < len(monitors); i++ {
-		t1, _ := time.Parse(time.RFC3339, monitors[i].Timestamp)
-		fmt.Printf("\t [[%d, %d, %d], %d, %d, %d, %d],\n",
-			t1.Hour(), t1.Minute(), t1.Second(),
-			monitors[i].Counters.CC_99,
-			monitors[i].Counters.CC_95,
-			monitors[i].Counters.CC_90,
-			monitors[i].Counters.CC_50)
-	}
+	StepReducedIterate(monitors, func(i int, monitors []Monitor) {
+                t1, _ := time.Parse(time.RFC3339, monitors[i].Timestamp)
+                fmt.Printf("\t [new Date(Date.UTC(%d, %d, %d, %d, %d, %d, 0)), %d, %d, %d, %d],\n",
+                        t1.Year(), t1.Month()-1, t1.Day(),
+                        t1.Hour(), t1.Minute(), t1.Second(),
+                        monitors[i].Counters.CC_99,
+                        monitors[i].Counters.CC_95,
+                        monitors[i].Counters.CC_90,
+                        monitors[i].Counters.CC_50)
+        })
 	chartfunc = `
         ]);
 
@@ -281,7 +297,7 @@ func PrintReconnectCostChart(monitors []Monitor) {
     function drawReconnectCostChart() {
 
       var data = new google.visualization.DataTable();
-        data.addColumn('timeofday', 'Time');
+        data.addColumn('date', 'Time');
         data.addColumn('number', '99% reconnect cost (ms)');
         data.addColumn('number', '95% reconnect cost (ms)');
         data.addColumn('number', '90% reconnect cost (ms)');
@@ -289,15 +305,16 @@ func PrintReconnectCostChart(monitors []Monitor) {
         data.addRows([
             `
 	fmt.Printf("%s\n", chartfunc)
-	for i := 0; i < len(monitors); i++ {
+	StepReducedIterate(monitors, func(i int, monitors []Monitor) {
 		t1, _ := time.Parse(time.RFC3339, monitors[i].Timestamp)
-		fmt.Printf("\t [[%d, %d, %d], %d, %d, %d, %d],\n",
+		fmt.Printf("\t [new Date(Date.UTC(%d, %d, %d, %d, %d, %d, 0)), %d, %d, %d, %d],\n",
+			t1.Year(), t1.Month()-1, t1.Day(),
 			t1.Hour(), t1.Minute(), t1.Second(),
 			monitors[i].Counters.RC_99,
 			monitors[i].Counters.RC_95,
 			monitors[i].Counters.RC_90,
 			monitors[i].Counters.RC_50)
-	}
+	})
 	chartfunc = `
         ]);
 
@@ -332,7 +349,7 @@ func PrintLifeSpanChart(monitors []Monitor) {
     function drawLifeSpanChart() {
 
       var data = new google.visualization.DataTable();
-        data.addColumn('timeofday', 'Time');
+        data.addColumn('date', 'Time');
         data.addColumn('number', '99% Life span (ms)');
         data.addColumn('number', '95% Life span (ms)');
         data.addColumn('number', '90% Life span (ms)');
@@ -340,15 +357,16 @@ func PrintLifeSpanChart(monitors []Monitor) {
         data.addRows([
             `
 	fmt.Printf("%s\n", chartfunc)
-	for i := 0; i < len(monitors); i++ {
+	StepReducedIterate(monitors, func(i int, monitors []Monitor) {
 		t1, _ := time.Parse(time.RFC3339, monitors[i].Timestamp)
-		fmt.Printf("\t [[%d, %d, %d], %d, %d, %d, %d],\n",
+		fmt.Printf("\t [new Date(Date.UTC(%d, %d, %d, %d, %d, %d, 0)), %d, %d, %d, %d],\n",
+			t1.Year(), t1.Month()-1, t1.Day(),
 			t1.Hour(), t1.Minute(), t1.Second(),
 			monitors[i].Counters.LS_99,
 			monitors[i].Counters.LS_95,
 			monitors[i].Counters.LS_90,
 			monitors[i].Counters.LS_50)
-	}
+	})
 	chartfunc = `
         ]);
 
@@ -383,7 +401,7 @@ func PrintSLAChart(monitors []Monitor) {
     function drawSLAChart() {
 
       var data = new google.visualization.DataTable();
-        data.addColumn('timeofday', 'Time');
+        data.addColumn('date', 'Time');
         data.addColumn('number', '99% SLA (%)');
         data.addColumn('number', '95% SLA (%)');
         data.addColumn('number', '90% SLA (%)');
@@ -391,15 +409,16 @@ func PrintSLAChart(monitors []Monitor) {
         data.addRows([
             `
 	fmt.Printf("%s\n", chartfunc)
-	for i := 0; i < len(monitors); i++ {
+	StepReducedIterate(monitors, func(i int, monitors []Monitor) {
 		t1, _ := time.Parse(time.RFC3339, monitors[i].Timestamp)
-		fmt.Printf("\t [[%d, %d, %d], %d, %d, %d, %d],\n",
+		fmt.Printf("\t [new Date(Date.UTC(%d, %d, %d, %d, %d, %d, 0)), %d, %d, %d, %d],\n",
+			t1.Year(), t1.Month()-1, t1.Day(),
 			t1.Hour(), t1.Minute(), t1.Second(),
 			monitors[i].Counters.CSLA_99,
 			monitors[i].Counters.CSLA_95,
 			monitors[i].Counters.CSLA_90,
 			monitors[i].Counters.CSLA_50)
-	}
+	})
 	chartfunc = `
         ]);
 
@@ -624,6 +643,7 @@ func PrintLastLatency(monitors []Monitor) {
 	fmt.Printf("%s\n", chartfunc)
 }
 
+
 func PrintAreaChart(monitors []Monitor) {
 	var chartfunc string
 	chartfunc = `
@@ -634,7 +654,8 @@ func PrintAreaChart(monitors []Monitor) {
 ['Send','LT100','LT200','LT300','LT400','LT500','LT600','LT700','LT800','LT900','LT1000','GE1000'],
             `
 	fmt.Printf("%s\n", chartfunc)
-	for _, v := range monitors {
+	StepReducedIterate(monitors, func(i int, monitors []Monitor) {
+		v := monitors[i]
 		fmt.Printf("['%d', %d, %d, %d, %d, %d, %d, %d, %d, %d, %d, %d],\n",
 			v.Counters.Send,
 			v.Counters.LT_100,
@@ -648,7 +669,7 @@ func PrintAreaChart(monitors []Monitor) {
 			v.Counters.LT_900,
 			v.Counters.LT_1000,
 			v.Counters.GE_1000)
-	}
+	})
 	chartfunc = `
         ]);
 
@@ -822,21 +843,26 @@ func PrintSizeRate(monitors []Monitor) {
     function drawSendRecvSizeChart() {
 
       var data = new google.visualization.DataTable();
-        data.addColumn('timeofday', 'Time');
+        data.addColumn('date', 'Time');
         data.addColumn('number', 'Send message size (Byte/Sec)');
         data.addColumn('number', 'Recv message size (Byte/Sec)');
         data.addRows([
             `
 	fmt.Printf("%s\n", chartfunc)
-	for i, j := 0, 1; j < len(monitors); i, j = i+1, j+1 {
-		t1, _ := time.Parse(time.RFC3339, monitors[j].Timestamp)
-		// ignore invalid (negative values) SendSizeDiff and RecvSizeDiff
-		sszdiff := monitors[j].Counters.SendSize - monitors[i].Counters.SendSize
-		rszdiff := monitors[j].Counters.RecvSize - monitors[i].Counters.RecvSize
-		if sszdiff > 0 && rszdiff > 0 {
-			fmt.Printf("\t [[%d, %d, %d], %d, %d],\n", t1.Hour(), t1.Minute(), t1.Second(), sszdiff, rszdiff)
+	StepReducedIterate(monitors, func(i int, monitors []Monitor) {
+		j := i + 1
+		if j < len(monitors) {
+			t1, _ := time.Parse(time.RFC3339, monitors[j].Timestamp)
+			// ignore invalid (negative values) SendSizeDiff and RecvSizeDiff
+			sszdiff := monitors[j].Counters.SendSize - monitors[i].Counters.SendSize
+			rszdiff := monitors[j].Counters.RecvSize - monitors[i].Counters.RecvSize
+			if sszdiff > 0 && rszdiff > 0 {
+				fmt.Printf("\t [new Date(Date.UTC(%d, %d, %d, %d, %d, %d, 0)), %d, %d],\n",
+				t1.Year(), t1.Month()-1, t1.Day(),
+				t1.Hour(), t1.Minute(), t1.Second(), sszdiff, rszdiff)
+			}
 		}
-	}
+	})
 	chartfunc = `
         ]);
 
@@ -930,21 +956,26 @@ func PrintRate(monitors []Monitor) {
       google.charts.setOnLoadCallback(drawSendRecvRate);
       function drawSendRecvRate() {
         var data = new google.visualization.DataTable();
-        data.addColumn('timeofday', 'Time');
+        data.addColumn('date', 'Time');
         data.addColumn('number', 'Send count rate');
         data.addColumn('number', 'Recv count rate');
         data.addRows([
             `
 	fmt.Printf("%s\n", chartfunc)
-	for i, j := 0, 1; j < len(monitors); i, j = i+1, j+1 {
-		t1, _ := time.Parse(time.RFC3339, monitors[j].Timestamp)
-		// ignore invalid negative values
-		sdiff := monitors[j].Counters.Send - monitors[i].Counters.Send
-		rdiff := monitors[j].Counters.Recv - monitors[i].Counters.Recv
-		if sdiff > 0 && rdiff > 0 {
-			fmt.Printf("\t [[%d, %d, %d], %d, %d],\n", t1.Hour(), t1.Minute(), t1.Second(), sdiff, rdiff)
+	StepReducedIterate(monitors, func(i int, monitors []Monitor) {
+                j := i + 1
+                if j < len(monitors) {
+			t1, _ := time.Parse(time.RFC3339, monitors[j].Timestamp)
+			// ignore invalid negative values
+			sdiff := monitors[j].Counters.Send - monitors[i].Counters.Send
+			rdiff := monitors[j].Counters.Recv - monitors[i].Counters.Recv
+			if sdiff > 0 && rdiff > 0 {
+				fmt.Printf("\t [new Date(Date.UTC(%d, %d, %d, %d, %d, %d, 0)), %d, %d],\n",
+				t1.Year(), t1.Month()-1, t1.Day(),
+				t1.Hour(), t1.Minute(), t1.Second(), sdiff, rdiff)
+			}
 		}
-	}
+	})
 	chartfunc = `
         ]);
       var options = {
