@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 
 namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
 {
-    public class PersistSendToGroup : RestGroupBase
+    public class RestPersistSendToGroup : RestGroupBase
     {
         protected override Task<IServiceHubContext> CreateHubContextAsync()
         {

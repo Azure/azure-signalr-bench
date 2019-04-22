@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
 {
-    public class PersistBroadcast : RestBase, ISlaveMethod
+    public class RestPersistBroadcast : RestBase, ISlaveMethod
     {
         protected override Task<IServiceHubContext> CreateHubContextAsync()
         {

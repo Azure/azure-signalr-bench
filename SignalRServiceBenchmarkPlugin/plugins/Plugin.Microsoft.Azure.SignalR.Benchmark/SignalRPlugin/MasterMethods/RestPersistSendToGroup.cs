@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
 {
-    public class PersistSendToGroup : SimpleScenarioBase, IMasterMethod
+    public class RestPersistSendToGroup : SimpleScenarioBase, IMasterMethod
     {
         public Task Do(
                     IDictionary<string, object> stepParameters,
