@@ -7,6 +7,10 @@ sendToGroup=others
 broadcast={1:2, 2:2, 5:2, 10:2, 20:2, 50:2, 100:2}
 restSendToUser={1:1, 2:1, 5:1, 10:1, 20:1, 50:1, 100:1}
 restBroadcast=restSendToUser
+restSendToGroup=restSendToUser
+restPersistBroadcast=restSendToUser
+restPersistSendToGroup=restSendToUser
+restPersistSendToUser=restSendToUser
 
 def unit1_appserver(s):
    return s[1]
