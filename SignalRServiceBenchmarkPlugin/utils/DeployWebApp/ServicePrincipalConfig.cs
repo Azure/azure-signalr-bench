@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace DeployWebApp
+﻿namespace DeployWebApp
 {
     public class ServicePrincipalConfig
     {

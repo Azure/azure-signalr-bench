@@ -15,7 +15,7 @@ namespace DeployWebApp
 {
     public class WebAppManagementBase
     {
-        protected ArgsOption _argsOption;
+        protected CommonArgsOption _argsOption;
         protected IAzure _azure;
         protected IDictionary<string, PricingTier> _priceTierMapper;
         protected PricingTier _targetPricingTier;
@@ -26,26 +26,17 @@ namespace DeployWebApp
         protected static int MAX_SCALE_OUT = 10;
         protected LogLevel _appLogLevel = LogLevel.Information;
 
-        public WebAppManagementBase(ArgsOption argsOption)
+        private void ProcessDeployOptions(DeployOption deployOption)
         {
-            _argsOption = argsOption;
-            _priceTierMapper = new Dictionary<string, PricingTier>()
-            {
-                { "StandardS1", PricingTier.StandardS1},
-                { "StandardS2", PricingTier.StandardS2},
-                { "StandardS3", PricingTier.StandardS3},
-                { "PremiumP1v2", PricingTier.PremiumP1v2},
-                { "PremiumP2v2", PricingTier.PremiumP2v2}
-            };
-            _appInstanceCount = _argsOption.WebappCount;
+            _appInstanceCount = deployOption.WebappCount;
             if (_appInstanceCount > 1)
             {
                 var i = MAX_SCALE_OUT;
                 for (; i > 1; i--)
                 {
-                    if (_argsOption.WebappCount % i == 0)
+                    if (deployOption.WebappCount % i == 0)
                     {
-                        _appPlanCount = _argsOption.WebappCount / i;
+                        _appPlanCount = deployOption.WebappCount / i;
                         _scaleOut = i;
                         break;
                     }
@@ -64,26 +55,53 @@ namespace DeployWebApp
                 throw new InvalidDataException("The web app instance count should be 1 or divided by 2 or 3 or 5 or 7");
             }
         }
+        public WebAppManagementBase(CommonArgsOption argsOption)
+        {
+            _argsOption = argsOption;
+            _priceTierMapper = new Dictionary<string, PricingTier>()
+            {
+                { "StandardS1", PricingTier.StandardS1},
+                { "StandardS2", PricingTier.StandardS2},
+                { "StandardS3", PricingTier.StandardS3},
+                { "PremiumP1v2", PricingTier.PremiumP1v2},
+                { "PremiumP2v2", PricingTier.PremiumP2v2}
+            };
+            if (argsOption is DeployOption)
+            {
+                var deployOption = (DeployOption)argsOption;
+                ProcessDeployOptions(deployOption);
+            }
+        }
 
         protected List<string> GenerateAppPlanNameList()
         {
             var rootTimestamp = DateTime.Now.ToString("yyyyMMddHHmmss");
             var webappNameList = new List<string>();
-            for (var i = 0; i < _appPlanCount; i++)
+            if (_argsOption is DeployOption)
             {
-                var name = _argsOption.WebAppNamePrefix + $"{rootTimestamp}{i}";
-                webappNameList.Add(name);
+                var deployOption = (DeployOption)_argsOption;
+                for (var i = 0; i < _appPlanCount; i++)
+                {
+                    var name = deployOption.WebAppNamePrefix + $"{rootTimestamp}{i}";
+                    webappNameList.Add(name);
+                }
             }
+
             return webappNameList;
         }
 
         protected bool ValidateDeployParameters()
         {
-            if (_argsOption.ConnectionString == null)
+            if (_argsOption is DeployOption)
             {
-                Console.WriteLine("No connection string is specified!");
-                return false;
+                var deployOption = (DeployOption)_argsOption;
+                if (deployOption.ConnectionString == null)
+                {
+                    Console.WriteLine("No connection string is specified!");
+                    return false;
+                }
             }
+
             if (_argsOption.ServicePrincipal == null &&
                 (_argsOption.ClientId == null ||
                 _argsOption.ClientSecret == null ||
@@ -95,28 +113,32 @@ namespace DeployWebApp
             return true;
         }
 
-        protected IResourceGroup GetResourceGroup()
+        protected async Task<IResourceGroup> GetResourceGroup()
         {
             IResourceGroup resourceGroup = null;
-            if (_azure.ResourceGroups.Contain(_argsOption.GroupName))
+            if (_argsOption is DeployOption)
             {
-                if (_argsOption.RemoveExistingResourceGroup == 1)
+                var deployOption = (DeployOption)_argsOption;
+                if (_azure.ResourceGroups.Contain(deployOption.GroupName))
                 {
-                    RemoveResourceGroup();
-                    resourceGroup = _azure.ResourceGroups.Define(_argsOption.GroupName)
-                                     .WithRegion(_argsOption.Location)
-                                     .Create();
+                    if (deployOption.RemoveExistingResourceGroup == 1)
+                    {
+                        await RemoveResourceGroup();
+                        resourceGroup = _azure.ResourceGroups.Define(_argsOption.GroupName)
+                                         .WithRegion(deployOption.Location)
+                                         .Create();
+                    }
+                    else
+                    {
+                        resourceGroup = _azure.ResourceGroups.GetByName(_argsOption.GroupName);
+                    }
                 }
                 else
                 {
-                    resourceGroup = _azure.ResourceGroups.GetByName(_argsOption.GroupName);
+                    resourceGroup = _azure.ResourceGroups.Define(_argsOption.GroupName)
+                                         .WithRegion(deployOption.Location)
+                                         .Create();
                 }
-            }
-            else
-            {
-                resourceGroup = _azure.ResourceGroups.Define(_argsOption.GroupName)
-                                     .WithRegion(_argsOption.Location)
-                                     .Create();
             }
             return resourceGroup;
         }
@@ -151,7 +173,7 @@ namespace DeployWebApp
                 .WithSubscription(_argsOption.SubscriptionId);
         }
 
-        protected void RemoveResourceGroup()
+        protected async Task RemoveResourceGroup()
         {
             var maxRetry = 3;
             var i = 0;
@@ -161,7 +183,10 @@ namespace DeployWebApp
                 {
                     if (_azure.ResourceGroups.Contain(_argsOption.GroupName))
                     {
-                        _azure.ResourceGroups.DeleteByName(_argsOption.GroupName);
+                        using (var cts = new CancellationTokenSource(TimeSpan.FromMinutes(5)))
+                        {
+                            await _azure.ResourceGroups.DeleteByNameAsync(_argsOption.GroupName, cts.Token);
+                        }
                     }
                     break;
                 }
@@ -423,6 +448,8 @@ namespace DeployWebApp
             string serverConnectionCount) package)
         {
             var funcName = "CreateWebAppCoreAsync";
+            var fileSystemQuotaInMB = 80;
+            var retentionDays = 30;
             using (var cts = new CancellationTokenSource(TimeSpan.FromHours(1)))
             {
                 var webapp = package.azure.WebApps.GetByResourceGroup(package.resourceGroup.Name, package.name);
@@ -430,7 +457,10 @@ namespace DeployWebApp
                 {
                     if (package.appServicePlan != null)
                     {
-                        await package.azure.WebApps.Define(package.name)
+                        if (package.appServicePlan.OperatingSystem ==
+                            Microsoft.Azure.Management.AppService.Fluent.OperatingSystem.Windows)
+                        {
+                            await package.azure.WebApps.Define(package.name)
                                                    .WithExistingWindowsPlan(package.appServicePlan)
                                                    .WithExistingResourceGroup(package.resourceGroup)
                                                    .WithWebSocketsEnabled(true)
@@ -445,8 +475,8 @@ namespace DeployWebApp
                                                    .DefineDiagnosticLogsConfiguration()
                                                        .WithWebServerLogging()
                                                        .WithWebServerLogsStoredOnFileSystem()
-                                                       .WithWebServerFileSystemQuotaInMB(30)
-                                                       .WithLogRetentionDays(1)
+                                                       .WithWebServerFileSystemQuotaInMB(fileSystemQuotaInMB)
+                                                       .WithLogRetentionDays(retentionDays)
                                                        .WithDetailedErrorMessages(true)
                                                        .WithFailedRequestTracing(true)
                                                        .Attach()
@@ -454,10 +484,12 @@ namespace DeployWebApp
                                                        .WithPublicGitRepository(package.githubRepo)
                                                        .WithBranch("master")
                                                        .Attach()
-                                                   .WithConnectionString("Azure:SignalR:ConnectionString", package.connectionString,
-                                                    Microsoft.Azure.Management.AppService.Fluent.Models.ConnectionStringType.Custom)
+                                                   .WithConnectionString("Azure:SignalR:ConnectionString",
+                                                        package.connectionString,
+                                                        Microsoft.Azure.Management.AppService.Fluent.Models.ConnectionStringType.Custom)
                                                    .WithAppSetting("ConnectionCount", package.serverConnectionCount)
                                                    .CreateAsync(cts.Token);
+                        }
                         Console.WriteLine($"{DateTime.Now.ToString("yyyyMMddHHmmss")} Successfully {funcName} for {package.name}");
                     }
                     else

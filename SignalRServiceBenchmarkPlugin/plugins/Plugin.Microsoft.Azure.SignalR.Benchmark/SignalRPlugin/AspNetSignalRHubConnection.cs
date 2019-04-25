@@ -180,17 +180,17 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
 
         public async Task StopAsync()
         {
+            await MarkAsStopped();
             try
             {
                 // If connection fails to start, its internal state is not complete.
                 // Exception will thrown if invoking Stop.
-                _hubConnection.Stop();
+                _hubConnection.Stop(TimeSpan.FromSeconds(5));
             }
             catch (Exception e)
             {
                 Log.Error($"Fail to stop: {e.Message}");
             }
-            await MarkAsStopped();
         }
 
         public Task DisposeAsync()

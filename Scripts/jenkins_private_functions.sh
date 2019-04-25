@@ -104,7 +104,7 @@ function createWebApp()
 
   disable_exit_immediately_when_fail
   cd $AspNetWebMgrWorkingDir
-  dotnet run -- --servicePrincipal $ServicePrincipal \
+  dotnet run -- deploy --servicePrincipal $ServicePrincipal \
               --location ${VMLocation} \
               --webappNamePrefix "${appPrefix}" \
               --webappCount $appserverCount \
@@ -308,7 +308,7 @@ function RunSendToGroup()
     # get the metrics
     collectWebAppMetrics $appPlanOut $webAppOut $outputDir $duration
     # remove appserver
-    $AspNetWebMgrDir/DeployWebApp --removeResourceGroup=1 --resourceGroup=${AspNetWebAppResGrp} --servicePrincipal $ServicePrincipal
+    $AspNetWebMgrDir/DeployWebApp removeGroup --resourceGroup=${AspNetWebAppResGrp} --servicePrincipal $ServicePrincipal
   fi
 }
 
@@ -366,7 +366,7 @@ function RunSendToClient()
     local duration=$(($SECONDS-$startSeconds))
     collectWebAppMetrics $appPlanOut $webAppOut $outputDir $duration
     # remove appserver
-    $AspNetWebMgrDir/DeployWebApp --removeResourceGroup=1 --resourceGroup=${AspNetWebAppResGrp} --servicePrincipal $ServicePrincipal
+    $AspNetWebMgrDir/DeployWebApp removeGroup --resourceGroup=${AspNetWebAppResGrp} --servicePrincipal $ServicePrincipal
   fi
 }
 
@@ -427,7 +427,7 @@ function RunCommonScenario()
     local duration=$(($SECONDS-$startSeconds))
     collectWebAppMetrics $appPlanOut $webAppOut $outputDir $duration
     # remove appserver
-    $AspNetWebMgrDir/DeployWebApp --removeResourceGroup=1 --resourceGroup=${AspNetWebAppResGrp} --servicePrincipal $ServicePrincipal
+    $AspNetWebMgrDir/DeployWebApp removeGroup --resourceGroup=${AspNetWebAppResGrp} --servicePrincipal $ServicePrincipal
   fi
 }
 
@@ -1116,7 +1116,7 @@ function remove_resource_group() {
   local clean_asrs_daemon=daemon_${JOB_NAME}_cleanasrs
   ## remove webapp if they are not removed
 cat << EOF > /tmp/clean_webapp.sh
-${AspNetWebMgrDir}/DeployWebApp --removeResourceGroup=1 --resourceGroup=${AspNetWebAppResGrp} --servicePrincipal=$ServicePrincipal
+${AspNetWebMgrDir}/DeployWebApp removeGroup --resourceGroup=${AspNetWebAppResGrp} --servicePrincipal=$ServicePrincipal
 EOF
   daemonize -v -o /tmp/${clean_aspwebapp_daemon}.out -e /tmp/${clean_aspwebapp_daemon}.err -E BUILD_ID=dontKillcenter /usr/bin/nohup /bin/sh /tmp/clean_webapp.sh &
   ## remove all test VMs
