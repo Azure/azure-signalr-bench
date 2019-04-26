@@ -62,11 +62,18 @@ function set_job_env() {
    else
      export Sku=$Sku
    fi
+   if [ "$GitRepo" == "" ]
+   then
+     export GitRepo="https://github.com/clovertrail/AspNetServer"
+   else
+     export GitRepo=$GitRepo
+   fi
    export ASRSResourceGroup="hzatpf"$result_root
    export SignalrServiceName="atpf"${result_root} #-`date +%H%M%S`
    export AspNetWebAppResGrp="hzperfwebapp"$result_root
    export MaxSendIteration=120 # we evaluate the total running time per this value
    record_build_info # record the jenkins job to /tmp/send_mail.txt
+   prebuild_helper_tool
 }
 
 function azure_login() {
@@ -124,9 +131,7 @@ then
 fi
 }
 
-function register_exit_handler() {
-  disable_exit_immediately_when_fail
-  trap remove_resource_group EXIT
+function prebuild_helper_tool() {
   cd $CurrentWorkingDir
   if [ -d ${VMMgrDir} ]
   then
@@ -140,6 +145,11 @@ function register_exit_handler() {
     rm -rf ${AspNetWebMgrDir}
   fi
   dotnet publish -c Release -f netcoreapp2.1 -o ${AspNetWebMgrDir} --self-contained -r linux-x64
+}
+
+function register_exit_handler() {
+  disable_exit_immediately_when_fail
+  trap remove_resource_group EXIT
   enable_exit_immediately_when_fail
 }
 

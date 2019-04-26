@@ -5,13 +5,13 @@ import yaml
 
 def masterIP(input, count):
     with open(input, 'r') as f:
-        data = yaml.load(f)
+        data = yaml.safe_load(f)
         return data['masterPrivateIp']
 
 def slaveListIP(input, count):
     ret=""
     with open(input, 'r') as f:
-        data = yaml.load(f)
+        data = yaml.safe_load(f)
         slaveList = data['slavePrivateIp'].split(';')
         l = len(slaveList)
         for i, item in enumerate(slaveList):
@@ -23,7 +23,7 @@ def slaveListIP(input, count):
 def slavesIP(input, count):
     ret=""
     with open(input, 'r') as f:
-        data = yaml.load(f)
+        data = yaml.safe_load(f)
         slaveList = data['slavePrivateIp'].split(';')
         l = len(slaveList)
         for i, item in enumerate(slaveList):
@@ -35,7 +35,7 @@ def slavesIP(input, count):
 def appserverListIP(input, count):
     ret=""
     with open(input, 'r') as f:
-        data = yaml.load(f)
+        data = yaml.safe_load(f)
         appserverList = data['appServerPrivateIp'].split(';')
         l = len(appserverList)
         for i, item in enumerate(appserverList):
@@ -49,7 +49,7 @@ def appserverListIP(input, count):
 def appserverIP(input, count):
     ret=""
     with open(input, 'r') as f:
-        data = yaml.load(f)
+        data = yaml.safe_load(f)
         appserverList = data['appServerPrivateIp'].split(';')
         l = len(appserverList)
         for i, item in enumerate(appserverList):
@@ -63,7 +63,7 @@ def appserverIP(input, count):
 def appserverPubIP(input, count):
     ret=""
     with open(input, 'r') as f:
-        data = yaml.load(f)
+        data = yaml.safe_load(f)
         appserverList = data['appServerPublicIp'].split(';')
         l = len(appserverList)
         for i, item in enumerate(appserverList):
