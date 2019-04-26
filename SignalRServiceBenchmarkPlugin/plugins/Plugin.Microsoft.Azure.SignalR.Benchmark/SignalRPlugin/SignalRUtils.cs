@@ -358,6 +358,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             var clientUrl = serviceManager.GetClientEndpoint(SignalRConstants.DefaultRestHubName);
             var connections = from i in Enumerable.Range(0, connectionIndex.Count)
                               let userId = GenClientUserIdFromConnectionIndex(connectionIndex[i])
+                              let tok = serviceManager.GenerateClientAccessToken(SignalRConstants.DefaultRestHubName, userId) // contains random value
                               select new HubConnectionBuilder()
                               .ConfigureLogging(logger =>
                               {
@@ -371,8 +372,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
                                   httpConnectionOptions.CloseTimeout = TimeSpan.FromMinutes(closeTimeout);
                                   httpConnectionOptions.AccessTokenProvider = () =>
                                   {
-                                      return Task.FromResult(
-                                          serviceManager.GenerateClientAccessToken(SignalRConstants.DefaultRestHubName, userId));
+                                      return Task.FromResult(tok);
                                   };
                               }) into builder
                               let hubConnection = protocolString.ToLower() == "messagepack" ?

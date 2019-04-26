@@ -112,7 +112,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         // Default cancellation token timeout
         public static readonly TimeSpan DefaultCancellationToken = TimeSpan.FromSeconds(5);
 
-        public static readonly string DefaultRestHubName = "RestBenchHub";
+        public static readonly string DefaultRestHubName = "restbenchhub";
 
         public static readonly string DefaultClientUserIdPrefix = "cli";
     }
