@@ -44,26 +44,37 @@ EOF
   enable_exit_immediately_when_fail
 }
 
+function isUseAzureWeb()
+{
+  if [ "$AspNetSignalR" == "true" ] || [ "$AzWebSignalR" == "true" ]
+  then
+    echo 1
+  else
+    echo 0
+  fi
+}
+
 function get_reduced_appserverCount()
 {
   local unit=$1
   local scenario=$2
   local appserverInUse=200
+  local useAzureWeb=$(isUseAzureWeb)
   # for none AspNet, we cannot surpass serverVmCount,
   # but for AspNet, we ignore serverVmCount because we use Azure WebApp
-  if [ "$AspNetSignalR" != "true" ] && [ "$serverVmCount" != "" ]
+  if [ $useAzureWeb -ne 1 ] && [ "$serverVmCount" != "" ]
   then
     appserverInUse=$serverVmCount
   fi
   # handle AspNet app server
-  if [ "$AspNetSignalR" == "true" ] && [ "$AspNetWebAppCount" != "" ]
+  if [ $useAzureWeb -eq 1 ] && [ "$AspNetWebAppCount" != "" ]
   then
     appserverInUse=$AspNetWebAppCount
   fi
   if [ "$DisableReduceServer" != "true" ]
   then
     local limitedAppserver
-    if [ "$AspNetSignalR" != "true" ]
+    if [ $useAzureWeb -ne 1 ]
     then
       limitedAppserver=`python get_appserver_count.py -u $unit -s $scenario`
     else
@@ -101,7 +112,7 @@ function createWebApp()
 
   local resGroup=$AspNetWebAppResGrp #"${appPrefix}"`date +%H%M%S`
   local appserverCount=$(get_reduced_appserverCount $unit $scenario)
-
+  local gitRepo=$GitRepo
   disable_exit_immediately_when_fail
   cd $AspNetWebMgrWorkingDir
   dotnet run -- deploy --servicePrincipal $ServicePrincipal \
@@ -112,7 +123,8 @@ function createWebApp()
               --outputFile $serverUrlOutFile --resourceGroup $resGroup \
               --appServicePlanIdOutputFile $appPlanIdOutFile \
               --appServicePlanScaleOutputFile $appPlanScaleOutFile \
-              --webAppIdOutputFile $webAppIdOutFile
+              --webAppIdOutputFile $webAppIdOutFile \
+              --githubRepo $gitRepo
   enable_exit_immediately_when_fail
 }
 
@@ -133,6 +145,18 @@ function collectWebAppMetrics()
   do
     local webname=`echo $i|awk -F / '{print $NF}'`
     dotnet run -- --secondsBeforeNow $duration --servicePrincipal $ServicePrincipal --resourceId $i > $outputDir/${webname}_webApp_metrics.txt
+  done
+}
+
+function downloadWebAppLog()
+{
+  local webAppOut=$1
+  local outputDir=$2
+  local i
+  for i in `cat $webAppOut`
+  do
+    local webname=`echo $i|awk -F / '{print $NF}'`
+    $AspNetWebMgrDir/DeployWebApp downloadLog --servicePrincipal $ServicePrincipal --WebAppResourceId $i --LocalFilePrefix $outputDir/webappserverlog
   done
 }
 
@@ -279,7 +303,8 @@ function RunSendToGroup()
   fi
   local startSeconds=$SECONDS
 
-  if [ "$AspNetSignalR" != "true" ]
+  local useAzureWeb=$(isUseAzureWeb)
+  if [ $useAzureWeb -ne 1 ]
   then
     cd $ScriptWorkingDir
     appserverUrls=$(get_reduced_appserverUrl $unit $Scenario)
@@ -302,11 +327,13 @@ function RunSendToGroup()
   local concurrentConnection=`python3 get_sending_connection.py -g $groupType -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q concurrentConnection $maxConnectionOption`
   local send=`python3 get_sending_connection.py -g $groupType -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q sendingSteps $maxConnectionOption`
   run_command_core $tag $Scenario $Transport $MessageEncoding $user "$passwd" "$connectionString" $outputDir $config_path $connection $concurrentConnection $send $appserverUrls $unit
-  if [ "$AspNetSignalR" == "true" ]
+  if [ $useAzureWeb -eq 1 ]
   then
     local duration=$(($SECONDS-$startSeconds))
     # get the metrics
     collectWebAppMetrics $appPlanOut $webAppOut $outputDir $duration
+    # download load
+    downloadWebAppLog $webAppOut $outputDir
     # remove appserver
     $AspNetWebMgrDir/DeployWebApp removeGroup --resourceGroup=${AspNetWebAppResGrp} --servicePrincipal $ServicePrincipal
   fi
@@ -337,7 +364,8 @@ function RunSendToClient()
   local webAppOut=$outputDir/${appPrefix}_webApp.txt
   local appPlanScaleOut=$outputDir/${appPrefix}_appPlanScaleOut.txt
   local startSeconds=$SECONDS
-  if [ "$AspNetSignalR" != "true" ]
+  local useAzureWeb=$(isUseAzureWeb)
+  if [ $useAzureWeb -ne 1 ]
   then
     cd $ScriptWorkingDir
     appserverUrls=$(get_reduced_appserverUrl $unit $Scenario)
@@ -361,10 +389,12 @@ function RunSendToClient()
   local send=`python3 get_sending_connection.py -ms $msgSize -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q sendingSteps $maxConnectionOption`
 
   run_command_core $tag $Scenario $Transport $MessageEncoding $user "$passwd" "$connectionString" $outputDir $config_path $connection $concurrentConnection $send $appserverUrls $unit
-  if [ "$AspNetSignalR" == "true" ]
+  if [ $useAzureWeb -eq 1 ]
   then
     local duration=$(($SECONDS-$startSeconds))
     collectWebAppMetrics $appPlanOut $webAppOut $outputDir $duration
+    # download load
+    downloadWebAppLog $webAppOut $outputDir
     # remove appserver
     $AspNetWebMgrDir/DeployWebApp removeGroup --resourceGroup=${AspNetWebAppResGrp} --servicePrincipal $ServicePrincipal
   fi
@@ -393,7 +423,8 @@ function RunCommonScenario()
   local webAppOut=$outputDir/${appPrefix}_webApp.txt
   local appPlanScaleOut=$outputDir/${appPrefix}_appPlanScaleOut.txt
   local startSeconds=$SECONDS
-  if [ "$AspNetSignalR" != "true" ]
+  local useAzureWeb=$(isUseAzureWeb)
+  if [ $useAzureWeb -ne 1 ]
   then
     if [[ "$Scenario" == "rest"* ]]
     then
@@ -422,10 +453,12 @@ function RunCommonScenario()
   local send=`python3 get_sending_connection.py -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q sendingSteps $maxConnectionOption`
   run_command_core $tag $Scenario $Transport $MessageEncoding $user "$passwd" "$connectionString" $outputDir $config_path $connection $concurrentConnection $send $appserverUrls $unit
 
-  if [ "$AspNetSignalR" == "true" ]
+  if [ $useAzureWeb -eq 1 ]
   then
     local duration=$(($SECONDS-$startSeconds))
     collectWebAppMetrics $appPlanOut $webAppOut $outputDir $duration
+    # download load
+    downloadWebAppLog $webAppOut $outputDir
     # remove appserver
     $AspNetWebMgrDir/DeployWebApp removeGroup --resourceGroup=${AspNetWebAppResGrp} --servicePrincipal $ServicePrincipal
   fi
@@ -638,9 +671,15 @@ function run_benchmark() {
   local passwd="$3"
   local connectStr="$4"
   local tag="unit"$unit
+  local useAzureWeb=$(isUseAzureWeb)
   if [ "$AspNetSignalR" == "true" ]
   then
     tag="AspNet"$tag
+  else
+    if [ $useAzureWeb -eq 1 ]
+    then
+      tag="AzWeb"$tag
+    fi
   fi
   if [ "kind" == "longrun" ]
   then
@@ -861,7 +900,8 @@ done
 EOF
   nohup sh $script_collect_slaves_top &
   collect_slaves_top_pid=$!
-  if [ "$AspNetSignalR" != "true" ]
+  local useAzureWeb=$(isUseAzureWeb)
+  if [ $useAzureWeb -ne 1 ]
   then
     nohup sh $script_collect_appserver_top &
     collect_appserver_top_pid=$!
@@ -949,7 +989,8 @@ function run_command() {
   local slaves=`python extract_ip.py -i $PrivateIps -q slaves`
   local masterDir=$CommandWorkingDir/master
   local slaveDir=$CommandWorkingDir/slave
-  if [ "$AspNetSignalR" != "true" ]
+  local useAzureWeb=$(isUseAzureWeb)
+  if [ $useAzureWeb -ne 1 ]
   then
     if [[ "$Scenario" != "rest"* ]]
     then
@@ -996,8 +1037,8 @@ EOF
   then
     neverStopAppServerOp="--NotStopAppServer=1"
   fi
-
-  if [ "$AspNetSignalR" != "true" ]
+  local useAzureWeb=$(isUseAzureWeb)
+  if [ $useAzureWeb -ne 1 ]
   then
     dotnet run -- --RpcPort=5555 --Username=$user --Password=$passwd \
          --SlaveList="$slaves" --MasterHostname="$master" $startAppServerOption \
