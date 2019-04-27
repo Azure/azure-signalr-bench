@@ -158,6 +158,10 @@ function downloadWebAppLog()
     local webname=`echo $i|awk -F / '{print $NF}'`
     $AspNetWebMgrDir/DeployWebApp downloadLog --servicePrincipal $ServicePrincipal --WebAppResourceId $i --LocalFilePrefix $outputDir/webappserverlog
   done
+  cd $outputDir
+  tar zcvf webappserverlog.log.tgz webappserverlog*.log
+  rm webappserverlog*.log
+  cd -
 }
 
 function gen4AspNet()
