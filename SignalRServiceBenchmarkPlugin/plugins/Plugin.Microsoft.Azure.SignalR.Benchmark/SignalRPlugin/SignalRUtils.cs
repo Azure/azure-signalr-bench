@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Azure.SignalR.Management;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Plugin.Microsoft.Azure.SignalR.Benchmark.Internals;
 using Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods;
 using Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods.Statistics;
 using Rpc.Service;
@@ -205,7 +206,57 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             return connections;
         }
 
-        public static Task<IDictionary<string, object>> SlaveCreateConnection(
+        public static async Task StartNegotiationServer(
+            IDictionary<string, object> stepParameters,
+            IDictionary<string, object> pluginParameters)
+        {
+            NegotiationServer negotiationServer = null;
+            stepParameters.TryGetTypedValue(SignalRConstants.Type,
+                out string type, Convert.ToString);
+            stepParameters.TryGetTypedValue(SignalRConstants.HubUrls,
+                out string urls, Convert.ToString);
+            if (pluginParameters.TryGetValue($"{SignalRConstants.NegotiationServer}.{type}", out _))
+            {
+                pluginParameters.TryGetTypedValue($"{SignalRConstants.NegotiationServer}.{type}",
+                    out negotiationServer, (obj) => (NegotiationServer)obj);
+            }
+            else
+            {
+                // connection string is stored in 'urls'
+                negotiationServer = new NegotiationServer(urls);
+                pluginParameters[$"{SignalRConstants.NegotiationServer}.{type}"] = negotiationServer;
+            }
+            if (!negotiationServer.IsStarted)
+            {
+                await negotiationServer.Start();
+            }
+        }
+
+        public static async Task StopNegotiationServer(
+            IDictionary<string, object> stepParameters,
+            IDictionary<string, object> pluginParameters)
+        {
+            NegotiationServer negotiationServer = null;
+            stepParameters.TryGetTypedValue(SignalRConstants.Type,
+                out string type, Convert.ToString);
+            if (pluginParameters.TryGetValue($"{SignalRConstants.NegotiationServer}.{type}", out _))
+            {
+                pluginParameters.TryGetTypedValue($"{SignalRConstants.NegotiationServer}.{type}",
+                    out negotiationServer, (obj) => (NegotiationServer)obj);
+            }
+            if (negotiationServer != null &&
+                negotiationServer.IsStarted)
+            {
+                await negotiationServer.Stop();
+            }
+        }
+
+        public static string GetNegotiationEndpoint(string hub, string userId)
+        {
+            return SignalRConstants.NegotiationUrl + "/" + hub + "?user=" + userId;
+        }
+
+        public static void SlaveCreateConnection(
             IDictionary<string, object> stepParameters,
             IDictionary<string, object> pluginParameters,
             ClientType clientType)
@@ -238,7 +289,6 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
                 // record the connection string for REST API send
                 SaveConnectionStringToContext(pluginParameters, type, urls);
             }
-            return Task.FromResult<IDictionary<string, object>>(null);
         }
 
         public static void FilterOnConnectedNotification(
@@ -350,15 +400,9 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             int closeTimeout)
         {
             var transportType = GetTransportType(transportTypeString);
-            var serviceManager = new ServiceManagerBuilder().WithOptions(option =>
-            {
-                option.ConnectionString = connectionString;
-                option.ServiceTransportType = ServiceTransportType.Persistent;
-            }).Build();
-            var clientUrl = serviceManager.GetClientEndpoint(SignalRConstants.DefaultRestHubName);
             var connections = from i in Enumerable.Range(0, connectionIndex.Count)
                               let userId = GenClientUserIdFromConnectionIndex(connectionIndex[i])
-                              let tok = serviceManager.GenerateClientAccessToken(SignalRConstants.DefaultRestHubName, userId) // contains random value
+                              let negoEndPoint = GetNegotiationEndpoint(SignalRConstants.DefaultRestHubName, userId)
                               select new HubConnectionBuilder()
                               .ConfigureLogging(logger =>
                               {
@@ -366,14 +410,10 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
                                   logger.AddSerilog(dispose: true);
                                   logger.SetMinimumLevel(LogLevel.Error);
                               })
-                              .WithUrl(clientUrl, httpConnectionOptions =>
+                              .WithUrl(negoEndPoint, httpConnectionOptions =>
                               {
                                   httpConnectionOptions.Transports = transportType;
                                   httpConnectionOptions.CloseTimeout = TimeSpan.FromMinutes(closeTimeout);
-                                  httpConnectionOptions.AccessTokenProvider = () =>
-                                  {
-                                      return Task.FromResult(tok);
-                                  };
                               }) into builder
                               let hubConnection = protocolString.ToLower() == "messagepack" ?
                                                   builder.AddMessagePackProtocol().Build() : builder.Build()

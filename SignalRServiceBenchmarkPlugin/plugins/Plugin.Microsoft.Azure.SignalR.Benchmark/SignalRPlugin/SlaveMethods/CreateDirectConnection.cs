@@ -9,15 +9,16 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
 {
     public class CreateDirectConnection : ISlaveMethod
     {
-        public Task<IDictionary<string, object>> Do(
+        public async Task<IDictionary<string, object>> Do(
             IDictionary<string, object> stepParameters,
             IDictionary<string, object> pluginParameters)
         {
             try
             {
                 Log.Information($"Create connections...");
-
-                return SignalRUtils.SlaveCreateConnection(stepParameters, pluginParameters, ClientType.DirectConnect);
+                await SignalRUtils.StartNegotiationServer(stepParameters, pluginParameters);
+                SignalRUtils.SlaveCreateConnection(stepParameters, pluginParameters, ClientType.DirectConnect);
+                return null;
             }
             catch (Exception ex)
             {

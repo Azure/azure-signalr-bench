@@ -11,7 +11,9 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
 {
     public class StopConnection: ISlaveMethod
     {
-        public async Task<IDictionary<string, object>> Do(IDictionary<string, object> stepParameters, IDictionary<string, object> pluginParameters)
+        public async Task<IDictionary<string, object>> Do(
+            IDictionary<string, object> stepParameters,
+            IDictionary<string, object> pluginParameters)
         {
             try
             {
@@ -27,6 +29,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 // Stop connections
                 await Task.WhenAll(from connection in connections
                                    select connection.StopAsync());
+                await SignalRUtils.StopNegotiationServer(stepParameters, pluginParameters);
                 return null;
             }
             catch (Exception ex)

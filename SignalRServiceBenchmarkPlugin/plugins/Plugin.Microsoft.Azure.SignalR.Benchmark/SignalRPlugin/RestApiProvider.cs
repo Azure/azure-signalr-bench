@@ -147,7 +147,6 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         private string GenerateAccessTokenInternal(string audience, IEnumerable<Claim> claims, TimeSpan lifetime)
         {
             var expire = DateTime.UtcNow.Add(lifetime);
-
             var securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_accessKey));
             var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
 
