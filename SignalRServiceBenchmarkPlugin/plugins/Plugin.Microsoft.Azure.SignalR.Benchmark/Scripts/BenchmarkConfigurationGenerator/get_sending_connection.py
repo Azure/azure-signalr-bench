@@ -1,4 +1,8 @@
 import argparse
+from RestPersistBroadcast import *
+from RestPersistSendToGroup import *
+from RestPersistSendToUser import *
+from RestSendToGroup import *
 from RestSendToUser import *
 from RestBroadcast import *
 from SendToClient import *
@@ -14,17 +18,28 @@ def parse_arguments():
 
     # required
     parser.add_argument('-u', '--unit', type=int, required=True, help='Azure SignalR service unit.')
-    parser.add_argument('-S', '--scenario', required=True, choices=[scenario_type.echo,
-                                                                    scenario_type.broadcast,
-                                                                    scenario_type.rest_broadcast,
-                                                                    scenario_type.rest_send_to_user,
-                                                                    scenario_type.send_to_client,
-                                                                    scenario_type.send_to_group,
-                                                                    scenario_type.frequent_join_leave_group],
-                        help="Scenario, choose from <{}>|<{}>|<{}>|<{}>|<{}>|<{}>|<{}>"
+    parser.add_argument('-S',
+                        '--scenario',
+                        required=True,
+                        choices=[scenario_type.echo,
+                                 scenario_type.broadcast,
+                                 scenario_type.rest_persist_broadcast,
+                                 scenario_type.rest_persist_send_to_group,
+                                 scenario_type.rest_persist_send_to_user,
+                                 scenario_type.rest_broadcast,
+                                 scenario_type.rest_send_to_group,
+                                 scenario_type.rest_send_to_user,
+                                 scenario_type.send_to_client,
+                                 scenario_type.send_to_group,
+                                 scenario_type.frequent_join_leave_group],
+                        help="Scenario, choose from <{}>|<{}>|<{}>|<{}>|<{}>|<{}>|<{}>|<{}>|<{}>|<{}>|<{}>"
                         .format(scenario_type.echo,
                                 scenario_type.broadcast,
+                                scenario_type.rest_persist_broadcast,
+                                scenario_type.rest_persist_send_to_group,
+                                scenario_type.rest_persist_send_to_user,
                                 scenario_type.rest_broadcast,
+                                scenario_type.rest_send_to_group,
                                 scenario_type.rest_send_to_user,
                                 scenario_type.send_to_client,
                                 scenario_type.send_to_group,
@@ -75,9 +90,15 @@ def main():
     scenario_config_collection = parse_settings(args.settings)
 
     # determine settings
-    scenario_config = determine_scenario_config(scenario_config_collection, args.unit, args.scenario, args.transport,
-                                                args.protocol, args.use_max_connection, args.message_size,
-                                                args.group_type, args.group_config_mode)
+    scenario_config = determine_scenario_config(scenario_config_collection,
+                                                args.unit,
+                                                args.scenario,
+                                                args.transport,
+                                                args.protocol,
+                                                args.use_max_connection,
+                                                args.message_size,
+                                                args.group_type,
+                                                args.group_config_mode)
 
     func="{f}(scenario_config)".format(f=args.query)
     eval(func)
