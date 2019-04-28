@@ -16,8 +16,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
             try
             {
                 Log.Information($"Create connections...");
-
-                return SignalRUtils.SlaveCreateConnection(stepParameters, pluginParameters, ClientType.AspNet);
+                SignalRUtils.SlaveCreateConnection(stepParameters, pluginParameters, ClientType.AspNet);
+                return Task.FromResult<IDictionary<string, object>>(null);
             }
             catch (Exception ex)
             {
