@@ -153,15 +153,18 @@ function downloadWebAppLog()
   local webAppOut=$1
   local outputDir=$2
   local i
-  for i in `cat $webAppOut`
-  do
-    local webname=`echo $i|awk -F / '{print $NF}'`
-    $AspNetWebMgrDir/DeployWebApp downloadLog --servicePrincipal $ServicePrincipal --WebAppResourceId $i --LocalFilePrefix $outputDir/webappserverlog
-  done
-  cd $outputDir
-  tar zcvf webappserverlog.log.tgz webappserverlog*.log
-  rm webappserverlog*.log
-  cd -
+  if [ "$AspNetSignalR" != "true" ] # AspNet SignalR has not writen log to filesystem
+  then
+    for i in `cat $webAppOut`
+    do
+      local webname=`echo $i|awk -F / '{print $NF}'`
+      $AspNetWebMgrDir/DeployWebApp downloadLog --servicePrincipal $ServicePrincipal --WebAppResourceId $i --LocalFilePrefix $outputDir/webappserverlog
+    done
+    cd $outputDir
+    tar zcvf webappserverlog.log.tgz webappserverlog*.log
+    rm webappserverlog*.log
+    cd -
+  fi
 }
 
 function gen4AspNet()
