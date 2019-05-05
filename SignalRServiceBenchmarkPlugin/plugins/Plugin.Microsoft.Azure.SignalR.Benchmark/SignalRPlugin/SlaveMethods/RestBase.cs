@@ -1,7 +1,5 @@
 ﻿using Microsoft.AspNetCore.SignalR;
 using Microsoft.Azure.SignalR.Management;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using Serilog;
 using System;
 using System.Collections.Generic;
@@ -40,6 +38,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
 
             var hubContext = await CreateHubContextAsync();
             await RestSendMessage(hubContext);
+            await hubContext.DisposeAsync();
             return null;
         }
 
