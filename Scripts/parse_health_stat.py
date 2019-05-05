@@ -12,14 +12,16 @@ def FindManyMax(infile, queryMax):
            if (len(items) == 2):
              try:
                 jData = json.loads(items[1], 'utf-8')
-                if (queryMax in jData):
-                   u = int(jData[queryMax])
-                   if (u >= v):
-                     qMax = u
-                   elif qMax > 0:
-                     manyMaxArr.append(qMax)
-                     qMax = 0
-                   v = u
+                u = 0
+                for key, value in jData.items():
+                    if (queryMax in value):
+                       u = u + int(value[queryMax])
+                if (u >= v):
+                   qMax = u
+                elif qMax > 0:
+                   manyMaxArr.append(qMax)
+                   qMax = 0
+                v = u
              except Exception:
                 print("exception occurs")
     if qMax > 0:
