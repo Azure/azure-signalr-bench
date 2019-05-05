@@ -4,6 +4,7 @@ using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 
 namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
@@ -16,7 +17,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
         {
             try
             {
-                Log.Information($"{GetType().Name}...");
+                ServicePointManager.DefaultConnectionLimit = SignalRConstants.DefaultConnectionLimit;
+                Log.Information($"{GetType().Name} 's DefaultConnectionLimit: {ServicePointManager.DefaultConnectionLimit}");
                 await RunRest(stepParameters, pluginParameters);
                 return null;
             }

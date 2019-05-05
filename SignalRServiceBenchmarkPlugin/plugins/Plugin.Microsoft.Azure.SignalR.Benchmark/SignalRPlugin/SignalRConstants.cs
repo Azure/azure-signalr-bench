@@ -121,5 +121,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         public static readonly string DefaultRestHubName = "restbenchhub";
 
         public static readonly string DefaultClientUserIdPrefix = "cli";
+
+        // Set the ServicePointManager.DefaultConnectionLimit for serverless test
+        public static readonly int DefaultConnectionLimit = 4;
     }
 }
