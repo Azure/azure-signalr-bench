@@ -24,6 +24,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
         protected List<int> ConnectionIndex;
         protected IList<IHubConnectionAdapter> Connections;
         protected IDictionary<string, object> PluginParameters;
+        protected bool HideRecordLatency;
 
         protected virtual void LoadParametersAndContext(
             IDictionary<string, object> stepParameters,

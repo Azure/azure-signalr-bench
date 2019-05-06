@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.SignalR;
+﻿using Common;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Azure.SignalR.Management;
 using Serilog;
 using System;
@@ -19,6 +20,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
             {
                 ServicePointManager.DefaultConnectionLimit = SignalRConstants.DefaultConnectionLimit;
                 Log.Information($"{GetType().Name} 's DefaultConnectionLimit: {ServicePointManager.DefaultConnectionLimit}");
+                // Here allow manually evaluate the "send" latency if "RecordLatency" callback is not registered
+                HideRecordLatency = SignalRUtils.HideMessageRoundTripLatency(stepParameters, pluginParameters);
                 await RunRest(stepParameters, pluginParameters);
                 return null;
             }
@@ -51,11 +54,17 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
         {
             try
             {
+                var beforeSend = Util.Timestamp();
                 var payload = GenPayload(data);
                 await package.RestApiProvider
                              .Clients
                              .User(package.UserId)
                              .SendAsync(SignalRConstants.RecordLatencyCallbackName, payload);
+                if (HideRecordLatency)
+                {
+                    var afterSend = Util.Timestamp();
+                    StatisticsCollector.RecordLatency(afterSend - beforeSend);
+                }
                 SignalRUtils.RecordSend(payload, StatisticsCollector);
             }
             catch (Exception e)
