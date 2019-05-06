@@ -390,6 +390,37 @@ function stop_connection_tracking() {
   kill $connection_start_pid
 }
 
+function copy_syslog() {
+  local i j k
+  local resName=$1
+  local outdir=$2
+  g_config=""
+  g_result=""
+  find_target_by_iterate_all_k8slist $resName k8s_query
+  local config_file=$g_config
+  local result=$g_result
+
+  for i in $result
+  do
+     # this copy may fail
+     mkdir -p $outdir
+     k=0
+     local asrslogs=`kubectl exec ${i} --kubeconfig=$config_file -- bash -c "ls /var/log/ASRS/ASRS*"`
+     for j in $asrslogs
+     do
+       kubectl cp default/${i}:${j} $outdir/${i}_${k}_ASRS.txt --kubeconfig=$config_file
+       if [ -e $outdir/${i}_${k}_ASRS.txt ]
+       then
+          cd $outdir
+          tar zcvf ${i}_${k}_ASRS.tgz ${i}_${k}_ASRS.txt
+          rm ${i}_${k}_ASRS.txt
+          cd -
+       fi
+       k=$(($k+1))
+     done
+  done
+}
+
 function copy_syslog_include_rotated() {
   local i j
   local resName=$1
@@ -419,7 +450,7 @@ function copy_syslog_include_rotated() {
   done
 }
 
-function copy_syslog() {
+function copy_single_syslog() {
   local i
   local resName=$1
   local outdir=$2
