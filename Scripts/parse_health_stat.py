@@ -1,5 +1,6 @@
 import json
 import argparse
+import traceback
 
 def FindManyMax(infile, queryMax):
     manyMaxArr = []
@@ -14,16 +15,17 @@ def FindManyMax(infile, queryMax):
                 jData = json.loads(items[1], 'utf-8')
                 u = 0
                 for key, value in jData.items():
-                    if (queryMax in value):
-                       u = u + int(value[queryMax])
+                    if (queryMax in key):
+                       u = u + int(value)
                 if (u >= v):
                    qMax = u
                 elif qMax > 0:
                    manyMaxArr.append(qMax)
                    qMax = 0
                 v = u
-             except Exception:
-                print("exception occurs")
+             except Exception as e:
+                print("exception occurs: " + str(e))
+                #traceback.print_exc()
     if qMax > 0:
        manyMaxArr.append(qMax)
     if len(manyMaxArr) == 0:
@@ -44,8 +46,8 @@ def FindMaxItem(infile, queryMax):
                    if (v > qMax):
                      qMax = v
                      jItem = items[1]
-             except Exception:
-                print("exception occurs")
+             except Exception as e:
+                print("exception occurs: " + str(e))
     print(qMax)
 
 if __name__=="__main__":
