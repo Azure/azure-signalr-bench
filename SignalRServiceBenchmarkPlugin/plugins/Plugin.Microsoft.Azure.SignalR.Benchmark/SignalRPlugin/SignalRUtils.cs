@@ -12,6 +12,7 @@ using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -254,6 +255,12 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         public static string GetNegotiationEndpoint(string hub, string userId)
         {
             return SignalRConstants.NegotiationUrl + "/" + hub + "?user=" + userId;
+        }
+
+        public static void ServicePointManagerOptimize()
+        {
+            ServicePointManager.DefaultConnectionLimit = SignalRConstants.DefaultConnectionLimit;
+            //ServicePointManager.UseNagleAlgorithm = false;
         }
 
         public static void SlaveCreateConnection(

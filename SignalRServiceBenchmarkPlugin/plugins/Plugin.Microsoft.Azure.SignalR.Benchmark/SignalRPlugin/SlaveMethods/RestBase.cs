@@ -18,7 +18,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
         {
             try
             {
-                ServicePointManager.DefaultConnectionLimit = SignalRConstants.DefaultConnectionLimit;
+                SignalRUtils.ServicePointManagerOptimize();
                 Log.Information($"{GetType().Name} 's DefaultConnectionLimit: {ServicePointManager.DefaultConnectionLimit}");
                 // Here allow manually evaluate the "send" latency if "RecordLatency" callback is not registered
                 HideRecordLatency = SignalRUtils.HideMessageRoundTripLatency(stepParameters, pluginParameters);
@@ -69,7 +69,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
             }
             catch (Exception e)
             {
-                Log.Error($"Fail to send message to user for {e.Message}");
+                Log.Error($"Fail to send message to user for {e}");
             }
         }
 
