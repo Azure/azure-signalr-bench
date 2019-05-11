@@ -153,15 +153,18 @@ function downloadWebAppLog()
   local webAppOut=$1
   local outputDir=$2
   local i
-  for i in `cat $webAppOut`
-  do
-    local webname=`echo $i|awk -F / '{print $NF}'`
-    $AspNetWebMgrDir/DeployWebApp downloadLog --servicePrincipal $ServicePrincipal --WebAppResourceId $i --LocalFilePrefix $outputDir/webappserverlog
-  done
-  cd $outputDir
-  tar zcvf webappserverlog.log.tgz webappserverlog*.log
-  rm webappserverlog*.log
-  cd -
+  if [ "$AspNetSignalR" != "true" ] # AspNet SignalR has not writen log to filesystem
+  then
+    for i in `cat $webAppOut`
+    do
+      local webname=`echo $i|awk -F / '{print $NF}'`
+      $AspNetWebMgrDir/DeployWebApp downloadLog --servicePrincipal $ServicePrincipal --WebAppResourceId $i --LocalFilePrefix $outputDir/webappserverlog
+    done
+    cd $outputDir
+    tar zcvf webappserverlog.log.tgz webappserverlog*.log
+    rm webappserverlog*.log
+    cd -
+  fi
 }
 
 function gen4AspNet()
@@ -294,11 +297,7 @@ function RunSendToGroup()
   local groupType=${10}
   local appserverUrls
 
-  local appPrefix="aspnetwebapp"
-  local serverUrlOut=$outputDir/${appPrefix}.txt
-  local appPlanOut=$outputDir/${appPrefix}_appPlan.txt
-  local webAppOut=$outputDir/${appPrefix}_webApp.txt
-  local appPlanScaleOut=$outputDir/${appPrefix}_appPlanScaleOut.txt
+  local appPrefix serverUrlOut appPlanOut webAppOut appPlanScaleOut
 
   local maxConnectionOption
   if [ "$useMaxConnection" == "true" ]
@@ -313,7 +312,29 @@ function RunSendToGroup()
     cd $ScriptWorkingDir
     appserverUrls=$(get_reduced_appserverUrl $unit $Scenario)
   else
-    createWebApp $unit $appPrefix "$connectionString" $serverUrlOut $appPlanOut $webAppOut $appPlanScaleOut $Scenario
+    if [ "$AspNetSignalR" == "true" ]
+    then
+       appPrefix="aspnetwebapp"
+    else
+       appPrefix="aspnetcorewebapp"
+    fi
+    if [ "$NeverStopAppServer" == "true" ]
+    then
+       serverUrlOut=$JenkinsRootPath/${appPrefix}.txt
+       appPlanOut=$JenkinsRootPath/${appPrefix}_appPlan.txt
+       webAppOut=$JenkinsRootPath/${appPrefix}_webApp.txt
+       appPlanScaleOut=$JenkinsRootPath/${appPrefix}_appPlanScaleOut.txt
+       if [ ! -e $serverUrlOut ]
+       then
+          createWebApp $unit $appPrefix "$connectionString" $serverUrlOut $appPlanOut $webAppOut $appPlanScaleOut $Scenario
+       fi
+    else
+       serverUrlOut=$outputDir/${appPrefix}.txt
+       appPlanOut=$outputDir/${appPrefix}_appPlan.txt
+       webAppOut=$outputDir/${appPrefix}_webApp.txt
+       appPlanScaleOut=$outputDir/${appPrefix}_appPlanScaleOut.txt
+       createWebApp $unit $appPrefix "$connectionString" $serverUrlOut $appPlanOut $webAppOut $appPlanScaleOut $Scenario
+    fi
     if [ -e $serverUrlOut ]
     then
       appserverUrls=`cat $serverUrlOut`
@@ -339,7 +360,10 @@ function RunSendToGroup()
     # download load
     downloadWebAppLog $webAppOut $outputDir
     # remove appserver
-    $AspNetWebMgrDir/DeployWebApp removeGroup --resourceGroup=${AspNetWebAppResGrp} --servicePrincipal $ServicePrincipal
+    if [ "$NeverStopAppServer" != "true" ]
+    then
+       $AspNetWebMgrDir/DeployWebApp removeGroup --resourceGroup=${AspNetWebAppResGrp} --servicePrincipal $ServicePrincipal
+    fi
   fi
 }
 
@@ -362,11 +386,7 @@ function RunSendToClient()
     maxConnectionOption="-m"
   fi
 
-  local appPrefix="aspnetwebapp"
-  local serverUrlOut=$outputDir/${appPrefix}.txt
-  local appPlanOut=$outputDir/${appPrefix}_appPlan.txt
-  local webAppOut=$outputDir/${appPrefix}_webApp.txt
-  local appPlanScaleOut=$outputDir/${appPrefix}_appPlanScaleOut.txt
+  local appPrefix serverUrlOut appPlanOut webAppOut appPlanScaleOut
   local startSeconds=$SECONDS
   local useAzureWeb=$(isUseAzureWeb)
   if [ $useAzureWeb -ne 1 ]
@@ -374,7 +394,29 @@ function RunSendToClient()
     cd $ScriptWorkingDir
     appserverUrls=$(get_reduced_appserverUrl $unit $Scenario)
   else
-    createWebApp $unit $appPrefix "$connectionString" $serverUrlOut $appPlanOut $webAppOut $appPlanScaleOut $Scenario
+    if [ "$AspNetSignalR" == "true" ]
+    then
+       appPrefix="aspnetwebapp"
+    else
+       appPrefix="aspnetcorewebapp"
+    fi
+    if [ "$NeverStopAppServer" == "true" ]
+    then
+       serverUrlOut=$JenkinsRootPath/${appPrefix}.txt
+       appPlanOut=$JenkinsRootPath/${appPrefix}_appPlan.txt
+       webAppOut=$JenkinsRootPath/${appPrefix}_webApp.txt
+       appPlanScaleOut=$JenkinsRootPath/${appPrefix}_appPlanScaleOut.txt
+       if [ ! -e $serverUrlOut ]
+       then
+          createWebApp $unit $appPrefix "$connectionString" $serverUrlOut $appPlanOut $webAppOut $appPlanScaleOut $Scenario
+       fi
+    else
+       serverUrlOut=$outputDir/${appPrefix}.txt
+       appPlanOut=$outputDir/${appPrefix}_appPlan.txt
+       webAppOut=$outputDir/${appPrefix}_webApp.txt
+       appPlanScaleOut=$outputDir/${appPrefix}_appPlanScaleOut.txt
+       createWebApp $unit $appPrefix "$connectionString" $serverUrlOut $appPlanOut $webAppOut $appPlanScaleOut $Scenario
+    fi
     if [ -e $serverUrlOut ]
     then
       appserverUrls=`cat $serverUrlOut`
@@ -400,7 +442,10 @@ function RunSendToClient()
     # download load
     downloadWebAppLog $webAppOut $outputDir
     # remove appserver
-    $AspNetWebMgrDir/DeployWebApp removeGroup --resourceGroup=${AspNetWebAppResGrp} --servicePrincipal $ServicePrincipal
+    if [ "$NeverStopAppServer" != "true" ]
+    then
+       $AspNetWebMgrDir/DeployWebApp removeGroup --resourceGroup=${AspNetWebAppResGrp} --servicePrincipal $ServicePrincipal
+    fi
   fi
 }
 
@@ -421,11 +466,7 @@ function RunCommonScenario()
   then
     maxConnectionOption="-m"
   fi
-  local appPrefix="aspnetwebapp"
-  local serverUrlOut=$outputDir/${appPrefix}.txt
-  local appPlanOut=$outputDir/${appPrefix}_appPlan.txt
-  local webAppOut=$outputDir/${appPrefix}_webApp.txt
-  local appPlanScaleOut=$outputDir/${appPrefix}_appPlanScaleOut.txt
+  local appPrefix serverUrlOut appPlanOut webAppOut appPlanScaleOut
   local startSeconds=$SECONDS
   local useAzureWeb=$(isUseAzureWeb)
   if [ $useAzureWeb -ne 1 ]
@@ -438,7 +479,30 @@ function RunCommonScenario()
        appserverUrls=$(get_reduced_appserverUrl $unit $Scenario)
     fi
   else
-    createWebApp $unit $appPrefix "$connectionString" $serverUrlOut $appPlanOut $webAppOut $appPlanScaleOut $Scenario
+    if [ "$AspNetSignalR" == "true" ]
+    then
+       appPrefix="aspnetwebapp"
+    else
+       appPrefix="aspnetcorewebapp"
+    fi
+    if [ "$NeverStopAppServer" == "true" ]
+    then
+       serverUrlOut=$JenkinsRootPath/${appPrefix}.txt
+       appPlanOut=$JenkinsRootPath/${appPrefix}_appPlan.txt
+       webAppOut=$JenkinsRootPath/${appPrefix}_webApp.txt
+       appPlanScaleOut=$JenkinsRootPath/${appPrefix}_appPlanScaleOut.txt
+       if [ ! -e $serverUrlOut ]
+       then
+          createWebApp $unit $appPrefix "$connectionString" $serverUrlOut $appPlanOut $webAppOut $appPlanScaleOut $Scenario
+       fi
+    else
+       serverUrlOut=$outputDir/${appPrefix}.txt
+       appPlanOut=$outputDir/${appPrefix}_appPlan.txt
+       webAppOut=$outputDir/${appPrefix}_webApp.txt
+       appPlanScaleOut=$outputDir/${appPrefix}_appPlanScaleOut.txt
+       createWebApp $unit $appPrefix "$connectionString" $serverUrlOut $appPlanOut $webAppOut $appPlanScaleOut $Scenario
+    fi
+
     if [ -e $serverUrlOut ]
     then
       appserverUrls=`cat $serverUrlOut`
@@ -464,7 +528,10 @@ function RunCommonScenario()
     # download load
     downloadWebAppLog $webAppOut $outputDir
     # remove appserver
-    $AspNetWebMgrDir/DeployWebApp removeGroup --resourceGroup=${AspNetWebAppResGrp} --servicePrincipal $ServicePrincipal
+    if [ "$NeverStopAppServer" != "true" ]
+    then
+       $AspNetWebMgrDir/DeployWebApp removeGroup --resourceGroup=${AspNetWebAppResGrp} --servicePrincipal $ServicePrincipal
+    fi
   fi
 }
 

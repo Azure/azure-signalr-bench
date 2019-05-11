@@ -1,11 +1,11 @@
-﻿using Microsoft.AspNetCore.SignalR;
+﻿using Common;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Azure.SignalR.Management;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 
 namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
@@ -18,7 +18,10 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
         {
             try
             {
-                Log.Information($"{GetType().Name}...");
+                SignalRUtils.ServicePointManagerOptimize();
+                Log.Information($"{GetType().Name} 's DefaultConnectionLimit: {ServicePointManager.DefaultConnectionLimit}");
+                // Here allow manually evaluate the "send" latency if "RecordLatency" callback is not registered
+                HideRecordLatency = SignalRUtils.HideMessageRoundTripLatency(stepParameters, pluginParameters);
                 await RunRest(stepParameters, pluginParameters);
                 return null;
             }
@@ -40,26 +43,37 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
 
             var hubContext = await CreateHubContextAsync();
             await RestSendMessage(hubContext);
+            await hubContext.DisposeAsync();
             return null;
         }
 
         protected async Task SendMsgToUser(
             (string UserId,
-             IServiceHubContext RestApiProvider) package,
+             RestApiProvider RestApiProvider) package,
              IDictionary<string, object> data)
         {
             try
             {
+                var beforeSend = Util.Timestamp();
                 var payload = GenPayload(data);
+                await package.RestApiProvider
+                    .SendToUser(package.UserId, SignalRConstants.RecordLatencyCallbackName, new[] { payload });
+                /*
                 await package.RestApiProvider
                              .Clients
                              .User(package.UserId)
                              .SendAsync(SignalRConstants.RecordLatencyCallbackName, payload);
+                             */
+                if (HideRecordLatency)
+                {
+                    var afterSend = Util.Timestamp();
+                    StatisticsCollector.RecordLatency(afterSend - beforeSend);
+                }
                 SignalRUtils.RecordSend(payload, StatisticsCollector);
             }
             catch (Exception e)
             {
-                Log.Error($"Fail to send message to user for {e.Message}");
+                Log.Error($"Fail to send message to user for {e}");
             }
         }
 
@@ -70,9 +84,10 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
             {
                 { SignalRConstants.MessageBlob, SignalRUtils.GenerateRandomData(MessageSize) } // message payload
             };
+            var connectionString = SignalRUtils.FetchConnectionStringFromContext(PluginParameters, Type);
             await Task.WhenAll(from i in Enumerable.Range(0, ConnectionIndex.Count)
                                where ConnectionIndex[i] % Modulo >= RemainderBegin && ConnectionIndex[i] % Modulo < RemainderEnd
-                               let restApiClient = hubContext
+                               let restApiClient = new RestApiProvider(connectionString, SignalRConstants.DefaultRestHubName)
                                let userId = SignalRUtils.GenClientUserIdFromConnectionIndex(ConnectionIndex[i])
                                select ContinuousSend((UserId: userId,
                                                       RestApiClient: restApiClient),

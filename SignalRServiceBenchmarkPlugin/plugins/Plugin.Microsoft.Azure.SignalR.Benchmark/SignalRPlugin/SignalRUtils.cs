@@ -12,6 +12,7 @@ using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
@@ -256,6 +257,12 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             return SignalRConstants.NegotiationUrl + "/" + hub + "?user=" + userId;
         }
 
+        public static void ServicePointManagerOptimize()
+        {
+            ServicePointManager.DefaultConnectionLimit = SignalRConstants.DefaultConnectionLimit;
+            //ServicePointManager.UseNagleAlgorithm = false;
+        }
+
         public static void SlaveCreateConnection(
             IDictionary<string, object> stepParameters,
             IDictionary<string, object> pluginParameters,
@@ -289,6 +296,35 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
                 // record the connection string for REST API send
                 SaveConnectionStringToContext(pluginParameters, type, urls);
             }
+        }
+
+        public static bool HideMessageRoundTripLatency(
+            IDictionary<string, object> stepParameters,
+            IDictionary<string, object> pluginParameters)
+        {
+            stepParameters.TryGetTypedValue(SignalRConstants.Type,
+                    out string type, Convert.ToString);
+            pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionStore}.{type}",
+                out IList<IHubConnectionAdapter> connections, (obj) => (IList<IHubConnectionAdapter>)obj);
+            pluginParameters.TryGetTypedValue($"{SignalRConstants.StatisticsStore}.{type}",
+                out StatisticsCollector statisticsCollector, obj => (StatisticsCollector)obj);
+            pluginParameters.TryGetTypedValue($"{SignalRConstants.RegisteredCallbacks}.{type}",
+                out var registeredCallbacks,
+                obj => (IList<Action<IList<IHubConnectionAdapter>, StatisticsCollector, string>>)obj);
+            pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionType}.{type}",
+                out string connectionType, Convert.ToString);
+            if (!Enum.TryParse<ClientType>(connectionType, out ClientType connType))
+            {
+                Log.Error($"Fail to parse {connectionType} to enum");
+                return false;
+            }
+            if (!registeredCallbacks.Contains(RegisterCallbackBase.SetCallback))
+            {
+                RegisterCallbackBase.SetDummyLatencyCallback(connections, statisticsCollector, SignalRConstants.RecordLatencyCallbackName);
+                registeredCallbacks.Add(RegisterCallbackBase.SetDummyLatencyCallback);
+                return true;
+            }
+            return false;
         }
 
         public static void FilterOnConnectedNotification(
