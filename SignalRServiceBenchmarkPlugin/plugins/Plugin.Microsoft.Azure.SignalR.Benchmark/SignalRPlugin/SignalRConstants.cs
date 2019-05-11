@@ -123,6 +123,6 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         public static readonly string DefaultClientUserIdPrefix = "cli";
 
         // Set the ServicePointManager.DefaultConnectionLimit for serverless test
-        public static readonly int DefaultConnectionLimit = 4;
+        public static readonly int DefaultConnectionLimit = 5000;
     }
 }

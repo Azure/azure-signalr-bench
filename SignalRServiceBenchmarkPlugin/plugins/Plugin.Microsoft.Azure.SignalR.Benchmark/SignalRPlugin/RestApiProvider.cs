@@ -28,15 +28,17 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         static HttpClientFactory()
         {
             var serviceCollection = new ServiceCollection();
-            serviceCollection.AddHttpClient();
-            var services = serviceCollection.BuildServiceProvider();
+            serviceCollection
+                .AddHttpClient("aa")
+                .SetHandlerLifetime(TimeSpan.FromHours(1));
 
+            var services = serviceCollection.BuildServiceProvider();
             _clientFactory = services.GetRequiredService<IHttpClientFactory>();
         }
 
         public static HttpClient CreateClient()
         {
-            return _clientFactory.CreateClient();
+            return _clientFactory.CreateClient("aa");
         }
     }
 
@@ -48,6 +50,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         private readonly string _urlCommonPrefix;
         private readonly string _audienceCommonPrefix;
         private readonly string _accessKey;
+        private readonly HttpClient _httpClient;
 
         public RestApiProvider(string connectionString, string hubName)
         {
@@ -57,7 +60,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             _audienceCommonPrefix = $"{_baseEndpoint}{postfix}";
             _urlCommonPrefix = Port.HasValue ?
                 $"{_baseEndpoint}:{Port}{postfix}" :
-                _audienceCommonPrefix;   
+                _audienceCommonPrefix;
+            _httpClient = HttpClientFactory.CreateClient();
         }
 
         public string GetClientUrl()
@@ -119,8 +123,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             HttpRequestMessage request,
             CancellationToken cancellationToken = default)
         {
-            var httpClient = HttpClientFactory.CreateClient();
-            using (var response = await httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken))
+            //var httpClient = HttpClientFactory.CreateClient();
+            using (var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken))
             {
                 response.EnsureSuccessStatusCode();
             }

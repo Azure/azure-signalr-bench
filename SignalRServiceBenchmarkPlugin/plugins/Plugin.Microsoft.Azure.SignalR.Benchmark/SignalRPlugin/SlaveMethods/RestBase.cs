@@ -49,7 +49,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
 
         protected async Task SendMsgToUser(
             (string UserId,
-             IServiceHubContext RestApiProvider) package,
+             RestApiProvider RestApiProvider) package,
              IDictionary<string, object> data)
         {
             try
@@ -57,9 +57,13 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 var beforeSend = Util.Timestamp();
                 var payload = GenPayload(data);
                 await package.RestApiProvider
+                    .SendToUser(package.UserId, SignalRConstants.RecordLatencyCallbackName, new[] { payload });
+                /*
+                await package.RestApiProvider
                              .Clients
                              .User(package.UserId)
                              .SendAsync(SignalRConstants.RecordLatencyCallbackName, payload);
+                             */
                 if (HideRecordLatency)
                 {
                     var afterSend = Util.Timestamp();
@@ -80,9 +84,10 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
             {
                 { SignalRConstants.MessageBlob, SignalRUtils.GenerateRandomData(MessageSize) } // message payload
             };
+            var connectionString = SignalRUtils.FetchConnectionStringFromContext(PluginParameters, Type);
             await Task.WhenAll(from i in Enumerable.Range(0, ConnectionIndex.Count)
                                where ConnectionIndex[i] % Modulo >= RemainderBegin && ConnectionIndex[i] % Modulo < RemainderEnd
-                               let restApiClient = hubContext
+                               let restApiClient = new RestApiProvider(connectionString, SignalRConstants.DefaultRestHubName)
                                let userId = SignalRUtils.GenClientUserIdFromConnectionIndex(ConnectionIndex[i])
                                select ContinuousSend((UserId: userId,
                                                       RestApiClient: restApiClient),
