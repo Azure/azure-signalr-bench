@@ -2,6 +2,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Newtonsoft.Json;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
@@ -27,10 +28,26 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
 
         static HttpClientFactory()
         {
+            var lifetime = TimeSpan.FromHours(1);
+            var handlerLifetime = Environment.GetEnvironmentVariable(SignalRConstants.HandlerLifetimeKey);
+            if (!string.IsNullOrEmpty(handlerLifetime))
+            {
+                if (int.TryParse(handlerLifetime, out var lt))
+                {
+                    lifetime = TimeSpan.FromHours(lt);
+                }
+            }
+            Log.Information($"HttpMessageHnalderLifetime: {lifetime.Hours} hours");
             var serviceCollection = new ServiceCollection();
             serviceCollection
                 .AddHttpClient("aa")
-                .SetHandlerLifetime(TimeSpan.FromHours(1));
+                .SetHandlerLifetime(lifetime)
+                .ConfigurePrimaryHttpMessageHandler(h => new HttpClientHandler
+                {
+                    ClientCertificateOptions = ClientCertificateOption.Manual,
+                    ServerCertificateCustomValidationCallback =
+                    (httpRequestMessage, cert, cetChain, policyErrors) => true
+                });
 
             var services = serviceCollection.BuildServiceProvider();
             _clientFactory = services.GetRequiredService<IHttpClientFactory>();
