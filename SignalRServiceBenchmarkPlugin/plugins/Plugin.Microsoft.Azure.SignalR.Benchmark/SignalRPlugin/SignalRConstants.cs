@@ -124,5 +124,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
 
         // Set the ServicePointManager.DefaultConnectionLimit for serverless test
         public static readonly int DefaultConnectionLimit = 5000;
+
+        public static readonly string HandlerLifetimeKey = "HandlerLifetimeKey";
     }
 }
