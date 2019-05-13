@@ -23,6 +23,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
         protected StatisticsCollector StatisticsCollector;
         protected List<int> ConnectionIndex;
         protected IList<IHubConnectionAdapter> Connections;
+        protected IDictionary<string, object> StepParameters;
         protected IDictionary<string, object> PluginParameters;
         protected bool HideRecordLatency;
 
@@ -45,6 +46,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 out Connections, (obj) => (IList<IHubConnectionAdapter>)obj);
             pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionIndex}.{Type}",
                 out ConnectionIndex, (obj) => (List<int>)obj);
+            StepParameters = stepParameters;
             PluginParameters = pluginParameters;
         }
 

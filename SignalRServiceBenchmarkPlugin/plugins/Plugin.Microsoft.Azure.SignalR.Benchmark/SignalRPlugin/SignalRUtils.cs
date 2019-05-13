@@ -154,6 +154,49 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             return concurrentConnection;
         }
 
+        public static void CreateHttpClientManagerAndSaveToContext(
+            IDictionary<string, object> stepParameters,
+            IDictionary<string, object> pluginParameters)
+        {
+            stepParameters.TryGetTypedValue(SignalRConstants.Type,
+                out string type, Convert.ToString);
+            stepParameters.TryGetTypedValue(SignalRConstants.ConnectionIndex,
+                out string connectionIndexString, Convert.ToString);
+            var connectionIndex = connectionIndexString.Split(',').Select(ind => Convert.ToInt32(ind)).ToList();
+            var connCount = connectionIndex.Count;
+            var httpClientManager = new HttpClientManager(connCount/2);
+            pluginParameters[$"{SignalRConstants.HttpClientManager}.{type}"] = httpClientManager;
+        }
+
+        public static HttpClientManager FetchHttpClientManagerFromContext(
+            IDictionary<string, object> stepParameters,
+            IDictionary<string, object> pluginParameters)
+        {
+            stepParameters.TryGetTypedValue(SignalRConstants.Type,
+                out string type, Convert.ToString);
+            if (pluginParameters.TryGetValue($"{SignalRConstants.HttpClientManager}.{type}", out _))
+            {
+                pluginParameters.TryGetTypedValue($"{SignalRConstants.HttpClientManager}.{type}",
+                   out var httpClientManager, obj => (HttpClientManager)obj);
+                return httpClientManager;
+            }
+            else
+            {
+                return null;
+            }
+        }
+
+        public static void DiposeAllHttpClient(
+            IDictionary<string, object> stepParameters,
+            IDictionary<string, object> pluginParameters)
+        {
+            var httpClientManager = FetchHttpClientManagerFromContext(stepParameters, pluginParameters);
+            if (httpClientManager != null)
+            {
+                httpClientManager.DisposeAllHttpMessageHandler();
+            }
+        }
+
         public static void MarkConnectionType(
             IDictionary<string, object> stepParameters,
             IDictionary<string, object> pluginParameters,
@@ -256,13 +299,13 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         {
             return SignalRConstants.NegotiationUrl + "/" + hub + "?user=" + userId;
         }
-
+        /*
         public static void ServicePointManagerOptimize()
         {
             ServicePointManager.DefaultConnectionLimit = SignalRConstants.DefaultConnectionLimit;
             //ServicePointManager.UseNagleAlgorithm = false;
         }
-
+        */
         public static void SlaveCreateConnection(
             IDictionary<string, object> stepParameters,
             IDictionary<string, object> pluginParameters,

@@ -36,6 +36,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         public static readonly string GroupConfigMode = "Parameter.Mode";
         public static readonly string PercentileList = "Parameter.PercentileList";
         public static readonly string ActionAfterConnect = "Parameter.ActionAfterConnect";
+        public static readonly string HttpClientManager = "Parameter.HttpClientManager";
 
         // Connection/group information
         public static readonly string ConnectionId = "information.ConnectionId";
@@ -123,7 +124,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         public static readonly string DefaultClientUserIdPrefix = "cli";
 
         // Set the ServicePointManager.DefaultConnectionLimit for serverless test
-        public static readonly int DefaultConnectionLimit = 5000;
+        public static readonly int DefaultConnectionLimit = 500;
 
         public static readonly string HandlerLifetimeKey = "HandlerLifetimeKey";
     }

@@ -18,7 +18,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
         {
             try
             {
-                SignalRUtils.ServicePointManagerOptimize();
+                //SignalRUtils.ServicePointManagerOptimize();
                 Log.Information($"{GetType().Name} 's DefaultConnectionLimit: {ServicePointManager.DefaultConnectionLimit}");
                 // Here allow manually evaluate the "send" latency if "RecordLatency" callback is not registered
                 HideRecordLatency = SignalRUtils.HideMessageRoundTripLatency(stepParameters, pluginParameters);
@@ -79,6 +79,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
 
         protected async Task RestSendUserMessage(IServiceHubContext hubContext)
         {
+            var httpClientManager = SignalRUtils.FetchHttpClientManagerFromContext(StepParameters, PluginParameters);
             // Generate necessary data
             var data = new Dictionary<string, object>
             {
@@ -87,7 +88,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
             var connectionString = SignalRUtils.FetchConnectionStringFromContext(PluginParameters, Type);
             await Task.WhenAll(from i in Enumerable.Range(0, ConnectionIndex.Count)
                                where ConnectionIndex[i] % Modulo >= RemainderBegin && ConnectionIndex[i] % Modulo < RemainderEnd
-                               let restApiClient = new RestApiProvider(connectionString, SignalRConstants.DefaultRestHubName)
+                               let restApiClient = new RestApiProvider(connectionString, SignalRConstants.DefaultRestHubName, httpClientManager.GetHttpClient(i))
                                let userId = SignalRUtils.GenClientUserIdFromConnectionIndex(ConnectionIndex[i])
                                select ContinuousSend((UserId: userId,
                                                       RestApiClient: restApiClient),

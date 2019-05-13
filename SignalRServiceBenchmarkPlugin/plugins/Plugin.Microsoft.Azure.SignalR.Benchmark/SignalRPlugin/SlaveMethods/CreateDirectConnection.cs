@@ -18,6 +18,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 Log.Information($"Create connections...");
                 await SignalRUtils.StartNegotiationServer(stepParameters, pluginParameters);
                 SignalRUtils.SlaveCreateConnection(stepParameters, pluginParameters, ClientType.DirectConnect);
+                SignalRUtils.CreateHttpClientManagerAndSaveToContext(stepParameters, pluginParameters);
                 return null;
             }
             catch (Exception ex)

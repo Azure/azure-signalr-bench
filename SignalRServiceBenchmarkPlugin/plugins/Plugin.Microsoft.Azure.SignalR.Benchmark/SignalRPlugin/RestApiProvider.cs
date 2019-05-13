@@ -6,6 +6,7 @@ using Serilog;
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Security.Claims;
@@ -20,6 +21,68 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         public string Target { get; set; }
 
         public object[] Arguments { get; set; }
+    }
+
+    public class HttpClientManager
+    {
+        private List<HttpMessageHandler> _httpMessageHandlerList;
+
+        public HttpClientManager(int initCount = 500)
+        {
+            _httpMessageHandlerList =
+                (from i in Enumerable.Range(0, initCount)
+                 select new HttpClientHandler()
+                 {
+                     ClientCertificateOptions = ClientCertificateOption.Manual,
+                     ServerCertificateCustomValidationCallback =
+                        (httpRequestMessage, cert, cetChain, policyErrors) => true
+                 }).ToList<HttpMessageHandler>();
+        }
+
+        private HttpMessageHandler GetHttpClientHandler(int index)
+        {
+            var count = _httpMessageHandlerList.Count;
+            if (count > 0)
+            {
+                return _httpMessageHandlerList[index % count];
+            }
+            else
+            {
+                return null;
+            }
+        }
+
+        public HttpClient GetHttpClient(int index)
+        {
+            var httpMessageHandler = GetHttpClientHandler(index);
+            if (httpMessageHandler == null)
+            {
+                return null;
+            }
+            return new HttpClient(httpMessageHandler, false);
+        }
+
+        public void DisposeAllHttpMessageHandler()
+        {
+            foreach (var handler in _httpMessageHandlerList)
+            {
+                handler.Dispose();
+            }
+            _httpMessageHandlerList.Clear();
+        }
+    }
+
+    internal class HttpClientHandlerTracker : HttpClientHandler
+    {
+        public HttpClientHandlerTracker()
+        {
+
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            Log.Warning("dipose httpclient handler");
+        }
     }
 
     internal static class HttpClientFactory
@@ -42,7 +105,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             serviceCollection
                 .AddHttpClient("aa")
                 .SetHandlerLifetime(lifetime)
-                .ConfigurePrimaryHttpMessageHandler(h => new HttpClientHandler
+                .ConfigurePrimaryHttpMessageHandler(h => new HttpClientHandlerTracker
                 {
                     ClientCertificateOptions = ClientCertificateOption.Manual,
                     ServerCertificateCustomValidationCallback =
@@ -69,7 +132,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         private readonly string _accessKey;
         private readonly HttpClient _httpClient;
 
-        public RestApiProvider(string connectionString, string hubName)
+        public RestApiProvider(string connectionString, string hubName, HttpClient httpClient)
         {
             _hubName = hubName;
             (_baseEndpoint, _accessKey, _, Port) = Parse(connectionString);
@@ -78,6 +141,11 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             _urlCommonPrefix = Port.HasValue ?
                 $"{_baseEndpoint}:{Port}{postfix}" :
                 _audienceCommonPrefix;
+            _httpClient = httpClient;
+        }
+
+        public RestApiProvider(string connectionString, string hubName) : this(connectionString, hubName, null)
+        {
             _httpClient = HttpClientFactory.CreateClient();
         }
 
@@ -140,7 +208,6 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             HttpRequestMessage request,
             CancellationToken cancellationToken = default)
         {
-            //var httpClient = HttpClientFactory.CreateClient();
             using (var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken))
             {
                 response.EnsureSuccessStatusCode();
