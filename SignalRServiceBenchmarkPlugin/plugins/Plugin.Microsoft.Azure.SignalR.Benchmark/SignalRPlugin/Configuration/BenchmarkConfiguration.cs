@@ -4,24 +4,30 @@ using System.Collections.Generic;
 using System.IO;
 using YamlDotNet.RepresentationModel;
 
-namespace Plugin.Base
+namespace Plugin.Microsoft.Azure.SignalR.Benchmark
 {
-    public class BenchmarkConfiguration
+    public class BenchmarkConfiguration : Plugin.Base.IBenchmarkConfiguration
     {
         protected static readonly string ModuleNameKey = "ModuleName";
         protected static readonly string PipelineKey = "Pipeline";
         protected static readonly string TypesKey = "Types";
 
-        public string ModuleName {get; set; }
         public IList<string> Types { get; set; } = new List<string>();
         public IList<IList<MasterStep>> Pipeline { get; set; } = new List<IList<MasterStep>>();
+
+        protected string _moduleName;
 
         public BenchmarkConfiguration(string content)
         {
             Parse(content);
         }
 
-        protected void Parse(string content)
+        public string ModuleName()
+        {
+            return _moduleName;
+        }
+
+        public void Parse(string content)
         {
             // Setup input
             var input = new StringReader(content);
@@ -45,7 +51,7 @@ namespace Plugin.Base
 
             // Parse the stream
             // Parse module name
-            ModuleName = (mapping.Children[new YamlScalarNode(ModuleNameKey)] as YamlScalarNode).Value;
+            _moduleName = (mapping.Children[new YamlScalarNode(ModuleNameKey)] as YamlScalarNode).Value;
 
             // Parse types
             var types = mapping.Children[new YamlScalarNode(TypesKey)] as YamlSequenceNode;
@@ -95,5 +101,6 @@ namespace Plugin.Base
                 throw new Exception($"Types is required, but not found.");
             }
         }
+
     }
 }

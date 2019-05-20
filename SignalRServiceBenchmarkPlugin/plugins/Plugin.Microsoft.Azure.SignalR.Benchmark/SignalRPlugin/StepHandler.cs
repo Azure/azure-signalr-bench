@@ -5,15 +5,15 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace Rpc.Master
+namespace Plugin.Microsoft.Azure.SignalR.Benchmark
 {
     public class StepHandler
     {
-        IPlugin _plugin;
+        ISignalRPlugin _plugin;
 
         public StepHandler(IPlugin plugin)
         {
-            _plugin = plugin;
+            _plugin = (ISignalRPlugin)plugin;
         }
 
         public async Task HandleStep(MasterStep step, IList<IRpcClient> clients)
