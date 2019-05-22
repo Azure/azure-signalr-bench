@@ -12,6 +12,7 @@ namespace Rpc.Service
         private RpcService.RpcServiceClient _client;
 
         public Func<IDictionary<string, object>, string> Serialize { get; set; } = null;
+
         public Func<string, IDictionary<string, object>> Deserialize { get; set; } = null;
 
         private RpcClient(RpcService.RpcServiceClient client)
@@ -40,17 +41,6 @@ namespace Rpc.Service
                 Log.Error(message);
                 throw;
             }
-        }
-
-        public Task UpdateAsync(IDictionary<string, object> data)
-        {
-            if (!CheckTypeAndMethod(data))
-            {
-                var message = $"Do not contain {Constants.Type} and {Constants.Method}.";
-                Log.Error(message);
-                throw new Exception(message);
-            }
-            return _client.UpdateAsync(new Data { Json = Serialize(data) }).ResponseAsync;
         }
 
         private static Channel CreateRpcChannel(string hostname, int port)
@@ -98,7 +88,9 @@ namespace Rpc.Service
             return false;
         }
 
-        public void InstallSerializerAndDeserializer(Func<IDictionary<string, object>, string> serialize, Func<string, IDictionary<string, object>> deserialize)
+        public void InstallSerializerAndDeserializer(
+            Func<IDictionary<string, object>, string> serialize,
+            Func<string, IDictionary<string, object>> deserialize)
         {
             Serialize = serialize;
             Deserialize = deserialize;

@@ -19,27 +19,14 @@ namespace Rpc.Service
 
         public override async Task<Result> Query(Data data, ServerCallContext context)
         {
-            var parameters = _plugin.Deserialize(data.Json);
-
-            // Display configurations
-            var configuration = (from entry in parameters select $"  {entry.Key} : {entry.Value}").Aggregate((a, b) => a + Environment.NewLine + b);
-            Log.Information($"Configuration:{Environment.NewLine}{configuration}");
-
-            // Extract method name
-            parameters.TryGetTypedValue(Constants.Method, out string method, Convert.ToString);
-
-            // Do action
             try
             {
-                // Create Instance
-                var methodInstance = _plugin.CreateSlaveMethodInstance(method);
-                var result = await methodInstance.Do(parameters, _plugin.PluginSlaveParamaters);
-                return new Result { Success = true, Message = "", Json = result != null ? _plugin.Serialize(result) : ""};
+                var result = await _plugin.ExecuteOnAgent(data.Json);
+                return new Result { Success = true, Message = "", Json = result != null ? result : "" };
             }
             catch (Exception ex)
             {
-                var message = $"Perform method '{method}' fail:{Environment.NewLine} {ex}";
-                return new Result { Success = false, Message = message };
+                return new Result { Success = false, Message = ex.Message };
             }
         }
 
