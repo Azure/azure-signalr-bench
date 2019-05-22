@@ -6,7 +6,7 @@ using YamlDotNet.RepresentationModel;
 
 namespace Plugin.Microsoft.Azure.SignalR.Benchmark
 {
-    public class BenchmarkConfiguration : Plugin.Base.IBenchmarkConfiguration
+    public class BenchmarkConfiguration
     {
         protected static readonly string ModuleNameKey = "ModuleName";
         protected static readonly string PipelineKey = "Pipeline";
