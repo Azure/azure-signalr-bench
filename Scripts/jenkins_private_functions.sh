@@ -1230,16 +1230,12 @@ function remove_resource_group() {
 cat << EOF > /tmp/clean_webapp.sh
 ${AspNetWebMgrDir}/DeployWebApp removeGroup --resourceGroup=${AspNetWebAppResGrp} --servicePrincipal=$ServicePrincipal
 EOF
-  daemonize -v -o /tmp/${clean_aspwebapp_daemon}.out -e /tmp/${clean_aspwebapp_daemon}.err -E BUILD_ID=dontKillcenter /usr/bin/nohup /bin/sh /tmp/clean_webapp.sh &
   ## remove all test VMs
-  local pid_file_path=/tmp/${result_root}_pid_remove_rsg.txt
 cat << EOF > /tmp/clean_vms.sh
 ${VMMgrDir}/JenkinsScript --step=DeleteResourceGroupByConfig --AgentConfigFile=$AgentConfig --DisableRandomSuffix --ServicePrincipal=$ServicePrincipal
 ${VMMgrDir}/JenkinsScript --step=DeleteResourceGroupByConfig --AgentConfigFile=$AgentConfig --DisableRandomSuffix --ServicePrincipal=$ServicePrincipal
 ${VMMgrDir}/JenkinsScript --step=DeleteResourceGroupByConfig --AgentConfigFile=$AgentConfig --DisableRandomSuffix --ServicePrincipal=$ServicePrincipal
 EOF
-  daemonize -v -o /tmp/${clean_vm_daemon}.out -e /tmp/${clean_vm_daemon}.err -E BUILD_ID=dontKillcenter /usr/bin/nohup /bin/sh /tmp/clean_vms.sh &
-  ## remove ASRS
 cat << EOF > /tmp/clean_asrs.sh
 cd $ScriptWorkingDir
 . ./az_signalr_service.sh
@@ -1256,6 +1252,10 @@ else
   delete_group $ASRSResourceGroup
 fi
 EOF
+  daemonize -v -o /tmp/${clean_aspwebapp_daemon}.out -e /tmp/${clean_aspwebapp_daemon}.err -E BUILD_ID=dontKillcenter /usr/bin/nohup /bin/sh /tmp/clean_webapp.sh &
+  ## remove all test VMs
+  daemonize -v -o /tmp/${clean_vm_daemon}.out -e /tmp/${clean_vm_daemon}.err -E BUILD_ID=dontKillcenter /usr/bin/nohup /bin/sh /tmp/clean_vms.sh &
+  ## remove ASRS
   daemonize -v -o /tmp/${clean_asrs_daemon}.out -e /tmp/${clean_asrs_daemon}.err -E BUILD_ID=dontKillcenter /usr/bin/nohup /bin/sh /tmp/clean_asrs.sh &
   mark_job_as_failure_if_meet_error
 }

@@ -16,7 +16,6 @@ namespace Rpc.Master
     {
         private static readonly int _maxRertryConnect = 100;
         private static IPlugin _plugin;
-        private static StepHandler _stepHandler;
         private static TimeSpan _retryInterval = TimeSpan.FromSeconds(1);
         private static TimeSpan _statisticsCollectInterval = TimeSpan.FromSeconds(1);
 
@@ -38,23 +37,12 @@ namespace Rpc.Master
 
             // Load benchmark configuration
             var configuration = Util.ReadFile(argsOption.BenchmarkConfiguration);
-            var benchmarkConfiguration = new BenchmarkConfiguration(configuration);
 
-            // Install plugin in master and slaves
-            await InstallPlugin(clients, benchmarkConfiguration.ModuleName);
+            var type = Type.GetType(argsOption.PluginFullName);
 
-            // Install serializer and deserializer from plugin
-            InstallSerializerAndDeserializer(_plugin, clients);
+            var plugin = (IPlugin)Activator.CreateInstance(type);
 
-            // Process pipeline
-            try
-            {
-                await ProcessPipeline(benchmarkConfiguration.Pipeline, clients);
-            }
-            catch (Exception e)
-            {
-                Log.Error($"Stop for {e.Message}");
-            }
+            await plugin.Start(configuration, clients);
         }
 
         private static void EnableTracing()
@@ -62,14 +50,6 @@ namespace Rpc.Master
             Environment.SetEnvironmentVariable("GRPC_TRACE", "tcp,channel,http,secure_endpoint");
             Environment.SetEnvironmentVariable("GRPC_VERBOSITY", "DEBUG");
             GrpcEnvironment.SetLogger(new ConsoleLogger());
-        }
-
-        private static void InstallSerializerAndDeserializer(IPlugin plugin, IList<IRpcClient> clients)
-        {
-            foreach(var client in clients)
-            {
-                client.InstallSerializerAndDeserializer(_plugin.Serialize, _plugin.Deserialize);
-            }
         }
 
         private static IList<IRpcClient> CreateRpcClients(IList<string> slaveList)
@@ -82,49 +62,6 @@ namespace Rpc.Master
                           select RpcClient.Create(item.Hostname, item.Port);
 
             return clients.ToList();
-        }
-
-        private static async Task InstallPlugin(IList<IRpcClient> clients, string moduleName)
-        {
-            Log.Information($"Install plugin '{moduleName}' in master...");
-            InstallPluginInMaster(moduleName);
-            await InstallPluginInSlaves(clients, moduleName);
-        }
-
-        private static void InstallPluginInMaster(string moduleName)
-        {
-            var type = Type.GetType(moduleName);
-            _plugin = (IPlugin)Activator.CreateInstance(type);
-            _stepHandler = new StepHandler(_plugin);
-        }
-
-        private static async Task InstallPluginInSlaves(IList<IRpcClient> clients, string moduleName)
-        {
-            Log.Information($"Install plugin in slaves...");
-
-            var tasks = new List<Task<bool>>();
-
-            // Try to install plugin
-            var installResults = await Task.WhenAll(from client in clients
-                                                    select client.InstallPluginAsync(moduleName));
-            var success = installResults.All(result => result);
-
-            if (!success) throw new Exception("Fail to install plugin in slaves.");
-        }
-
-        private static async Task ProcessPipeline(
-            IList<IList<MasterStep>> pipeline,
-            IList<IRpcClient> clients)
-        {
-            foreach(var parallelStep in pipeline)
-            {
-                var tasks = new List<Task>();
-                foreach(var step in parallelStep)
-                {
-                    tasks.Add(_stepHandler.HandleStep(step, clients));
-                }
-                await Task.WhenAll(tasks);
-            }
         }
 
         private static ArgsOption ParseArgs(string[] args)

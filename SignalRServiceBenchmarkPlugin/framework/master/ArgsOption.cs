@@ -25,6 +25,10 @@ namespace Rpc.Master
             " Console: Output to console;" + " File: Output to file.")]
         public LogTargetEnum LogTarget { get; set; }
 
+        [Option("PluginFullClassName", Required = false, Default = "Plugin.Microsoft.Azure.SignalR.Benchmark.SignalRBenchmarkPlugin, Plugin.Microsoft.Azure.SignalR.Benchmark",
+            HelpText = "Full class name including namespace of plugin, default it is SignalR: 'Plugin.Microsoft.Azure.SignalR.Benchmark.SignalRBenchmarkPlugin, Plugin.Microsoft.Azure.SignalR.Benchmark'")]
+        public string PluginFullName { get; set; }
+
         // Benchmark configuration
         [Option("BenchmarkConfiguration", Required = true,  HelpText = "Benchmark configuration Path.")]
         public string BenchmarkConfiguration { get; set; }

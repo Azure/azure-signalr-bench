@@ -1,10 +1,9 @@
-﻿using Newtonsoft.Json;
-using Serilog;
+﻿using Serilog;
 using System;
 using System.Collections.Generic;
 using YamlDotNet.RepresentationModel;
 
-namespace Plugin.Base
+namespace Plugin.Microsoft.Azure.SignalR.Benchmark
 {
     public class MasterStep
     {
@@ -14,7 +13,7 @@ namespace Plugin.Base
         {
             try
             {
-                Parameters.TryGetValue(Constants.Method, out object method);
+                Parameters.TryGetValue(Plugin.Base.Constants.Method, out object method);
                 return (string)method;
             }
             catch (Exception ex)
@@ -46,8 +45,8 @@ namespace Plugin.Base
         protected bool Validate(YamlMappingNode stepNode)
         {
             var keys = stepNode.Children.Keys;
-            if (!keys.Contains(new YamlScalarNode(Constants.Type))) return false;
-            if (!keys.Contains(new YamlScalarNode(Constants.Method))) return false;
+            if (!keys.Contains(new YamlScalarNode(Plugin.Base.Constants.Type))) return false;
+            if (!keys.Contains(new YamlScalarNode(Plugin.Base.Constants.Method))) return false;
             return true;
         }
     }
