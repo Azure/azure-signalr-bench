@@ -1,15 +1,9 @@
-﻿using Plugin.Base;
-using Rpc.Service;
+﻿using Newtonsoft.Json;
+using Plugin.Base;
 using Serilog;
 using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Threading.Tasks;
-using Common;
-using System.Linq;
-using Newtonsoft.Json;
-using System.Reflection;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 
 namespace Plugin.Microsoft.Azure.SignalR.Benchmark
 {
@@ -18,6 +12,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
     {
         private string _masterNamespaceSuffix = "MasterMethods";
         private string _slaveNamespaceSuffix = "SlaveMethods";
+
         public IDictionary<string, object> PluginMasterParameters { get; set; } = new ConcurrentDictionary<string, object>();
         public IDictionary<string, object> PluginSlaveParamaters { get; set; } = new ConcurrentDictionary<string, object>();
 

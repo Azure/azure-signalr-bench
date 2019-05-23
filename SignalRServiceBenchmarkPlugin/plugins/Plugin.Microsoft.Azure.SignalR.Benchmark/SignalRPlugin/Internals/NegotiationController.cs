@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.SignalR.Management;
+using Serilog;
 using System.Collections.Generic;
 
 namespace Plugin.Microsoft.Azure.SignalR.Benchmark.Internals

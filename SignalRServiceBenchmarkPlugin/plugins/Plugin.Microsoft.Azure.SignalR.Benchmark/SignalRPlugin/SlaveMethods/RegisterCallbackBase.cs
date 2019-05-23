@@ -10,12 +10,11 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
     {
         public static void SetCallbackOnConnected(
             IList<IHubConnectionAdapter> connections,
-            StatisticsCollector statisticsCollector,
-            string methodName)
+            StatisticsCollector statisticsCollector)
         {
             foreach (var connection in connections)
             {
-                connection.On(methodName, (string connectionId) =>
+                connection.On(SignalRConstants.OnConnectedCallback, (string connectionId) =>
                 {
                     connection.UpdateTimestampWhenConnected();
                 });
@@ -24,12 +23,11 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
 
         public static void SetDummyCallbackOnConnected(
             IList<IHubConnectionAdapter> connections,
-            StatisticsCollector statisticsCollector,
-            string methodName)
+            StatisticsCollector statisticsCollector)
         {
             foreach (var connection in connections)
             {
-                connection.On(methodName, (string connectionId) =>
+                connection.On(SignalRConstants.OnConnectedCallback, (string connectionId) =>
                 {
                     Log.Information($"Connection Id: {connectionId}");
                 });
@@ -38,12 +36,11 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
 
         public static void SetDummyLatencyCallback(
             IList<IHubConnectionAdapter> connections,
-            StatisticsCollector statisticsCollector,
-            string methodName)
+            StatisticsCollector statisticsCollector)
         {
             foreach (var connection in connections)
             {
-                connection.On(methodName, (IDictionary<string, object> data) =>
+                connection.On(SignalRConstants.RecordLatencyCallbackName, (IDictionary<string, object> data) =>
                 {
                     //var receiveTimestamp = Util.Timestamp();
                     //data.TryGetTypedValue(SignalRConstants.Timestamp, out long sendTimestamp, Convert.ToInt64);
@@ -56,12 +53,11 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
 
         public static void SetCallback(
             IList<IHubConnectionAdapter> connections,
-            StatisticsCollector statisticsCollector,
-            string methodName)
+            StatisticsCollector statisticsCollector)
         {
             foreach (var connection in connections)
             {
-                connection.On(methodName, (IDictionary<string, object> data) =>
+                connection.On(SignalRConstants.RecordLatencyCallbackName, (IDictionary<string, object> data) =>
                 {
                     var receiveTimestamp = Util.Timestamp();
                     data.TryGetTypedValue(SignalRConstants.Timestamp, out long sendTimestamp, Convert.ToInt64);
@@ -72,7 +68,10 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
             }
         }
 
-        public static void SetCallbackJoinGroup(IList<IHubConnectionAdapter> connections, StatisticsCollector statisticsCollector, string methodName=null)
+        public static void SetCallbackJoinGroup(
+            IList<IHubConnectionAdapter> connections,
+            StatisticsCollector statisticsCollector,
+            string methodName=null)
         {
             foreach (var connection in connections)
             {
@@ -83,7 +82,9 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
             }
         }
 
-        public static void SetCallbackLeaveGroup(IList<IHubConnectionAdapter> connections, StatisticsCollector statisticsCollector, string methodName = null)
+        public static void SetCallbackLeaveGroup(
+            IList<IHubConnectionAdapter> connections,
+            StatisticsCollector statisticsCollector)
         {
             foreach (var connection in connections)
             {
