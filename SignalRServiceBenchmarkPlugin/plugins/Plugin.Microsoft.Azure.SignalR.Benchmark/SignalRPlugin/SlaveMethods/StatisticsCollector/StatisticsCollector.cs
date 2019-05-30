@@ -6,10 +6,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods.Statistics
 {
     public class StatisticsCollector
     {
-        public const long LATENCY_STEP = 100;
-        public const long LATENCY_MAX = 1000;
-        public static long LatencyStep = LATENCY_STEP;
-        public static long LatencyMax  = LATENCY_MAX;
+        public long LatencyStep;
+        public long LatencyMax;
 
         protected ConcurrentDictionary<string, long> _statistics = new ConcurrentDictionary<string, long>();
 

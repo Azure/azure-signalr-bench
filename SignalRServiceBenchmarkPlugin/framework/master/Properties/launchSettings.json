@@ -2,7 +2,7 @@
   "profiles": {
     "master": {
       "commandName": "Project",
-      "commandLineArgs": "-- --SlaveList=\"localhost:5555\" --BenchmarkConfiguration=unit5_rest_send_to_user.yaml",
+      "commandLineArgs": "-- --BenchmarkConfiguration simple-config.yaml",
       "workingDirectory": "C:\\home\\Work\\DevDiv\\azure-signalr-bench\\SignalRServiceBenchmarkPlugin\\framework\\master"
     }
   }

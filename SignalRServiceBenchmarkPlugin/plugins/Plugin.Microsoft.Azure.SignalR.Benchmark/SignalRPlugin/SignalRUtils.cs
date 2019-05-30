@@ -299,13 +299,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         {
             return SignalRConstants.NegotiationUrl + "/" + hub + "?user=" + userId;
         }
-        /*
-        public static void ServicePointManagerOptimize()
-        {
-            ServicePointManager.DefaultConnectionLimit = SignalRConstants.DefaultConnectionLimit;
-            //ServicePointManager.UseNagleAlgorithm = false;
-        }
-        */
+
         public static void SlaveCreateConnection(
             IDictionary<string, object> stepParameters,
             IDictionary<string, object> pluginParameters,

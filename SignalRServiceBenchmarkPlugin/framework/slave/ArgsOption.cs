@@ -7,7 +7,7 @@ namespace Rpc.Slave
     class ArgsOption
     {
         // Rpc
-        [Option("RpcPort", Required = false, Default = 5050, HelpText = "Port to be conencted from remote hosts.")]
+        [Option("RpcPort", Required = false, Default = 7000, HelpText = "Port to be conencted from remote hosts.")]
         public int RpcPort { get; set; }
 
         [Option("PidFile", Required = false, Default = "slave-pid.txt")]

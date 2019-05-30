@@ -18,7 +18,6 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
         {
             try
             {
-                //SignalRUtils.ServicePointManagerOptimize();
                 Log.Information($"{GetType().Name} 's DefaultConnectionLimit: {ServicePointManager.DefaultConnectionLimit}");
                 // Here allow manually evaluate the "send" latency if "RecordLatency" callback is not registered
                 HideRecordLatency = SignalRUtils.HideMessageRoundTripLatency(stepParameters, pluginParameters);

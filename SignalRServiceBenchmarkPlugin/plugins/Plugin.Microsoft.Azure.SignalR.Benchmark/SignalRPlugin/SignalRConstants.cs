@@ -71,6 +71,9 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         public static readonly string Timestamp = "payload.Timestamp";
         public static readonly string MessageBlob = "payload.MessageBlob";
 
+        public const long LATENCY_STEP = 100;
+        public const long LATENCY_MAX = 1000;
+        public const string PERCENTILE_LIST = "0.5,0.9,0.95,0.99";
         // Timer
         public static readonly string Timer = "Timer";
 

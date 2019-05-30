@@ -41,6 +41,14 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             return success;
         }
 
+        public void Dump()
+        {
+            foreach (string key in Parameters.Keys)
+            {
+                Console.WriteLine($"key: {key}, value: {Parameters[key]}");
+            }
+        }
+
         // TODO: validate more on Step
         protected bool Validate(YamlMappingNode stepNode)
         {
