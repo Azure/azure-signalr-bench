@@ -23,10 +23,10 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.StatisticsStore}.{type}",
                     out var statisticsCollector, obj => (StatisticsCollector)obj);
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.RegisteredCallbacks}.{type}",
-                    out var registeredCallbacks, obj => (IList<Action<IList<IHubConnectionAdapter>, StatisticsCollector, string>>)obj);
+                    out var registeredCallbacks, obj => (IList<Action<IList<IHubConnectionAdapter>, StatisticsCollector>>)obj);
 
                 // Set callback
-                SetCallback(connections, statisticsCollector, SignalRConstants.RecordLatencyCallbackName);
+                SetCallback(connections, statisticsCollector);
                 registeredCallbacks.Add(SetCallback);
 
                 return Task.FromResult<IDictionary<string, object>>(null);

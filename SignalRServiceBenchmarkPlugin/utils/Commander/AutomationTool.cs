@@ -18,34 +18,6 @@ namespace Commander
         {
         }
 
-        public void Start()
-        {
-            try
-            {
-                // Clients connect to host
-                _remoteClients.ConnectAll();
-
-                // Publish dlls
-                var (appserverExecutable, masterExecutable, slaveExecutable) = PubishExcutables();
-
-                // Copy executables and configurations
-                CopyExecutables(appserverExecutable, masterExecutable, slaveExecutable);
-
-                // Unzip packages
-                UnzipExecutables();
-
-                // Run benchmark
-                RunBenchmark();
-            }
-            finally
-            {
-                // Disconnect and dispose
-                _remoteClients.DestroyAll();
-
-                Log.Information("Finish");
-            }
-        }
-
         // Only for development
         public void StartDev()
         {

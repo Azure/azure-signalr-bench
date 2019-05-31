@@ -120,14 +120,14 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             pluginParameters[$"{SignalRConstants.ConnectionStore}.{type}"] = connections;
             pluginParameters[$"{SignalRConstants.ConnectionIndex}.{type}"] = connectionIndex;
             pluginParameters[$"{SignalRConstants.RegisteredCallbacks}.{type}"] =
-                new List<Action<IList<IHubConnectionAdapter>, StatisticsCollector, string>>();
+                new List<Action<IList<IHubConnectionAdapter>, StatisticsCollector>>();
         }
 
-        public static IList<Action<IList<IHubConnectionAdapter>, StatisticsCollector, string>>
+        public static IList<Action<IList<IHubConnectionAdapter>, StatisticsCollector>>
             FetchCallbacksFromContext(IDictionary<string, object> pluginParameters, string type)
         {
             pluginParameters.TryGetTypedValue($"{SignalRConstants.RegisteredCallbacks}.{type}",
-                    out var registeredCallbacks, obj => (IList<Action<IList<IHubConnectionAdapter>, StatisticsCollector, string>>)obj);
+                    out var registeredCallbacks, obj => (IList<Action<IList<IHubConnectionAdapter>, StatisticsCollector>>)obj);
             return registeredCallbacks;
         }
 
@@ -353,7 +353,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
                 out StatisticsCollector statisticsCollector, obj => (StatisticsCollector)obj);
             pluginParameters.TryGetTypedValue($"{SignalRConstants.RegisteredCallbacks}.{type}",
                 out var registeredCallbacks,
-                obj => (IList<Action<IList<IHubConnectionAdapter>, StatisticsCollector, string>>)obj);
+                obj => (IList<Action<IList<IHubConnectionAdapter>, StatisticsCollector>>)obj);
             pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionType}.{type}",
                 out string connectionType, Convert.ToString);
             if (!Enum.TryParse<ClientType>(connectionType, out ClientType connType))
@@ -363,7 +363,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             }
             if (!registeredCallbacks.Contains(RegisterCallbackBase.SetCallback))
             {
-                RegisterCallbackBase.SetDummyLatencyCallback(connections, statisticsCollector, SignalRConstants.RecordLatencyCallbackName);
+                RegisterCallbackBase.SetDummyLatencyCallback(connections, statisticsCollector);
                 registeredCallbacks.Add(RegisterCallbackBase.SetDummyLatencyCallback);
                 return true;
             }
@@ -376,7 +376,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         {
             pluginParameters.TryGetTypedValue($"{SignalRConstants.RegisteredCallbacks}.{type}",
                 out var registeredCallbacks,
-                obj => (IList<Action<IList<IHubConnectionAdapter>, StatisticsCollector, string>>)obj);
+                obj => (IList<Action<IList<IHubConnectionAdapter>, StatisticsCollector>>)obj);
             pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionType}.{type}",
                 out string connectionType, Convert.ToString);
             pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionStore}.{type}",
@@ -392,9 +392,21 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             {
                 if (!registeredCallbacks.Contains(RegisterCallbackBase.SetDummyCallbackOnConnected))
                 {
-                    RegisterCallbackBase.SetCallbackOnConnected(connections, statisticsCollector, SignalRConstants.OnConnectedCallback);
+                    RegisterCallbackBase.SetCallbackOnConnected(connections, statisticsCollector);
                     registeredCallbacks.Add(RegisterCallbackBase.SetDummyCallbackOnConnected);
                 }
+            }
+        }
+
+        public static void AddOnConnectedCallback(
+            IList<IHubConnectionAdapter> connections,
+            IList<Action<IList<IHubConnectionAdapter>, StatisticsCollector>> registeredCallbacks,
+            StatisticsCollector statisticsCollector)
+        {
+            if (!registeredCallbacks.Contains(RegisterCallbackBase.SetDummyCallbackOnConnected))
+            {
+                RegisterCallbackBase.SetCallbackOnConnected(connections, statisticsCollector);
+                registeredCallbacks.Add(RegisterCallbackBase.SetDummyCallbackOnConnected);
             }
         }
 
@@ -481,16 +493,21 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             var transportType = GetTransportType(transportTypeString);
             var connections = from i in Enumerable.Range(0, connectionIndex.Count)
                               let userId = GenClientUserIdFromConnectionIndex(connectionIndex[i])
+                              //let handler = new HttpClientHandler
+                              //{
+                              //    ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+                              //}
                               let negoEndPoint = GetNegotiationEndpoint(SignalRConstants.DefaultRestHubName, userId)
                               select new HubConnectionBuilder()
                               .ConfigureLogging(logger =>
                               {
                                   logger.ClearProviders();
                                   logger.AddSerilog(dispose: true);
-                                  logger.SetMinimumLevel(LogLevel.Error);
+                                  logger.SetMinimumLevel(LogLevel.Information);
                               })
                               .WithUrl(negoEndPoint, httpConnectionOptions =>
                               {
+                                  //httpConnectionOptions.HttpMessageHandlerFactory = _ => handler;
                                   httpConnectionOptions.Transports = transportType;
                                   httpConnectionOptions.CloseTimeout = TimeSpan.FromMinutes(closeTimeout);
                               }) into builder
@@ -662,7 +679,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             var message = new byte[len];
             Random rnd = new Random();
             rnd.NextBytes(message);
-            return Convert.ToBase64String(message);
+            return Convert.ToBase64String(message).Substring(0, len);
         }
 
         private static long EvaluatePayloadSize(IDictionary<string, object> payload)

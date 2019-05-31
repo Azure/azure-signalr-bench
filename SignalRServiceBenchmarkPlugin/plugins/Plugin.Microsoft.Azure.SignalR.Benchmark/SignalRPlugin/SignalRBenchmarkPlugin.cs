@@ -1,4 +1,4 @@
-﻿using Common;
+using Common;
 using Newtonsoft.Json;
 using Plugin.Base;
 using Rpc.Service;

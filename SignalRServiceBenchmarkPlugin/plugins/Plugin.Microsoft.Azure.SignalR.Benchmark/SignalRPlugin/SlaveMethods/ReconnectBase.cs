@@ -30,7 +30,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionStore}.{type}",
                     out IList<IHubConnectionAdapter> connections, (obj) => (IList<IHubConnectionAdapter>)obj);
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.RegisteredCallbacks}.{type}",
-                    out var registeredCallbacks, obj => (IList<Action<IList<IHubConnectionAdapter>, StatisticsCollector, string>>)obj);
+                    out var registeredCallbacks, obj => (IList<Action<IList<IHubConnectionAdapter>, StatisticsCollector>>)obj);
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.StatisticsStore}.{type}",
                     out StatisticsCollector statisticsCollector, obj => (StatisticsCollector)obj);
 
@@ -59,6 +59,11 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 }
                 statisticsCollector.UpdateReconnect(newConnections.Count);
                 Log.Information($"Start {newConnections.Count} reconnections");
+                // Re-setCallbacks
+                foreach (var registerCallback in registeredCallbacks)
+                {
+                    registerCallback(newConnections, statisticsCollector);
+                }
                 // It must use original connections instead of 'newConnections' here
                 // because the 'connectionSuccessFlag' is for original connections
                 await BatchConnect(
@@ -66,11 +71,6 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                     pluginParameters,
                     connections,
                     concurrentConnection);
-                // Re-setCallbacks
-                foreach (var registerCallback in registeredCallbacks)
-                {
-                    registerCallback(newConnections, statisticsCollector, SignalRConstants.RecordLatencyCallbackName);
-                }
                 Log.Information($"Finish {newConnections.Count} reconnections");
                 SignalRUtils.DumpConnectionInternalStat(connections);
                 return null;

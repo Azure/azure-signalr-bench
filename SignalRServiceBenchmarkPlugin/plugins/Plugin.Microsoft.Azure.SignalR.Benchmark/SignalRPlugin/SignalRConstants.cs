@@ -76,6 +76,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
 
         // Negotiation server for REST API clients
         public static readonly int NegoatiationServerPort = 12345;
+        public const int LocalhostAppServerPort = 54321;
         public static readonly string NegotiationServer = "NegotiationServer";
         // REST API: http://url:port/{hub}?user={userId}
         public static readonly string NegotiationUrl = $"http://localhost:{NegoatiationServerPort}";

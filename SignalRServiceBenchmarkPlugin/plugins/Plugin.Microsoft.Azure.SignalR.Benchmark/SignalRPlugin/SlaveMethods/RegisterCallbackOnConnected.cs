@@ -25,9 +25,9 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.StatisticsStore}.{type}",
                     out var statisticsCollector, obj => (StatisticsCollector)obj);
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.RegisteredCallbacks}.{type}",
-                    out var registeredCallbacks, obj => (IList<Action<IList<IHubConnectionAdapter>, StatisticsCollector, string>>)obj);
+                    out var registeredCallbacks, obj => (IList<Action<IList<IHubConnectionAdapter>, StatisticsCollector>>)obj);
                 // Set callback
-                RegisterCallbackBase.SetCallbackOnConnected(connections, statisticsCollector, SignalRConstants.OnConnectedCallback);
+                RegisterCallbackBase.SetCallbackOnConnected(connections, statisticsCollector);
                 registeredCallbacks.Add(RegisterCallbackBase.SetCallbackOnConnected);
 
                 return Task.FromResult<IDictionary<string, object>>(null);
