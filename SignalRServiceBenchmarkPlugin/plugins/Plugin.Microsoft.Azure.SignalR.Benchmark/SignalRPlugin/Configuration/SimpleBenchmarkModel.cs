@@ -18,6 +18,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         public const int DEFAULT_SINGLE_STEP_DUR = 240000;
         public const int DEFAULT_SEND_INTERVAL = 1000;
         public const int DEFAULT_ARRIVING_BATCH_WAIT = 1000;
+        public const double DEFAULT_CONNECT_FAIL_PERCENTAGE = 0.01;
+        public const double DEFAULT_MESSAGE_LATENCY_PERCENTAGE = 0.01;
         public const string DEFAULT_KIND = "perf";
         public const string LONGRUN_KIND = "longrun";
         public const string DEFAULT_MODE = "simple";
@@ -57,6 +59,10 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             public int BaseSending { get; set; } = DEFAULT_BASE_SENDING_STEP;
 
             public int SendingSteps { get; set; } = DEFAULT_SENDING_STEPS;
+
+            public double ConnectionFailPercentage { get; set; } = DEFAULT_CONNECT_FAIL_PERCENTAGE;
+
+            public double LatencyPercentage { get; set; } = DEFAULT_MESSAGE_LATENCY_PERCENTAGE;
 
         }
 

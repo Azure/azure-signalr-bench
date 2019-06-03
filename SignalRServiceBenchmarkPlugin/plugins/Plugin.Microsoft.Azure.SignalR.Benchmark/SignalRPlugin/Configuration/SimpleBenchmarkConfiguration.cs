@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using YamlDotNet.RepresentationModel;
+using static Plugin.Microsoft.Azure.SignalR.Benchmark.SimpleBenchmarkModel;
 
 namespace Plugin.Microsoft.Azure.SignalR.Benchmark
 {
@@ -13,37 +14,12 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         Advance
     }
 
-    public enum ConfigurationKind
-    {
-        perf,
-        longrun
-    }
-
-    public enum ConfigurationConnectionType
-    {
-        Core,
-        AspNet
-    }
-
     public class SimpleBenchmarkConfiguration
     {
         protected static readonly string ModuleNameKey = "ModuleName";
         protected static readonly string PipelineKey = "Pipeline";
         protected static readonly string TypesKey = "Types";
         protected static readonly string ModeKey = "Mode";
-        protected static readonly string KindKey = "Kind";
-        protected static readonly string ConnectionTypeKey = "ConnectionType";
-
-        // simple configuration keys
-        protected static readonly string ConnectionKey = "Connections";
-        protected static readonly string ArrivingRateKey = "ArrivingRate";
-        protected static readonly string ProtocolKey = "Protocol";
-        protected static readonly string TransportKey = "Transport";
-        protected static readonly string WebAppTargetKey = "WebAppTarget";
-        protected static readonly string ASRSConnectionStringKey = "ASRSConnectionString";
-        protected static readonly string SingleStepDurationKey = "SingleStepDuration";
-        protected static readonly string BaseSendingKey = "BaseSending";
-        protected static readonly string SendingStepsKey = "SendingSteps";
 
         // default settings
         protected static readonly int DEFAULT_CONNECTIONS = 1000;
@@ -74,35 +50,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
                     return m == ConfigurationMode.Simple;
                 }
             }
-            return true;
-        }
-
-        protected bool isPerf(YamlMappingNode root)
-        {
-            var keys = root.Children.Keys;
-            if (keys.Contains(KindKey))
-            {
-                var mode = root.Children[new YamlScalarNode(KindKey)];
-                if (Enum.TryParse(mode.ToString(), out ConfigurationKind m))
-                {
-                    return m == ConfigurationKind.perf;
-                }
-            }
-            return true;
-        }
-
-        protected bool isCore(YamlMappingNode root)
-        {
-            var keys = root.Children.Keys;
-            if (keys.Contains(ConnectionTypeKey))
-            {
-                var mode = root.Children[new YamlScalarNode(ConnectionTypeKey)];
-                if (Enum.TryParse(mode.ToString(), out ConfigurationConnectionType m))
-                {
-                    return m == ConfigurationConnectionType.Core;
-                }
-            }
-            return true;
+            return false;
         }
 
         protected MasterStep AttachType(MasterStep masterStep, string typeName)
@@ -261,9 +209,170 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             int totalConnections,
             string targetUrl,
             string protocol,
-            string transport)
+            string transport,
+            string batchMode,
+            string typeName,
+            int concurrent,
+            int wait = 1000)
         {
             var masterStep = CreateConnectionInternal(totalConnections, targetUrl, protocol, transport);
+            masterStep.Parameters[Plugin.Base.Constants.Method] = typeof(Reconnect).Name;
+            masterStep.Parameters[SignalRConstants.ConcurrentConnection] = concurrent;
+            masterStep.Parameters[SignalRConstants.BatchMode] = batchMode;
+            masterStep.Parameters[SignalRConstants.BatchWait] = wait;
+            masterStep = AttachType(masterStep, typeName);
+            return masterStep;
+        }
+
+        protected MasterStep ConditionalStop(
+            string typeName,
+            int maxConnections,
+            double connectionFailPercentage,
+            double latencyPercentage)
+        {
+            var masterStep = new MasterStep();
+            masterStep.Parameters[Plugin.Base.Constants.Method] = typeof(ConditionalStop).Name;
+            masterStep.Parameters[SignalRConstants.CriteriaMaxFailConnectionAmount] = maxConnections;
+            masterStep.Parameters[SignalRConstants.CriteriaMaxFailConnectionPercentage] = connectionFailPercentage;
+            masterStep.Parameters[SignalRConstants.CriteriaMaxFailSendingPercentage] = latencyPercentage;
+            masterStep = AttachType(masterStep, typeName);
+            return masterStep;
+        }
+
+        protected MasterStep CollectConnectionId(string typeName)
+        {
+            var masterStep = new MasterStep();
+            masterStep.Parameters[Plugin.Base.Constants.Method] = typeof(CollectConnectionId).Name;
+            masterStep = AttachType(masterStep, typeName);
+            return masterStep;
+        }
+
+        protected MasterStep Broadcast(BenchConfigData config)
+        {
+            return Broadcast(
+                config.Scenario.Name,
+                config.Config.SingleStepDuration,
+                config.Scenario.Parameters.MessageSize,
+                config.Scenario.Parameters.SendingInterval,
+                config.Config.Connections,
+                0,
+                config.Config.SendingSteps);
+        }
+
+        protected MasterStep Broadcast(
+            string typeName,
+            int stepDuration,
+            int msgSize,
+            int sendingInterval,
+            int totalConnections,
+            int beginIndex,
+            int endIndex)
+        {
+            var masterStep = SimpleSendingScenario(stepDuration, msgSize, sendingInterval, totalConnections, beginIndex, endIndex);
+            masterStep.Parameters[Plugin.Base.Constants.Method] = typeof(Broadcast).Name;
+            masterStep = AttachType(masterStep, typeName);
+            return masterStep;
+        }
+
+        protected MasterStep Echo(
+            string typeName,
+            int stepDuration,
+            int msgSize,
+            int sendingInterval,
+            int totalConnections,
+            int beginIndex,
+            int endIndex)
+        {
+            var masterStep = SimpleSendingScenario(stepDuration, msgSize, sendingInterval, totalConnections, beginIndex, endIndex);
+            masterStep.Parameters[Plugin.Base.Constants.Method] = typeof(Echo).Name;
+            masterStep = AttachType(masterStep, typeName);
+            return masterStep;
+        }
+
+        protected MasterStep SendToClient(
+            string typeName,
+            int stepDuration,
+            int msgSize,
+            int sendingInterval,
+            int totalConnections,
+            int beginIndex,
+            int endIndex)
+        {
+            var masterStep = SimpleSendingScenario(stepDuration, msgSize, sendingInterval, totalConnections, beginIndex, endIndex);
+            masterStep.Parameters[SignalRConstants.ConnectionTotal] = totalConnections;
+            masterStep.Parameters[Plugin.Base.Constants.Method] = typeof(SendToClient).Name;
+            masterStep = AttachType(masterStep, typeName);
+            return masterStep;
+        }
+
+        protected MasterStep SendToGroup(
+            string typeName,
+            int groupCount,
+            int stepDuration,
+            int msgSize,
+            int sendingInterval,
+            int totalConnections,
+            int beginIndex,
+            int endIndex)
+        {
+            var masterStep = SimpleSendingScenario(stepDuration, msgSize, sendingInterval, totalConnections, beginIndex, endIndex);
+            masterStep.Parameters[SignalRConstants.GroupConfigMode] = SignalREnums.GroupConfigMode.Connection.ToString();
+            masterStep.Parameters[SignalRConstants.Modulo] = totalConnections;
+            masterStep.Parameters[SignalRConstants.GroupCount] = groupCount;
+            masterStep.Parameters[SignalRConstants.ConnectionTotal] = totalConnections;
+            masterStep.Parameters[Plugin.Base.Constants.Method] = typeof(SendToGroup).Name;
+            masterStep = AttachType(masterStep, typeName);
+            return masterStep;
+        }
+
+        protected MasterStep SimpleSendingScenario(
+            int stepDuration,
+            int msgSize,
+            int sendingInterval,
+            int totalConnections,
+            int beginIndex,
+            int endIndex)
+        {
+            var masterStep = new MasterStep();
+            masterStep.Parameters[SignalRConstants.RemainderBegin] = beginIndex;
+            masterStep.Parameters[SignalRConstants.RemainderEnd] = endIndex;
+            masterStep.Parameters[SignalRConstants.Modulo] = totalConnections;
+            masterStep.Parameters[SignalRConstants.Duration] = stepDuration;
+            masterStep.Parameters[SignalRConstants.MessageSize] = msgSize;
+            masterStep.Parameters[SignalRConstants.Interval] = sendingInterval;
+            return masterStep;
+        }
+
+        protected MasterStep JoinGroup(
+            string typeName,
+            int groupCount,
+            int connections)
+        {
+            var masterStep = GroupInternal(typeName, groupCount, connections);
+            masterStep.Parameters[Plugin.Base.Constants.Method] = typeof(JoinGroup).Name;
+            return masterStep;
+        }
+
+        protected MasterStep LeaveGroup(
+            string typeName,
+            int groupCount,
+            int connections)
+        {
+            var masterStep = GroupInternal(typeName, groupCount, connections);
+            masterStep.Parameters[Plugin.Base.Constants.Method] = typeof(LeaveGroup).Name;
+            return masterStep;
+        }
+
+        protected MasterStep GroupInternal(
+            string typeName,
+            int groupCount,
+            int connections)
+        {
+            var masterStep = new MasterStep();
+            masterStep.Parameters[Plugin.Base.Constants.Method] = typeof(LeaveGroup).Name;
+            masterStep.Parameters[SignalRConstants.GroupCount] = groupCount;
+            masterStep.Parameters[SignalRConstants.ConnectionTotal] = connections;
+            masterStep = AttachType(masterStep, typeName);
             return masterStep;
         }
     }

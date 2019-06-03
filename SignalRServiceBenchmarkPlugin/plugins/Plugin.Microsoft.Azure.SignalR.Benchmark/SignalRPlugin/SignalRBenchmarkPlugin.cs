@@ -33,6 +33,8 @@ config:
   connectionType: Core                                                               # Optional: 'Core|AspNet', default is 'Core', if you use AspNet SignalR, please choose 'AspNet'.
   arrivingBatchMode: HighPress                                                       # Optional: 'HighPress|LowPress|LimitRatePress', default is 'HighPress'
   arrivingBatchWait: 1000                                                            # Optional: waiting period during batch connection, default is 1000 millisecond
+  connectionFailPercentage: 0.01                                                     # Optional: connection failure tolerance, default is 0.01 which means it allows at most 1% connections fail, and try to reconnect. Otherwise stop.
+  latencyPercentage: 0.01                                                            # Optional: message latency tolerance, default is 0.01 which means it allows at most 1% message latency > 1s, otherwise stop
 scenario:
   name: echo                                                                         # Optional: 'echo|broadcast|sendToGroup|sendToClient|restSendToUser|restSendToGroup|restBroadcast|restPersistSendToUser|restPersistSendToGroup|restPersistBroadcast', default is echo
   parameters:

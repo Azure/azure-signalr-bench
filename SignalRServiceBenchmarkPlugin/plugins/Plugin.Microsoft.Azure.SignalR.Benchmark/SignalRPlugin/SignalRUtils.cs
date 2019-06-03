@@ -5,6 +5,7 @@ using Microsoft.Azure.SignalR.Management;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Plugin.Microsoft.Azure.SignalR.Benchmark.Internals;
+using Plugin.Microsoft.Azure.SignalR.Benchmark.Internals.AppServer;
 using Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods;
 using Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods.Statistics;
 using Rpc.Service;
@@ -248,6 +249,58 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
                     break;
             }
             return connections;
+        }
+
+        public static bool isUsingInternalApp(IDictionary<string, object> stepParameters)
+        {
+            stepParameters.TryGetTypedValue(SignalRConstants.HubUrls,
+                out string urls, Convert.ToString);
+            return urls.StartsWith("Endpoint=");
+        }
+
+        public static async Task StartInternalAppServer(
+            IDictionary<string, object> stepParameters,
+            IDictionary<string, object> pluginParameters)
+        {
+            LocalhostAppServer localAppServer = null;
+            stepParameters.TryGetTypedValue(SignalRConstants.Type,
+                out string type, Convert.ToString);
+            stepParameters.TryGetTypedValue(SignalRConstants.HubUrls,
+                out string urls, Convert.ToString);
+            if (pluginParameters.TryGetValue($"{SignalRConstants.LocalhostAppServer}.{type}", out _))
+            {
+                pluginParameters.TryGetTypedValue($"{SignalRConstants.LocalhostAppServer}.{type}",
+                    out localAppServer, (obj) => (LocalhostAppServer)obj);
+            }
+            else
+            {
+                // connection string is stored in 'urls'
+                localAppServer = new LocalhostAppServer(urls);
+                pluginParameters[$"{SignalRConstants.LocalhostAppServer}.{type}"] = localAppServer;
+            }
+            if (!localAppServer.IsStarted)
+            {
+                await localAppServer.Start();
+            }
+        }
+
+        public static async Task StopInternalAppServer(
+            IDictionary<string, object> stepParameters,
+            IDictionary<string, object> pluginParameters)
+        {
+            LocalhostAppServer localAppServer = null;
+            stepParameters.TryGetTypedValue(SignalRConstants.Type,
+                out string type, Convert.ToString);
+            if (pluginParameters.TryGetValue($"{SignalRConstants.LocalhostAppServer}.{type}", out _))
+            {
+                pluginParameters.TryGetTypedValue($"{SignalRConstants.LocalhostAppServer}.{type}",
+                    out localAppServer, (obj) => (LocalhostAppServer)obj);
+            }
+            if (localAppServer != null &&
+                localAppServer.IsStarted)
+            {
+                await localAppServer.Stop();
+            }
         }
 
         public static async Task StartNegotiationServer(

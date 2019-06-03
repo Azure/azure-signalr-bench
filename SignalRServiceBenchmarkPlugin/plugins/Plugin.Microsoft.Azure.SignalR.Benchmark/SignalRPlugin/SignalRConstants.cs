@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Azure.SignalR.PerfTest.AppServer;
+using System;
 
 namespace Plugin.Microsoft.Azure.SignalR.Benchmark
 {
@@ -77,9 +78,12 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         // Timer
         public static readonly string Timer = "Timer";
 
+        public static readonly string LocalhostAppServer = "LocalhostAppServer";
+        public const int LocalhostAppServerPort = 54321;
+        public static readonly string LocalhostUrl = $"http://localhost:{LocalhostAppServerPort}{Startup.HUB_NAME}";
         // Negotiation server for REST API clients
         public static readonly int NegoatiationServerPort = 12345;
-        public const int LocalhostAppServerPort = 54321;
+        
         public static readonly string NegotiationServer = "NegotiationServer";
         // REST API: http://url:port/{hub}?user={userId}
         public static readonly string NegotiationUrl = $"http://localhost:{NegoatiationServerPort}";

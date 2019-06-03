@@ -9,15 +9,22 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
 {
     public class CreateConnection : ISlaveMethod
     {
-        public Task<IDictionary<string, object>> Do(
+        public async Task<IDictionary<string, object>> Do(
             IDictionary<string, object> stepParameters,
             IDictionary<string, object> pluginParameters)
         {
             try
             {
                 Log.Information($"Create connections...");
+                if (SignalRUtils.isUsingInternalApp(stepParameters))
+                {
+                    await SignalRUtils.StartInternalAppServer(stepParameters, pluginParameters);
+                    // rewrite the url
+                    stepParameters[SignalRConstants.HubUrls] = SignalRConstants.LocalhostUrl;
+                }
+                
                 SignalRUtils.SlaveCreateConnection(stepParameters, pluginParameters, ClientType.AspNetCore);
-                return Task.FromResult<IDictionary<string, object>>(null);
+                return null;
             }
             catch (Exception ex)
             {

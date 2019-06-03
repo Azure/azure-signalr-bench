@@ -63,23 +63,15 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             return;
         }
 
-
-        private void HandleSimpleConfiguration(YamlMappingNode root)
-        {
-            if (isCore(root))
-            {
-                //Pipeline.Add(CreateCoreConnection());
-            }
-        }
-
         private void HandleSimpleConfiguration(string content)
         {
             var simpleModel = new SimpleBenchmarkModel();
             var configData = simpleModel.Deserialize(content);
+            string url = null;
             // create connections
             if (configData.IsCore())
             {
-                var url = String.IsNullOrEmpty(configData.Config.WebAppTarget) ?
+                url = String.IsNullOrEmpty(configData.Config.WebAppTarget) ?
                     configData.Config.ConnectionString : configData.Config.WebAppTarget;
                 var masterStep = CreateCoreConnection(
                     configData.Config.Connections,
@@ -90,7 +82,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             }
             else if (configData.IsAspNet())
             {
-                var url = configData.Config.WebAppTarget;
+                url = configData.Config.WebAppTarget;
                 var masterStep = CreateAspNetConnection(
                     configData.Config.Connections,
                     url,
@@ -100,7 +92,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             }
             else if (configData.IsDirect())
             {
-                var url = configData.Config.WebAppTarget;
+                url = configData.Config.WebAppTarget;
                 var masterStep = CreateDirectConnection(
                     configData.Config.Connections,
                     url,
@@ -151,14 +143,79 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
                                                configData.Config.ArrivingBatchWait));
             // wait for connections finish
             AddSingleMasterStep(Wait(configData.Scenario.Name));
-
+            // reconnect
+            AddSingleMasterStep(Reconnect(configData.Config.Connections,
+                                          url,
+                                          configData.Config.Protocol,
+                                          configData.Config.Transport,
+                                          configData.Config.ArrivingBatchMode,
+                                          configData.Scenario.Name,
+                                          configData.Config.ArrivingRate));
+            if (configData.Scenario.Name.EndsWith("Group"))
+            {
+                AddSingleMasterStep(JoinGroup(configData.Scenario.Name,
+                                              configData.Scenario.Parameters.GroupCount,
+                                              configData.Config.Connections));
+                AddSingleMasterStep(Wait(configData.Scenario.Name));
+            }
+            else if (configData.Scenario.Name == "sendToClient")
+            {
+                AddSingleMasterStep(CollectConnectionId(configData.Scenario.Name));
+                AddSingleMasterStep(Wait(configData.Scenario.Name));
+                AddSingleMasterStep(Reconnect(configData.Config.Connections,
+                                          url,
+                                          configData.Config.Protocol,
+                                          configData.Config.Transport,
+                                          configData.Config.ArrivingBatchMode,
+                                          configData.Scenario.Name,
+                                          configData.Config.ArrivingRate));
+                AddSingleMasterStep(Wait(configData.Scenario.Name));
+                AddSingleMasterStep(CollectConnectionId(configData.Scenario.Name));
+            }
             // sending steps
             if (configData.Config.BaseSending > 0)
             {
+                var scenario = configData.Scenario.Name;
+                var scenarioNameLen = scenario.Length;
+                var methodName = scenario.Substring(0, 1).ToUpper() + scenario.Substring(1, scenarioNameLen - 1);
+                var scenarioMethod = GetType().GetMethod(methodName);
                 var steps = configData.Config.Connections / configData.Config.BaseSending;
                 for (int i = 0; i < steps; i++)
                 {
-
+                    if (i > 0)
+                    {
+                        // conditional stop and reconnect
+                        AddSingleMasterStep(ConditionalStop(configData.Scenario.Name,
+                                                            configData.Config.Connections,
+                                                            configData.Config.ConnectionFailPercentage,
+                                                            configData.Config.LatencyPercentage));
+                        AddSingleMasterStep(Reconnect(configData.Config.Connections,
+                                            url,
+                                            configData.Config.Protocol,
+                                            configData.Config.Transport,
+                                            configData.Config.ArrivingBatchMode,
+                                            configData.Scenario.Name,
+                                            configData.Config.ArrivingRate));
+                        if (configData.Scenario.Name == "sendToClient")
+                        {
+                            AddSingleMasterStep(CollectConnectionId(configData.Scenario.Name));
+                        }
+                        AddSingleMasterStep(ConditionalStop(configData.Scenario.Name,
+                                                            configData.Config.Connections,
+                                                            configData.Config.ConnectionFailPercentage,
+                                                            configData.Config.LatencyPercentage));
+                    }
+                    // sending scenario
+                    var step = scenarioMethod.Invoke(this, new object[] { configData });
+                    AddSingleMasterStep((MasterStep)step);
+                    AddSingleMasterStep(Wait(configData.Scenario.Name));
+                }
+                // post stop and clean steps
+                if (configData.Scenario.Name.EndsWith("Group"))
+                {
+                    AddSingleMasterStep(LeaveGroup(configData.Scenario.Name,
+                                              configData.Scenario.Parameters.GroupCount,
+                                              configData.Config.Connections));
                 }
             }
             

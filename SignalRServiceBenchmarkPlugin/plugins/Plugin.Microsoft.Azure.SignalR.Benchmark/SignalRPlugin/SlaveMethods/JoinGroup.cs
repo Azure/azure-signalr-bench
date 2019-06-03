@@ -35,7 +35,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
 
                 if (totalConnection % _groupCount != 0)
                 {
-                    throw new Exception("Not supported: Total connections cannot be divided by group count");
+                    //throw new Exception("Not supported: Total connections cannot be divided by group count");
+                    Log.Warning($"groups do not have equal members because total connections {totalConnection} cannot be divided by group count {_groupCount}");
                 }
 
                 SignalRUtils.SaveGroupInfoToContext(pluginParameters, _type, _groupCount, totalConnection);
@@ -79,30 +80,69 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
             }).Build();
 
             var hubContext = await serviceManager.CreateHubContextAsync(SignalRConstants.DefaultRestHubName);
-            for (var i = 0; i < _connections.Count; i++)
+            var connectionCount = _connections.Count;
+            if (connectionCount >= _groupCount)
             {
-                var userId = SignalRUtils.GenClientUserIdFromConnectionIndex(_connectionIndex[i]);
-                try
+                for (var i = 0; i < _connections.Count; i++)
                 {
-                    await hubContext.UserGroups.AddToGroupAsync(userId,
-                        SignalRUtils.GroupName(_type, _connectionIndex[i] % _groupCount));
-                    _statisticsCollector.IncreaseJoinGroupSuccess();
+                    var userId = SignalRUtils.GenClientUserIdFromConnectionIndex(_connectionIndex[i]);
+                    try
+                    {
+                        await hubContext.UserGroups.AddToGroupAsync(
+                            userId,
+                            SignalRUtils.GroupName(_type, _connectionIndex[i] % _groupCount));
+                        _statisticsCollector.IncreaseJoinGroupSuccess();
+                    }
+                    catch (Exception e)
+                    {
+                        _statisticsCollector.IncreaseJoinGroupFail();
+                        Log.Error($"Fail to join group: {e.Message}");
+                    }
                 }
-                catch (Exception e)
+            }
+            else
+            {
+                for (var i = 0; i < _groupCount; i++)
                 {
-                    _statisticsCollector.IncreaseJoinGroupFail();
-                    Log.Error($"Fail to join group: {e.Message}");
+                    var userId = SignalRUtils.GenClientUserIdFromConnectionIndex(i);
+                    try
+                    {
+                        await hubContext.UserGroups.AddToGroupAsync(
+                            userId,
+                            SignalRUtils.GroupName(_type, i));
+                        _statisticsCollector.IncreaseJoinGroupSuccess();
+                    }
+                    catch (Exception e)
+                    {
+                        _statisticsCollector.IncreaseJoinGroupFail();
+                        Log.Error($"Fail to join group: {e.Message}");
+                    }
                 }
             }
         }
 
         private async Task NormalConnectionJoinGroup()
         {
-            for (var i = 0; i < _connections.Count; i++)
+            if (_connections.Count >= _groupCount)
             {
-                await SignalRUtils.JoinToGroup(_connections[i],
-                    SignalRUtils.GroupName(_type, _connectionIndex[i] % _groupCount),
-                    _statisticsCollector);
+                for (var i = 0; i < _connections.Count; i++)
+                {
+                    await SignalRUtils.JoinToGroup(
+                        _connections[i],
+                        SignalRUtils.GroupName(_type, _connectionIndex[i] % _groupCount),
+                        _statisticsCollector);
+                }
+            }
+            else
+            {
+                var connectionCount = _connections.Count;
+                for (var i = 0; i < _groupCount; i++)
+                {
+                    await SignalRUtils.JoinToGroup(
+                        _connections[i % connectionCount],
+                        SignalRUtils.GroupName(_type, i),
+                        _statisticsCollector);
+                }
             }
         }
     }

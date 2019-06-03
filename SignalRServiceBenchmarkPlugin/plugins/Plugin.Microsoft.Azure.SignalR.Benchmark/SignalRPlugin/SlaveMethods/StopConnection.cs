@@ -30,6 +30,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 await Task.WhenAll(from connection in connections
                                    select connection.StopAsync());
                 await SignalRUtils.StopNegotiationServer(stepParameters, pluginParameters);
+                await SignalRUtils.StopInternalAppServer(stepParameters, pluginParameters);
                 return null;
             }
             catch (Exception ex)
