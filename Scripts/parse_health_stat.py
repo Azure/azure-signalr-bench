@@ -9,23 +9,28 @@ def FindManyMax(infile, queryMax):
     v = 0
     with open(infile) as f:
        for line in f:
+           # timestamp json
            items = line.rstrip().split(" ")
            if (len(items) == 2):
              try:
                 jData = json.loads(items[1], 'utf-8')
                 u = 0
-                for key, value in jData.items():
-                    if (queryMax in key):
-                       u = u + int(value)
-                if (u >= v):
-                   qMax = u
-                elif qMax > 0:
-                   manyMaxArr.append(qMax)
-                   qMax = 0
-                v = u
+                # "servId":{xxx}
+                for servIdKey, serValue in jData.items():
+                    for key, value in serValue.items():
+                        if (queryMax in key):
+                            u = u + int(value)
+                            if (u >= v):
+                                qMax = u
+                            elif qMax > 0:
+                                manyMaxArr.append(qMax)
+                                qMax = 0
+                            v = u
              except Exception as e:
                 print("exception occurs: " + str(e))
-                #traceback.print_exc()
+                traceback.print_exc()
+           else:
+               print(len(items))
     if qMax > 0:
        manyMaxArr.append(qMax)
     if len(manyMaxArr) == 0:
@@ -41,11 +46,13 @@ def FindMaxItem(infile, queryMax):
            if (len(items) == 2):
              try:
                 jData = json.loads(items[1], 'utf-8')
-                if (queryMax in jData):
-                   v = int(jData[queryMax])
-                   if (v > qMax):
-                     qMax = v
-                     jItem = items[1]
+                for servIdKey, serValue in jData.items():
+                    for key, value in serValue.items():
+                        if (queryMax in key):
+                            v = int(value)
+                            if (v > qMax):
+                                qMax = v
+                                jItem = items[1]
              except Exception as e:
                 print("exception occurs: " + str(e))
     print(qMax)
