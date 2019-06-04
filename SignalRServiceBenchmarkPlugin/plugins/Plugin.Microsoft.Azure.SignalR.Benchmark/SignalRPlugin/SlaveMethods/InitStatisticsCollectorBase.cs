@@ -19,9 +19,9 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
             // Get parameters
             stepParameters.TryGetTypedValue(SignalRConstants.Type,
                 out string type, Convert.ToString);
-            stepParameters.TryGetTypedValue($"{SignalRConstants.LatencyStep}.{type}",
+            stepParameters.TryGetTypedValue($"{SignalRConstants.LatencyStep}",
                 out long latencyStep, Convert.ToInt64);
-            stepParameters.TryGetTypedValue($"{SignalRConstants.LatencyMax}.{type}",
+            stepParameters.TryGetTypedValue($"{SignalRConstants.LatencyMax}",
                 out long latencyMax, Convert.ToInt64);
             _type = type;
             _latencyMax = latencyMax;

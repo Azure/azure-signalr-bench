@@ -508,11 +508,19 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
                                 out StatisticsCollector statisticsCollector, (obj) => (StatisticsCollector)obj);
                             package.Context.TryGetTypedValue($"{SignalRConstants.ConnectionIndex}.{package.Type}",
                                 out List<int> connectionIndex, (obj) => (List<int>)obj);
-                            var grp = GroupName(package.Type, connectionIndex[package.LocalIndex] % groupCount);
-                            //Log.Information($"connection {package.LocalIndex} joins group {grp}");
-                            await JoinToGroup(package.Connection,
-                                grp,
-                                statisticsCollector);
+                            if (connectionCount >= groupCount)
+                            {
+                                var grp = GroupName(package.Type, connectionIndex[package.LocalIndex] % groupCount);
+                                await JoinToGroup(package.Connection, grp, statisticsCollector);
+                            }
+                            else
+                            {
+                                for (var i = package.LocalIndex; i < groupCount; i += connectionCount)
+                                {
+                                    var grp = GroupName(package.Type, i);
+                                    await JoinToGroup(package.Connection, grp, statisticsCollector);
+                                }
+                            }
                         }
                     }
                 }
@@ -549,8 +557,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
                               .ConfigureLogging(logger =>
                               {
                                   logger.ClearProviders();
-                                  logger.AddSerilog(dispose: true);
-                                  logger.SetMinimumLevel(LogLevel.Information);
+                                  //logger.AddSerilog(dispose: true);
+                                  //logger.SetMinimumLevel(LogLevel.Information);
                               })
                               .WithUrl(negoEndPoint, httpConnectionOptions =>
                               {

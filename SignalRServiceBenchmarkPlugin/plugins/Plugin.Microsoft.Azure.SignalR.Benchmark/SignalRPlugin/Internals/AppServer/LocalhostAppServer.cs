@@ -1,9 +1,13 @@
 ﻿using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Hosting.Server.Features;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Azure.SignalR.PerfTest.AppServer;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Serilog;
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -25,20 +29,31 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.Internals.AppServer
 
         public LocalhostAppServer(string connectionString, int port = SignalRConstants.LocalhostAppServerPort)
         {
+            Environment.SetEnvironmentVariable("Azure:SignalR:ConnectionString", connectionString);
+            Environment.SetEnvironmentVariable("Azure:SignalR:ConnectionNumber", "5");
             _host = new WebHostBuilder()
-                .ConfigureLogging(logging =>
+                .ConfigureLogging((context, logging) =>
                 {
                     logging.AddSerilog();
+                    logging.SetMinimumLevel(LogLevel.Warning);
                 })
+                .ConfigureAppConfiguration(ConfigurationConfig)
                 .UseKestrel(KestrelConfig)
                 .UseStartup(typeof(Startup))
                 .Build();
         }
 
+        public static readonly Action<WebHostBuilderContext, IConfigurationBuilder> ConfigurationConfig =
+            (context, builder) =>
+            {
+                builder.SetBasePath(context.HostingEnvironment.ContentRootPath)
+                       .AddEnvironmentVariables();
+            };
+
         public static readonly Action<WebHostBuilderContext, KestrelServerOptions> KestrelConfig =
             (context, options) =>
             {
-                options.ListenLocalhost(SignalRConstants.NegoatiationServerPort);
+                options.ListenLocalhost(SignalRConstants.LocalhostAppServerPort);
             };
 
         public async Task Start()
@@ -49,12 +64,13 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.Internals.AppServer
                 {
                     Log.Information("Starting localhost app server...");
                     await _host.StartAsync(cts.Token);
-                    Log.Information("Localhost app server started");
+                    var url = _host.ServerFeatures.Get<IServerAddressesFeature>().Addresses.FirstOrDefault();
+                    Log.Information($"Localhost app server started {url}");
                     _lifetime = _host.Services.GetRequiredService<IApplicationLifetime>();
                     _started = true;
                     _lifetime.ApplicationStopped.Register(() =>
                     {
-                        Log.Information("Negotiation server stopped");
+                        Log.Information("Localhost app server stopped");
                         _started = false;
                     });
                 }

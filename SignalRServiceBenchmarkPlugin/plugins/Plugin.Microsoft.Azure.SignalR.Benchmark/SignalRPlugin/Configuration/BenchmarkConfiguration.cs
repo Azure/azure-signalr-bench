@@ -66,10 +66,25 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         {
             var simpleModel = new SimpleBenchmarkModel();
             var configData = simpleModel.Deserialize(content);
-            configData.isValid();
+            if (!configData.isValid())
+            {
+                throw new Exception("Invalid benchmark configuration");
+            }
             string url = null;
             // create connections
-            if (configData.IsCore())
+            // Check REST API connection first
+            if (configData.IsDirect())
+            {
+                url = configData.Config.ConnectionString;
+                var masterStep = CreateDirectConnection(
+                    configData.Config.Connections,
+                    url,
+                    configData.Config.Protocol,
+                    configData.Config.Transport,
+                    configData.Scenario.Name);
+                AddSingleMasterStep(masterStep);
+            }
+            else if (configData.IsCore())
             {
                 url = String.IsNullOrEmpty(configData.Config.WebAppTarget) ?
                     configData.Config.ConnectionString : configData.Config.WebAppTarget;
@@ -77,7 +92,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
                     configData.Config.Connections,
                     url,
                     configData.Config.Protocol,
-                    configData.Config.Transport);
+                    configData.Config.Transport,
+                    configData.Scenario.Name);
                 AddSingleMasterStep(masterStep);
             }
             else if (configData.IsAspNet())
@@ -87,17 +103,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
                     configData.Config.Connections,
                     url,
                     configData.Config.Protocol,
-                    configData.Config.Transport);
-                AddSingleMasterStep(masterStep);
-            }
-            else if (configData.IsDirect())
-            {
-                url = configData.Config.WebAppTarget;
-                var masterStep = CreateDirectConnection(
-                    configData.Config.Connections,
-                    url,
-                    configData.Config.Protocol,
-                    configData.Config.Transport);
+                    configData.Config.Transport,
+                    configData.Scenario.Name);
                 AddSingleMasterStep(masterStep);
             }
             else
@@ -175,10 +182,12 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             // sending steps
             if (configData.Config.BaseSending > 0)
             {
+                // Find the scenario method by name
                 var scenario = configData.Scenario.Name;
                 var scenarioNameLen = scenario.Length;
                 var methodName = scenario.Substring(0, 1).ToUpper() + scenario.Substring(1, scenarioNameLen - 1);
                 var scenarioMethod = GetType().GetMethod(methodName);
+                // Calculate the steps
                 var s = (configData.Config.Connections - configData.Config.BaseSending) / configData.Config.Step + 1;
                 var steps = s < configData.Config.SendingSteps ? s : configData.Config.SendingSteps;
                 for (int i = 0; i < steps; i++)

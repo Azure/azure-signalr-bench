@@ -43,9 +43,10 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
 
         public void Dump()
         {
+            Log.Information("--------");
             foreach (string key in Parameters.Keys)
             {
-                Console.WriteLine($"key: {key}, value: {Parameters[key]}");
+                Log.Information($"key: {key}, value: {Parameters[key]}");
             }
         }
 

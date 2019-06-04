@@ -30,6 +30,7 @@ config:
   singleStepDuration: 240000                                                         # Optional, default is 240 seconds
   baseSending: 500                                                                   # Optional, the count for active sending connections when starting, default is 500
   sendingSteps: 2                                                                    # Optional: maximum value is 'Connections / BaseSending', mimum value is 1. Default is 'Connections / BaseSending'
+  step: 500                                                                          # Optional: default is 500
   connectionType: Core                                                               # Optional: 'Core|AspNet', default is 'Core', if you use AspNet SignalR, please choose 'AspNet'.
   arrivingBatchMode: HighPress                                                       # Optional: 'HighPress|LowPress', default is 'HighPress'
   arrivingBatchWait: 1000                                                            # Optional: waiting period during batch connection, default is 1000 millisecond

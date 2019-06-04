@@ -89,16 +89,6 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         {
         }
 
-        public bool isCore(BenchConfigData configData)
-        {
-            return configData.Config.ConnectionType == DEFAULT_CONNECTION_TYPE;
-        }
-
-        public bool isSimple(BenchConfigData configData)
-        {
-            return configData.Mode == DEFAULT_MODE;
-        }
-
         public BenchConfigData Deserialize(string content)
         {
             var input = new StringReader(content);

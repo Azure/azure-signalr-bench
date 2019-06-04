@@ -31,8 +31,6 @@ namespace Microsoft.Azure.SignalR.PerfTest.AppServer
 
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddMvc();
-
             if (useLocalSignalR)
                 services.AddSignalR().AddMessagePackProtocol();
             else
@@ -46,7 +44,6 @@ namespace Microsoft.Azure.SignalR.PerfTest.AppServer
 
         public void Configure(IApplicationBuilder app)
         {
-            app.UseMvc();
             app.UseFileServer();
             if (useLocalSignalR)
                 app.UseSignalR(routes =>

@@ -79,9 +79,10 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             int totalConnections,
             string targetUrl,
             string protocol,
-            string transport)
+            string transport,
+            string typeName)
         {
-            var masterStep = CreateConnectionInternal(totalConnections, targetUrl, protocol, transport);
+            var masterStep = CreateConnectionInternal(totalConnections, targetUrl, protocol, transport, typeName);
             masterStep.Parameters[Plugin.Base.Constants.Method] = typeof(CreateDirectConnection).Name;
             return masterStep;
         }
@@ -90,9 +91,10 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             int totalConnections,
             string targetUrl,
             string protocol,
-            string transport)
+            string transport,
+            string typeName)
         {
-            var masterStep = CreateConnectionInternal(totalConnections, targetUrl, protocol, transport);
+            var masterStep = CreateConnectionInternal(totalConnections, targetUrl, protocol, transport, typeName);
             masterStep.Parameters[Plugin.Base.Constants.Method] = typeof(CreateAspNetConnection).Name;
             return masterStep;
         }
@@ -101,9 +103,10 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             int totalConnections,
             string targetUrl,
             string protocol,
-            string transport)
+            string transport,
+            string typeName)
         {
-            var masterStep = CreateConnectionInternal(totalConnections, targetUrl, protocol, transport);
+            var masterStep = CreateConnectionInternal(totalConnections, targetUrl, protocol, transport, typeName);
             masterStep.Parameters[Plugin.Base.Constants.Method] = typeof(CreateConnection).Name;
             return masterStep;
         }
@@ -112,9 +115,11 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             int totalConnections,
             string targetUrl,
             string protocol,
-            string transport)
+            string transport,
+            string typeName)
         {
             var masterStep = new MasterStep();
+            masterStep = AttachType(masterStep, typeName);
             masterStep.Parameters[SignalRConstants.ConnectionTotal] = totalConnections;
             masterStep.Parameters[SignalRConstants.HubProtocol] = protocol;
             masterStep.Parameters[SignalRConstants.TransportType] = transport;
@@ -140,8 +145,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         {
             var masterStep = new MasterStep();
             masterStep = AttachType(masterStep, typeName);
-            masterStep.Parameters[$"{SignalRConstants.LatencyStep}.{typeName}"] = SignalRConstants.LATENCY_STEP;
-            masterStep.Parameters[$"{SignalRConstants.LatencyMax}.{typeName}"] = SignalRConstants.LATENCY_MAX;
+            masterStep.Parameters[$"{SignalRConstants.LatencyStep}"] = SignalRConstants.LATENCY_STEP;
+            masterStep.Parameters[$"{SignalRConstants.LatencyMax}"] = SignalRConstants.LATENCY_MAX;
             return masterStep;
         }
 
@@ -215,12 +220,11 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             int concurrent,
             int wait = 1000)
         {
-            var masterStep = CreateConnectionInternal(totalConnections, targetUrl, protocol, transport);
+            var masterStep = CreateConnectionInternal(totalConnections, targetUrl, protocol, transport, typeName);
             masterStep.Parameters[Plugin.Base.Constants.Method] = typeof(Reconnect).Name;
             masterStep.Parameters[SignalRConstants.ConcurrentConnection] = concurrent;
             masterStep.Parameters[SignalRConstants.BatchMode] = batchMode;
             masterStep.Parameters[SignalRConstants.BatchWait] = wait;
-            masterStep = AttachType(masterStep, typeName);
             return masterStep;
         }
 
@@ -246,10 +250,25 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             masterStep = AttachType(masterStep, typeName);
             return masterStep;
         }
+        #region Scenarion methods for reflect call
+        public MasterStep SendToGroup(BenchConfigData config, int endIndex)
+        {
+            var masterStep = SendToGroup(
+                config.Scenario.Name,
+                config.Scenario.Parameters.GroupCount,
+                config.Config.SingleStepDuration,
+                config.Scenario.Parameters.MessageSize,
+                config.Scenario.Parameters.SendingInterval,
+                config.Config.Connections,
+                0,
+                endIndex);
+            masterStep.Parameters[Plugin.Base.Constants.Method] = typeof(SendToGroup).Name;
+            return masterStep;
+        }
 
         public MasterStep Broadcast(BenchConfigData config, int endIndex)
         {
-            return Broadcast(
+            var masterStep = SimpleSendingScenario(
                 config.Scenario.Name,
                 config.Config.SingleStepDuration,
                 config.Scenario.Parameters.MessageSize,
@@ -257,11 +276,13 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
                 config.Config.Connections,
                 0,
                 endIndex);
+            masterStep.Parameters[Plugin.Base.Constants.Method] = typeof(Broadcast).Name;
+            return masterStep;
         }
 
         public MasterStep SendToClient(BenchConfigData config, int endIndex)
         {
-            return SendToClient(
+            var masterStep = SimpleSendingScenario(
                 config.Scenario.Name,
                 config.Config.SingleStepDuration,
                 config.Scenario.Parameters.MessageSize,
@@ -269,11 +290,13 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
                 config.Config.Connections,
                 0,
                 endIndex);
+            masterStep.Parameters[Plugin.Base.Constants.Method] = typeof(SendToClient).Name;
+            return masterStep;
         }
 
         public MasterStep Echo(BenchConfigData config, int endIndex)
         {
-            return Echo(
+            var masterStep = SimpleSendingScenario(
                 config.Scenario.Name,
                 config.Config.SingleStepDuration,
                 config.Scenario.Parameters.MessageSize,
@@ -281,53 +304,96 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
                 config.Config.Connections,
                 0,
                 endIndex);
-        }
-
-        protected MasterStep Broadcast(
-            string typeName,
-            int stepDuration,
-            int msgSize,
-            int sendingInterval,
-            int totalConnections,
-            int beginIndex,
-            int endIndex)
-        {
-            var masterStep = SimpleSendingScenario(stepDuration, msgSize, sendingInterval, totalConnections, beginIndex, endIndex);
-            masterStep.Parameters[Plugin.Base.Constants.Method] = typeof(Broadcast).Name;
-            masterStep = AttachType(masterStep, typeName);
-            return masterStep;
-        }
-
-        protected MasterStep Echo(
-            string typeName,
-            int stepDuration,
-            int msgSize,
-            int sendingInterval,
-            int totalConnections,
-            int beginIndex,
-            int endIndex)
-        {
-            var masterStep = SimpleSendingScenario(stepDuration, msgSize, sendingInterval, totalConnections, beginIndex, endIndex);
             masterStep.Parameters[Plugin.Base.Constants.Method] = typeof(Echo).Name;
-            masterStep = AttachType(masterStep, typeName);
             return masterStep;
         }
 
-        protected MasterStep SendToClient(
-            string typeName,
-            int stepDuration,
-            int msgSize,
-            int sendingInterval,
-            int totalConnections,
-            int beginIndex,
-            int endIndex)
+        public MasterStep RestSendToUser(BenchConfigData config, int endIndex)
         {
-            var masterStep = SimpleSendingScenario(stepDuration, msgSize, sendingInterval, totalConnections, beginIndex, endIndex);
-            masterStep.Parameters[SignalRConstants.ConnectionTotal] = totalConnections;
-            masterStep.Parameters[Plugin.Base.Constants.Method] = typeof(SendToClient).Name;
-            masterStep = AttachType(masterStep, typeName);
+            var masterStep = SimpleSendingScenario(
+                config.Scenario.Name,
+                config.Config.SingleStepDuration,
+                config.Scenario.Parameters.MessageSize,
+                config.Scenario.Parameters.SendingInterval,
+                config.Config.Connections,
+                0,
+                endIndex);
+            masterStep.Parameters[Plugin.Base.Constants.Method] = typeof(RestSendToUser).Name;
             return masterStep;
         }
+
+        public MasterStep RestPersistSendToUser(BenchConfigData config, int endIndex)
+        {
+            var masterStep = SimpleSendingScenario(
+                config.Scenario.Name,
+                config.Config.SingleStepDuration,
+                config.Scenario.Parameters.MessageSize,
+                config.Scenario.Parameters.SendingInterval,
+                config.Config.Connections,
+                0,
+                endIndex);
+            masterStep.Parameters[Plugin.Base.Constants.Method] = typeof(RestPersistSendToUser).Name;
+            return masterStep;
+        }
+
+        public MasterStep RestBroadcast(BenchConfigData config, int endIndex)
+        {
+            var masterStep = SimpleSendingScenario(
+                config.Scenario.Name,
+                config.Config.SingleStepDuration,
+                config.Scenario.Parameters.MessageSize,
+                config.Scenario.Parameters.SendingInterval,
+                config.Config.Connections,
+                0,
+                endIndex);
+            masterStep.Parameters[Plugin.Base.Constants.Method] = typeof(RestBroadcast).Name;
+            return masterStep;
+        }
+
+        public MasterStep RestPersistBroadcast(BenchConfigData config, int endIndex)
+        {
+            var masterStep = SimpleSendingScenario(
+                config.Scenario.Name,
+                config.Config.SingleStepDuration,
+                config.Scenario.Parameters.MessageSize,
+                config.Scenario.Parameters.SendingInterval,
+                config.Config.Connections,
+                0,
+                endIndex);
+            masterStep.Parameters[Plugin.Base.Constants.Method] = typeof(RestPersistBroadcast).Name;
+            return masterStep;
+        }
+
+        public MasterStep RestSendToGroup(BenchConfigData config, int endIndex)
+        {
+            var masterStep = SendToGroup(
+                config.Scenario.Name,
+                config.Scenario.Parameters.GroupCount,
+                config.Config.SingleStepDuration,
+                config.Scenario.Parameters.MessageSize,
+                config.Scenario.Parameters.SendingInterval,
+                config.Config.Connections,
+                0,
+                endIndex);
+            masterStep.Parameters[Plugin.Base.Constants.Method] = typeof(RestSendToGroup).Name;
+            return masterStep;
+        }
+
+        public MasterStep RestPersistSendToGroup(BenchConfigData config, int endIndex)
+        {
+            var masterStep = SendToGroup(
+                config.Scenario.Name,
+                config.Scenario.Parameters.GroupCount,
+                config.Config.SingleStepDuration,
+                config.Scenario.Parameters.MessageSize,
+                config.Scenario.Parameters.SendingInterval,
+                config.Config.Connections,
+                0,
+                endIndex);
+            masterStep.Parameters[Plugin.Base.Constants.Method] = typeof(RestPersistSendToGroup).Name;
+            return masterStep;
+        }
+        #endregion
 
         protected MasterStep SendToGroup(
             string typeName,
@@ -339,17 +405,17 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             int beginIndex,
             int endIndex)
         {
-            var masterStep = SimpleSendingScenario(stepDuration, msgSize, sendingInterval, totalConnections, beginIndex, endIndex);
+            var masterStep = SimpleSendingScenario(typeName, stepDuration, msgSize, sendingInterval, totalConnections, beginIndex, endIndex);
             masterStep.Parameters[SignalRConstants.GroupConfigMode] = SignalREnums.GroupConfigMode.Connection.ToString();
             masterStep.Parameters[SignalRConstants.Modulo] = totalConnections;
             masterStep.Parameters[SignalRConstants.GroupCount] = groupCount;
             masterStep.Parameters[SignalRConstants.ConnectionTotal] = totalConnections;
-            masterStep.Parameters[Plugin.Base.Constants.Method] = typeof(SendToGroup).Name;
             masterStep = AttachType(masterStep, typeName);
             return masterStep;
         }
 
         protected MasterStep SimpleSendingScenario(
+            string typeName,
             int stepDuration,
             int msgSize,
             int sendingInterval,
@@ -364,6 +430,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             masterStep.Parameters[SignalRConstants.Duration] = stepDuration;
             masterStep.Parameters[SignalRConstants.MessageSize] = msgSize;
             masterStep.Parameters[SignalRConstants.Interval] = sendingInterval;
+            masterStep = AttachType(masterStep, typeName);
             return masterStep;
         }
 
