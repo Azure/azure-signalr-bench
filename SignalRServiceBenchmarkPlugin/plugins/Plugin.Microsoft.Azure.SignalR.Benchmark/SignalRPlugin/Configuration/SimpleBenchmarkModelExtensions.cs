@@ -35,11 +35,22 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
 
         public static bool isValid(this BenchConfigData configData)
         {
+            if (!configData.isLongrun() && !configData.isPerf())
+            {
+                Log.Error($"Kind must be {DEFAULT_KIND} or {LONGRUN_KIND}, but see {configData.Kind}");
+                return false;
+            }
+            if (!configData.IsCore() && !configData.IsAspNet())
+            {
+                Log.Error($"ConnectionType must be {DEFAULT_CONNECTION_TYPE} or {ASPNET_CONNECTION_TYPE}, but see {configData.Config.ConnectionType}");
+                return false;
+            }
             var connections = configData.Config.Connections;
             var baseSending = configData.Config.BaseSending;
             if (baseSending > connections)
             {
-                Log.Warning($"base sending should not be larger than total connections");
+                Log.Warning($"base sending should not be larger than total connections, will be changed to the same as connections");
+                configData.Config.BaseSending = connections;
             }
             return true;
         }

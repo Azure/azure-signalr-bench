@@ -19,7 +19,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         protected static readonly string ModuleNameKey = "ModuleName";
         protected static readonly string PipelineKey = "Pipeline";
         protected static readonly string TypesKey = "Types";
-        protected static readonly string ModeKey = "Mode";
+        protected static readonly string ModeKey = "mode";
 
         // default settings
         protected static readonly int DEFAULT_CONNECTIONS = 1000;
@@ -247,7 +247,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             return masterStep;
         }
 
-        protected MasterStep Broadcast(BenchConfigData config)
+        public MasterStep Broadcast(BenchConfigData config, int endIndex)
         {
             return Broadcast(
                 config.Scenario.Name,
@@ -256,7 +256,31 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
                 config.Scenario.Parameters.SendingInterval,
                 config.Config.Connections,
                 0,
-                config.Config.SendingSteps);
+                endIndex);
+        }
+
+        public MasterStep SendToClient(BenchConfigData config, int endIndex)
+        {
+            return SendToClient(
+                config.Scenario.Name,
+                config.Config.SingleStepDuration,
+                config.Scenario.Parameters.MessageSize,
+                config.Scenario.Parameters.SendingInterval,
+                config.Config.Connections,
+                0,
+                endIndex);
+        }
+
+        public MasterStep Echo(BenchConfigData config, int endIndex)
+        {
+            return Echo(
+                config.Scenario.Name,
+                config.Config.SingleStepDuration,
+                config.Scenario.Parameters.MessageSize,
+                config.Scenario.Parameters.SendingInterval,
+                config.Config.Connections,
+                0,
+                endIndex);
         }
 
         protected MasterStep Broadcast(
@@ -372,6 +396,30 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             masterStep.Parameters[Plugin.Base.Constants.Method] = typeof(LeaveGroup).Name;
             masterStep.Parameters[SignalRConstants.GroupCount] = groupCount;
             masterStep.Parameters[SignalRConstants.ConnectionTotal] = connections;
+            masterStep = AttachType(masterStep, typeName);
+            return masterStep;
+        }
+
+        protected MasterStep StopCollector(string typeName)
+        {
+            var masterStep = new MasterStep();
+            masterStep.Parameters[Plugin.Base.Constants.Method] = typeof(StopCollector).Name;
+            masterStep = AttachType(masterStep, typeName);
+            return masterStep;
+        }
+
+        protected MasterStep StopConnection(string typeName)
+        {
+            var masterStep = new MasterStep();
+            masterStep.Parameters[Plugin.Base.Constants.Method] = typeof(StopConnection).Name;
+            masterStep = AttachType(masterStep, typeName);
+            return masterStep;
+        }
+
+        protected MasterStep DisposeConnection(string typeName)
+        {
+            var masterStep = new MasterStep();
+            masterStep.Parameters[Plugin.Base.Constants.Method] = typeof(DisposeConnection).Name;
             masterStep = AttachType(masterStep, typeName);
             return masterStep;
         }

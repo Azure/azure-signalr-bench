@@ -1,5 +1,4 @@
-﻿using Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods;
-using Serilog;
+﻿using Serilog;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -67,6 +66,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         {
             var simpleModel = new SimpleBenchmarkModel();
             var configData = simpleModel.Deserialize(content);
+            configData.isValid();
             string url = null;
             // create connections
             if (configData.IsCore())
@@ -179,9 +179,11 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
                 var scenarioNameLen = scenario.Length;
                 var methodName = scenario.Substring(0, 1).ToUpper() + scenario.Substring(1, scenarioNameLen - 1);
                 var scenarioMethod = GetType().GetMethod(methodName);
-                var steps = configData.Config.Connections / configData.Config.BaseSending;
+                var s = (configData.Config.Connections - configData.Config.BaseSending) / configData.Config.Step + 1;
+                var steps = s < configData.Config.SendingSteps ? s : configData.Config.SendingSteps;
                 for (int i = 0; i < steps; i++)
                 {
+                    var endIndex = configData.Config.BaseSending + i * configData.Config.Step;
                     if (i > 0)
                     {
                         // conditional stop and reconnect
@@ -206,7 +208,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
                                                             configData.Config.LatencyPercentage));
                     }
                     // sending scenario
-                    var step = scenarioMethod.Invoke(this, new object[] { configData });
+                    var step = scenarioMethod.Invoke(this, new object[] { configData, endIndex });
                     AddSingleMasterStep((MasterStep)step);
                     AddSingleMasterStep(Wait(configData.Scenario.Name));
                 }
@@ -217,8 +219,10 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
                                               configData.Scenario.Parameters.GroupCount,
                                               configData.Config.Connections));
                 }
+                AddSingleMasterStep(StopCollector(configData.Scenario.Name));
+                AddSingleMasterStep(StopConnection(configData.Scenario.Name));
+                AddSingleMasterStep(DisposeConnection(configData.Scenario.Name));
             }
-            
         }
 
         protected void AddSingleMasterStep(MasterStep masterStep)

@@ -23,6 +23,10 @@ namespace Rpc.Master
             // Parse args
             var argsOption = ParseArgs(args);
 
+            if (argsOption == null)
+            {
+                return;
+            }
             Util.SavePidToFile(argsOption.PidFile);
 
             // Create Logger
@@ -86,8 +90,9 @@ namespace Rpc.Master
                 .WithParsed(options => argsOption = options)
                 .WithNotParsed(error => 
                 {
-                    Log.Error($"Error in parsing arguments: {error}");
-                    throw new ArgumentException("Error in parsing arguments.");
+                    argsOption = null;
+                    //Log.Error($"Error in parsing arguments: {error}");
+                    //throw new ArgumentException("Error in parsing arguments.");
                 });
             return argsOption;
         }

@@ -11,6 +11,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
     {
         // default settings
         public const int DEFAULT_BASE_SENDING_STEP = 500;
+        public const int DEFAULT_STEP = 500;
         public const int DEFAULT_SENDING_STEPS = 2;
         public const int DEFAULT_CONNECTIONS = 1000;
         public const int DEFAULT_ARRIVINGRATE = 50;
@@ -24,7 +25,10 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         public const string LONGRUN_KIND = "longrun";
         public const string DEFAULT_MODE = "simple";
         public const string DEFAULT_TRANSPORT = "Websockets";
+        public const string SSE_TRANSPORT = "ServerSentEvents";
+        public const string LONGPOLLING_TRANSPORT = "LongPolling";
         public const string DEFAULT_PROTOCOL = "json";
+        public const string MSGPACK_PROTOCOL = "messagepack";
         public const string DEFAULT_CONNECTION_TYPE = "Core";
         public const string ASPNET_CONNECTION_TYPE = "AspNet";
         public const string DIRECT_CONNECTION_PREFIX = "rest";
@@ -57,6 +61,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             public int Connections { get; set; } = DEFAULT_CONNECTIONS;
 
             public int BaseSending { get; set; } = DEFAULT_BASE_SENDING_STEP;
+
+            public int Step { get; set; } = DEFAULT_STEP;
 
             public int SendingSteps { get; set; } = DEFAULT_SENDING_STEPS;
 

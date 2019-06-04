@@ -31,7 +31,7 @@ config:
   baseSending: 500                                                                   # Optional, the count for active sending connections when starting, default is 500
   sendingSteps: 2                                                                    # Optional: maximum value is 'Connections / BaseSending', mimum value is 1. Default is 'Connections / BaseSending'
   connectionType: Core                                                               # Optional: 'Core|AspNet', default is 'Core', if you use AspNet SignalR, please choose 'AspNet'.
-  arrivingBatchMode: HighPress                                                       # Optional: 'HighPress|LowPress|LimitRatePress', default is 'HighPress'
+  arrivingBatchMode: HighPress                                                       # Optional: 'HighPress|LowPress', default is 'HighPress'
   arrivingBatchWait: 1000                                                            # Optional: waiting period during batch connection, default is 1000 millisecond
   connectionFailPercentage: 0.01                                                     # Optional: connection failure tolerance, default is 0.01 which means it allows at most 1% connections fail, and try to reconnect. Otherwise stop.
   latencyPercentage: 0.01                                                            # Optional: message latency tolerance, default is 0.01 which means it allows at most 1% message latency > 1s, otherwise stop
