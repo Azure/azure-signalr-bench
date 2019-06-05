@@ -13,8 +13,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
     class RepairConnections : ISlaveMethod
     {
         private int _concurrentConnection;
-        private SignalREnums.ActionAfterConnection _action =
-            SignalREnums.ActionAfterConnection.None;
+        private SignalREnums.ActionAfterConnection _action = SignalREnums.ActionAfterConnection.None;
         private string _type;
         private IDictionary<string, object> _context;
 

@@ -168,7 +168,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         {
             var masterStep = CollectStatisticsInternal(typeName, interval, output);
             masterStep.Parameters[SignalRConstants.PercentileList] = percentileList;
-            masterStep.Parameters[Plugin.Base.Constants.Method] = typeof(CollectStatistics).Name;
+            masterStep.Parameters[Plugin.Base.Constants.Method] = typeof(CollectConnectionStatistics).Name;
             return masterStep;
         }
 
@@ -225,6 +225,17 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             masterStep.Parameters[SignalRConstants.ConcurrentConnection] = concurrent;
             masterStep.Parameters[SignalRConstants.BatchMode] = batchMode;
             masterStep.Parameters[SignalRConstants.BatchWait] = wait;
+            return masterStep;
+        }
+
+        protected MasterStep RepairConnections(
+            string typeName,
+            string action = "None")
+        {
+            var masterStep = new MasterStep();
+            masterStep.Parameters[Plugin.Base.Constants.Method] = typeof(RepairConnections).Name;
+            masterStep.Parameters[SignalRConstants.ActionAfterConnect] = action;
+            masterStep = AttachType(masterStep, typeName);
             return masterStep;
         }
 

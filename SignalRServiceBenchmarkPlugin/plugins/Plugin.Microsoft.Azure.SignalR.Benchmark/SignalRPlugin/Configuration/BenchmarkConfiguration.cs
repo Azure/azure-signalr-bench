@@ -150,7 +150,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
                                                configData.Config.ArrivingBatchWait));
             // wait for connections finish
             AddSingleMasterStep(Wait(configData.Scenario.Name));
-            // reconnect
+            // reconnect if start connection has failures
             AddSingleMasterStep(Reconnect(configData.Config.Connections,
                                           url,
                                           configData.Config.Protocol,
@@ -179,6 +179,18 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
                 AddSingleMasterStep(Wait(configData.Scenario.Name));
                 AddSingleMasterStep(CollectConnectionId(configData.Scenario.Name));
             }
+            // setup backgroud task of repairing connections for longrun
+            if (configData.isLongrun())
+            {
+                if (configData.Scenario.Name.EndsWith("Group"))
+                {
+                    AddSingleMasterStep(RepairConnections(configData.Scenario.Name, "JoinToGroup"));
+                }
+                else
+                {
+                    AddSingleMasterStep(RepairConnections(configData.Scenario.Name));
+                }
+            }
             // sending steps
             if (configData.Config.BaseSending > 0)
             {
@@ -196,20 +208,23 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
                     if (i > 0)
                     {
                         // conditional stop and reconnect
-                        AddSingleMasterStep(ConditionalStop(configData.Scenario.Name,
-                                                            configData.Config.Connections,
-                                                            configData.Config.ConnectionFailPercentage,
-                                                            configData.Config.LatencyPercentage));
-                        AddSingleMasterStep(Reconnect(configData.Config.Connections,
-                                            url,
-                                            configData.Config.Protocol,
-                                            configData.Config.Transport,
-                                            configData.Config.ArrivingBatchMode,
-                                            configData.Scenario.Name,
-                                            configData.Config.ArrivingRate));
-                        if (configData.Scenario.Name == "sendToClient")
+                        if (configData.isPerf())
                         {
-                            AddSingleMasterStep(CollectConnectionId(configData.Scenario.Name));
+                            AddSingleMasterStep(ConditionalStop(configData.Scenario.Name,
+                                                                configData.Config.Connections,
+                                                                configData.Config.ConnectionFailPercentage,
+                                                                configData.Config.LatencyPercentage));
+                            AddSingleMasterStep(Reconnect(configData.Config.Connections,
+                                                          url,
+                                                          configData.Config.Protocol,
+                                                          configData.Config.Transport,
+                                                          configData.Config.ArrivingBatchMode,
+                                                          configData.Scenario.Name,
+                                                          configData.Config.ArrivingRate));
+                            if (configData.Scenario.Name == "sendToClient")
+                            {
+                                AddSingleMasterStep(CollectConnectionId(configData.Scenario.Name));
+                            }
                         }
                         AddSingleMasterStep(ConditionalStop(configData.Scenario.Name,
                                                             configData.Config.Connections,
@@ -225,8 +240,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
                 if (configData.Scenario.Name.EndsWith("Group"))
                 {
                     AddSingleMasterStep(LeaveGroup(configData.Scenario.Name,
-                                              configData.Scenario.Parameters.GroupCount,
-                                              configData.Config.Connections));
+                                                   configData.Scenario.Parameters.GroupCount,
+                                                   configData.Config.Connections));
                 }
                 AddSingleMasterStep(StopCollector(configData.Scenario.Name));
                 AddSingleMasterStep(StopConnection(configData.Scenario.Name));
