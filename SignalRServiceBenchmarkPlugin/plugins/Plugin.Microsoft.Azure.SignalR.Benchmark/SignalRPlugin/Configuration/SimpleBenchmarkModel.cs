@@ -22,6 +22,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         public const string LONGRUN_KIND = "longrun";
         public const string PARSERESULT_KIND = "resultparser";
         public const string DEFAULT_MODE = "simple";
+        public const string ADVANCE_MODE = "advance";
         public const string DEFAULT_TRANSPORT = "Websockets";
         public const string SSE_TRANSPORT = "ServerSentEvents";
         public const string LONGPOLLING_TRANSPORT = "LongPolling";
@@ -31,6 +32,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         public const string ASPNET_CONNECTION_TYPE = "AspNet";
         public const string DIRECT_CONNECTION_PREFIX = "rest";
         public const string DEFAULT_ARRIVING_BATCH_MODE = "HighPress";
+        public const string LOW_ARRIVING_BATCH_MODE = "LowPress";
         public const string DEFAULT_SCENARIO = "echo";
         public const string DEFAULT_OUTPUT_PATH = "counters.txt";
 
