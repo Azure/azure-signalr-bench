@@ -15,11 +15,12 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
         {
             // Get parameters
             stepParameters.TryGetTypedValue(SignalRConstants.Type, out string type, Convert.ToString);
-            stepParameters.TryGetTypedValue(SignalRConstants.LatencyStep, out long latencyStep, Convert.ToInt64);
-            stepParameters.TryGetTypedValue(SignalRConstants.LatencyMax, out long latencyMax, Convert.ToInt64);
-
-            stepParameters[$"{SignalRConstants.LatencyStep}.{type}"] = latencyStep;
-            stepParameters[$"{SignalRConstants.LatencyMax}.{type}"] = latencyMax;
+            stepParameters.TryGetTypedValue(
+                $"{SignalRConstants.LatencyStep}",
+                out long latencyStep, Convert.ToInt64);
+            stepParameters.TryGetTypedValue(
+                $"{SignalRConstants.LatencyMax}",
+                out long latencyMax, Convert.ToInt64);
 
             pluginParameters[$"{SignalRConstants.LatencyStep}.{type}"] = latencyStep;
             pluginParameters[$"{SignalRConstants.LatencyMax}.{type}"] = latencyMax;

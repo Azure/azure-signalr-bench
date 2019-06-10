@@ -13,7 +13,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
     {
         public Task Do(IDictionary<string, object> stepParameters, IDictionary<string, object> pluginParameters, IList<IRpcClient> clients)
         {
-            System.Timers.Timer timer = null;
+            ICollector collector = null;
 
             try
             {
@@ -21,18 +21,16 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
 
                 // Get parameters
                 stepParameters.TryGetTypedValue(SignalRConstants.Type, out string type, Convert.ToString);
-                pluginParameters.TryGetTypedValue($"{SignalRConstants.Timer}.{type}", out timer, obj => (System.Timers.Timer)obj);
+                pluginParameters.TryGetTypedValue($"{SignalRConstants.StopCollector}.{type}", out collector, obj => (ICollector)obj);
             }
             finally
             {
                 // Stop and dispose timer
-                if (timer != null)
+                if (collector != null)
                 {
-                    timer.Stop();
-                    timer.Dispose();
+                    collector.StopCollector();
                 }
             }
-
 
             return Task.CompletedTask;
         }

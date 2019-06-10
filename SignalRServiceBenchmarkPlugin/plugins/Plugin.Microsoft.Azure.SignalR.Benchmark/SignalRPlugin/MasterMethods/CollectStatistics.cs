@@ -21,14 +21,5 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
             CollectStatistics(stepParameters, pluginParameters, clients, LatencyEventerCallback);
             return Task.CompletedTask;
         }
-
-        private void DisplayStatistics(IDictionary<string, object>[] results, string type)
-        {
-            for (var i = 0; i < results.Count(); i++)
-            {
-                var statistics = results[i];
-                Log.Information($"Type: {type} Client: {i}th statistics{Environment.NewLine}{statistics.GetContents()}");
-            }
-        }
     }
 }

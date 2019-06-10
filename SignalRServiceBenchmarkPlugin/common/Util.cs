@@ -53,7 +53,6 @@ namespace Common
             // remove history logs
             foreach (string f in Directory.EnumerateFiles(directory, name.Replace(".", "*")))
             {
-                Console.WriteLine($"removing file {f}");
                 File.Delete(f);
             }
             switch (logTarget)

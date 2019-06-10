@@ -47,5 +47,6 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             LimitRatePress,
             ExtLimitRatePress
         }
+
     }
 }

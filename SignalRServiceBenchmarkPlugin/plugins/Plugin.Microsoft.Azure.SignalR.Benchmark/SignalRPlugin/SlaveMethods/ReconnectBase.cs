@@ -24,16 +24,6 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 stepParameters.TryGetTypedValue(SignalRConstants.Type, out string type, Convert.ToString);
                 stepParameters.TryGetTypedValue(SignalRConstants.ConcurrentConnection, out int concurrentConnection, Convert.ToInt32);
 
-                // Get context
-                pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionIndex}.{type}",
-                    out List<int> connectionIndex, (obj) => (List<int>)obj);
-                pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionStore}.{type}",
-                    out IList<IHubConnectionAdapter> connections, (obj) => (IList<IHubConnectionAdapter>)obj);
-                pluginParameters.TryGetTypedValue($"{SignalRConstants.RegisteredCallbacks}.{type}",
-                    out var registeredCallbacks, obj => (IList<Action<IList<IHubConnectionAdapter>, StatisticsCollector>>)obj);
-                pluginParameters.TryGetTypedValue($"{SignalRConstants.StatisticsStore}.{type}",
-                    out StatisticsCollector statisticsCollector, obj => (StatisticsCollector)obj);
-
                 var clientType = SignalREnums.ClientType.AspNetCore;
                 if (pluginParameters.TryGetValue($"{SignalRConstants.ConnectionType}.{type}", out _))
                 {
@@ -44,6 +34,23 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                         clientType = ct;
                     }
                 }
+
+                if (SignalRUtils.isUsingInternalApp(stepParameters) && clientType == ClientType.AspNetCore)
+                {
+                    // rewrite the URL to be localhost
+                    stepParameters[SignalRConstants.HubUrls] = SignalRConstants.LocalhostUrl;
+                    urls = SignalRConstants.LocalhostUrl;
+                }
+                // Get context
+                pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionIndex}.{type}",
+                    out List<int> connectionIndex, (obj) => (List<int>)obj);
+                pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionStore}.{type}",
+                    out IList<IHubConnectionAdapter> connections, (obj) => (IList<IHubConnectionAdapter>)obj);
+                pluginParameters.TryGetTypedValue($"{SignalRConstants.RegisteredCallbacks}.{type}",
+                    out var registeredCallbacks, obj => (IList<Action<IList<IHubConnectionAdapter>, StatisticsCollector>>)obj);
+                pluginParameters.TryGetTypedValue($"{SignalRConstants.StatisticsStore}.{type}",
+                    out StatisticsCollector statisticsCollector, obj => (StatisticsCollector)obj);
+
                 SignalRUtils.DumpConnectionInternalStat(connections);
                 // Re-create broken connections in their original index position
                 var newConnections = await RecreateBrokenConnections(

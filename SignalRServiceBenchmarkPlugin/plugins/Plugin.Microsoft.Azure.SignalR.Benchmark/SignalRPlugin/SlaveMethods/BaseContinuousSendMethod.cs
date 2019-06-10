@@ -15,7 +15,6 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
         protected long Duration;
         protected long Interval;
         protected int MessageSize;
-        protected int TotalConnection;
         protected int RemainderBegin;
         protected int RemainderEnd;
         protected int Modulo;

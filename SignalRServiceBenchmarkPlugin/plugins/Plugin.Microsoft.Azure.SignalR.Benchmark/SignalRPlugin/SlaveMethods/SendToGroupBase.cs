@@ -18,6 +18,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
         protected int GroupInternalRemainderBegin;
         protected int GroupInternalRemainderEnd;
         protected int GroupInternalModulo;
+        protected int TotalConnection;
         protected SignalREnums.GroupConfigMode Mode;
 
         // Key
@@ -84,6 +85,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
         {
             // Get parameters
             base.LoadParametersAndContext(stepParameters, pluginParameters);
+            stepParameters.TryGetTypedValue(SignalRConstants.ConnectionTotal, out TotalConnection, Convert.ToInt32);
             stepParameters.TryGetTypedValue(SignalRConstants.GroupCount, out GroupCount, Convert.ToInt32);
             stepParameters.TryGetTypedValue(SignalRConstants.GroupConfigMode, out string groupConfigMode, Convert.ToString);
 

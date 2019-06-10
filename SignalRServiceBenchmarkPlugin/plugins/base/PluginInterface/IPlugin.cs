@@ -18,5 +18,9 @@ namespace Plugin.Base
 
         // Execute command on agent node, the input/output are Json strings
         Task<string> ExecuteOnAgent(string parametersInJson);
+
+        bool NeedSlaves(string configuration);
+
+        void Help();
     }
 }

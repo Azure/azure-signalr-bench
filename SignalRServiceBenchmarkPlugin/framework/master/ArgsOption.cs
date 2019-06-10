@@ -7,7 +7,7 @@ namespace Rpc.Master
     public class ArgsOption
     {
         // Rpc 
-        [Option("SlaveList", Required = false, Separator = ',', Default = new string[]{"localhost:5050", "localhost:6060"}, HelpText = "Target hosts to connect.")]
+        [Option("SlaveList", Required = false, Separator = ',', Default = new string[]{"localhost:7000"}, HelpText = "Target hosts to connect.")]
         public IList<string> SlaveList { get; set; }
 
         [Option("PidFile", Required = false, Default = "master-pid.txt")]
@@ -30,7 +30,7 @@ namespace Rpc.Master
         public string PluginFullName { get; set; }
 
         // Benchmark configuration
-        [Option("BenchmarkConfiguration", Required = true,  HelpText = "Benchmark configuration Path.")]
+        [Option("BenchmarkConfiguration", Required = true,  HelpText = "Benchmark configuration Path, please specify '?' if you want to see what the configuration looks like")]
         public string BenchmarkConfiguration { get; set; }
     }
 }

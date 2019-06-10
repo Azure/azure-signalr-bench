@@ -12,6 +12,7 @@ namespace Microsoft.Azure.SignalR.PerfTest.AppServer
 {
     public class Startup
     {
+        public const string HUB_NAME = "/signalrbench";
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
@@ -30,8 +31,6 @@ namespace Microsoft.Azure.SignalR.PerfTest.AppServer
 
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddMvc();
-
             if (useLocalSignalR)
                 services.AddSignalR().AddMessagePackProtocol();
             else
@@ -45,17 +44,16 @@ namespace Microsoft.Azure.SignalR.PerfTest.AppServer
 
         public void Configure(IApplicationBuilder app)
         {
-            app.UseMvc();
             app.UseFileServer();
             if (useLocalSignalR)
                 app.UseSignalR(routes =>
                 {
-                    routes.MapHub<BenchHub>("/signalrbench");
+                    routes.MapHub<BenchHub>(HUB_NAME);
                 });
             else
                 app.UseAzureSignalR(routes =>
                 {
-                    routes.MapHub<BenchHub>("/signalrbench");
+                    routes.MapHub<BenchHub>(HUB_NAME);
                 });
 
         }

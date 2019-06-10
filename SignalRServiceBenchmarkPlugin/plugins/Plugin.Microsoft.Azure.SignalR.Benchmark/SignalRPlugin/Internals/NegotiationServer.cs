@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Azure.SignalR.Management;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Serilog;
 using System;
 using System.Threading;
@@ -32,7 +33,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.Internals
             _host = new WebHostBuilder()
                 .ConfigureLogging(logging =>
                 {
-
+                    logging.SetMinimumLevel(LogLevel.Information);
                 })
                 .ConfigureServices(services => services.Add(ServiceDescriptor.Singleton(_serviceManager)))
                 .UseKestrel(KestrelConfig)

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Azure.SignalR.PerfTest.AppServer;
+using System;
 
 namespace Plugin.Microsoft.Azure.SignalR.Benchmark
 {
@@ -37,6 +38,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         public static readonly string PercentileList = "Parameter.PercentileList";
         public static readonly string ActionAfterConnect = "Parameter.ActionAfterConnect";
         public static readonly string HttpClientManager = "Parameter.HttpClientManager";
+        public static readonly string StatPrintMode = "Parameter.StatPrintMode";
 
         // Connection/group information
         public static readonly string ConnectionId = "information.ConnectionId";
@@ -71,12 +73,18 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         public static readonly string Timestamp = "payload.Timestamp";
         public static readonly string MessageBlob = "payload.MessageBlob";
 
-        // Timer
-        public static readonly string Timer = "Timer";
+        public const long LATENCY_STEP = 100;
+        public const long LATENCY_MAX = 1000;
+        public const string PERCENTILE_LIST = "0.5,0.9,0.95,0.99";
+        // Stop collector
+        public static readonly string StopCollector = "StopCollector";
 
+        public static readonly string LocalhostAppServer = "LocalhostAppServer";
+        public const int LocalhostAppServerPort = 54321;
+        public static readonly string LocalhostUrl = $"http://localhost:{LocalhostAppServerPort}{Startup.HUB_NAME}";
         // Negotiation server for REST API clients
         public static readonly int NegoatiationServerPort = 12345;
-        public const int LocalhostAppServerPort = 54321;
+        
         public static readonly string NegotiationServer = "NegotiationServer";
         // REST API: http://url:port/{hub}?user={userId}
         public static readonly string NegotiationUrl = $"http://localhost:{NegoatiationServerPort}";
@@ -84,24 +92,26 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         // Statistics
         public static readonly string StatisticsTimestamp = "Time";
         public static readonly string StatisticsCounters = "Counters";
-        public static readonly string StatisticsEpoch = "epoch";
-        public static readonly string StatisticsSendingStep = "sendingStep";
-        public static readonly string StatisticsMessageSent = "message:sent";
-        public static readonly string StatisticsMessageSentSize = "message:sentSize";
-        public static readonly string StatisticsMessageReceived = "message:received";
-        public static readonly string StatisticsMessageReceivedSize = "message:recvSize";
-        public static readonly string StatisticsGroupJoinSuccess = "group:join:success";
-        public static readonly string StatisticsGroupLeaveSuccess = "group:leave:success";
-        public static readonly string StatisticsGroupJoinFail = "group:join:fail";
-        public static readonly string StatisticsGroupLeaveFail = "group:leave:fail";
-        public static readonly string StatisticsConnectionConnectSuccess = "connection:connect:success";
-        public static readonly string StatisticsConnectionConnectFail = "connection:connect:fail";
-        public static readonly string StatisticsConnectionReconnect = "connection:connect:reconnect";
-        public static readonly string StatisticsConnectionInit = "connection:connect:init";
-        public static readonly string StatisticsConnectionLifeSpan = "connection:connect:lifespan";
-        public static readonly string StatisticsConnectionCost = "connection:connect:cost";
-        public static readonly string StatisticsConnectionReconnectCost = "connection:reconnect:cost";
-        public static readonly string StatisticsConnectionSLA = "connection:sla";
+        public const string StatisticsEpoch = "epoch";
+        public const string StatisticsSendingStep = "sendingStep";
+        public const string StatisticsMessageSent = "message:sent";
+        public const string StatisticsMessageSentSize = "message:sentSize";
+        public const string StatisticsMessageReceived = "message:received";
+        public const string StatisticsMessageReceivedSize = "message:recvSize";
+        public const string StatisticsGroupJoinSuccess = "group:join:success";
+        public const string StatisticsGroupLeaveSuccess = "group:leave:success";
+        public const string StatisticsGroupJoinFail = "group:join:fail";
+        public const string StatisticsGroupLeaveFail = "group:leave:fail";
+        public const string StatisticsConnectionConnectSuccess = "connection:connect:success";
+        public const string StatisticsConnectionConnectFail = "connection:connect:fail";
+        public const string StatisticsConnectionReconnect = "connection:connect:reconnect";
+        public const string StatisticsConnectionInit = "connection:connect:init";
+        public const string StatisticsConnectionLifeSpan = "connection:connect:lifespan";
+        public const string StatisticsConnectionCost = "connection:connect:cost";
+        public const string StatisticsConnectionReconnectCost = "connection:reconnect:cost";
+        public const string StatisticsConnectionSLA = "connection:sla";
+        public const string StatisticsLatencyLessThan = "message:lt:";
+        public const string StatisticsLatencyGreatEqThan = "message:ge:";
         // Constants
         public static readonly int ConnectionCloseTimeout = 100;
 

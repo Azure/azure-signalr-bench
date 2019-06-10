@@ -55,11 +55,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 }
                 else
                 {
-                    await Task.WhenAll(from i in Enumerable.Range(0, _connections.Count)
-                                       select SignalRUtils.LeaveFromGroup(_connections[i],
-                                                             SignalRUtils.GroupName(_type,
-                                                                         _connectionIndex[i] % _groupCount),
-                                                             _statisticsCollector));
+                    await NormalConnectionLeaveGroup();
                 }
                 return null;
             }
@@ -68,6 +64,26 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 var message = $"Fail to leave group: {ex}";
                 Log.Error(message);
                 throw;
+            }
+        }
+
+        private async Task NormalConnectionLeaveGroup()
+        {
+            if (_connections.Count >= _groupCount)
+            {
+                await Task.WhenAll(from i in Enumerable.Range(0, _connections.Count)
+                                   select SignalRUtils.LeaveFromGroup(_connections[i],
+                                                       SignalRUtils.GroupName(_type,
+                                                                              _connectionIndex[i] % _groupCount),
+                                                       _statisticsCollector));
+            }
+            else
+            {
+                var connectionCount = _connections.Count;
+                await Task.WhenAll(from i in Enumerable.Range(0, _groupCount)
+                                   select SignalRUtils.LeaveFromGroup(_connections[i % connectionCount],
+                                                                      SignalRUtils.GroupName(_type, i),
+                                                                      _statisticsCollector));
             }
         }
 
@@ -80,19 +96,41 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
             }).Build();
 
             var hubContext = await serviceManager.CreateHubContextAsync(SignalRConstants.DefaultRestHubName);
-            for (var i = 0; i < _connections.Count; i++)
+            if (_connections.Count >= _groupCount)
             {
-                var userId = SignalRUtils.GenClientUserIdFromConnectionIndex(_connectionIndex[i]);
-                try
+                for (var i = 0; i < _connections.Count; i++)
                 {
-                    await hubContext.UserGroups.RemoveFromGroupAsync(userId,
-                        SignalRUtils.GroupName(_type, _connectionIndex[i] % _groupCount));
-                    _statisticsCollector.IncreaseLeaveGroupSuccess();
+                    var userId = SignalRUtils.GenClientUserIdFromConnectionIndex(_connectionIndex[i]);
+                    try
+                    {
+                        await hubContext.UserGroups.RemoveFromGroupAsync(userId,
+                            SignalRUtils.GroupName(_type, _connectionIndex[i] % _groupCount));
+                        _statisticsCollector.IncreaseLeaveGroupSuccess();
+                    }
+                    catch (Exception e)
+                    {
+                        _statisticsCollector.IncreaseLeaveGroupFail();
+                        Log.Error($"Fail to leave group: {e.Message}");
+                    }
                 }
-                catch (Exception e)
+            }
+            else
+            {
+                for (var i = 0; i < _groupCount; i++)
                 {
-                    _statisticsCollector.IncreaseLeaveGroupFail();
-                    Log.Error($"Fail to leave group: {e.Message}");
+                    var userId = SignalRUtils.GenClientUserIdFromConnectionIndex(i);
+                    try
+                    {
+                        await hubContext.UserGroups.RemoveFromGroupAsync(
+                            userId,
+                            SignalRUtils.GroupName(_type, i));
+                        _statisticsCollector.IncreaseLeaveGroupSuccess();
+                    }
+                    catch (Exception e)
+                    {
+                        _statisticsCollector.IncreaseLeaveGroupFail();
+                        Log.Error($"Fail to leave group: {e.Message}");
+                    }
                 }
             }
         }

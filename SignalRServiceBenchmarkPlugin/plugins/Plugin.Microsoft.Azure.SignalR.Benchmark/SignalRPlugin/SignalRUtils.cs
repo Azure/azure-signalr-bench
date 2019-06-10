@@ -5,6 +5,7 @@ using Microsoft.Azure.SignalR.Management;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Plugin.Microsoft.Azure.SignalR.Benchmark.Internals;
+using Plugin.Microsoft.Azure.SignalR.Benchmark.Internals.AppServer;
 using Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods;
 using Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods.Statistics;
 using Rpc.Service;
@@ -12,8 +13,6 @@ using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
-using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using static Plugin.Microsoft.Azure.SignalR.Benchmark.SignalREnums;
@@ -21,13 +20,14 @@ using AspNetHubConnection = Microsoft.AspNet.SignalR.Client.HubConnection;
 
 namespace Plugin.Microsoft.Azure.SignalR.Benchmark
 {
+
     public static class SignalRUtils
     {
         public static string GroupName(string type, int index) => $"{type}:{index}";
 
-        public static string MessageLessThan(long latency) => $"message:lt:{latency}";
+        public static string MessageLessThan(long latency) => $"{SignalRConstants.StatisticsLatencyLessThan}{latency}";
 
-        public static string MessageGreaterOrEqualTo(long latency) => $"message:ge:{latency}";
+        public static string MessageGreaterOrEqualTo(long latency) => $"{SignalRConstants.StatisticsLatencyGreatEqThan}{latency}";
 
         public static Task MasterCreateConnection(
             IDictionary<string, object> stepParameters,
@@ -250,6 +250,58 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             return connections;
         }
 
+        public static bool isUsingInternalApp(IDictionary<string, object> stepParameters)
+        {
+            stepParameters.TryGetTypedValue(SignalRConstants.HubUrls,
+                out string urls, Convert.ToString);
+            return urls.StartsWith("Endpoint=");
+        }
+
+        public static async Task StartInternalAppServer(
+            IDictionary<string, object> stepParameters,
+            IDictionary<string, object> pluginParameters)
+        {
+            LocalhostAppServer localAppServer = null;
+            stepParameters.TryGetTypedValue(SignalRConstants.Type,
+                out string type, Convert.ToString);
+            stepParameters.TryGetTypedValue(SignalRConstants.HubUrls,
+                out string urls, Convert.ToString);
+            if (pluginParameters.TryGetValue($"{SignalRConstants.LocalhostAppServer}.{type}", out _))
+            {
+                pluginParameters.TryGetTypedValue($"{SignalRConstants.LocalhostAppServer}.{type}",
+                    out localAppServer, (obj) => (LocalhostAppServer)obj);
+            }
+            else
+            {
+                // connection string is stored in 'urls'
+                localAppServer = new LocalhostAppServer(urls);
+                pluginParameters[$"{SignalRConstants.LocalhostAppServer}.{type}"] = localAppServer;
+            }
+            if (!localAppServer.IsStarted)
+            {
+                await localAppServer.Start();
+            }
+        }
+
+        public static async Task StopInternalAppServer(
+            IDictionary<string, object> stepParameters,
+            IDictionary<string, object> pluginParameters)
+        {
+            LocalhostAppServer localAppServer = null;
+            stepParameters.TryGetTypedValue(SignalRConstants.Type,
+                out string type, Convert.ToString);
+            if (pluginParameters.TryGetValue($"{SignalRConstants.LocalhostAppServer}.{type}", out _))
+            {
+                pluginParameters.TryGetTypedValue($"{SignalRConstants.LocalhostAppServer}.{type}",
+                    out localAppServer, (obj) => (LocalhostAppServer)obj);
+            }
+            if (localAppServer != null &&
+                localAppServer.IsStarted)
+            {
+                await localAppServer.Stop();
+            }
+        }
+
         public static async Task StartNegotiationServer(
             IDictionary<string, object> stepParameters,
             IDictionary<string, object> pluginParameters)
@@ -299,13 +351,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         {
             return SignalRConstants.NegotiationUrl + "/" + hub + "?user=" + userId;
         }
-        /*
-        public static void ServicePointManagerOptimize()
-        {
-            ServicePointManager.DefaultConnectionLimit = SignalRConstants.DefaultConnectionLimit;
-            //ServicePointManager.UseNagleAlgorithm = false;
-        }
-        */
+
         public static void SlaveCreateConnection(
             IDictionary<string, object> stepParameters,
             IDictionary<string, object> pluginParameters,
@@ -461,11 +507,19 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
                                 out StatisticsCollector statisticsCollector, (obj) => (StatisticsCollector)obj);
                             package.Context.TryGetTypedValue($"{SignalRConstants.ConnectionIndex}.{package.Type}",
                                 out List<int> connectionIndex, (obj) => (List<int>)obj);
-                            var grp = GroupName(package.Type, connectionIndex[package.LocalIndex] % groupCount);
-                            //Log.Information($"connection {package.LocalIndex} joins group {grp}");
-                            await JoinToGroup(package.Connection,
-                                grp,
-                                statisticsCollector);
+                            if (connectionCount >= groupCount)
+                            {
+                                var grp = GroupName(package.Type, connectionIndex[package.LocalIndex] % groupCount);
+                                await JoinToGroup(package.Connection, grp, statisticsCollector);
+                            }
+                            else
+                            {
+                                for (var i = package.LocalIndex; i < groupCount; i += connectionCount)
+                                {
+                                    var grp = GroupName(package.Type, i);
+                                    await JoinToGroup(package.Connection, grp, statisticsCollector);
+                                }
+                            }
                         }
                     }
                 }
@@ -502,8 +556,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
                               .ConfigureLogging(logger =>
                               {
                                   logger.ClearProviders();
-                                  logger.AddSerilog(dispose: true);
-                                  logger.SetMinimumLevel(LogLevel.Information);
+                                  //logger.AddSerilog(dispose: true);
+                                  //logger.SetMinimumLevel(LogLevel.Information);
                               })
                               .WithUrl(negoEndPoint, httpConnectionOptions =>
                               {
@@ -827,7 +881,6 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
                 Sum(results, SignalRConstants.StatisticsConnectionConnectFail);
             merged[SignalRConstants.StatisticsConnectionReconnect] =
                 Sum(results, SignalRConstants.StatisticsConnectionReconnect);
-            //merged[SignalRConstants.StatisticsConnectionInit] = Sum(results, SignalRConstants.StatisticsConnectionInit);
 
             // Sum of group statistics
             merged[SignalRConstants.StatisticsGroupJoinSuccess] =

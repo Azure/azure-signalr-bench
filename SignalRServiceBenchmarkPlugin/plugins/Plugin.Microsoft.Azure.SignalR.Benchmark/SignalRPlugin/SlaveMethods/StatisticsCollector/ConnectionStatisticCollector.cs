@@ -10,9 +10,9 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods.Statistics
 
         public ConnectionStatisticCollector(
             IList<IHubConnectionAdapter> connections,
-            long latencyStep = LATENCY_STEP,
-            long latencyMax = LATENCY_MAX)
-            : base(LatencyStep, LatencyMax)
+            long latencyStep = SignalRConstants.LATENCY_STEP,
+            long latencyMax = SignalRConstants.LATENCY_MAX)
+            : base(SignalRConstants.LATENCY_STEP, SignalRConstants.LATENCY_MAX)
         {
             _connections = connections;
         }
