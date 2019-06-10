@@ -122,10 +122,14 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.Internals
             long latencyStep,
             long latencyMax)
         {
-            Statistics prevStat = null, endStat = null, curStat = null;
+            Statistics firstStat = null, prevStat = null, endStat = null, curStat = null;
             long prevEpoch = 0;
             foreach (var statistic in GetStatistics(fileName))
             {
+                if (firstStat == null)
+                {
+                    firstStat = statistic;
+                }
                 endStat = curStat;
                 curStat = statistic;
                 if (curStat.Counters.Epoch > 0)
@@ -136,6 +140,13 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.Internals
                     {
                         PrintEpoch(prevStat, endStat, percentileList, latencyStep, latencyMax);
                     }
+                    else
+                    {
+                        if (firstStat != null)
+                        {
+                            PrintConnectionEstablishedStat(firstStat, endStat);
+                        }
+                    }
                     prevEpoch = curStat.Counters.Epoch;
                     prevStat = curStat;
                 }
@@ -144,6 +155,16 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.Internals
             {
                 PrintEpoch(prevStat, endStat, percentileList, latencyStep, latencyMax);
             }
+        }
+
+        private static void PrintConnectionEstablishedStat(
+            Statistics start,
+            Statistics end)
+        {
+            var elapse = DateTimeOffset.Parse(end.Time) - DateTimeOffset.Parse(start.Time);
+            var succ = end.Counters.ConnectionSuccess;
+            Log.Information($"-----------");
+            Log.Information($"  {succ} connections established in {elapse.TotalSeconds}s");
         }
 
         private static void PrintEpoch(
@@ -166,7 +187,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.Internals
             var recvRate = recv / elapse.TotalSeconds;
             Log.Information($"-----------");
             Log.Information($" Connections/sendingStep: {connections}/{sendingStep} in {elapse.TotalSeconds}s");
-            Log.Information($"   Requests/sec: {FormatDoubleValue(sendRate)} , {FormatBytesDisplay(sentMsgSize)} write");
+            Log.Information($"   Requests/sec: {FormatDoubleValue(sendRate)}, {FormatBytesDisplay(sentMsgSize)} write");
             Log.Information($"   Responses/sec: {FormatDoubleValue(recvRate)}, {FormatBytesDisplay(recvMsgSize)} read");
             Log.Information($"   Write throughput: {FormatBytesDisplay(sendTputs)}");
             Log.Information($"   Read throughput: {FormatBytesDisplay(recvTputs)}");
