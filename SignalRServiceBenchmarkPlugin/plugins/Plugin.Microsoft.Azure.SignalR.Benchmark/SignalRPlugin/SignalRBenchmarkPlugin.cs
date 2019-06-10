@@ -127,7 +127,8 @@ scenario:
 
         public bool NeedSlaves(string configuration)
         {
-            return !BenchmarkConfiguration.IsResultParser(configuration);
+            var bench = new BenchmarkConfiguration(configuration);
+            return !bench.IsSimple || !BenchmarkConfiguration.IsResultParser(configuration);
         }
 
         public string Serialize(IDictionary<string, object> data)
