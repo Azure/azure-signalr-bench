@@ -16,10 +16,16 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             _plugin = (ISignalRPlugin)plugin;
         }
 
-        public async Task HandleStep(MasterStep step, IList<IRpcClient> clients)
+        public async Task HandleStep(
+            MasterStep step,
+            IList<IRpcClient> clients,
+            bool debug)
         {
             // Show step configuration
-            PluginUtils.ShowConfiguration(step.Parameters);
+            if (debug)
+            {
+                PluginUtils.ShowConfiguration(step.Parameters);
+            }
 
             // Send to slaves
             await SendToSlaves(step, clients);

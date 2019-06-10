@@ -1,7 +1,4 @@
 ﻿using Serilog;
-using System;
-using System.Collections.Generic;
-using System.Text;
 using static Plugin.Microsoft.Azure.SignalR.Benchmark.SimpleBenchmarkModel;
 
 namespace Plugin.Microsoft.Azure.SignalR.Benchmark
@@ -23,6 +20,11 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             return configData.Scenario.Name.StartsWith(DIRECT_CONNECTION_PREFIX);
         }
 
+        public static bool IsDebug(this BenchConfigData configData)
+        {
+            return configData.Config.Debug;
+        }
+
         public static bool isPerf(this BenchConfigData configData)
         {
             return configData.Kind == DEFAULT_KIND;
@@ -33,11 +35,16 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             return configData.Kind == LONGRUN_KIND;
         }
 
+        public static bool isResultParser(this BenchConfigData configData)
+        {
+            return configData.Kind == PARSERESULT_KIND;
+        }
+
         public static bool isValid(this BenchConfigData configData)
         {
-            if (!configData.isLongrun() && !configData.isPerf())
+            if (!configData.isLongrun() && !configData.isPerf() && !configData.isResultParser())
             {
-                Log.Error($"Kind must be {DEFAULT_KIND} or {LONGRUN_KIND}, but see {configData.Kind}");
+                Log.Error($"Kind must be {DEFAULT_KIND} or {LONGRUN_KIND} or {PARSERESULT_KIND}, but see {configData.Kind}");
                 return false;
             }
             if (!configData.IsCore() && !configData.IsAspNet())

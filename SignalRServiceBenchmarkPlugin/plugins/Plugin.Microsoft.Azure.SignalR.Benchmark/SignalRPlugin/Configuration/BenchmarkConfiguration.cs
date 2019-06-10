@@ -1,7 +1,9 @@
-﻿using Serilog;
+﻿using Plugin.Microsoft.Azure.SignalR.Benchmark.Internals;
+using Serilog;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using YamlDotNet.RepresentationModel;
 
 namespace Plugin.Microsoft.Azure.SignalR.Benchmark
@@ -13,6 +15,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         public IList<IList<MasterStep>> Pipeline { get; set; } = new List<IList<MasterStep>>();
 
         public bool IsSimple { get; set; }
+
+        public bool Debug { get; set; } = true;
 
         public BenchmarkConfiguration(string content)
         {
@@ -62,6 +66,34 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             return;
         }
 
+        public static bool IsResultParser(string content)
+        {
+            var simpleModel = new SimpleBenchmarkModel();
+            var configData = simpleModel.Deserialize(content);
+            if (!configData.isValid())
+            {
+                throw new Exception("Invalid benchmark configuration");
+            }
+            if (configData.isResultParser())
+            {
+                return true;
+            }
+            return false;
+        }
+
+        public static void ParseResult(string content)
+        {
+            var simpleModel = new SimpleBenchmarkModel();
+            var configData = simpleModel.Deserialize(content);
+            var percentileList = SignalRConstants.PERCENTILE_LIST.Split(",")
+                                                     .Select(ind => Convert.ToDouble(ind)).ToArray();
+            StatisticsParser.Parse(
+                    configData.Config.ResultFilePath,
+                    percentileList,
+                    SignalRConstants.LATENCY_STEP,
+                    SignalRConstants.LATENCY_MAX);
+        }
+
         private void HandleSimpleConfiguration(string content)
         {
             var simpleModel = new SimpleBenchmarkModel();
@@ -71,6 +103,11 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
                 throw new Exception("Invalid benchmark configuration");
             }
             string url = null;
+            Debug = configData.IsDebug();
+            if (configData.isResultParser())
+            {
+                return;
+            }
             // create connections
             // Check REST API connection first
             if (configData.IsDirect())
@@ -116,14 +153,14 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             {
                 var masterStep = InitStatisticsCollector(configData.Scenario.Name);
                 AddSingleMasterStep(masterStep);
-                masterStep = CollectStatistics(configData.Scenario.Name);
+                masterStep = CollectStatistics(configData.Scenario.Name, configData.IsDebug(), configData.Config.ResultFilePath);
                 AddSingleMasterStep(masterStep);
             }
             else if (configData.isLongrun())
             {
                 var masterStep = InitConnectionStatisticsCollector(configData.Scenario.Name);
                 AddSingleMasterStep(masterStep);
-                masterStep = CollectConnectionStatistics(configData.Scenario.Name);
+                masterStep = CollectConnectionStatistics(configData.Scenario.Name, configData.IsDebug(), configData.Config.ResultFilePath);
                 AddSingleMasterStep(masterStep);
             }
             else

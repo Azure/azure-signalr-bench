@@ -13,8 +13,6 @@ using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
-using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using static Plugin.Microsoft.Azure.SignalR.Benchmark.SignalREnums;
@@ -22,13 +20,14 @@ using AspNetHubConnection = Microsoft.AspNet.SignalR.Client.HubConnection;
 
 namespace Plugin.Microsoft.Azure.SignalR.Benchmark
 {
+
     public static class SignalRUtils
     {
         public static string GroupName(string type, int index) => $"{type}:{index}";
 
-        public static string MessageLessThan(long latency) => $"message:lt:{latency}";
+        public static string MessageLessThan(long latency) => $"{SignalRConstants.StatisticsLatencyLessThan}{latency}";
 
-        public static string MessageGreaterOrEqualTo(long latency) => $"message:ge:{latency}";
+        public static string MessageGreaterOrEqualTo(long latency) => $"{SignalRConstants.StatisticsLatencyGreatEqThan}{latency}";
 
         public static Task MasterCreateConnection(
             IDictionary<string, object> stepParameters,
@@ -882,7 +881,6 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
                 Sum(results, SignalRConstants.StatisticsConnectionConnectFail);
             merged[SignalRConstants.StatisticsConnectionReconnect] =
                 Sum(results, SignalRConstants.StatisticsConnectionReconnect);
-            //merged[SignalRConstants.StatisticsConnectionInit] = Sum(results, SignalRConstants.StatisticsConnectionInit);
 
             // Sum of group statistics
             merged[SignalRConstants.StatisticsGroupJoinSuccess] =

@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Text;
+﻿using System.IO;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 
@@ -23,6 +20,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         public const double DEFAULT_MESSAGE_LATENCY_PERCENTAGE = 0.01;
         public const string DEFAULT_KIND = "perf";
         public const string LONGRUN_KIND = "longrun";
+        public const string PARSERESULT_KIND = "resultparser";
         public const string DEFAULT_MODE = "simple";
         public const string DEFAULT_TRANSPORT = "Websockets";
         public const string SSE_TRANSPORT = "ServerSentEvents";
@@ -34,6 +32,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         public const string DIRECT_CONNECTION_PREFIX = "rest";
         public const string DEFAULT_ARRIVING_BATCH_MODE = "HighPress";
         public const string DEFAULT_SCENARIO = "echo";
+        public const string DEFAULT_OUTPUT_PATH = "counters.txt";
 
         public class BenchConfigData
         {
@@ -70,6 +69,9 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
 
             public double LatencyPercentage { get; set; } = DEFAULT_MESSAGE_LATENCY_PERCENTAGE;
 
+            public string ResultFilePath { get; set; } = DEFAULT_OUTPUT_PATH;
+
+            public bool Debug { get; set; } = false;
         }
 
         public class ScenarioData
@@ -98,30 +100,6 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
                 .Build();
             var config = deserializer.Deserialize<BenchConfigData>(input);
             return config;
-        }
-
-        public void Dump(BenchConfigData config)
-        {
-            Console.WriteLine($"mode: {config.Mode}");
-            Console.WriteLine($"kind: {config.Kind}");
-            Console.WriteLine("config: ");
-            Console.WriteLine(" arrivingBatchMode: " + config.Config.ArrivingBatchMode);
-            Console.WriteLine(" arrivingRate: " + config.Config.ArrivingRate);
-            Console.WriteLine(" baseSending: " + config.Config.BaseSending);
-            Console.WriteLine(" connections: " + config.Config.Connections);
-            Console.WriteLine(" connectionString: " + config.Config.ConnectionString);
-            Console.WriteLine(" connectionType: " + config.Config.ConnectionType);
-            Console.WriteLine(" protocol: " + config.Config.Protocol);
-            Console.WriteLine(" singleStepDuration: " + config.Config.SingleStepDuration);
-            Console.WriteLine(" transport: " + config.Config.Transport);
-            Console.WriteLine(" webAppTarget: " + config.Config.WebAppTarget);
-
-            Console.WriteLine("scenario: ");
-            Console.WriteLine(" name: " + config.Scenario.Name);
-            var para = config.Scenario.Parameters;
-            Console.WriteLine(" parameters:");
-            Console.WriteLine("   messageSize: " + para.MessageSize);
-            Console.WriteLine("   sendingInterval: " + para.SendingInterval);
         }
     }
 }

@@ -40,14 +40,15 @@ namespace Rpc.Master
             {
                 // Load benchmark configuration
                 var configuration = Util.ReadFile(argsOption.BenchmarkConfiguration);
+                IList<IRpcClient> clients = null;
+                if (plugin.NeedSlaves(configuration))
+                {
+                    // Create rpc clients
+                    clients = CreateRpcClients(argsOption.SlaveList);
 
-                plugin.DumpConfiguration(configuration);
-
-                // Create rpc clients
-                var clients = CreateRpcClients(argsOption.SlaveList);
-
-                // Check rpc connections
-                await WaitRpcConnectSuccess(clients);
+                    // Check rpc connections
+                    await WaitRpcConnectSuccess(clients);
+                }
 
                 await plugin.Start(configuration, clients);
             }

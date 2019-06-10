@@ -1,8 +1,5 @@
 ﻿using Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods;
-using Serilog;
 using System;
-using System.Collections.Generic;
-using System.Text;
 using YamlDotNet.RepresentationModel;
 using static Plugin.Microsoft.Azure.SignalR.Benchmark.SimpleBenchmarkModel;
 
@@ -10,8 +7,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
 {
     public enum ConfigurationMode
     {
-        Simple,
-        Advance
+        simple,
+        advance
     }
 
     public class SimpleBenchmarkConfiguration
@@ -47,7 +44,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
                 var mode = root.Children[new YamlScalarNode(ModeKey)];
                 if (Enum.TryParse(mode.ToString(), out ConfigurationMode m))
                 {
-                    return m == ConfigurationMode.Simple;
+                    return m == ConfigurationMode.simple;
                 }
             }
             return false;
@@ -152,34 +149,41 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
 
         protected MasterStep CollectStatistics(
             string typeName,
+            bool debug,
+            string output = "counters.txt",
             int interval = 1000,
-            string output = "counters.txt")
+            string percentileList = SignalRConstants.PERCENTILE_LIST)
         {
-            var masterStep = CollectStatisticsInternal(typeName, interval, output);
+            var masterStep = CollectStatisticsInternal(typeName, debug, interval, output);
+            masterStep.Parameters[SignalRConstants.PercentileList] = percentileList;
             masterStep.Parameters[Plugin.Base.Constants.Method] = typeof(CollectStatistics).Name;
             return masterStep;
         }
 
         protected MasterStep CollectConnectionStatistics(
             string typeName,
-            int interval = 1000,
+            bool debug,
             string output = "counters.txt",
+            int interval = 1000,
             string percentileList = SignalRConstants.PERCENTILE_LIST)
         {
-            var masterStep = CollectStatisticsInternal(typeName, interval, output);
-            masterStep.Parameters[SignalRConstants.PercentileList] = percentileList;
+            var masterStep = CollectStatisticsInternal(typeName, debug, interval, output);
             masterStep.Parameters[Plugin.Base.Constants.Method] = typeof(CollectConnectionStatistics).Name;
             return masterStep;
         }
 
         protected MasterStep CollectStatisticsInternal(
             string typeName,
+            bool debug,
             int interval = 1000,
-            string output = "counters.txt")
+            string output = "counters.txt",
+            string percentileList = SignalRConstants.PERCENTILE_LIST)
         {
             var masterStep = new MasterStep();
             masterStep = AttachType(masterStep, typeName);
             masterStep.Parameters[SignalRConstants.Interval] = 1000;
+            masterStep.Parameters[SignalRConstants.PercentileList] = percentileList;
+            masterStep.Parameters[SignalRConstants.StatPrintMode] = debug;
             masterStep.Parameters[SignalRConstants.StatisticsOutputPath] = output;
             return masterStep;
         }
@@ -261,7 +265,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             masterStep = AttachType(masterStep, typeName);
             return masterStep;
         }
-        #region Scenarion methods for reflect call
+
+        #region Scenarion methods for reflection call
         public MasterStep SendToGroup(BenchConfigData config, int endIndex)
         {
             var masterStep = SendToGroup(

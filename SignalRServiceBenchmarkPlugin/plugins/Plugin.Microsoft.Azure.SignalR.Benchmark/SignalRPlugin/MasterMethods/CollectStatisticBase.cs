@@ -1,5 +1,6 @@
 ﻿using Common;
 using Newtonsoft.Json.Linq;
+using Plugin.Microsoft.Azure.SignalR.Benchmark.Internals;
 using Rpc.Service;
 using Serilog;
 using System;
@@ -11,7 +12,7 @@ using System.Threading.Tasks;
 
 namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
 {
-    public class CollectStatisticBase
+    public class CollectStatisticBase : ICollector
     {
         private long _latencyStep;
         private long _latencyMax;
@@ -19,6 +20,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
         private string _type;
         private string _statisticsOutputPath;
         private double[] _percentileList;
+        private System.Timers.Timer _timer;
+        private bool _printLatency = true;
 
         protected void ExtractParams(
             IDictionary<string, object> stepParameters,
@@ -33,15 +36,17 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
             _type = type;
 
             // Get context
-            pluginParameters.TryGetTypedValue($"{SignalRConstants.LatencyStep}.{_type}", out long latencyStep, Convert.ToInt64);
-            pluginParameters.TryGetTypedValue($"{SignalRConstants.LatencyMax}.{_type}", out long latencyMax, Convert.ToInt64);
-            _latencyMax = latencyMax;
-            _latencyStep = latencyStep;
+            pluginParameters.TryGetTypedValue($"{SignalRConstants.LatencyStep}.{_type}", out _latencyStep, Convert.ToInt64);
+            pluginParameters.TryGetTypedValue($"{SignalRConstants.LatencyMax}.{_type}", out _latencyMax, Convert.ToInt64);
 
             if (stepParameters.TryGetValue(SignalRConstants.PercentileList, out _))
             {
                 stepParameters.TryGetTypedValue(SignalRConstants.PercentileList, out string percentileListStr, Convert.ToString);
                 _percentileList = percentileListStr.Split(",").Select(ind => Convert.ToDouble(ind)).ToArray();
+            }
+            if (stepParameters.TryGetValue(SignalRConstants.StatPrintMode, out _))
+            {
+                stepParameters.TryGetTypedValue(SignalRConstants.StatPrintMode, out _printLatency);
             }
         }
 
@@ -62,13 +67,24 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
             ExtractParams(stepParameters, pluginParameters);
             ClearOldStatistics();
             // Start timer
-            var timer = new System.Timers.Timer(_interval);
-            timer.Elapsed += async (sender, e) =>
+            _timer = new System.Timers.Timer(_interval);
+            _timer.Elapsed += async (sender, e) =>
                 await callback(stepParameters, pluginParameters, clients);
-            timer.Start();
+            _timer.Start();
 
             // Save timer to plugin
-            pluginParameters[$"{SignalRConstants.Timer}.{_type}"] = timer;
+            pluginParameters[$"{SignalRConstants.StopCollector}.{_type}"] = this;
+        }
+
+        private void PrintAndSave(IDictionary<string, long> merged)
+        {
+            // Display merged statistics
+            if (_printLatency)
+            {
+                Log.Information(Environment.NewLine + $"Statistic type: {_type}" + Environment.NewLine + merged.GetContents());
+            }
+            // Save to file
+            SaveToFile(merged, _statisticsOutputPath);
         }
 
         protected async Task LatencyEventerCallback(
@@ -77,14 +93,9 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
         {
             var results = await Task.WhenAll(from client in clients
                                              select client.QueryAsync(stepParameters));
-
             // Merge statistics
             var merged = SignalRUtils.MergeStatistics(results, _latencyMax, _latencyStep);
-            // Display merged statistics
-            Log.Information(Environment.NewLine + $"Statistic type: {_type}" + Environment.NewLine + merged.GetContents());
-
-            // Save to file
-            SaveToFile(merged, _statisticsOutputPath);
+            PrintAndSave(merged);
         }
 
         protected async Task ConnectionStatEventerCallback(
@@ -97,11 +108,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
             var merged = SignalRUtils.MergeStatistics(results, _latencyMax, _latencyStep);
             var connectionStatMerged = SignalRUtils.MergeConnectionStatistics(results, _percentileList.ToArray());
             merged = merged.Union(connectionStatMerged).ToDictionary(entry => entry.Key, entry => entry.Value);
-            // Display merged statistics
-            Log.Information(Environment.NewLine + $"Statistic type: {_type}" + Environment.NewLine + merged.GetContents());
-
-            // Save to file
-            SaveToFile(merged, _statisticsOutputPath);
+            PrintAndSave(merged);
         }
 
         protected void SaveToFile(IDictionary<string, long> mergedResult, string path)
@@ -122,6 +129,17 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
                     sw.Write(oneLineRecord);
                 }
             }
+        }
+
+        public void StopCollector()
+        {
+            _timer.Stop();
+            _timer.Dispose();
+            StatisticsParser.Parse(
+                _statisticsOutputPath,
+                _percentileList,
+                _latencyStep,
+                _latencyMax);
         }
     }
 }

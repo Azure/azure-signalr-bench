@@ -18,8 +18,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         private string _slaveNamespaceSuffix = "SlaveMethods";
 
         private string _simpleConfigurationTemplate = @"
-mode: Simple                                                                         # Required: 'Simple|Advanced', default is 'Simple'
-kind: perf                                                                           # Optional: 'perf|longrun', default is 'perf'
+mode: simple                                                                         # Required: 'simple|advanced', default is 'simple'
+kind: perf                                                                           # Optional: 'perf|longrun|resultparser', default is 'perf'
 config:
   connectionString: Endpoint=https://xxxx.signalr.net;AccessKey=xxx;Version=1.0; # Required
   webAppTarget: http://localhost:5050/signalrbench                                   # Optional: if not specified, an internal webapp is launched on http://localhost:5050, hubname is 'signalrbench'
@@ -36,6 +36,8 @@ config:
   arrivingBatchWait: 1000                                                            # Optional: waiting period during batch connection, default is 1000 millisecond
   connectionFailPercentage: 0.01                                                     # Optional: connection failure tolerance, default is 0.01 which means it allows at most 1% connections fail, and try to reconnect. Otherwise stop.
   latencyPercentage: 0.01                                                            # Optional: message latency tolerance, default is 0.01 which means it allows at most 1% message latency > 1s, otherwise stop
+  resultFilePath: ./counters.txt                                                     # Optional: output file path of result
+  debug: false                                                                       # Optional: dump more details if it is true, default is false
 scenario:
   name: echo                                                                         # Optional: 'echo|broadcast|sendToGroup|sendToClient|restSendToUser|restSendToGroup|restBroadcast|restPersistSendToUser|restPersistSendToGroup|restPersistBroadcast', default is echo
   parameters:
@@ -123,6 +125,11 @@ scenario:
             Console.WriteLine(_simpleConfigurationTemplate);
         }
 
+        public bool NeedSlaves(string configuration)
+        {
+            return !BenchmarkConfiguration.IsResultParser(configuration);
+        }
+
         public string Serialize(IDictionary<string, object> data)
         {
             var json = JsonConvert.SerializeObject(data);
@@ -132,7 +139,18 @@ scenario:
         public async Task Start(string configurationContent, IList<IRpcClient> clients)
         {
             var benchConfig = new BenchmarkConfiguration(configurationContent);
-
+            if (benchConfig.Debug)
+            {
+                DumpConfiguration(configurationContent);
+            }
+            if (benchConfig.Pipeline.Count == 0)
+            {
+                if (BenchmarkConfiguration.IsResultParser(configurationContent))
+                {
+                    BenchmarkConfiguration.ParseResult(configurationContent);
+                }
+                return;
+            }
             var stepHandler = new StepHandler(this);
             foreach (var client in clients)
             {
@@ -148,7 +166,7 @@ scenario:
                     var tasks = new List<Task>();
                     foreach (var step in parallelStep)
                     {
-                        tasks.Add(stepHandler.HandleStep(step, clients));
+                        tasks.Add(stepHandler.HandleStep(step, clients, benchConfig.Debug));
                     }
                     await Task.WhenAll(tasks);
                 }
