@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using YamlDotNet.RepresentationModel;
+using static Plugin.Microsoft.Azure.SignalR.Benchmark.SimpleBenchmarkModelExtensions;
 
 namespace Plugin.Microsoft.Azure.SignalR.Benchmark
 {
@@ -90,9 +91,10 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         {
             var simpleModel = new SimpleBenchmarkModel();
             var configData = simpleModel.Deserialize(content);
-            if (!configData.isValid())
+            var errCode = configData.isValid();
+            if (errCode != ERRORCODE.NoErr)
             {
-                throw new Exception("Invalid benchmark configuration");
+                throw new Exception($"Invalid benchmark configuration: {ErrorMap[errCode]}");
             }
             if (configData.isResultParser())
             {
@@ -118,9 +120,10 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         {
             var simpleModel = new SimpleBenchmarkModel();
             var configData = simpleModel.Deserialize(content);
-            if (!configData.isValid())
+            var errCode = configData.isValid();
+            if (errCode != ERRORCODE.NoErr)
             {
-                throw new Exception("Invalid benchmark configuration");
+                throw new Exception($"Invalid benchmark configuration: {ErrorMap[errCode]}");
             }
             string url = null;
             Debug = configData.IsDebug();

@@ -21,7 +21,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
 mode: {SimpleBenchmarkModel.DEFAULT_MODE}                                            # Required: '{SimpleBenchmarkModel.DEFAULT_MODE}|{SimpleBenchmarkModel.ADVANCE_MODE}', default is '{SimpleBenchmarkModel.DEFAULT_MODE}'
 kind: {SimpleBenchmarkModel.DEFAULT_KIND}                                            # Optional: '{SimpleBenchmarkModel.DEFAULT_KIND}|{SimpleBenchmarkModel.LONGRUN_KIND}|{SimpleBenchmarkModel.PARSERESULT_KIND}', default is '{SimpleBenchmarkModel.DEFAULT_KIND}'
 config:
-  connectionString: Endpoint=https://xxxx.signalr.net;AccessKey=xxx;Version=1.0; # Required
+  connectionString: Endpoint=https://xxxx.signalr.net;AccessKey=xxx;Version=1.0;     # Optional: if 'webAppTarget' has specified, this option will be ignored, otherwise you must specify it.
   webAppTarget: http://localhost:5050/signalrbench                                   # Optional: if not specified, an internal webapp is launched on http://localhost:5050, hubname is 'signalrbench'
   connections: {SimpleBenchmarkModel.DEFAULT_CONNECTIONS}                            # Optional, default is {SimpleBenchmarkModel.DEFAULT_CONNECTIONS}
   arrivingRate: {SimpleBenchmarkModel.DEFAULT_ARRIVINGRATE}                          # Optional, default is {SimpleBenchmarkModel.DEFAULT_ARRIVINGRATE}
