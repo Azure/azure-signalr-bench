@@ -52,14 +52,14 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
 
         protected MasterStep AttachType(MasterStep masterStep, string typeName)
         {
-            masterStep.Parameters[Plugin.Base.Constants.Type] = typeName;
+            masterStep.Parameters[SignalRConstants.Type] = typeName;
             return masterStep;
         }
 
         protected MasterStep RegisterRecordLatency(string typeName)
         {
             var masterStep = new MasterStep();
-            masterStep.Parameters[Plugin.Base.Constants.Method] = typeof(RegisterCallbackRecordLatency).Name;
+            masterStep.Parameters[SignalRConstants.Method] = typeof(RegisterCallbackRecordLatency).Name;
             AttachType(masterStep, typeName);
             return masterStep;
         }
@@ -67,7 +67,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         protected MasterStep RegisterOnConnected(string typeName)
         {
             var masterStep = new MasterStep();
-            masterStep.Parameters[Plugin.Base.Constants.Method] = typeof(RegisterCallbackOnConnected).Name;
+            masterStep.Parameters[SignalRConstants.Method] = typeof(RegisterCallbackOnConnected).Name;
             AttachType(masterStep, typeName);
             return masterStep;
         }
@@ -80,7 +80,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             string typeName)
         {
             var masterStep = CreateConnectionInternal(totalConnections, targetUrl, protocol, transport, typeName);
-            masterStep.Parameters[Plugin.Base.Constants.Method] = typeof(CreateDirectConnection).Name;
+            masterStep.Parameters[SignalRConstants.Method] = typeof(CreateDirectConnection).Name;
             return masterStep;
         }
 
@@ -92,7 +92,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             string typeName)
         {
             var masterStep = CreateConnectionInternal(totalConnections, targetUrl, protocol, transport, typeName);
-            masterStep.Parameters[Plugin.Base.Constants.Method] = typeof(CreateAspNetConnection).Name;
+            masterStep.Parameters[SignalRConstants.Method] = typeof(CreateAspNetConnection).Name;
             return masterStep;
         }
 
@@ -104,7 +104,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             string typeName)
         {
             var masterStep = CreateConnectionInternal(totalConnections, targetUrl, protocol, transport, typeName);
-            masterStep.Parameters[Plugin.Base.Constants.Method] = typeof(CreateConnection).Name;
+            masterStep.Parameters[SignalRConstants.Method] = typeof(CreateConnection).Name;
             return masterStep;
         }
 
@@ -127,14 +127,14 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         protected MasterStep InitStatisticsCollector(string typeName)
         {
             var masterStep = InitStatisticsCollectorInternal(typeName);
-            masterStep.Parameters[Plugin.Base.Constants.Method] = typeof(InitStatisticsCollector).Name;
+            masterStep.Parameters[SignalRConstants.Method] = typeof(InitStatisticsCollector).Name;
             return masterStep;
         }
 
         protected MasterStep InitConnectionStatisticsCollector(string typeName)
         {
             var masterStep = InitStatisticsCollectorInternal(typeName);
-            masterStep.Parameters[Plugin.Base.Constants.Method] = typeof(InitConnectionStatisticsCollector).Name;
+            masterStep.Parameters[SignalRConstants.Method] = typeof(InitConnectionStatisticsCollector).Name;
             return masterStep;
         }
 
@@ -156,7 +156,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         {
             var masterStep = CollectStatisticsInternal(typeName, debug, interval, output);
             masterStep.Parameters[SignalRConstants.PercentileList] = percentileList;
-            masterStep.Parameters[Plugin.Base.Constants.Method] = typeof(CollectStatistics).Name;
+            masterStep.Parameters[SignalRConstants.Method] = typeof(CollectStatistics).Name;
             return masterStep;
         }
 
@@ -168,7 +168,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             string percentileList = SignalRConstants.PERCENTILE_LIST)
         {
             var masterStep = CollectStatisticsInternal(typeName, debug, interval, output);
-            masterStep.Parameters[Plugin.Base.Constants.Method] = typeof(CollectConnectionStatistics).Name;
+            masterStep.Parameters[SignalRConstants.Method] = typeof(CollectConnectionStatistics).Name;
             return masterStep;
         }
 
@@ -195,7 +195,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             int wait = 1000)
         {
             var masterStep = new MasterStep();
-            masterStep.Parameters[Plugin.Base.Constants.Method] = typeof(StartConnection).Name;
+            masterStep.Parameters[SignalRConstants.Method] = typeof(StartConnection).Name;
             masterStep.Parameters[SignalRConstants.ConcurrentConnection] = concurrent;
             masterStep.Parameters[SignalRConstants.BatchMode] = batchMode;
             masterStep.Parameters[SignalRConstants.BatchWait] = wait;
@@ -208,7 +208,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             int wait = 5000)
         {
             var masterStep = new MasterStep();
-            masterStep.Parameters[Plugin.Base.Constants.Method] = typeof(Wait).Name;
+            masterStep.Parameters[SignalRConstants.Method] = typeof(Wait).Name;
             masterStep.Parameters[SignalRConstants.Duration] = wait;
             masterStep = AttachType(masterStep, typeName);
             return masterStep;
@@ -225,7 +225,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             int wait = 1000)
         {
             var masterStep = CreateConnectionInternal(totalConnections, targetUrl, protocol, transport, typeName);
-            masterStep.Parameters[Plugin.Base.Constants.Method] = typeof(Reconnect).Name;
+            masterStep.Parameters[SignalRConstants.Method] = typeof(Reconnect).Name;
             masterStep.Parameters[SignalRConstants.ConcurrentConnection] = concurrent;
             masterStep.Parameters[SignalRConstants.BatchMode] = batchMode;
             masterStep.Parameters[SignalRConstants.BatchWait] = wait;
@@ -237,7 +237,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             string action = "None")
         {
             var masterStep = new MasterStep();
-            masterStep.Parameters[Plugin.Base.Constants.Method] = typeof(RepairConnections).Name;
+            masterStep.Parameters[SignalRConstants.Method] = typeof(RepairConnections).Name;
             masterStep.Parameters[SignalRConstants.ActionAfterConnect] = action;
             masterStep = AttachType(masterStep, typeName);
             return masterStep;
@@ -250,7 +250,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             double latencyPercentage)
         {
             var masterStep = new MasterStep();
-            masterStep.Parameters[Plugin.Base.Constants.Method] = typeof(ConditionalStop).Name;
+            masterStep.Parameters[SignalRConstants.Method] = typeof(ConditionalStop).Name;
             masterStep.Parameters[SignalRConstants.CriteriaMaxFailConnectionAmount] = maxConnections;
             masterStep.Parameters[SignalRConstants.CriteriaMaxFailConnectionPercentage] = connectionFailPercentage;
             masterStep.Parameters[SignalRConstants.CriteriaMaxFailSendingPercentage] = latencyPercentage;
@@ -261,7 +261,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         protected MasterStep CollectConnectionId(string typeName)
         {
             var masterStep = new MasterStep();
-            masterStep.Parameters[Plugin.Base.Constants.Method] = typeof(CollectConnectionId).Name;
+            masterStep.Parameters[SignalRConstants.Method] = typeof(CollectConnectionId).Name;
             masterStep = AttachType(masterStep, typeName);
             return masterStep;
         }
@@ -278,7 +278,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
                 config.Config.Connections,
                 0,
                 endIndex);
-            masterStep.Parameters[Plugin.Base.Constants.Method] = typeof(SendToGroup).Name;
+            masterStep.Parameters[SignalRConstants.Method] = typeof(SendToGroup).Name;
             return masterStep;
         }
 
@@ -292,7 +292,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
                 config.Config.Connections,
                 0,
                 endIndex);
-            masterStep.Parameters[Plugin.Base.Constants.Method] = typeof(Broadcast).Name;
+            masterStep.Parameters[SignalRConstants.Method] = typeof(Broadcast).Name;
             return masterStep;
         }
 
@@ -306,7 +306,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
                 config.Config.Connections,
                 0,
                 endIndex);
-            masterStep.Parameters[Plugin.Base.Constants.Method] = typeof(SendToClient).Name;
+            masterStep.Parameters[SignalRConstants.Method] = typeof(SendToClient).Name;
             return masterStep;
         }
 
@@ -320,7 +320,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
                 config.Config.Connections,
                 0,
                 endIndex);
-            masterStep.Parameters[Plugin.Base.Constants.Method] = typeof(Echo).Name;
+            masterStep.Parameters[SignalRConstants.Method] = typeof(Echo).Name;
             return masterStep;
         }
 
@@ -334,7 +334,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
                 config.Config.Connections,
                 0,
                 endIndex);
-            masterStep.Parameters[Plugin.Base.Constants.Method] = typeof(RestSendToUser).Name;
+            masterStep.Parameters[SignalRConstants.Method] = typeof(RestSendToUser).Name;
             return masterStep;
         }
 
@@ -348,7 +348,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
                 config.Config.Connections,
                 0,
                 endIndex);
-            masterStep.Parameters[Plugin.Base.Constants.Method] = typeof(RestPersistSendToUser).Name;
+            masterStep.Parameters[SignalRConstants.Method] = typeof(RestPersistSendToUser).Name;
             return masterStep;
         }
 
@@ -362,7 +362,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
                 config.Config.Connections,
                 0,
                 endIndex);
-            masterStep.Parameters[Plugin.Base.Constants.Method] = typeof(RestBroadcast).Name;
+            masterStep.Parameters[SignalRConstants.Method] = typeof(RestBroadcast).Name;
             return masterStep;
         }
 
@@ -376,7 +376,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
                 config.Config.Connections,
                 0,
                 endIndex);
-            masterStep.Parameters[Plugin.Base.Constants.Method] = typeof(RestPersistBroadcast).Name;
+            masterStep.Parameters[SignalRConstants.Method] = typeof(RestPersistBroadcast).Name;
             return masterStep;
         }
 
@@ -391,7 +391,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
                 config.Config.Connections,
                 0,
                 endIndex);
-            masterStep.Parameters[Plugin.Base.Constants.Method] = typeof(RestSendToGroup).Name;
+            masterStep.Parameters[SignalRConstants.Method] = typeof(RestSendToGroup).Name;
             return masterStep;
         }
 
@@ -406,7 +406,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
                 config.Config.Connections,
                 0,
                 endIndex);
-            masterStep.Parameters[Plugin.Base.Constants.Method] = typeof(RestPersistSendToGroup).Name;
+            masterStep.Parameters[SignalRConstants.Method] = typeof(RestPersistSendToGroup).Name;
             return masterStep;
         }
         #endregion
@@ -456,7 +456,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             int connections)
         {
             var masterStep = GroupInternal(typeName, groupCount, connections);
-            masterStep.Parameters[Plugin.Base.Constants.Method] = typeof(JoinGroup).Name;
+            masterStep.Parameters[SignalRConstants.Method] = typeof(JoinGroup).Name;
             return masterStep;
         }
 
@@ -466,7 +466,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             int connections)
         {
             var masterStep = GroupInternal(typeName, groupCount, connections);
-            masterStep.Parameters[Plugin.Base.Constants.Method] = typeof(LeaveGroup).Name;
+            masterStep.Parameters[SignalRConstants.Method] = typeof(LeaveGroup).Name;
             return masterStep;
         }
 
@@ -476,7 +476,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             int connections)
         {
             var masterStep = new MasterStep();
-            masterStep.Parameters[Plugin.Base.Constants.Method] = typeof(LeaveGroup).Name;
+            masterStep.Parameters[SignalRConstants.Method] = typeof(LeaveGroup).Name;
             masterStep.Parameters[SignalRConstants.GroupCount] = groupCount;
             masterStep.Parameters[SignalRConstants.ConnectionTotal] = connections;
             masterStep = AttachType(masterStep, typeName);
@@ -486,7 +486,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         protected MasterStep StopCollector(string typeName)
         {
             var masterStep = new MasterStep();
-            masterStep.Parameters[Plugin.Base.Constants.Method] = typeof(StopCollector).Name;
+            masterStep.Parameters[SignalRConstants.Method] = typeof(StopCollector).Name;
             masterStep = AttachType(masterStep, typeName);
             return masterStep;
         }
@@ -494,7 +494,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         protected MasterStep StopConnection(string typeName)
         {
             var masterStep = new MasterStep();
-            masterStep.Parameters[Plugin.Base.Constants.Method] = typeof(StopConnection).Name;
+            masterStep.Parameters[SignalRConstants.Method] = typeof(StopConnection).Name;
             masterStep = AttachType(masterStep, typeName);
             return masterStep;
         }
@@ -502,7 +502,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         protected MasterStep DisposeConnection(string typeName)
         {
             var masterStep = new MasterStep();
-            masterStep.Parameters[Plugin.Base.Constants.Method] = typeof(DisposeConnection).Name;
+            masterStep.Parameters[SignalRConstants.Method] = typeof(DisposeConnection).Name;
             masterStep = AttachType(masterStep, typeName);
             return masterStep;
         }

@@ -1,5 +1,4 @@
 ﻿using Grpc.Core;
-using Plugin.Base;
 using Serilog;
 using System;
 using System.Collections.Generic;
@@ -22,12 +21,6 @@ namespace Rpc.Service
 
         public async Task<IDictionary<string, object>> QueryAsync(IDictionary<string, object> data)
         {
-            if (!CheckTypeAndMethod(data))
-            {
-                var message = $"Do not contain {Constants.Type} and {Constants.Method}.";
-                Log.Error(message);
-                throw new Exception(message);
-            }
             try
             {
                 var result = await _client.QueryAsync(new Data { Json = Serialize(data) }).ResponseAsync;
@@ -82,11 +75,13 @@ namespace Rpc.Service
             return result.Success;
         }
 
+        /*
         public bool CheckTypeAndMethod(IDictionary<string, object> data)
         {
             if (data.ContainsKey(Constants.Type) && data.ContainsKey(Constants.Method)) return true;
             return false;
         }
+        */
 
         public void InstallSerializerAndDeserializer(
             Func<IDictionary<string, object>, string> serialize,

@@ -20,9 +20,19 @@ using AspNetHubConnection = Microsoft.AspNet.SignalR.Client.HubConnection;
 
 namespace Plugin.Microsoft.Azure.SignalR.Benchmark
 {
-
     public static class SignalRUtils
     {
+        public static void AddMethodAndType(IDictionary<string, object> data, IDictionary<string, object> parameters)
+        {
+            data[SignalRConstants.Method] = parameters[SignalRConstants.Method];
+            data[SignalRConstants.Type] = parameters[SignalRConstants.Type];
+        }
+
+        public static void ShowConfiguration(IDictionary<string, object> dict)
+        {
+            Log.Information($"Handle step...{Environment.NewLine}Configuration: {Environment.NewLine}{dict.GetContents()}");
+        }
+
         public static string GroupName(string type, int index) => $"{type}:{index}";
 
         public static string MessageLessThan(long latency) => $"{SignalRConstants.StatisticsLatencyLessThan}{latency}";

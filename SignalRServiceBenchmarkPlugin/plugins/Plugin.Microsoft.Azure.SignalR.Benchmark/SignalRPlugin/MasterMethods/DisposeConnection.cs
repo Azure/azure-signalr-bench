@@ -17,7 +17,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
 
             var data = new Dictionary<string, object>();
 
-            PluginUtils.AddMethodAndType(data, stepParameters);
+            SignalRUtils.AddMethodAndType(data, stepParameters);
 
             return Task.WhenAll(from client in clients
                                 select client.QueryAsync(data));

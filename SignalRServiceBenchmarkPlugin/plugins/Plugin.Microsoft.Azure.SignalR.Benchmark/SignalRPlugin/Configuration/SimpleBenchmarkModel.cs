@@ -40,8 +40,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         {
             public string Mode { get; set; } = DEFAULT_MODE;
             public string Kind { get; set; } = DEFAULT_KIND;
-            public ConfigData Config { get; set; }
-            public ScenarioData Scenario { get; set; }
+            public ConfigData Config { get; set; } = new ConfigData();
+            public ScenarioData Scenario { get; set; } = new ScenarioData();
         }
 
         public class ConfigData

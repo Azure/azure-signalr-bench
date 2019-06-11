@@ -13,7 +13,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         {
             try
             {
-                Parameters.TryGetValue(Plugin.Base.Constants.Method, out object method);
+                Parameters.TryGetValue(SignalRConstants.Method, out object method);
                 return (string)method;
             }
             catch (Exception ex)
@@ -54,8 +54,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         protected bool Validate(YamlMappingNode stepNode)
         {
             var keys = stepNode.Children.Keys;
-            if (!keys.Contains(new YamlScalarNode(Plugin.Base.Constants.Type))) return false;
-            if (!keys.Contains(new YamlScalarNode(Plugin.Base.Constants.Method))) return false;
+            if (!keys.Contains(new YamlScalarNode(SignalRConstants.Type))) return false;
+            if (!keys.Contains(new YamlScalarNode(SignalRConstants.Method))) return false;
             return true;
         }
     }

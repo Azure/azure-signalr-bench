@@ -24,7 +24,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             // Show step configuration
             if (debug)
             {
-                PluginUtils.ShowConfiguration(step.Parameters);
+                SignalRUtils.ShowConfiguration(step.Parameters);
             }
 
             // Send to slaves

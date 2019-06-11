@@ -100,7 +100,7 @@ scenario:
             Log.Information($"Configuration:{Environment.NewLine}{configuration}");
 
             // Extract method name
-            parameters.TryGetTypedValue(Constants.Method, out string method, Convert.ToString);
+            parameters.TryGetTypedValue(SignalRConstants.Method, out string method, Convert.ToString);
 
             // Create Instance
             try

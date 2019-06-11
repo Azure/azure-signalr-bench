@@ -5,8 +5,9 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
 {
     public static class SignalRConstants
     {
-        // Configuration parameters
         public static readonly string Type = "Type";
+        public static readonly string Method = "Method";
+        // Configuration parameters
         public static readonly string ConcurrentConnection = "Parameter.ConcurrentConnection";
         public static readonly string BatchMode = "Parameter.BatchMode";
         public static readonly string BatchWait = "Parameter.BatchWait";

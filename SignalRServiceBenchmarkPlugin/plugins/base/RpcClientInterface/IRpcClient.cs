@@ -14,8 +14,6 @@ namespace Rpc.Service
 
         Task<bool> InstallPluginAsync(string pluginName);
 
-        bool CheckTypeAndMethod(IDictionary<string, object> data);
-
         void InstallSerializerAndDeserializer(Func<IDictionary<string, object>, string> serialize, Func<string, IDictionary<string, object>> deserialize);
 
         Func<IDictionary<string, object>, string> Serialize { get; set; }

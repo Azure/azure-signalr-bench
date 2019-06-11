@@ -1,4 +1,5 @@
 using Plugin.Base;
+using Plugin.Microsoft.Azure.SignalR.Benchmark;
 using System;
 using Xunit;
 
@@ -41,7 +42,6 @@ Pipeline:
             var benchmarkConfiguration = new BenchmarkConfiguration(input);
 
             // Basic information
-            Assert.True(benchmarkConfiguration.ModuleName == "myModuleName", $"moduleName != 'myModuleName'");
             Assert.True(benchmarkConfiguration.Types[0] == "P1", $"type1 != 'P1', '{benchmarkConfiguration.Types[0]} instead'");
             Assert.True(benchmarkConfiguration.Types[1] == "P2", $"type2 != 'P2'");
 
