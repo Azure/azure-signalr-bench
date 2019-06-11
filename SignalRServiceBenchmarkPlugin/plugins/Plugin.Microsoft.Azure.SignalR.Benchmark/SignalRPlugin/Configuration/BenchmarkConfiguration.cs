@@ -35,6 +35,26 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             }
         }
 
+        public static bool IsConfigInSimpleMode(string content)
+        {
+            // Setup input
+            var input = new StringReader(content);
+
+            // Load the stream
+            var yaml = new YamlStream();
+            yaml.Load(input);
+            try
+            {
+                var mapping = (YamlMappingNode)yaml.Documents[0].RootNode;
+                return IsSimpleNode(mapping);
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"Benchmark configuration is invalid: {ex}");
+                throw;
+            }
+        }
+
         public void Parse(string content)
         {
             // Setup input
@@ -48,7 +68,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             try
             {
                 mapping = (YamlMappingNode)yaml.Documents[0].RootNode;
-                if (isSimple(mapping))
+                if (IsSimpleNode(mapping))
                 {
                     HandleSimpleConfiguration(content);
                     IsSimple = true;

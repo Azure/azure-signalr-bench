@@ -127,8 +127,9 @@ scenario:
 
         public bool NeedSlaves(string configuration)
         {
-            var bench = new BenchmarkConfiguration(configuration);
-            return !bench.IsSimple || !BenchmarkConfiguration.IsResultParser(configuration);
+            // Simple configuration to parse result (counters.txt) does not need slave agents
+            return !BenchmarkConfiguration.IsConfigInSimpleMode(configuration) ||
+                   !BenchmarkConfiguration.IsResultParser(configuration);
         }
 
         public string Serialize(IDictionary<string, object> data)

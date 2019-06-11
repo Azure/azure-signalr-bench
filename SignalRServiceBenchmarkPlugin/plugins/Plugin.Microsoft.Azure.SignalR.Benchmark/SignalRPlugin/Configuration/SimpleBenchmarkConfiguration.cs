@@ -36,7 +36,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         protected int BaseSending;
         protected int SendingSteps;
 
-        protected bool isSimple(YamlMappingNode root)
+        protected static bool IsSimpleNode(YamlMappingNode root)
         {
             var keys = root.Children.Keys;
             if (keys.Contains(ModeKey))
