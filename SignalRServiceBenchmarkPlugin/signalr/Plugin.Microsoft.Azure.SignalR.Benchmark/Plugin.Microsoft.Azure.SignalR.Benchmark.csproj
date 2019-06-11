@@ -31,15 +31,15 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\common\common.csproj" />
-    <ProjectReference Include="..\..\base\base.csproj" />
+    <ProjectReference Include="..\..\common\common.csproj" />
+    <ProjectReference Include="..\..\interface\interface.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="..\..\..\utils\AppServer\Startup.cs" Link="Internals\AppServer\Startup.cs" />
-    <Compile Include="..\..\..\utils\AppServer\Hub\BenchHub.cs" Link="Internals\AppServer\BenchHub.cs" />
-    <Compile Include="..\..\..\utils\AppServer\TimedLogger.cs" Link="Internals\AppServer\TimedLogger.cs" />
-    <Compile Include="..\..\..\utils\AppServer\TimedLoggerFactory.cs" Link="Internals\AppServer\TimedLoggerFactory.cs" />
+    <Compile Include="..\..\utils\AppServer\Startup.cs" Link="Internals\AppServer\Startup.cs" />
+    <Compile Include="..\..\utils\AppServer\Hub\BenchHub.cs" Link="Internals\AppServer\BenchHub.cs" />
+    <Compile Include="..\..\utils\AppServer\TimedLogger.cs" Link="Internals\AppServer\TimedLogger.cs" />
+    <Compile Include="..\..\utils\AppServer\TimedLoggerFactory.cs" Link="Internals\AppServer\TimedLoggerFactory.cs" />
   </ItemGroup>
 
 </Project>
