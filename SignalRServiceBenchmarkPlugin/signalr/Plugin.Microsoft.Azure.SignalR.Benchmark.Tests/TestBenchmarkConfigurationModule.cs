@@ -1,12 +1,42 @@
-using Plugin.Base;
 using Plugin.Microsoft.Azure.SignalR.Benchmark;
 using System;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Plugins.Microsoft.Azure.SignalR.Benchmark.Tests
 {
     public class TestBenchmarkConfigurationModule
     {
+        private readonly ITestOutputHelper _output;
+
+        public TestBenchmarkConfigurationModule(ITestOutputHelper output)
+        {
+            _output = output;
+        }
+
+        [Fact]
+        public void TestSimpleConfigurationSteps()
+        {
+            var connections = 20000;
+            var baseSending = 1000;
+            var step = 500;
+            var input = $@"
+mode: simple                                            # Required: 'simple|advance', default is 'simple'
+kind: perf                                            # Optional: 'perf|longrun|resultparser', default is 'perf'
+config:
+  connectionString: Endpoint=https://xxxx;AccessKey=ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789;Version=1.0; # Required
+  connections: {connections}                            # Optional, default is 1000
+  arrivingRate: 100
+  baseSending: {baseSending}
+  step: {step}
+  debug: true
+scenario:
+  name: restSendToUser
+";
+            var benchmark = new BenchmarkConfiguration(input);
+            _output.WriteLine($"Pipe steps: {benchmark.Pipeline.Count}");
+        }
+
         [Fact]
         public void TestParse()
         {
@@ -58,15 +88,6 @@ Pipeline:
             Assert.True((string)benchmarkConfiguration.Pipeline[1][1].Parameters["Type"] == "P2", $"type != P2 in step 2");
             Assert.True((string)benchmarkConfiguration.Pipeline[1][1].Parameters["Method"] == "Create", $"method != Create in step 2");
             Assert.True(Convert.ToInt32(benchmarkConfiguration.Pipeline[1][1].Parameters["Parameter.Idle"]) == 333, $"Idle != 333 in step 2");
-
-            //// Test serialization and deserialization
-            //var jsonList = benchmarkConfiguration.Pipeline[0][1].Serialize();
-            //var step = new MasterStep();
-            //step.Deserialize(jsonList);
-            //Assert.True(Convert.ToInt32(step.Parameters["Parameter.Total"]) == 999, $"Error serializing and deserializing parameters. total != 999, {Convert.ToInt32(step.Parameters["Parameter.Total"]) } instead");
-            //Assert.True(step.GetIdleConnetion() == 200, $"Error serializing and deserializing parameters. idle != 200, {step.GetIdleConnetion()} instead");
-
-
         }
     }
 }

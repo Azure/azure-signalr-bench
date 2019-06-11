@@ -69,8 +69,9 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.Internals
             var recvRate = recv / elapse.TotalSeconds;
             Log.Information($"-----------");
             Log.Information($" Connection/sendingStep: {connection}/{sendingStep} in {elapse.TotalSeconds}s");
-            Log.Information($"   Requests/sec: {FormatDoubleValue(sendRate)} , {FormatBytesDisplay(sentMsgSize)} write");
-            Log.Information($"   Responses/sec: {FormatDoubleValue(recvRate)}, {FormatBytesDisplay(recvMsgSize)} read");
+            Log.Information($" Messages: requests: {FormatBytesDisplay(sentMsgSize)}, responses: {FormatBytesDisplay(recvMsgSize)}");
+            Log.Information($"   Requests/sec: {FormatDoubleValue(sendRate)}");
+            Log.Information($"   Responses/sec: {FormatDoubleValue(recvRate)}");
             Log.Information($"   Write throughput: {FormatBytesDisplay(sendTputs)}");
             Log.Information($"   Read throughput: {FormatBytesDisplay(recvTputs)}");
             Log.Information($" Latency:");
@@ -187,8 +188,9 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.Internals
             var recvRate = recv / elapse.TotalSeconds;
             Log.Information($"-----------");
             Log.Information($" Connections/sendingStep: {connections}/{sendingStep} in {elapse.TotalSeconds}s");
-            Log.Information($"   Requests/sec: {FormatDoubleValue(sendRate)}, {FormatBytesDisplay(sentMsgSize)} write");
-            Log.Information($"   Responses/sec: {FormatDoubleValue(recvRate)}, {FormatBytesDisplay(recvMsgSize)} read");
+            Log.Information($" Messages: requests: {FormatBytesDisplay(sentMsgSize)}, responses: {FormatBytesDisplay(recvMsgSize)}");
+            Log.Information($"   Requests/sec: {FormatDoubleValue(sendRate)}");
+            Log.Information($"   Responses/sec: {FormatDoubleValue(recvRate)}");
             Log.Information($"   Write throughput: {FormatBytesDisplay(sendTputs)}");
             Log.Information($"   Read throughput: {FormatBytesDisplay(recvTputs)}");
             Log.Information($" Latency:");
@@ -197,7 +199,9 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.Internals
                 var index = FindLatencyLowerBound(end.Counters, p, latencyStep, latencyMax);
                 if (index == latencyStep + latencyMax)
                 {
-                    Log.Information($"  {p * 100}%: >= 1s");
+                    var lt1s = FindLatencyLessThan1sPercent(end.Counters, latencyStep, latencyMax);
+                    Log.Information($"  {FormatDoubleValue(lt1s * 100)}%: < 1s");
+                    break;
                 }
                 else if (index == latencyStep)
                 {
@@ -260,6 +264,25 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.Internals
                 }
             }
             return latencyStep + latencyMax;
+        }
+
+        protected static double FindLatencyLessThan1sPercent(
+            Statistic counter,
+            long latencyStep,
+            long latencyMax)
+        {
+            long total = 0, sum = 0;
+            for (var i = latencyStep; i <= latencyMax; i += latencyStep)
+            {
+                total += Convert.ToInt64(counter.GetType().GetProperty($"MessageLatencyLt{i}").GetValue(counter));
+            }
+            total += counter.MessageLatencyGe1000;
+            for (var i = latencyStep; i <= latencyMax; i += latencyStep)
+            {
+                sum += Convert.ToInt64(counter.GetType().GetProperty($"MessageLatencyLt{i}").GetValue(counter));
+            }
+            var s = (double)sum;
+            return s / total;
         }
 
         private static IEnumerable<Statistics> GetStatistics(string fileName)

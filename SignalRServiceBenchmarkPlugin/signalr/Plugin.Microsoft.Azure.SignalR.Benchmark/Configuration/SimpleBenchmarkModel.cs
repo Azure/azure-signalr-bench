@@ -7,15 +7,15 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
     public class SimpleBenchmarkModel
     {
         // default settings
-        public const int DEFAULT_BASE_SENDING_STEP = 500;
-        public const int DEFAULT_STEP = 500;
-        public const int DEFAULT_SENDING_STEPS = 2;
-        public const int DEFAULT_CONNECTIONS = 1000;
-        public const int DEFAULT_ARRIVINGRATE = 50;
-        public const int DEFAULT_MESSAGESIZE = 2048;
-        public const int DEFAULT_SINGLE_STEP_DUR = 240000;
-        public const int DEFAULT_SEND_INTERVAL = 1000;
-        public const int DEFAULT_ARRIVING_BATCH_WAIT = 1000;
+        public const uint DEFAULT_BASE_SENDING_STEP = 500;
+        public const uint DEFAULT_STEP = 500;
+        public const uint DEFAULT_SENDING_STEPS = 0;
+        public const uint DEFAULT_CONNECTIONS = 1000;
+        public const uint DEFAULT_ARRIVINGRATE = 50;
+        public const uint DEFAULT_MESSAGESIZE = 2048;
+        public const uint DEFAULT_SINGLE_STEP_DUR = 240000;
+        public const uint DEFAULT_SEND_INTERVAL = 1000;
+        public const uint DEFAULT_ARRIVING_BATCH_WAIT = 1000;
         public const double DEFAULT_CONNECT_FAIL_PERCENTAGE = 0.01;
         public const double DEFAULT_MESSAGE_LATENCY_PERCENTAGE = 0.01;
         public const string DEFAULT_KIND = "perf";
@@ -51,21 +51,21 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             public string Transport { get; set; } = DEFAULT_TRANSPORT;
             public string Protocol { get; set; } = DEFAULT_PROTOCOL;
             public string ConnectionType { get; set; } = DEFAULT_CONNECTION_TYPE;
-            public int ArrivingRate { get; set; } = DEFAULT_ARRIVINGRATE;
+            public uint ArrivingRate { get; set; } = DEFAULT_ARRIVINGRATE;
 
             public string ArrivingBatchMode { get; set; } = DEFAULT_ARRIVING_BATCH_MODE;
 
-            public int ArrivingBatchWait { get; set; } = DEFAULT_ARRIVING_BATCH_WAIT;
+            public uint ArrivingBatchWait { get; set; } = DEFAULT_ARRIVING_BATCH_WAIT;
 
-            public int SingleStepDuration { get; set; } = DEFAULT_SINGLE_STEP_DUR;
+            public uint SingleStepDuration { get; set; } = DEFAULT_SINGLE_STEP_DUR;
 
-            public int Connections { get; set; } = DEFAULT_CONNECTIONS;
+            public uint Connections { get; set; } = DEFAULT_CONNECTIONS;
 
-            public int BaseSending { get; set; } = DEFAULT_BASE_SENDING_STEP;
+            public uint BaseSending { get; set; } = DEFAULT_BASE_SENDING_STEP;
 
-            public int Step { get; set; } = DEFAULT_STEP;
+            public uint Step { get; set; } = DEFAULT_STEP;
 
-            public int SendingSteps { get; set; } = DEFAULT_SENDING_STEPS;
+            public uint SendingSteps { get; set; } = DEFAULT_SENDING_STEPS;
 
             public double ConnectionFailPercentage { get; set; } = DEFAULT_CONNECT_FAIL_PERCENTAGE;
 
@@ -84,9 +84,9 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
 
         public class ScenarioParameters
         {
-            public int MessageSize { get; set; } = DEFAULT_MESSAGESIZE;
-            public int SendingInterval { get; set; } = DEFAULT_SEND_INTERVAL;
-            public int GroupCount { get; set; }
+            public uint MessageSize { get; set; } = DEFAULT_MESSAGESIZE;
+            public uint SendingInterval { get; set; } = DEFAULT_SEND_INTERVAL;
+            public uint GroupCount { get; set; }
         }
 
         public SimpleBenchmarkModel()

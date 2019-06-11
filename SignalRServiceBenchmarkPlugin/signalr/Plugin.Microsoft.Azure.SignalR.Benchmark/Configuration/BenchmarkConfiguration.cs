@@ -258,10 +258,15 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
                 var scenarioMethod = GetType().GetMethod(methodName);
                 // Calculate the steps
                 var s = (configData.Config.Connections - configData.Config.BaseSending) / configData.Config.Step + 1;
-                var steps = s < configData.Config.SendingSteps ? s : configData.Config.SendingSteps;
+                var steps = s;
+                if (configData.Config.SendingSteps != SimpleBenchmarkModel.DEFAULT_SENDING_STEPS &&
+                    steps < configData.Config.SendingSteps)
+                {
+                    steps = configData.Config.SendingSteps;
+                }
                 for (int i = 0; i < steps; i++)
                 {
-                    var endIndex = configData.Config.BaseSending + i * configData.Config.Step;
+                    var endIndex = (uint)(configData.Config.BaseSending + i * configData.Config.Step);
                     if (i > 0)
                     {
                         // conditional stop and reconnect

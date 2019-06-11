@@ -73,7 +73,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         }
 
         protected MasterStep CreateDirectConnection(
-            int totalConnections,
+            uint totalConnections,
             string targetUrl,
             string protocol,
             string transport,
@@ -85,7 +85,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         }
 
         protected MasterStep CreateAspNetConnection(
-            int totalConnections,
+            uint totalConnections,
             string targetUrl,
             string protocol,
             string transport,
@@ -97,7 +97,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         }
 
         protected MasterStep CreateCoreConnection(
-            int totalConnections,
+            uint totalConnections,
             string targetUrl,
             string protocol,
             string transport,
@@ -109,7 +109,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         }
 
         protected MasterStep CreateConnectionInternal(
-            int totalConnections,
+            uint totalConnections,
             string targetUrl,
             string protocol,
             string transport,
@@ -190,9 +190,9 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
 
         protected MasterStep StartConnectin(
             string batchMode,
-            int concurrent,
+            uint concurrent,
             string typeName,
-            int wait = 1000)
+            uint wait = 1000)
         {
             var masterStep = new MasterStep();
             masterStep.Parameters[SignalRConstants.Method] = typeof(StartConnection).Name;
@@ -215,14 +215,14 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         }
 
         protected MasterStep Reconnect(
-            int totalConnections,
+            uint totalConnections,
             string targetUrl,
             string protocol,
             string transport,
             string batchMode,
             string typeName,
-            int concurrent,
-            int wait = 1000)
+            uint concurrent,
+            uint wait = 1000)
         {
             var masterStep = CreateConnectionInternal(totalConnections, targetUrl, protocol, transport, typeName);
             masterStep.Parameters[SignalRConstants.Method] = typeof(Reconnect).Name;
@@ -245,7 +245,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
 
         protected MasterStep ConditionalStop(
             string typeName,
-            int maxConnections,
+            uint maxConnections,
             double connectionFailPercentage,
             double latencyPercentage)
         {
@@ -267,7 +267,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         }
 
         #region Scenarion methods for reflection call
-        public MasterStep SendToGroup(BenchConfigData config, int endIndex)
+        public MasterStep SendToGroup(BenchConfigData config, uint endIndex)
         {
             var masterStep = SendToGroup(
                 config.Scenario.Name,
@@ -282,7 +282,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             return masterStep;
         }
 
-        public MasterStep Broadcast(BenchConfigData config, int endIndex)
+        public MasterStep Broadcast(BenchConfigData config, uint endIndex)
         {
             var masterStep = SimpleSendingScenario(
                 config.Scenario.Name,
@@ -296,7 +296,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             return masterStep;
         }
 
-        public MasterStep SendToClient(BenchConfigData config, int endIndex)
+        public MasterStep SendToClient(BenchConfigData config, uint endIndex)
         {
             var masterStep = SimpleSendingScenario(
                 config.Scenario.Name,
@@ -310,7 +310,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             return masterStep;
         }
 
-        public MasterStep Echo(BenchConfigData config, int endIndex)
+        public MasterStep Echo(BenchConfigData config, uint endIndex)
         {
             var masterStep = SimpleSendingScenario(
                 config.Scenario.Name,
@@ -324,7 +324,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             return masterStep;
         }
 
-        public MasterStep RestSendToUser(BenchConfigData config, int endIndex)
+        public MasterStep RestSendToUser(BenchConfigData config, uint endIndex)
         {
             var masterStep = SimpleSendingScenario(
                 config.Scenario.Name,
@@ -338,7 +338,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             return masterStep;
         }
 
-        public MasterStep RestPersistSendToUser(BenchConfigData config, int endIndex)
+        public MasterStep RestPersistSendToUser(BenchConfigData config, uint endIndex)
         {
             var masterStep = SimpleSendingScenario(
                 config.Scenario.Name,
@@ -352,7 +352,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             return masterStep;
         }
 
-        public MasterStep RestBroadcast(BenchConfigData config, int endIndex)
+        public MasterStep RestBroadcast(BenchConfigData config, uint endIndex)
         {
             var masterStep = SimpleSendingScenario(
                 config.Scenario.Name,
@@ -366,7 +366,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             return masterStep;
         }
 
-        public MasterStep RestPersistBroadcast(BenchConfigData config, int endIndex)
+        public MasterStep RestPersistBroadcast(BenchConfigData config, uint endIndex)
         {
             var masterStep = SimpleSendingScenario(
                 config.Scenario.Name,
@@ -380,7 +380,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             return masterStep;
         }
 
-        public MasterStep RestSendToGroup(BenchConfigData config, int endIndex)
+        public MasterStep RestSendToGroup(BenchConfigData config, uint endIndex)
         {
             var masterStep = SendToGroup(
                 config.Scenario.Name,
@@ -395,7 +395,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             return masterStep;
         }
 
-        public MasterStep RestPersistSendToGroup(BenchConfigData config, int endIndex)
+        public MasterStep RestPersistSendToGroup(BenchConfigData config, uint endIndex)
         {
             var masterStep = SendToGroup(
                 config.Scenario.Name,
@@ -413,13 +413,13 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
 
         protected MasterStep SendToGroup(
             string typeName,
-            int groupCount,
-            int stepDuration,
-            int msgSize,
-            int sendingInterval,
-            int totalConnections,
-            int beginIndex,
-            int endIndex)
+            uint groupCount,
+            uint stepDuration,
+            uint msgSize,
+            uint sendingInterval,
+            uint totalConnections,
+            uint beginIndex,
+            uint endIndex)
         {
             var masterStep = SimpleSendingScenario(typeName, stepDuration, msgSize, sendingInterval, totalConnections, beginIndex, endIndex);
             masterStep.Parameters[SignalRConstants.GroupConfigMode] = SignalREnums.GroupConfigMode.Connection.ToString();
@@ -432,12 +432,12 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
 
         protected MasterStep SimpleSendingScenario(
             string typeName,
-            int stepDuration,
-            int msgSize,
-            int sendingInterval,
-            int totalConnections,
-            int beginIndex,
-            int endIndex)
+            uint stepDuration,
+            uint msgSize,
+            uint sendingInterval,
+            uint totalConnections,
+            uint beginIndex,
+            uint endIndex)
         {
             var masterStep = new MasterStep();
             masterStep.Parameters[SignalRConstants.RemainderBegin] = beginIndex;
@@ -452,8 +452,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
 
         protected MasterStep JoinGroup(
             string typeName,
-            int groupCount,
-            int connections)
+            uint groupCount,
+            uint connections)
         {
             var masterStep = GroupInternal(typeName, groupCount, connections);
             masterStep.Parameters[SignalRConstants.Method] = typeof(JoinGroup).Name;
@@ -462,8 +462,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
 
         protected MasterStep LeaveGroup(
             string typeName,
-            int groupCount,
-            int connections)
+            uint groupCount,
+            uint connections)
         {
             var masterStep = GroupInternal(typeName, groupCount, connections);
             masterStep.Parameters[SignalRConstants.Method] = typeof(LeaveGroup).Name;
@@ -472,8 +472,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
 
         protected MasterStep GroupInternal(
             string typeName,
-            int groupCount,
-            int connections)
+            uint groupCount,
+            uint connections)
         {
             var masterStep = new MasterStep();
             masterStep.Parameters[SignalRConstants.Method] = typeof(LeaveGroup).Name;
