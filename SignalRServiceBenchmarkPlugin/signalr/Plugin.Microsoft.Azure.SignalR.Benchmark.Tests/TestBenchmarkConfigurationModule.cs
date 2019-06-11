@@ -34,6 +34,25 @@ kind: perf
         }
 
         [Fact]
+        public void TestSimpleConfigForResultParsing()
+        {
+            var input = @"
+mode: simple
+kind: resultparser
+";
+            Exception err = null;
+            try
+            {
+                var benchmark = new BenchmarkConfiguration(input);
+            }
+            catch (Exception e)
+            {
+                err = e;
+            }
+            Assert.True(err == null);
+        }
+
+        [Fact]
         public void TestSimpleConfigurationSteps()
         {
             var connections = 20000;

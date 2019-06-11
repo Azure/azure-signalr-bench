@@ -68,7 +68,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
                 Log.Error(error);
                 return ERRORCODE.InvalidConnectionType;
             }
-            if (string.IsNullOrEmpty(configData.Config.ConnectionString) &&
+            if (!configData.isResultParser() &&
+                string.IsNullOrEmpty(configData.Config.ConnectionString) &&
                 string.IsNullOrEmpty(configData.Config.WebAppTarget))
             {
                 error = $"ConnectionString and WebAppTarget cannot be empty at the same time. You must specify any of them.";
