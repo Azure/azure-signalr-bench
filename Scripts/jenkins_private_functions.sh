@@ -1233,8 +1233,6 @@ EOF
   ## remove all test VMs
 cat << EOF > /tmp/clean_vms.sh
 ${VMMgrDir}/JenkinsScript --step=DeleteResourceGroupByConfig --AgentConfigFile=$AgentConfig --DisableRandomSuffix --ServicePrincipal=$ServicePrincipal
-${VMMgrDir}/JenkinsScript --step=DeleteResourceGroupByConfig --AgentConfigFile=$AgentConfig --DisableRandomSuffix --ServicePrincipal=$ServicePrincipal
-${VMMgrDir}/JenkinsScript --step=DeleteResourceGroupByConfig --AgentConfigFile=$AgentConfig --DisableRandomSuffix --ServicePrincipal=$ServicePrincipal
 EOF
 cat << EOF > /tmp/clean_asrs.sh
 cd $ScriptWorkingDir
@@ -1244,11 +1242,9 @@ if [ "$ASRSEnv" == "dogfood" ]
 then
   az_login_ASRS_dogfood
   delete_group $ASRSResourceGroup
-  delete_group $ASRSResourceGroup
   unregister_signalr_service_dogfood
 else
   az_login_signalr_dev_sub
-  delete_group $ASRSResourceGroup
   delete_group $ASRSResourceGroup
 fi
 EOF
