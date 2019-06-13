@@ -22,6 +22,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
         private double[] _percentileList;
         private System.Timers.Timer _timer;
         private bool _printLatency = true;
+        private object _lock = new object();
 
         protected void ExtractParams(
             IDictionary<string, object> stepParameters,
@@ -122,7 +123,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
             string oneLineRecord = Regex.Replace(record.ToString(), @"\s+", "");
             oneLineRecord = Regex.Replace(oneLineRecord, @"\t|\n|\r", "");
             oneLineRecord += Environment.NewLine;
-            lock (this)
+            lock (_lock)
             {
                 using (StreamWriter sw = new StreamWriter(path, true))
                 {
@@ -139,7 +140,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
                 _statisticsOutputPath,
                 _percentileList,
                 _latencyStep,
-                _latencyMax);
+                _latencyMax,
+                Log.Information);
         }
     }
 }

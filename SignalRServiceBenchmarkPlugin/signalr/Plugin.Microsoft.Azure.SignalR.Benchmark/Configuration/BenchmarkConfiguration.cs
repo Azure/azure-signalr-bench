@@ -113,7 +113,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
                     configData.Config.ResultFilePath,
                     percentileList,
                     SignalRConstants.LATENCY_STEP,
-                    SignalRConstants.LATENCY_MAX);
+                    SignalRConstants.LATENCY_MAX,
+                    Log.Information);
         }
 
         private void HandleSimpleConfiguration(string content)
@@ -263,7 +264,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
                 var s = (configData.Config.Connections - configData.Config.BaseSending) / configData.Config.Step + 1;
                 var steps = s;
                 if (configData.Config.SendingSteps != SimpleBenchmarkModel.DEFAULT_SENDING_STEPS &&
-                    steps < configData.Config.SendingSteps)
+                    steps > configData.Config.SendingSteps)
                 {
                     steps = configData.Config.SendingSteps;
                 }

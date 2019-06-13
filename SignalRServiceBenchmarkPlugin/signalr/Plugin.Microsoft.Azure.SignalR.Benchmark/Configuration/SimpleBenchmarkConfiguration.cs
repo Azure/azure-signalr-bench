@@ -306,6 +306,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
                 config.Config.Connections,
                 0,
                 endIndex);
+            masterStep.Parameters[SignalRConstants.ConnectionTotal] = config.Config.Connections;
             masterStep.Parameters[SignalRConstants.Method] = typeof(SendToClient).Name;
             return masterStep;
         }
