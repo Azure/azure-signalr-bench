@@ -55,7 +55,7 @@ scenario:broadcast,transport:LongPolling:
   max_connection: [750, 1500, 3000, 7500, 15000, 30000, 75000]
   base_step: [1, 1, 1, 1, 1, 1, 1]
   step: [1, 1, 1, 1, 1, 1, 1]
-  step_length: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
+  step_length: [10, 10, 10, 10, 10, 10, 10]
   concurrent: [100, 100, 100, 100, 100, 100, 200]
 
 
@@ -64,7 +64,7 @@ scenario:broadcast,transport:ServerSentEvents:
   max_connection: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
   base_step: [1, 1, 1, 1, 1, 1, 1]
   step: [1, 1, 1, 1, 1, 1, 1]
-  step_length: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
+  step_length: [10, 10, 10, 10, 10, 10, 10]
   concurrent: [100, 100, 100, 100, 100, 100, 200]
 
 

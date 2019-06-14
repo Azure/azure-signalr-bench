@@ -115,7 +115,6 @@ config:
   webAppTarget: http://localhost:5050/signalrbench
   connections: 1000
   baseSending: 500
-  step: 100
 scenario:
   name: sendToGroup
   parameters:
@@ -153,7 +152,6 @@ config:
   connectionString: Endpoint=https://xxx;AccessKey=xxx
   connections: 1000
   baseSending: 500
-  step: 100
 scenario:
   name: restSendToGroup
   parameters:
