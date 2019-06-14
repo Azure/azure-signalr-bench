@@ -135,7 +135,7 @@ config:
             var arrvingRate = 5;
             var input = $@"
 mode: simple
-king: longrun
+kind: longrun
 config:
   connectionString: Endpoint=https://dummy;AccessKey=dummy;Version=1.0; # Required
   singleStepDuration: {_duration}
