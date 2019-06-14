@@ -12,7 +12,7 @@ This benchmark targets to help you evaluate the throughput and latency. It can b
 - **SignalRServiceBenchmarkPlugin**: The benchmark source code folder which can be run on a single machine with 2 commands. If you want to get a quick start, or check the benchmark source code for further development, please go to this folder.
 
 # Quick start
-
+![quickstart.git](Doc/quickrun.gif)
 Take 1000 connections for `Echo` performance test as an example.
 
 Go to [slave folder](https://github.com/Azure/azure-signalr-bench/tree/master/SignalRServiceBenchmarkPlugin/framework/slave)

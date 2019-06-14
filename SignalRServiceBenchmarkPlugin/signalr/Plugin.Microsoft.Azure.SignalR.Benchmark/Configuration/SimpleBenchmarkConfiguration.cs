@@ -205,7 +205,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
 
         protected MasterStep Wait(
             string typeName,
-            int wait = 5000)
+            int wait = 3000)
         {
             var masterStep = new MasterStep();
             masterStep.Parameters[SignalRConstants.Method] = typeof(Wait).Name;
