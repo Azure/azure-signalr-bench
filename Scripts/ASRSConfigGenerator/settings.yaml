@@ -23,8 +23,8 @@ scenario:echo,transport:Websockets:
 scenario:echo,transport:LongPolling:
   normal_connection: [500, 1000, 2500, 5000, 10000, 25000, 50000]
   max_connection: [750, 1500, 3000, 7500, 15000, 30000, 75000]
-  base_step: [100, 100, 50, 50, 50, 400, 400]
-  step: [50, 50, 20, 20, 20, 400, 400]
+  base_step: [100, 100, 100, 100, 100, 400, 400]
+  step: [50, 50, 100, 100, 100, 400, 400]
   step_length: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
   concurrent: [50, 50, 50, 50, 50, 100, 100]
 
