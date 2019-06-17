@@ -33,10 +33,6 @@ config:
   step: {SimpleBenchmarkModel.DEFAULT_STEP}                                          # Optional: default is {SimpleBenchmarkModel.DEFAULT_STEP}
   connectionType: {SimpleBenchmarkModel.DEFAULT_CONNECTION_TYPE}                     # Optional: '{SimpleBenchmarkModel.DEFAULT_CONNECTION_TYPE}|{SimpleBenchmarkModel.ASPNET_CONNECTION_TYPE}', default is '{SimpleBenchmarkModel.DEFAULT_CONNECTION_TYPE}', if you use AspNet SignalR, please choose '{SimpleBenchmarkModel.ASPNET_CONNECTION_TYPE}'.
   arrivingBatchMode: {SimpleBenchmarkModel.DEFAULT_ARRIVING_BATCH_MODE}              # Optional: '{SimpleBenchmarkModel.DEFAULT_ARRIVING_BATCH_MODE}|{SimpleBenchmarkModel.LOW_ARRIVING_BATCH_MODE}', default is '{SimpleBenchmarkModel.DEFAULT_ARRIVING_BATCH_MODE}'
-  arrivingBatchWait: {SimpleBenchmarkModel.DEFAULT_ARRIVING_BATCH_WAIT}              # Optional: waiting period during batch connection, default is {SimpleBenchmarkModel.DEFAULT_ARRIVING_BATCH_WAIT} millisecond
-  connectionFailPercentage: 0.01                                                     # Optional: connection failure tolerance, default is 0.01 which means it allows at most 1% connections fail, and try to reconnect. Otherwise stop.
-  latencyPercentage: 0.01                                                            # Optional: message latency tolerance, default is 0.01 which means it allows at most 1% message latency > 1s, otherwise stop
-  resultFilePath: {SimpleBenchmarkModel.DEFAULT_OUTPUT_PATH}                         # Optional: output file path of result, default is {SimpleBenchmarkModel.DEFAULT_OUTPUT_PATH}
   debug: false                                                                       # Optional: dump more details if it is true, default is false
 scenario:
   name: {SimpleBenchmarkModel.DEFAULT_SCENARIO}                                      # Optional: '{SimpleBenchmarkModel.DEFAULT_SCENARIO}|broadcast|sendToGroup|sendToClient|restSendToUser|restSendToGroup|restBroadcast|restPersistSendToUser|restPersistSendToGroup|restPersistBroadcast', default is {SimpleBenchmarkModel.DEFAULT_SCENARIO}

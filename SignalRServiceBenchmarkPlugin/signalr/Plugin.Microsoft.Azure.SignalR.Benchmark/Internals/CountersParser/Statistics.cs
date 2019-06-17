@@ -16,6 +16,35 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.Internals
         public Statistic Counters { get; set; }
     }
 
+    public class BenchResult
+    {
+        public long Connections { get; set; }
+
+        public BenchResultItem[] Items { get; set; }
+    }
+
+    public class BenchResultItem
+    {
+        public long SendingStep { get; set; }
+        public double Duration { get; set; } // milli-seconds
+        public MessageBenchResult Message { get; set; }
+        public LatencyBenchResult Latency { get; set; }
+    }
+
+    public class MessageBenchResult
+    {
+        public long TotalSend { get; set; }
+        public long TotalRecv { get; set; }
+        public long TotalSendMsgSize { get; set; }
+        public long TotalRecvMsgSize { get; set; }
+    }
+
+    public class LatencyBenchResult
+    {
+        public double[] PercentileList { get; set; }
+        public long[] LatencyList { get; set; }
+    }
+
     public class Statistic
     {
         [JsonProperty(PropertyName = SignalRConstants.StatisticsConnectionConnectSuccess)]

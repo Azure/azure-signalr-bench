@@ -3,6 +3,7 @@ using Serilog;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 namespace Plugin.Microsoft.Azure.SignalR.Benchmark.Internals
 {
@@ -121,10 +122,18 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.Internals
             string fileName,
             double[] percentileList,
             long latencyStep,
-            long latencyMax)
+            long latencyMax,
+            Action<string> output,
+            bool outputJsonFormat = false)
         {
             Statistics firstStat = null, prevStat = null, endStat = null, curStat = null;
-            long prevEpoch = 0;
+            long prevEpoch = 0, totalConnection = 0;
+            var benchItemList = new List<BenchResultItem>();
+            Action<string> outputEveryEpoch = output;
+            if (outputJsonFormat)
+            {
+                outputEveryEpoch = null;
+            }
             foreach (var statistic in GetStatistics(fileName))
             {
                 if (firstStat == null)
@@ -139,13 +148,14 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.Internals
                         continue;
                     if (prevStat != null)
                     {
-                        PrintEpoch(prevStat, endStat, percentileList, latencyStep, latencyMax);
+                        var item = PrintEpoch(prevStat, endStat, percentileList, latencyStep, latencyMax, outputEveryEpoch);
+                        benchItemList.Add(item);
                     }
                     else
                     {
                         if (firstStat != null)
                         {
-                            PrintConnectionEstablishedStat(firstStat, endStat);
+                            totalConnection = PrintConnectionEstablishedStat(firstStat, endStat, outputEveryEpoch);
                         }
                     }
                     prevEpoch = curStat.Counters.Epoch;
@@ -154,64 +164,106 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.Internals
             }
             if (endStat != null && prevStat != null && endStat != prevStat)
             {
-                PrintEpoch(prevStat, endStat, percentileList, latencyStep, latencyMax);
+                var item = PrintEpoch(prevStat, endStat, percentileList, latencyStep, latencyMax, outputEveryEpoch);
+                benchItemList.Add(item);
+            }
+            if (outputJsonFormat)
+            {
+                var benchResult = new BenchResult()
+                {
+                    Connections = totalConnection,
+                    Items = benchItemList.ToArray()
+                };
+                var result = JsonConvert.SerializeObject(benchResult);
+                output(result);
             }
         }
 
-        private static void PrintConnectionEstablishedStat(
+        private static long PrintConnectionEstablishedStat(
             Statistics start,
-            Statistics end)
+            Statistics end,
+            Action<string> outputCallback)
         {
             var elapse = DateTimeOffset.Parse(end.Time) - DateTimeOffset.Parse(start.Time);
             var succ = end.Counters.ConnectionSuccess;
-            Log.Information($"-----------");
-            Log.Information($"  {succ} connections established in {elapse.TotalSeconds}s");
+            if (outputCallback != null)
+            {
+                outputCallback($"-----------");
+                outputCallback($"  {succ} connections established in {elapse.TotalSeconds}s");
+            }
+            return succ;
         }
 
-        private static void PrintEpoch(
+        private static BenchResultItem PrintEpoch(
             Statistics start,
             Statistics end,
             double[] percentileList,
             long latencyStep,
-            long latencyMax)
+            long latencyMax,
+            Action<string> outputCallback)
         {
             var elapse = DateTimeOffset.Parse(end.Time) - DateTimeOffset.Parse(start.Time);
-            var sentMsgSize = end.Counters.MessageSentSize - start.Counters.MessageSentSize;
-            var recvMsgSize = end.Counters.MessageRecvSize - start.Counters.MessageRecvSize;
-            var sent = end.Counters.MessageSent - start.Counters.MessageSent;
-            var recv = end.Counters.MessageReceived - start.Counters.MessageReceived;
+            var sentMsgSize = end.Counters.MessageSentSize;
+            var recvMsgSize = end.Counters.MessageRecvSize;
+            var sent = end.Counters.MessageSent;
+            var recv = end.Counters.MessageReceived;
             var connections = end.Counters.ConnectionSuccess;
             var sendingStep = end.Counters.SendingStep;
             var sendTputs = sentMsgSize / elapse.TotalSeconds;
             var recvTputs = recvMsgSize / elapse.TotalSeconds;
             var sendRate = sent / elapse.TotalSeconds;
             var recvRate = recv / elapse.TotalSeconds;
-            Log.Information($"-----------");
-            Log.Information($" Connections/sendingStep: {connections}/{sendingStep} in {elapse.TotalSeconds}s");
-            Log.Information($" Messages: requests: {FormatBytesDisplay(sentMsgSize)}, responses: {FormatBytesDisplay(recvMsgSize)}");
-            Log.Information($"   Requests/sec: {FormatDoubleValue(sendRate)}");
-            Log.Information($"   Responses/sec: {FormatDoubleValue(recvRate)}");
-            Log.Information($"   Write throughput: {FormatBytesDisplay(sendTputs)}");
-            Log.Information($"   Read throughput: {FormatBytesDisplay(recvTputs)}");
-            Log.Information($" Latency:");
+            var percentList = new List<double>();
+            var latDist = new List<long>();
             foreach (var p in percentileList)
             {
                 var index = FindLatencyLowerBound(end.Counters, p, latencyStep, latencyMax);
                 if (index == latencyStep + latencyMax)
                 {
                     var lt1s = FindLatencyLessThan1sPercent(end.Counters, latencyStep, latencyMax);
-                    Log.Information($"  {FormatDoubleValue(lt1s * 100)}%: < 1s");
+                    percentList.Add(lt1s);
+                    latDist.Add(1000);
                     break;
-                }
-                else if (index == latencyStep)
-                {
-                    Log.Information($"  {p * 100}%: < {index} ms");
                 }
                 else
                 {
-                    Log.Information($"  {p * 100}%: < {index + latencyStep} ms");
+                    percentList.Add(p);
+                    latDist.Add(index);
                 }
             }
+            if (outputCallback != null)
+            {
+                outputCallback($"-----------");
+                outputCallback($" Connections/sendingStep: {connections}/{sendingStep} in {elapse.TotalSeconds}s");
+                outputCallback($" Messages: requests: {FormatBytesDisplay(sentMsgSize)}, responses: {FormatBytesDisplay(recvMsgSize)}");
+                outputCallback($"   Requests/sec: {FormatDoubleValue(sendRate)}");
+                outputCallback($"   Responses/sec: {FormatDoubleValue(recvRate)}");
+                outputCallback($"   Write throughput: {FormatBytesDisplay(sendTputs)}");
+                outputCallback($"   Read throughput: {FormatBytesDisplay(recvTputs)}");
+                outputCallback($" Latency:");
+                percentList.ToList().ForEach(x =>
+                   outputCallback($"  {FormatDoubleValue(x * 100)}%: < {latDist[percentList.IndexOf(x)]} ms"));
+            }
+            var msg = new MessageBenchResult()
+            {
+                TotalRecv = recv,
+                TotalRecvMsgSize = recvMsgSize,
+                TotalSend = sent,
+                TotalSendMsgSize = sentMsgSize
+            };
+            var lat = new LatencyBenchResult()
+            {
+                PercentileList = percentList.ToArray(),
+                LatencyList = latDist.ToArray()
+            };
+            var benchItem = new BenchResultItem()
+            {
+                SendingStep = sendingStep,
+                Duration = elapse.TotalMilliseconds,
+                Message = msg,
+                Latency = lat
+            };
+            return benchItem;
         }
 
         private static string FormatDoubleValue(double value)
@@ -240,6 +292,11 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.Internals
                 var str = FormatDoubleValue(value);
                 ret = $"{str}KB";
             }
+            else
+            {
+                var str = FormatDoubleValue(value);
+                ret = $"{str}B";
+            }
             return ret;
         }
 
@@ -249,12 +306,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.Internals
             long latencyStep,
             long latencyMax)
         {
-            long total = 0, sum = 0;
-            for (var i = latencyStep; i <= latencyMax; i += latencyStep)
-            {
-                total += Convert.ToInt64(counter.GetType().GetProperty($"MessageLatencyLt{i}").GetValue(counter));
-            }
-            total += counter.MessageLatencyGe1000;
+            long total = counter.MessageReceived, sum = 0;
             for (var i = latencyStep; i <= latencyMax; i += latencyStep)
             {
                 sum += Convert.ToInt64(counter.GetType().GetProperty($"MessageLatencyLt{i}").GetValue(counter));
@@ -271,12 +323,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.Internals
             long latencyStep,
             long latencyMax)
         {
-            long total = 0, sum = 0;
-            for (var i = latencyStep; i <= latencyMax; i += latencyStep)
-            {
-                total += Convert.ToInt64(counter.GetType().GetProperty($"MessageLatencyLt{i}").GetValue(counter));
-            }
-            total += counter.MessageLatencyGe1000;
+            long total = counter.MessageReceived, sum = 0;
             for (var i = latencyStep; i <= latencyMax; i += latencyStep)
             {
                 sum += Convert.ToInt64(counter.GetType().GetProperty($"MessageLatencyLt{i}").GetValue(counter));

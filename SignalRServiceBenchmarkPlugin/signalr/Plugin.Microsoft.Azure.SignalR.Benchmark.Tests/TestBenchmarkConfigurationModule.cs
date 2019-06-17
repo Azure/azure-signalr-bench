@@ -73,6 +73,8 @@ scenario:
 ";
             var benchmark = new BenchmarkConfiguration(input);
             _output.WriteLine($"Pipe steps: {benchmark.Pipeline.Count}");
+            var s = (connections - baseSending) / step + 1;
+            Assert.True(benchmark.Pipeline.Count > s * 2);
         }
 
         [Fact]
