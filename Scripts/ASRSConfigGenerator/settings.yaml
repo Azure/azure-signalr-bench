@@ -1,0 +1,287 @@
+
+
+unit_map:
+- 1
+- 2
+- 5
+- 10
+- 20
+- 50
+- 100
+
+
+# echo for all transport types
+scenario:echo,transport:Websockets:
+  normal_connection: [1000, 2000, 5000, 10000, 20000, 50000, 100000]
+  max_connection: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
+  base_step: [1000, 2000, 5000, 5000, 5000, 5000, 5000]
+  step: [500, 1000, 2500, 5000, 5000, 5000, 5000]
+  step_length: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
+  concurrent: [100, 100, 100, 200, 1000, 2500, 5000]
+
+
+scenario:echo,transport:LongPolling:
+  normal_connection: [500, 1000, 2500, 5000, 10000, 25000, 50000]
+  max_connection: [750, 1500, 3000, 7500, 15000, 30000, 75000]
+  base_step: [100, 100, 100, 100, 100, 400, 400]
+  step: [50, 50, 100, 100, 100, 400, 400]
+  step_length: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
+  concurrent: [50, 50, 50, 50, 50, 100, 100]
+
+
+scenario:echo,transport:ServerSentEvents:
+  normal_connection: [1000, 2000, 5000, 10000, 20000, 50000, 100000]
+  max_connection: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
+  base_step: [400, 400, 600, 1000, 1000, 2000, 5000]
+  step: [100, 100, 200, 200, 500, 1000, 1000]
+  step_length: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
+  concurrent: [100, 100, 100, 100, 200, 200, 200]
+  batch_mode: ["HighPress", "HighPress", "HighPress", "LowPress", "HighPress", "HighPress", "HighPress"]
+  batch_wait: [1000, 1000, 1000, 1000, 1000, 1000, 1000]
+
+
+# broadcast for all transport types
+scenario:broadcast,transport:Websockets:
+  normal_connection: [1000, 2000, 5000, 10000, 20000, 50000, 100000]
+  max_connection: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
+  base_step: [1, 1, 1, 1, 1, 1, 1]
+  step: [1, 1, 1, 1, 1, 1, 1]
+  step_length: [10, 10, 10, 10, 10, 10, 10]
+  concurrent: [100, 100, 100, 200, 1000, 2500, 5000]
+
+
+scenario:broadcast,transport:LongPolling:
+  normal_connection: [500, 1000, 2500, 5000, 10000, 25000, 50000]
+  max_connection: [750, 1500, 3000, 7500, 15000, 30000, 75000]
+  base_step: [1, 1, 1, 1, 1, 1, 1]
+  step: [1, 1, 1, 1, 1, 1, 1]
+  step_length: [10, 10, 10, 10, 10, 10, 10]
+  concurrent: [100, 100, 100, 100, 100, 100, 200]
+
+
+scenario:broadcast,transport:ServerSentEvents:
+  normal_connection: [1000, 2000, 5000, 10000, 20000, 50000, 100000]
+  max_connection: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
+  base_step: [1, 1, 1, 1, 1, 1, 1]
+  step: [1, 1, 1, 1, 1, 1, 1]
+  step_length: [10, 10, 10, 10, 10, 10, 10]
+  concurrent: [100, 100, 100, 100, 100, 100, 200]
+
+
+# send to client for all message sizes
+scenario:sendToClient,transport:Websockets,protocol:json,message_size:131072:
+  normal_connection: [1000, 2000, 5000, 10000, 20000, 50000, 100000]
+  max_connection: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
+  base_step: [50, 50, 50, 50, 100, 200, 500]
+  step: [50, 50, 50, 50, 50, 100, 100]
+  step_length: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
+  concurrent: [100, 100, 100, 100, 1000, 2500, 5000]
+
+
+scenario:sendToClient,transport:Websockets,protocol:json,message_size:16384:
+  normal_connection: [1000, 2000, 5000, 10000, 20000, 50000, 100000]
+  max_connection: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
+  base_step: [500, 500, 600, 600, 800, 1000, 1000]
+  step: [100, 100, 200, 200, 200, 1000, 1000]
+  step_length: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
+  concurrent: [100, 100, 100, 100, 1000, 2500, 5000]
+
+
+scenario:sendToClient,transport:Websockets,protocol:json,message_size:2048:
+  normal_connection: [1000, 2000, 5000, 10000, 20000, 50000, 100000]
+  max_connection: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
+  # base_step: [1200, 1200, 3000, 3000, 3000, 10000, 10000]
+  # step: [100, 100, 1000, 1000, 1000, 2000, 2000]
+  # try to find base step and step for unit 20
+  base_step: [1000, 1000, 1000, 1000, 2000, 2000, 2000]
+  step: [100, 100, 1000, 1000, 2000, 2000, 2000]
+  step_length: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
+  concurrent: [100, 100, 100, 100, 1000, 2500, 5000]
+
+
+scenario:sendToClient,transport:Websockets,protocol:json,message_size:256:
+  normal_connection: [1000, 2000, 5000, 10000, 20000, 50000, 100000]
+  max_connection: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
+  base_step: [1000, 2000, 5000, 5000, 10000, 14000, 14000]
+  step: [200, 200, 1000, 1000, 2000, 2000, 2000]
+  step_length: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
+  concurrent: [100, 100, 100, 100, 1000, 2500, 5000]
+
+
+# send to group
+scenario:sendToGroup,transport:Websockets,group:tiny:
+  normal_connection: [1000, 2000, 5000, 10000, 20000, 50000, 100000]
+  max_connection: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
+  base_step: [800, 1000, 1000, 500, 1000, 1000, 1000]
+  step: [100, 200, 500, 500, 1000, 1000, 1000]
+  step_length: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
+  concurrent: [50, 50, 50, 50, 1000, 2500, 5000]
+  group_count: [1000, 2000, 5000, 10000, 20000, 50000, 100000]
+  max_group_count: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
+
+
+scenario:sendToGroup,transport:Websockets,group:small:
+  normal_connection: [1000, 2000, 5000, 10000, 20000, 50000, 100000]
+  max_connection: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
+  base_step: [300, 300, 300, 200, 3000, 5000, 5000]
+  step: [100, 100, 100, 100, 1000, 1000, 1000]
+  step_length: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
+  concurrent: [100, 100, 100, 100, 1000, 2500, 5000]
+  group_count: [100, 200, 500, 1000, 2000, 5000, 10000]
+  max_group_count: [150, 300, 750, 1500, 3000, 7500, 15000]
+
+
+scenario:sendToGroup,transport:Websockets,group:big:
+  normal_connection: [1000, 2000, 5000, 10000, 20000, 50000, 100000]
+  max_connection: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
+  base_step: [20, 20, 10, 10, 10, 10, 10]
+  step: [5, 5, 10, 10, 10, 10, 10]
+  step_length: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
+  concurrent: [100, 100, 100, 200, 1000, 2500, 5000]
+  group_count: [10, 10, 10, 10, 10, 10, 10]
+  max_group_count: [10, 10, 10, 10, 10, 10, 10]
+
+# frequently join leave group
+scenario:frequentJoinLeaveGroup,transport:Websockets,group:tiny:
+  normal_connection: [1000, 2000, 5000, 10000, 20000, 50000, 100000]
+  max_connection: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
+  base_step: [800, 1000, 2000, 3000, 3000, 6000, 6000]
+  step: [100, 100, 500, 1000, 1000, 1000, 1000]
+  step_length: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
+  concurrent: [100, 100, 100, 200, 1000, 2500, 5000]
+  group_count: [1000, 2000, 5000, 10000, 20000, 50000, 100000]
+
+
+scenario:frequentJoinLeaveGroup,transport:Websockets,group:small:
+  normal_connection: [1000, 2000, 5000, 10000, 20000, 50000, 100000]
+  max_connection: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
+  base_step: [500, 500, 500, 500, 3000, 6000, 6000]
+  step: [100, 100, 500, 500, 1000, 1000, 1000]
+  step_length: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
+  concurrent: [100, 100, 100, 200, 1000, 2500, 5000]
+  group_count: [100, 200, 500, 1000, 2000, 5000, 10000]
+
+
+
+scenario:frequentJoinLeaveGroup,transport:Websockets,group:big:
+  normal_connection: [1000, 2000, 5000, 10000, 20000, 50000, 100000]
+  max_connection: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
+  base_step: [20, 20, 10, 10, 10, 10, 10]
+  step: [5, 5, 10, 10, 10, 10, 10]
+  step_length: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
+  concurrent: [100, 100, 100, 200, 1000, 2500, 5000]
+  group_count: [10, 10, 10, 10, 10, 10, 10]
+
+# REST API
+scenario:restSendToUser,transport:Websockets:
+  normal_connection: [1000, 2000, 5000, 10000, 20000, 50000, 100000]
+  max_connection: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
+  base_step: [500, 500, 500, 500, 1000, 5000, 5000]
+  step: [100, 100, 200, 200, 200, 1000, 1000]
+  step_length: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
+  concurrent: [50, 50, 50, 80, 100, 500, 500]
+  batch_mode: ["LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress"]
+  batch_wait: [1000, 1000, 1000, 1000, 1000, 1000, 1000]
+
+
+scenario:restBroadcast,transport:Websockets:
+  normal_connection: [1000, 2000, 5000, 10000, 20000, 50000, 100000]
+  max_connection: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
+  base_step: [1, 1, 1, 1, 1, 1, 1]
+  step: [1, 1, 1, 1, 1, 1, 1]
+  step_length: [10, 10, 10, 10, 10, 10, 10]
+  concurrent: [50, 50, 50, 100, 100, 500, 500]
+  batch_mode: ["LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress"]
+  batch_wait: [1000, 1000, 1000, 1000, 1000, 1000, 1000]
+
+scenario:restSendToGroup,transport:Websockets,group:tiny:
+  normal_connection: [1000, 2000, 5000, 10000, 20000, 50000, 100000]
+  max_connection: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
+  base_step: [500, 300, 500, 500, 1000, 5000, 5000]
+  step: [100, 100, 200, 200, 1000, 1000, 1000]
+  step_length: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
+  concurrent: [50, 50, 50, 80, 100, 500, 500]
+  batch_mode: ["LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress"]
+  batch_wait: [1000, 1000, 1000, 1000, 1000, 1000, 1000]
+  group_count: [1000, 2000, 5000, 10000, 20000, 50000, 100000]
+
+scenario:restSendToGroup,transport:Websockets,group:small:
+  normal_connection: [1000, 2000, 5000, 10000, 20000, 50000, 100000]
+  max_connection: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
+  base_step: [300, 300, 300, 200, 3000, 5000, 5000]
+  step: [100, 100, 100, 100, 1000, 1000, 1000]
+  step_length: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
+  concurrent: [100, 100, 100, 100, 1000, 2500, 5000]
+  batch_mode: ["LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress"]
+  batch_wait: [1000, 1000, 1000, 1000, 1000, 1000, 1000]
+  group_count: [100, 200, 500, 1000, 2000, 5000, 10000]
+  max_group_count: [150, 300, 750, 1500, 3000, 7500, 15000]
+
+scenario:restSendToGroup,transport:Websockets,group:big:
+  normal_connection: [1000, 2000, 5000, 10000, 20000, 50000, 100000]
+  max_connection: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
+  base_step: [20, 20, 10, 10, 10, 10, 10]
+  step: [5, 5, 10, 10, 10, 10, 10]
+  step_length: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
+  concurrent: [100, 100, 100, 200, 1000, 2500, 5000]
+  batch_mode: ["LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress"]
+  batch_wait: [1000, 1000, 1000, 1000, 1000, 1000, 1000]
+  group_count: [10, 10, 10, 10, 10, 10, 10]
+  max_group_count: [10, 10, 10, 10, 10, 10, 10]
+
+scenario:restPersistSendToUser,transport:Websockets:
+  normal_connection: [1000, 2000, 5000, 10000, 20000, 50000, 100000]
+  max_connection: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
+  base_step: [1000, 2000, 5000, 5000, 5000, 5000, 5000]
+  step: [100, 100, 200, 5000, 5000, 5000, 5000]
+  step_length: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
+  concurrent: [50, 50, 50, 80, 100, 500, 500]
+  batch_mode: ["LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress"]
+  batch_wait: [1000, 1000, 1000, 1000, 1000, 1000, 1000]
+
+
+scenario:restPersistBroadcast,transport:Websockets:
+  normal_connection: [1000, 2000, 5000, 10000, 20000, 50000, 100000]
+  max_connection: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
+  base_step: [1, 1, 1, 1, 1, 1, 1]
+  step: [1, 1, 1, 1, 1, 1, 1]
+  step_length: [10, 10, 10, 10, 10, 10, 10]
+  concurrent: [50, 50, 50, 100, 100, 500, 500]
+  batch_mode: ["LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress"]
+  batch_wait: [1000, 1000, 1000, 1000, 1000, 1000, 1000]
+
+scenario:restPersistSendToGroup,transport:Websockets,group:tiny:
+  normal_connection: [1000, 2000, 5000, 10000, 20000, 50000, 100000]
+  max_connection: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
+  base_step: [800, 1000, 2000, 2000, 5000, 5000, 5000]
+  step: [100, 200, 500, 500, 1000, 5000, 5000]
+  step_length: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
+  concurrent: [50, 50, 50, 80, 100, 500, 500]
+  batch_mode: ["LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress"]
+  batch_wait: [1000, 1000, 1000, 1000, 1000, 1000, 1000]
+  group_count: [1000, 2000, 5000, 10000, 20000, 50000, 100000]
+
+scenario:restPersistSendToGroup,transport:Websockets,group:small:
+  normal_connection: [1000, 2000, 5000, 10000, 20000, 50000, 100000]
+  max_connection: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
+  base_step: [500, 500, 1000, 1000, 2000, 5000, 5000]
+  step: [100, 100, 200, 500, 1000, 1000, 1000]
+  step_length: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
+  concurrent: [100, 100, 100, 100, 1000, 2500, 5000]
+  batch_mode: ["LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress"]
+  batch_wait: [1000, 1000, 1000, 1000, 1000, 1000, 1000]
+  group_count: [100, 200, 500, 1000, 2000, 5000, 10000]
+  max_group_count: [150, 300, 750, 1500, 3000, 7500, 15000]
+
+
+scenario:restPersistSendToGroup,transport:Websockets,group:big:
+  normal_connection: [1000, 2000, 5000, 10000, 20000, 50000, 100000]
+  max_connection: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
+  base_step: [20, 20, 10, 10, 10, 10, 10]
+  step: [5, 5, 10, 10, 10, 10, 10]
+  step_length: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
+  concurrent: [100, 100, 100, 200, 1000, 2500, 5000]
+  batch_mode: ["LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress"]
+  batch_wait: [1000, 1000, 1000, 1000, 1000, 1000, 1000]
+  group_count: [10, 10, 10, 10, 10, 10, 10]
+  max_group_count: [10, 10, 10, 10, 10, 10, 10]

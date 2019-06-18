@@ -30,5 +30,10 @@ namespace Rpc.Service
             _server.Start();
             return Task.Delay(Timeout.Infinite);
         }
+
+        public Task Stop()
+        {
+            return _server.ShutdownAsync();
+        }
     }
 }

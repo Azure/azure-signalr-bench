@@ -7,7 +7,7 @@ namespace Rpc.Slave
     class ArgsOption
     {
         // Rpc
-        [Option("RpcPort", Required = false, Default = 5050, HelpText = "Port to be conencted from remote hosts.")]
+        [Option("RpcPort", Required = false, Default = 7000, HelpText = "Port to be conencted from remote hosts.")]
         public int RpcPort { get; set; }
 
         [Option("PidFile", Required = false, Default = "slave-pid.txt")]
@@ -19,7 +19,7 @@ namespace Rpc.Slave
         // Log
         [Option("LogName", Required = false, Default = "slave-.log", HelpText = "Log file name. " + 
             "Timestamp will insert into the position before dot. If the name is 'slave-.log'. " + 
-            " The final file name will be 'master-123456789.log', for example.")]
+            " The final file name will be 'slave-123456789.log', for example.")]
         public string LogName { get; set; }
 
         [Option("LogDirectory", Required = false, Default = ".", HelpText = "Directory in which the log will be stored.")]
@@ -29,8 +29,5 @@ namespace Rpc.Slave
             "Options: All/File/Console." + " All: Output to file and console;" + 
             " Console: Output to console;" + " File: Output to file.")]
         public LogTargetEnum LogTarget { get; set; }
-
-        
-
     }
 }

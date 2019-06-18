@@ -15,7 +15,6 @@ namespace Rpc.Master
     class Program
     {
         private static readonly int _maxRertryConnect = 100;
-        private static IPlugin _plugin;
         private static TimeSpan _retryInterval = TimeSpan.FromSeconds(1);
         private static TimeSpan _statisticsCollectInterval = TimeSpan.FromSeconds(1);
 
@@ -24,25 +23,45 @@ namespace Rpc.Master
             // Parse args
             var argsOption = ParseArgs(args);
 
+            if (argsOption == null)
+            {
+                return;
+            }
             Util.SavePidToFile(argsOption.PidFile);
 
             // Create Logger
             Util.CreateLogger(argsOption.LogDirectory, argsOption.LogName, argsOption.LogTarget);
 
-            // Create rpc clients
-            var clients = CreateRpcClients(argsOption.SlaveList);
-
-            // Check rpc connections
-            await WaitRpcConnectSuccess(clients);
-
-            // Load benchmark configuration
-            var configuration = Util.ReadFile(argsOption.BenchmarkConfiguration);
-
             var type = Type.GetType(argsOption.PluginFullName);
 
             var plugin = (IPlugin)Activator.CreateInstance(type);
 
-            await plugin.Start(configuration, clients);
+            if (!CheckUsage(argsOption, plugin))
+            {
+                // Load benchmark configuration
+                var configuration = Util.ReadFile(argsOption.BenchmarkConfiguration);
+                IList<IRpcClient> clients = null;
+                if (plugin.NeedSlaves(configuration))
+                {
+                    // Create rpc clients
+                    clients = CreateRpcClients(argsOption.SlaveList);
+
+                    // Check rpc connections
+                    await WaitRpcConnectSuccess(clients);
+                }
+
+                await plugin.Start(configuration, clients);
+            }
+        }
+
+        private static bool CheckUsage(ArgsOption argsOption, IPlugin plugin)
+        {
+            if (argsOption.BenchmarkConfiguration == "?")
+            {
+                plugin.Help();
+                return true;
+            }
+            return false;
         }
 
         private static void EnableTracing()
@@ -72,8 +91,9 @@ namespace Rpc.Master
                 .WithParsed(options => argsOption = options)
                 .WithNotParsed(error => 
                 {
-                    Log.Error($"Error in parsing arguments: {error}");
-                    throw new ArgumentException("Error in parsing arguments.");
+                    argsOption = null;
+                    //Log.Error($"Error in parsing arguments: {error}");
+                    //throw new ArgumentException("Error in parsing arguments.");
                 });
             return argsOption;
         }

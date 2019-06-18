@@ -513,6 +513,17 @@ function deploy_all_scripts_config_bench()
 }
 
 
+function isDogfood() {
+	local connectionString=$1
+        local is_dogfood=`echo "$connectionString"|grep "servicedev.signalr.net"`
+	if [ "$is_dogfood" != "" ]
+	then
+		echo 1
+	else
+		echo 0
+	fi
+}
+
 function extract_servicename_from_connectionstring() {
 	local connectionString=$1
 	local is_dogfood=`echo "$connectionString"|grep "servicedev.signalr.net"`
