@@ -15,6 +15,10 @@ This benchmark targets to help you evaluate the throughput and latency. It can b
 ![quickstart.git](Doc/quickrun.gif)
 Take 1000 connections for `Echo` performance test as an example.
 
+## Build
+Build the tool through [build.bat](https://github.com/Azure/azure-signalr-bench/tree/master/SignalRServiceBenchmarkPlugin/build.bat) or [build.sh](https://github.com/Azure/azure-signalr-bench/tree/master/SignalRServiceBenchmarkPlugin/build.sh) script.
+
+## Run
 Go to [slave folder](https://github.com/Azure/azure-signalr-bench/tree/master/SignalRServiceBenchmarkPlugin/framework/slave)
 ```
 dotnet run
