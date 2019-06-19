@@ -1223,6 +1223,39 @@ function create_asrs()
 function remove_resource_group() {
   echo "!!Received EXIT!! and remove all created VMs"
   cd $CurrentWorkingDir
+  local clean_resource_daemon=daemon_${JOB_NAME}_cleanresource
+  # I found several daemonize commands can not be executed sometimes, so I merged them to avoid this issue
+cat << EOF > /tmp/clean_resource.sh
+${VMMgrDir}/JenkinsScript --step=DeleteResourceGroupByConfig --AgentConfigFile=$AgentConfig --DisableRandomSuffix --ServicePrincipal=$ServicePrincipal
+
+if [ "$AspNetSignalR" == "true" ] || [ "$AzWebSignalR" == "true" ]
+then
+  ${AspNetWebMgrDir}/DeployWebApp removeGroup --resourceGroup=${AspNetWebAppResGrp} --servicePrincipal=$ServicePrincipal
+fi
+
+cd $ScriptWorkingDir
+. ./az_signalr_service.sh
+
+if [ "$ASRSEnv" == "dogfood" ]
+then
+  az_login_ASRS_dogfood
+  delete_group $ASRSResourceGroup
+  unregister_signalr_service_dogfood
+else
+  az_login_signalr_dev_sub
+  delete_group $ASRSResourceGroup
+fi
+EOF
+
+mark_job_as_failure_if_meet_error
+
+daemonize -v -o /tmp/${clean_resource_daemon}.out -e /tmp/${clean_resource_daemon}.err -E BUILD_ID=dontKillcenter /usr/bin/nohup /bin/sh /tmp/clean_resource.sh &
+
+}
+
+function remove_all_resource_group() {
+  echo "!!Received EXIT!! and remove all created VMs"
+  cd $CurrentWorkingDir
   local clean_aspwebapp_daemon=daemon_${JOB_NAME}_cleanwebapp
   local clean_vm_daemon=daemon_${JOB_NAME}_cleanvms
   local clean_asrs_daemon=daemon_${JOB_NAME}_cleanasrs
