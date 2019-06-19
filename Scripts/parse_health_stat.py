@@ -29,8 +29,8 @@ def FindManyMax(infile, queryMax):
              except Exception as e:
                 print("exception occurs: " + str(e))
                 traceback.print_exc()
-           else:
-               print(len(items))
+           #else:
+           #    print(len(items))
     if qMax > 0:
        manyMaxArr.append(qMax)
     if len(manyMaxArr) == 0:

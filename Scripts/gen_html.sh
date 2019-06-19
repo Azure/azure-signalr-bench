@@ -37,7 +37,8 @@ function gen_single_html
         if [ "$connectionString" != "" ]
 	then
 		serviceName=$(extract_servicename_from_connectionstring $connectionString)
-		if [ "$serviceName" != "" ]
+		local isDog=$(isDogfood $connectionString)
+		if [ "$serviceName" != "" ] && [ "$isDog" == "1" ] # only dogfood env has metrics
 		then
 			local timeWindows=`go run parseresult.go -input $norm_file -timeWindow`
 			for i in `sh find_pod_name_by_resourcename.sh $serviceName`
