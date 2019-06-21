@@ -11,10 +11,10 @@ function set_global_env() {
       relative_dir=$2
    fi
    export JenkinsRootPath="$Jenkins_Workspace_Root"
-   export PluginScriptWorkingDir=$Jenkins_Workspace_Root/${relative_dir}/Scripts/ASRSConfigGenerator/
+   export PluginScriptWorkingDir=$Jenkins_Workspace_Root/${relative_dir}/Scripts/tools/ASRSConfigGenerator/
    export PluginRpcBuildWorkingDir=$Jenkins_Workspace_Root/${relative_dir}/SignalRServiceBenchmarkPlugin/framework/rpc/
    export ScriptWorkingDir=$Jenkins_Workspace_Root/${relative_dir}/Scripts/                     # folders to find all scripts
-   export CurrentWorkingDir=$Jenkins_Workspace_Root/${relative_dir}/Scripts/JenkinsScript/     # workding directory
+   export CurrentWorkingDir=$Jenkins_Workspace_Root/${relative_dir}/Scripts/tools/AzureVMMgr     # workding directory
    export CommandWorkingDir=$Jenkins_Workspace_Root/${relative_dir}/SignalRServiceBenchmarkPlugin/utils/Commander
    export AppServerWorkingDir=$Jenkins_Workspace_Root/${relative_dir}/SignalRServiceBenchmarkPlugin/utils/AppServer
    export AspNetWebMgrWorkingDir=$Jenkins_Workspace_Root/${relative_dir}/SignalRServiceBenchmarkPlugin/utils/DeployWebApp
@@ -26,10 +26,6 @@ function set_global_env() {
    export ServicePrincipal=$JenkinsRootPath'/servicePrincipal.yaml'
 
 ############ global static variables #########
-   export RootFolder="$CurrentWorkingDir"
-   export ConfigRoot="$RootFolder/signalr_perf_config_sample/config/"
-   export ScenarioRoot="$RootFolder/signalr_perf_config_sample/scenarios/"
-   export BenchConfig=$ConfigRoot'/bench.yaml'
    #export ResultFolderSuffix='suffix'
    export VMMgrDir=/tmp/VMMgr
    export AspNetWebMgrDir=/tmp/AspNetWebMgr

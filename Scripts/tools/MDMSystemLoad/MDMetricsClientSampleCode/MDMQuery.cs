@@ -17,7 +17,7 @@ namespace MDMetricsClientSampleCode
         {
             if (platformType == PlatformType.Dogfood)
             {
-                var testCertificateThumbprint = "C35CBFF9FA6C51E51E1DE97B6D1E246F27661301";
+                var testCertificateThumbprint = Environment.GetEnvironmentVariable("DogfoodCertificateThumbPrint");
                 var httpsUrl = "https://shoebox2.metrics.nsatc.net/public/monitoringAccount/SignalRShoeboxTest/homeStamp";
                 var connectionInfo = new ConnectionInfo(new Uri(httpsUrl), testCertificateThumbprint, StoreLocation.LocalMachine);
                 var id = new MetricIdentifier("SignalRShoeboxTest", "systemLoad", systemLoadType == SystemLoadType.CPU ? "PodCpuUsage" : "PodMemory");
