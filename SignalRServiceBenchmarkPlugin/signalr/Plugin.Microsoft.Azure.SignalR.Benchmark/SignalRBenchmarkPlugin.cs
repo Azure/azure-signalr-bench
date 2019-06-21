@@ -16,29 +16,28 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
     {
         private string _masterNamespaceSuffix = "MasterMethods";
         private string _slaveNamespaceSuffix = "SlaveMethods";
-
         private string _simpleConfigurationTemplate = $@"
-mode: {SimpleBenchmarkModel.DEFAULT_MODE}                                            # Required: '{SimpleBenchmarkModel.DEFAULT_MODE}|{SimpleBenchmarkModel.ADVANCE_MODE}', default is '{SimpleBenchmarkModel.DEFAULT_MODE}'
-kind: {SimpleBenchmarkModel.DEFAULT_KIND}                                            # Optional: '{SimpleBenchmarkModel.DEFAULT_KIND}|{SimpleBenchmarkModel.LONGRUN_KIND}|{SimpleBenchmarkModel.PARSERESULT_KIND}', default is '{SimpleBenchmarkModel.DEFAULT_KIND}'
+mode: simple                                                                         # Required: '{SimpleBenchmarkModel.DEFAULT_MODE}|{SimpleBenchmarkModel.ADVANCE_MODE}', default is '{SimpleBenchmarkModel.DEFAULT_MODE}'
+kind: perf                                                                           # Optional: '{SimpleBenchmarkModel.DEFAULT_KIND}|{SimpleBenchmarkModel.LONGRUN_KIND}|{SimpleBenchmarkModel.PARSERESULT_KIND}', default is '{SimpleBenchmarkModel.DEFAULT_KIND}'
 config:
   connectionString: Endpoint=https://xxxx.signalr.net;AccessKey=xxx;Version=1.0;     # Optional: if 'webAppTarget' has specified, this option will be ignored, otherwise you must specify it.
   webAppTarget: http://localhost:5050/signalrbench                                   # Optional: if not specified, an internal webapp is launched on http://localhost:5050, hubname is 'signalrbench'
-  connections: {SimpleBenchmarkModel.DEFAULT_CONNECTIONS}                            # Optional, default is {SimpleBenchmarkModel.DEFAULT_CONNECTIONS}
-  arrivingRate: {SimpleBenchmarkModel.DEFAULT_ARRIVINGRATE}                          # Optional, default is {SimpleBenchmarkModel.DEFAULT_ARRIVINGRATE}
-  transport: {SimpleBenchmarkModel.DEFAULT_TRANSPORT}                                # Optional: '{SimpleBenchmarkModel.DEFAULT_TRANSPORT}|{SimpleBenchmarkModel.SSE_TRANSPORT}|{SimpleBenchmarkModel.LONGPOLLING_TRANSPORT}', default is {SimpleBenchmarkModel.DEFAULT_TRANSPORT}
-  protocol: {SimpleBenchmarkModel.DEFAULT_PROTOCOL}                                  # Optional: '{SimpleBenchmarkModel.DEFAULT_PROTOCOL}|{SimpleBenchmarkModel.MSGPACK_PROTOCOL}' default is {SimpleBenchmarkModel.DEFAULT_PROTOCOL}
-  singleStepDuration: {SimpleBenchmarkModel.DEFAULT_SINGLE_STEP_DUR}                 # Optional, default is {SimpleBenchmarkModel.DEFAULT_SINGLE_STEP_DUR} mill-seconds
-  baseSending: {SimpleBenchmarkModel.DEFAULT_BASE_SENDING_STEP}                      # Optional, the count for active sending connections when starting, default is {SimpleBenchmarkModel.DEFAULT_BASE_SENDING_STEP}
-  sendingSteps: {SimpleBenchmarkModel.DEFAULT_SENDING_STEPS}                         # Optional: maximum value is 'Connections / BaseSending', minimum value is 1. Default is 0, means getting from 'Connections / BaseSending'
-  step: {SimpleBenchmarkModel.DEFAULT_STEP}                                          # Optional: default is {SimpleBenchmarkModel.DEFAULT_STEP}
-  connectionType: {SimpleBenchmarkModel.DEFAULT_CONNECTION_TYPE}                     # Optional: '{SimpleBenchmarkModel.DEFAULT_CONNECTION_TYPE}|{SimpleBenchmarkModel.ASPNET_CONNECTION_TYPE}', default is '{SimpleBenchmarkModel.DEFAULT_CONNECTION_TYPE}', if you use AspNet SignalR, please choose '{SimpleBenchmarkModel.ASPNET_CONNECTION_TYPE}'.
-  arrivingBatchMode: {SimpleBenchmarkModel.DEFAULT_ARRIVING_BATCH_MODE}              # Optional: '{SimpleBenchmarkModel.DEFAULT_ARRIVING_BATCH_MODE}|{SimpleBenchmarkModel.LOW_ARRIVING_BATCH_MODE}', default is '{SimpleBenchmarkModel.DEFAULT_ARRIVING_BATCH_MODE}'
+  connections: 1000                                                                  # Optional, default is {SimpleBenchmarkModel.DEFAULT_CONNECTIONS}
+  arrivingRate: 50                                                                   # Optional, default is {SimpleBenchmarkModel.DEFAULT_ARRIVINGRATE}
+  transport: Websockets                                                              # Optional: '{SimpleBenchmarkModel.DEFAULT_TRANSPORT}|{SimpleBenchmarkModel.SSE_TRANSPORT}|{SimpleBenchmarkModel.LONGPOLLING_TRANSPORT}', default is {SimpleBenchmarkModel.DEFAULT_TRANSPORT}
+  protocol: json                                                                     # Optional: '{SimpleBenchmarkModel.DEFAULT_PROTOCOL}|{SimpleBenchmarkModel.MSGPACK_PROTOCOL}' default is {SimpleBenchmarkModel.DEFAULT_PROTOCOL}
+  singleStepDuration: 240000                                                         # Optional, default is {SimpleBenchmarkModel.DEFAULT_SINGLE_STEP_DUR} mill-seconds
+  baseSending: 500                                                                   # Optional, the count for active sending connections when starting, default is {SimpleBenchmarkModel.DEFAULT_BASE_SENDING_STEP}
+  sendingSteps: 0                                                                    # Optional: maximum value is 'Connections / BaseSending', minimum value is 1. Default is 0, means getting from 'Connections / BaseSending'
+  step: 500                                                                          # Optional: default is {SimpleBenchmarkModel.DEFAULT_STEP}
+  connectionType: Core                                                               # Optional: '{SimpleBenchmarkModel.DEFAULT_CONNECTION_TYPE}|{SimpleBenchmarkModel.ASPNET_CONNECTION_TYPE}', default is '{SimpleBenchmarkModel.DEFAULT_CONNECTION_TYPE}', if you use AspNet SignalR, please choose '{SimpleBenchmarkModel.ASPNET_CONNECTION_TYPE}'.
+  arrivingBatchMode: HighPress                                                       # Optional: '{SimpleBenchmarkModel.DEFAULT_ARRIVING_BATCH_MODE}|{SimpleBenchmarkModel.LOW_ARRIVING_BATCH_MODE}', default is '{SimpleBenchmarkModel.DEFAULT_ARRIVING_BATCH_MODE}'
   debug: false                                                                       # Optional: dump more details if it is true, default is false
 scenario:
-  name: {SimpleBenchmarkModel.DEFAULT_SCENARIO}                                      # Optional: '{SimpleBenchmarkModel.DEFAULT_SCENARIO}|broadcast|sendToGroup|sendToClient|restSendToUser|restSendToGroup|restBroadcast|restPersistSendToUser|restPersistSendToGroup|restPersistBroadcast', default is {SimpleBenchmarkModel.DEFAULT_SCENARIO}
+  name: echo                                                                         # Optional: '{SimpleBenchmarkModel.DEFAULT_SCENARIO}|broadcast|sendToGroup|sendToClient|restSendToUser|restSendToGroup|restBroadcast|restPersistSendToUser|restPersistSendToGroup|restPersistBroadcast', default is {SimpleBenchmarkModel.DEFAULT_SCENARIO}
   parameters:
-    messageSize: {SimpleBenchmarkModel.DEFAULT_MESSAGESIZE}                          # Optional: default is {SimpleBenchmarkModel.DEFAULT_MESSAGESIZE} bytes
-    sendingInterval: {SimpleBenchmarkModel.DEFAULT_SEND_INTERVAL}                    # Optional: default is {SimpleBenchmarkModel.DEFAULT_SEND_INTERVAL} milliseconds
+    messageSize: 2048                                                                # Optional: default is {SimpleBenchmarkModel.DEFAULT_MESSAGESIZE} bytes
+    sendingInterval: 1000                                                            # Optional: default is {SimpleBenchmarkModel.DEFAULT_SEND_INTERVAL} milliseconds
     groupCount: 500                                                                  # Optional: group count only valid for 'sendToGroup|restSendToGroup|restPersistSendToGroup', ignored for other scenarios
 ";
         public IDictionary<string, object> PluginMasterParameters { get; set; } = new ConcurrentDictionary<string, object>();
