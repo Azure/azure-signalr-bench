@@ -26,6 +26,7 @@ function set_global_env() {
    export ServicePrincipal=$JenkinsRootPath'/servicePrincipal.yaml'
 
 ############ global static variables #########
+   export RootFolder=$CurrentWorkingDir # some jekins already refers this
    #export ResultFolderSuffix='suffix'
    export VMMgrDir=/tmp/VMMgr
    export AspNetWebMgrDir=/tmp/AspNetWebMgr
