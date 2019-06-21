@@ -3,11 +3,11 @@ repo: https://github.com/Azure/azure-signalr-bench.git
 rpcPort: 5555
 sshPort: 22
 
-imageId: /subscriptions/9caf2a1e-9c49-49b6-89a2-56bdec7e3f97/resourceGroups/wanlimage/providers/Microsoft.Compute/images/wanlSignalrGeneralImage-eastus
+imageId: /subscriptions/xxxx/resourceGroups/wanlimage/providers/Microsoft.Compute/images/xxx
 
 
-user: honzhan
-password: Hackathon@2018
+user: xxx
+password: xxx
 
 # config for creating VMs
 prefix: hz2eus
