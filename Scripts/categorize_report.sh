@@ -71,11 +71,11 @@ generate_counterlist() {
     local f=`echo "$i"|awk '{print $2}'`
     counterPath=`echo "$i"|awk '{print $3}'`
     sh normalize.sh $counterPath /tmp/normal.txt
-    read maxConnection maxSend < <(python parse_counter.py -i /tmp/normal.txt)
+    read maxConnection maxSend sendTPuts recvTPuts< <(python parse_counter.py -i /tmp/normal.txt)
     if [ $maxSend -ne 0 ]
     then
       html=${httpBase}/${d}/${f}/index.html
-      echo "$d,$f,$maxConnection,$maxSend,$html"
+      echo "$d,$f,$maxConnection,$maxSend,$sendTPuts,$recvTPuts,$html"
     fi
   done < $rawCounterOutput
   rm $rawCounterOutput

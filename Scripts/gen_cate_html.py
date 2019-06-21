@@ -13,18 +13,22 @@ def gen_google_chart_table(input):
         data.addColumn('string', 'Scenario');
         data.addColumn('number', 'Connections');
         data.addColumn('number', 'Send');
+        date.addColumn('number', 'SendTPuts');
+        date.addColumn('number', 'RecvTPuts');
         data.addRows(["""
    print(head)
    with open(input, 'r') as f:
       for i,line in enumerate(f):
           fields = line.rstrip().split(',')
-          assert len(fields) == 5, "Invalid input file: the columns do not match requirement"
+          assert len(fields) == 7, "Invalid input file: the columns do not match requirement"
           d = fields[0]
           scenario = fields[1]
           conn = fields[2]
           send = fields[3]
-          link = fields[4]
-          content="""          ['{date}', '<a href="{link}">{scenario}</a>', {conn}, {send}],""".format(date=d,link=link,conn=conn,send=send,scenario=scenario)
+          sendTPuts = fields[4]
+          recvTPuts = fields[5]
+          link = fields[6]
+          content="""          ['{date}', '<a href="{link}">{scenario}</a>', {conn}, {send}, {sendTPuts}, {recvTPuts}],""".format(date=d,link=link,conn=conn,send=send,scenario=scenario,sendTPuts=sendTPuts,recvTPuts=recvTPuts)
           print(content)
    tail="""
         ]);
@@ -38,7 +42,7 @@ def gen_google_chart_table(input):
 
 if __name__=="__main__":
    parser = argparse.ArgumentParser()
-   parser.add_argument("-i", "--input", help="Specify the file contains <date,scenario,connection,send,link> information")
+   parser.add_argument("-i", "--input", help="Specify the file contains <date,scenario,connection,send,sendTPuts,recvTPuts,link> information")
    args = parser.parse_args()
    if args.input is None:
       print("Input file is not specified!")
