@@ -67,7 +67,12 @@ function set_job_env() {
    fi
    export ASRSResourceGroup="hzatpf"$result_root
    export SignalrServiceName="atpf"${result_root} #-`date +%H%M%S`
-   export AspNetWebAppResGrp="hzperfwebapp"$result_root
+   if [ "$kind" == "" ] || [ "$kind" == "perf" ]
+   then
+     export AspNetWebAppResGrp="hzperfwebapp"$result_root
+   else
+     export AspNetWebAppResGrp="hzlongrunwebapp"$result_root
+   fi
    export MaxSendIteration=120 # we evaluate the total running time per this value
    record_build_info # record the jenkins job to /tmp/send_mail.txt
    prebuild_helper_tool
