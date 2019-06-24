@@ -13,8 +13,8 @@ def gen_google_chart_table(input):
         data.addColumn('string', 'Scenario');
         data.addColumn('number', 'Connections');
         data.addColumn('number', 'Send');
-        date.addColumn('number', 'SendTPuts');
-        date.addColumn('number', 'RecvTPuts');
+        data.addColumn('number', 'SendTPuts');
+        data.addColumn('number', 'RecvTPuts');
         data.addRows(["""
    print(head)
    with open(input, 'r') as f:
