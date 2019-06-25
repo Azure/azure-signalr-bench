@@ -2,6 +2,8 @@ import json
 import argparse
 
 def Analyze(item):
+   if ('connection:connect:success' not in item['Counters']):
+      return 0
    sendingStep = item['Counters']['sendingStep']
    received = item['Counters']['message:received']
    successConn = item['Counters']['connection:connect:success']
@@ -78,8 +80,12 @@ def FindMaxValidSend(jsonFile):
                    if (tmpSend > maxSending):
                       maxSending = sendingStep
                if (sendingStep > 0 and index + 1 < jLen and
+                   'sendingStep' in jData[index+1]['Counters'] and
                    sendingStep == jData[index+1]['Counters']['sendingStep'] and
+                   'message:received' in jData[index+1]['Counters'] and
                    received > 0 and jData[index+1]['Counters']['message:received'] > 0):
+                   if ('message:sentSize' not in jData[index]['Counters']):
+                      continue
                    if (jData[index]['Counters']['message:sentSize'] >= curSendSize):
                        curSendSize = jData[index]['Counters']['message:sentSize']
                        stputs = GetSendTPuts(jData[index], jData[index+1])

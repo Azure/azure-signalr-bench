@@ -28,7 +28,16 @@ def streaming_normalize(input):
         curLine = 0
         for line in f:
             curLine = curLine + 1
-            a=json.loads(line)
+            l = line.rstrip()
+            if l.endswith(','):
+               a = l[0:-1]
+               l = a
+            line=l
+            try:
+              a=json.loads(line)
+            except Exception as e:
+              #print(line)
+              continue
             jr = ast.literal_eval(json.dumps(a, sort_keys=True, indent=2))
             nr = str(jr).replace("'", "\"")
             print(nr)
