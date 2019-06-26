@@ -1,8 +1,9 @@
 import glob, os, re
+import argparse
 
-def FindCounters():
+def FindCounters(targetDir):
     pat = re.compile(r"[0-9]+")
-    for root, dirs, files in os.walk("/mnt/Data/NginxRoot"):
+    for root, dirs, files in os.walk(targetDir):
         for file in files:
            if file.endswith("counters.txt"):
               a = os.path.join(root, file)
@@ -11,4 +12,8 @@ def FindCounters():
                  c = "{date} {scenario} {path}".format(date=b[4],scenario=b[5], path=a)
                  print(c)
 
-FindCounters()
+if __name__=="__main__":
+   parser = argparse.ArgumentParser()
+   parser.add_argument("-q", "--queryDir", default="/mnt/Data/NginxRoot", help="Specify the query directory")
+   args = parser.parse_args()
+   FindCounters(args.queryDir)

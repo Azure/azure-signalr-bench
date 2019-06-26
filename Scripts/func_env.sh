@@ -773,3 +773,31 @@ gen_all_tabs_4_report() {
   go run gen5tmpl.go -content=tmpl/alltabs.tmpl -t1=tmpl/header.tmpl -t2=${js_refer_tmpl_file} -t3=$tabs_list_gen -t4=$tabs_tmpl_gen > $out_dir/allunits.html
   rm /tmp/tabs*${postfix}
 }
+
+function export_sql_mgr_env()
+{
+  local wrkDir=`pwd`/tools/ReportToDB
+  local sqlConnStr=`cat sqlconnectionstring.txt`
+  export SQL_CLI_DIR=$wrkDir
+  export SQL_CONNSTR=$sqlConnStr
+  #export SQL_PERF_TBL="AzureSignalRPerf"
+}
+
+function drop_sql_perf_table()
+{
+  local SQL_PERF_TBL=$1
+  export_sql_mgr_env
+  cd $SQL_CLI_DIR
+  dotnet run -- dropTable --SqlConnectionString "$SQL_CONNSTR" --TableName $SQL_PERF_TBL
+  cd -
+}
+
+function insert_records_to_perf_table()
+{
+  local tblName=$1
+  local tblFile=$2
+  export_sql_mgr_env
+  cd $SQL_CLI_DIR
+  dotnet run -- insertRecords --SqlConnectionString "$SQL_CONNSTR" --TableName $tblName --InputFile $tblFile
+  cd -
+}
