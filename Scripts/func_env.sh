@@ -797,13 +797,17 @@ function insert_records_to_perf_table()
 {
   local tblFile tblName
   export_sql_mgr_env
+  tblName=$DEFAULT_SQL_TBL
   if [ $# -eq 1 ]
   then
     tblFile=$1
     tblName=$DEFAULT_SQL_TBL
   else
-    tblFile=$1
-    tblName=$2
+    if [ $# -eq 2 ]
+    then
+      tblFile=$1
+      tblName=$2
+    fi
   fi
   cd $SQL_CLI_DIR
   dotnet run -- insertRecords --SqlConnectionString "$SQL_CONNSTR" --TableName $tblName --InputFile $tblFile
