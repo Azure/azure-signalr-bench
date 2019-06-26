@@ -211,7 +211,7 @@ namespace ReportToDB
         SendTPuts bigint,
         RecvTPuts bigint,
         Reference varchar(512),
-        CONSTRAINT PK_ASRSPerf PRIMARY KEY (Id)
+        CONSTRAINT PK_{table} PRIMARY KEY (Id)
     )
 ";
             return createTableCommand;
