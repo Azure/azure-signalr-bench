@@ -1,10 +1,12 @@
 #!/bin/sh
+
+. ./func_env.sh
+
 MONITORDIR=/mnt/Data/NginxRoot
 LOG_FOLDER=/var/log/nginxroot/monitor.log
 RE='^[0-9]+$'
 REPORT_DB_TOOL=`pwd`/tools/ReportToDB
 DATA_PATH=${REPORT_DB_TOOL}/table.csv
-SQL_CONN_STR=`cat sqlconnectionstring.txt`
 
 function action() {
   local newFile=$1
@@ -13,9 +15,7 @@ function action() {
     rm $DATA_PATH
   fi
   ./categorize_folder.sh ${newFile} | tee $DATA_PATH
-  cd $REPORT_DB_TOOL
-  dotnet run -- insertRecords --SqlConnectionString "$SQL_CONN_STR" --InputFile $DATA_PATH
-  cd -
+  insert_records_to_perf_table $DATA_PATH
   echo "`date +%Y%m%d%H%M%S` ${newFile} created" >> $LOG_FOLDER
 }
 

@@ -780,6 +780,7 @@ function export_sql_mgr_env()
   local sqlConnStr=`cat sqlconnectionstring.txt`
   export SQL_CLI_DIR=$wrkDir
   export SQL_CONNSTR=$sqlConnStr
+  export DEFAULT_SQL_TBL="AzureSignalRPerf"
   #export SQL_PERF_TBL="AzureSignalRPerf"
 }
 
@@ -794,10 +795,18 @@ function drop_sql_perf_table()
 
 function insert_records_to_perf_table()
 {
-  local tblName=$1
-  local tblFile=$2
+  local tblFile tblName
   export_sql_mgr_env
+  if [ $# -eq 1 ]
+  then
+    tblFile=$1
+    tblName=$DEFAULT_SQL_TBL
+  else
+    tblFile=$1
+    tblName=$2
+  fi
   cd $SQL_CLI_DIR
   dotnet run -- insertRecords --SqlConnectionString "$SQL_CONNSTR" --TableName $tblName --InputFile $tblFile
   cd -
 }
+
