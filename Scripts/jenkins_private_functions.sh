@@ -861,80 +861,6 @@ build_app_server() {
   cd -
 }
 
-try_catch_netstat_when_server_conn_drop()
-{
-  local user=$1
-  local passwd="$2"
-  local connectionString="$3"
-  local netstat_check_file="netstat_check.sh"
-  local remote_netstat_log="netstat.log"
-  local asrs_endpoint=`echo "$connectionString"|awk -F \; '{print $1}'|awk -F = '{print $2}'`
-cat << EOF > $netstat_check_file
-#!/bin/bash
-if [ -e $remote_netstat_log ]
-then
-  rm $remote_netstat_log
-fi
-
-appserver_log=\`find . -iname "appserver.log"\`
-if [ "\$appserver_log" == "" ]
-then
-  exit 0
-fi
-
-if [ -e $remote_netstat_log ]
-then
-  rm $remote_netstat_log
-fi
-i=0
-max=3600
-while [ \$i -lt \$max ]
-do
-  conn_drop=\`grep "service was dropped" \$appserver_log\`
-  if [ "\$conn_drop" != "" ]
-  then
-     date_time=\`date --iso-8601='seconds'\`
-     echo "\${date_time} " >> $remote_netstat_log
-     curl -I $asrs_endpoint 2>/dev/null|head -n 3 >> $remote_netstat_log
-     echo "------------------" >> $remote_netstat_log
-     curl -I http://www.bing.com 2>/dev/null|head -n 3 >> $remote_netstat_log
-  fi
-  sleep 1
-  i=\$((\$i+1))
-done
-EOF
-  local i
-  for i in `python extract_ip.py -i $PrivateIps -q appserverList`
-  do
-    sshpass -p $passwd scp -o StrictHostKeyChecking=no -o LogLevel=ERROR $netstat_check_file $user@${i}:/home/$user/
-    sshpass -p $passwd ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $user@${i} "chmod +x $netstat_check_file"
-    sshpass -p $passwd ssh -f -o StrictHostKeyChecking=no -o LogLevel=ERROR $user@${i} "killall $netstat_check_file; nohup ./$netstat_check_file &"
-  done
-}
-
-fetch_netstat_for_server_conn_drop()
-{
-  local user=$1
-  local passwd="$2"
-  local outputDir=$3
-  local i
-  local remote_netstat_log="netstat.log"
-  for i in `python extract_ip.py -i $PrivateIps -q appserverList`
-  do
-    local netstatLogPath=`sshpass -p $passwd ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $user@${i} "find . -iname $remote_netstat_log"`
-    if [ "$netstatLogPath" != "" ]
-    then
-      sshpass -p $passwd scp -o StrictHostKeyChecking=no -o LogLevel=ERROR $user@${i}:$netstatLogPath $outputDir/appserver_netstat_${i}.txt
-      if [ -e $outputDir/appserver_netstat_${i}.txt ]
-      then
-         cd $outputDir
-         tar zcvf appserver_netstat_${i}.txt.tgz appserver_netstat_${i}.txt
-         cd -
-      fi
-    fi
-  done
-}
-
 start_collect_slaves_appserver_top()
 {
   local user=$1
@@ -965,6 +891,7 @@ do
     date_time=\`date --iso-8601='seconds'\`
     echo "\${date_time} " >> $outputDir/appserver_\${i}_top.txt
     sshpass -p $passwd ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $user@\${i} "top -b -n 1|head -n 17" >> $outputDir/appserver_\${i}_top.txt
+    sshpass -p $passwd ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $user@\${i} "curl -w '\n' http://169.254.169.254/metadata/scheduledevents?api-version=2017-08-01 -H @{\"Metadata\"=\"true\"}" >> $outputDir/appserver_\${i}_schedule.txt
   done
   sleep 1
 done
@@ -1142,7 +1069,6 @@ EOF
     sshpass -p $passwd ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR ${user}@${master} "find /home/${user}/master -iname counters.txt"
   fi
   copy_log_from_slaves_master ${user} $passwd ${outputDir}
-  #fetch_netstat_for_server_conn_drop ${user} $passwd ${outputDir}
   enable_exit_immediately_when_fail
 }
 
