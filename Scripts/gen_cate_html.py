@@ -19,8 +19,12 @@ def gen_google_chart_table(input):
    print(head)
    with open(input, 'r') as f:
       for i,line in enumerate(f):
+          if (line.isspace()):
+            continue
           fields = line.rstrip().split(',')
-          assert len(fields) == 7, "Invalid input line '{a}': the columns do not match requirement".format(a=line)
+          if (len(fields) != 7):
+            print("Invalid input line '{a}': the columns do not match requirement".format(a=line))
+          assert len(fields) == 7, "Invalid input line : the columns do not match requirement"
           d = fields[0]
           scenario = fields[1]
           conn = fields[2]
