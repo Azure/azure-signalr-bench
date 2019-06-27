@@ -26,6 +26,7 @@ function action() {
 
 function monitor() {
   local newFile dirName
+  echo "launch monitor"
   inotifywait -m -r -e create -e moved_to --format '%w%f' "${MONITORDIR}" | while read newFile
   do
    dirName=`basename $newFile`
@@ -34,6 +35,7 @@ function monitor() {
      action $newFile
    fi
   done
+  echo "monitor closed"
 }
 
 monitor
