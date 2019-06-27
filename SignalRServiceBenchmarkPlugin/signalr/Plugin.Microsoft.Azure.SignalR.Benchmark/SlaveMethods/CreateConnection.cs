@@ -18,6 +18,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 Log.Information($"Create connections...");
                 if (SignalRUtils.isUsingInternalApp(stepParameters))
                 {
+                    // Setup the internal app server for simple local perf test
                     await SignalRUtils.StartInternalAppServer(stepParameters, pluginParameters);
                     // rewrite the url
                     stepParameters[SignalRConstants.HubUrls] = SignalRConstants.LocalhostUrl;

@@ -119,9 +119,9 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
         {
             // Generate necessary data
             var messageBlob = SignalRUtils.GenerateRandomData(MessageSize);
-
+            // TODO: for group count is larger than connections, we need to tune groupName parameters
             var packages = from i in Enumerable.Range(0, Connections.Count)
-                           let groupName = SignalRUtils.GroupName(Type, i % GroupCount)
+                           let groupName = SignalRUtils.GroupName(Type, ConnectionIndex[i] % GroupCount)
                            select 
                            new Package
                            {

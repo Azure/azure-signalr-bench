@@ -503,6 +503,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
                 using (var c = new CancellationTokenSource(TimeSpan.FromSeconds(3)))
                 {
                     await package.Connection.StartAsync(c.Token);
+                    // This does not support REST API client to join group if it drops.
                     if (package.Action == ActionAfterConnection.JoinToGroup)
                     {
                         if (package.Context.ContainsKey($"{SignalRConstants.GroupCount}.{package.Type}") &&
@@ -557,6 +558,10 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             var transportType = GetTransportType(transportTypeString);
             var connections = from i in Enumerable.Range(0, connectionIndex.Count)
                               let userId = GenClientUserIdFromConnectionIndex(connectionIndex[i])
+                              /* XXX: I don't know how to handle HttpClientHandler now.
+                               * It is useful to connect self-signed https appserver,
+                               * but it is disposed when reconnect which caused reconnect fail.
+                               */
                               //let handler = new HttpClientHandler
                               //{
                               //    ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator

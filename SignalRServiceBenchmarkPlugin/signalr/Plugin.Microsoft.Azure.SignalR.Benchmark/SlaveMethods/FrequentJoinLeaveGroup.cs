@@ -35,7 +35,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
             var messageBlob = SignalRUtils.GenerateRandomData(MessageSize);
 
             var packages = from i in Enumerable.Range(0, Connections.Count)
-                           let groupName = SignalRUtils.GroupName(Type, i % GroupCount)
+                           let groupName = SignalRUtils.GroupName(Type, ConnectionIndex[i] % GroupCount)
                            select
                            new Package
                            {

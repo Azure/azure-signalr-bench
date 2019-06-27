@@ -12,10 +12,13 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
     public class JoinGroup : RegisterCallbackBase, ISlaveMethod
     {
         private StatisticsCollector _statisticsCollector;
+        // connections created on the current node.
         private IList<IHubConnectionAdapter> _connections;
         private List<int> _connectionIndex;
         private string _type;
         private int _groupCount;
+        // This is the total connections on all slave nodes, which may not equal to above connections number.
+        private int _totalConnection;
 
         public async Task<IDictionary<string, object>> Do(
             IDictionary<string, object> stepParameters,
@@ -31,15 +34,15 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 stepParameters.TryGetTypedValue(SignalRConstants.GroupCount,
                     out _groupCount, Convert.ToInt32);
                 stepParameters.TryGetTypedValue(SignalRConstants.ConnectionTotal,
-                    out int totalConnection, Convert.ToInt32);
+                    out _totalConnection, Convert.ToInt32);
 
-                if (totalConnection % _groupCount != 0)
+                if (_totalConnection % _groupCount != 0)
                 {
                     //throw new Exception("Not supported: Total connections cannot be divided by group count");
-                    Log.Warning($"groups do not have equal members because total connections {totalConnection} cannot be divided by group count {_groupCount}");
+                    Log.Warning($"groups do not have equal members because total connections {_totalConnection} cannot be divided by group count {_groupCount}");
                 }
 
-                SignalRUtils.SaveGroupInfoToContext(pluginParameters, _type, _groupCount, totalConnection);
+                SignalRUtils.SaveGroupInfoToContext(pluginParameters, _type, _groupCount, _totalConnection);
                 // Get context
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionStore}.{_type}",
                     out _connections, (obj) => (IList<IHubConnectionAdapter>)obj);
@@ -80,9 +83,9 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
             }).Build();
 
             var hubContext = await serviceManager.CreateHubContextAsync(SignalRConstants.DefaultRestHubName);
-            var connectionCount = _connections.Count;
-            if (connectionCount >= _groupCount)
+            if (_totalConnection >= _groupCount)
             {
+                Log.Information($"connection count is larger than group count: {_totalConnection} vs. {_groupCount}");
                 for (var i = 0; i < _connections.Count; i++)
                 {
                     var userId = SignalRUtils.GenClientUserIdFromConnectionIndex(_connectionIndex[i]);
@@ -102,20 +105,48 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
             }
             else
             {
-                for (var i = 0; i < _groupCount; i++)
+                Log.Information($"connection count is smaller than group count: {_totalConnection} vs. {_groupCount}");
+                var m = _groupCount / _totalConnection;
+                for (var j = 0; j < m; j++)
                 {
-                    var userId = SignalRUtils.GenClientUserIdFromConnectionIndex(i);
-                    try
+                    for (var i = 0; i < _connections.Count; i++)
                     {
-                        await hubContext.UserGroups.AddToGroupAsync(
-                            userId,
-                            SignalRUtils.GroupName(_type, i));
-                        _statisticsCollector.IncreaseJoinGroupSuccess();
+                        var userId = SignalRUtils.GenClientUserIdFromConnectionIndex(_connectionIndex[i]);
+                        try
+                        {
+                            await hubContext.UserGroups.AddToGroupAsync(
+                                userId,
+                                SignalRUtils.GroupName(_type, j * _totalConnection + _connectionIndex[i]));
+                            _statisticsCollector.IncreaseJoinGroupSuccess();
+                        }
+                        catch (Exception e)
+                        {
+                            _statisticsCollector.IncreaseJoinGroupFail();
+                            Log.Error($"Fail to join group: {e.Message}");
+                        }
                     }
-                    catch (Exception e)
+                }
+                var n = _groupCount % _totalConnection;
+                if (n > 0)
+                {
+                    for (var i = 0; i < _connections.Count; i++)
                     {
-                        _statisticsCollector.IncreaseJoinGroupFail();
-                        Log.Error($"Fail to join group: {e.Message}");
+                        if (_connectionIndex[i] < n)
+                        {
+                            var userId = SignalRUtils.GenClientUserIdFromConnectionIndex(_connectionIndex[i]);
+                            try
+                            {
+                                await hubContext.UserGroups.AddToGroupAsync(
+                                    userId,
+                                    SignalRUtils.GroupName(_type, m * _totalConnection + _connectionIndex[i]));
+                                _statisticsCollector.IncreaseJoinGroupSuccess();
+                            }
+                            catch (Exception e)
+                            {
+                                _statisticsCollector.IncreaseJoinGroupFail();
+                                Log.Error($"Fail to join group: {e.Message}");
+                            }
+                        }
                     }
                 }
             }
@@ -123,8 +154,9 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
 
         private async Task NormalConnectionJoinGroup()
         {
-            if (_connections.Count >= _groupCount)
+            if (_totalConnection >= _groupCount)
             {
+                Log.Information($"connection count is larger than group count: {_connections.Count} vs. {_groupCount}");
                 for (var i = 0; i < _connections.Count; i++)
                 {
                     await SignalRUtils.JoinToGroup(
@@ -135,13 +167,31 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
             }
             else
             {
-                var connectionCount = _connections.Count;
-                for (var i = 0; i < _groupCount; i++)
+                Log.Information($"connection count is smaller than group count: {_connections.Count} vs. {_groupCount}");
+                var m = _groupCount / _totalConnection;
+                for (var j = 0; j < m; j++)
                 {
-                    await SignalRUtils.JoinToGroup(
-                        _connections[i % connectionCount],
-                        SignalRUtils.GroupName(_type, i),
+                    for (var i = 0; i < _connections.Count; i++)
+                    {
+                        await SignalRUtils.JoinToGroup(
+                        _connections[i],
+                        SignalRUtils.GroupName(_type, j * _totalConnection +  _connectionIndex[i]),
                         _statisticsCollector);
+                    }
+                }
+                var n = _groupCount % _totalConnection;
+                if (n > 0)
+                {
+                    for (var i = 0; i < _connections.Count; i++)
+                    {
+                        if (_connectionIndex[i] < n)
+                        {
+                            await SignalRUtils.JoinToGroup(
+                            _connections[i],
+                            SignalRUtils.GroupName(_type, m * _totalConnection + _connectionIndex[i]),
+                            _statisticsCollector);
+                        }
+                    }
                 }
             }
         }
