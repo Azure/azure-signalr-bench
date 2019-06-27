@@ -15,7 +15,12 @@ function action() {
     rm $DATA_PATH
   fi
   ./categorize_folder.sh ${newFile} | tee $DATA_PATH
-  insert_records_to_perf_table $DATA_PATH
+  if [ "$g_db_table" != "" ]
+  then
+    insert_records_to_perf_table $DATA_PATH $g_db_table
+  else
+    insert_records_to_perf_table $DATA_PATH
+  fi
   echo "`date +%Y%m%d%H%M%S` ${newFile} created" >> $LOG_FOLDER
 }
 
