@@ -936,6 +936,43 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             return merged;
         }
 
+        public static async Task JoinGroupForConnection(
+            int totalConnection,
+            int groupCount,
+            List<int> connectionIndex,
+            Func<int, int, Task> JoinGroupOpt)
+        {
+            if (totalConnection > groupCount)
+            {
+                for (var i = 0; i < connectionIndex.Count; i++)
+                {
+                    await JoinGroupOpt(i, connectionIndex[i] % groupCount);
+                }
+            }
+            else
+            {
+                var m = groupCount / totalConnection;
+                for (var j = 0; j < m; j++)
+                {
+                    for (var i = 0; i < connectionIndex.Count; i++)
+                    {
+                        await JoinGroupOpt(i, j * totalConnection + connectionIndex[i]);
+                    }
+                }
+                var n = groupCount % totalConnection;
+                if (n > 0)
+                {
+                    for (var i = 0; i < connectionIndex.Count; i++)
+                    {
+                        if (connectionIndex[i] < n)
+                        {
+                            await JoinGroupOpt(i, m * totalConnection + connectionIndex[i]);
+                        }
+                    }
+                }
+            }
+        }
+
         public static bool TryGetBatchMode(
             IDictionary<string, object> stepParameters,
             out string batchConfigMode,
