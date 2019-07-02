@@ -27,10 +27,10 @@ function action() {
 function monitor() {
   local newFile dirName
   echo "launch monitor"
-  inotifywait -m -r -e moved_to --format '%w%f' "${MONITORDIR}" | while read newFile
+  inotifywait -m --exclude '/\.' -r -e create -e moved_to --format '%w%f' "${MONITORDIR}" | while read newFile
   do
    dirName=`basename $newFile`
-   if [ "${MONITORDIR}/${dirName}" == $NEWFILE ] && [[ $dirName =~ $RE ]]
+   if [ "${MONITORDIR}/${dirName}" == "$newFile" ] && [[ $dirName =~ $RE ]]
    then
      action $newFile
    fi
