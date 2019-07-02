@@ -84,7 +84,7 @@ namespace ReportToDB
         {
 
             var command4Insert = $@"
-        IF NOT EXISTS (SELECT * FROM AzureSignalRPerf r WHERE r.Id = '{id}')
+        IF NOT EXISTS (SELECT * FROM {table} r WHERE r.Id = '{id}')
            INSERT INTO [dbo].[{table}] (
               [Id],
               [ReportDateTime],
