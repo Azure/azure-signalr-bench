@@ -891,7 +891,7 @@ do
     date_time=\`date --iso-8601='seconds'\`
     echo "\${date_time} " >> $outputDir/appserver_\${i}_top.txt
     sshpass -p $passwd ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $user@\${i} "top -b -n 1|head -n 17" >> $outputDir/appserver_\${i}_top.txt
-    sshpass -p $passwd ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $user@\${i} "curl -w '\n' http://169.254.169.254/metadata/scheduledevents?api-version=2017-08-01 -H @{\"Metadata\"=\"true\"}" >> $outputDir/appserver_\${i}_schedule.txt
+    sshpass -p $passwd ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $user@\${i} "curl -w '\n' http://169.254.169.254/metadata/scheduledevents?api-version=2017-08-01 -H @{\"Metadata\"=\"true\"}" >> $outputDir/appserver_\${i}_schedule.txt 2> /dev/null
   done
   sleep 1
 done
