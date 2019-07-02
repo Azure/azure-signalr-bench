@@ -93,8 +93,8 @@ scenario:sendToClient,transport:Websockets,protocol:json,message_size:2048:
   # base_step: [1200, 1200, 3000, 3000, 3000, 10000, 10000]
   # step: [100, 100, 1000, 1000, 1000, 2000, 2000]
   # try to find base step and step for unit 20
-  base_step: [1000, 1000, 1000, 1000, 2000, 2000, 2000]
-  step: [100, 100, 1000, 1000, 2000, 2000, 2000]
+  base_step: [1000, 1000, 2000, 4000, 4000, 4000, 4000]
+  step: [100, 500, 1000, 2000, 2000, 2000, 2000]
   step_length: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
   concurrent: [100, 100, 100, 100, 1000, 2500, 5000]
 
