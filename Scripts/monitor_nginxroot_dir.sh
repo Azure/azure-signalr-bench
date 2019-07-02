@@ -14,25 +14,32 @@ function action() {
   then
     rm $DATA_PATH
   fi
-  ./categorize_folder.sh ${newFile} | tee $DATA_PATH
+  echo "./categorize_folder.sh ${newFile} > $DATA_PATH" >> $LOG_FOLDER
+  ./categorize_folder.sh ${newFile} > $DATA_PATH
   if [ "$g_db_table" != "" ]
   then
-    insert_records_to_perf_table $DATA_PATH $g_db_table
+    insert_records_to_perf_table $DATA_PATH $g_db_table >> $LOG_FOLDER
   else
-    insert_records_to_perf_table $DATA_PATH
+    insert_records_to_perf_table $DATA_PATH >> $LOG_FOLDER
   fi
   echo "`date +%Y%m%d%H%M%S` ${newFile} created" >> $LOG_FOLDER
 }
 
 function monitor() {
   local newFile dirName
+  local timeout=1800
   echo "launch monitor"
   inotifywait -m --exclude '/\.' -r -e create -e moved_to --format '%w%f' "${MONITORDIR}" | while read newFile
   do
    dirName=`basename $newFile`
    if [ "${MONITORDIR}/${dirName}" == "$newFile" ] && [[ $dirName =~ $RE ]]
    then
-     action $newFile
+     # wait until all copy operations finishes, stop it if timedout
+     inotifywait -s -t $timeout --exclude '/\.' -r -e close --format '%w%f' "${MONITORDIR}"
+     if [ $? -eq 0 ]
+     then
+       action $newFile
+     fi
    fi
   done
   echo "monitor closed"
