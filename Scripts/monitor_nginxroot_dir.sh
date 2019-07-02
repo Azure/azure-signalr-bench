@@ -34,12 +34,14 @@ function monitor() {
    dirName=`basename $newFile`
    if [ "${MONITORDIR}/${dirName}" == "$newFile" ] && [[ $dirName =~ $RE ]]
    then
-     # wait until all copy operations finishes, stop it if timedout
-     inotifywait -s -t $timeout --exclude '/\.' -r -e close --format '%w%f' "${MONITORDIR}"
-     if [ $? -eq 0 ]
-     then
-       action $newFile
-     fi
+     echo "`date +%Y%m%d%H%M%S` Detect creation on $newFile" >> $LOG_FOLDER
+     inotifywait -t $timeout --exclude '/\.' -r -e close --format '%w%f' "${MONITORDIR}" # this wait returns once detected a close event
+     local ret=$?
+     echo "`date +%Y%m%d%H%M%S` close event for $newFile return $ret" >> $LOG_FOLDER
+     sleep 120 # wait another 2min to make sure all copies finish
+     echo "`date +%Y%m%d%H%M%S` starting to take action"  >> $LOG_FOLDER
+     action $newFile
+     echo "`date +%Y%m%d%H%M%S` end action"  >> $LOG_FOLDER
    fi
   done
   echo "monitor closed"
