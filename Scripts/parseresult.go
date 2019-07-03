@@ -183,18 +183,39 @@ func PrintConnectionStatSummary(monitors []Monitor) {
 	var reconnectionCost99 int64
 	var sla99 int64
 	for _, v := range monitors {
-		if v.Counters.LS_99 > 0 {
+		if v.Counters.LS_99 > lifeSpan99 {
 			lifeSpan99 = v.Counters.LS_99
 		}
-		if v.Counters.CC_99 > 0 {
+		if v.Counters.CC_99 > connectionCost99 {
 			connectionCost99 = v.Counters.CC_99
 		}
-		if v.Counters.RC_99 > 0 {
+		if v.Counters.RC_99 > reconnectionCost99 {
 			reconnectionCost99 = v.Counters.RC_99
 		}
-		if v.Counters.CSLA_99 > 0 {
+		if v.Counters.CSLA_99 > sla99 {
 			sla99 = v.Counters.CSLA_99
 		}
+	}
+	var curSendingStep int64
+	var lastValidIndex int
+	var connDropped int64
+	var sum int64
+	for i, v := range monitors {
+		if v.Counters.Recv > 0 {
+			curSendingStep = v.Counters.Sending
+			if i+1 < len(monitors) &&
+				monitors[i+1].Counters.Sending != curSendingStep {
+				connDropped = connDropped + v.Counters.ReConn
+				sum = v.Counters.Recv
+			}
+			lastValidIndex = i
+		}
+	}
+	if lastValidIndex > 0 &&
+		monitors[lastValidIndex].Counters.Recv != sum &&
+		monitors[lastValidIndex].Counters.Recv > 0 {
+		//v = monitors[lastValidIndex]
+		connDropped = connDropped + monitors[lastValidIndex].Counters.ReConn
 	}
 	var chartfunc string
 	chartfunc = `
@@ -208,10 +229,11 @@ func PrintConnectionStatSummary(monitors []Monitor) {
         data.addColumn('number', '99% ReconnectCost (ms)');
         data.addColumn('number', '99% ConnectCost (ms)');
         data.addColumn('number', '99% LifeSpan (ms)');
+	data.addColumn('number', 'TotalDroppedConnection')
         `
 	fmt.Printf("%s\n", chartfunc)
 	fmt.Printf("\tdata.addRows([\n")
-	fmt.Printf("\t [%d, %d, %d, %d],\n", sla99, reconnectionCost99, connectionCost99, lifeSpan99)
+	fmt.Printf("\t [%d, %d, %d, %d, %d],\n", sla99, reconnectionCost99, connectionCost99, lifeSpan99, connDropped)
 	chartfunc = `
         ]);
         var table = new google.visualization.Table(document.getElementById('tab_for_sum'));
@@ -226,7 +248,7 @@ func StepReducedIterate(monitors []Monitor, ProcessItem func(index int, monitors
 	if len(monitors) > 1000 {
 		step := len(monitors) / 300
 		for i, _ := range monitors {
-			if i % step == 0 {
+			if i%step == 0 {
 				ProcessItem(i, monitors)
 			}
 		}
@@ -254,15 +276,15 @@ func PrintConnectCostChart(monitors []Monitor) {
             `
 	fmt.Printf("%s\n", chartfunc)
 	StepReducedIterate(monitors, func(i int, monitors []Monitor) {
-                t1, _ := time.Parse(time.RFC3339, monitors[i].Timestamp)
-                fmt.Printf("\t [new Date(Date.UTC(%d, %d, %d, %d, %d, %d, 0)), %d, %d, %d, %d],\n",
-                        t1.Year(), t1.Month()-1, t1.Day(),
-                        t1.Hour(), t1.Minute(), t1.Second(),
-                        monitors[i].Counters.CC_99,
-                        monitors[i].Counters.CC_95,
-                        monitors[i].Counters.CC_90,
-                        monitors[i].Counters.CC_50)
-        })
+		t1, _ := time.Parse(time.RFC3339, monitors[i].Timestamp)
+		fmt.Printf("\t [new Date(Date.UTC(%d, %d, %d, %d, %d, %d, 0)), %d, %d, %d, %d],\n",
+			t1.Year(), t1.Month()-1, t1.Day(),
+			t1.Hour(), t1.Minute(), t1.Second(),
+			monitors[i].Counters.CC_99,
+			monitors[i].Counters.CC_95,
+			monitors[i].Counters.CC_90,
+			monitors[i].Counters.CC_50)
+	})
 	chartfunc = `
         ]);
 
@@ -643,7 +665,6 @@ func PrintLastLatency(monitors []Monitor) {
 	fmt.Printf("%s\n", chartfunc)
 }
 
-
 func PrintAreaChart(monitors []Monitor) {
 	var chartfunc string
 	chartfunc = `
@@ -858,8 +879,8 @@ func PrintSizeRate(monitors []Monitor) {
 			rszdiff := monitors[j].Counters.RecvSize - monitors[i].Counters.RecvSize
 			if sszdiff > 0 && rszdiff > 0 {
 				fmt.Printf("\t [new Date(Date.UTC(%d, %d, %d, %d, %d, %d, 0)), %d, %d],\n",
-				t1.Year(), t1.Month()-1, t1.Day(),
-				t1.Hour(), t1.Minute(), t1.Second(), sszdiff, rszdiff)
+					t1.Year(), t1.Month()-1, t1.Day(),
+					t1.Hour(), t1.Minute(), t1.Second(), sszdiff, rszdiff)
 			}
 		}
 	})
@@ -963,16 +984,16 @@ func PrintRate(monitors []Monitor) {
             `
 	fmt.Printf("%s\n", chartfunc)
 	StepReducedIterate(monitors, func(i int, monitors []Monitor) {
-                j := i + 1
-                if j < len(monitors) {
+		j := i + 1
+		if j < len(monitors) {
 			t1, _ := time.Parse(time.RFC3339, monitors[j].Timestamp)
 			// ignore invalid negative values
 			sdiff := monitors[j].Counters.Send - monitors[i].Counters.Send
 			rdiff := monitors[j].Counters.Recv - monitors[i].Counters.Recv
 			if sdiff > 0 && rdiff > 0 {
 				fmt.Printf("\t [new Date(Date.UTC(%d, %d, %d, %d, %d, %d, 0)), %d, %d],\n",
-				t1.Year(), t1.Month()-1, t1.Day(),
-				t1.Hour(), t1.Minute(), t1.Second(), sdiff, rdiff)
+					t1.Year(), t1.Month()-1, t1.Day(),
+					t1.Hour(), t1.Minute(), t1.Second(), sdiff, rdiff)
 			}
 		}
 	})
