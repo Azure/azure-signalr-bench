@@ -2,6 +2,14 @@ import argparse
 import sys
 
 def gen_google_chart_table(input):
+   maxField = 0
+   with open(input, 'r') as f:
+      for i,line in enumerate(f):
+          if (line.isspace()):
+            continue
+          fields = line.rstrip().split(',')
+          if (len(fields) > maxField):
+              maxField = len(fields)
    head="""
       google.charts.load("current", {packages:["corechart", "line", "table"]});
       google.charts.setOnLoadCallback(draw1sPercent);
@@ -14,17 +22,22 @@ def gen_google_chart_table(input):
         data.addColumn('number', 'Connections');
         data.addColumn('number', 'Send');
         data.addColumn('number', 'SendTPuts');
-        data.addColumn('number', 'RecvTPuts');
-        data.addRows(["""
+        data.addColumn('number', 'RecvTPuts');"""
    print(head)
+   if (maxField == 9):
+        append="""
+        data.addColumn('number', 'ConnectionDrop');
+        data.addColumn('number', '99%ReconnCost(ms)');"""
+        print(append)
+   print("data.addRows([")
    with open(input, 'r') as f:
       for i,line in enumerate(f):
           if (line.isspace()):
             continue
           fields = line.rstrip().split(',')
-          if (len(fields) != 7):
+          if (len(fields) >= 7):
             print("Invalid input line '{a}': the columns do not match requirement".format(a=line))
-          assert len(fields) == 7, "Invalid input line : the columns do not match requirement"
+          assert len(fields) >= 7, "Invalid input line : the columns do not match requirement"
           d = fields[0]
           scenario = fields[1]
           conn = fields[2]
@@ -32,7 +45,13 @@ def gen_google_chart_table(input):
           sendTPuts = fields[4]
           recvTPuts = fields[5]
           link = fields[6]
-          content="""          ['{date}', '<a href="{link}">{scenario}</a>', {conn}, {send}, {sendTPuts}, {recvTPuts}],""".format(date=d,link=link,conn=conn,send=send,scenario=scenario,sendTPuts=sendTPuts,recvTPuts=recvTPuts)
+          if (len(fields) == 9):
+             drop = fields[7]
+             reconnCost = fields[8]
+          if (len(fields) == 7):
+             content="""          ['{date}', '<a href="{link}">{scenario}</a>', {conn}, {send}, {sendTPuts}, {recvTPuts}],""".format(date=d,link=link,conn=conn,send=send,scenario=scenario,sendTPuts=sendTPuts,recvTPuts=recvTPuts)
+          elif (len(fields) == 9):
+             content="""          ['{date}', '<a href="{link}">{scenario}</a>', {conn}, {send}, {sendTPuts}, {recvTPuts}, {drop}, {reconnCost}],""".format(date=d,link=link,conn=conn,send=send,scenario=scenario,sendTPuts=sendTPuts,recvTPuts=recvTPuts,drop=drop,reconnCost=reconnCost)
           print(content)
    tail="""
         ]);

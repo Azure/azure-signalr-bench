@@ -1,10 +1,15 @@
 #!/bin/bash
 . ./analyze_statistic.sh
 
-if [ $# -ne 1 ]
+if [ $# -lt 1 ]
 then
-  echo "$0: folder"
+  echo "$0: folder <longrun>"
   exit 1
 fi
 
-analyze_1_folder $1
+if [ $# -eq 2 ]
+then
+  analyze_1_folder $1 $2
+else
+  analyze_1_folder $1
+fi

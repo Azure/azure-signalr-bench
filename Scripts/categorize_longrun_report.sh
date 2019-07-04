@@ -18,4 +18,4 @@ then
   end_date=$2
 fi
 
-analyze_date_in_window $start_date $end_date
+analyze_longrun_date_in_window $start_date $end_date

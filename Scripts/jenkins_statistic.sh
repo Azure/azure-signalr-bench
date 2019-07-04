@@ -35,7 +35,12 @@ then
   rm $env_g_root/table.csv
 fi
 
-./categorize_report.sh $env_g_start_date $env_g_end_date | tee $env_g_root/table.csv
+if [ "$env_g_kind" == "longrun" ]
+then
+ ./categorize_longrun_report.sh $env_g_start_date $env_g_end_date | tee $env_g_root/table.csv
+else
+ ./categorize_report.sh $env_g_start_date $env_g_end_date | tee $env_g_root/table.csv
+fi
 
 python gen_cate_html.py -i $env_g_root/table.csv > $env_g_root/latency_table_1s_category.js
 

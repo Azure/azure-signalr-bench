@@ -10,8 +10,14 @@ DATA_PATH=${REPORT_DB_TOOL}/table.csv
 
 function genTable() {
   local newFile=$1
-  echo "`date +%Y%m%d%H%M%S` ./categorize_folder.sh ${newFile} > $DATA_PATH" >> $LOG_FOLDER
-  ./categorize_folder.sh ${newFile} > $DATA_PATH
+  if [ "$g_env_kind" == "longrun" ]
+  then
+    echo "`date +%Y%m%d%H%M%S` ./categorize_folder.sh ${newFile} $g_env_kind > $DATA_PATH" >> $LOG_FOLDER
+    ./categorize_folder.sh ${newFile} $g_env_kind > $DATA_PATH
+  else
+    echo "`date +%Y%m%d%H%M%S` ./categorize_folder.sh ${newFile} > $DATA_PATH" >> $LOG_FOLDER
+    ./categorize_folder.sh ${newFile} > $DATA_PATH
+  fi
 }
 
 function action() {
