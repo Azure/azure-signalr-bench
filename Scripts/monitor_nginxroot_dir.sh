@@ -8,14 +8,28 @@ RE='^[0-9]+$'
 REPORT_DB_TOOL=`pwd`/tools/ReportToDB
 DATA_PATH=${REPORT_DB_TOOL}/table.csv
 
+function genTable() {
+  local newFile=$1
+  echo "`date +%Y%m%d%H%M%S` ./categorize_folder.sh ${newFile} > $DATA_PATH" >> $LOG_FOLDER
+  ./categorize_folder.sh ${newFile} > $DATA_PATH
+}
+
 function action() {
   local newFile=$1
+  local try=0
   if [ -e $DATA_PATH ]
   then
     rm $DATA_PATH
   fi
-  echo "./categorize_folder.sh ${newFile} > $DATA_PATH" >> $LOG_FOLDER
-  ./categorize_folder.sh ${newFile} > $DATA_PATH
+  genTable ${newFile}
+  while [ ! -s $DATA_PATH ] && [ $try -lt 3 ]
+  do
+     echo "`date +%Y%m%d%H%M%S` $DATA_PATH is empty, and wait ... " >> $LOG_FOLDER
+     sleep 120
+     genTable ${newFile}
+     try=$(($try+1))
+  done
+  genTable ${newFile}
   if [ "$g_db_table" != "" ]
   then
     insert_records_to_perf_table $DATA_PATH $g_db_table >> $LOG_FOLDER
@@ -27,7 +41,7 @@ function action() {
 
 function monitor() {
   local newFile dirName
-  local timeout=1800
+  local timeout=300
   echo "launch monitor"
   inotifywait -m --exclude '/\.' -r -e create -e moved_to --format '%w%f' "${MONITORDIR}" | while read newFile
   do
