@@ -90,9 +90,9 @@ def FindMaxValidSend(jsonFile):
                        curSendSize = jData[index]['Counters']['message:sentSize']
                        stputs = GetSendTPuts(jData[index], jData[index+1])
                        rtputs = GetRecvTPuts(jData[index], jData[index+1])
-                       if (stputs > 0 and stputs > sendTPuts):
+                       if (stputs > sendTPuts):
                            sendTPuts = stputs
-                       if (rtputs > 0 and rtputs > recvTPuts):
+                       if (rtputs > recvTPuts):
                            recvTPuts = rtputs
        connection = GetConnection(item)
        if (connection > maxConnection):
