@@ -44,18 +44,33 @@ filter_date_window() {
 
 generate_stat() {
   local rawCounterOutput="$1"
-  local i
+  local i maxConnection maxSend sendTPuts recvTPuts drop reconnCost
+  local longrun=0 html normFile=/tmp/normal.txt
+  if [ $# -eq 2 ] && [ "$2" == "longrun" ]
+  then
+    longrun=1
+  fi
   while read -r i
   do
     local d=`echo "$i"|awk '{print $1}'`
     local f=`echo "$i"|awk '{print $2}'`
     counterPath=`echo "$i"|awk '{print $3}'`
-    sh normalize.sh $counterPath /tmp/normal.txt
-    read maxConnection maxSend sendTPuts recvTPuts< <(python parse_counter.py -i /tmp/normal.txt)
-    if [ $maxSend -ne 0 ]
+    sh normalize.sh $counterPath $normFile
+    if [ $longrun -eq 0 ]
     then
-      html=${httpBase}/${d}/${f}/index.html
-      echo "$d,$f,$maxConnection,$maxSend,$sendTPuts,$recvTPuts,$html"
+      read maxConnection maxSend sendTPuts recvTPuts< <(python parse_counter.py -i $normFile)
+      if [ $maxSend -ne 0 ]
+      then
+        html=${httpBase}/${d}/${f}/index.html
+        echo "$d,$f,$maxConnection,$maxSend,$sendTPuts,$recvTPuts,$html"
+      fi
+    else
+      read maxConnection maxSend sendTPuts recvTPuts drop reconnCost< <(python parse_counter.py -i $normFile -q longrun)
+      if [ $maxSend -ne 0 ]
+      then
+        html=${httpBase}/${d}/${f}/index.html
+        echo "$d,$f,$maxConnection,$maxSend,$sendTPuts,$recvTPuts,$html,$drop,$reconnCost"
+      fi
     fi
   done < $rawCounterOutput
 }
@@ -64,85 +79,64 @@ generate_1_counterlist() {
   local folder="$1"
   local timestamp=`date +%Y%m%d%H%M%S`
   local rawCounterOutput=/tmp/rawCounterList${timestamp}
+  local result
   python find_counters.py -q "$folder"| sort -k 2 > $rawCounterOutput
-  local result=$(generate_stat $rawCounterOutput)
-  echo "$result"
-  rm $rawCounterOutput
-}
-
-generate_counterlist() {
-  local start_date end_date output
-  local filter=$1 rawCounterOutput
-  local timestamp=`date +%Y%m%d%H%M%S`
-  rawCounterOutput=/tmp/rawCounterList${timestamp}
-  if [ $# -eq 3 ]
+  if [ $# -eq 2 ] && [ "$2" == "longrun" ]
   then
-    start_date=$2
-    end_date=$3
-    output=/tmp/rawReportInfo${timestamp}
-    filter_date_window $start_date $end_date $output
-    local output_size=`wc -l $output|awk '{print $1}'`
-    if [ $output_size -eq 0 ]
-    then
-       cat $output
-       echo "Error"
-       return
-    fi
-    sort -k 2 $output|grep "$filter" >$rawCounterOutput
-    rm $output
+    result=$(generate_stat $rawCounterOutput "$2")
   else
-    python find_counters.py | sort -k 2 |grep "$filter" > $rawCounterOutput
+    result=$(generate_stat $rawCounterOutput)
   fi
-  local result=$(generate_stat $rawCounterOutput)
   echo "$result"
   rm $rawCounterOutput
 }
 
-category_scenario() {
-  local filter=$1
-  local i d f counterPath maxConnection maxSend html
+generate_counterlist_time_window() {
+  local start_date end_date output
+  start_date=$1
+  end_date=$2
   local timestamp=`date +%Y%m%d%H%M%S`
-  python find_counters.py | sort -k 2 |grep "$filter" > /tmp/rawCounterList${timestamp}
-  while read -r i
-  do
-    d=`echo "$i"|awk '{print $1}'`
-    f=`echo "$i"|awk '{print $2}'`
-    counterPath=`echo "$i"|awk '{print $3}'`
-    sh normalize.sh $counterPath /tmp/normal.txt
-    read maxConnection maxSend < <(python parse_counter.py -i /tmp/normal.txt)
-    if [ $maxSend -ne 0 ]
-    then
-      html=${httpBase}/${d}/${f}/index.html
-      echo "$d,$f,$maxConnection,$maxSend,$html"
-    fi
-  done < /tmp/rawCounterList${timestamp}
+  local rawCounterOutput=/tmp/rawCounterList${timestamp}
+  filter_date_window $start_date $end_date $rawCounterOutput
+  local output_size=`wc -l $rawCounterOutput|awk '{print $1}'`
+  if [ $output_size -eq 0 ]
+  then
+     cat $rawCounterOutput
+     echo "Error"
+     return
+  fi
+  local result
+  if [ $# -eq 3 ] && [ "$3" == "longrun" ]
+  then
+     result=$(generate_stat $rawCounterOutput "$3")
+  else
+     result=$(generate_stat $rawCounterOutput)
+  fi
+  echo "$result"
+  rm $rawCounterOutput
 }
 
-function analyze_all() {
-  local i
-  local scenarios=`python find_counters.py|sort -k 2 |awk '{print $2}'|uniq`
-  for i in $scenarios
-  do
-    local result=$(generate_counterlist $i)
-    echo "$result"
-  done
-}
-
-analyze_date_in_window() {
+function analyze_date_in_window() {
   local start_date=$1
   local end_date=$2
-  local i
-  local scenarios=`python find_counters.py|sort -k 2 |awk '{print $2}'|uniq`
-  for i in $scenarios
-  do
-    local result=$(generate_counterlist $i $start_date $end_date)
-    echo "$result"
-  done
+  local result=$(generate_counterlist_time_window $start_date $end_date)
+  echo "$result"
 }
 
 function analyze_1_folder() {
-  local folder="$1"
-  local result=$(generate_1_counterlist $folder)
+  local folder="$1" result
+  if [ $# -eq 2 ] && [ "$2" == "longrun" ]
+  then
+    result=$(generate_1_counterlist $folder "$2")
+  else
+    result=$(generate_1_counterlist $folder)
+  fi
   echo "$result"
 }
 
+function analyze_longrun_date_in_window() {
+  local start_date=$1
+  local end_date=$2
+  local result=$(generate_counterlist_time_window $start_date $end_date "longrun")
+  echo "$result"
+}
