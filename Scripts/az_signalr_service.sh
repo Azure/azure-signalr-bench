@@ -55,6 +55,47 @@ function delete_group() {
   az group delete --name $rsg -y --no-wait
 }
 
+function create_serverless_asrs_with_acs_redises()
+{
+  local rsg=$1
+  local name=$2
+  local location=$3
+  local unitCount=$4
+  local redisRowKey=$5
+  local redisRouteRowKey=$6
+  local acsRowKey=$7
+  local vmSet=$8
+  local signalrHostName
+  local p="{'properties':{'features':[{'flag':'ServiceMode','value':'Serverless'}]},'location':'$location','sku':{'name':'Standard_S1','capacity':$unit}}"
+
+  local pp=`echo $p|sed "s/'/\"/g"`
+  local properties=$pp
+  signalrHostName=$(az resource create -g $rsg -n $name \
+                                       --namespace Microsoft.SignalRService \
+                                       --resource-type SignalR \
+                                       --properties $properties \
+                                       --is-full-object \
+                                       --tags SIGNALR_MESSAGE_REDIS_ROW_KEY=$redisRowKey \
+                                              SIGNALR_ROUTE_REDIS_ROW_KEY=$redisRouteRowKey \
+                                              SIGNALR_ACS_ROW_KEY=$acsRowKey \
+                                              SIGNALR_INGRESS_VM_SET=$vmSet)
+  echo "$signalrHostName"
+}
+
+function create_serverless_signalr_service()
+{
+  local rsg=$1
+  local name=$2
+  local location=$3
+  local unitCount=$4
+  local p="{'properties':{'features':[{'flag':'ServiceMode','value':'Serverless'}]},'location':'$location','sku':{'name':'Standard_S1','capacity':$unit}}"
+
+  local pp=`echo $p|sed "s/'/\"/g"`
+  local properties=$pp
+  local ret=$(az resource create -g $rsg -n $name --namespace Microsoft.SignalRService --resource-type SignalR --properties $properties --is-full-object)
+  echo $ret
+}
+
 function create_signalr_service()
 {
   local rsg=$1

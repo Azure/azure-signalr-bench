@@ -1085,7 +1085,15 @@ function create_asrs()
   local signalr_service
   if [ "$separatedRedis" != "" ] && [ "$separatedRouteRedis" != "" ] && [ "$separatedAcs" != "" ] && [ "$separatedIngressVMSS" != "" ]
   then
-   signalr_service=$(create_asrs_with_acs_redises $rsg $name $sku $unit $separatedRedis $separatedRouteRedis $separatedAcs $separatedIngressVMSS)
+   if [ "$ServiceMode" == "" ]
+   then
+     signalr_service=$(create_asrs_with_acs_redises $rsg $name $sku $unit $separatedRedis $separatedRouteRedis $separatedAcs $separatedIngressVMSS)
+   else
+     if [ "$ServiceMode" == "Serverless" ]
+     then
+        signalr_service=$(create_serverless_asrs_with_acs_redises $rsg $name $ASRSLocation $unit $separatedRedis $separatedRouteRedis $separatedAcs $separatedIngressVMSS)
+     fi
+   fi
   else
    if [ "$separatedRedis" != "" ] && [ "$separatedAcs" != "" ] && [ "$separatedIngressVMSS" != "" ]
    then
@@ -1103,7 +1111,15 @@ function create_asrs()
       then
         signalr_service=$(create_signalr_service_with_specific_redis $rsg $name $sku $unit $separatedRedis)
       else
-        signalr_service=$(create_signalr_service $rsg $name $sku $unit)
+        if [ "$ServiceMode" == "" ]
+        then
+           signalr_service=$(create_signalr_service $rsg $name $sku $unit)
+        else
+           if [ "$ServiceMode" == "Serverless" ]
+           then
+              signalr_service=$(create_serverless_signalr_service $rsg $name $ASRSLocation $unit)
+           fi
+        fi
       fi
      fi
     fi
