@@ -29,8 +29,9 @@ namespace ReportToDB
 
         private static ReportRecord BuildReportRecord(string strContent)
         {
+            ReportRecord reportRecord = null;
             var items = strContent.Split(',');
-            var reportRecord = new ReportRecord()
+            reportRecord = new ReportRecord()
             {
                 Timestamp = items[0],
                 Scenario = items[1],
@@ -40,7 +41,12 @@ namespace ReportToDB
                 RecvTPuts = Convert.ToInt64(items[5]),
                 Reference = items[6]
             };
-
+            if (items.Length == 9)
+            {
+                reportRecord.DroppedConnections = Convert.ToInt32(items[7]);
+                reportRecord.ReconnCost99Percent = Convert.ToInt32(items[8]);
+                reportRecord.HasConnectionStat = true;
+            }
             return reportRecord;
         }
     }

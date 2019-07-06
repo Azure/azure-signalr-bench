@@ -14,7 +14,14 @@ namespace ReportToDB
             sqlClient.Open();
             try
             {
-                sqlClient.CreateTableIfNotExist(table);
+                if (createTableOption.TableType == 1)
+                {
+                    sqlClient.CreateTableIfNotExist(table, SqlClient.CommandsToCreateTable);
+                }
+                else if (createTableOption.TableType == 2)
+                {
+                    sqlClient.CreateTableIfNotExist(table, SqlClient.CommandsToCreateConnStatTable);
+                }
             }
             finally
             {
@@ -40,7 +47,7 @@ namespace ReportToDB
             return Task.CompletedTask;
         }
 
-        private static Task RunInsertOption(InsertToTableOption insertOption)
+        private static async Task RunInsertOption(InsertToTableOption insertOption)
         {
             var connectionString = insertOption.SqlConnectionString;
             var table = insertOption.TableName;
@@ -49,24 +56,14 @@ namespace ReportToDB
             sqlClient.Open();
             try
             {
-                sqlClient.CreateTableIfNotExist(table);
+                await CreateTableOption(insertOption);
                 int insertSucc = 0;
                 foreach (var stat in LoadReportRecords.GetReportRecords(csvFileName))
                 {
                     var ts = stat.Timestamp;
                     var id = Convert.ToInt64(ts);
                     var dt = Utils.ConvertFromTimestamp(ts);
-                    insertSucc += sqlClient.InsertRecord(
-                        table,
-                        $"{id}{stat.Scenario}",
-                        dt,
-                        stat.Scenario,
-                        stat.Unit(),
-                        stat.Connections,
-                        stat.Sends,
-                        stat.SendTPuts,
-                        stat.RecvTPuts,
-                        stat.Reference);
+                    insertSucc += sqlClient.InsertRecord(table, stat);
                 }
                 Console.WriteLine($"Finally successfully insert {insertSucc}");
             }
@@ -74,7 +71,6 @@ namespace ReportToDB
             {
                 sqlClient.Close();
             }
-            return Task.CompletedTask;
         }
 
         private static Task Run(string[] args)

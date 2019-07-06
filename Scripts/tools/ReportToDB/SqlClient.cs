@@ -15,11 +15,12 @@ namespace ReportToDB
             _sqlConnection = new SqlConnection(connectionString);
         }
 
-        public Task CreateTableIfNotExist(string table)
+        public Task CreateTableIfNotExist(string table, Func<string, string> genCreateTableCommand)
         {
             if (!isTableExist(table))
             {
-                var commandToCreateTbl = CommandsToCreateTable(table);
+                var commandToCreateTbl = genCreateTableCommand(table);
+                CommandsToCreateTable(table);
                 using (var command = new SqlCommand(commandToCreateTbl, _sqlConnection))
                 {
                     var ret = command.ExecuteScalar();
@@ -56,21 +57,112 @@ namespace ReportToDB
             _sqlConnection.Close();
         }
 
-        private IEnumerable<ReportRecord> FilterNewRecord(
-            IEnumerable<ReportRecord> plannedRecords,
-            string table,
-            DateTime latestRecordInDB)
+        public int InsertRecord(string table, ReportRecord stat)
         {
-            var commandToGetLatestRecord = $@"
-            
-";
-            return plannedRecords.Where(x => {
-                var dt = Utils.ConvertFromTimestamp(x.Timestamp);
-                return dt > latestRecordInDB;
-            });
+            var ts = stat.Timestamp;
+            var id = Convert.ToInt64(ts);
+            var dt = Utils.ConvertFromTimestamp(ts);
+            var dbId = $"{id}{stat.Scenario}";
+            if (stat.HasConnectionStat)
+            {
+                return InsertConnStatRecord(
+                        table,
+                        dbId,
+                        dt,
+                        stat.Scenario,
+                        stat.Unit(),
+                        stat.Connections,
+                        stat.Sends,
+                        stat.SendTPuts,
+                        stat.RecvTPuts,
+                        stat.Reference,
+                        stat.DroppedConnections,
+                        stat.ReconnCost99Percent);
+            }
+            else
+            {
+                return InsertCommonRecord(
+                        table,
+                        dbId,
+                        dt,
+                        stat.Scenario,
+                        stat.Unit(),
+                        stat.Connections,
+                        stat.Sends,
+                        stat.SendTPuts,
+                        stat.RecvTPuts,
+                        stat.Reference);
+            }
         }
 
-        public int InsertRecord(
+        private int InsertConnStatRecord(
+            string table,
+            string id,
+            DateTime reportDateTime,
+            string scenario,
+            int unit,
+            int connections,
+            int sends,
+            long sendTPuts,
+            long recvTPuts,
+            string reference,
+            int droppedConnections,
+            int reconnCost99Percent)
+        {
+            var command4Insert = $@"
+        IF NOT EXISTS (SELECT * FROM {table} r WHERE r.Id = '{id}')
+           INSERT INTO [dbo].[{table}] (
+              [Id],
+              [ReportDateTime],
+              [Scenario],
+              [Unit],
+              [Connections],
+              [Sends],
+              [SendTPuts],
+              [RecvTPuts],
+              [Reference],
+              [DroppedConnections],
+              [ReconnectCost99Percent]) VALUES (
+              @id,
+              @reportDateTime,
+              @scenario,
+              @unit,
+              @connections,
+              @sends,
+              @sendTPuts,
+              @recvTPuts,
+              @reference,
+              @droppedConnections,
+              @reconnectCost99Percent)";
+            var insertCmd = new SqlCommand(command4Insert, _sqlConnection);
+            insertCmd.Parameters.AddWithValue("@id", id);
+            insertCmd.Parameters.AddWithValue("@reportDateTime", reportDateTime);
+            insertCmd.Parameters.AddWithValue("@scenario", scenario);
+            insertCmd.Parameters.AddWithValue("@unit", unit);
+            insertCmd.Parameters.AddWithValue("@connections", connections);
+            insertCmd.Parameters.AddWithValue("@sends", sends);
+            insertCmd.Parameters.AddWithValue("@sendTPuts", sendTPuts);
+            insertCmd.Parameters.AddWithValue("@recvTPuts", recvTPuts);
+            insertCmd.Parameters.AddWithValue("@reference", reference);
+            insertCmd.Parameters.AddWithValue("@droppedConnections", droppedConnections);
+            insertCmd.Parameters.AddWithValue("@reconnectCost99Percent", reconnCost99Percent);
+            try
+            {
+                var count = insertCmd.ExecuteNonQuery();
+                if (count == -1)
+                {
+                    return 0;
+                }
+                return count;
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"{e}");
+            }
+            return -1;
+        }
+
+        private int InsertCommonRecord(
             string table,
             string id,
             DateTime reportDateTime,
@@ -82,7 +174,6 @@ namespace ReportToDB
             long recvTPuts,
             string reference)
         {
-
             var command4Insert = $@"
         IF NOT EXISTS (SELECT * FROM {table} r WHERE r.Id = '{id}')
            INSERT INTO [dbo].[{table}] (
@@ -149,41 +240,6 @@ namespace ReportToDB
             }
         }
 
-        private static string CommandsToInsertRecord(
-            string table,
-            long id,
-            DateTime reportDateTime,
-            string scenario,
-            int unit,
-            int connections,
-            int sends,
-            long sendTPuts,
-            long recvTPuts)
-        {
-            var command = $@"
-        INSERT INTO [dbo].[{table}] (
-              [Id],
-              [ReportDateTime],
-              [Scenario],
-              [Unit],
-              [Connections],
-              [Sends],
-              [SendTPuts],
-              [RecvTPuts],
-              [Reference]) VALUES (
-              @id,
-              @reportDateTime,
-              @scenario,
-              @unit,
-              @connections,
-              @sends,
-              @sendTPuts,
-              @recvTPuts,
-              @reference)
-";
-            return command;
-        }
-
         private static string CommandsToCheckTableExist(string table)
         {
             var command = $@"
@@ -198,7 +254,28 @@ namespace ReportToDB
             return dropTableCommand;
         }
 
-        private static string CommandsToCreateTable(string table)
+        public static string CommandsToCreateConnStatTable(string table)
+        {
+            var createTableCommand = $@"
+    CREATE TABLE {table} (
+        Id varchar(128) NOT NULL,
+        ReportDateTime DateTime NOT NULL,
+        Scenario varchar(255) NOT NULL,
+        Unit int,
+        Connections int,
+        Sends int,
+        SendTPuts bigint,
+        RecvTPuts bigint,
+        Reference varchar(512),
+        DroppedConnections int,
+        ReconnectCost99Percent int,
+        CONSTRAINT PK_{table} PRIMARY KEY (Id)
+    )
+";
+            return createTableCommand;
+        }
+
+        public static string CommandsToCreateTable(string table)
         {
             var createTableCommand = $@"
     CREATE TABLE {table} (

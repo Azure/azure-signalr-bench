@@ -9,5 +9,9 @@
         public long SendTPuts { get; set; }
         public long RecvTPuts { get; set; }
         public string Reference { get; set; }
+
+        public bool HasConnectionStat { get; set; }
+        public int DroppedConnections { get; set; }
+        public int ReconnCost99Percent { get; set; }
     }
 }
