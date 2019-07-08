@@ -14,7 +14,7 @@ namespace ReportToDB
     [Verb("createTable", HelpText = "Create a table")]
     public class CreateTableOption : CommonArgsOption
     {
-        [Option("TableType", Required = false, Default = "1", HelpText = "1 for performance data table, 2 for performance plus connection stat data table")]
+        [Option("TableType", Required = false, Default = 1, HelpText = "1 for performance data table, 2 for performance plus connection stat data table")]
         public int TableType { get; set; }
     }
 
