@@ -35,7 +35,7 @@ def gen_google_chart_table(input):
           if (line.isspace()):
             continue
           fields = line.rstrip().split(',')
-          if (len(fields) >= 7):
+          if (len(fields) < 7):
             print("Invalid input line '{a}': the columns do not match requirement".format(a=line))
           assert len(fields) >= 7, "Invalid input line : the columns do not match requirement"
           d = fields[0]
