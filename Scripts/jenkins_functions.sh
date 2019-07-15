@@ -33,6 +33,12 @@ function set_global_env() {
    set_job_env
 }
 
+function write_az_credentials_to_create_vm() {
+. ./utils.sh
+
+az_signalr_dev_credentials $ServicePrincipal
+}
+
 # depends on set_global_env
 function set_job_env() {
    if [ "$nginx_root" == "" ]
@@ -76,6 +82,7 @@ function set_job_env() {
    export MaxSendIteration=120 # we evaluate the total running time per this value
    record_build_info # record the jenkins job to /tmp/send_mail.txt
    prebuild_helper_tool
+   write_az_credentials_to_create_vm
 }
 
 function azure_login() {
