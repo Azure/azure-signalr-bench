@@ -34,9 +34,10 @@ function set_global_env() {
 }
 
 function write_az_credentials_to_create_vm() {
-. ./utils.sh
-
-az_signalr_dev_credentials $ServicePrincipal
+  cd $ScriptWorkingDir
+  . ./utils.sh
+  az_signalr_dev_credentials $ServicePrincipal
+  cd -
 }
 
 # depends on set_global_env
@@ -154,6 +155,7 @@ function prebuild_helper_tool() {
     rm -rf ${AspNetWebMgrDir}
   fi
   dotnet publish -c Release -f netcoreapp2.1 -o ${AspNetWebMgrDir} --self-contained -r linux-x64
+  cd -
 }
 
 function register_exit_handler() {
