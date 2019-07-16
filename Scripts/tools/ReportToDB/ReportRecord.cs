@@ -13,5 +13,6 @@
         public bool HasConnectionStat { get; set; }
         public int DroppedConnections { get; set; }
         public int ReconnCost99Percent { get; set; }
+        public int LifeSpan99Percent { get; set; }
     }
 }

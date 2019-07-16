@@ -41,10 +41,11 @@ namespace ReportToDB
                 RecvTPuts = Convert.ToInt64(items[5]),
                 Reference = items[6]
             };
-            if (items.Length == 9)
+            if (items.Length == 10)
             {
                 reportRecord.DroppedConnections = Convert.ToInt32(items[7]);
                 reportRecord.ReconnCost99Percent = Convert.ToInt32(items[8]);
+                reportRecord.LifeSpan99Percent = Convert.ToInt32(items[9]);
                 reportRecord.HasConnectionStat = true;
             }
             return reportRecord;

@@ -1,7 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Data.SqlClient;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace ReportToDB
@@ -77,7 +75,8 @@ namespace ReportToDB
                         stat.RecvTPuts,
                         stat.Reference,
                         stat.DroppedConnections,
-                        stat.ReconnCost99Percent);
+                        stat.ReconnCost99Percent,
+                        stat.LifeSpan99Percent);
             }
             else
             {
@@ -107,7 +106,8 @@ namespace ReportToDB
             long recvTPuts,
             string reference,
             int droppedConnections,
-            int reconnCost99Percent)
+            int reconnCost99Percent,
+            int lifeSpan99Percent)
         {
             var command4Insert = $@"
         IF NOT EXISTS (SELECT * FROM {table} r WHERE r.Id = '{id}')
@@ -122,7 +122,8 @@ namespace ReportToDB
               [RecvTPuts],
               [Reference],
               [DroppedConnections],
-              [ReconnectCost99Percent]) VALUES (
+              [ReconnectCost99Percent],
+              [LifeSpan99Percent]) VALUES (
               @id,
               @reportDateTime,
               @scenario,
@@ -133,7 +134,8 @@ namespace ReportToDB
               @recvTPuts,
               @reference,
               @droppedConnections,
-              @reconnectCost99Percent)";
+              @reconnectCost99Percent,
+              @lifeSpan99Percent)";
             var insertCmd = new SqlCommand(command4Insert, _sqlConnection);
             insertCmd.Parameters.AddWithValue("@id", id);
             insertCmd.Parameters.AddWithValue("@reportDateTime", reportDateTime);
@@ -146,6 +148,7 @@ namespace ReportToDB
             insertCmd.Parameters.AddWithValue("@reference", reference);
             insertCmd.Parameters.AddWithValue("@droppedConnections", droppedConnections);
             insertCmd.Parameters.AddWithValue("@reconnectCost99Percent", reconnCost99Percent);
+            insertCmd.Parameters.AddWithValue("@lifeSpan99Percent", lifeSpan99Percent);
             try
             {
                 var count = insertCmd.ExecuteNonQuery();
@@ -269,6 +272,7 @@ namespace ReportToDB
         Reference varchar(512),
         DroppedConnections int,
         ReconnectCost99Percent int,
+        LifeSpan99Percent int,
         CONSTRAINT PK_{table} PRIMARY KEY (Id)
     )
 ";
