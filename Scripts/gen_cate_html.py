@@ -24,10 +24,11 @@ def gen_google_chart_table(input):
         data.addColumn('number', 'SendTPuts');
         data.addColumn('number', 'RecvTPuts');"""
    print(head)
-   if (maxField == 9):
+   if (maxField == 10):
         append="""
         data.addColumn('number', 'ConnectionDrop');
-        data.addColumn('number', '99%ReconnCost(ms)');"""
+        data.addColumn('number', '99%ReconnCost(ms)');
+        data.addColumn('number', '99%LifeSpan(ms)');"""
         print(append)
    print("data.addRows([")
    with open(input, 'r') as f:
@@ -45,13 +46,14 @@ def gen_google_chart_table(input):
           sendTPuts = fields[4]
           recvTPuts = fields[5]
           link = fields[6]
-          if (len(fields) == 9):
+          if (len(fields) == 10):
              drop = fields[7]
              reconnCost = fields[8]
+             lifeSpan = fields[9]
           if (len(fields) == 7):
              content="""          ['{date}', '<a href="{link}">{scenario}</a>', {conn}, {send}, {sendTPuts}, {recvTPuts}],""".format(date=d,link=link,conn=conn,send=send,scenario=scenario,sendTPuts=sendTPuts,recvTPuts=recvTPuts)
-          elif (len(fields) == 9):
-             content="""          ['{date}', '<a href="{link}">{scenario}</a>', {conn}, {send}, {sendTPuts}, {recvTPuts}, {drop}, {reconnCost}],""".format(date=d,link=link,conn=conn,send=send,scenario=scenario,sendTPuts=sendTPuts,recvTPuts=recvTPuts,drop=drop,reconnCost=reconnCost)
+          elif (len(fields) == 10):
+             content="""          ['{date}', '<a href="{link}">{scenario}</a>', {conn}, {send}, {sendTPuts}, {recvTPuts}, {drop}, {reconnCost}, {lifeSpan}],""".format(date=d,link=link,conn=conn,send=send,scenario=scenario,sendTPuts=sendTPuts,recvTPuts=recvTPuts,drop=drop,reconnCost=reconnCost,lifeSpan=lifeSpan)
           print(content)
    tail="""
         ]);

@@ -100,6 +100,12 @@ def FindMax99ReconnCost(index, item):
         cost = item['Counters']['connection:reconnect:cost:0.99']
     return int(cost)
 
+def FindMax99LifeSpan(index, item):
+    lifeSpan = 0
+    if ('connection:connect:lifespan:0.99' in item['Counters']):
+        lifeSpan = item['Counters']['connection:connect:lifespan:0.99']
+    return int(lifeSpan)
+
 def FindMaxDropCount(index, item, jData, jLen):
     drop = 0
     if ('sendingStep' in item['Counters'] and
@@ -122,6 +128,7 @@ def FindMaxValidSend(jsonFile, requireConnStat):
    curSendSize = 0
    drop = 0
    reconnCost = 0
+   lifeSpan = 0
    with open(jsonFile) as f:
        jData = json.load(f, 'utf-8')
        jLen = len(jData)
@@ -141,6 +148,9 @@ def FindMaxValidSend(jsonFile, requireConnStat):
                c = FindMax99ReconnCost(index, item)
                if (c > reconnCost):
                    reconnCost = c
+               l = FindMax99LifeSpan(index, item)
+               if (l > lifeSpan):
+                   lifeSpan = l
                d = FindMaxDropCount(index, item, jData, jLen)
                drop = drop + d
        connection = GetConnection(item)
@@ -152,7 +162,7 @@ def FindMaxValidSend(jsonFile, requireConnStat):
        if (requireConnStat):
            drop = drop + FindMaxDropCount(index, item, jData, jLen)
    if (requireConnStat):
-       return maxConnection,maxSending,sendTPuts,recvTPuts,drop,reconnCost
+       return maxConnection,maxSending,sendTPuts,recvTPuts,drop,reconnCost,lifeSpan
    else:
        return maxConnection,maxSending,sendTPuts,recvTPuts
 
@@ -162,8 +172,8 @@ if __name__=="__main__":
    parser.add_argument("-q", "--query", choices=["perf", "longrun"], default="perf", help="specify the query type, default is perf")
    args = parser.parse_args()
    if (args.query == "longrun"):
-       maxConnection,maxSending,sendTPuts,recvTPuts,drop,reconnCost = FindMaxValidSend(args.input, True)
-       print maxConnection,maxSending,sendTPuts,recvTPuts,drop,reconnCost
+       maxConnection,maxSending,sendTPuts,recvTPuts,drop,reconnCost,lifeSpan = FindMaxValidSend(args.input, True)
+       print maxConnection,maxSending,sendTPuts,recvTPuts,drop,reconnCost,lifeSpan
    else:
        maxConnection,maxSending,sendTPuts,recvTPuts = FindMaxValidSend(args.input, False)
        print maxConnection,maxSending,sendTPuts,recvTPuts
