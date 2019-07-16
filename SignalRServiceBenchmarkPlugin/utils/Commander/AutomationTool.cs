@@ -49,6 +49,10 @@ namespace Commander
                 // Run benchmark
                 RunBenchmark();
             }
+            catch (Exception e)
+            {
+                Log.Error($"Automation tool stops for {e}");
+            }
             finally
             {
                 // Disconnect and dispose
