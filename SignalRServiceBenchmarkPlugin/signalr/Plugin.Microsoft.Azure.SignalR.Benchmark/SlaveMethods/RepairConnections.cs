@@ -124,6 +124,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 }
                 else
                 {
+                    UpdateReconnect(0); // clean the history
                     Log.Information($"All connections are active");
                 }
                 await Task.Delay(TimeSpan.FromSeconds(1));
