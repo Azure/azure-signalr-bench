@@ -1,7 +1,7 @@
 import json
 import argparse
 
-def Analyze(item):
+def Analyze(item, ignoreFailRate):
    if ('connection:connect:success' not in item['Counters']):
       return 0
    sendingStep = item['Counters']['sendingStep']
@@ -14,11 +14,14 @@ def Analyze(item):
        return 0
    ge1sRate = ge1s/float(received)
    errRate = errConn/float(totalConn)
-   if (ge1sRate < 0.01 and errRate < 0.01):
-      return sendingStep
+   if (ignoreFailRate):
+       return sendingStep
+   else:
+      if (ge1sRate < 0.01 and errRate < 0.01):
+          return sendingStep
    return 0
 
-def IsValid(item):
+def IsValid(item, ignoreFailRate):
    received = item['Counters']['message:received']
    successConn = item['Counters']['connection:connect:success']
    errConn = item['Counters']['connection:connect:fail']
@@ -28,12 +31,15 @@ def IsValid(item):
        return 0
    ge1sRate = ge1s/float(received)
    errRate = errConn/float(totalConn)
-   if (ge1sRate < 0.01 and errRate < 0.01):
+   if (ignoreFailRate):
        return 1
+   else:
+       if (ge1sRate < 0.01 and errRate < 0.01):
+           return 1
    return 0
 
-def GetSendTPuts(cur, next):
-   if (IsValid(cur) == 0 or IsValid(next) == 0):
+def GetSendTPuts(cur, next, ignoreFailRate):
+   if (IsValid(cur, ignoreFailRate) == 0 or IsValid(next, ignoreFailRate) == 0):
       return 0
    curSendSize = cur['Counters']['message:sentSize']
    nextSendSize = next['Counters']['message:sentSize']
@@ -42,8 +48,8 @@ def GetSendTPuts(cur, next):
        sendTPuts = (nextSendSize - curSendSize)
    return sendTPuts
 
-def GetRecvTPuts(cur, next):
-   if (IsValid(cur) == 0 or IsValid(next) == 0):
+def GetRecvTPuts(cur, next, ignoreFailRate):
+   if (IsValid(cur, ignoreFailRate) == 0 or IsValid(next, ignoreFailRate) == 0):
       return 0
    curRecvSize = cur['Counters']['message:recvSize']
    nextRecvSize = next['Counters']['message:recvSize']
@@ -60,7 +66,7 @@ def GetConnection(item):
        return successConn + errConn
    return 0
 
-def FindMaxSend(index, item, jData, jLen):
+def FindMaxSend(index, item, jData, jLen, ignoreFailRate):
     tmpSend = 0
     if ('sendingStep' in item['Counters'] and
         'message:received' in item['Counters']):
@@ -70,12 +76,12 @@ def FindMaxSend(index, item, jData, jLen):
             'sendingStep' in jData[index+1]['Counters'] and
             sendingStep < jData[index+1]['Counters']['sendingStep'] and
             received > 0):
-            tmpSend = Analyze(item)
+            tmpSend = Analyze(item, ignoreFailRate)
         elif (index + 1 == jLen):
-            tmpSend = Analyze(item)
+            tmpSend = Analyze(item, ignoreFailRate)
     return tmpSend
 
-def FindSendRecvTPuts(index, item, jData, jLen, curSendSize):
+def FindSendRecvTPuts(index, item, jData, jLen, curSendSize, ignoreFailRate):
     stputs = 0
     rtputs = 0
     if ('sendingStep' in item['Counters'] and
@@ -90,8 +96,8 @@ def FindSendRecvTPuts(index, item, jData, jLen, curSendSize):
             'message:sentSize' in jData[index]['Counters'] and
             jData[index]['Counters']['message:sentSize'] >= curSendSize):
             curSendSize = jData[index]['Counters']['message:sentSize']
-            stputs = GetSendTPuts(jData[index], jData[index+1])
-            rtputs = GetRecvTPuts(jData[index], jData[index+1])
+            stputs = GetSendTPuts(jData[index], jData[index+1], ignoreFailRate)
+            rtputs = GetRecvTPuts(jData[index], jData[index+1], ignoreFailRate)
     return stputs, rtputs, curSendSize
 
 def FindMax99ReconnCost(index, item):
@@ -136,10 +142,10 @@ def FindMaxValidSend(jsonFile, requireConnStat):
            connection = GetConnection(item)
            if (connection > maxConnection):
                maxConnection = connection
-           tmpSend = FindMaxSend(index, item, jData, jLen)
+           tmpSend = FindMaxSend(index, item, jData, jLen, requireConnStat)
            if (tmpSend > maxSending):
               maxSending = tmpSend
-           stputs,rtputs,curSendSize = FindSendRecvTPuts(index, item, jData, jLen, curSendSize)
+           stputs,rtputs,curSendSize = FindSendRecvTPuts(index, item, jData, jLen, curSendSize, requireConnStat)
            if (stputs > sendTPuts):
                sendTPuts = stputs
            if (rtputs > recvTPuts):
@@ -156,7 +162,7 @@ def FindMaxValidSend(jsonFile, requireConnStat):
        connection = GetConnection(item)
        if (connection > maxConnection):
            maxConnection = connection
-       tmpSend = FindMaxSend(index, item, jData, jLen)
+       tmpSend = FindMaxSend(index, item, jData, jLen, requireConnStat)
        if (tmpSend > maxSending):
            maxSending = tmpSend
        if (requireConnStat):
