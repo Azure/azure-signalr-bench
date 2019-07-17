@@ -944,6 +944,9 @@ namespace JenkinsScript
                     case "southeastasia":
                         location = Region.AsiaSouthEast;
                         break;
+                    case "westeurope":
+                        location = Region.EuropeWest;
+                        break;
                     default:
                         location = Region.AsiaSouthEast;
                         break;
