@@ -128,6 +128,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.Internals
         {
             Statistics firstStat = null, prevStat = null, endStat = null, curStat = null;
             long prevEpoch = 0, totalConnection = 0;
+            long reconnectInThisEpoch = 0, connectCostInThisEpoch = 0, reconnectCostInThisEpoch = 0;
             var benchItemList = new List<BenchResultItem>();
             Action<string> outputEveryEpoch = output;
             if (outputJsonFormat)
@@ -145,10 +146,29 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.Internals
                 if (curStat.Counters.Epoch > 0)
                 {
                     if (curStat.Counters.Epoch == prevEpoch)
+                    {
+                        reconnectInThisEpoch += curStat.Counters.ConnectionReconnect;
+                        if (curStat.Counters.ConnectCost99Percent > connectCostInThisEpoch)
+                        {
+                            connectCostInThisEpoch = curStat.Counters.ConnectCost99Percent;
+                        }
+                        if (curStat.Counters.ReconnectCost99Percent > reconnectCostInThisEpoch)
+                        {
+                            reconnectCostInThisEpoch = curStat.Counters.ReconnectCost99Percent;
+                        }
                         continue;
+                    }
                     if (prevStat != null)
                     {
-                        var item = PrintEpoch(prevStat, endStat, percentileList, latencyStep, latencyMax, outputEveryEpoch);
+                        var item = PrintEpoch(prevStat,
+                                              endStat,
+                                              percentileList,
+                                              latencyStep,
+                                              latencyMax,
+                                              reconnectInThisEpoch,
+                                              connectCostInThisEpoch,
+                                              reconnectCostInThisEpoch,
+                                              outputEveryEpoch);
                         benchItemList.Add(item);
                     }
                     else
@@ -160,11 +180,19 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.Internals
                     }
                     prevEpoch = curStat.Counters.Epoch;
                     prevStat = curStat;
+                    reconnectInThisEpoch = 0;
+                    connectCostInThisEpoch = 0;
+                    reconnectCostInThisEpoch = 0;
                 }
             }
             if (endStat != null && prevStat != null && endStat != prevStat)
             {
-                var item = PrintEpoch(prevStat, endStat, percentileList, latencyStep, latencyMax, outputEveryEpoch);
+                var item = PrintEpoch(prevStat, endStat, percentileList,
+                                      latencyStep, latencyMax,
+                                      reconnectInThisEpoch,
+                                      connectCostInThisEpoch,
+                                      reconnectCostInThisEpoch,
+                                      outputEveryEpoch);
                 benchItemList.Add(item);
             }
             if (outputJsonFormat)
@@ -200,6 +228,9 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.Internals
             double[] percentileList,
             long latencyStep,
             long latencyMax,
+            long reconnectInThisEpoch,
+            long connectCost99PercentInThisEpoch,
+            long reconnectCost99PercentInThisEpoch,
             Action<string> outputCallback)
         {
             var elapse = DateTimeOffset.Parse(end.Time) - DateTimeOffset.Parse(start.Time);
@@ -243,6 +274,18 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.Internals
                 outputCallback($" Latency:");
                 percentList.ToList().ForEach(x =>
                    outputCallback($"  {FormatDoubleValue(x * 100)}%: < {latDist[percentList.IndexOf(x)]} ms"));
+                if (reconnectInThisEpoch > 0)
+                {
+                    outputCallback($" Reconnect: {reconnectInThisEpoch}");
+                }
+                if (connectCost99PercentInThisEpoch > 0)
+                {
+                    outputCallback($" 99% connect cost (ms): {connectCost99PercentInThisEpoch}");
+                }
+                if (reconnectCost99PercentInThisEpoch > 0)
+                {
+                    outputCallback($" 99% reconnect cost (ms): {reconnectCost99PercentInThisEpoch}");
+                }
             }
             var msg = new MessageBenchResult()
             {
@@ -261,7 +304,10 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.Internals
                 SendingStep = sendingStep,
                 Duration = elapse.TotalMilliseconds,
                 Message = msg,
-                Latency = lat
+                Latency = lat,
+                Reconnect = reconnectInThisEpoch,
+                ConnectionCost99Percent = connectCost99PercentInThisEpoch,
+                ReconnectionCost99Percent = reconnectCost99PercentInThisEpoch
             };
             return benchItem;
         }

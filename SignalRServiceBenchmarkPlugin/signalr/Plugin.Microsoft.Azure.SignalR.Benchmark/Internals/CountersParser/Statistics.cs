@@ -27,6 +27,9 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.Internals
     {
         public long SendingStep { get; set; }
         public double Duration { get; set; } // milli-seconds
+        public long Reconnect { get; set; }
+        public long ConnectionCost99Percent { get; set; }
+        public long ReconnectionCost99Percent { get; set; }
         public MessageBenchResult Message { get; set; }
         public LatencyBenchResult Latency { get; set; }
     }
@@ -106,5 +109,11 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.Internals
 
         [JsonProperty(PropertyName = "message:ge:1000")]
         public long MessageLatencyGe1000 { get; set; }
+
+        [JsonProperty(PropertyName = "connection:connect:cost:0.99")]
+        public long ConnectCost99Percent { get; set; }
+
+        [JsonProperty(PropertyName = "connection:reconnect:cost:0.99")]
+        public long ReconnectCost99Percent { get; set; }
     }
 }
