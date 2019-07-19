@@ -64,7 +64,6 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                     Log.Information("Skip reconnect");
                     return null;
                 }
-                statisticsCollector.UpdateReconnect(newConnections.Count);
                 Log.Information($"Start {newConnections.Count} reconnections");
                 // Re-setCallbacks
                 foreach (var registerCallback in registeredCallbacks)
@@ -79,6 +78,10 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                     connections,
                     concurrentConnection);
                 Log.Information($"Finish {newConnections.Count} reconnections");
+                var recoverred = (from i in Enumerable.Range(0, newConnections.Count)
+                                  where newConnections[i].GetStat() == SignalREnums.ConnectionInternalStat.Active
+                                  select newConnections[i]).ToList();
+                statisticsCollector.UpdateReconnect(recoverred.Count);
                 SignalRUtils.DumpConnectionInternalStat(connections);
                 return null;
             }

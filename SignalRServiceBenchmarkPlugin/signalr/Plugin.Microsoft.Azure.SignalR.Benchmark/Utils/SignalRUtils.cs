@@ -33,7 +33,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             Log.Information($"Handle step...{Environment.NewLine}Configuration: {Environment.NewLine}{dict.GetContents()}");
         }
 
-        public static string GroupName(string type, int index) => $"{type}:{index}";
+        public static string GroupName(string type, int index) => $"{type}_{index}";
 
         public static string MessageLessThan(long latency) => $"{SignalRConstants.StatisticsLatencyLessThan}{latency}";
 
