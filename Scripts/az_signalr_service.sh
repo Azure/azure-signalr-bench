@@ -66,7 +66,7 @@ function create_serverless_asrs_with_acs_redises()
   local acsRowKey=$7
   local vmSet=$8
   local signalrHostName
-  local p="{'properties':{'features':[{'flag':'ServiceMode','value':'Serverless'}]},'location':'$location','sku':{'name':'Standard_S1','capacity':$unit}}"
+  local p="{'properties':{'features':[{'flag':'ServiceMode','value':'Serverless'}]},'location':'$location','sku':{'name':'Standard_S1','capacity':$unitCount},'tags':{'SIGNALR_MESSAGE_REDIS_ROW_KEY':'$redisRowKey','SIGNALR_ROUTE_REDIS_ROW_KEY':'$redisRouteRowKey','SIGNALR_ACS_ROW_KEY':'$acsRowKey','SIGNALR_INGRESS_VM_SET':'$vmSet'}}"
 
   local pp=`echo $p|sed "s/'/\"/g"`
   local properties=$pp
@@ -74,11 +74,8 @@ function create_serverless_asrs_with_acs_redises()
                                        --namespace Microsoft.SignalRService \
                                        --resource-type SignalR \
                                        --properties $properties \
-                                       --is-full-object \
-                                       --tags SIGNALR_MESSAGE_REDIS_ROW_KEY=$redisRowKey \
-                                              SIGNALR_ROUTE_REDIS_ROW_KEY=$redisRouteRowKey \
-                                              SIGNALR_ACS_ROW_KEY=$acsRowKey \
-                                              SIGNALR_INGRESS_VM_SET=$vmSet)
+                                       --is-full-object)
+
   echo "$signalrHostName"
 }
 
