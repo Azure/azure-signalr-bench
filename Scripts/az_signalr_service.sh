@@ -75,7 +75,10 @@ function create_serverless_asrs_with_acs_redises()
                                        --resource-type SignalR \
                                        --properties $properties \
                                        --is-full-object)
-
+  # the new instance may be killed ~2 times, so please wait
+  echo "`date +%Y%m%d%H%M%S`: waiting instance ready"
+  sleep 600
+  echo "`date +%Y%m%d%H%M%S`: finish waiting"
   echo "$signalrHostName"
 }
 
