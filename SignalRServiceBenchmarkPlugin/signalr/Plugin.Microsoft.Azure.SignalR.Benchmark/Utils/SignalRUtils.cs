@@ -821,8 +821,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
                         .ToDictionary(entry => entry.Key, entry => entry.Value);
             // remove connections who do not have reconnection cost
             var hasReconn = (from i in arr3
-                             where arr3[i] > 0
-                             select arr3[i]).ToArray();
+                             where i > 0
+                             select i).ToArray();
             var dic3 = (from i in percentileList
                         select new { Key = $"{SignalRConstants.StatisticsConnectionReconnectCost}:{i}", Value = Percentile(hasReconn, i) })
                         .ToDictionary(entry => entry.Key, entry => entry.Value);
