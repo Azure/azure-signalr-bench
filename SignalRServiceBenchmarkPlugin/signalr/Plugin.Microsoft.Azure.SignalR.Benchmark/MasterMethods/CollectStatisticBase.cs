@@ -70,7 +70,16 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
             // Start timer
             _timer = new System.Timers.Timer(_interval);
             _timer.Elapsed += async (sender, e) =>
-                await callback(stepParameters, pluginParameters, clients);
+            {
+                try
+                {
+                    await callback(stepParameters, pluginParameters, clients);
+                }
+                catch (Exception ex)
+                {
+                    Log.Error($"{ex}");
+                }
+            };
             _timer.Start();
 
             // Save timer to plugin
