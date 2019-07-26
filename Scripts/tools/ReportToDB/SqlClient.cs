@@ -76,7 +76,8 @@ namespace ReportToDB
                         stat.Reference,
                         stat.DroppedConnections,
                         stat.ReconnCost99Percent,
-                        stat.LifeSpan99Percent);
+                        stat.LifeSpan99Percent,
+                        stat.Offline99Percent);
             }
             else
             {
@@ -107,7 +108,8 @@ namespace ReportToDB
             string reference,
             int droppedConnections,
             int reconnCost99Percent,
-            int lifeSpan99Percent)
+            int lifeSpan99Percent,
+            int offline99Percent)
         {
             var command4Insert = $@"
         IF NOT EXISTS (SELECT * FROM {table} r WHERE r.Id = '{id}')
@@ -123,7 +125,8 @@ namespace ReportToDB
               [Reference],
               [DroppedConnections],
               [ReconnectCost99Percent],
-              [LifeSpan99Percent]) VALUES (
+              [LifeSpan99Percent],
+              [Offline99Percent]) VALUES (
               @id,
               @reportDateTime,
               @scenario,
@@ -135,7 +138,8 @@ namespace ReportToDB
               @reference,
               @droppedConnections,
               @reconnectCost99Percent,
-              @lifeSpan99Percent)";
+              @lifeSpan99Percent,
+              @offline99Percent)";
             var insertCmd = new SqlCommand(command4Insert, _sqlConnection);
             insertCmd.Parameters.AddWithValue("@id", id);
             insertCmd.Parameters.AddWithValue("@reportDateTime", reportDateTime);
@@ -149,6 +153,7 @@ namespace ReportToDB
             insertCmd.Parameters.AddWithValue("@droppedConnections", droppedConnections);
             insertCmd.Parameters.AddWithValue("@reconnectCost99Percent", reconnCost99Percent);
             insertCmd.Parameters.AddWithValue("@lifeSpan99Percent", lifeSpan99Percent);
+            insertCmd.Parameters.AddWithValue("@offline99Percent", offline99Percent);
             try
             {
                 var count = insertCmd.ExecuteNonQuery();
@@ -273,6 +278,7 @@ namespace ReportToDB
         DroppedConnections int,
         ReconnectCost99Percent int,
         LifeSpan99Percent int,
+        Offline99Percent int,
         CONSTRAINT PK_{table} PRIMARY KEY (Id)
     )
 ";
