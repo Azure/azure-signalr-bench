@@ -147,7 +147,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.Internals
                 {
                     if (curStat.Counters.Epoch == prevEpoch)
                     {
-                        reconnectInThisEpoch += curStat.Counters.ConnectionReconnect;
+                        reconnectInThisEpoch = curStat.Counters.ConnectionReconnect;
                         if (curStat.Counters.ConnectCost99Percent > connectCostInThisEpoch)
                         {
                             connectCostInThisEpoch = curStat.Counters.ConnectCost99Percent;
