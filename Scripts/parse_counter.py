@@ -106,6 +106,12 @@ def FindMax99ReconnCost(index, item):
         cost = item['Counters']['connection:reconnect:cost:0.99']
     return int(cost)
 
+def Find99OfflineTime(index, item):
+    offline = 0
+    if ('connection:connect:offline:0.99' in item['Counters']):
+        offline = item['Counters']['connection:connect:offline:0.99']
+    return int(offline)
+
 def FindMax99LifeSpan(index, item):
     lifeSpan = 0
     if ('connection:connect:lifespan:0.99' in item['Counters']):
@@ -114,6 +120,7 @@ def FindMax99LifeSpan(index, item):
 
 def FindMaxDropCount(index, item, jData, jLen):
     drop = 0
+    recv = 0
     if ('sendingStep' in item['Counters'] and
         'message:received' in item['Counters']):
         sendingStep = item['Counters']['sendingStep']
@@ -122,9 +129,11 @@ def FindMaxDropCount(index, item, jData, jLen):
             sendingStep < jData[index+1]['Counters']['sendingStep'] and
             'connection:connect:reconnect' in item['Counters']):
             drop = item['Counters']['connection:connect:reconnect']
+            recv = item['Counters']['message:received']
         elif (index + 1 == jLen):
             drop = item['Counters']['connection:connect:reconnect']
-    return int(drop)
+            recv = item['Counters']['message:received']
+    return int(drop),int(recv)
 
 def FindMaxValidSend(jsonFile, requireConnStat):
    maxSending = 0
@@ -132,9 +141,11 @@ def FindMaxValidSend(jsonFile, requireConnStat):
    sendTPuts = 0
    recvTPuts = 0
    curSendSize = 0
-   drop = 0
+   reconn = 0
    reconnCost = 0
    lifeSpan = 0
+   reconnRecv = 0
+   offline = 0
    with open(jsonFile) as f:
        jData = json.load(f, 'utf-8')
        jLen = len(jData)
@@ -157,8 +168,13 @@ def FindMaxValidSend(jsonFile, requireConnStat):
                l = FindMax99LifeSpan(index, item)
                if (l > lifeSpan):
                    lifeSpan = l
-               d = FindMaxDropCount(index, item, jData, jLen)
-               drop = drop + d
+               d,r = FindMaxDropCount(index, item, jData, jLen)
+               if (r != reconnRecv):
+                   reconnRecv = r
+                   reconn = reconn + d
+               o = Find99OfflineTime(index, item)
+               if (o > offline):
+                   offline = o
        connection = GetConnection(item)
        if (connection > maxConnection):
            maxConnection = connection
@@ -166,9 +182,12 @@ def FindMaxValidSend(jsonFile, requireConnStat):
        if (tmpSend > maxSending):
            maxSending = tmpSend
        if (requireConnStat):
-           drop = drop + FindMaxDropCount(index, item, jData, jLen)
+           d,r = FindMaxDropCount(index, item, jData, jLen)
+           if (r != reconnRecv):
+               reconnRecv = r
+               reconn = reconn + d
    if (requireConnStat):
-       return maxConnection,maxSending,sendTPuts,recvTPuts,drop,reconnCost,lifeSpan
+       return maxConnection,maxSending,sendTPuts,recvTPuts,reconn,reconnCost,lifeSpan,offline
    else:
        return maxConnection,maxSending,sendTPuts,recvTPuts
 
@@ -178,8 +197,8 @@ if __name__=="__main__":
    parser.add_argument("-q", "--query", choices=["perf", "longrun"], default="perf", help="specify the query type, default is perf")
    args = parser.parse_args()
    if (args.query == "longrun"):
-       maxConnection,maxSending,sendTPuts,recvTPuts,drop,reconnCost,lifeSpan = FindMaxValidSend(args.input, True)
-       print maxConnection,maxSending,sendTPuts,recvTPuts,drop,reconnCost,lifeSpan
+       maxConnection,maxSending,sendTPuts,recvTPuts,drop,reconnCost,lifeSpan,offline = FindMaxValidSend(args.input, True)
+       print maxConnection,maxSending,sendTPuts,recvTPuts,drop,reconnCost,lifeSpan,offline
    else:
        maxConnection,maxSending,sendTPuts,recvTPuts = FindMaxValidSend(args.input, False)
        print maxConnection,maxSending,sendTPuts,recvTPuts
