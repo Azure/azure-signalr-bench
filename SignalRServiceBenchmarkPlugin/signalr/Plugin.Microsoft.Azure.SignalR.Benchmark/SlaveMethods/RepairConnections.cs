@@ -65,6 +65,13 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
             statisticsCollector.UpdateReconnect(count);
         }
 
+        private void ResetReconnect()
+        {
+            _context.TryGetTypedValue($"{SignalRConstants.StatisticsStore}.{_type}",
+                            out StatisticsCollector statisticsCollector, (obj) => (StatisticsCollector)obj);
+            statisticsCollector.ResetReconnectCounters();
+        }
+
         private async Task NonePostAction(IList<IHubConnectionAdapter> connections)
         {
             var packages = (from i in Enumerable.Range(0, connections.Count())
@@ -124,7 +131,6 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods
                 }
                 else
                 {
-                    UpdateReconnect(0); // clean the history
                     Log.Information($"All connections are active");
                 }
                 await Task.Delay(TimeSpan.FromSeconds(1));

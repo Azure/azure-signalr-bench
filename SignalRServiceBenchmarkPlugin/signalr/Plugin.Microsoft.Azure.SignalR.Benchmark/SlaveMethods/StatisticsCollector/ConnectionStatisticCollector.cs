@@ -31,6 +31,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods.Statistics
             var connectionCostArray = new int[_connections.Count];
             var reconnectCostArray = new int[_connections.Count];
             var connectionSLArray = new int[_connections.Count];
+            var offlineArray = new int[_connections.Count];
             for (var i = 0; i < _connections.Count; i++)
             {
                 var connection = _connections[i];
@@ -55,9 +56,12 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods.Statistics
                     {
                         reconnectCostArray[i] = (int)(connectedTimestamp - lastDisconnectingTimestamp);
                     }
+                    if (downTimePeriod > 0)
+                    {
+                        offlineArray[i] = (int)downTimePeriod;
+                    }
                     if (lifeSpanArray[i] > 0)
                     {
-
                         double sla = 100.0;
                         if (downTimePeriod > 0)
                         {
@@ -71,6 +75,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods.Statistics
             data[SignalRConstants.StatisticsConnectionCost] = string.Join(',', connectionCostArray);
             data[SignalRConstants.StatisticsConnectionReconnectCost] = string.Join(',', reconnectCostArray);
             data[SignalRConstants.StatisticsConnectionSLA] = string.Join(',', connectionSLArray);
+            data[SignalRConstants.StatisticsConnectionOfflinetime] = string.Join(',', offlineArray);
         }
     }
 }

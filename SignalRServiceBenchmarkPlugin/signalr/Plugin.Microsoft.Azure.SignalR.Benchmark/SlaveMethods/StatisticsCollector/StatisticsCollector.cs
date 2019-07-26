@@ -36,11 +36,6 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods.Statistics
             ResetCounters("group:");
         }
 
-        public void ResetConnectionCounters()
-        {
-            ResetCounters("connection:");
-        }
-
         public void ResetReconnectCounters()
         {
             ResetCounters(SignalRConstants.StatisticsConnectionReconnect);

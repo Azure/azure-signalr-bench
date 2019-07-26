@@ -13,6 +13,7 @@ using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using static Plugin.Microsoft.Azure.SignalR.Benchmark.SignalREnums;
@@ -811,6 +812,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             var arr2 = MergeConnectionDistribution(results, SignalRConstants.StatisticsConnectionCost);
             var arr3 = MergeConnectionDistribution(results, SignalRConstants.StatisticsConnectionReconnectCost);
             var arr4 = MergeConnectionDistribution(results, SignalRConstants.StatisticsConnectionSLA);
+            var arr5 = MergeConnectionDistribution(results, SignalRConstants.StatisticsConnectionOfflinetime);
             var dic1 = (from i in percentileList
                         select new { Key = $"{SignalRConstants.StatisticsConnectionLifeSpan}:{i}", Value = Percentile(arr1, i) })
                         .ToDictionary(entry => entry.Key, entry => entry.Value);
@@ -827,7 +829,10 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             var dic4 = (from i in percentileList
                         select new { Key = $"{SignalRConstants.StatisticsConnectionSLA}:{i}", Value = Percentile(arr4, i) })
                         .ToDictionary(entry => entry.Key, entry => entry.Value);
-            merged = merged.Union(dic1).Union(dic2).Union(dic3).Union(dic4).ToDictionary(entry => entry.Key, entry => entry.Value);
+            var dic5 = (from i in percentileList
+                        select new { Key = $"{SignalRConstants.StatisticsConnectionOfflinetime}:{i}", Value = Percentile(arr5, i) })
+                        .ToDictionary(entry => entry.Key, entry => entry.Value);
+            merged = merged.Union(dic1).Union(dic2).Union(dic3).Union(dic4).Union(dic5).ToDictionary(entry => entry.Key, entry => entry.Value);
             return merged;
         }
 
@@ -854,7 +859,6 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         private static int[] MergeConnectionDistribution(
             IDictionary<string, object>[] results, string key)
         {
-
             var arrays = results.ToList().Select(statistics =>
             {
                 if (statistics.ContainsKey(key))
