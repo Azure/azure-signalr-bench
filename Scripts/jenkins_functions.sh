@@ -80,10 +80,39 @@ function set_job_env() {
    else
      export AspNetWebAppResGrp="hzlongrunwebapp"$result_root
    fi
+   export CleanResourceScript=/tmp/clean_resource.sh
    export MaxSendIteration=120 # we evaluate the total running time per this value
    record_build_info # record the jenkins job to /tmp/send_mail.txt
    prebuild_helper_tool
    write_az_credentials_to_create_vm
+   generate_clean_resource_script $CleanResourceScript
+}
+
+function generate_clean_resource_script() {
+   local script_file=$1
+   # I found several daemonize commands can not be executed sometimes, so I merged them to avoid this issue
+cat << EOF > $script_file
+${VMMgrDir}/JenkinsScript --step=DeleteResourceGroupByConfig --AgentConfigFile=$AgentConfig --DisableRandomSuffix --ServicePrincipal=$ServicePrincipal
+
+if [ "$AspNetSignalR" == "true" ] || [ "$AzWebSignalR" == "true" ]
+then
+  ${AspNetWebMgrDir}/DeployWebApp removeGroup --resourceGroup=${AspNetWebAppResGrp} --servicePrincipal=$ServicePrincipal
+fi
+
+cd $ScriptWorkingDir
+. ./az_signalr_service.sh
+
+if [ "$ASRSEnv" == "dogfood" ]
+then
+  az_login_ASRS_dogfood
+  delete_group $ASRSResourceGroup
+  unregister_signalr_service_dogfood
+else
+  az_login_signalr_dev_sub
+  delete_group $ASRSResourceGroup
+fi
+EOF
+
 }
 
 function azure_login() {
