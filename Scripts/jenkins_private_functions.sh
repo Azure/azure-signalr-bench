@@ -814,25 +814,25 @@ function build_rpc_master() {
   cd -
 }
 
-function build_rpc_slave() {
+function build_rpc_agent() {
   local targetDir=$1
-  local tmpSlave=/tmp/slave
-  if [ -e $tmpSlave ]
+  local tmpAgent=/tmp/agent
+  if [ -e $tmpAgent ]
   then
-     rm -rf $tmpSlave
+     rm -rf $tmpAgent
   fi
   cd $PluginRpcBuildWorkingDir
-  ./build.sh slave $tmpSlave
-  if [ ! -e $tmpSlave/slave ]
+  ./build.sh agent $tmpAgent
+  if [ ! -e $tmpAgent/agent ]
   then
-    echo "!!! Fail to build slave: the '$tmpSlave/slave' does not exist!!!"
+    echo "!!! Fail to build agent: the '$tmpAgent/agent' does not exist!!!"
     exit 1
   fi
   if [ -e $targetDir/publish ]
   then
      rm -rf $targetDir/publish
   fi
-  mv $tmpSlave $targetDir/publish
+  mv $tmpAgent $targetDir/publish
   cd $targetDir
   tar zcvf publish.tgz publish
   rm -rf publish
@@ -864,23 +864,23 @@ build_app_server() {
   cd -
 }
 
-start_collect_slaves_appserver_top()
+start_collect_agents_appserver_top()
 {
   local user=$1
   local passwd="$2"
   local outputDir="$3"
-  local script_collect_slaves_top="collect_slaves_top.sh"
+  local script_collect_agents_top="collect_agents_top.sh"
   local script_collect_appserver_top="collect_appserver_top.sh"
   cd $ScriptWorkingDir
-cat << EOF > $script_collect_slaves_top
+cat << EOF > $script_collect_agents_top
 #!/bin/bash
 while [ true ]
 do
-  for i in `python extract_ip.py -i $PrivateIps -q slaveList`
+  for i in `python extract_ip.py -i $PrivateIps -q agentList`
   do
     date_time=\`date --iso-8601='seconds'\`
-    echo "\${date_time} " >> $outputDir/slave_\${i}_top.txt
-    sshpass -p $passwd ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $user@\${i} "top -b -n 1|head -n 17" >> $outputDir/slave_\${i}_top.txt
+    echo "\${date_time} " >> $outputDir/agent_\${i}_top.txt
+    sshpass -p $passwd ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $user@\${i} "top -b -n 1|head -n 17" >> $outputDir/agent_\${i}_top.txt
   done
   sleep 1
 done
@@ -899,8 +899,8 @@ do
   sleep 1
 done
 EOF
-  nohup sh $script_collect_slaves_top &
-  collect_slaves_top_pid=$!
+  nohup sh $script_collect_agents_top &
+  collect_agents_top_pid=$!
   local useAzureWeb=$(isUseAzureWeb)
   if [ $useAzureWeb -ne 1 ]
   then
@@ -909,15 +909,15 @@ EOF
   fi
 }
 
-stop_collect_slaves_appserver_top()
+stop_collect_agents_appserver_top()
 {
-  if [ "$collect_slaves_top_pid" != "" ]
+  if [ "$collect_agents_top_pid" != "" ]
   then
     # kill the process if it is alive
-    local a=`ps -o pid= -p $collect_slaves_top_pid`
+    local a=`ps -o pid= -p $collect_agents_top_pid`
     if [ "$a" != "" ]
     then
-       kill $collect_slaves_top_pid
+       kill $collect_agents_top_pid
     fi
   fi
   if [ "$collect_appserver_top_pid" != "" ]
@@ -931,28 +931,28 @@ stop_collect_slaves_appserver_top()
   fi
 }
 
-function copy_log_from_slaves_master()
+function copy_log_from_agents_master()
 {
   local user=$1
   local passwd="$2"
   local outputDir="$3"
   cd $ScriptWorkingDir
   local i j k
-  for i in `python extract_ip.py -i $PrivateIps -q slaveList`
+  for i in `python extract_ip.py -i $PrivateIps -q agentList`
   do
-    #sshpass -p $passwd scp -o StrictHostKeyChecking=no -o LogLevel=ERROR $user@${i}:/home/$user/slave/publish/slave*.log $outputDir/ # only 1 log was left
+    #sshpass -p $passwd scp -o StrictHostKeyChecking=no -o LogLevel=ERROR $user@${i}:/home/$user/agent/publish/agent*.log $outputDir/ # only 1 log was left
     #if [ $? -ne 0 ]
     #then
-    #  sshpass -p $passwd ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $user@${i} "find /home/$user/slave -iname slave*.log"
+    #  sshpass -p $passwd ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $user@${i} "find /home/$user/agent -iname agent*.log"
     #fi
-    local slaveLogPath=`sshpass -p $passwd ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $user@${i} "find /home/$user/slave -iname slave*.log"`
+    local agentLogPath=`sshpass -p $passwd ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $user@${i} "find /home/$user/agent -iname agent*.log"`
     k=0
-    for j in $slaveLogPath
+    for j in $agentLogPath
     do
-      sshpass -p $passwd scp -o StrictHostKeyChecking=no -o LogLevel=ERROR $user@${i}:${j} $outputDir/slave_${i}_${k}.log
+      sshpass -p $passwd scp -o StrictHostKeyChecking=no -o LogLevel=ERROR $user@${i}:${j} $outputDir/agent_${i}_${k}.log
       if [ $? -ne 0 ]
       then
-        sshpass -p $passwd ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $user@${i} "find /home/$user/slave -iname slave*.log"
+        sshpass -p $passwd ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR $user@${i} "find /home/$user/agent -iname agent*.log"
       fi
       k=$(($k+1))
     done
@@ -966,8 +966,8 @@ function copy_log_from_slaves_master()
     fi
   done
   cd $outputDir
-  tar zcvf slave_master_log.tgz slave*.log master*.log
-  rm slave*.log master*.log
+  tar zcvf agent_master_log.tgz agent*.log master*.log
+  rm agent*.log master*.log
   cd -
 }
 
@@ -987,9 +987,9 @@ function run_command() {
 
   cd $ScriptWorkingDir
   local master=`python extract_ip.py -i $PrivateIps -q master`
-  local slaves=`python extract_ip.py -i $PrivateIps -q slaves`
+  local agents=`python extract_ip.py -i $PrivateIps -q agents`
   local masterDir=$CommandWorkingDir/master
-  local slaveDir=$CommandWorkingDir/slave
+  local agentDir=$CommandWorkingDir/agent
   local useAzureWeb=$(isUseAzureWeb)
   if [ $useAzureWeb -ne 1 ]
   then
@@ -1008,9 +1008,9 @@ function run_command() {
     notStartAppServer=1
   fi
   mkdir -p $masterDir
-  mkdir -p $slaveDir
+  mkdir -p $agentDir
   build_rpc_master $masterDir
-  build_rpc_slave $slaveDir
+  build_rpc_agent $agentDir
   cd $CommandWorkingDir
   local remoteCmd="remove_counters.sh"
   cat << EOF > $remoteCmd
@@ -1029,7 +1029,7 @@ EOF
   sshpass -p ${passwd} ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR ${user}@${master} "chmod +x $remoteCmd"
   sshpass -p ${passwd} ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR ${user}@${master} "./$remoteCmd"
   disable_exit_immediately_when_fail
-  start_collect_slaves_appserver_top ${user} $passwd ${outputDir}
+  start_collect_agents_appserver_top ${user} $passwd ${outputDir}
   #try_catch_netstat_when_server_conn_drop ${user} $passwd "$connectionString"
   cd $CommandWorkingDir
   # "never stop app server" is used for long run stress test
@@ -1042,36 +1042,36 @@ EOF
   if [ $useAzureWeb -ne 1 ]
   then
     dotnet run -- --RpcPort=5555 --Username=$user --Password=$passwd \
-         --SlaveList="$slaves" --MasterHostname="$master" $startAppServerOption \
+         --SlaveList="$agents" --MasterHostname="$master" $startAppServerOption \
          --MasterProject="$masterDir" \
          --MasterTargetPath="/home/${user}/master.tgz" \
-         --SlaveProject="$slaveDir" \
-         --SlaveTargetPath="/home/${user}/slave.tgz" \
+         --AgentProject="$agentDir" \
+         --AgentTargetPath="/home/${user}/agent.tgz" \
          --BenchmarkConfiguration="$configPath" \
          --BenchmarkConfigurationTargetPath="/home/${user}/signalr.yaml" \
          --AzureSignalRConnectionString="$connectionString" \
          --AppserverLogDirectory="${outputDir}" \
          --NotStartAppServer=$notStartAppServer $neverStopAppServerOp
   else
-    dotnet run -- --RpcPort=5555 --SlaveList="$slaves" --MasterHostname="$master" \
+    dotnet run -- --RpcPort=5555 --SlaveList="$agents" --MasterHostname="$master" \
                --Username=$user --Password=$passwd \
                --MasterProject="$masterDir" \
-               --SlaveProject="$slaveDir" \
-               --SlaveTargetPath="/home/${user}/slave.tgz" \
+               --AgentProject="$agentDir" \
+               --AgentTargetPath="/home/${user}/agent.tgz" \
                --MasterTargetPath="/home/${user}/master.tgz" \
                --BenchmarkConfiguration="$configPath" \
                --BenchmarkConfigurationTargetPath="/home/${user}/signalr.yaml" \
                --AzureSignalRConnectionString="$connectionString" \
                --NotStartAppServer=1
   fi
-  stop_collect_slaves_appserver_top ${user} $passwd ${outputDir}
+  stop_collect_agents_appserver_top ${user} $passwd ${outputDir}
   local counterPath=`sshpass -p $passwd ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR ${user}@${master} "find /home/${user}/master -iname counters.txt"`
   sshpass -p ${passwd} scp -o StrictHostKeyChecking=no -o LogLevel=ERROR ${user}@${master}:$counterPath ${outputDir}/
   if [ $? -ne 0 ]
   then
     sshpass -p $passwd ssh -o StrictHostKeyChecking=no -o LogLevel=ERROR ${user}@${master} "find /home/${user}/master -iname counters.txt"
   fi
-  copy_log_from_slaves_master ${user} $passwd ${outputDir}
+  copy_log_from_agents_master ${user} $passwd ${outputDir}
   enable_exit_immediately_when_fail
 }
 
