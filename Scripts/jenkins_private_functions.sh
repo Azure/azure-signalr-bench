@@ -1170,6 +1170,5 @@ function remove_resource_group() {
   echo "!!Received EXIT!! and remove all created VMs, exit code: $exitStatus"
   local clean_resource_daemon=daemon_${JOB_NAME}_cleanresource
 
-  daemonize -v -o /tmp/${clean_resource_daemon}.out -e /tmp/${clean_resource_daemon}.err -E BUILD_ID=dontKillcenter /usr/bin/nohup /bin/sh $CleanResourceScript &
-  mark_job_as_failure_if_meet_error $exitStatus
+  (daemonize -v -o /tmp/${clean_resource_daemon}.out -e /tmp/${clean_resource_daemon}.err -E BUILD_ID=dontKillcenter /usr/bin/nohup /bin/sh $CleanResourceScript &) && (mark_job_as_failure_if_meet_error $exitStatus)
 }
