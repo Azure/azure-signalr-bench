@@ -128,7 +128,7 @@ namespace ReportToDB
               [DroppedConnections],
               [ReconnectCost99Percent],
               [LifeSpan99Percent],
-              [Offline99Percent]
+              [Offline99Percent],
               [Others]) VALUES (
               @id,
               @reportDateTime,
