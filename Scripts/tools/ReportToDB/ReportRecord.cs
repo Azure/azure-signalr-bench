@@ -15,5 +15,7 @@
         public int ReconnCost99Percent { get; set; }
         public int LifeSpan99Percent { get; set; }
         public int Offline99Percent { get; set; }
+
+        public string Others { get; set; }
     }
 }

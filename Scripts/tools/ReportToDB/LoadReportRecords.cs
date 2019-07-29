@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 
 namespace ReportToDB
 {
@@ -41,12 +42,28 @@ namespace ReportToDB
                 RecvTPuts = Convert.ToInt64(items[5]),
                 Reference = items[6]
             };
-            if (items.Length == 11)
+            if (items.Length >= 11)
             {
                 reportRecord.DroppedConnections = Convert.ToInt32(items[7]);
                 reportRecord.ReconnCost99Percent = Convert.ToInt32(items[8]);
                 reportRecord.LifeSpan99Percent = Convert.ToInt32(items[9]);
                 reportRecord.Offline99Percent = Convert.ToInt32(items[10]);
+                if (items.Length > 11)
+                {
+                    var othersBuilder = new StringBuilder();
+                    for (var i = 11; i < items.Length; i++)
+                    {
+                        if (i == 11)
+                        {
+                            othersBuilder.Append(items[i]);
+                        }
+                        else
+                        {
+                            othersBuilder.Append("|").Append(items[i]);
+                        }
+                    }
+                    reportRecord.Others = othersBuilder.ToString();
+                }
                 reportRecord.HasConnectionStat = true;
             }
             return reportRecord;

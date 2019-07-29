@@ -77,7 +77,8 @@ namespace ReportToDB
                         stat.DroppedConnections,
                         stat.ReconnCost99Percent,
                         stat.LifeSpan99Percent,
-                        stat.Offline99Percent);
+                        stat.Offline99Percent,
+                        stat.Others);
             }
             else
             {
@@ -109,7 +110,8 @@ namespace ReportToDB
             int droppedConnections,
             int reconnCost99Percent,
             int lifeSpan99Percent,
-            int offline99Percent)
+            int offline99Percent,
+            string others)
         {
             var command4Insert = $@"
         IF NOT EXISTS (SELECT * FROM {table} r WHERE r.Id = '{id}')
@@ -126,7 +128,8 @@ namespace ReportToDB
               [DroppedConnections],
               [ReconnectCost99Percent],
               [LifeSpan99Percent],
-              [Offline99Percent]) VALUES (
+              [Offline99Percent]
+              [Others]) VALUES (
               @id,
               @reportDateTime,
               @scenario,
@@ -139,7 +142,8 @@ namespace ReportToDB
               @droppedConnections,
               @reconnectCost99Percent,
               @lifeSpan99Percent,
-              @offline99Percent)";
+              @offline99Percent,
+              @others)";
             var insertCmd = new SqlCommand(command4Insert, _sqlConnection);
             insertCmd.Parameters.AddWithValue("@id", id);
             insertCmd.Parameters.AddWithValue("@reportDateTime", reportDateTime);
@@ -154,6 +158,7 @@ namespace ReportToDB
             insertCmd.Parameters.AddWithValue("@reconnectCost99Percent", reconnCost99Percent);
             insertCmd.Parameters.AddWithValue("@lifeSpan99Percent", lifeSpan99Percent);
             insertCmd.Parameters.AddWithValue("@offline99Percent", offline99Percent);
+            insertCmd.Parameters.AddWithValue("@others", others);
             try
             {
                 var count = insertCmd.ExecuteNonQuery();
@@ -279,6 +284,7 @@ namespace ReportToDB
         ReconnectCost99Percent int,
         LifeSpan99Percent int,
         Offline99Percent int,
+        Others varchar(4096) NOT NULL,
         CONSTRAINT PK_{table} PRIMARY KEY (Id)
     )
 ";
