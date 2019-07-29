@@ -284,7 +284,7 @@ namespace ReportToDB
         ReconnectCost99Percent int,
         LifeSpan99Percent int,
         Offline99Percent int,
-        Others varchar(4096) NOT NULL,
+        Others varchar(4096),
         CONSTRAINT PK_{table} PRIMARY KEY (Id)
     )
 ";
