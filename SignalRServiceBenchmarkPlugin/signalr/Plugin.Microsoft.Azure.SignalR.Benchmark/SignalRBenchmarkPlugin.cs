@@ -15,7 +15,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
     public class SignalRBenchmarkPlugin : IPlugin, ISignalRPlugin
     {
         private string _masterNamespaceSuffix = "MasterMethods";
-        private string _slaveNamespaceSuffix = "SlaveMethods";
+        private string _agentNamespaceSuffix = "AgentMethods";
         private string _simpleConfigurationTemplate = $@"
 mode: simple                                                                         # Required: '{SimpleBenchmarkModel.DEFAULT_MODE}|{SimpleBenchmarkModel.ADVANCE_MODE}', default is '{SimpleBenchmarkModel.DEFAULT_MODE}'
 kind: perf                                                                           # Optional: '{SimpleBenchmarkModel.DEFAULT_KIND}|{SimpleBenchmarkModel.LONGRUN_KIND}|{SimpleBenchmarkModel.PARSERESULT_KIND}', default is '{SimpleBenchmarkModel.DEFAULT_KIND}'
@@ -56,7 +56,7 @@ scenario:
         public IAgentMethod CreateAgentMethodInstance(string methodName)
         {
             var currentNamespace = GetType().Namespace;
-            var fullMethodName = $"{currentNamespace}.{_slaveNamespaceSuffix}.{methodName}, {currentNamespace}";
+            var fullMethodName = $"{currentNamespace}.{_agentNamespaceSuffix}.{methodName}, {currentNamespace}";
             var type = Type.GetType(fullMethodName);
             IAgentMethod methodInstance = (IAgentMethod)Activator.CreateInstance(type);
             return methodInstance;
