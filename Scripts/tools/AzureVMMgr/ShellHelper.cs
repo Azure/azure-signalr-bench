@@ -400,34 +400,34 @@ fi
             return (errCode, result);
         }
 
-        public static(int, string) StartRpcAgents(List<string> slaves, string user, string password, int sshPort, int rpcPort,
-            List<string> logPath, string slaveRoot)
+        public static(int, string) StartRpcAgents(List<string> agents, string user, string password, int sshPort, int rpcPort,
+            List<string> logPath, string agentRoot)
         {
             var errCode = 0;
             var result = "";
             var cmd = "";
 
-            for (var i = 0; i < slaves.Count; i++)
+            for (var i = 0; i < agents.Count; i++)
             {
-                cmd = $"cd {slaveRoot}; dotnet run -- --rpcPort {rpcPort} -d 0.0.0.0 > {logPath[i]}";
-                Util.Log($"CMD: {user}@{slaves[i]}: {cmd}");
-                (errCode, result) = ShellHelper.RemoteBash(user, slaves[i], sshPort, password, cmd, wait : false);
+                cmd = $"cd {agentRoot}; dotnet run -- --rpcPort {rpcPort} -d 0.0.0.0 > {logPath[i]}";
+                Util.Log($"CMD: {user}@{agents[i]}: {cmd}");
+                (errCode, result) = ShellHelper.RemoteBash(user, agents[i], sshPort, password, cmd, wait : false);
                 if (errCode != 0) break;
             };
             if (errCode != 0)
             {
-                Util.Log($"RPC slave stopped: ERR {errCode}: {result}");
+                Util.Log($"RPC agent stopped: ERR {errCode}: {result}");
                 //Environment.Exit(1);
             }
-            // wait the starting of slave VM.
+            // wait the starting of agent VM.
             Task.Delay(TimeSpan.FromSeconds(1)).Wait();
-            WaitServerStarted(slaves, user, password, sshPort, logPath, "[0.0.0.0:5555] started");
+            WaitServerStarted(agents, user, password, sshPort, logPath, "[0.0.0.0:5555] started");
             return (errCode, result);
 
         }
 
         public static(int, string) StartRpcMaster(
-            string host, List<string> slaves, string user, string password, int sshPort, string logPath,
+            string host, List<string> agents, string user, string password, int sshPort, string logPath,
             string serviceType, string transportType, string hubProtocol, string scenario,
             int connection, int concurrentConnection, int duration, int interval, List<string> pipeLine,
             int groupNum, int groupOverlap, int combineFactor, string messageSize, string serverUrl, string suffix,
@@ -443,13 +443,13 @@ fi
             (errCode, result) = RemoteBash(user, host, sshPort, password, "cd ~; pwd;");
             var userRoot = result.Substring(0, result.Length - 1);
             Util.Log($"user root: {userRoot}");
-            var slaveList = "";
+            var agentList = "";
 
-            for (var i = 0; i < slaves.Count; i++)
+            for (var i = 0; i < agents.Count; i++)
             {
-                slaveList += slaves[i];
-                if (i < slaves.Count - 1)
-                    slaveList += ";";
+                agentList += agents[i];
+                if (i < agents.Count - 1)
+                    agentList += ";";
             }
 
             var clear = "false";
@@ -482,9 +482,9 @@ fi
             cmd += $"mkdir -p {outputCounterDir} || true;";
             cmd += $"dotnet run -- " +
                 $"--rpcPort 5555 " +
-                $"--duration {duration} --connections {connection} --interval {interval} --slaves {slaves.Count} {serverOption} --pipeLine '{string.Join(";", pipeLine)}' " +
+                $"--duration {duration} --connections {connection} --interval {interval} --agents {agents.Count} {serverOption} --pipeLine '{string.Join(";", pipeLine)}' " +
                 $"-v {serviceType} -t {transportType} -p {hubProtocol} -s {scenario} " +
-                $" --slaveList '{slaveList}' " +
+                $" --agentList '{agentList}' " +
                 $" --retry {0} " +
                 $" --clear {clear} " +
                 $" --concurrentConnection {concurrentConnection} " +
