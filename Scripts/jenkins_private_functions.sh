@@ -1042,7 +1042,7 @@ EOF
   if [ $useAzureWeb -ne 1 ]
   then
     dotnet run -- --RpcPort=5555 --Username=$user --Password=$passwd \
-         --SlaveList="$agents" --MasterHostname="$master" $startAppServerOption \
+         --AgentList="$agents" --MasterHostname="$master" $startAppServerOption \
          --MasterProject="$masterDir" \
          --MasterTargetPath="/home/${user}/master.tgz" \
          --AgentProject="$agentDir" \
@@ -1053,7 +1053,7 @@ EOF
          --AppserverLogDirectory="${outputDir}" \
          --NotStartAppServer=$notStartAppServer $neverStopAppServerOp
   else
-    dotnet run -- --RpcPort=5555 --SlaveList="$agents" --MasterHostname="$master" \
+    dotnet run -- --RpcPort=5555 --AgentList="$agents" --MasterHostname="$master" \
                --Username=$user --Password=$passwd \
                --MasterProject="$masterDir" \
                --AgentProject="$agentDir" \
