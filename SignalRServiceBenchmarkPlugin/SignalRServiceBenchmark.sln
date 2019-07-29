@@ -5,7 +5,7 @@ VisualStudioVersion = 15.0.27703.2000
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "framework", "framework", "{CDBF9EB3-6160-44BE-87D0-3147FC15AF9D}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "slave", "framework\slave\slave.csproj", "{3F065D76-6957-4462-8735-6C100A013A16}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "agent", "framework\agent\agent.csproj", "{3F065D76-6957-4462-8735-6C100A013A16}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "rpc", "framework\rpc\rpc.csproj", "{9C85C9D3-558C-4AE4-8A2B-666BC4A5106B}"
 EndProject

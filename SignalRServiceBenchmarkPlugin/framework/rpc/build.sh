@@ -25,5 +25,5 @@ then
   package $1 $2
 else
   build_master
-  build_slave
+  build_agent
 fi

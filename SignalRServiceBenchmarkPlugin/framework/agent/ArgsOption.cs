@@ -2,7 +2,7 @@ using System;
 using CommandLine;
 using Common;
 
-namespace Rpc.Slave
+namespace Rpc.Agent
 {
     class ArgsOption
     {

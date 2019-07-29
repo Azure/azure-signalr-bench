@@ -41,10 +41,10 @@ namespace Rpc.Master
                 // Load benchmark configuration
                 var configuration = Util.ReadFile(argsOption.BenchmarkConfiguration);
                 IList<IRpcClient> clients = null;
-                if (plugin.NeedSlaves(configuration))
+                if (plugin.NeedAgents(configuration))
                 {
                     // Create rpc clients
-                    clients = CreateRpcClients(argsOption.SlaveList);
+                    clients = CreateRpcClients(argsOption.AgentList);
 
                     // Check rpc connections
                     await WaitRpcConnectSuccess(clients);
@@ -71,10 +71,10 @@ namespace Rpc.Master
             GrpcEnvironment.SetLogger(new ConsoleLogger());
         }
 
-        private static IList<IRpcClient> CreateRpcClients(IList<string> slaveList)
+        private static IList<IRpcClient> CreateRpcClients(IList<string> agentList)
         {
-            var hostnamePortList = (from slave in slaveList
-                                    select slave.Split(':') into parts
+            var hostnamePortList = (from agent in agentList
+                                    select agent.Split(':') into parts
                                     select (Hostname: parts[0], Port: Convert.ToInt32(parts[1])));
 
             var clients = from item in hostnamePortList
@@ -100,7 +100,7 @@ namespace Rpc.Master
 
         private static async Task WaitRpcConnectSuccess(IList<IRpcClient> clients)
         {
-            Log.Information("Connect Rpc slaves...");
+            Log.Information("Connect Rpc agents...");
             for (var i = 0; i < _maxRertryConnect; i++)
             {
                 try
@@ -119,14 +119,14 @@ namespace Rpc.Master
                 }
                 catch (Exception ex)
                 {
-                    Log.Warning($"Fail to connect slaves because of {ex.Message}, retry {i}th time");
+                    Log.Warning($"Fail to connect agents because of {ex.Message}, retry {i}th time");
                     await Task.Delay(_retryInterval);
                     continue;
                 }
                 return;
             }
 
-            var message = $"Cannot connect to all slaves.";
+            var message = $"Cannot connect to all agents.";
             Log.Error(message);
             throw new Exception(message);
         }

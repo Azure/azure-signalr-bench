@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 
 namespace Plugin.Base
 {
-    // User can implement Iplugin to handle step in master and in slaves
+    // User can implement Iplugin to handle step in master and in agents
     public interface IPlugin
     {
         // Serialize <key, value> to JSON string
@@ -19,8 +19,8 @@ namespace Plugin.Base
         // Execute command on agent node, the input/output are Json strings
         Task<string> ExecuteOnAgent(string parametersInJson);
 
-        // Check whether the slave nodes are necessary
-        bool NeedSlaves(string configuration);
+        // Check whether the agent nodes are necessary
+        bool NeedAgents(string configuration);
 
         // Print the help information for commandline or configurations
         void Help();

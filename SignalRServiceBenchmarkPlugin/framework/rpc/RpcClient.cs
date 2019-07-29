@@ -69,9 +69,9 @@ namespace Rpc.Service
 
         public async Task<bool> InstallPluginAsync(string pluginName)
         {
-            Log.Information($"Install plugin '{pluginName}' in slave...");
+            Log.Information($"Install plugin '{pluginName}' in agent...");
             var result = await _client.InstallPluginAsync(new Data { Json = pluginName }).ResponseAsync;
-            if (!result.Success) Log.Error($"Fail to install plugin in slave: {result.Message}");
+            if (!result.Success) Log.Error($"Fail to install plugin in agent: {result.Message}");
             return result.Success;
         }
 

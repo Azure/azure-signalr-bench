@@ -5,7 +5,7 @@ using Rpc.Service;
 using Common;
 using Serilog;
 
-namespace Rpc.Slave
+namespace Rpc.Agent
 {
     class Program
     {
