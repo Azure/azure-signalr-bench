@@ -400,7 +400,7 @@ fi
             return (errCode, result);
         }
 
-        public static(int, string) StartRpcSlaves(List<string> slaves, string user, string password, int sshPort, int rpcPort,
+        public static(int, string) StartRpcAgents(List<string> slaves, string user, string password, int sshPort, int rpcPort,
             List<string> logPath, string slaveRoot)
         {
             var errCode = 0;

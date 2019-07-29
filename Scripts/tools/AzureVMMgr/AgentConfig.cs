@@ -18,8 +18,8 @@ namespace JenkinsScript
         public string Location { get; set; }
 
         // slave vm
-        public string SlaveVmSize { get; set; }
-        public int SlaveVmCount { get; set; }
+        public string AgentVmSize { get; set; }
+        public int AgentVmCount { get; set; }
 
         // app server
         public string AppSvrVmSize { get; set; }
