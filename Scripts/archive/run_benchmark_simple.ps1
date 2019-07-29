@@ -21,9 +21,9 @@ $start_appserver = {
     & cd $using:current_dir
 }
 
-$start_slaves = {
-    Write-Host 'Start slave'
-    cd ($using:project_root + "\SignalRServiceBenchmarkPlugin\framework\slave\")
+$start_agents = {
+    Write-Host 'Start agent'
+    cd ($using:project_root + "\SignalRServiceBenchmarkPlugin\framework\agent\")
     dotnet clean
     dotnet build
     dotnet run -- --HostName 0.0.0.0 --RpcPort 5555
@@ -45,14 +45,14 @@ $start_master = {
     dotnet clean
     dotnet build
     cd ($using:current_dir)
-    dotnet run -p $project_master -- --BenchmarkConfiguration ($using:benchmark) --SlaveList localhost:5555
+    dotnet run -p $project_master -- --BenchmarkConfiguration ($using:benchmark) --AgentList localhost:5555
     cd $using:current_dir
 }
 
 Invoke-Command $generate_proto
 
 Start-Job $start_appserver -Name "appserver"
-Start-Job $start_slaves -Name "slaves"
+Start-Job $start_agents -Name "agents"
 Start-Job $start_master -Name "master"
 
 $master_finish = 0

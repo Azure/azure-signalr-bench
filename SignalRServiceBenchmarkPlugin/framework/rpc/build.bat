@@ -10,6 +10,6 @@ dotnet build
 
 cd %pwd%
 
-cd ../slave
+cd ../agent
 dotnet build
 cd %pwd%

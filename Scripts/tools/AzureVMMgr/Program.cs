@@ -183,7 +183,7 @@ namespace JenkinsScript
                         var jobConfigV2 = configLoader.Load<JobConfigV2>(argsOption.JobConfigFileV2);
 
                         // IPs
-                        var slavesPvtIp = privateIps.SlavePrivateIp.Split(";").ToList();
+                        var agentsPvtIp = privateIps.AgentPrivateIp.Split(";").ToList();
                         var masterPvtIp = privateIps.MasterPrivateIp;
 
                         var serviceDir = "~/OSSServices-SignalR-Service/src/Microsoft.Azure.SignalR.ServiceRuntime";
@@ -197,7 +197,7 @@ namespace JenkinsScript
                         var localRepoRoot = debug ? "~/workspace/azure-signalr-bench/" : "~/signalr-bench";
                         var appSvrRoot = Path.Join(localRepoRoot, "v2/AppServer/");
                         var masterRoot = Path.Join(localRepoRoot, "v2/Rpc/Bench.Client/");
-                        var slaveRoot = Path.Join(localRepoRoot, "v2/Rpc/Bench.Server/");
+                        var agentRoot = Path.Join(localRepoRoot, "v2/Rpc/Bench.Server/");
                         var logRoot = "~/logs";
                         var resultRoot = Environment.GetEnvironmentVariable("result_root");
                         var waitTime = TimeSpan.FromSeconds(5);
@@ -266,7 +266,7 @@ namespace JenkinsScript
                         }
 
                         hosts.Add(privateIps.MasterPrivateIp);
-                        hosts.AddRange(privateIps.SlavePrivateIp.Split(";").ToList());
+                        hosts.AddRange(privateIps.AgentPrivateIp.Split(";").ToList());
 
                         // prepare log dirs
                         var suffix = "";
@@ -299,12 +299,12 @@ namespace JenkinsScript
                             }
                         }
 
-                        var logPathSlave = new List<string>();
-                        slavesPvtIp.ForEach(ip =>
+                        var logPathAgent = new List<string>();
+                        agentsPvtIp.ForEach(ip =>
                         {
-                            suffix = GenerateSuffix($"slave{ip}");
+                            suffix = GenerateSuffix($"agent{ip}");
                             (errCode, result) = ShellHelper.PrepareLogPath(ip, user, password, sshPort, logRoot, resultRoot, suffix);
-                            logPathSlave.Add(result);
+                            logPathAgent.Add(result);
                         });
 
                         suffix = "master";
@@ -347,13 +347,13 @@ namespace JenkinsScript
                             Task.Delay(waitTime).Wait();
                         }
 
-                        // start slaves
-                        privateIps.SlavePrivateIp.Split(";").ToList().ForEach(host => StartCollectMachineStatisticsTimer(host, user, password, sshPort, Path.Combine(Util.MakeSureDirectoryExist(statisticFolder), $"slave{host}.txt"), TimeSpan.FromSeconds(1)));
-                        ShellHelper.StartRpcSlaves(privateIps.SlavePrivateIp.Split(";").ToList(), user, password, sshPort, rpcPort, logPathSlave, slaveRoot);Task.Delay(waitTime).Wait();
+                        // start agents
+                        privateIps.AgentPrivateIp.Split(";").ToList().ForEach(host => StartCollectMachineStatisticsTimer(host, user, password, sshPort, Path.Combine(Util.MakeSureDirectoryExist(statisticFolder), $"agent{host}.txt"), TimeSpan.FromSeconds(1)));
+                        ShellHelper.StartRpcAgents(privateIps.AgentPrivateIp.Split(";").ToList(), user, password, sshPort, rpcPort, logPathAgent, agentRoot);Task.Delay(waitTime).Wait();
 
                         // start master
                         privateIps.MasterPrivateIp.Split(";").ToList().ForEach(host => StartCollectMachineStatisticsTimer(host, user, password, sshPort, Path.Combine(Util.MakeSureDirectoryExist(statisticFolder), $"master{host}.txt"), TimeSpan.FromSeconds(1)));
-                        ShellHelper.StartRpcMaster(privateIps.MasterPrivateIp, privateIps.SlavePrivateIp.Split(";").ToList(),
+                        ShellHelper.StartRpcMaster(privateIps.MasterPrivateIp, privateIps.AgentPrivateIp.Split(";").ToList(),
                             user, password, sshPort, logPathMaster, serviceType, transportType, hubProtocol, scenario,
                             connection, concurrentConnection, duration, interval, pipeline, groupNum, overlap, combineFactor, messageSize,
                             serverUrl, suffix, masterRoot, sendToFixedClient, enableGroupJoinLeave,

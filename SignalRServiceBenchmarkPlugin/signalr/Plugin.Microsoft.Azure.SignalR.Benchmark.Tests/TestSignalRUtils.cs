@@ -36,16 +36,16 @@ namespace Microsoft.Azure.SignalR.Benchmark.Tests
         [Fact]
         public async Task TestJoinGroupForConnection1()
         {
-            int total = 6, group = 15, slaves = 2;
+            int total = 6, group = 15, agents = 2;
             // we expect every connection joins two or three different groups
             var indexes = Enumerable.Range(0, total).ToList();
             indexes.Shuffle();
             var expectedGroup = Enumerable.Range(0, group).ToList();
             var assignedGroup = new List<int>();
             var connectionGroupDic = new Dictionary<int, List<int>>();
-            for (var i = 0; i < slaves; i++)
+            for (var i = 0; i < agents; i++)
             {
-                (int beg, int end) = Util.GetConnectionRange(total, i, slaves);
+                (int beg, int end) = Util.GetConnectionRange(total, i, agents);
                 var connectIndex = indexes.GetRange(beg, end - beg);
 
                 await SignalRUtils.JoinGroupForConnection(total, group, connectIndex, (index, groupIndex) =>
@@ -75,18 +75,18 @@ namespace Microsoft.Azure.SignalR.Benchmark.Tests
         [Theory]
         [InlineData(6, 12, 2)]
         [InlineData(6, 6, 2)]
-        public async Task TestJoinGroupForConnection2(int total, int group, int slaves)
+        public async Task TestJoinGroupForConnection2(int total, int group, int agents)
         {
-            //int total = 6, group = 12, slaves = 2;
+            //int total = 6, group = 12, agents = 2;
             // we expect every connection joins two different groups
             var indexes = Enumerable.Range(0, total).ToList();
             indexes.Shuffle();
             var expectedGroup = Enumerable.Range(0, group).ToList();
             var assignedGroup = new List<int>();
             var connectionGroupDic = new Dictionary<int, List<int>>();
-            for (var i = 0; i < slaves; i++)
+            for (var i = 0; i < agents; i++)
             {
-                (int beg, int end) = Util.GetConnectionRange(total, i, slaves);
+                (int beg, int end) = Util.GetConnectionRange(total, i, agents);
                 var connectIndex = indexes.GetRange(beg, end - beg);
 
                 await SignalRUtils.JoinGroupForConnection(total, group, connectIndex, (index, groupIndex) =>
@@ -114,15 +114,15 @@ namespace Microsoft.Azure.SignalR.Benchmark.Tests
         [Fact]
         public async Task TestJoinGroupForConnection3()
         {
-            int total = 6, group = 3, slaves = 2;
+            int total = 6, group = 3, agents = 2;
             // we expect every 2 connections join one groups
             var indexes = Enumerable.Range(0, total).ToList();
             indexes.Shuffle();
             var assignedConnect = new List<int>();
             var connectionGroupDic = new Dictionary<int, List<int>>();
-            for (var i = 0; i < slaves; i++)
+            for (var i = 0; i < agents; i++)
             {
-                (int beg, int end) = Util.GetConnectionRange(total, i, slaves);
+                (int beg, int end) = Util.GetConnectionRange(total, i, agents);
                 var connectIndex = indexes.GetRange(beg, end - beg);
 
                 await SignalRUtils.JoinGroupForConnection(total, group, connectIndex, (index, groupIndex) =>

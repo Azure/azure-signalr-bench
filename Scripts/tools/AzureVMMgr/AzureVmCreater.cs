@@ -59,7 +59,7 @@ namespace JenkinsScript
         private bool CheckAllSSHPort(int appSvrVmCount, int svcVmCount, TimeSpan timeSpan)
         {
             var portCheckTaskList = new List<Task>();
-            for (var i = 0; i < _agentConfig.SlaveVmCount; i++)
+            for (var i = 0; i < _agentConfig.AgentVmCount; i++)
             {
                 var privateIp = GetPrivateIp(NicBase + $"{i}");
                 portCheckTaskList.Add(Task.Run(() => WaitPortOpen(privateIp, 22, timeSpan)));
@@ -109,7 +109,7 @@ namespace JenkinsScript
 
             // debug: list all private ip
             var slvPvtIps = new List<string>();
-            for (var i = 0; i < _agentConfig.SlaveVmCount; i++)
+            for (var i = 0; i < _agentConfig.AgentVmCount; i++)
             {
                 slvPvtIps.Add(GetPrivateIp(NicBase + $"{i}"));
             }
@@ -142,7 +142,7 @@ namespace JenkinsScript
             if (slvPvtIps.Count > 0)
             {
                 str += $"masterPrivateIp: {slvPvtIps[0]}\n";
-                str += "slavePrivateIp: ";
+                str += "agentPrivateIp: ";
                 for (var i = 0; i < slvPvtIps.Count; i++)
                 {
                     str += slvPvtIps[i];
@@ -272,25 +272,25 @@ namespace JenkinsScript
             List<ICreatable<IVirtualMachine>> creatableVirtualMachines = new List<ICreatable<IVirtualMachine>>();
 
             /*
-            var publicIpTasks = CreatePublicIPAddrListWithRetry(_azure, _agentConfig.SlaveVmCount,
+            var publicIpTasks = CreatePublicIPAddrListWithRetry(_azure, _agentConfig.AgentVmCount,
                 PublicIpBase, Location, GroupName, PublicDnsBase).GetAwaiter().GetResult();
             */
             var publicIpTasks = new List<Task<IPublicIPAddress>>();
-            for (var i = 0; i < _agentConfig.SlaveVmCount; i++)
+            for (var i = 0; i < _agentConfig.AgentVmCount; i++)
             {
                 publicIpTasks.Add(CreatePublicIpAsync(PublicIpBase, Location, GroupName, PublicDnsBase, i));
             }
             var publicIps = Task.WhenAll(publicIpTasks).GetAwaiter().GetResult();
 
             var nsgTasks = new List<Task<INetworkSecurityGroup>>();
-            for (var i = 0; i < _agentConfig.SlaveVmCount; i++)
+            for (var i = 0; i < _agentConfig.AgentVmCount; i++)
             {
                 nsgTasks.Add(CreateNetworkSecurityGroupAsync(NsgBase, Location, GroupName, _agentConfig.SshPort, i));
             }
             var nsgs = Task.WhenAll(nsgTasks).GetAwaiter().GetResult();
 
             var nicTasks = new List<Task<INetworkInterface>>();
-            for (var i = 0; i < _agentConfig.SlaveVmCount; i++)
+            for (var i = 0; i < _agentConfig.AgentVmCount; i++)
             {
                 nicTasks.Add(CreateNetworkInterfaceAsync(NicBase, Location, GroupName,
                     subnet == null? SubNet : subnet.Name, vNet, publicIps[i], nsgs[i], i));
@@ -298,10 +298,10 @@ namespace JenkinsScript
             var nics = Task.WhenAll(nicTasks).GetAwaiter().GetResult();
 
             var vmTasks = new List<Task<IWithCreate>>();
-            for (var i = 0; i < _agentConfig.SlaveVmCount; i++)
+            for (var i = 0; i < _agentConfig.AgentVmCount; i++)
             {
                 vmTasks.Add(GenerateVmTemplateAsync(VmNameBase, Location, GroupName, _agentConfig.ImageId,
-                    _agentConfig.User, _agentConfig.Password, _agentConfig.Ssh, SlaveVmSize, nics[i], avSet, i));
+                    _agentConfig.User, _agentConfig.Password, _agentConfig.Ssh, AgentVmSize, nics[i], avSet, i));
             }
 
             var vms = Task.WhenAll(vmTasks).GetAwaiter().GetResult();
@@ -646,8 +646,6 @@ namespace JenkinsScript
                 var res = "";
                 var cmd = "";
 
-                //var domain = SlaveDomainName(i);
-
                 cmd = $"echo '{password}' | sudo -S cp /etc/security/limits.conf /etc/security/limits.conf.bak";
                 (errCode, res) = ShellHelper.RemoteBash(user, domain, 22, password, cmd, handleRes : true, retry : 5);
 
@@ -712,11 +710,6 @@ namespace JenkinsScript
                 (errCode, res) = ShellHelper.RemoteBash(user, domain, 22, password, cmd, handleRes : true, retry : 5);
 
             });
-        }
-
-        public string SlaveDomainName(int i)
-        {
-            return PublicDnsBase + Convert.ToString(i) + "." + _agentConfig.Location.ToLower() + ".cloudapp.azure.com";
         }
 
         public string AppSvrDomainName(int i = 0)
@@ -956,11 +949,11 @@ namespace JenkinsScript
             }
         }
 
-        public VirtualMachineSizeTypes SlaveVmSize
+        public VirtualMachineSizeTypes AgentVmSize
         {
             get
             {
-                return GetVmSize(_agentConfig.SlaveVmSize);
+                return GetVmSize(_agentConfig.AgentVmSize);
             }
         }
 

@@ -1,12 +1,10 @@
 ﻿using Common;
 using Plugin.Base;
-using Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods.Statistics;
 using Rpc.Service;
 using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods

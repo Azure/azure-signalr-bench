@@ -21,7 +21,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
             if (concurrentConnection < clients.Count)
             {
                 concurrentConnection = clients.Count;
-                var message = $"Concurrent connection {concurrentConnection} should NOT be less than the number of slaves {clients.Count}, we force it to be {clients.Count}";
+                var message = $"Concurrent connection {concurrentConnection} should NOT be less than the number of agents {clients.Count}, we force it to be {clients.Count}";
                 Log.Warning(message);
             }
 

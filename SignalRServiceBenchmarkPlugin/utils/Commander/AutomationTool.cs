@@ -26,7 +26,7 @@ namespace Commander
                 // Clients connect to host
                 _remoteClients.ConnectAll();
 
-                FileInfo appserverExecutable = null, masterExecutable, slaveExecutable;
+                FileInfo appserverExecutable = null, masterExecutable, agentExecutable;
                 if (!_notStartAppServer)
                 {
                     appserverExecutable = File.Exists($"{_appserverProject}/{_baseName}.tgz") ?
@@ -36,12 +36,12 @@ namespace Commander
                 masterExecutable = File.Exists($"{_masterProject}/{_baseName}.tgz") ?
                     new FileInfo($"{_masterProject}/{_baseName}.tgz") :
                     new FileInfo($"{_masterProject}/{_baseName}.zip");
-                slaveExecutable = File.Exists($"{_slaveProject}/{_baseName}.tgz") ?
-                    new FileInfo($"{_slaveProject}/{_baseName}.tgz") :
-                    new FileInfo($"{_slaveProject}/{_baseName}.zip");
+                agentExecutable = File.Exists($"{_agentProject}/{_baseName}.tgz") ?
+                    new FileInfo($"{_agentProject}/{_baseName}.tgz") :
+                    new FileInfo($"{_agentProject}/{_baseName}.zip");
 
                 // Copy executables and configurations
-                CopyExecutables(appserverExecutable, masterExecutable, slaveExecutable);
+                CopyExecutables(appserverExecutable, masterExecutable, agentExecutable);
 
                 // Unzip packages
                 UnzipExecutables();
@@ -192,16 +192,16 @@ fi
 
                 // Create SSH commands
 
-                var slaveDirectory = ConcatPathWithBaseName(_slaveTargetPath);
+                var agentDirectory = ConcatPathWithBaseName(_agentTargetPath);
                 var masterDirectory = ConcatPathWithBaseName(_masterTargetPath);
                 var masterExecutablePath = Path.Combine(ConcatPathWithBaseName(_masterTargetPath), "master.dll");
-                var slaveExecutablePath = Path.Combine(ConcatPathWithBaseName(_slaveTargetPath), "slave.dll");
+                var agentExecutablePath = Path.Combine(ConcatPathWithBaseName(_agentTargetPath), "agent.dll");
 
                 var masterCommand = $"cd {masterDirectory}; " +
                                     $"dotnet exec {masterExecutablePath} -- " +
                                     $"--BenchmarkConfiguration=\"{_benchmarkConfigurationTargetPath}\" " +
-                                    $"--SlaveList=\"{string.Join(',', _slaveList)}\"";
-                var slaveCommand = $"cd {slaveDirectory}; dotnet exec {slaveExecutablePath} --HostName 0.0.0.0 --RpcPort {_rpcPort}";
+                                    $"--AgentList=\"{string.Join(',', _agentList)}\"";
+                var agentCommand = $"cd {agentDirectory}; dotnet exec {agentExecutablePath} --HostName 0.0.0.0 --RpcPort {_rpcPort}";
 
                 var masterSshCommand = _remoteClients.MasterSshClient.CreateCommand(masterCommand.Replace('\\', '/'));
 
@@ -216,14 +216,14 @@ fi
                 {
                     Log.Information("Do not start appserver !");
                 }
-                // Start slaves
+                // Start agents
                 // Check connection status
-                foreach (var sshClient in _remoteClients.SlaveSshClients)
+                foreach (var sshClient in _remoteClients.AgentSshClients)
                 {
                     if (!sshClient.IsConnected)
                     {
                         var endpoint = $"{sshClient.ConnectionInfo.Host}:{sshClient.ConnectionInfo.Port}";
-                        Log.Warning($"a slave ssh {endpoint} dropped, and try reconnect");
+                        Log.Warning($"a agent ssh {endpoint} dropped, and try reconnect");
                         try
                         {
                             sshClient.Connect();
@@ -235,11 +235,11 @@ fi
                         }
                     }
                 }
-                Log.Information("All slaves connected");
-                var slaveSshCommands = (from client in _remoteClients.SlaveSshClients
-                                        select client.CreateCommand(slaveCommand.Replace('\\', '/'))).ToList();
-                Log.Information($"Start slaves");
-                var slaveAsyncResults = (from command in slaveSshCommands
+                Log.Information("All agents connected");
+                var agentSshCommands = (from client in _remoteClients.AgentSshClients
+                                        select client.CreateCommand(agentCommand.Replace('\\', '/'))).ToList();
+                Log.Information($"Start agents");
+                var agentAsyncResults = (from command in agentSshCommands
                                          select command.BeginExecute(OnAsyncSshCommandComplete, command)).ToList();
 
                 // Start master
@@ -291,14 +291,14 @@ fi
                 _remoteClients.AppserverSshClients.ToList().ForEach(client => killDotnet(client));
             }
             killDotnet(_remoteClients.MasterSshClient);
-            _remoteClients.SlaveSshClients.ToList().ForEach(client => killDotnet(client));
+            _remoteClients.AgentSshClients.ToList().ForEach(client => killDotnet(client));
         }
 
-        private void CopyExecutables(FileInfo appserverExecutable, FileInfo masterExecutable, FileInfo slaveExecutable)
+        private void CopyExecutables(FileInfo appserverExecutable, FileInfo masterExecutable, FileInfo agentExecutable)
         {
             Log.Information($"Copy executables to hosts...");
 
-            CreateDirIfNotExist(appserverExecutable, masterExecutable, slaveExecutable);
+            CreateDirIfNotExist(appserverExecutable, masterExecutable, agentExecutable);
             if (!_notStartAppServer)
             {
                 foreach (var appserver in _appServerHostNameList)
@@ -311,20 +311,20 @@ fi
 
             RetriableUploadFile(_masterHostName, masterExecutable.FullName, _masterTargetPath);
             RetriableUploadFile(_masterHostName, _benchmarkConfiguration.FullName, _benchmarkConfigurationTargetPath);
-            foreach (var slaveHost in _slaveHostNameList)
+            foreach (var agentHost in _agentHostNameList)
             {
-                var srcFile = slaveExecutable.FullName;
-                var dstFile = _slaveTargetPath;
-                RetriableUploadFile(slaveHost, srcFile, dstFile);
+                var srcFile = agentExecutable.FullName;
+                var dstFile = _agentTargetPath;
+                RetriableUploadFile(agentHost, srcFile, dstFile);
             }
         }
 
         // The ScpClient of SSH.NET has bug https://github.com/sshnet/SSH.NET/issues/516. We cannot use it until it is fixed.
-        private void CopyExecutables2(FileInfo appserverExecutable, FileInfo masterExecutable, FileInfo slaveExecutable)
+        private void CopyExecutables2(FileInfo appserverExecutable, FileInfo masterExecutable, FileInfo agentExecutable)
         {
             Log.Information($"Copy executables to hosts...");
 
-            CreateDirIfNotExist(appserverExecutable, masterExecutable, slaveExecutable);
+            CreateDirIfNotExist(appserverExecutable, masterExecutable, agentExecutable);
             // Copy executables
             var copyTasks = new List<Task>();
             if (!_notStartAppServer)
@@ -335,13 +335,13 @@ fi
             }
             copyTasks.Add(Task.Run(() => _remoteClients.MasterScpClient.Upload(masterExecutable, _masterTargetPath)));
             copyTasks.Add(Task.Run(() => _remoteClients.MasterScpClient.Upload(_benchmarkConfiguration, _benchmarkConfigurationTargetPath)));
-            copyTasks.AddRange(from client in _remoteClients.SlaveScpClients
-                                select Task.Run(() => client.Upload(slaveExecutable, _slaveTargetPath)));
+            copyTasks.AddRange(from client in _remoteClients.AgentScpClients
+                                select Task.Run(() => client.Upload(agentExecutable, _agentTargetPath)));
             Task.WhenAll(copyTasks).Wait();
         }
 
         // TODO. publish executables do not work since we have to build through script instead of raw dotnet command
-        private (FileInfo appserverExecutable, FileInfo masterExecutable, FileInfo slaveExecutable) PubishExcutables()
+        private (FileInfo appserverExecutable, FileInfo masterExecutable, FileInfo agentExecutable) PubishExcutables()
         {
             Log.Information($"Generate executables...");
 
@@ -351,8 +351,8 @@ fi
                 appserverExecutable = PubishExcutable(_appserverProject, _baseName);
             }
             var masterExecutable = PubishExcutable(_masterProject, _baseName);
-            var slaveExecutable = PubishExcutable(_slaveProject, _baseName);
-            return (appserverExecutable, masterExecutable, slaveExecutable); 
+            var agentExecutable = PubishExcutable(_agentProject, _baseName);
+            return (appserverExecutable, masterExecutable, agentExecutable); 
         }
 
         private FileInfo PubishExcutable(string projectPath, string baseName)

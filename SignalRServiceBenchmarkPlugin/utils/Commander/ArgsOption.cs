@@ -19,8 +19,8 @@ namespace Commander
         [Option("RpcPort", Required = false, Default = 5555, HelpText = "Port to be conencted from remote hosts.")]
         public int RpcPort { get; set; }
 
-        [Option("SlaveList", Required = true, Separator = ',',  HelpText = "Target hosts to connect.")]
-        public IList<string> SlaveList { get; set; }
+        [Option("AgentList", Required = true, Separator = ',',  HelpText = "Target hosts to connect.")]
+        public IList<string> AgentList { get; set; }
 
         [Option("MasterHostname", Required = true, HelpText = "Hostname of master.")]
         public string MasterHostname { get; set; }
@@ -61,8 +61,8 @@ namespace Commander
         [Option("MasterProject", Required = true, HelpText = "Master project.")]
         public string MasterProject { get; set; }
 
-        [Option("SlaveProject", Required = true, HelpText = "Slave project.")]
-        public string SlaveProject { get; set; }
+        [Option("AgentProject", Required = true, HelpText = "Agent project.")]
+        public string AgentProject { get; set; }
 
         [Option("AppserverTargetPath", Required = false, Default = null, HelpText = "Target path for app server executable.")]
         public string AppserverTargetPath { get; set; }
@@ -70,8 +70,8 @@ namespace Commander
         [Option("MasterTargetPath", Required = true, HelpText = "Target path for master executable.")]
         public string MasterTargetPath { get; set; }
 
-        [Option("SlaveTargetPath", Required = true, HelpText = "Target path for slave executables.")]
-        public string SlaveTargetPath { get; set; }
+        [Option("AgentTargetPath", Required = true, HelpText = "Target path for agent executables.")]
+        public string AgentTargetPath { get; set; }
 
         [Option("BenchmarkConfiguration", Required = true, HelpText = "Benchmark configurations.")]
         public string BenchmarkConfiguration { get; set; }
