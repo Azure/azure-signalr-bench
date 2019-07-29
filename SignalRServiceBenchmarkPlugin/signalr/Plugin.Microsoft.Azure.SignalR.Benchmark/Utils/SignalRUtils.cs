@@ -6,8 +6,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Plugin.Microsoft.Azure.SignalR.Benchmark.Internals;
 using Plugin.Microsoft.Azure.SignalR.Benchmark.Internals.AppServer;
-using Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods;
-using Plugin.Microsoft.Azure.SignalR.Benchmark.SlaveMethods.Statistics;
+using Plugin.Microsoft.Azure.SignalR.Benchmark.AgentMethods;
+using Plugin.Microsoft.Azure.SignalR.Benchmark.AgentMethods.Statistics;
 using Rpc.Service;
 using Serilog;
 using System;
@@ -363,7 +363,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             return SignalRConstants.NegotiationUrl + "/" + hub + "?user=" + userId;
         }
 
-        public static void SlaveCreateConnection(
+        public static void AgentCreateConnection(
             IDictionary<string, object> stepParameters,
             IDictionary<string, object> pluginParameters,
             ClientType clientType)

@@ -7,8 +7,8 @@ namespace Rpc.Master
     public class ArgsOption
     {
         // Rpc 
-        [Option("SlaveList", Required = false, Separator = ',', Default = new string[]{"localhost:7000"}, HelpText = "Target hosts to connect.")]
-        public IList<string> SlaveList { get; set; }
+        [Option("AgentList", Required = false, Separator = ',', Default = new string[]{"localhost:7000"}, HelpText = "Target hosts to connect.")]
+        public IList<string> AgentList { get; set; }
 
         [Option("PidFile", Required = false, Default = "master-pid.txt")]
         public string PidFile { get; set; }

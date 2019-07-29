@@ -11,7 +11,7 @@ start_appserver() {
 
 start_slaves() {
   echo 'Start slave'
-  cd $project_root/SignalRServiceBenchmarkPlugin/framework/slave/
+  cd $project_root/SignalRServiceBenchmarkPlugin/framework/agent/
   dotnet build
   dotnet run -- --HostName 0.0.0.0 --RpcPort 5555
 }
@@ -22,7 +22,7 @@ start_master() {
   project_master=$project_root"/SignalRServiceBenchmarkPlugin/framework/master"
   cd $project_master
   dotnet build 
-  dotnet run -- --BenchmarkConfiguration=$benchmark --SlaveList=localhost:5555
+  dotnet run -- --BenchmarkConfiguration=$benchmark --AgentList=localhost:5555
   cp counters.txt $current_dir"/counters.txt"
 }
 

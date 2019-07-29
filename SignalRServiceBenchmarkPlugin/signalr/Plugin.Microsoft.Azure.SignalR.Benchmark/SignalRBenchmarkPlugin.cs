@@ -15,7 +15,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
     public class SignalRBenchmarkPlugin : IPlugin, ISignalRPlugin
     {
         private string _masterNamespaceSuffix = "MasterMethods";
-        private string _slaveNamespaceSuffix = "SlaveMethods";
+        private string _agentNamespaceSuffix = "AgentMethods";
         private string _simpleConfigurationTemplate = $@"
 mode: simple                                                                         # Required: '{SimpleBenchmarkModel.DEFAULT_MODE}|{SimpleBenchmarkModel.ADVANCE_MODE}', default is '{SimpleBenchmarkModel.DEFAULT_MODE}'
 kind: perf                                                                           # Optional: '{SimpleBenchmarkModel.DEFAULT_KIND}|{SimpleBenchmarkModel.LONGRUN_KIND}|{SimpleBenchmarkModel.PARSERESULT_KIND}', default is '{SimpleBenchmarkModel.DEFAULT_KIND}'
@@ -42,7 +42,7 @@ scenario:
 ";
         public IDictionary<string, object> PluginMasterParameters { get; set; } = new ConcurrentDictionary<string, object>();
 
-        public IDictionary<string, object> PluginSlaveParamaters { get; set; } = new ConcurrentDictionary<string, object>();
+        public IDictionary<string, object> PluginAgentParamaters { get; set; } = new ConcurrentDictionary<string, object>();
 
         public IMasterMethod CreateMasterMethodInstance(string methodName)
         {
@@ -53,12 +53,12 @@ scenario:
             return methodInstance;
         }
 
-        public ISlaveMethod CreateSlaveMethodInstance(string methodName)
+        public IAgentMethod CreateAgentMethodInstance(string methodName)
         {
             var currentNamespace = GetType().Namespace;
-            var fullMethodName = $"{currentNamespace}.{_slaveNamespaceSuffix}.{methodName}, {currentNamespace}";
+            var fullMethodName = $"{currentNamespace}.{_agentNamespaceSuffix}.{methodName}, {currentNamespace}";
             var type = Type.GetType(fullMethodName);
-            ISlaveMethod methodInstance = (ISlaveMethod)Activator.CreateInstance(type);
+            IAgentMethod methodInstance = (IAgentMethod)Activator.CreateInstance(type);
             return methodInstance;
         }
 
@@ -100,8 +100,8 @@ scenario:
             // Create Instance
             try
             {
-                var methodInstance = CreateSlaveMethodInstance(method);
-                var result = await methodInstance.Do(parameters, PluginSlaveParamaters);
+                var methodInstance = CreateAgentMethodInstance(method);
+                var result = await methodInstance.Do(parameters, PluginAgentParamaters);
                 if (result != null)
                 {
                     return Serialize(result);
@@ -120,7 +120,7 @@ scenario:
             Console.WriteLine(_simpleConfigurationTemplate);
         }
 
-        public bool NeedSlaves(string configuration)
+        public bool NeedAgents(string configuration)
         {
             // Simple configuration to parse result (counters.txt) does not need slave agents
             return !BenchmarkConfiguration.IsConfigInSimpleMode(configuration) ||

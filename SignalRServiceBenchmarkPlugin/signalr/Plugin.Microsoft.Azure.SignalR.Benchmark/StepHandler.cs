@@ -27,11 +27,11 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
                 SignalRUtils.ShowConfiguration(step.Parameters);
             }
 
-            // Send to slaves
-            await SendToSlaves(step, clients);
+            // Send to agents
+            await SendToAgents(step, clients);
         }
 
-        private Task SendToSlaves(MasterStep step, IList<IRpcClient> clients)
+        private Task SendToAgents(MasterStep step, IList<IRpcClient> clients)
         {
             try
             {

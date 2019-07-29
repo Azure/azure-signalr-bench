@@ -7,7 +7,7 @@ namespace JenkinsScript
     public class AgentConfig
     {
         public string Master { get; set; }
-        public List<string> Slaves { get; set; }
+        public List<string> Agents { get; set; }
         public string AppServer { get; set; }
         public int RpcPort { get; set; }
         public int SshPort { get; set; }
@@ -17,9 +17,9 @@ namespace JenkinsScript
         public string Prefix { get; set; }
         public string Location { get; set; }
 
-        // slave vm
-        public string SlaveVmSize { get; set; }
-        public int SlaveVmCount { get; set; }
+        // agent vm
+        public string AgentVmSize { get; set; }
+        public int AgentVmCount { get; set; }
 
         // app server
         public string AppSvrVmSize { get; set; }

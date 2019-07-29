@@ -88,6 +88,40 @@ function set_job_env() {
    generate_clean_resource_script $CleanResourceScript
 }
 
+# global var: $AgentConfig
+function generate_vm_provison_config() {
+   local img=$1
+   local VMUser=$2
+   local VMPassword="$3"
+   local vmPrefix=$4
+   local VMLocation=$5
+   local clientVmCount=$6
+   local serverVmCount=$7
+
+cat << EOF > $AgentConfig
+rpcPort: 5555
+sshPort: 22
+
+imageId: $img
+
+user: ${VMUser}
+password: ${VMPassword}
+
+# config for creating VMs
+prefix: ${vmPrefix}
+location: ${VMLocation}
+
+# agents (the first one will be master)
+agentVmSize: StandardDS2V2
+agentVmCount: ${clientVmCount}
+
+# app server
+appSvrVmSize: StandardF4sV2
+appSvrVmCount: ${serverVmCount}
+EOF
+
+}
+
 function generate_clean_resource_script() {
    local script_file=$1
    # I found several daemonize commands can not be executed sometimes, so I merged them to avoid this issue

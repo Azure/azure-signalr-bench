@@ -44,7 +44,7 @@ function create_group_if_not_exist() {
   local location=$2
   local grps=`az group list -o json|jq .[].name|grep $resgrp`
 
-  if [ "$grps" == "" ]
+  if [ "$grps" == "" ] || [ "$grps" != "$resgrp" ]
   then
     az group create --name $resgrp --location $location
   fi
@@ -93,6 +93,9 @@ function create_serverless_signalr_service()
   local pp=`echo $p|sed "s/'/\"/g"`
   local properties=$pp
   local ret=$(az resource create -g $rsg -n $name --namespace Microsoft.SignalRService --resource-type SignalR --properties $properties --is-full-object)
+  echo "`date +%Y%m%d%H%M%S`: waiting instance ready"
+  sleep 120
+  echo "`date +%Y%m%d%H%M%S`: finish waiting"
   echo $ret
 }
 

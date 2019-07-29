@@ -23,20 +23,20 @@ namespace Commander
         protected readonly bool _notStartAppServer;
         protected readonly bool _notStopAppServer;
         protected readonly IList<string> _appServerHostNameList;
-        // Slave Information
+        // Agent Information
         protected readonly int _rpcPort;
-        protected readonly IList<string> _slaveList;
-        protected readonly IList<string> _slaveHostNameList;
+        protected readonly IList<string> _agentList;
+        protected readonly IList<string> _agentHostNameList;
 
         // Local project path
         protected readonly string _appserverProject;
         protected readonly string _masterProject;
-        protected readonly string _slaveProject;
+        protected readonly string _agentProject;
 
         // Remote executable files
         protected readonly string _appserverTargetPath;
         protected readonly string _masterTargetPath;
-        protected readonly string _slaveTargetPath;
+        protected readonly string _agentTargetPath;
 
         // Benchmark configuration
         protected readonly FileInfo _benchmarkConfiguration;
@@ -60,13 +60,13 @@ namespace Commander
             _notStartAppServer = argOption.NotStartAppServer == 1;
             _notStopAppServer = argOption.NotStopAppServer == 1;
             _masterProject = argOption.MasterProject;
-            _slaveProject = argOption.SlaveProject;
+            _agentProject = argOption.AgentProject;
             _appserverTargetPath = argOption.AppserverTargetPath;
             _masterTargetPath = argOption.MasterTargetPath;
-            _slaveTargetPath = argOption.SlaveTargetPath;
+            _agentTargetPath = argOption.AgentTargetPath;
             _benchmarkConfiguration = new FileInfo(argOption.BenchmarkConfiguration);
             _benchmarkConfigurationTargetPath = argOption.BenchmarkConfigurationTargetPath;
-            _slaveList = argOption.SlaveList;
+            _agentList = argOption.AgentList;
             _rpcPort = argOption.RpcPort;
             _appserverPort = argOption.AppserverPort;
             _azureSignalRConnectionString = argOption.AzureSignalRConnectionString;
@@ -79,11 +79,11 @@ namespace Commander
                 appServerCountInUse : appServerCount).ToList();
             // Create clients
             _masterHostName = argOption.MasterHostname;
-            _slaveHostNameList = (from slave in argOption.SlaveList select slave.Split(':')[0]).ToList();
+            _agentHostNameList = (from agent in argOption.AgentList select agent.Split(':')[0]).ToList();
 
             _remoteClients = new RemoteClients();
             _remoteClients.CreateAll(_username, _password,
-                _appServerHostNameList, _masterHostName, _slaveHostNameList);
+                _appServerHostNameList, _masterHostName, _agentHostNameList);
         }
 
         protected string ConcatPathWithBaseName(string path)
@@ -230,7 +230,7 @@ namespace Commander
             }
         }
 
-        protected void CreateDirIfNotExist(FileInfo appserverExecutable, FileInfo masterExecutable, FileInfo slaveExecutable)
+        protected void CreateDirIfNotExist(FileInfo appserverExecutable, FileInfo masterExecutable, FileInfo agentExecutable)
         {
             string GetDir(string path) => Path.GetDirectoryName(path).Replace('\\', '/');
 
@@ -245,10 +245,10 @@ namespace Commander
                                           GetDir(_appserverTargetPath)).Execute()));
             }
 
-            makeDirTasks.AddRange(from client in _remoteClients.SlaveSshClients
+            makeDirTasks.AddRange(from client in _remoteClients.AgentSshClients
                                   select Task.Run(() => client.CreateCommand(
                                       "mkdir -p " +
-                                      GetDir(_slaveTargetPath)).Execute()));
+                                      GetDir(_agentTargetPath)).Execute()));
 
             Task.WhenAll(makeDirTasks).Wait();
         }
@@ -298,8 +298,8 @@ namespace Commander
                                select Task.Run(() => Unzip(client, _appserverTargetPath)));
             }
             tasks.Add(Task.Run(() => Unzip(_remoteClients.MasterSshClient, _masterTargetPath)));
-            tasks.AddRange(from client in _remoteClients.SlaveSshClients
-                           select Task.Run(() => Unzip(client, _slaveTargetPath)));
+            tasks.AddRange(from client in _remoteClients.AgentSshClients
+                           select Task.Run(() => Unzip(client, _agentTargetPath)));
             Task.WhenAll(tasks).Wait();
         }
     }

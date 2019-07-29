@@ -1,7 +1,5 @@
 ﻿using Plugin.Base;
-using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace Plugin.Microsoft.Azure.SignalR.Benchmark
 {
@@ -11,8 +9,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
 
         IMasterMethod CreateMasterMethodInstance(string methodName);
 
-        IDictionary<string, object> PluginSlaveParamaters { get; set; }
+        IDictionary<string, object> PluginAgentParamaters { get; set; }
 
-        ISlaveMethod CreateSlaveMethodInstance(string methodName);
+        IAgentMethod CreateAgentMethodInstance(string methodName);
     }
 }
