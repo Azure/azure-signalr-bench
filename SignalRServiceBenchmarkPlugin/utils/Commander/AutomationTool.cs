@@ -49,6 +49,10 @@ namespace Commander
                 // Run benchmark
                 RunBenchmark();
             }
+            catch (Exception e)
+            {
+                Log.Error($"Automation tool stops for {e}");
+            }
             finally
             {
                 // Disconnect and dispose
@@ -254,11 +258,18 @@ fi
                     }
                 }
 
-                masterSshCommand.EndExecute(masterResult);
+                var result = masterSshCommand.EndExecute(masterResult);
+                var exitStatus = masterSshCommand.ExitStatus;
+                var masterError = masterSshCommand.Error;
+                Log.Information($"Master execute result: {result}, exit status: {exitStatus}, error: '{masterError}'");
                 if (!_notStartAppServer)
                 {
                     CopyAppServerLog();
                 }
+            }
+            catch (Exception e)
+            {
+                Log.Error($"unhandled exception {e}");
             }
             finally
             {

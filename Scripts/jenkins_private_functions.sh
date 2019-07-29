@@ -727,10 +727,13 @@ function mark_error_if_failed()
 
 function mark_job_as_failure_if_meet_error()
 {
-  if [ "$gMeetError" != "" ]
-  then
+  local exitCode=$1
+  if [ "$gMeetError" != "" ]; then
      echo "!!!! Failed for ${gMeetError}, so mark this job as failure !!!!"
      exit 1
+  fi
+  if [ $exitCode -ne 0 ]; then
+     exit $exitCode
   fi
 }
 
@@ -1163,70 +1166,10 @@ function create_asrs()
 # global env:
 # CurrentWorkingDir, ServicePrincipal, AgentConfig, VMMgrDir
 function remove_resource_group() {
-  echo "!!Received EXIT!! and remove all created VMs"
-  cd $CurrentWorkingDir
+  local exitStatus=$?
+  echo "!!Received EXIT!! and remove all created VMs, exit code: $exitStatus"
   local clean_resource_daemon=daemon_${JOB_NAME}_cleanresource
-  # I found several daemonize commands can not be executed sometimes, so I merged them to avoid this issue
-cat << EOF > /tmp/clean_resource.sh
-${VMMgrDir}/JenkinsScript --step=DeleteResourceGroupByConfig --AgentConfigFile=$AgentConfig --DisableRandomSuffix --ServicePrincipal=$ServicePrincipal
 
-if [ "$AspNetSignalR" == "true" ] || [ "$AzWebSignalR" == "true" ]
-then
-  ${AspNetWebMgrDir}/DeployWebApp removeGroup --resourceGroup=${AspNetWebAppResGrp} --servicePrincipal=$ServicePrincipal
-fi
-
-cd $ScriptWorkingDir
-. ./az_signalr_service.sh
-
-if [ "$ASRSEnv" == "dogfood" ]
-then
-  az_login_ASRS_dogfood
-  delete_group $ASRSResourceGroup
-  unregister_signalr_service_dogfood
-else
-  az_login_signalr_dev_sub
-  delete_group $ASRSResourceGroup
-fi
-EOF
-
-mark_job_as_failure_if_meet_error
-
-daemonize -v -o /tmp/${clean_resource_daemon}.out -e /tmp/${clean_resource_daemon}.err -E BUILD_ID=dontKillcenter /usr/bin/nohup /bin/sh /tmp/clean_resource.sh &
-
-}
-
-function remove_all_resource_group() {
-  echo "!!Received EXIT!! and remove all created VMs"
-  cd $CurrentWorkingDir
-  local clean_aspwebapp_daemon=daemon_${JOB_NAME}_cleanwebapp
-  local clean_vm_daemon=daemon_${JOB_NAME}_cleanvms
-  local clean_asrs_daemon=daemon_${JOB_NAME}_cleanasrs
-  ## remove webapp if they are not removed
-cat << EOF > /tmp/clean_webapp.sh
-${AspNetWebMgrDir}/DeployWebApp removeGroup --resourceGroup=${AspNetWebAppResGrp} --servicePrincipal=$ServicePrincipal
-EOF
-  ## remove all test VMs
-cat << EOF > /tmp/clean_vms.sh
-${VMMgrDir}/JenkinsScript --step=DeleteResourceGroupByConfig --AgentConfigFile=$AgentConfig --DisableRandomSuffix --ServicePrincipal=$ServicePrincipal
-EOF
-cat << EOF > /tmp/clean_asrs.sh
-cd $ScriptWorkingDir
-. ./az_signalr_service.sh
-
-if [ "$ASRSEnv" == "dogfood" ]
-then
-  az_login_ASRS_dogfood
-  delete_group $ASRSResourceGroup
-  unregister_signalr_service_dogfood
-else
-  az_login_signalr_dev_sub
-  delete_group $ASRSResourceGroup
-fi
-EOF
-  daemonize -v -o /tmp/${clean_aspwebapp_daemon}.out -e /tmp/${clean_aspwebapp_daemon}.err -E BUILD_ID=dontKillcenter /usr/bin/nohup /bin/sh /tmp/clean_webapp.sh &
-  ## remove all test VMs
-  daemonize -v -o /tmp/${clean_vm_daemon}.out -e /tmp/${clean_vm_daemon}.err -E BUILD_ID=dontKillcenter /usr/bin/nohup /bin/sh /tmp/clean_vms.sh &
-  ## remove ASRS
-  daemonize -v -o /tmp/${clean_asrs_daemon}.out -e /tmp/${clean_asrs_daemon}.err -E BUILD_ID=dontKillcenter /usr/bin/nohup /bin/sh /tmp/clean_asrs.sh &
-  mark_job_as_failure_if_meet_error
+  daemonize -v -o /tmp/${clean_resource_daemon}.out -e /tmp/${clean_resource_daemon}.err -E BUILD_ID=dontKillcenter /usr/bin/nohup /bin/sh $CleanResourceScript &
+  mark_job_as_failure_if_meet_error $exitStatus
 }

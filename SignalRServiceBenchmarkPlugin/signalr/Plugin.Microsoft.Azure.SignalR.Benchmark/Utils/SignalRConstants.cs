@@ -109,6 +109,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         public const string StatisticsConnectionInit = "connection:connect:init";
         public const string StatisticsConnectionLifeSpan = "connection:connect:lifespan";
         public const string StatisticsConnectionCost = "connection:connect:cost";
+        public const string StatisticsConnectionOfflinetime = "connection:connect:offline";
         public const string StatisticsConnectionReconnectCost = "connection:reconnect:cost";
         public const string StatisticsConnectionSLA = "connection:sla";
         public const string StatisticsLatencyLessThan = "message:lt:";

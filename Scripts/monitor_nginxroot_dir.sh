@@ -36,11 +36,21 @@ function action() {
      try=$(($try+1))
   done
   genTable ${newFile}
-  if [ "$g_db_table" != "" ]
+  if [ "$g_env_kind" == "longrun" ]
   then
-    insert_records_to_perf_table $DATA_PATH $g_db_table >> $LOG_FOLDER
+    if [ "$g_db_table" != "" ]
+    then
+      insert_longrun_records_to_perf_table $DATA_PATH $g_db_table >> $LOG_FOLDER
+    else
+      insert_longrun_records_to_perf_table $DATA_PATH >> $LOG_FOLDER
+    fi
   else
-    insert_records_to_perf_table $DATA_PATH >> $LOG_FOLDER
+    if [ "$g_db_table" != "" ]
+    then
+      insert_records_to_perf_table $DATA_PATH $g_db_table >> $LOG_FOLDER
+    else
+      insert_records_to_perf_table $DATA_PATH >> $LOG_FOLDER
+    fi
   fi
   echo "`date +%Y%m%d%H%M%S` ${newFile} created" >> $LOG_FOLDER
 }

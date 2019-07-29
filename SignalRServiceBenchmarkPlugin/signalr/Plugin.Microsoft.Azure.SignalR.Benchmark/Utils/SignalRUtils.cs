@@ -13,6 +13,7 @@ using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using static Plugin.Microsoft.Azure.SignalR.Benchmark.SignalREnums;
@@ -33,7 +34,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             Log.Information($"Handle step...{Environment.NewLine}Configuration: {Environment.NewLine}{dict.GetContents()}");
         }
 
-        public static string GroupName(string type, int index) => $"{type}:{index}";
+        public static string GroupName(string type, int index) => $"{type}_{index}";
 
         public static string MessageLessThan(long latency) => $"{SignalRConstants.StatisticsLatencyLessThan}{latency}";
 
@@ -811,19 +812,27 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             var arr2 = MergeConnectionDistribution(results, SignalRConstants.StatisticsConnectionCost);
             var arr3 = MergeConnectionDistribution(results, SignalRConstants.StatisticsConnectionReconnectCost);
             var arr4 = MergeConnectionDistribution(results, SignalRConstants.StatisticsConnectionSLA);
+            var arr5 = MergeConnectionDistribution(results, SignalRConstants.StatisticsConnectionOfflinetime);
             var dic1 = (from i in percentileList
                         select new { Key = $"{SignalRConstants.StatisticsConnectionLifeSpan}:{i}", Value = Percentile(arr1, i) })
                         .ToDictionary(entry => entry.Key, entry => entry.Value);
             var dic2 = (from i in percentileList
                         select new { Key = $"{SignalRConstants.StatisticsConnectionCost}:{i}", Value = Percentile(arr2, i) })
                         .ToDictionary(entry => entry.Key, entry => entry.Value);
+            // remove connections who do not have reconnection cost
+            var hasReconn = (from i in arr3
+                             where i > 0
+                             select i).ToArray();
             var dic3 = (from i in percentileList
-                        select new { Key = $"{SignalRConstants.StatisticsConnectionReconnectCost}:{i}", Value = Percentile(arr3, i) })
+                        select new { Key = $"{SignalRConstants.StatisticsConnectionReconnectCost}:{i}", Value = Percentile(hasReconn, i) })
                         .ToDictionary(entry => entry.Key, entry => entry.Value);
             var dic4 = (from i in percentileList
                         select new { Key = $"{SignalRConstants.StatisticsConnectionSLA}:{i}", Value = Percentile(arr4, i) })
                         .ToDictionary(entry => entry.Key, entry => entry.Value);
-            merged = merged.Union(dic1).Union(dic2).Union(dic3).Union(dic4).ToDictionary(entry => entry.Key, entry => entry.Value);
+            var dic5 = (from i in percentileList
+                        select new { Key = $"{SignalRConstants.StatisticsConnectionOfflinetime}:{i}", Value = Percentile(arr5, i) })
+                        .ToDictionary(entry => entry.Key, entry => entry.Value);
+            merged = merged.Union(dic1).Union(dic2).Union(dic3).Union(dic4).Union(dic5).ToDictionary(entry => entry.Key, entry => entry.Value);
             return merged;
         }
 
@@ -850,7 +859,6 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         private static int[] MergeConnectionDistribution(
             IDictionary<string, object>[] results, string key)
         {
-
             var arrays = results.ToList().Select(statistics =>
             {
                 if (statistics.ContainsKey(key))

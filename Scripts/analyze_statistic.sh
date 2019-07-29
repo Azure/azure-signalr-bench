@@ -44,7 +44,7 @@ filter_date_window() {
 
 generate_stat() {
   local rawCounterOutput="$1"
-  local i maxConnection maxSend sendTPuts recvTPuts drop reconnCost
+  local i maxConnection maxSend sendTPuts recvTPuts drop reconnCost lifeSpan offline
   local longrun=0 html normFile=/tmp/normal.txt
   if [ $# -eq 2 ] && [ "$2" == "longrun" ]
   then
@@ -65,11 +65,11 @@ generate_stat() {
         echo "$d,$f,$maxConnection,$maxSend,$sendTPuts,$recvTPuts,$html"
       fi
     else
-      read maxConnection maxSend sendTPuts recvTPuts drop reconnCost< <(python parse_counter.py -i $normFile -q longrun)
+      read maxConnection maxSend sendTPuts recvTPuts drop reconnCost lifeSpan offline< <(python parse_counter.py -i $normFile -q longrun)
       if [ $maxSend -ne 0 ]
       then
         html=${httpBase}/${d}/${f}/index.html
-        echo "$d,$f,$maxConnection,$maxSend,$sendTPuts,$recvTPuts,$html,$drop,$reconnCost"
+        echo "$d,$f,$maxConnection,$maxSend,$sendTPuts,$recvTPuts,$html,$drop,$reconnCost,$lifeSpan,$offline"
       fi
     fi
   done < $rawCounterOutput

@@ -198,14 +198,14 @@ func PrintConnectionStatSummary(monitors []Monitor) {
 	}
 	var curSendingStep int64
 	var lastValidIndex int
-	var connDropped int64
+	var reconn int64
 	var sum int64
 	for i, v := range monitors {
 		if v.Counters.Recv > 0 {
 			curSendingStep = v.Counters.Sending
 			if i+1 < len(monitors) &&
 				monitors[i+1].Counters.Sending != curSendingStep {
-				connDropped = connDropped + v.Counters.ReConn
+				reconn = reconn + v.Counters.ReConn
 				sum = v.Counters.Recv
 			}
 			lastValidIndex = i
@@ -215,7 +215,7 @@ func PrintConnectionStatSummary(monitors []Monitor) {
 		monitors[lastValidIndex].Counters.Recv != sum &&
 		monitors[lastValidIndex].Counters.Recv > 0 {
 		//v = monitors[lastValidIndex]
-		connDropped = connDropped + monitors[lastValidIndex].Counters.ReConn
+		reconn = reconn + monitors[lastValidIndex].Counters.ReConn
 	}
 	var chartfunc string
 	chartfunc = `
@@ -229,11 +229,11 @@ func PrintConnectionStatSummary(monitors []Monitor) {
         data.addColumn('number', '99% ReconnectCost (ms)');
         data.addColumn('number', '99% ConnectCost (ms)');
         data.addColumn('number', '99% LifeSpan (ms)');
-	data.addColumn('number', 'TotalDroppedConnection')
+	data.addColumn('number', 'TotalReconnection')
         `
 	fmt.Printf("%s\n", chartfunc)
 	fmt.Printf("\tdata.addRows([\n")
-	fmt.Printf("\t [%d, %d, %d, %d, %d],\n", sla99, reconnectionCost99, connectionCost99, lifeSpan99, connDropped)
+	fmt.Printf("\t [%d, %d, %d, %d, %d],\n", sla99, reconnectionCost99, connectionCost99, lifeSpan99, reconn)
 	chartfunc = `
         ]);
         var table = new google.visualization.Table(document.getElementById('tab_for_sum'));
