@@ -44,7 +44,7 @@ function create_group_if_not_exist() {
   local location=$2
   local grps=`az group list -o json|jq .[].name|grep $resgrp`
 
-  if [ "$grps" == "" ]
+  if [ "$grps" == "" ] || [ "$grps" != "$resgrp" ]
   then
     az group create --name $resgrp --location $location
   fi
