@@ -1,0 +1,44 @@
+<Project>
+  <PropertyGroup>
+    <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+  </PropertyGroup>
+  <PropertyGroup Label="Package Versions">
+    <!-- Azure ASP.NET Core SignalR -->
+    <MicrosoftAspNetCoreVersion>2.2.0</MicrosoftAspNetCoreVersion>
+    <MicrosoftAspNetCoreMvcVersion>2.2.0</MicrosoftAspNetCoreMvcVersion>
+    <MicrosoftAspNetCoreHttpConnectionsVersion>1.0.4</MicrosoftAspNetCoreHttpConnectionsVersion>
+    <MicrosoftAspNetCoreSignalRClientVersion>1.0.4</MicrosoftAspNetCoreSignalRClientVersion>
+    <MicrosoftAspNetCoreSignalRProtocolMessagePackPackageVersion>1.0.11</MicrosoftAspNetCoreSignalRProtocolMessagePackPackageVersion>
+    <MicrosoftAspNetCoreStaticFiles>2.2.0</MicrosoftAspNetCoreStaticFiles>
+    <MicrosoftAspNetSignalRClientVersion>2.4.0</MicrosoftAspNetSignalRClientVersion>
+    <MicrosoftAzureSignalRManagementVersion>1.0.0</MicrosoftAzureSignalRManagementVersion>
+    <MicrosoftExtensionsDependencyInjectionVersion>2.2.0</MicrosoftExtensionsDependencyInjectionVersion>
+    <MicrosoftExtensionsHttpVersion>2.2.0</MicrosoftExtensionsHttpVersion>
+    <MicrosoftExtensionsLoggingVersion>2.2.0</MicrosoftExtensionsLoggingVersion>
+    <SystemIdentityModelTokensJwtVersion>5.4.0</SystemIdentityModelTokensJwtVersion>
+
+    <!-- third-party libraries -->
+    <CommandLineParserVersion>2.3.0</CommandLineParserVersion>
+    <GrpcVersion>1.15.0</GrpcVersion>
+    <GrpcToolsVersion>1.15.0</GrpcToolsVersion>
+    <GoogleProtobufVersion>3.6.1</GoogleProtobufVersion>
+    <GoogleProtobufToolsVersion>3.6.1</GoogleProtobufToolsVersion>
+    <MedallionShellVersion>1.5.1</MedallionShellVersion>
+    <NewtonsoftJsonVersion>11.0.2</NewtonsoftJsonVersion>
+    <SerilogVersion>2.7.2-dev-01027</SerilogVersion>
+    <SerilogAspNetCoreVersion>2.1.1</SerilogAspNetCoreVersion>
+    <SerilogSinksConsoleVersion>3.1.2-dev-00779</SerilogSinksConsoleVersion>
+    <SerilogSinksFileVersion>4.0.1-dev-00798</SerilogSinksFileVersion>
+    <SSHNETVersion>2016.1.0</SSHNETVersion>
+    <YamlDotNetVersion>5.1.0</YamlDotNetVersion>
+
+    <!-- Signing -->
+    <MicroBuildCorePackageVersion>0.3.0</MicroBuildCorePackageVersion>
+
+    <!--Testing -->
+    <XunitVersion>2.3.1</XunitVersion>
+    <MicrosoftNETTestSdkVersion>15.7.0</MicrosoftNETTestSdkVersion>
+    <XunitRunnerVisualStudioVersion>2.4.0</XunitRunnerVisualStudioVersion>
+  </PropertyGroup>
+  <Import Project="$(DotNetPackageVersionPropsPath)" Condition=" '$(DotNetPackageVersionPropsPath)' != '' " />
+</Project>
