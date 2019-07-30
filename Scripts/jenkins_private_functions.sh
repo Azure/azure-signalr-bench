@@ -1168,7 +1168,7 @@ function create_asrs()
 function remove_resource_group() {
   local exitStatus=$?
   echo "!!Received EXIT!! and remove all created VMs, exit code: $exitStatus"
-  local clean_resource_daemon=daemon_${JOB_NAME}_cleanresource
+  local clean_resource_daemon=daemon_${NORMALIZED_JOB_NAME}_cleanresource
 
   (daemonize -v -o /tmp/${clean_resource_daemon}.out -e /tmp/${clean_resource_daemon}.err -E BUILD_ID=dontKillcenter /usr/bin/nohup /bin/sh $CleanResourceScript &) && (mark_job_as_failure_if_meet_error $exitStatus)
 }
