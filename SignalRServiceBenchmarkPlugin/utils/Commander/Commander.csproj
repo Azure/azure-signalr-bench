@@ -4,6 +4,11 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>netcoreapp2.1</TargetFramework>
     <LangVersion>latest</LangVersion>
+    <!-- Workaround start: Do not sign this exe since MedallionShell is unsigned-->
+    <SignAssembly>false</SignAssembly>
+    <DelaySign>false</DelaySign>
+    <PublicSign>false</PublicSign>
+    <!-- Workaround end -->
   </PropertyGroup>
 
   <ItemGroup>
