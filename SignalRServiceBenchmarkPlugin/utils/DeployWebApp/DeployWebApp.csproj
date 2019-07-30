@@ -7,11 +7,11 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="CommandLineParser" Version="2.3.0" />
-    <PackageReference Include="FluentFTP" Version="24.0.0" />
-    <PackageReference Include="Microsoft.Azure.Management.Fluent" Version="1.18.0" />
-    <PackageReference Include="Microsoft.Azure.Management.Websites" Version="2.0.1" />
-    <PackageReference Include="YamlDotNet" Version="5.3.0" />
+    <PackageReference Include="CommandLineParser" Version="$(CommandLineParserVersion)" />
+    <PackageReference Include="FluentFTP" Version="$(FluentFTPVersion)" />
+    <PackageReference Include="Microsoft.Azure.Management.Fluent" Version="$(MicrosoftAzureManagementFluentVersion)" />
+    <PackageReference Include="Microsoft.Azure.Management.Websites" Version="$(MicrosoftAzureManagementWebsitesVersion)" />
+    <PackageReference Include="YamlDotNet.Signed" Version="$(YamlDotNetSignedVersion)" />
   </ItemGroup>
 
 </Project>

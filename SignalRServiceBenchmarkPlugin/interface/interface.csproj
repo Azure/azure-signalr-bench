@@ -14,7 +14,7 @@
 
   <ItemGroup>
     <PackageReference Include="Serilog.AspNetCore" Version="$(SerilogAspNetCoreVersion)" />
-    <PackageReference Include="YamlDotNet" Version="$(YamlDotNetVersion)" />
+    <PackageReference Include="YamlDotNet.Signed" Version="$(YamlDotNetSignedVersion)" />
     <PackageReference Include="Newtonsoft.Json" Version="$(NewtonsoftJsonVersion)" />
     <PackageReference Include="Serilog" Version="$(SerilogVersion)" />
     <PackageReference Include="Serilog.Sinks.Console" Version="$(SerilogSinksConsoleVersion)" />

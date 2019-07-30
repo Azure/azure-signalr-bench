@@ -27,7 +27,7 @@
     <PackageReference Include="Microsoft.Extensions.Logging" Version="$(MicrosoftExtensionsLoggingVersion)" />
     <PackageReference Include="Newtonsoft.Json" Version="$(NewtonsoftJsonVersion)" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="$(SystemIdentityModelTokensJwtVersion)" />
-    <PackageReference Include="YamlDotNet" Version="$(YamlDotNetVersion)" />
+    <PackageReference Include="YamlDotNet.Signed" Version="$(YamlDotNetSignedVersion)" />
   </ItemGroup>
 
   <ItemGroup>

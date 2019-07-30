@@ -17,6 +17,10 @@
     <MicrosoftExtensionsLoggingVersion>2.2.0</MicrosoftExtensionsLoggingVersion>
     <SystemIdentityModelTokensJwtVersion>5.4.0</SystemIdentityModelTokensJwtVersion>
 
+    <!-- For Utils tools -->
+    <FluentFTPVersion>24.0.0</FluentFTPVersion>
+    <MicrosoftAzureManagementFluentVersion>1.18.0</MicrosoftAzureManagementFluentVersion>
+    <MicrosoftAzureManagementWebsitesVersion>2.0.1</MicrosoftAzureManagementWebsitesVersion>
     <!-- third-party libraries -->
     <CommandLineParserVersion>2.3.0</CommandLineParserVersion>
     <GrpcVersion>1.15.0</GrpcVersion>
@@ -30,7 +34,7 @@
     <SerilogSinksConsoleVersion>3.1.2-dev-00779</SerilogSinksConsoleVersion>
     <SerilogSinksFileVersion>4.0.1-dev-00798</SerilogSinksFileVersion>
     <SSHNETVersion>2016.1.0</SSHNETVersion>
-    <YamlDotNetVersion>5.1.0</YamlDotNetVersion>
+    <YamlDotNetSignedVersion>6.0.0</YamlDotNetSignedVersion>
 
     <!-- Signing -->
     <MicroBuildCorePackageVersion>0.3.0</MicroBuildCorePackageVersion>
