@@ -7,15 +7,15 @@
   </ItemGroup>
 
   <ItemGroup>
-    <FilesToSign Include="$(RepositoryRoot)framework\master\bin\$(Configuration)\netcoreapp2.1\master.dll" Certificate="$(AssemblySigningCertName)" />
-    <FilesToSign Include="$(RepositoryRoot)framework\agent\bin\$(Configuration)\netcoreapp2.1\agent.dll" Certificate="$(AssemblySigningCertName)" />
-    <FilesToSign Include="$(RepositoryRoot)signalr\Plugin.Microsoft.Azure.SignalR.Benchmark\bin\$(Configuration)\netcoreapp2.1\Plugin.Microsoft.Azure.SignalR.Benchmark.dll" Certificate="$(AssemblySigningCertName)" />
+    <FilesToSign Include="$(RepositoryRoot)src\master\bin\$(Configuration)\netcoreapp2.1\master.dll" Certificate="$(AssemblySigningCertName)" />
+    <FilesToSign Include="$(RepositoryRoot)src\agent\bin\$(Configuration)\netcoreapp2.1\agent.dll" Certificate="$(AssemblySigningCertName)" />
+    <FilesToSign Include="$(RepositoryRoot)src\signalr\bin\$(Configuration)\netcoreapp2.1\Plugin.Microsoft.Azure.SignalR.Benchmark.dll" Certificate="$(AssemblySigningCertName)" />
   </ItemGroup>
 
   <ItemGroup Condition ="'$(IsTargetMultiFramework)' != 'false'">
   </ItemGroup>
   <ItemGroup>
-    <ProjectToExclude Include="$(RepositoryRoot)utils\Commander\Commander.csproj" />
+    <ProjectToExclude Include="$(RepositoryRoot)src\utils\Commander\Commander.csproj" />
   </ItemGroup>
 
 </Project>

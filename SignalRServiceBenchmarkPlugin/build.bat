@@ -1,3 +1,3 @@
-cd framework\rpc
+cd src\rpc
 call build.bat
 cd ..\..

@@ -13,6 +13,7 @@
 @rem limitations under the License.
 
 @rem Generate the C# code for .proto files
+@ECHO OFF
 
 setlocal
 

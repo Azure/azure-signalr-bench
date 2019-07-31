@@ -2,7 +2,10 @@
 
 build()
 {
-  cd framework/rpc
+  cd src/rpc
+  ./build.sh
+  cd ../..
+  cd src/appserver
   ./build.sh
   cd ../..
 }

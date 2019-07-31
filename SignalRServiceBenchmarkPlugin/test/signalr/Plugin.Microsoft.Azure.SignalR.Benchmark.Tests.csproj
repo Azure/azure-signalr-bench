@@ -21,9 +21,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\interface\interface.csproj" />
-    <ProjectReference Include="..\..\framework\rpc\rpc.csproj" />
-    <ProjectReference Include="..\Plugin.Microsoft.Azure.SignalR.Benchmark\Plugin.Microsoft.Azure.SignalR.Benchmark.csproj" />
+    <ProjectReference Include="..\..\src\interface\interface.csproj" />
+    <ProjectReference Include="..\..\src\rpc\rpc.csproj" />
+    <ProjectReference Include="..\..\src\signalr\Plugin.Microsoft.Azure.SignalR.Benchmark.csproj" />
   </ItemGroup>
 
 </Project>

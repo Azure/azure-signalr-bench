@@ -9,9 +9,10 @@
     <MicrosoftAspNetCoreHttpConnectionsVersion>1.0.4</MicrosoftAspNetCoreHttpConnectionsVersion>
     <MicrosoftAspNetCoreSignalRClientVersion>1.0.4</MicrosoftAspNetCoreSignalRClientVersion>
     <MicrosoftAspNetCoreSignalRProtocolMessagePackPackageVersion>1.0.11</MicrosoftAspNetCoreSignalRProtocolMessagePackPackageVersion>
-    <MicrosoftAspNetCoreStaticFiles>2.2.0</MicrosoftAspNetCoreStaticFiles>
+    <MicrosoftAspNetCoreStaticFilesVersion>2.2.0</MicrosoftAspNetCoreStaticFilesVersion>
     <MicrosoftAspNetSignalRClientVersion>2.4.0</MicrosoftAspNetSignalRClientVersion>
     <MicrosoftAzureSignalRManagementVersion>1.0.0</MicrosoftAzureSignalRManagementVersion>
+    <MicrosoftAzureSignalRVersion>1.0.11</MicrosoftAzureSignalRVersion>
     <MicrosoftExtensionsDependencyInjectionVersion>2.2.0</MicrosoftExtensionsDependencyInjectionVersion>
     <MicrosoftExtensionsHttpVersion>2.2.0</MicrosoftExtensionsHttpVersion>
     <MicrosoftExtensionsLoggingVersion>2.2.0</MicrosoftExtensionsLoggingVersion>
@@ -21,6 +22,7 @@
     <FluentFTPVersion>24.0.0</FluentFTPVersion>
     <MicrosoftAzureManagementFluentVersion>1.18.0</MicrosoftAzureManagementFluentVersion>
     <MicrosoftAzureManagementWebsitesVersion>2.0.1</MicrosoftAzureManagementWebsitesVersion>
+
     <!-- third-party libraries -->
     <CommandLineParserVersion>2.3.0</CommandLineParserVersion>
     <GrpcVersion>1.15.0</GrpcVersion>
@@ -29,10 +31,11 @@
     <GoogleProtobufToolsVersion>3.6.1</GoogleProtobufToolsVersion>
     <MedallionShellVersion>1.5.1</MedallionShellVersion>
     <NewtonsoftJsonVersion>11.0.2</NewtonsoftJsonVersion>
-    <SerilogVersion>2.7.2-dev-01027</SerilogVersion>
     <SerilogAspNetCoreVersion>2.1.1</SerilogAspNetCoreVersion>
+    <SerilogExtensionsLoggingFileVersion>1.1.0</SerilogExtensionsLoggingFileVersion>
     <SerilogSinksConsoleVersion>3.1.2-dev-00779</SerilogSinksConsoleVersion>
     <SerilogSinksFileVersion>4.0.1-dev-00798</SerilogSinksFileVersion>
+    <SerilogVersion>2.7.2-dev-01027</SerilogVersion>
     <SSHNETVersion>2016.1.0</SSHNETVersion>
     <YamlDotNetSignedVersion>6.0.0</YamlDotNetSignedVersion>
 

@@ -1,9 +1,0 @@
-{
-  "profiles": {
-    "master": {
-      "commandName": "Project",
-      "commandLineArgs": "--BenchmarkConfiguration resultparser.yaml",
-      "workingDirectory": "E:\\home\\Work\\azure-signalr-bench\\SignalRServiceBenchmarkPlugin\\framework\\master"
-    }
-  }
-}
