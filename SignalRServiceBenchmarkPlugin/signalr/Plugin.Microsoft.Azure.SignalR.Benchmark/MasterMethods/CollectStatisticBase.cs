@@ -19,7 +19,9 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
         private long _interval;
         private string _type;
         private string _statisticsOutputPath;
-        private double[] _percentileList;
+        private double[] _percentileList = SignalRConstants.PERCENTILE_LIST
+                                                           .Split(",")
+                                                           .Select(ind => Convert.ToDouble(ind)).ToArray();
         private System.Timers.Timer _timer;
         private bool _printLatency = true;
         private object _lock = new object();
