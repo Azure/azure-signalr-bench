@@ -20,7 +20,7 @@
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="$(MicrosoftAspNetCoreSignalRClientVersion)" />
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Protocols.MessagePack" Version="$(MicrosoftAspNetCoreSignalRProtocolMessagePackPackageVersion)" />
     <PackageReference Include="Microsoft.AspNet.SignalR.Client" Version="$(MicrosoftAspNetSignalRClientVersion)" />
-    <PackageReference Include="Microsoft.AspNetCore.StaticFiles" Version="$(MicrosoftAspNetCoreStaticFiles)" />
+    <PackageReference Include="Microsoft.AspNetCore.StaticFiles" Version="$(MicrosoftAspNetCoreStaticFilesVersion)" />
     <PackageReference Include="Microsoft.Azure.SignalR.Management" Version="$(MicrosoftAzureSignalRManagementVersion)" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="$(MicrosoftExtensionsDependencyInjectionVersion)" />
     <PackageReference Include="Microsoft.Extensions.Http" Version="$(MicrosoftExtensionsHttpVersion)" />
@@ -31,15 +31,15 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\common\common.csproj" />
-    <ProjectReference Include="..\..\interface\interface.csproj" />
+    <ProjectReference Include="..\common\common.csproj" />
+    <ProjectReference Include="..\interface\interface.csproj" />
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="..\..\utils\AppServer\Startup.cs" Link="Internals\AppServer\Startup.cs" />
-    <Compile Include="..\..\utils\AppServer\Hub\BenchHub.cs" Link="Internals\AppServer\BenchHub.cs" />
-    <Compile Include="..\..\utils\AppServer\TimedLogger.cs" Link="Internals\AppServer\TimedLogger.cs" />
-    <Compile Include="..\..\utils\AppServer\TimedLoggerFactory.cs" Link="Internals\AppServer\TimedLoggerFactory.cs" />
+    <Compile Include="..\appserver\Startup.cs" Link="Internals\AppServer\Startup.cs" />
+    <Compile Include="..\appserver\Hub\BenchHub.cs" Link="Internals\AppServer\BenchHub.cs" />
+    <Compile Include="..\appserver\TimedLogger.cs" Link="Internals\AppServer\TimedLogger.cs" />
+    <Compile Include="..\appserver\TimedLoggerFactory.cs" Link="Internals\AppServer\TimedLoggerFactory.cs" />
   </ItemGroup>
 
 </Project>

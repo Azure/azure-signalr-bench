@@ -1,8 +1,0 @@
-{
-  "profiles": {
-    "slave": {
-      "commandName": "Project",
-      "commandLineArgs": "-- --RpcPort 5555 --HostName 0.0.0.0"
-    }
-  }
-}
