@@ -94,7 +94,7 @@ function create_serverless_signalr_service()
   local properties=$pp
   local ret=$(az resource create -g $rsg -n $name --namespace Microsoft.SignalRService --resource-type SignalR --properties $properties --is-full-object)
   echo "`date +%Y%m%d%H%M%S`: waiting instance ready"
-  sleep 120
+  sleep 600
   echo "`date +%Y%m%d%H%M%S`: finish waiting"
   echo $ret
 }
