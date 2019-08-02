@@ -848,9 +848,9 @@ build_app_server() {
   fi
   cd $AppServerWorkingDir
   ./build.sh $tmpAppServer
-  if [ ! -e $tmpAppServer/AppServer ]
+  if [ ! -e $tmpAppServer/appserver ]
   then
-    echo "!!! Fail to build appserver: the '$tmpAppServer/AppServer' does not exist!!!"
+    echo "!!! Fail to build appserver: the '$tmpAppServer/appserver' does not exist!!!"
     exit 1
   fi
   if [ -e $targetDir/publish ]
