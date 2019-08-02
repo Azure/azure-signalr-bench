@@ -20,5 +20,6 @@ kore_build()
   "$DIR/run.sh" default-build "$@"
 }
 
+export _PackTool=true
 build
 kore_build

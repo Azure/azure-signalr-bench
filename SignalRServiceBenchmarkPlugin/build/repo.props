@@ -7,15 +7,34 @@
   </ItemGroup>
 
   <ItemGroup>
-    <FilesToSign Include="$(RepositoryRoot)src\master\bin\$(Configuration)\netcoreapp2.1\master.dll" Certificate="$(AssemblySigningCertName)" />
-    <FilesToSign Include="$(RepositoryRoot)src\agent\bin\$(Configuration)\netcoreapp2.1\agent.dll" Certificate="$(AssemblySigningCertName)" />
-    <FilesToSign Include="$(RepositoryRoot)src\signalr\bin\$(Configuration)\netcoreapp2.1\Plugin.Microsoft.Azure.SignalR.Benchmark.dll" Certificate="$(AssemblySigningCertName)" />
+    <FilesToSign Include="$(RepositoryRoot)src\master\bin\$(Configuration)\**\master.dll" Certificate="$(AssemblySigningCertName)" />
+    <FilesToSign Include="$(RepositoryRoot)src\agent\bin\$(Configuration)\**\agent.dll" Certificate="$(AssemblySigningCertName)" />
+    <FilesToSign Include="$(RepositoryRoot)src\**\bin\$(Configuration)\**\common.dll" Certificate="$(AssemblySigningCertName)" />
+    <FilesToSign Include="$(RepositoryRoot)src\**\bin\$(Configuration)\**\interface.dll" Certificate="$(AssemblySigningCertName)" />
+    <FilesToSign Include="$(RepositoryRoot)src\**\bin\$(Configuration)\**\rpc.dll" Certificate="$(AssemblySigningCertName)" />
+    <FilesToSign Include="$(RepositoryRoot)src\**\bin\$(Configuration)\**\Microsoft.*.dll" Certificate="$(AssemblySigningCertName)" />
+    <FilesToSign Include="$(RepositoryRoot)src\**\bin\$(Configuration)\**\System.*.dll" Certificate="$(AssemblySigningCertName)" />
+    <FilesToSign Include="$(RepositoryRoot)src\signalr\bin\$(Configuration)\**\Plugin.Microsoft.Azure.SignalR.Benchmark.dll" Certificate="$(AssemblySigningCertName)" />
+    <FilesToSign Include="$(RepositoryRoot)src\appserver\bin\$(Configuration)\**\appserver.dll" Certificate="$(AssemblySigningCertName)" />
   </ItemGroup>
 
-  <ItemGroup Condition ="'$(IsTargetMultiFramework)' != 'false'">
+  <ItemGroup Label="Code sign exclusions">
+    <FilesToExcludeFromSigning Include="$(RepositoryRoot)src\appserver\**\*.js" />
+    <FilesToExcludeFromSigning Include="$(RepositoryRoot)src\**\bin\$(Configuration)\**\CommandLine.dll" />
+    <FilesToExcludeFromSigning Include="$(RepositoryRoot)src\**\bin\$(Configuration)\**\Google.Protobuf.dll" />
+    <FilesToExcludeFromSigning Include="$(RepositoryRoot)src\**\bin\$(Configuration)\**\Grpc.Core.dll" />
+    <FilesToExcludeFromSigning Include="$(RepositoryRoot)src\**\bin\$(Configuration)\**\MessagePack.dll" />
+    <FilesToExcludeFromSigning Include="$(RepositoryRoot)src\**\bin\$(Configuration)\**\Newtonsoft.Json.Bson.dll" />
+    <FilesToExcludeFromSigning Include="$(RepositoryRoot)src\**\bin\$(Configuration)\**\Newtonsoft.Json.dll" />
+    <FilesToExcludeFromSigning Include="$(RepositoryRoot)src\**\bin\$(Configuration)\**\Serilog.dll" />
+    <FilesToExcludeFromSigning Include="$(RepositoryRoot)src\**\bin\$(Configuration)\**\Serilog.*.dll" />
+    <FilesToExcludeFromSigning Include="$(RepositoryRoot)src\**\bin\$(Configuration)\**\YamlDotNet.dll" />
+    <FilesToExcludeFromSigning Include="$(RepositoryRoot)src\**\bin\$(Configuration)\**\grpc_csharp_ext.*.dll" />
   </ItemGroup>
+
   <ItemGroup>
     <ProjectToExclude Include="$(RepositoryRoot)src\utils\Commander\Commander.csproj" />
+    <ProjectToExclude Include="$(RepositoryRoot)test\signalr\**\*.csproj" />
   </ItemGroup>
 
 </Project>

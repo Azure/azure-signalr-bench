@@ -64,7 +64,7 @@ namespace Commander
         {
             var appserverDirectory = GenAppServerRemoteDirection();
             var appserverScript = "";
-            var cmdPrefix = "dotnet exec AppServer.dll";
+            var cmdPrefix = "dotnet exec appserver.dll";
             var appLogFile = _appLogFileName;
             if (_azureSignalRConnectionString == null)
             {
