@@ -16,7 +16,6 @@
     <FilesToSign Include="$(RepositoryRoot)src\**\bin\$(Configuration)\**\System.*.dll" Certificate="$(AssemblySigningCertName)" />
     <FilesToSign Include="$(RepositoryRoot)src\signalr\bin\$(Configuration)\**\Plugin.Microsoft.Azure.SignalR.Benchmark.dll" Certificate="$(AssemblySigningCertName)" />
     <FilesToSign Include="$(RepositoryRoot)src\appserver\bin\$(Configuration)\**\appserver.dll" Certificate="$(AssemblySigningCertName)" />
-    <!--<FilesToSign Include="$(RepositoryRoot)src\agent\bin\$(Configuration)\**\CommandLine.dll" Certificate="$(AssemblySigningCertName)" />-->
   </ItemGroup>
 
   <ItemGroup Label="Code sign exclusions">
