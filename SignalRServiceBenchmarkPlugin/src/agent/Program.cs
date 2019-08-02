@@ -14,6 +14,11 @@ namespace Rpc.Agent
             // Parse args
             var argsOption = ParseArgs(args);
 
+            if (argsOption == null)
+            {
+                return;
+            }
+
             Util.SavePidToFile(argsOption.PidFile);
 
             // Create Logger
@@ -34,8 +39,7 @@ namespace Rpc.Agent
                 .WithParsed(options => argsOption = options)
                 .WithNotParsed(error => 
                 {
-                    Log.Error($"Error in parsing arguments: {error}");
-                    throw new ArgumentException("Error in parsing arguments");
+                    argsOption = null;
                 });
             return argsOption;
         }

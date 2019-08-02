@@ -19,7 +19,6 @@
     <RepositoryUrl>https://github.com/azure/azure-signalr-bench</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <RepositoryRoot>$(MSBuildThisFileDirectory)</RepositoryRoot>
-    <AssemblyOriginatorKeyFile>$(MSBuildThisFileDirectory)build\Key.snk</AssemblyOriginatorKeyFile>
     <SignAssembly>true</SignAssembly>
     <PublicSign Condition="'$(OS)' != 'Windows_NT'">true</PublicSign>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
