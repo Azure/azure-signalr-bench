@@ -19,6 +19,7 @@
 
   <ItemGroup>
     <ProjectToExclude Include="$(RepositoryRoot)src\utils\Commander\Commander.csproj" />
+    <ProjectToExclude Include="$(RepositoryRoot)test\signalr\**\*.csproj" />
   </ItemGroup>
 
 </Project>
