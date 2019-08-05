@@ -77,7 +77,7 @@ function create_serverless_asrs_with_acs_redises()
                                        --is-full-object)
   # the new instance may be killed ~2 times, so please wait
   echo "`date +%Y%m%d%H%M%S`: waiting instance ready"
-  sleep 600
+  sleep 1200
   echo "`date +%Y%m%d%H%M%S`: finish waiting"
   echo "$signalrHostName"
 }
@@ -94,7 +94,7 @@ function create_serverless_signalr_service()
   local properties=$pp
   local ret=$(az resource create -g $rsg -n $name --namespace Microsoft.SignalRService --resource-type SignalR --properties $properties --is-full-object)
   echo "`date +%Y%m%d%H%M%S`: waiting instance ready"
-  sleep 600
+  sleep 1200
   echo "`date +%Y%m%d%H%M%S`: finish waiting"
   echo $ret
 }
