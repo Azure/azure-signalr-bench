@@ -4,7 +4,6 @@
     <TargetFramework>netcoreapp2.1</TargetFramework>
     <UserSecretsId>appserver</UserSecretsId>
     <LangVersion>latest</LangVersion>
-    <IsPackable>true</IsPackable>
   </PropertyGroup>
 
   <ItemGroup>

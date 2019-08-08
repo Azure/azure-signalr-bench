@@ -5,9 +5,6 @@ build()
   cd src/rpc
   ./build.sh
   cd ../..
-  cd src/appserver
-  ./build.sh
-  cd ../..
 }
 
 kore_build()
