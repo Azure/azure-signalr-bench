@@ -1,23 +1,13 @@
 ﻿using CommandLine;
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
+using Common;
 using Rpc.Service;
 using Serilog;
-using Common;
-using Plugin.Base;
-using System.Linq;
-using Grpc.Core;
-using Grpc.Core.Logging;
+using System.Threading.Tasks;
 
 namespace Rpc.Master
 {
     class Program
     {
-        private static readonly int _maxRertryConnect = 100;
-        private static TimeSpan _retryInterval = TimeSpan.FromSeconds(1);
-        private static TimeSpan _statisticsCollectInterval = TimeSpan.FromSeconds(1);
-
         static async Task Main(string[] args)
         {
             // Parse args
@@ -27,60 +17,34 @@ namespace Rpc.Master
             {
                 return;
             }
-            Util.SavePidToFile(argsOption.PidFile);
+            var config = GenConfig(argsOption);
+            var controller = new Controller(config);
+            await controller.Start();
+        }
 
-            // Create Logger
-            Util.CreateLogger(argsOption.LogDirectory, argsOption.LogName, argsOption.LogTarget);
-
-            var type = Type.GetType(argsOption.PluginFullName);
-
-            var plugin = (IPlugin)Activator.CreateInstance(type);
-
-            if (!CheckUsage(argsOption, plugin))
+        private static RpcConfig GenConfig(ArgsOption option)
+        {
+            var logTarget = RpcLogTargetEnum.All;
+            if (option.LogTarget == LogTargetEnum.Console)
             {
-                // Load benchmark configuration
-                var configuration = Util.ReadFile(argsOption.BenchmarkConfiguration);
-                IList<IRpcClient> clients = null;
-                if (plugin.NeedAgents(configuration))
-                {
-                    // Create rpc clients
-                    clients = CreateRpcClients(argsOption.AgentList);
-
-                    // Check rpc connections
-                    await WaitRpcConnectSuccess(clients);
-                }
-
-                await plugin.Start(configuration, clients);
+                logTarget = RpcLogTargetEnum.Console;
             }
-        }
-
-        private static bool CheckUsage(ArgsOption argsOption, IPlugin plugin)
-        {
-            if (argsOption.BenchmarkConfiguration == "?")
+            else if (option.LogTarget == LogTargetEnum.File)
             {
-                plugin.Help();
-                return true;
+                logTarget = RpcLogTargetEnum.File;
             }
-            return false;
-        }
+            var config = new RpcConfig()
+            {
+                PidFile = option.PidFile,
+                LogTarget = logTarget,
+                LogName = option.LogName,
+                LogDirectory = option.LogDirectory,
+                AgentList = option.AgentList,
+                PluginFullName = option.PluginFullName,
+                PluginConfiguration = option.BenchmarkConfiguration
+            };
 
-        private static void EnableTracing()
-        {
-            Environment.SetEnvironmentVariable("GRPC_TRACE", "tcp,channel,http,secure_endpoint");
-            Environment.SetEnvironmentVariable("GRPC_VERBOSITY", "DEBUG");
-            GrpcEnvironment.SetLogger(new ConsoleLogger());
-        }
-
-        private static IList<IRpcClient> CreateRpcClients(IList<string> agentList)
-        {
-            var hostnamePortList = (from agent in agentList
-                                    select agent.Split(':') into parts
-                                    select (Hostname: parts[0], Port: Convert.ToInt32(parts[1])));
-
-            var clients = from item in hostnamePortList
-                          select RpcClient.Create(item.Hostname, item.Port);
-
-            return clients.ToList();
+            return config;
         }
 
         private static ArgsOption ParseArgs(string[] args)
@@ -92,43 +56,8 @@ namespace Rpc.Master
                 .WithNotParsed(error => 
                 {
                     argsOption = null;
-                    //Log.Error($"Error in parsing arguments: {error}");
-                    //throw new ArgumentException("Error in parsing arguments.");
                 });
             return argsOption;
-        }
-
-        private static async Task WaitRpcConnectSuccess(IList<IRpcClient> clients)
-        {
-            Log.Information("Connect Rpc agents...");
-            for (var i = 0; i < _maxRertryConnect; i++)
-            {
-                try
-                {
-                    foreach (var client in clients)
-                    {
-                        try
-                        {
-                            client.TestConnection();
-                        }
-                        catch (Exception)
-                        {
-                            throw;
-                        }
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Log.Warning($"Fail to connect agents because of {ex.Message}, retry {i}th time");
-                    await Task.Delay(_retryInterval);
-                    continue;
-                }
-                return;
-            }
-
-            var message = $"Cannot connect to all agents.";
-            Log.Error(message);
-            throw new Exception(message);
         }
     }
 }

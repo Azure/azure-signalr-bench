@@ -14,7 +14,7 @@ namespace Rpc.Agent
         public string PidFile { get; set; }
 
         [Option("HostName", Required = false, Default = "localhost", HelpText = "Hostname.")]
-        public string HostName{ get; set; }
+        public string HostName { get; set; }
 
         // Log
         [Option("LogName", Required = false, Default = "agent-.log", HelpText = "Log file name. " +

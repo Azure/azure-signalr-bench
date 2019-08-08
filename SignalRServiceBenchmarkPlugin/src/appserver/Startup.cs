@@ -2,7 +2,6 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using Microsoft.AspNetCore.Builder;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
@@ -12,50 +11,54 @@ namespace Microsoft.Azure.SignalR.PerfTest.AppServer
 {
     public class Startup
     {
-        public const string HUB_NAME = "/signalrbench";
-        public Startup(IConfiguration configuration)
-        {
-            Configuration = configuration;
-            useLocalSignalR =
-                Environment.GetEnvironmentVariable("useLocalSignalR") == null ||
-                Environment.GetEnvironmentVariable("useLocalSignalR") == "" ||
-                Environment.GetEnvironmentVariable("useLocalSignalR") == "false" ? false : true;
+        private const string HUB_NAME = "/signalrbench";
 
+        private AppServerConfig _serverConfig;
+        private bool _useLocalSignalR;
+
+        public Startup(AppServerConfig serverConfig)
+        {
+            _serverConfig = serverConfig;
             Console.BackgroundColor = ConsoleColor.DarkMagenta;
-            Console.WriteLine($"use local signalr: {useLocalSignalR}");
+            _useLocalSignalR = _serverConfig.SignalRType == 0 ? true : false;
+            Console.WriteLine($"use local signalr: {_useLocalSignalR}");
             Console.BackgroundColor = ConsoleColor.Black;
         }
 
-        public IConfiguration Configuration { get; }
-        private bool useLocalSignalR = false;
-
         public void ConfigureServices(IServiceCollection services)
         {
-            if (useLocalSignalR)
+            if (_useLocalSignalR)
+            {
                 services.AddSignalR().AddMessagePackProtocol();
+            }
             else
+            {
                 services.AddSignalR().AddMessagePackProtocol().AddAzureSignalR(option =>
                 {
-                    option.AccessTokenLifetime = TimeSpan.FromDays(1);
-                    option.ConnectionCount = Configuration.GetValue<int>("Azure:SignalR:ConnectionNumber");
+                    option.AccessTokenLifetime = TimeSpan.FromHours(_serverConfig.AccessTokenLifetime);
+                    option.ConnectionCount = _serverConfig.ConnectionNumber;
+                    option.ConnectionString = _serverConfig.ConnectionString;
                 });
+            }
             services.Replace(ServiceDescriptor.Singleton(typeof(ILoggerFactory), typeof(TimedLoggerFactory)));
         }
 
         public void Configure(IApplicationBuilder app)
         {
-            app.UseFileServer();
-            if (useLocalSignalR)
+            if (_useLocalSignalR)
+            {
                 app.UseSignalR(routes =>
                 {
                     routes.MapHub<BenchHub>(HUB_NAME);
                 });
+            }   
             else
+            {
                 app.UseAzureSignalR(routes =>
                 {
                     routes.MapHub<BenchHub>(HUB_NAME);
                 });
-
+            }   
         }
 
     }

@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="..\shared.targets" Condition="'$(_PackTool)' == 'true'" />
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp2.1</TargetFramework>
+    <IsPackable>true</IsPackable>
+    <AssemblyName>dotnet-signalr-bench</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.App" Version="$(MicrosoftAspNetCoreAppVersion)" />
+    <PackageReference Include="Microsoft.AspNetCore.SignalR" Version="$(MicrosoftAspNetCoreSignalRClientVersion)" />
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Protocols.MessagePack" Version="$(MicrosoftAspNetCoreSignalRProtocolMessagePackPackageVersion)" />
+    <PackageReference Include="Microsoft.Azure.SignalR" Version="$(MicrosoftAzureSignalRVersion)" />
+    <PackageReference Include="McMaster.Extensions.CommandLineUtils" Version="$(McMasterExtensionsCommandLineUtilsVersion)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\appserver\AppServerConfig.cs" Link="application\AppServerConfig.cs" />
+    <Compile Include="..\appserver\Hub\BenchHub.cs" Link="application\Hub\BenchHub.cs" />
+    <Compile Include="..\appserver\Startup.cs" Link="application\Startup.cs" />
+    <Compile Include="..\appserver\TimedLogger.cs" Link="application\TimedLogger.cs" />
+    <Compile Include="..\appserver\TimedLoggerFactory.cs" Link="application\TimedLoggerFactory.cs" />
+    <Compile Include="..\agent\Agent.cs" Link="agent\Agent.cs" />
+    <Compile Include="..\master\Controller.cs" Link="controller\Controller.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\common\common.csproj" />
+    <ProjectReference Include="..\rpc\rpc.csproj" />
+  </ItemGroup>
+</Project>

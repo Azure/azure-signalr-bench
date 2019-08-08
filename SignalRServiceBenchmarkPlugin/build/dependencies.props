@@ -4,7 +4,8 @@
   </PropertyGroup>
   <PropertyGroup Label="Package Versions">
     <!-- Azure ASP.NET Core SignalR -->
-    <MicrosoftAspNetCoreVersion>2.2.0</MicrosoftAspNetCoreVersion>
+    <MicrosoftAspNetCoreVersion>2.1.0</MicrosoftAspNetCoreVersion>
+    <MicrosoftAspNetCoreAppVersion>2.1.7</MicrosoftAspNetCoreAppVersion>
     <MicrosoftAspNetCoreMvcVersion>2.2.0</MicrosoftAspNetCoreMvcVersion>
     <MicrosoftAspNetCoreHttpConnectionsVersion>1.0.4</MicrosoftAspNetCoreHttpConnectionsVersion>
     <MicrosoftAspNetCoreSignalRClientVersion>1.0.4</MicrosoftAspNetCoreSignalRClientVersion>
@@ -29,6 +30,7 @@
     <GrpcToolsVersion>1.15.0</GrpcToolsVersion>
     <GoogleProtobufVersion>3.6.1</GoogleProtobufVersion>
     <GoogleProtobufToolsVersion>3.6.1</GoogleProtobufToolsVersion>
+    <McMasterExtensionsCommandLineUtilsVersion>2.3.4</McMasterExtensionsCommandLineUtilsVersion>
     <MedallionShellVersion>1.5.1</MedallionShellVersion>
     <NewtonsoftJsonVersion>11.0.2</NewtonsoftJsonVersion>
     <SerilogAspNetCoreVersion>2.1.1</SerilogAspNetCoreVersion>

@@ -4,7 +4,10 @@
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using System;
+using System.IO;
 using System.Security.Cryptography.X509Certificates;
 
 namespace Microsoft.Azure.SignalR.PerfTest.AppServer
@@ -14,18 +17,52 @@ namespace Microsoft.Azure.SignalR.PerfTest.AppServer
         private const string Port = "Port";
         private const string HttpsEnabled = "Https:Enabled";
         private const string HttpsLocalCertPath = "Https:LocalCertPath";
+        private const string UseLocalSignalR = "useLocalSignalR";
+        private const string UserSecrets = "appserver";
+        private const string ASRSConnectionStringKey = "Azure:SignalR:ConnectionString";
+        private const string ASRSConnectionNumberKey = "Azure:SignalR:ConnectionNumber";
         private const int DefaultPort = 5050;
 
         public static void Main(string[] args)
         {
-            CreateWebHostBuilder(args).Build().Run();
+            var appConfig = GenServerConfig();
+            WebHost.CreateDefaultBuilder(args)
+                .UseKestrel(KestrelConfig)
+                .UseStartup<Startup>()
+                .ConfigureServices(s => s.AddSingleton(appConfig))
+                .Build().Run();
+        }    
+
+        private static AppServerConfig GenServerConfig()
+        {
+            var signalrType =
+                Environment.GetEnvironmentVariable(UseLocalSignalR) == null ||
+                Environment.GetEnvironmentVariable(UseLocalSignalR) == "" ||
+                Environment.GetEnvironmentVariable(UseLocalSignalR) == "false" ? 1 : 0;
+            var config = new ConfigurationBuilder()
+                .SetBasePath(Directory.GetCurrentDirectory())
+                .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+                .AddEnvironmentVariables()
+                .AddUserSecrets(UserSecrets)
+                .Build();
+            var appConfig = new AppServerConfig()
+            {
+                SignalRType = signalrType
+            };
+            if (signalrType == 1)
+            {
+                var connectionString = config[ASRSConnectionStringKey];
+                Console.WriteLine($"connection string: {connectionString}");
+                appConfig.ConnectionString = connectionString;
+                if (config[ASRSConnectionNumberKey] != null)
+                {
+                    appConfig.ConnectionNumber = config.GetValue<int>(ASRSConnectionNumberKey);
+                }
+            }
+            return appConfig;
         }
 
-        public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
-            WebHost.CreateDefaultBuilder(args).UseKestrel(KestrelConfig)
-                .UseStartup<Startup>();
-
-        public static readonly Action<WebHostBuilderContext, KestrelServerOptions> KestrelConfig =
+        private static readonly Action<WebHostBuilderContext, KestrelServerOptions> KestrelConfig =
             (context, options) =>
             {
                 var config = context.Configuration;
