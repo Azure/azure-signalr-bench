@@ -3,7 +3,6 @@
   <PropertyGroup>
     <TargetFramework>netcoreapp2.1</TargetFramework>
     <IsPackable>false</IsPackable>
-    <!--<ServerGarbageCollection>true</ServerGarbageCollection>-->
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
@@ -37,8 +36,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="..\appserver\Startup.cs" Link="Internals\AppServer\Startup.cs" />
+    <Compile Include="..\appserver\AppServerConfig.cs" Link="Internals\AppServer\AppServerConfig.cs" />
     <Compile Include="..\appserver\Hub\BenchHub.cs" Link="Internals\AppServer\BenchHub.cs" />
+    <Compile Include="..\appserver\Startup.cs" Link="Internals\AppServer\Startup.cs" />
     <Compile Include="..\appserver\TimedLogger.cs" Link="Internals\AppServer\TimedLogger.cs" />
     <Compile Include="..\appserver\TimedLoggerFactory.cs" Link="Internals\AppServer\TimedLoggerFactory.cs" />
   </ItemGroup>

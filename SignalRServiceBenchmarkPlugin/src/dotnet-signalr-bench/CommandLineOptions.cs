@@ -1,8 +1,11 @@
 ﻿using McMaster.Extensions.CommandLineUtils;
 using Microsoft.Extensions.Logging;
+using Rpc.Service;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Reflection;
+using System.Threading.Tasks;
 
 namespace Microsoft.Azure.SignalR.PerfTest.AppServer
 {
@@ -16,34 +19,101 @@ namespace Microsoft.Azure.SignalR.PerfTest.AppServer
         typeof(AgentCommandOptions),
         typeof(ApplicationCommandOptions),
         typeof(ControllerCommandOptions))]
-    public class CommandLineOptions
+    internal class CommandLineOptions : BaseOption
     {
         public string GetVersion()
             => typeof(CommandLineOptions).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion;
+
+        protected override Task OnExecuteAsync(CommandLineApplication app)
+        {
+            app.ShowHelp();
+            return Task.CompletedTask;
+        }
     }
 
-    [Command(Description = "Agent command options")]
-    public class AgentCommandOptions
+    [Command(Name = "agent", FullName = "agent", Description = "Agent command options")]
+    internal class AgentCommandOptions : BaseOption
     {
         [Option("-p|--port", Description = "Port to use [7000]. Default is 7000")]
         public int Port { get; } = 7000;
 
         [Option("--host", Description = "IP to bind. Default is localhost")]
         public string HostName { get; } = "localhost";
+
+        protected override async Task OnExecuteAsync(CommandLineApplication app)
+        {
+            try
+            {
+                var config = GenAgentConfig(this);
+                var agent = new Rpc.Agent.Agent(config);
+                await agent.Start();
+            }
+            catch (Exception ex)
+            {
+                ReportError(ex);
+            }
+        }
+
+        private static RpcConfig GenAgentConfig(AgentCommandOptions option)
+        {
+            var logTarget = RpcLogTargetEnum.All;
+            var config = new RpcConfig()
+            {
+                PidFile = "agent-pid.txt",
+                LogTarget = logTarget,
+                LogName = "agent-.log",
+                LogDirectory = ".",
+                RpcPort = option.Port,
+                HostName = option.HostName
+            };
+            return config;
+        }
     }
 
-    [Command(Description = "Controller command options")]
-    public class ControllerCommandOptions
+    [Command(Name = "controller", FullName = "controller", Description = "Controller command options")]
+    internal class ControllerCommandOptions : BaseOption
     {
         [Option("-a|--agentlist", Description = "Specify the agents endpoint list with ',' as separator. Default is 'localhost:7000'")]
         public IList<string> AgentList { get; } = new[] { "localhost:7000" };
 
         [Option("-c|--configuration", Description = "Sepcify the configuration filename. If it is '?', it will print help for how to create the configuration YAML file.")]
         public string PluginConfiguration { get; set; }
+
+        protected override async Task OnExecuteAsync(CommandLineApplication app)
+        {
+            try
+            {
+                var config = GenControllerConfig(this);
+                var controller = new Rpc.Master.Controller(config);
+                await controller.Start();
+            }
+            catch (Exception ex)
+            {
+                ReportError(ex);
+            }
+        }
+
+        private static RpcConfig GenControllerConfig(ControllerCommandOptions option)
+        {
+            var logTarget = RpcLogTargetEnum.All;
+
+            var config = new RpcConfig()
+            {
+                PidFile = "master-pid.txt",
+                LogTarget = logTarget,
+                LogName = "master-.log",
+                LogDirectory = ".",
+                AgentList = option.AgentList,
+                PluginFullName = "Plugin.Microsoft.Azure.SignalR.Benchmark.SignalRBenchmarkPlugin, Plugin.Microsoft.Azure.SignalR.Benchmark",
+                PluginConfiguration = option.PluginConfiguration
+            };
+
+            return config;
+        }
     }
 
-    [Command(Description = "Application command options")]
-    public class ApplicationCommandOptions
+    [Command(Name = "application", FullName = "application", Description = "Application command options")]
+    internal class ApplicationCommandOptions : BaseOption
     {
         private LogLevel? _logLevel;
 
@@ -95,5 +165,35 @@ namespace Microsoft.Azure.SignalR.PerfTest.AppServer
             }
             private set => _logLevel = value;
         }
+
+        protected override async Task OnExecuteAsync(CommandLineApplication app)
+        {
+            try
+            {
+                var server = new AppServer(this, PhysicalConsole.Singleton);
+                await server.RunAsync();
+            }
+            catch (Exception ex)
+            {
+                ReportError(ex);
+            }
+        }
     }
+
+    [HelpOption("--help")]
+    internal abstract class BaseOption
+    {
+        protected virtual Task OnExecuteAsync(CommandLineApplication app)
+        {
+            return Task.CompletedTask;
+        }
+
+        protected static void ReportError(Exception ex)
+        {
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.Error.WriteLine($"Unexpected error: {ex}");
+            Console.ResetColor();
+        }
+    }
+
 }

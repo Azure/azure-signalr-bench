@@ -1,5 +1,6 @@
 ﻿using McMaster.Extensions.CommandLineUtils;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Hosting.Server.Features;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System;
@@ -14,7 +15,7 @@ namespace Microsoft.Azure.SignalR.PerfTest.AppServer
         private readonly IConsole _console;
         private readonly IReporter _reporter;
         
-        public AppServer(ApplicationCommandOptions options, IConsole console)
+        internal AppServer(ApplicationCommandOptions options, IConsole console)
         {
             _options = options;
             _console = console;
@@ -28,15 +29,15 @@ namespace Microsoft.Azure.SignalR.PerfTest.AppServer
 
         public async Task<int> RunAsync()
         {
-            var cts = new CancellationTokenSource();
             var port = _options.Port;
-
+            var cts = new CancellationTokenSource();
             _console.CancelKeyPress += (o, e) =>
             {
                 _console.WriteLine("Shutting down...");
                 cts.Cancel();
             };
-            
+
+            var config = GetAppServerConfig(_options);
             var host = new WebHostBuilder()
                 .ConfigureLogging(l =>
                 {
@@ -50,11 +51,12 @@ namespace Microsoft.Azure.SignalR.PerfTest.AppServer
                 })
                 .UseEnvironment("Production")
                 .UseStartup<Startup>()
-                .ConfigureServices(s => s.AddSingleton(_options))
+                .ConfigureServices(s => s.AddSingleton(config))
                 .Build();
 
             _console.Write("Starting server");
             await host.StartAsync(cts.Token);
+            AfterServerStart(host);
             await host.WaitForShutdownAsync(cts.Token);
             return 0;
         }
@@ -69,5 +71,31 @@ namespace Microsoft.Azure.SignalR.PerfTest.AppServer
             }
         }
 
+        private AppServerConfig GetAppServerConfig(ApplicationCommandOptions option)
+        {
+            var config = new AppServerConfig()
+            {
+                SignalRType = option.SignalRType,
+                AccessTokenLifetime = option.AccessTokenLifetime,
+                ConnectionNumber = option.ServerConnectionNumber,
+                ConnectionString = option.ConnectionString
+            };
+            return config;
+        }
+
+        private void AfterServerStart(IWebHost host)
+        {
+            var addresses = host.ServerFeatures.Get<IServerAddressesFeature>();
+            //var pathBase = _options.GetPathBase();
+
+            _console.WriteLine("Listening on:");
+            foreach (var a in addresses.Addresses)
+            {
+                _console.WriteLine($"  {a}");
+            }
+
+            _console.WriteLine("");
+            _console.WriteLine("Press CTRL+C to exit");
+        }
     }
 }

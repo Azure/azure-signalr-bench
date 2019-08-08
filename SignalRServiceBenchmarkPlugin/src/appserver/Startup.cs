@@ -11,7 +11,7 @@ namespace Microsoft.Azure.SignalR.PerfTest.AppServer
 {
     public class Startup
     {
-        private const string HUB_NAME = "/signalrbench";
+        internal const string HUB_NAME = "/signalrbench";
 
         private AppServerConfig _serverConfig;
         private bool _useLocalSignalR;

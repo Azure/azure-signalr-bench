@@ -12,6 +12,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\common\common.csproj" />
+    <ProjectReference Include="..\signalr\Plugin.Microsoft.Azure.SignalR.Benchmark.csproj" />
     <ProjectReference Include="..\rpc\rpc.csproj" />
   </ItemGroup>
 
