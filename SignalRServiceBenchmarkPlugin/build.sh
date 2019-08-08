@@ -22,4 +22,4 @@ kore_build()
 
 export _PackTool=true
 build
-kore_build
+kore_build "$@"

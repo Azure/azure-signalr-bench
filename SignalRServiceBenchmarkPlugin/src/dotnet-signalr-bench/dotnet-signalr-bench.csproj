@@ -8,7 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.AspNetCore.App" Version="$(MicrosoftAspNetCoreAppVersion)" />
+    <PackageReference Include="Microsoft.AspNetCore" Version="$(MicrosoftAspNetCoreVersion)" />
     <PackageReference Include="Microsoft.AspNetCore.SignalR" Version="$(MicrosoftAspNetCoreSignalRClientVersion)" />
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Protocols.MessagePack" Version="$(MicrosoftAspNetCoreSignalRProtocolMessagePackPackageVersion)" />
     <PackageReference Include="Microsoft.Azure.SignalR" Version="$(MicrosoftAzureSignalRVersion)" />
@@ -16,11 +16,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="..\appserver\AppServerConfig.cs" Link="application\AppServerConfig.cs" />
-    <Compile Include="..\appserver\Hub\BenchHub.cs" Link="application\Hub\BenchHub.cs" />
-    <Compile Include="..\appserver\Startup.cs" Link="application\Startup.cs" />
-    <Compile Include="..\appserver\TimedLogger.cs" Link="application\TimedLogger.cs" />
-    <Compile Include="..\appserver\TimedLoggerFactory.cs" Link="application\TimedLoggerFactory.cs" />
     <Compile Include="..\agent\Agent.cs" Link="agent\Agent.cs" />
     <Compile Include="..\master\Controller.cs" Link="controller\Controller.cs" />
   </ItemGroup>
@@ -28,5 +23,6 @@
   <ItemGroup>
     <ProjectReference Include="..\common\common.csproj" />
     <ProjectReference Include="..\rpc\rpc.csproj" />
+    <ProjectReference Include="..\signalr\Plugin.Microsoft.Azure.SignalR.Benchmark.csproj" /> <!-- we need to pack this project to target package -->
   </ItemGroup>
 </Project>
