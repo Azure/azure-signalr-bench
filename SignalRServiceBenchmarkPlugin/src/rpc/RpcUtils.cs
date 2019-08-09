@@ -5,6 +5,7 @@ namespace Rpc.Service
 {
     public class RpcUtils
     {
+        // This function is copied from common.Util, because we want to use customized LogTargetEnum
         public static void CreateLogger(string directory, string name, RpcLogTargetEnum logTarget)
         {
             // remove history logs
