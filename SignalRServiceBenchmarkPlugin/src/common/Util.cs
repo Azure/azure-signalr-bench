@@ -57,7 +57,7 @@ namespace Common
             }
             switch (logTarget)
             {
-                
+
                 case LogTargetEnum.File:
                     Log.Logger = new LoggerConfiguration()
                     .MinimumLevel.Debug()

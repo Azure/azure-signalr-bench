@@ -12,6 +12,85 @@ This benchmark targets to help you evaluate the throughput and latency. It can b
 - **SignalRServiceBenchmarkPlugin**: The benchmark source code folder which can be run on a single machine with 2 commands. If you want to get a quick start, or check the benchmark source code for further development, please go to this folder.
 
 # Quick start
+
+Run the tool on local machine
+
+## Install and run dotnet-signalr-bench global tool
+
+Install the tool
+
+`dotnet tool install -g dotnet-signalr-bench`
+
+Start the agent
+
+```
+E:\home\Work\SignalRBenchTests>dotnet signalr-bench agent
+[11:51:53 INF] Create Rpc Server...
+[11:51:53 INF] Start server...
+```
+
+Start the application
+
+```
+E:\home\Work\SignalRBenchTests>dotnet signalr-bench application
+use local signalr: True
+Starting serverListening on:
+  http://[::]:5050
+
+Press CTRL+C to exit
+```
+
+Start the controller with 'echo.yaml'. The content of echo.yaml is
+
+```
+mode: simple
+config:
+  webAppTarget: http://localhost:5050/signalrbench
+  connections: 1000
+  baseSending: 500
+  step: 500
+  singleStepDuration: 1000
+  debug: true
+```
+
+```
+E:\home\Work\SignalRBenchTests>dotnet signalr-bench controller -c echo.yaml
+[11:45:04 INF] Open channel to rpc server...
+[11:45:04 INF] Create Rpc client...
+......
+[11:54:38 INF] Stop collecting...
+[11:54:38 INF] -----------
+[11:54:38 INF]   1000 connections established in 9s
+[11:54:38 INF] -----------
+[11:54:38 INF]  Connections/sendingStep: 1000/500 in 5s
+[11:54:38 INF]  Messages: requests: 1.81MB, responses: 1.81MB
+[11:54:38 INF]    Requests/sec: 175.80
+[11:54:38 INF]    Responses/sec: 175.80
+[11:54:38 INF]    Write throughput: 361.44KB
+[11:54:38 INF]    Read throughput: 361.44KB
+[11:54:38 INF]  Latency:
+[11:54:38 INF]   50.00%: < 100 ms
+[11:54:38 INF]   90.00%: < 100 ms
+[11:54:38 INF]   95.00%: < 100 ms
+[11:54:38 INF]   99.00%: < 200 ms
+[11:54:38 INF] -----------
+[11:54:38 INF]  Connections/sendingStep: 1000/1000 in 4s
+[11:54:38 INF]  Messages: requests: 3.67MB, responses: 3.67MB
+[11:54:38 INF]    Requests/sec: 446.00
+[11:54:38 INF]    Responses/sec: 446.00
+[11:54:38 INF]    Write throughput: 916.98KB
+[11:54:38 INF]    Read throughput: 916.98KB
+[11:54:38 INF]  Latency:
+[11:54:38 INF]   50.00%: < 100 ms
+[11:54:38 INF]   90.00%: < 100 ms
+[11:54:38 INF]   95.00%: < 100 ms
+[11:54:38 INF]   99.00%: < 100 ms
+[11:54:38 INF] Handle step...
+```
+## Run the self build benchmark
+
+You can build and run the source code by yourself.
+
 ![quickstart.git](Doc/quickrun.gif)
 Take 1000 connections for `Echo` performance test as an example.
 

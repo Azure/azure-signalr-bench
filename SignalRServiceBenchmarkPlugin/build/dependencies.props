@@ -4,8 +4,9 @@
   </PropertyGroup>
   <PropertyGroup Label="Package Versions">
     <!-- Azure ASP.NET Core SignalR -->
-    <MicrosoftAspNetCoreVersion>2.2.0</MicrosoftAspNetCoreVersion>
-    <MicrosoftAspNetCoreMvcVersion>2.2.0</MicrosoftAspNetCoreMvcVersion>
+    <MicrosoftAspNetCoreVersion>2.1.0</MicrosoftAspNetCoreVersion>
+    <MicrosoftAspNetCoreAppVersion>2.1.7</MicrosoftAspNetCoreAppVersion>
+    <MicrosoftAspNetCoreMvcVersion>2.1.3</MicrosoftAspNetCoreMvcVersion>
     <MicrosoftAspNetCoreHttpConnectionsVersion>1.0.4</MicrosoftAspNetCoreHttpConnectionsVersion>
     <MicrosoftAspNetCoreSignalRClientVersion>1.0.4</MicrosoftAspNetCoreSignalRClientVersion>
     <MicrosoftAspNetCoreSignalRProtocolMessagePackPackageVersion>1.0.11</MicrosoftAspNetCoreSignalRProtocolMessagePackPackageVersion>
@@ -13,7 +14,7 @@
     <MicrosoftAspNetSignalRClientVersion>2.4.0</MicrosoftAspNetSignalRClientVersion>
     <MicrosoftAzureSignalRManagementVersion>1.0.0</MicrosoftAzureSignalRManagementVersion>
     <MicrosoftAzureSignalRVersion>1.0.11</MicrosoftAzureSignalRVersion>
-    <MicrosoftExtensionsDependencyInjectionVersion>2.2.0</MicrosoftExtensionsDependencyInjectionVersion>
+    <MicrosoftExtensionsDependencyInjectionVersion>2.1.1</MicrosoftExtensionsDependencyInjectionVersion>
     <MicrosoftExtensionsHttpVersion>2.2.0</MicrosoftExtensionsHttpVersion>
     <MicrosoftExtensionsLoggingVersion>2.2.0</MicrosoftExtensionsLoggingVersion>
     <SystemIdentityModelTokensJwtVersion>5.4.0</SystemIdentityModelTokensJwtVersion>
@@ -29,6 +30,7 @@
     <GrpcToolsVersion>1.15.0</GrpcToolsVersion>
     <GoogleProtobufVersion>3.6.1</GoogleProtobufVersion>
     <GoogleProtobufToolsVersion>3.6.1</GoogleProtobufToolsVersion>
+    <McMasterExtensionsCommandLineUtilsVersion>2.3.4</McMasterExtensionsCommandLineUtilsVersion>
     <MedallionShellVersion>1.5.1</MedallionShellVersion>
     <NewtonsoftJsonVersion>11.0.2</NewtonsoftJsonVersion>
     <SerilogAspNetCoreVersion>2.1.1</SerilogAspNetCoreVersion>

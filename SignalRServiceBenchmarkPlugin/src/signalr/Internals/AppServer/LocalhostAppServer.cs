@@ -29,8 +29,20 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.Internals.AppServer
 
         public LocalhostAppServer(string connectionString, int port = SignalRConstants.LocalhostAppServerPort)
         {
-            Environment.SetEnvironmentVariable("Azure:SignalR:ConnectionString", connectionString);
-            Environment.SetEnvironmentVariable("Azure:SignalR:ConnectionNumber", "5");
+            bool useLocalSignalR = false;
+            var useLocalSignalRValue = Environment.GetEnvironmentVariable("useLocalSignalR");
+            if (!string.IsNullOrEmpty(useLocalSignalRValue))
+            {
+                if (Boolean.TryParse(useLocalSignalRValue, out var result))
+                {
+                    useLocalSignalR = result;
+                }
+            }
+            var config = new AppServerConfig()
+            {
+                SignalRType = useLocalSignalR ? 0 : 1,
+                ConnectionString = connectionString
+            };
             _host = new WebHostBuilder()
                 .ConfigureLogging((context, logging) =>
                 {
@@ -38,6 +50,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.Internals.AppServer
                     logging.SetMinimumLevel(LogLevel.Warning);
                 })
                 .ConfigureAppConfiguration(ConfigurationConfig)
+                .ConfigureServices(s => s.AddSingleton(config))
                 .UseKestrel(KestrelConfig)
                 .UseStartup(typeof(Startup))
                 .Build();

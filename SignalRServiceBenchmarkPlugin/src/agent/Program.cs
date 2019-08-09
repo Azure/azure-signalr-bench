@@ -1,9 +1,8 @@
-﻿using System;
-using CommandLine;
-using System.Threading.Tasks;
-using Rpc.Service;
+﻿using CommandLine;
 using Common;
+using Rpc.Service;
 using Serilog;
+using System.Threading.Tasks;
 
 namespace Rpc.Agent
 {
@@ -19,16 +18,33 @@ namespace Rpc.Agent
                 return;
             }
 
-            Util.SavePidToFile(argsOption.PidFile);
+            var config = GenConfig(argsOption);
+            var agent = new Agent(config);
+            await agent.Start();
+        }
 
-            // Create Logger
-            Util.CreateLogger(argsOption.LogDirectory, argsOption.LogName, argsOption.LogTarget);
-
-            // Create Rpc server
-            var server = new RpcServer().Create(argsOption.HostName, argsOption.RpcPort);
-
-            // Start Rpc server
-            await server.Start();
+        private static RpcConfig GenConfig(ArgsOption option)
+        {
+            var logTarget = RpcLogTargetEnum.All;
+            if (option.LogTarget == LogTargetEnum.Console)
+            {
+                logTarget = RpcLogTargetEnum.Console;
+            }
+            else if (option.LogTarget == LogTargetEnum.File)
+            {
+                logTarget = RpcLogTargetEnum.File;
+            }
+            var config = new RpcConfig()
+            {
+                PidFile = option.PidFile,
+                LogTarget = logTarget,
+                LogName = option.LogName,
+                LogDirectory = option.LogDirectory,
+                RpcPort = option.RpcPort,
+                HostName = option.HostName
+            };
+            
+            return config;
         }
 
         private static ArgsOption ParseArgs(string[] args)
