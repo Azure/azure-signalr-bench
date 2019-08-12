@@ -1,12 +1,13 @@
 ﻿using McMaster.Extensions.CommandLineUtils;
+using System.Threading.Tasks;
 
 namespace Microsoft.Azure.SignalR.PerfTest.AppServer
 {
     class Program
     {
-        static int Main(string[] args)
+        static async Task Main(string[] args)
         {
-            return CommandLineApplication.Execute<CommandLineOptions>(args);
+            await CommandLineApplication.ExecuteAsync<CommandLineOptions>(args);
         }
     }
 }

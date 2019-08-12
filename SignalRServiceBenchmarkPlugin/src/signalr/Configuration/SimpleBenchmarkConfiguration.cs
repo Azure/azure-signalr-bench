@@ -8,7 +8,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
     public enum ConfigurationMode
     {
         simple,
-        advance
+        advanced
     }
 
     public class SimpleBenchmarkConfiguration

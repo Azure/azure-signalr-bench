@@ -8,15 +8,18 @@ namespace Microsoft.Azure.SignalR.PerfTest.AppServer
     {
         private ILoggerFactory _loggerFactory;
         private volatile bool _disposed;
+        private AppServerConfig _appServerConfig;
 
         protected virtual bool CheckDisposed() => _disposed;
 
-        public TimedLoggerFactory()
+        public TimedLoggerFactory(AppServerConfig serverConfig)
         {
+            _appServerConfig = serverConfig;
             var serviceCollection = new ServiceCollection();
             serviceCollection.AddLogging(config =>
             {
                 config.AddConsole();
+                config.SetMinimumLevel(serverConfig.MinLogLevel);
             });
             var serviceProvider = serviceCollection.BuildServiceProvider();
             _loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();

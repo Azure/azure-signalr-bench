@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.Extensions.Logging;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -16,5 +17,7 @@ namespace Microsoft.Azure.SignalR.PerfTest.AppServer
         public int ConnectionNumber { get; set; } = 5;
 
         public string ConnectionString { get; set; }
+
+        public LogLevel MinLogLevel { get; set; } = LogLevel.Information;
     }
 }
