@@ -78,7 +78,8 @@ namespace Microsoft.Azure.SignalR.PerfTest.AppServer
                 SignalRType = option.SignalRType,
                 AccessTokenLifetime = option.AccessTokenLifetime,
                 ConnectionNumber = option.ServerConnectionNumber,
-                ConnectionString = option.ConnectionString
+                ConnectionString = option.ConnectionString,
+                MinLogLevel = option.MinLogLevel
             };
             return config;
         }

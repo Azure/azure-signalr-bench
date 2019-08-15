@@ -175,16 +175,16 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             // create statistics
             if (configData.isPerf())
             {
-                var masterStep = InitStatisticsCollector(configData.Scenario.Name);
-                AddSingleMasterStep(masterStep);
-                masterStep = CollectStatistics(configData.Scenario.Name, configData.IsDebug(), configData.Config.ResultFilePath);
-                AddSingleMasterStep(masterStep);
-            }
-            else if (configData.isLongrun())
-            {
                 var masterStep = InitConnectionStatisticsCollector(configData.Scenario.Name);
                 AddSingleMasterStep(masterStep);
                 masterStep = CollectConnectionStatistics(configData.Scenario.Name, configData.IsDebug(), configData.Config.ResultFilePath);
+                AddSingleMasterStep(masterStep);
+            }
+            else if (configData.isStrictPerf())
+            {
+                var masterStep = InitStatisticsCollector(configData.Scenario.Name);
+                AddSingleMasterStep(masterStep);
+                masterStep = CollectStatistics(configData.Scenario.Name, configData.IsDebug(), configData.Config.ResultFilePath);
                 AddSingleMasterStep(masterStep);
             }
             else
@@ -196,12 +196,12 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             {
                 var masterStep = RegisterRecordLatency(configData.Scenario.Name);
                 AddSingleMasterStep(masterStep);
+                masterStep = RegisterOnConnected(configData.Scenario.Name);
+                AddSingleMasterStep(masterStep);
             }
-            else if (configData.isLongrun())
+            else if (configData.isStrictPerf())
             {
                 var masterStep = RegisterRecordLatency(configData.Scenario.Name);
-                AddSingleMasterStep(masterStep);
-                masterStep = RegisterOnConnected(configData.Scenario.Name);
                 AddSingleMasterStep(masterStep);
             }
             // start connection
@@ -241,7 +241,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
                 AddSingleMasterStep(CollectConnectionId(configData.Scenario.Name));
             }
             // setup backgroud task of repairing connections for longrun
-            if (configData.isLongrun())
+            if (configData.isPerf())
             {
                 if (configData.Scenario.Name.EndsWith("Group"))
                 {
@@ -274,7 +274,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
                     if (i > 0)
                     {
                         // conditional stop and reconnect
-                        if (configData.isPerf())
+                        if (configData.isStrictPerf())
                         {
                             AddSingleMasterStep(ConditionalStop(configData.Scenario.Name,
                                                                 configData.Config.Connections,

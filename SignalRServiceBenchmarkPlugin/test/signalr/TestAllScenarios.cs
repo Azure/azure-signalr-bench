@@ -10,7 +10,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.Tests
         {   
         }
 
-        #region simple perf
+        #region simple longrun
         [Fact]
         public async Task TestSendToGroup()
         {
@@ -103,9 +103,9 @@ config:
         }
         #endregion
 
-        #region simple longrun
+        #region simple perf
         [Fact]
-        public async Task TestEchoLongrun()
+        public async Task TestEchoPerf2()
         {
             _connections = 100;
             _sending = 100;
@@ -113,7 +113,7 @@ config:
             var arrvingRate = 10;
             var input = $@"
 mode: simple
-kind: longrun
+kind: perf2
 config:
   connectionString: Endpoint=https://dummy;AccessKey=dummy;Version=1.0; # Required
   singleStepDuration: {_duration}
@@ -126,7 +126,7 @@ config:
         }
 
         [Fact]
-        public async Task TestSendToGroupLongrun()
+        public async Task TestSendToGroupPerf2()
         {
             _connections = 100;
             _sending = 100;
@@ -135,7 +135,7 @@ config:
             var arrvingRate = 5;
             var input = $@"
 mode: simple
-kind: longrun
+kind: perf2
 config:
   connectionString: Endpoint=https://dummy;AccessKey=dummy;Version=1.0; # Required
   singleStepDuration: {_duration}
@@ -152,7 +152,7 @@ scenario:
         }
 
         [Fact]
-        public async Task TestSendToClientsLongrun()
+        public async Task TestSendToClientsPerf2()
         {
             _connections = 100;
             _sending = 100;
@@ -160,7 +160,7 @@ scenario:
             var arrvingRate = 5;
             var input = $@"
 mode: simple
-kind: longrun
+kind: perf2
 config:
   connectionString: Endpoint=https://dummy;AccessKey=dummy;Version=1.0; # Required
   singleStepDuration: {_duration}
@@ -175,7 +175,7 @@ scenario:
         }
 
         [Fact]
-        public async Task TestBroadcastLongrun()
+        public async Task TestBroadcastPerf2()
         {
             _connections = 10;
             _sending = 1;
@@ -183,7 +183,7 @@ scenario:
             var arrvingRate = 5;
             var input = $@"
 mode: simple
-kind: longrun
+kind: perf2
 config:
   connectionString: Endpoint=https://dummy;AccessKey=dummy;Version=1.0; # Required
   singleStepDuration: {_duration}
@@ -339,7 +339,7 @@ Types:
 - sendToGroup
 ";
             await _plugin.Start(input, _clients);
-            CheckResult(GetBenchResult());
+            CheckResult(GetBenchResult(output));
         }
         #endregion
 

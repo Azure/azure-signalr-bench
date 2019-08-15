@@ -19,10 +19,10 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         public const double DEFAULT_CONNECT_FAIL_PERCENTAGE = 0.01;
         public const double DEFAULT_MESSAGE_LATENCY_PERCENTAGE = 0.01;
         public const string DEFAULT_KIND = "perf";
-        public const string LONGRUN_KIND = "longrun";
+        public const string STRICTPERF_KIND = "perf2";
         public const string PARSERESULT_KIND = "resultparser";
         public const string DEFAULT_MODE = "simple";
-        public const string ADVANCE_MODE = "advance";
+        public const string ADVANCED_MODE = "advanced";
         public const string DEFAULT_TRANSPORT = "Websockets";
         public const string SSE_TRANSPORT = "ServerSentEvents";
         public const string LONGPOLLING_TRANSPORT = "LongPolling";
@@ -35,6 +35,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         public const string LOW_ARRIVING_BATCH_MODE = "LowPress";
         public const string DEFAULT_SCENARIO = "echo";
         public const string DEFAULT_OUTPUT_PATH = "counters.txt";
+        public const string DEFAULT_WEBAPP_HUB_URL = "http://localhost:5050/signalrbench";
 
         public class BenchConfigData
         {

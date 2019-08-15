@@ -41,9 +41,9 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             return configData.Kind == DEFAULT_KIND;
         }
 
-        public static bool isLongrun(this BenchConfigData configData)
+        public static bool isStrictPerf(this BenchConfigData configData)
         {
-            return configData.Kind == LONGRUN_KIND;
+            return configData.Kind == STRICTPERF_KIND;
         }
 
         public static bool isResultParser(this BenchConfigData configData)
@@ -54,9 +54,9 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         public static ERRORCODE isValid(this BenchConfigData configData)
         {
             string error = null;
-            if (!configData.isLongrun() && !configData.isPerf() && !configData.isResultParser())
+            if (!configData.isStrictPerf() && !configData.isPerf() && !configData.isResultParser())
             {
-                error = $"Kind must be {DEFAULT_KIND} or {LONGRUN_KIND} or {PARSERESULT_KIND}, but see {configData.Kind}";
+                error = $"Kind must be {DEFAULT_KIND} or {STRICTPERF_KIND} or {PARSERESULT_KIND}, but see {configData.Kind}";
                 ErrorMap[ERRORCODE.InvalidKind] = error;
                 Log.Error(error);
                 return ERRORCODE.InvalidKind;
