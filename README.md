@@ -1,15 +1,14 @@
 # Benchmark for Microsoft SignalR and Azure SignalR Service
 
-This benchmark defines some typical performance scenarios, develops an Application Server with Azure SignalR SDK, and
-builds clients through SignalR client SDK to evaluate the performance of those scenarios.
+This benchmark defines some typical performance scenarios, develops an Application Server with Azure SignalR SDK, and builds clients through SignalR client SDK to evaluate the performance of those scenarios.
 
 This benchmark targets to help you evaluate the throughput and latency. It can be used for benchmarking ASP.NET Core SignalR, ASP.NET SignalR and Azure SignalR Service.
 
 # Content
 
-- **Scripts**: All scripts related to run the benchmark in a large scale, for example, 50 client VMs and 20 app server VMs. If you plan to setup a large scale performance test on Azure, those scripts are for your reference.
+- **scripts**: All scripts related to run the benchmark in a large scale, for example, 50 client VMs and 20 app server VMs. If you plan to setup a large scale performance test on Azure, those scripts are for your reference.
 
-- **SignalRServiceBenchmarkPlugin**: The benchmark source code folder which can be run on a single machine with 2 commands. If you want to get a quick start, or check the benchmark source code for further development, please go to this folder.
+- **src**: The benchmark source code folder which can be run on a single machine with 2 commands. If you want to get a quick start, or check the benchmark source code for further development, please go to this folder.
 
 # Quick start
 
@@ -19,15 +18,8 @@ Run the tool on local machine
 
 Install the tool
 
-`dotnet tool install -g dotnet-signalr-bench`
+`dotnet tool install -g dotnet-signalr-bench --version 1.0.0-preview1-10000 --add-source https://www.myget.org/F/azure-signalr-bench/api/v3/index.json`
 
-Start the agent
-
-```
-E:\home\Work\SignalRBenchTests>dotnet signalr-bench agent
-[11:51:53 INF] Create Rpc Server...
-[11:51:53 INF] Start server...
-```
 
 Start the application
 
@@ -37,24 +29,14 @@ use local signalr: True
 Starting serverListening on:
   http://[::]:5050
 
-Press CTRL+C to exit
+`Press CTRL+C to exit
 ```
 
-Start the controller with 'echo.yaml'. The content of echo.yaml is
+Start the controller by using built-in agent through parameter "-u 1".
+In a real perf test, it is not recommended using built-in agent.
 
 ```
-mode: simple
-config:
-  webAppTarget: http://localhost:5050/signalrbench
-  connections: 1000
-  baseSending: 500
-  step: 500
-  singleStepDuration: 1000
-  debug: true
-```
-
-```
-E:\home\Work\SignalRBenchTests>dotnet signalr-bench controller -c echo.yaml
+E:\home\Work\SignalRBenchTests>dotnet signalr-bench controller -u 1
 [11:45:04 INF] Open channel to rpc server...
 [11:45:04 INF] Create Rpc client...
 ......
@@ -87,11 +69,12 @@ E:\home\Work\SignalRBenchTests>dotnet signalr-bench controller -c echo.yaml
 [11:54:38 INF]   99.00%: < 100 ms
 [11:54:38 INF] Handle step...
 ```
+
 ## Run the self build benchmark
 
 You can build and run the source code by yourself.
 
-![quickstart.git](Doc/quickrun.gif)
+![quickstart.git](doc/quickrun.gif)
 Take 1000 connections for `Echo` performance test as an example.
 
 ## Build

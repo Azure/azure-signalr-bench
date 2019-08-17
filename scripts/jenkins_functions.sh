@@ -11,14 +11,14 @@ function set_global_env() {
       relative_dir=$2
    fi
    export JenkinsRootPath="$Jenkins_Workspace_Root"
-   export PluginScriptWorkingDir=$Jenkins_Workspace_Root/${relative_dir}/Scripts/tools/ASRSConfigGenerator/
-   export PluginRpcBuildWorkingDir=$Jenkins_Workspace_Root/${relative_dir}/SignalRServiceBenchmarkPlugin/src/rpc/
-   export ScriptWorkingDir=$Jenkins_Workspace_Root/${relative_dir}/Scripts/                     # folders to find all scripts
-   export CurrentWorkingDir=$Jenkins_Workspace_Root/${relative_dir}/Scripts/tools/AzureVMMgr     # workding directory
-   export CommandWorkingDir=$Jenkins_Workspace_Root/${relative_dir}/SignalRServiceBenchmarkPlugin/src/utils/Commander
-   export AppServerWorkingDir=$Jenkins_Workspace_Root/${relative_dir}/SignalRServiceBenchmarkPlugin/src/appserver
-   export AspNetWebMgrWorkingDir=$Jenkins_Workspace_Root/${relative_dir}/SignalRServiceBenchmarkPlugin/src/utils/DeployWebApp
-   export WebAppMonitorWorkingDir=$Jenkins_Workspace_Root/${relative_dir}/SignalRServiceBenchmarkPlugin/src/utils/WebAppMonitor
+   export PluginScriptWorkingDir=$Jenkins_Workspace_Root/${relative_dir}/scripts/tools/ASRSConfigGenerator/
+   export PluginRpcBuildWorkingDir=$Jenkins_Workspace_Root/${relative_dir}/src/rpc/
+   export ScriptWorkingDir=$Jenkins_Workspace_Root/${relative_dir}/scripts/                     # folders to find all scripts
+   export CurrentWorkingDir=$Jenkins_Workspace_Root/${relative_dir}/scripts/tools/AzureVMMgr     # workding directory
+   export CommandWorkingDir=$Jenkins_Workspace_Root/${relative_dir}/src/utils/Commander
+   export AppServerWorkingDir=$Jenkins_Workspace_Root/${relative_dir}/src/appserver
+   export AspNetWebMgrWorkingDir=$Jenkins_Workspace_Root/${relative_dir}/src/utils/DeployWebApp
+   export WebAppMonitorWorkingDir=$Jenkins_Workspace_Root/${relative_dir}/src/utils/WebAppMonitor
 ############# those configurations are shared in Jenkins folder #####
    export AgentConfig=$JenkinsRootPath'/agent.yaml'
    export PrivateIps=$JenkinsRootPath'/privateIps.yaml'
