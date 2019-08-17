@@ -7,34 +7,66 @@ trigger:
 - master
 
 pool:
-  vmImage: 'windows-latest'
+  name: VSEng-MicroBuildVS2017
+  demands:
+  - Cmd
+  - msbuild
 
 variables:
   solution: '*.sln'
   BuildPlatform: 'Any CPU'
   BuildConfiguration: 'Release'
-  MSBuildArguments: '/p:Configuration=$(BuildConfiguration) /p:BuildNumber=$(BuildNumber)'
+  MSBuildArguments: '/p:Configuration=$(BuildConfiguration) /p:EnableSigning=true /p:BuildNumber=$(BuildNumber)'
 
 steps:
-- task: NuGetToolInstaller@1
-
 - task: NuGetCommand@2
+  displayName: 'Restore Microbuild'
   inputs:
-    restoreSolution: '$(solution)'
+    restoreSolution: build/microbuild.proj
+    vstsFeed: '6a2d6fd3-0b16-40f0-b309-7175c4e86490'
 
-- task: BatchScript@1
+- task: CmdLine@2
+  displayName: 'List all local files and directories'
   inputs:
-    filename: 'build.bat'
-    arguments: '-ci /p:BuildNumber=$(BuildNumber)'
+    script: 'dir'
+- task: CmdLine@2
+  displayName: 'Clean artifacts'
+  inputs:
+    script: 'if exist artifacts del /s /q artifacts'
+
+- task: CmdLine@2
+  displayName: 'Clean local nuget'
+  inputs:
+    script: 'if exist .nuget del /s /q .nuget'
+
+- task: CmdLine@2
+  displayName: 'Clean local obj'
+  inputs:
+    script: 'if exist obj del /s /q obj'
 
 - task: MicroBuildSigningPlugin@2
   displayName: 'Install Signing Plugin'
   inputs:
     signType: '$(SignType)'
-  condition: and(succeeded(), in(variables.SignType, 'real', 'test')) 
-  
+  condition: and(succeeded(), in(variables.SignType, 'real', 'test'))
+
+- task: BatchScript@1
+  inputs:
+    filename: 'build.bat'
+    arguments: '$(MSBuildArguments)'
+
+- task: MSBuild@1
+  displayName: Sign
+  inputs:
+    solution: build/sign.proj
+    msbuildVersion: '15.0'
+    msbuildArchitecture: x64
+    configuration: '$(BuildConfiguration)'
+    msbuildArguments: '/t:SignPackages'
+  enabled: false
+
+
 - task: PublishBuildArtifacts@1
   inputs:
-    PathtoPublish: '$(Build.ArtifactStagingDirectory)'
-    ArtifactName: 'dotnet-signalr-bench'
-    publishLocation: 'Container'
+    PathtoPublish: 'artifacts/build'
+    ArtifactName: Artifacts
