@@ -10,7 +10,7 @@ pool:
   vmImage: 'windows-latest'
 
 variables:
-  solution: 'SignalRServiceBenchmarkPlugin/*.sln'
+  solution: '*.sln'
   buildPlatform: 'Any CPU'
   buildConfiguration: 'Release'
 
@@ -23,7 +23,7 @@ steps:
 
 - task: BatchScript@1
   inputs:
-    filename: 'SignalRServiceBenchmarkPlugin/build.bat'
+    filename: 'build.bat'
     arguments: '-ci /p:BuildNumber=$(BuildNumber)'
 
 - task: MicroBuildSigningPlugin@2
@@ -33,6 +33,6 @@ steps:
 
 - task: PublishBuildArtifacts@1
   inputs:
-    PathtoPublish: 'SignalRServiceBenchmarkPlugin/$(Build.ArtifactStagingDirectory)'
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)'
     ArtifactName: 'dotnet-signalr-bench'
     publishLocation: 'Container'
