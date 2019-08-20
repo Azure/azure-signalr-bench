@@ -27,10 +27,11 @@ steps:
     arguments: '-ci /p:BuildNumber=$(BuildNumber)'
 
 - task: MicroBuildSigningPlugin@2
+  displayName: 'Install Signing Plugin'
   inputs:
-    signType: 'real'
-    feedSource: 'https://devdiv.pkgs.visualstudio.com/DefaultCollection/_packaging/MicroBuildToolset/nuget/v3/index.json'
-
+    signType: '$(SignType)'
+  condition: and(succeeded(), in(variables.SignType, 'real', 'test')) 
+  
 - task: PublishBuildArtifacts@1
   inputs:
     PathtoPublish: '$(Build.ArtifactStagingDirectory)'
