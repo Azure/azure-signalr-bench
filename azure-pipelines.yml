@@ -11,8 +11,9 @@ pool:
 
 variables:
   solution: '*.sln'
-  buildPlatform: 'Any CPU'
-  buildConfiguration: 'Release'
+  BuildPlatform: 'Any CPU'
+  BuildConfiguration: 'Release'
+  MSBuildArguments: '/p:Configuration=$(BuildConfiguration) /p:BuildNumber=$(BuildNumber)'
 
 steps:
 - task: NuGetToolInstaller@1
