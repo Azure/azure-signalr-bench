@@ -3,7 +3,7 @@
 build()
 {
   cd src/rpc
-  ./build.sh
+  ./generate_protos.sh
   cd ../..
 }
 

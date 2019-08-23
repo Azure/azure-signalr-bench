@@ -1,8 +1,4 @@
-<Project>
-  <Import
-    Project="$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), AspNetCoreSettings.props))\AspNetCoreSettings.props"
-    Condition=" '$(CI)' != 'true' AND '$([MSBuild]::GetDirectoryNameOfFileAbove($(MSBuildThisFileDirectory), AspNetCoreSettings.props))' != '' " />
-
+﻿<Project>
   <Import Project="version.props" />
   <Import Project="build\dependencies.props" />
   <Import Project="build\sources.props" />
@@ -14,18 +10,20 @@
     <Owners>microsoft,azure-sdk</Owners>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
-    <PackageProjectUrl>https://aka.ms/signalr_service</PackageProjectUrl>
+    <PackageProjectUrl>https://aks.ms/signalr-bench</PackageProjectUrl>
     <PackageIconUrl>http://go.microsoft.com/fwlink/?LinkID=288890</PackageIconUrl>
     <RepositoryUrl>https://github.com/azure/azure-signalr-bench</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <RepositoryRoot>$(MSBuildThisFileDirectory)</RepositoryRoot>
     <AssemblyOriginatorKeyFile>$(MSBuildThisFileDirectory)build\Key.snk</AssemblyOriginatorKeyFile>
     <SignAssembly>true</SignAssembly>
-    <PublicSign Condition="'$(OS)' != 'Windows_NT'">true</PublicSign>
+    <!-- PublicSign only when not Windows and not macOS https://github.com/Microsoft/msbuild/issues/2468#issuecomment-324719212  -->
+    <PublicSign Condition="'$(OS)' != 'Windows_NT' and !$([System.IO.File]::Exists('/usr/lib/libc.dylib'))">true</PublicSign>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <LangVersion>latest</LangVersion>
     <MicroBuildCorePackageVersion>0.3.0</MicroBuildCorePackageVersion>
     <AssemblySigningCertName>Microsoft400</AssemblySigningCertName>
+    <AssemblySigning3rdPartyCertName>3PartySHA2</AssemblySigning3rdPartyCertName>
     <PackageSigningCertName>NuGet</PackageSigningCertName>
     <IsTargetMultiFramework>true</IsTargetMultiFramework>
   </PropertyGroup>
