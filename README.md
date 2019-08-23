@@ -91,7 +91,7 @@ E:\home\Work\SignalRBenchTests>dotnet signalr-bench controller -c echo.yaml
 
 You can build and run the source code by yourself.
 
-![quickstart.git](Doc/quickrun.gif)
+![quickstart.git](doc/quickrun.gif)
 Take 1000 connections for `Echo` performance test as an example.
 
 ## Build
