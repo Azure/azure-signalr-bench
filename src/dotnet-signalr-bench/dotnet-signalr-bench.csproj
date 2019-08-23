@@ -6,6 +6,9 @@
     <IsPackable>true</IsPackable>
     <AssemblyName>dotnet-signalr-bench</AssemblyName>
     <PackageId>Microsoft.Azure.SignalR.Benchmark</PackageId>
+    <PackageProjectUrl>https://aka.ms/signalr_service</PackageProjectUrl>
+    <PackageLicenseUrl>https://raw.githubusercontent.com/Azure/azure-signalr-bench/master/LICENSE</PackageLicenseUrl>
+    <PackageTags>signalr;benchmark</PackageTags>
   </PropertyGroup>
 
   <ItemGroup>
