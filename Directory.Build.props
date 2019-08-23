@@ -8,7 +8,7 @@
     <Authors>Microsoft</Authors>
     <Copyright>© Microsoft Corporation. All rights reserved.</Copyright>
     <Owners>microsoft,azure-sdk</Owners>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageLicenseUrl>https://raw.githubusercontent.com/Azure/azure-signalr-bench/master/LICENSE</PackageLicenseUrl>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <PackageProjectUrl>https://aks.ms/signalr-bench</PackageProjectUrl>
     <PackageIconUrl>http://go.microsoft.com/fwlink/?LinkID=288890</PackageIconUrl>
