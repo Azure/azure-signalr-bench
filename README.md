@@ -19,7 +19,7 @@ Run the tool on local machine
 
 Install the tool
 
-`dotnet tool install -g dotnet-signalr-bench`
+`dotnet tool install --global Microsoft.Azure.SignalR.Benchmark --version 1.0.0-preview1-10001`
 
 ## Run
 
@@ -92,7 +92,9 @@ E:\home\Work\SignalRBenchTests>dotnet signalr-bench controller -c echo.yaml
 
 ## Self-hosted Hub
 
-If you want to setup your own app server for this benchmark, please use [built-in app server](https://github.com/Azure/azure-signalr-bench/tree/master/src/appserver) as a reference because the benchmark tool requires the hub to include some predefined methods for all scenarios.
+If you want to setup your own app server for this benchmark with AspNetCore SignalR, please use [built-in app server](https://github.com/Azure/azure-signalr-bench/tree/master/src/appserver) as a reference because the benchmark tool requires the hub to include some predefined methods for all scenarios.
+
+> If you want to try AspNet SignalR, please refer to [AspNet SignalR app server](https://github.com/clovertrail/AspNetServer). The hub class is https://github.com/clovertrail/AspNetServer/blob/master/SignalRBench.cs.
 
 Let us take `echo` as an example.
 
@@ -116,6 +118,7 @@ Create your hub with 2 methods. The `OnConnectedAsync` must include the logic wh
 Here we use the [built-in app server](https://github.com/Azure/azure-signalr-bench/tree/master/src/appserver) as the benchmark app server. We just need to copy the above ChatHub.cs to [Hub folder](https://github.com/Azure/azure-signalr-bench/tree/master/src/appserver/Hub) modify the hub in
 
 ```
+        internal const string HUB_NAME = "/signalrbench";
         public void Configure(IApplicationBuilder app)
         {
             if (_useLocalSignalR)

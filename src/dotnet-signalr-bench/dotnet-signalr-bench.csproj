@@ -5,7 +5,7 @@
     <TargetFramework>netcoreapp2.1</TargetFramework>
     <IsPackable>true</IsPackable>
     <AssemblyName>dotnet-signalr-bench</AssemblyName>
-    <PackageId>Microsoft.Azure.SignalR.Benchmark</PackageId>
+    <PackageId>Microsoft.SignalR.Benchmark</PackageId>
     <PackageProjectUrl>https://aka.ms/signalr_service</PackageProjectUrl>
     <PackageLicenseUrl>https://raw.githubusercontent.com/Azure/azure-signalr-bench/master/LICENSE</PackageLicenseUrl>
     <PackageTags>signalr;benchmark</PackageTags>
