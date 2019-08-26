@@ -1,5 +1,5 @@
 ﻿using Grpc.Core;
-using Serilog;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -8,10 +8,13 @@ namespace Rpc.Service
     public class RpcServer : IRpcServer
     {
         private Server _server;
+        private string _hostname;
+        private int _port;
+
         public IRpcServer Create(string hostname, int port)
         {
-            Log.Information("Create Rpc Server...");
-
+            _hostname = hostname;
+            _port = port;
             _server = new Grpc.Core.Server(new ChannelOption[]
             {
                 // For Group, the received message size is very large, so here set 8000k
@@ -26,8 +29,9 @@ namespace Rpc.Service
 
         public Task Start()
         {
-            Log.Information("Start server...");
             _server.Start();
+            Console.WriteLine($"Listening on: {_hostname}:{_port}");
+            Console.WriteLine("Press CTRL+C to exit");
             return Task.Delay(Timeout.Infinite);
         }
 

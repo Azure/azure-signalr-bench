@@ -7,19 +7,21 @@ This benchmark targets to help you evaluate the throughput and latency. It can b
 
 # Content
 
-- **Scripts**: All scripts related to run the benchmark in a large scale, for example, 50 client VMs and 20 app server VMs. If you plan to setup a large scale performance test on Azure, those scripts are for your reference.
+- **scripts**: All scripts related to run the benchmark in a large scale, for example, 50 client VMs and 20 app server VMs. If you plan to setup a large scale performance test on Azure, those scripts are for your reference.
 
-- **SignalRServiceBenchmarkPlugin**: The benchmark source code folder which can be run on a single machine with 2 commands. If you want to get a quick start, or check the benchmark source code for further development, please go to this folder.
+- **src**: The benchmark source code folder which can be run on a single machine with 2 commands. If you want to get a quick start, or check the benchmark source code for further development, please go to this folder.
 
 # Quick start
 
 Run the tool on local machine
 
-## Install and run dotnet-signalr-bench global tool
+## Install
 
 Install the tool
 
 `dotnet tool install -g dotnet-signalr-bench`
+
+## Run
 
 Start the agent
 
@@ -87,7 +89,111 @@ E:\home\Work\SignalRBenchTests>dotnet signalr-bench controller -c echo.yaml
 [11:54:38 INF]   99.00%: < 100 ms
 [11:54:38 INF] Handle step...
 ```
-## Run the self build benchmark
+
+## Self-hosted Hub
+
+If you want to setup your own app server for this benchmark, please use [built-in app server](https://github.com/Azure/azure-signalr-bench/tree/master/src/appserver) as a reference because the benchmark tool requires the hub to include some predefined methods for all scenarios.
+
+Let us take `echo` as an example.
+
+Create your hub with 2 methods. The `OnConnectedAsync` must include the logic which will inform clients its connection Id.
+
+```
+    public class ChatHub : Hub
+    {
+        public override async Task OnConnectedAsync()
+        {
+            await Clients.Client(Context.ConnectionId).SendAsync("OnConnected", Context.ConnectionId);
+        }
+
+        public void Echo(IDictionary<string, object> data)
+        {
+            Clients.Client(Context.ConnectionId).SendAsync("RecordLatency", data);
+        }
+    }
+```
+
+Here we use the [built-in app server](https://github.com/Azure/azure-signalr-bench/tree/master/src/appserver) as the benchmark app server. We just need to copy the above ChatHub.cs to [Hub folder](https://github.com/Azure/azure-signalr-bench/tree/master/src/appserver/Hub) modify the hub in
+
+```
+        public void Configure(IApplicationBuilder app)
+        {
+            if (_useLocalSignalR)
+            {
+                app.UseSignalR(routes =>
+                {
+                    routes.MapHub<ChatHub>(HUB_NAME);
+                });
+            }
+            else
+            {
+                app.UseAzureSignalR(routes =>
+                {
+                    routes.MapHub<ChatHub>(HUB_NAME);
+                });
+            }
+        }
+```
+
+Then you can re-build the appserver and launch it.
+
+See all the predefined methods in the hub. If you want to run perf test on other scenarios, please include other methods.
+
+```
+    public class BenchHub : Hub
+    {
+        public override async Task OnConnectedAsync()
+        {
+            await Clients.Client(Context.ConnectionId).SendAsync("OnConnected", Context.ConnectionId);
+        }
+
+        public void Echo(IDictionary<string, object> data)
+        {
+            Clients.Client(Context.ConnectionId).SendAsync("RecordLatency", data);
+        }
+
+        public void Broadcast(IDictionary<string, object> data)
+        {
+            Clients.All.SendAsync("RecordLatency", data);
+        }
+
+        public void SendToClient(IDictionary<string, object> data)
+        {
+            var targetId = (string)data["information.ConnectionId"];
+            Clients.Client(targetId).SendAsync("RecordLatency", data);
+        }
+
+        public void ConnectionId()
+        {
+            Clients.Client(Context.ConnectionId).SendAsync("ConnectionId", Context.ConnectionId);
+        }
+
+        public string GetConnectionId()
+        {
+            return Context.ConnectionId;
+        }
+
+        public async Task JoinGroup(string groupName)
+        {
+            await Groups.AddToGroupAsync(Context.ConnectionId, groupName);
+            await Clients.Client(Context.ConnectionId).SendAsync("JoinGroup");
+        }
+
+        public async Task LeaveGroup(string groupName)
+        {
+            await Groups.RemoveFromGroupAsync(Context.ConnectionId, groupName);
+            await Clients.Client(Context.ConnectionId).SendAsync("LeaveGroup");
+        }
+
+        public void SendToGroup(IDictionary<string, object> data)
+        {
+            var groupName = (string)data["information.GroupName"];
+            Clients.Group(groupName).SendAsync("RecordLatency", data);
+        }
+    }
+```
+
+# Run the self build benchmark
 
 You can build and run the source code by yourself.
 
@@ -95,15 +201,15 @@ You can build and run the source code by yourself.
 Take 1000 connections for `Echo` performance test as an example.
 
 ## Build
-Build the tool through [build.bat](https://github.com/Azure/azure-signalr-bench/tree/master/SignalRServiceBenchmarkPlugin/build.bat) or [build.sh](https://github.com/Azure/azure-signalr-bench/tree/master/SignalRServiceBenchmarkPlugin/build.sh) script.
+Build the tool through [build.bat](https://github.com/Azure/azure-signalr-bench/blob/master/build.bat) or [build.sh](https://github.com/Azure/azure-signalr-bench/blob/master/build.sh) script.
 
 ## Run
-Go to [slave folder](https://github.com/Azure/azure-signalr-bench/tree/master/SignalRServiceBenchmarkPlugin/framework/slave)
+Go to [agent folder](https://github.com/Azure/azure-signalr-bench/tree/master/src/agent)
 ```
 dotnet run
 ```
 
-Go to [master folder](https://github.com/Azure/azure-signalr-bench/tree/master/SignalRServiceBenchmarkPlugin/framework/master)
+Go to [master folder](https://github.com/Azure/azure-signalr-bench/tree/master/src/master)
 
 ```
 dotnet run -- --BenchmarkConfiguration echo.yaml
@@ -117,8 +223,6 @@ config:
 ```
 
 If you have a Azure SignalR Service connection string, but does not want to setup the app server, you can specify connection string instead. The benchmark will launch an internal app server for you. It is recommended for serious performance test.
-
-If you want to setup your own app server for this benchmark, please use [built-in app server](https://github.com/Azure/azure-signalr-bench/tree/master/SignalRServiceBenchmarkPlugin/utils/AppServer) as a reference because the benchmark tool requires a predefined Hub.
 
 Use internal app server, please specify `connectionString` instead.
 ```yaml
@@ -157,9 +261,9 @@ The output is like:
   99%: < 100 ms
 ```
 
-# More options
+## More options
 
-You can see more options by running the following command in [master folder](https://github.com/Azure/azure-signalr-bench/tree/master/SignalRServiceBenchmarkPlugin/framework/master)
+You can see more options by running the following command in [master folder](https://github.com/Azure/azure-signalr-bench/tree/master/src/master)
 
 ```
 dotnet run -- --BenchmarkConfiguration ?

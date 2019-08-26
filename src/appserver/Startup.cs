@@ -51,14 +51,14 @@ namespace Microsoft.Azure.SignalR.PerfTest.AppServer
                 {
                     routes.MapHub<BenchHub>(HUB_NAME);
                 });
-            }   
+            }
             else
             {
                 app.UseAzureSignalR(routes =>
                 {
                     routes.MapHub<BenchHub>(HUB_NAME);
                 });
-            }   
+            }
         }
 
     }
