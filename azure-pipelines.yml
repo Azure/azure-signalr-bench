@@ -29,6 +29,12 @@ steps:
   displayName: 'List all local files and directories'
   inputs:
     script: 'dir'
+
+- task: CmdLine@2
+  displayName: 'Check variables'
+  inputs:
+    script: 'echo $(buildcounter)'
+
 - task: CmdLine@2
   displayName: 'Clean artifacts'
   inputs:
