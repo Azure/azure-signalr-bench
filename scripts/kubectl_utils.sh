@@ -4,6 +4,11 @@ g_CPU_limits="1|2|3|4"
 g_Memory_limits="4000|4000|4000|4000"
 g_k8s_config_list="kubeconfig.srprodacswestus2k.json|kubeconfig.srdevacseastuse.json|kubeconfig.srdevacsseasiae.json"
 
+if [ -s kubeconfig.extend ]
+then
+   g_k8s_ext=`cat kubeconfig.extend`
+   g_k8s_config_list=${g_k8s_config_list}|${g_k8s_ext}
+fi
 ## Bourne shell does not support array, so a string is used
 ## to work around with the hep of awk array
 
