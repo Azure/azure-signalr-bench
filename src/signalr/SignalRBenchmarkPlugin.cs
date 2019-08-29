@@ -21,7 +21,7 @@ mode: simple                                                                    
 kind: perf                                                                           # Optional: '{SimpleBenchmarkModel.DEFAULT_KIND}|{SimpleBenchmarkModel.PARSERESULT_KIND}', default is '{SimpleBenchmarkModel.DEFAULT_KIND}'
 config:
   connectionString: Endpoint=https://xxxx.signalr.net;AccessKey=xxx;Version=1.0;     # Optional: if 'webAppTarget' has specified, this option will be ignored, otherwise you must specify it.
-  webAppTarget: http://localhost:5050/signalrbench                                   # Optional: if not specified, the default webapp url is assumed to be {SimpleBenchmarkModel.DEFAULT_WEBAPP_HUB_URL}
+  webAppTarget: http://localhost:5050/signalrbench                                   # Optional: specify multiple web target URLs with ',' as separator. If not specified, the default webapp url is assumed to be {SimpleBenchmarkModel.DEFAULT_WEBAPP_HUB_URL}
   connections: 1000                                                                  # Optional, default is {SimpleBenchmarkModel.DEFAULT_CONNECTIONS}
   arrivingRate: 50                                                                   # Optional, default is {SimpleBenchmarkModel.DEFAULT_ARRIVINGRATE}
   transport: Websockets                                                              # Optional: '{SimpleBenchmarkModel.DEFAULT_TRANSPORT}|{SimpleBenchmarkModel.SSE_TRANSPORT}|{SimpleBenchmarkModel.LONGPOLLING_TRANSPORT}', default is {SimpleBenchmarkModel.DEFAULT_TRANSPORT}
