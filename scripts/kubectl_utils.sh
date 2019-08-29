@@ -4,6 +4,11 @@ g_CPU_limits="1|2|3|4"
 g_Memory_limits="4000|4000|4000|4000"
 g_k8s_config_list="kubeconfig.srprodacswestus2k.json|kubeconfig.srdevacseastuse.json|kubeconfig.srdevacsseasiae.json"
 
+if [ -e kubeconfig.extend ] && [ -s kubeconfig.extend ]
+then
+   g_k8s_ext=`cat kubeconfig.extend`
+   g_k8s_config_list=${g_k8s_config_list}|${g_k8s_ext}
+fi
 ## Bourne shell does not support array, so a string is used
 ## to work around with the hep of awk array
 
@@ -707,12 +712,21 @@ function get_nginx_pod_internal() {
   local res=$1
   local config=$2
   local ns=$3
-  local appId=`kubectl get deploy -o=json --namespace=${ns} --selector resourceName=${res} --kubeconfig=${config}|jq '.items[0].spec.selector.matchLabels.app'|tr -d '"'`
-  local len=`kubectl get pod -o=json --namespace=${ns} --selector app=${appId} --kubeconfig=${config}|jq '.items|length'`
   local i=0
+  local ingress=`kubectl get ingresses -o=json --selector resourceName=$res --kubeconfig=${config}|jq '.items[0].metadata.annotations["kubernetes.io/ingress.class"]'|tr -d '"'`
+  if [[ "$ingress" != "ingress*" ]]
+  then
+    ingress="ingress-${ingress}"
+  fi
+  local len=`kubectl get pod -o=json --namespace=${ns} --selector app=$ingress --kubeconfig=${config}|jq '.items|length'`
+  if [ $len == "0" ]
+  then
+     #echo "Cannot find $resName"
+     return
+  fi
   while [ $i -lt $len ]
   do
-    kubectl get pod -o=json --namespace=$ns --selector app=${appId} --kubeconfig=${config}|jq ".items[$i].metadata.name"|tr -d '"'
+    kubectl get pod -o=json --selector app=$ingress --namespace=${ns} --kubeconfig=${config}|jq ".items[$i].metadata.name"|tr -d '"'
     i=`expr $i + 1`
   done
 }

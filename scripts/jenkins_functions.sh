@@ -82,7 +82,7 @@ function set_job_env() {
    fi
    local jobName=`echo "${JOB_NAME}"|tr ' ' '_'`
    export NORMALIZED_JOB_NAME=${jobName}
-   export CleanResourceScript=/tmp/clean_resource_${jobName}.sh # every job has its own script to clean resource, they will never execute concurrently.
+   export CleanResourceScript=/tmp/clean_resource_${jobName}_${result_root}.sh # every job has its own script to clean resource, they will never execute concurrently.
    export MaxSendIteration=120 # we evaluate the total running time per this value
    record_build_info # record the jenkins job to /tmp/send_mail.txt
    prebuild_helper_tool
