@@ -280,11 +280,11 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.Internals
                 }
                 if (connectCost99PercentInThisEpoch > 0)
                 {
-                    outputCallback($" 99% connect cost (ms): {connectCost99PercentInThisEpoch}");
+                    outputCallback($" 99% time to connect (ms): {connectCost99PercentInThisEpoch}");
                 }
                 if (reconnectCost99PercentInThisEpoch > 0)
                 {
-                    outputCallback($" 99% reconnect cost (ms): {reconnectCost99PercentInThisEpoch}");
+                    outputCallback($" 99% time to reconnect (ms): {reconnectCost99PercentInThisEpoch}");
                 }
             }
             var msg = new MessageBenchResult()
