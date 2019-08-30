@@ -47,6 +47,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             // Get parameters
             stepParameters.TryGetTypedValue(SignalRConstants.ConnectionTotal,
                 out int connectionTotal, Convert.ToInt32);
+            stepParameters.TryGetTypedValue(SignalRConstants.Type, out string type, Convert.ToString);
+            SignalRUtils.SaveTotalConnectionToContext(pluginParameters, type, connectionTotal);
             // Shuffle connection indexes
             var indexes = Enumerable.Range(0, connectionTotal).ToList();
             indexes.Shuffle();
@@ -94,6 +96,31 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
                 statisticsCollector.IncreaseLeaveGroupFail();
             }
         }
+        #region save/fetch parameters to/from the context
+
+        public static void SaveTotalConnectionToContext(
+            IDictionary<string, object> pluginParameters,
+            string type,
+            int totalConnection)
+        {
+            pluginParameters[$"{SignalRConstants.ConnectionTotal}.{type}"] = totalConnection;
+        }
+
+        public static bool FetchTotalConnectionFromContext(
+            IDictionary<string, object> pluginParameters,
+            string type,
+            out int totalConnections)
+        {
+            totalConnections = 0;
+            if (pluginParameters.ContainsKey($"{SignalRConstants.ConnectionTotal}.{type}"))
+            {
+                pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionTotal}.{type}",
+                                out int connectionCount, Convert.ToInt32);
+                totalConnections = connectionCount;
+                return true;
+            }
+            return false;
+        }
 
         public static void SaveGroupInfoToContext(
             IDictionary<string, object> pluginParameters,
@@ -133,6 +160,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             pluginParameters[$"{SignalRConstants.RegisteredCallbacks}.{type}"] =
                 new List<Action<IList<IHubConnectionAdapter>, StatisticsCollector>>();
         }
+        #endregion
 
         public static IList<Action<IList<IHubConnectionAdapter>, StatisticsCollector>>
             FetchCallbacksFromContext(IDictionary<string, object> pluginParameters, string type)
@@ -1042,6 +1070,16 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             statisticsCollecter.ResetGroupCounters();
             statisticsCollecter.ResetMessageCounters();
             statisticsCollecter.ResetReconnectCounters();
+        }
+
+        public static long GetTimeoutPerConcurrentSpeed(int totalConnection, int concurrentConnections)
+        {
+            long expectedMilliseconds = (totalConnection / concurrentConnections) * 1000 * 2;
+            if (expectedMilliseconds < SignalRConstants.MillisecondsToWait)
+            {
+                expectedMilliseconds = SignalRConstants.MillisecondsToWait;
+            }
+            return expectedMilliseconds;
         }
     }
 }

@@ -28,8 +28,10 @@ function set_global_env() {
 ############ global static variables #########
    export RootFolder=$CurrentWorkingDir # some jekins already refers this
    #export ResultFolderSuffix='suffix'
-   export VMMgrDir=/tmp/VMMgr
-   export AspNetWebMgrDir=/tmp/AspNetWebMgr
+   local jobName=`echo "${JOB_NAME}"|tr ' ' '_'`
+   export JOBNAME_PREFIX=$jobName
+   export VMMgrDir=/tmp/${JOBNAME_PREFIX}VMMgr
+   export AspNetWebMgrDir=/tmp/${JOBNAME_PREFIX}AspNetWebMgr
    set_job_env
 }
 

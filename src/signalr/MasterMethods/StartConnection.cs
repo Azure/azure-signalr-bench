@@ -17,7 +17,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
 
             // Get parameters
             stepParameters.TryGetTypedValue(SignalRConstants.ConcurrentConnection, out int concurrentConnection, Convert.ToInt32);
-
+            stepParameters.TryGetTypedValue(SignalRConstants.Type, out string type, Convert.ToString);
             if (concurrentConnection < clients.Count)
             {
                 concurrentConnection = clients.Count;
@@ -37,7 +37,13 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
 
             var task = Task.WhenAll(results);
             // we wait until the default timeout reached
-            return Util.TimeoutCheckedTask(task, SignalRConstants.MillisecondsToWait, nameof(StartConnection));
+            long expectedMilliseconds = SignalRConstants.MillisecondsToWait;
+            if (SignalRUtils.FetchTotalConnectionFromContext(pluginParameters, type, out int totalConnections))
+            {
+                expectedMilliseconds = SignalRUtils.GetTimeoutPerConcurrentSpeed(totalConnections, concurrentConnection);
+            }
+
+            return Util.TimeoutCheckedTask(task, expectedMilliseconds, nameof(StartConnection));
         }
     }
 }

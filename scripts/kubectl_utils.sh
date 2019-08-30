@@ -377,12 +377,6 @@ function start_connection_tracking() {
   # collect connections
   while [ $SECONDS -lt $end ]
   do
-     # !do not always install net-tools which consumes too much CPU!
-     #result=$(k8s_query $resName $config_file)
-     #for i in $result
-     #do
-     #  kubectl exec --kubeconfig=$config_file $i apt-get install net-tools > /dev/null
-     #done
      for i in $result
      do
        local date_time=`date --iso-8601='seconds'`
