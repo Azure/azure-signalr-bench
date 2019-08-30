@@ -28,6 +28,10 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
 
         SignalREnums.ConnectionInternalStat GetStat();
 
+        string ConnectionId { get; set; }
+
+        long BigMessageLatencyCount { get; set; }
+
         long ConnectionBornTimestamp { get; set; }
 
         long ConnectedTimestamp { get; set; }

@@ -1,6 +1,7 @@
 ﻿using Common;
 using Serilog;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Plugin.Microsoft.Azure.SignalR.Benchmark.AgentMethods.Statistics
 {
@@ -22,7 +23,26 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.AgentMethods.Statistics
         {
             var data = base.GetData();
             AddConnectionStat(data);
+            AddBigLatencyCount(data);
             return data;
+        }
+
+        private void AddBigLatencyCount(IDictionary<string, object> data)
+        {
+            long bigLatencyCount = 0;
+            int maxIndex = -1;
+            for (var i = 0; i < _connections.Count; i++)
+            {
+                if (_connections[i].BigMessageLatencyCount > bigLatencyCount)
+                {
+                    bigLatencyCount = _connections[i].BigMessageLatencyCount;
+                    maxIndex = i;
+                }
+            }
+            if (bigLatencyCount > 0)
+            {
+                Log.Information($"Max latency count: {bigLatencyCount}, ConnectionID: {_connections[maxIndex].ConnectionId}");
+            }
         }
 
         private void AddConnectionStat(IDictionary<string, object> data)

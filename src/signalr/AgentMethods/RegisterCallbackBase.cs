@@ -17,19 +17,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.AgentMethods
                 connection.On(SignalRConstants.OnConnectedCallback, (string connectionId) =>
                 {
                     connection.UpdateTimestampWhenConnected();
-                });
-            }
-        }
-
-        public static void SetDummyCallbackOnConnected(
-            IList<IHubConnectionAdapter> connections,
-            StatisticsCollector statisticsCollector)
-        {
-            foreach (var connection in connections)
-            {
-                connection.On(SignalRConstants.OnConnectedCallback, (string connectionId) =>
-                {
-                    Log.Information($"Connection Id: {connectionId}");
+                    connection.ConnectionId = connectionId;
                 });
             }
         }
@@ -62,7 +50,10 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.AgentMethods
                     var receiveTimestamp = Util.Timestamp();
                     data.TryGetTypedValue(SignalRConstants.Timestamp, out long sendTimestamp, Convert.ToInt64);
                     var latency = receiveTimestamp - sendTimestamp;
-                    statisticsCollector.RecordLatency(latency);
+                    if (!statisticsCollector.RecordLatency(latency))
+                    {
+                        connection.BigMessageLatencyCount = connection.BigMessageLatencyCount + 1;
+                    }
                     SignalRUtils.RecordRecvSize(data, statisticsCollector);
                 });
             }

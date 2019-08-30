@@ -75,6 +75,30 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             }
         }
 
+        public string ConnectionId
+        {
+            get
+            {
+                return InternalConnectionId;
+            }
+            set
+            {
+                InternalConnectionId = value;
+            }
+        }
+
+        public long BigMessageLatencyCount
+        {
+            get
+            {
+                return InternalBigMessageLatencyCount;
+            }
+            set
+            {
+                InternalBigMessageLatencyCount = value;
+            }
+        }
+
         public event Func<Exception, Task> Closed
         {
             add

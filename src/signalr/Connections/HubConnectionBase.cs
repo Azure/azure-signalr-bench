@@ -14,6 +14,10 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
 
         protected bool _born = false;
 
+        protected string InternalConnectionId { get; set; }
+
+        protected long InternalBigMessageLatencyCount { get; set; }
+
         // The timestamp of 1st time connection connected, never changed
         protected long ConnectionBornTime { get; set; }
 

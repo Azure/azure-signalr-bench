@@ -67,7 +67,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.AgentMethods.Statistics
             _statistics.AddOrUpdate(SignalRConstants.StatisticsMessageReceivedSize, sz, (k, v) => v + sz);
         }
 
-        public void RecordLatency(long latency)
+        // For latency meets requirement, return true, otherwise return false
+        public bool RecordLatency(long latency)
         {
             var index = latency / LatencyStep;
             var upperBound = (index + 1) * LatencyStep;
@@ -75,10 +76,12 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.AgentMethods.Statistics
             if (upperBound <= LatencyMax)
             {
                 _statistics.AddOrUpdate(SignalRUtils.MessageLessThan(upperBound), 1, (k, v) => v + 1);
+                return true;
             }
             else
             {
                 _statistics.AddOrUpdate(SignalRUtils.MessageGreaterOrEqualTo(LatencyMax), 1, (k, v) => v + 1);
+                return false;
             }
         }
 

@@ -447,23 +447,11 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             }
             if (connType == ClientType.AspNetCore)
             {
-                if (!registeredCallbacks.Contains(RegisterCallbackBase.SetDummyCallbackOnConnected))
+                if (!registeredCallbacks.Contains(RegisterCallbackBase.SetCallbackOnConnected))
                 {
                     RegisterCallbackBase.SetCallbackOnConnected(connections, statisticsCollector);
-                    registeredCallbacks.Add(RegisterCallbackBase.SetDummyCallbackOnConnected);
+                    registeredCallbacks.Add(RegisterCallbackBase.SetCallbackOnConnected);
                 }
-            }
-        }
-
-        public static void AddOnConnectedCallback(
-            IList<IHubConnectionAdapter> connections,
-            IList<Action<IList<IHubConnectionAdapter>, StatisticsCollector>> registeredCallbacks,
-            StatisticsCollector statisticsCollector)
-        {
-            if (!registeredCallbacks.Contains(RegisterCallbackBase.SetDummyCallbackOnConnected))
-            {
-                RegisterCallbackBase.SetCallbackOnConnected(connections, statisticsCollector);
-                registeredCallbacks.Add(RegisterCallbackBase.SetDummyCallbackOnConnected);
             }
         }
 
