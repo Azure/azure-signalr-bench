@@ -339,6 +339,7 @@ function start_top_tracking() {
     local end=$((SECONDS + $duration))
     while [ $SECONDS -lt $end ]
     do
+     result=$(k8s_query $resName $config_file $ns)
      for i in $result
      do
        local date_time=`date --iso-8601='seconds'`
@@ -376,6 +377,11 @@ function start_connection_tracking() {
   # collect connections
   while [ $SECONDS -lt $end ]
   do
+     result=$(k8s_query $resName $config_file)
+     for i in $result
+     do
+       kubectl exec --kubeconfig=$config_file $i apt-get install net-tools > /dev/null
+     done
      for i in $result
      do
        local date_time=`date --iso-8601='seconds'`
