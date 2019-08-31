@@ -21,7 +21,11 @@
 
     <!-- For Utils tools -->
     <FluentFTPVersion>24.0.0</FluentFTPVersion>
+    <MicrosoftRestClientRuntimeVersion>2.3.18</MicrosoftRestClientRuntimeVersion>
+    <MicrosoftRestClientRuntimeAzureVersion>3.3.18</MicrosoftRestClientRuntimeAzureVersion>
+    <MicrosoftRestClientRuntimeAzureAuthenticationVersion>2.3.6</MicrosoftRestClientRuntimeAzureAuthenticationVersion>
     <MicrosoftAzureManagementFluentVersion>1.18.0</MicrosoftAzureManagementFluentVersion>
+    <MicrosoftAzureManagementMonitorFluentVersion>1.18.0</MicrosoftAzureManagementMonitorFluentVersion>
     <MicrosoftAzureManagementWebsitesVersion>2.0.1</MicrosoftAzureManagementWebsitesVersion>
 
     <!-- third-party libraries -->

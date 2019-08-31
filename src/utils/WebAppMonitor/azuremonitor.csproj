@@ -6,13 +6,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="CommandLineParser" Version="2.3.0" />
-    <PackageReference Include="Microsoft.Azure.Management.Fluent" Version="1.18.0" />
-    <PackageReference Include="Microsoft.Azure.Management.Monitor.Fluent" Version="1.18.0" />
-    <PackageReference Include="Microsoft.Rest.ClientRuntime" Version="2.3.18" />
-    <PackageReference Include="Microsoft.Rest.ClientRuntime.Azure" Version="3.3.18" />
-    <PackageReference Include="Microsoft.Rest.ClientRuntime.Azure.Authentication" Version="2.3.6" />
-    <PackageReference Include="YamlDotNet" Version="5.3.0" />
+    <PackageReference Include="CommandLineParser" Version="$(CommandLineParserVersion)" />
+    <PackageReference Include="Microsoft.Azure.Management.Fluent" Version="$(MicrosoftAzureManagementFluentVersion)" />
+    <PackageReference Include="Microsoft.Azure.Management.Monitor.Fluent" Version="$(MicrosoftAzureManagementMonitorFluentVersion)" />
+    <PackageReference Include="Microsoft.Rest.ClientRuntime" Version="$(MicrosoftRestClientRuntimeVersion)" />
+    <PackageReference Include="Microsoft.Rest.ClientRuntime.Azure" Version="$(MicrosoftRestClientRuntimeAzureVersion)" />
+    <PackageReference Include="Microsoft.Rest.ClientRuntime.Azure.Authentication" Version="$(MicrosoftRestClientRuntimeAzureAuthenticationVersion)" />
+    <PackageReference Include="YamlDotNet.Signed" Version="$(YamlDotNetSignedVersion)" />
   </ItemGroup>
 
 </Project>
