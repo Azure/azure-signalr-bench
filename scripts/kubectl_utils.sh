@@ -377,20 +377,18 @@ function start_connection_tracking() {
   # collect connections
   while [ $SECONDS -lt $end ]
   do
-     result=$(k8s_query $resName $config_file)
-     for i in $result
-     do
-       kubectl exec --kubeconfig=$config_file $i apt-get install net-tools > /dev/null
-     done
+     # !do not always install net-tools which consumes too much CPU!
+     #result=$(k8s_query $resName $config_file)
+     #for i in $result
+     #do
+     #  kubectl exec --kubeconfig=$config_file $i apt-get install net-tools > /dev/null
+     #done
      for i in $result
      do
        local date_time=`date --iso-8601='seconds'`
        # TODO. specify the container for exec command
        local cli_ser_stat=`kubectl exec $i --kubeconfig=$config_file -- bash -c "curl http://localhost:5003/health/stat" 2> /dev/null`
        echo "${date_time} ${cli_ser_stat}" >> $output_dir/${i}_connections.txt
-       #local cli_connection=`kubectl exec $i --kubeconfig=$config_file -- bash -c "netstat -an|grep 5001|grep EST|wc -l"`
-       #local ser_connection=`kubectl exec $i --kubeconfig=$config_file -- bash -c "netstat -an|grep 5002|grep EST|wc -l"`
-       #echo "${date_time} $cli_connection $ser_connection" >> $output_dir/${i}_connections.txt
      done
      sleep 1
   done
@@ -834,6 +832,29 @@ function get_nginx_log() {
        cd $outdir
        tar zcvf ${i}.log.tgz ${i}.log
        rm ${i}.log
+       cd -
+    fi
+  done
+}
+
+function get_asrs_nginx_ssl_log() {
+  local res=$1
+  local outdir=$2
+  g_config=""
+  g_result=""
+  find_target_by_iterate_all_k8slist $res k8s_query
+  local config_file=$g_config
+  local result=$g_result
+  for i in $result
+  do
+    local prefix=nginx_ssl_
+    local nginx_ssl_log=$outdir/${prefix}${i}.log
+    kubectl logs $i --kubeconfig=$config_file > $nginx_ssl_log
+    if [ -e $nginx_ssl_log ]
+    then
+       cd $outdir
+       tar zcvf ${prefix}${i}.log.tgz ${prefix}${i}.log
+       rm ${prefix}${i}.log
        cd -
     fi
   done
