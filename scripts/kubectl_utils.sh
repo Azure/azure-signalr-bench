@@ -390,7 +390,7 @@ function start_connection_tracking() {
        local cli_ser_stat=`kubectl exec $i --kubeconfig=$config_file -- bash -c "curl http://localhost:5003/health/stat" 2> /dev/null`
        echo "${date_time} ${cli_ser_stat}" >> $output_dir/${i}_connections.txt
      done
-     sleep 1
+     sleep 5
   done
 }
 
