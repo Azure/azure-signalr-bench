@@ -19,7 +19,7 @@ Run the tool on local machine
 
 Install the tool
 
-`dotnet tool install --global Microsoft.Azure.SignalR.Benchmark --version 1.0.0-preview1-10415`
+`dotnet tool install -g Microsoft.dotnet-signalr-benchmark --version 1.0.0-preview1-10422`
 
 ## Run
 
