@@ -792,7 +792,7 @@ function run_and_gen_report() {
 
 function build_rpc_master() {
   local targetDir=$1
-  local tmpMaster=/tmp/master
+  local tmpMaster=/tmp/${JOBNAME_PREFIX}master
   if [ -e $tmpMaster ]
   then
      rm -rf $tmpMaster
@@ -817,7 +817,7 @@ function build_rpc_master() {
 
 function build_rpc_agent() {
   local targetDir=$1
-  local tmpAgent=/tmp/agent
+  local tmpAgent=/tmp/${JOBNAME_PREFIX}agent
   if [ -e $tmpAgent ]
   then
      rm -rf $tmpAgent
@@ -842,7 +842,7 @@ function build_rpc_agent() {
 
 build_app_server() {
   local targetDir=$1
-  local tmpAppServer=/tmp/appserver
+  local tmpAppServer=/tmp/${JOBNAME_PREFIX}appserver
   if [ -e $tmpAppServer ]
   then
      rm -rf $tmpAppServer

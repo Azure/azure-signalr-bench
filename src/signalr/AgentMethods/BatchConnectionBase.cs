@@ -19,6 +19,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.AgentMethods
                 out int batchWaitMilliSeconds,
                 out SignalREnums.BatchMode mode);
             var packages = (from i in Enumerable.Range(0, connections.Count())
+                            where connections[i].GetStat() == SignalREnums.ConnectionInternalStat.Init
                             select (Connection: connections[i], LocalIndex: i)).ToList();
             // 100 milliseconds is the default fine-granularity
             var period = SignalRConstants.RateLimitDefaultGranularity;

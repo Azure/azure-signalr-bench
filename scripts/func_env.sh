@@ -723,7 +723,8 @@ gen_all_tabs_4_report() {
   local html_id=$3
   local js_tgt_file=$4
   local desc="$5"
-  local postfix=`date +%Y%m%d%H%M%S`
+  local jobName=`echo "${JOB_NAME}"|tr ' ' '_'`
+  local postfix=${jobName}`date +%Y%m%d%H%M%S`
   local tmp_tabs=/tmp/tabs_${postfix}
   local js_refer_tmpl_file=/tmp/tabs_js_refer_${postfix}
   local i j
