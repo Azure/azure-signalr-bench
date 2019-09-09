@@ -375,13 +375,13 @@ function RunCommonScenario()
       connection=`python3 get_sending_connection.py -g $extension -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q totalConnections $maxConnectionOption`
       concurrentConnection=`python3 get_sending_connection.py -g $extension -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q concurrentConnection $maxConnectionOption`
       send=`python3 get_sending_connection.py -g $extension -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q sendingSteps $maxConnectionOption`
-    fi
-  else
-    if [ $extensionType == 3 ]; then
-      GenBenchmarkConfig $unit $Scenario $Transport $MessageEncoding $appserverUrls None $config_path "$connectionString" $extension
-      connection=`python3 get_sending_connection.py -ms $extension -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q totalConnections $maxConnectionOption`
-      concurrentConnection=`python3 get_sending_connection.py -ms $extension -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q concurrentConnection $maxConnectionOption`
-      send=`python3 get_sending_connection.py -ms $extension -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q sendingSteps $maxConnectionOption`
+    else
+      if [ $extensionType == 3 ]; then
+        GenBenchmarkConfig $unit $Scenario $Transport $MessageEncoding $appserverUrls None $config_path "$connectionString" $extension
+        connection=`python3 get_sending_connection.py -ms $extension -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q totalConnections $maxConnectionOption`
+        concurrentConnection=`python3 get_sending_connection.py -ms $extension -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q concurrentConnection $maxConnectionOption`
+        send=`python3 get_sending_connection.py -ms $extension -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q sendingSteps $maxConnectionOption`
+      fi
     fi
   fi
 
