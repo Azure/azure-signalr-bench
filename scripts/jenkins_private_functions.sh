@@ -287,6 +287,7 @@ function GenBenchmarkConfig()
   echo "......"
 }
 
+#@UseExistingWebUrl: @connectionString is the real webapp URL if webapp url was already created
 #@extensionType: 1 for common, 2 for sendtogroup, 3 for sendtoclient
 #@extension: None if extensionType=1; groupType(tiny,small,big) if extensionType=2; msgSize if extensionType=3;
 function RunCommonScenario()
@@ -312,24 +313,27 @@ function RunCommonScenario()
   local appPrefix serverUrlOut appPlanOut webAppOut appPlanScaleOut
   local startSeconds=$SECONDS
   local useAzureWeb=$(isUseAzureWeb)
-  if [ $useAzureWeb -ne 1 ]
-  then
-    if [[ "$Scenario" == "rest"* ]]
+  if [ "$UseExistingWebUrl" == "true" ];then
+    appserverUrls="$connectionString" # we borrow this parameter to pass appserverUrls
+  else
+    if [ $useAzureWeb -ne 1 ]
     then
+      if [[ "$Scenario" == "rest"* ]]
+      then
        appserverUrls="ignored" ## rest API does not need app server
-    else
+      else
        cd $ScriptWorkingDir
        appserverUrls=$(get_reduced_appserverUrl $unit $Scenario)
-    fi
-  else
-    if [ "$AspNetSignalR" == "true" ]
-    then
-       appPrefix="aspnetwebapp"
+      fi
     else
+      if [ "$AspNetSignalR" == "true" ]
+      then
+       appPrefix="aspnetwebapp"
+      else
        appPrefix="aspnetcorewebapp"
-    fi
-    if [ "$NeverStopAppServer" == "true" ]
-    then
+      fi
+      if [ "$NeverStopAppServer" == "true" ]
+      then
        serverUrlOut=$JenkinsRootPath/${appPrefix}.txt
        appPlanOut=$JenkinsRootPath/${appPrefix}_appPlan.txt
        webAppOut=$JenkinsRootPath/${appPrefix}_webApp.txt
@@ -338,22 +342,23 @@ function RunCommonScenario()
        then
           createWebApp $unit $appPrefix "$connectionString" $serverUrlOut $appPlanOut $webAppOut $appPlanScaleOut $Scenario
        fi
-    else
+      else
        serverUrlOut=$outputDir/${appPrefix}.txt
        appPlanOut=$outputDir/${appPrefix}_appPlan.txt
        webAppOut=$outputDir/${appPrefix}_webApp.txt
        appPlanScaleOut=$outputDir/${appPrefix}_appPlanScaleOut.txt
        createWebApp $unit $appPrefix "$connectionString" $serverUrlOut $appPlanOut $webAppOut $appPlanScaleOut $Scenario
-    fi
+      fi
 
-    if [ -e $serverUrlOut ]
-    then
-      appserverUrls=`cat $serverUrlOut`
-    else
-      echo "!!Fail to create web app!!"
-      return
+      if [ -e $serverUrlOut ]
+      then
+        appserverUrls=`cat $serverUrlOut`
+      else
+        echo "!!Fail to create web app!!"
+        return
+      fi
+      startSeconds=$SECONDS
     fi
-    startSeconds=$SECONDS
   fi
 
   local connection concurrentConnection send
@@ -599,6 +604,40 @@ function mark_job_as_failure_if_meet_error()
   fi
 }
 
+function run_benchmark_on_exsiting_webapp()
+{
+  local unit=$1
+  local user=$2
+  local passwd="$3"
+  local webappRawUrlList="$4"
+  local webappUrlList=""
+  local tag="unit"$unit
+
+  local i j
+  IFS=";" read -ra splittedWebUrl <<< "$webappRawUrlList"
+  for i in "${splittedWebUrl[@]}"
+  do
+    if [ "$webappUrlList" == "" ]; then
+      webappUrlList="${i}/$bench_config_hub"
+    else
+      webappUrlList="${webappUrlList};${i}/$bench_config_hub"
+    fi
+  done
+  local Scenario
+  local Transport
+  local MessageEncoding
+  export ConnectionString="$webappUrlList"
+  for Scenario in $bench_scenario_list
+  do
+      for Transport in $bench_transport_list
+      do
+         for MessageEncoding in $bench_encoding_list
+         do
+            run_on_scenario $Scenario $Transport $MessageEncoding $tag $user $passwd "$webappUrlList" $unit
+         done
+      done
+  done
+}
 # global environment:
 # AspNetSignalR
 function run_benchmark() {
