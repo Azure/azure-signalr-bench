@@ -894,21 +894,15 @@ function run_command() {
   local masterDir=$CommandWorkingDir/master
   local agentDir=$CommandWorkingDir/agent
   local useAzureWeb=$(isUseAzureWeb)
-  if [ $useAzureWeb -ne 1 ]
-  then
-    if [[ "$Scenario" != "rest"* ]]
-    then
-      appserverInUse=$(get_reduced_appserverCount $unit $scenario)
-      appserver=`python extract_ip.py -i $PrivateIps -q appserver -c $appserverInUse`
-      appserverDir=$CommandWorkingDir/appserver
-      mkdir -p $appserverDir
-      build_app_server $appserverDir
-      startAppServerOption="--AppServerHostnames=$appserver --AppserverProject=$appserverDir --AppserverTargetPath=/home/${user}/appserver.tgz --AppServerCount=$appserverInUse"
-    else
-      notStartAppServer=1
-    fi
-  else
+  if [ "$UseExistingWebUrl" == "true" ] || [ $useAzureWeb -eq 1 ] || [[ "$Scenario" == "rest"* ]]; then
     notStartAppServer=1
+  else
+    appserverInUse=$(get_reduced_appserverCount $unit $scenario)
+    appserver=`python extract_ip.py -i $PrivateIps -q appserver -c $appserverInUse`
+    appserverDir=$CommandWorkingDir/appserver
+    mkdir -p $appserverDir
+    build_app_server $appserverDir
+    startAppServerOption="--AppServerHostnames=$appserver --AppserverProject=$appserverDir --AppserverTargetPath=/home/${user}/appserver.tgz --AppServerCount=$appserverInUse"
   fi
   mkdir -p $masterDir
   mkdir -p $agentDir
