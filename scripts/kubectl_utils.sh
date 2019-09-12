@@ -2,7 +2,7 @@
 g_CPU_requests="1|2|3|4"
 g_CPU_limits="1|2|3|4"
 g_Memory_limits="4000|4000|4000|4000"
-g_k8s_config_list="kubeconfig.srprodacswestus2k.json|kubeconfig.srdevacseastuse.json|kubeconfig.srdevacsseasiae.json"
+g_k8s_config_list="kubeconfig.srprodacswestus2k.json|kubeconfig.srdevacseastusa.json|kubeconfig.srdevacsseasiae.json"
 
 if [ -e kubeconfig.extend ] && [ -s kubeconfig.extend ]
 then
