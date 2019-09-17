@@ -266,3 +266,14 @@ function run_all_units() {
  azure_login
  delete_signalr_service $SignalrServiceName $ASRSResourceGroup
 }
+
+function run_all_units_on_exsiting_webapp()
+{
+  local user=$1
+  local passwd="$2"
+  local webappRawUrlList="$3"
+  for service in $bench_serviceunit_list
+  do
+    run_benchmark_on_exsiting_webapp $service ${user} "${passwd}" ${webappRawUrlList}
+  done
+}
