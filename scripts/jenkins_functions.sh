@@ -274,6 +274,7 @@ function run_all_units_on_exsiting_webapp()
   local user=$1
   local passwd="$2"
   local webappRawUrlList="$3"
+  local service
   for service in $bench_serviceunit_list
   do
     run_benchmark_on_exsiting_webapp $service ${user} "${passwd}" ${webappRawUrlList}
