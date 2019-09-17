@@ -4,6 +4,10 @@
 
 declare -A ScenarioHandlerDict=(["frequentJoinLeaveGroup"]="SendToGroup" ["sendToGroup"]="SendToGroup" ["restSendToGroup"]="SendToGroup" ["restPersistSendToGroup"]="SendToGroup" ["sendToClient"]="SendToClient")
 
+CommonExtensionType=1
+SendToGroupExtensionType=2
+SendToClientExtensionType=3
+
 function clean_known_hosts()
 {
   echo "" > ~/.ssh/known_hosts
@@ -283,172 +287,9 @@ function GenBenchmarkConfig()
   echo "......"
 }
 
-function RunSendToGroup()
-{
-  local tag=$1
-  local Scenario=$2
-  local Transport=$3
-  local MessageEncoding=$4
-  local user=$5
-  local passwd="$6"
-  local connectionString="$7"
-  local outputDir="$8"
-  local unit=$9
-  local groupType=${10}
-  local appserverUrls
-
-  local appPrefix serverUrlOut appPlanOut webAppOut appPlanScaleOut
-
-  local maxConnectionOption
-  if [ "$useMaxConnection" == "true" ]
-  then
-    maxConnectionOption="-m"
-  fi
-  local startSeconds=$SECONDS
-
-  local useAzureWeb=$(isUseAzureWeb)
-  if [ $useAzureWeb -ne 1 ]
-  then
-    cd $ScriptWorkingDir
-    appserverUrls=$(get_reduced_appserverUrl $unit $Scenario)
-  else
-    if [ "$AspNetSignalR" == "true" ]
-    then
-       appPrefix="aspnetwebapp"
-    else
-       appPrefix="aspnetcorewebapp"
-    fi
-    if [ "$NeverStopAppServer" == "true" ]
-    then
-       serverUrlOut=$JenkinsRootPath/${appPrefix}.txt
-       appPlanOut=$JenkinsRootPath/${appPrefix}_appPlan.txt
-       webAppOut=$JenkinsRootPath/${appPrefix}_webApp.txt
-       appPlanScaleOut=$JenkinsRootPath/${appPrefix}_appPlanScaleOut.txt
-       if [ ! -e $serverUrlOut ]
-       then
-          createWebApp $unit $appPrefix "$connectionString" $serverUrlOut $appPlanOut $webAppOut $appPlanScaleOut $Scenario
-       fi
-    else
-       serverUrlOut=$outputDir/${appPrefix}.txt
-       appPlanOut=$outputDir/${appPrefix}_appPlan.txt
-       webAppOut=$outputDir/${appPrefix}_webApp.txt
-       appPlanScaleOut=$outputDir/${appPrefix}_appPlanScaleOut.txt
-       createWebApp $unit $appPrefix "$connectionString" $serverUrlOut $appPlanOut $webAppOut $appPlanScaleOut $Scenario
-    fi
-    if [ -e $serverUrlOut ]
-    then
-      appserverUrls=`cat $serverUrlOut`
-    else
-      echo "!!Fail to create web app!!"
-      return
-    fi
-    startSeconds=$SECONDS
-  fi
-
-  cd $PluginScriptWorkingDir
-  local config_path=$outputDir/${tag}_${Scenario}_${Transport}_${MessageEncoding}.config
-  GenBenchmarkConfig $unit $Scenario $Transport $MessageEncoding $appserverUrls $groupType $config_path "$connectionString" None
-  local connection=`python3 get_sending_connection.py -g $groupType -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q totalConnections $maxConnectionOption`
-  local concurrentConnection=`python3 get_sending_connection.py -g $groupType -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q concurrentConnection $maxConnectionOption`
-  local send=`python3 get_sending_connection.py -g $groupType -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q sendingSteps $maxConnectionOption`
-  run_command_core $tag $Scenario $Transport $MessageEncoding $user "$passwd" "$connectionString" $outputDir $config_path $connection $concurrentConnection $send $appserverUrls $unit
-  if [ $useAzureWeb -eq 1 ]
-  then
-    local duration=$(($SECONDS-$startSeconds))
-    # get the metrics
-    collectWebAppMetrics $appPlanOut $webAppOut $outputDir $duration
-    # download load
-    downloadWebAppLog $webAppOut $outputDir
-    # remove appserver
-    if [ "$NeverStopAppServer" != "true" ]
-    then
-       $AspNetWebMgrDir/DeployWebApp removeGroup --resourceGroup=${AspNetWebAppResGrp} --servicePrincipal $ServicePrincipal
-    fi
-  fi
-}
-
-function RunSendToClient()
-{
-  local tag=$1
-  local Scenario=$2
-  local Transport=$3
-  local MessageEncoding=$4
-  local user=$5
-  local passwd="$6"
-  local connectionString="$7"
-  local outputDir="$8"
-  local unit=$9
-  local msgSize=${10}
-  local appserverUrls
-  local maxConnectionOption
-  if [ "$useMaxConnection" == "true" ]
-  then
-    maxConnectionOption="-m"
-  fi
-
-  local appPrefix serverUrlOut appPlanOut webAppOut appPlanScaleOut
-  local startSeconds=$SECONDS
-  local useAzureWeb=$(isUseAzureWeb)
-  if [ $useAzureWeb -ne 1 ]
-  then
-    cd $ScriptWorkingDir
-    appserverUrls=$(get_reduced_appserverUrl $unit $Scenario)
-  else
-    if [ "$AspNetSignalR" == "true" ]
-    then
-       appPrefix="aspnetwebapp"
-    else
-       appPrefix="aspnetcorewebapp"
-    fi
-    if [ "$NeverStopAppServer" == "true" ]
-    then
-       serverUrlOut=$JenkinsRootPath/${appPrefix}.txt
-       appPlanOut=$JenkinsRootPath/${appPrefix}_appPlan.txt
-       webAppOut=$JenkinsRootPath/${appPrefix}_webApp.txt
-       appPlanScaleOut=$JenkinsRootPath/${appPrefix}_appPlanScaleOut.txt
-       if [ ! -e $serverUrlOut ]
-       then
-          createWebApp $unit $appPrefix "$connectionString" $serverUrlOut $appPlanOut $webAppOut $appPlanScaleOut $Scenario
-       fi
-    else
-       serverUrlOut=$outputDir/${appPrefix}.txt
-       appPlanOut=$outputDir/${appPrefix}_appPlan.txt
-       webAppOut=$outputDir/${appPrefix}_webApp.txt
-       appPlanScaleOut=$outputDir/${appPrefix}_appPlanScaleOut.txt
-       createWebApp $unit $appPrefix "$connectionString" $serverUrlOut $appPlanOut $webAppOut $appPlanScaleOut $Scenario
-    fi
-    if [ -e $serverUrlOut ]
-    then
-      appserverUrls=`cat $serverUrlOut`
-    else
-      echo "!!Fail to create web app!!"
-      return
-    fi
-    startSeconds=$SECONDS
-  fi
-
-  cd $PluginScriptWorkingDir
-  local config_path=$outputDir/${tag}_${Scenario}_${Transport}_${MessageEncoding}.config
-  GenBenchmarkConfig $unit $Scenario $Transport $MessageEncoding $appserverUrls None $config_path "$connectionString" $msgSize
-  local connection=`python3 get_sending_connection.py -ms $msgSize -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q totalConnections $maxConnectionOption`
-  local concurrentConnection=`python3 get_sending_connection.py -ms $msgSize -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q concurrentConnection $maxConnectionOption`
-  local send=`python3 get_sending_connection.py -ms $msgSize -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q sendingSteps $maxConnectionOption`
-
-  run_command_core $tag $Scenario $Transport $MessageEncoding $user "$passwd" "$connectionString" $outputDir $config_path $connection $concurrentConnection $send $appserverUrls $unit
-  if [ $useAzureWeb -eq 1 ]
-  then
-    local duration=$(($SECONDS-$startSeconds))
-    collectWebAppMetrics $appPlanOut $webAppOut $outputDir $duration
-    # download load
-    downloadWebAppLog $webAppOut $outputDir
-    # remove appserver
-    if [ "$NeverStopAppServer" != "true" ]
-    then
-       $AspNetWebMgrDir/DeployWebApp removeGroup --resourceGroup=${AspNetWebAppResGrp} --servicePrincipal $ServicePrincipal
-    fi
-  fi
-}
-
+#@UseExistingWebUrl: @connectionString is the real webapp URL if webapp url was already created
+#@extensionType: 1 for common, 2 for sendtogroup, 3 for sendtoclient
+#@extension: None if extensionType=1; groupType(tiny,small,big) if extensionType=2; msgSize if extensionType=3;
 function RunCommonScenario()
 {
   local tag=$1
@@ -460,6 +301,9 @@ function RunCommonScenario()
   local connectionString="$7"
   local outputDir="$8"
   local unit=$9
+  local extension=${10}
+  local extensionType=${11}
+
   local appserverUrls
   local maxConnectionOption
   if [ "$useMaxConnection" == "true" ]
@@ -469,24 +313,27 @@ function RunCommonScenario()
   local appPrefix serverUrlOut appPlanOut webAppOut appPlanScaleOut
   local startSeconds=$SECONDS
   local useAzureWeb=$(isUseAzureWeb)
-  if [ $useAzureWeb -ne 1 ]
-  then
-    if [[ "$Scenario" == "rest"* ]]
+  if [ "$UseExistingWebUrl" == "true" ];then
+    appserverUrls="$connectionString" # we borrow this parameter to pass appserverUrls
+  else
+    if [ $useAzureWeb -ne 1 ]
     then
+      if [[ "$Scenario" == "rest"* ]]
+      then
        appserverUrls="ignored" ## rest API does not need app server
-    else
+      else
        cd $ScriptWorkingDir
        appserverUrls=$(get_reduced_appserverUrl $unit $Scenario)
-    fi
-  else
-    if [ "$AspNetSignalR" == "true" ]
-    then
-       appPrefix="aspnetwebapp"
+      fi
     else
+      if [ "$AspNetSignalR" == "true" ]
+      then
+       appPrefix="aspnetwebapp"
+      else
        appPrefix="aspnetcorewebapp"
-    fi
-    if [ "$NeverStopAppServer" == "true" ]
-    then
+      fi
+      if [ "$NeverStopAppServer" == "true" ]
+      then
        serverUrlOut=$JenkinsRootPath/${appPrefix}.txt
        appPlanOut=$JenkinsRootPath/${appPrefix}_appPlan.txt
        webAppOut=$JenkinsRootPath/${appPrefix}_webApp.txt
@@ -495,30 +342,49 @@ function RunCommonScenario()
        then
           createWebApp $unit $appPrefix "$connectionString" $serverUrlOut $appPlanOut $webAppOut $appPlanScaleOut $Scenario
        fi
-    else
+      else
        serverUrlOut=$outputDir/${appPrefix}.txt
        appPlanOut=$outputDir/${appPrefix}_appPlan.txt
        webAppOut=$outputDir/${appPrefix}_webApp.txt
        appPlanScaleOut=$outputDir/${appPrefix}_appPlanScaleOut.txt
        createWebApp $unit $appPrefix "$connectionString" $serverUrlOut $appPlanOut $webAppOut $appPlanScaleOut $Scenario
-    fi
+      fi
 
-    if [ -e $serverUrlOut ]
-    then
-      appserverUrls=`cat $serverUrlOut`
-    else
-      echo "!!Fail to create web app!!"
-      return
+      if [ -e $serverUrlOut ]
+      then
+        appserverUrls=`cat $serverUrlOut`
+      else
+        echo "!!Fail to create web app!!"
+        return
+      fi
+      startSeconds=$SECONDS
     fi
-    startSeconds=$SECONDS
   fi
 
+  local connection concurrentConnection send
   cd $PluginScriptWorkingDir
   local config_path=$outputDir/${tag}_${Scenario}_${Transport}_${MessageEncoding}.config
-  GenBenchmarkConfig $unit $Scenario $Transport $MessageEncoding $appserverUrls None $config_path "$connectionString" None
-  local connection=`python3 get_sending_connection.py -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q totalConnections $maxConnectionOption`
-  local concurrentConnection=`python3 get_sending_connection.py -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q concurrentConnection $maxConnectionOption`
-  local send=`python3 get_sending_connection.py -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q sendingSteps $maxConnectionOption`
+  if [ $extensionType == 1 ]; then
+    GenBenchmarkConfig $unit $Scenario $Transport $MessageEncoding $appserverUrls None $config_path "$connectionString" None
+    connection=`python3 get_sending_connection.py -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q totalConnections $maxConnectionOption`
+    concurrentConnection=`python3 get_sending_connection.py -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q concurrentConnection $maxConnectionOption`
+    send=`python3 get_sending_connection.py -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q sendingSteps $maxConnectionOption`
+  else
+    if [ $extensionType == 2 ]; then
+      GenBenchmarkConfig $unit $Scenario $Transport $MessageEncoding $appserverUrls $extension $config_path "$connectionString" None
+      connection=`python3 get_sending_connection.py -g $extension -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q totalConnections $maxConnectionOption`
+      concurrentConnection=`python3 get_sending_connection.py -g $extension -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q concurrentConnection $maxConnectionOption`
+      send=`python3 get_sending_connection.py -g $extension -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q sendingSteps $maxConnectionOption`
+    else
+      if [ $extensionType == 3 ]; then
+        GenBenchmarkConfig $unit $Scenario $Transport $MessageEncoding $appserverUrls None $config_path "$connectionString" $extension
+        connection=`python3 get_sending_connection.py -ms $extension -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q totalConnections $maxConnectionOption`
+        concurrentConnection=`python3 get_sending_connection.py -ms $extension -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q concurrentConnection $maxConnectionOption`
+        send=`python3 get_sending_connection.py -ms $extension -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q sendingSteps $maxConnectionOption`
+      fi
+    fi
+  fi
+
   run_command_core $tag $Scenario $Transport $MessageEncoding $user "$passwd" "$connectionString" $outputDir $config_path $connection $concurrentConnection $send $appserverUrls $unit
 
   if [ $useAzureWeb -eq 1 ]
@@ -554,7 +420,7 @@ function SendToGroup()
 
      start_collect_top_for_signalr_and_nginx
 
-     RunSendToGroup $tag $Scenario $Transport $MessageEncoding $user $passwd "$connectStr" $env_statistic_folder $unit $j
+     run_and_gen_report $tag $Scenario $Transport $MessageEncoding $user $passwd "$connectStr" $env_statistic_folder $unit $j $SendToGroupExtensionType
 
      stop_collect_top_for_signalr_and_nginx
 
@@ -583,7 +449,7 @@ function SendToClient()
 
      start_collect_top_for_signalr_and_nginx
 
-     RunSendToClient $tag $Scenario $Transport $MessageEncoding $user $passwd "$connectStr" $env_statistic_folder $unit $j
+     run_and_gen_report $tag $Scenario $Transport $MessageEncoding $user $passwd "$connectStr" $env_statistic_folder $unit $j $SendToClientExtensionType
 
      stop_collect_top_for_signalr_and_nginx
 
@@ -708,7 +574,7 @@ function run_on_scenario() {
   else
      prepare_result_folder_4_scenario $origTag $Transport $MessageEncoding $Scenario
      start_collect_top_for_signalr_and_nginx
-     run_and_gen_report $origTag $Scenario $Transport $MessageEncoding $user $passwd "$connectStr" $env_statistic_folder $unit
+     run_and_gen_report $origTag $Scenario $Transport $MessageEncoding $user $passwd "$connectStr" $env_statistic_folder $unit None $CommonExtensionType
      stop_collect_top_for_signalr_and_nginx
      copy_log_from_k8s
      reboot_all_pods "$connectStr"
@@ -738,6 +604,40 @@ function mark_job_as_failure_if_meet_error()
   fi
 }
 
+function run_benchmark_on_exsiting_webapp()
+{
+  local unit=$1
+  local user=$2
+  local passwd="$3"
+  local webappRawUrlList="$4"
+  local webappUrlList=""
+  local tag="unit"$unit
+
+  local i j
+  IFS=";" read -ra splittedWebUrl <<< "$webappRawUrlList"
+  for i in "${splittedWebUrl[@]}"
+  do
+    if [ "$webappUrlList" == "" ]; then
+      webappUrlList="${i}/$bench_config_hub"
+    else
+      webappUrlList="${webappUrlList};${i}/$bench_config_hub"
+    fi
+  done
+  local Scenario
+  local Transport
+  local MessageEncoding
+  export ConnectionString="$webappUrlList"
+  for Scenario in $bench_scenario_list
+  do
+      for Transport in $bench_transport_list
+      do
+         for MessageEncoding in $bench_encoding_list
+         do
+            run_on_scenario $Scenario $Transport $MessageEncoding $tag $user $passwd "$webappUrlList" $unit
+         done
+      done
+  done
+}
 # global environment:
 # AspNetSignalR
 function run_benchmark() {
@@ -786,8 +686,9 @@ function run_and_gen_report() {
   local connectionString="$7"
   local outputDir="$8"
   local unit=$9
-
-  RunCommonScenario $tag $Scenario $Transport $MessageEncoding $user $passwd "$connectionString" $outputDir $unit
+  local extension=${10}
+  local extensionType=${11}
+  RunCommonScenario $tag $Scenario $Transport $MessageEncoding $user $passwd "$connectionString" $outputDir $unit $extension $extensionType $extension $extensionType
 }
 
 function build_rpc_master() {
@@ -993,21 +894,15 @@ function run_command() {
   local masterDir=$CommandWorkingDir/master
   local agentDir=$CommandWorkingDir/agent
   local useAzureWeb=$(isUseAzureWeb)
-  if [ $useAzureWeb -ne 1 ]
-  then
-    if [[ "$Scenario" != "rest"* ]]
-    then
-      appserverInUse=$(get_reduced_appserverCount $unit $scenario)
-      appserver=`python extract_ip.py -i $PrivateIps -q appserver -c $appserverInUse`
-      appserverDir=$CommandWorkingDir/appserver
-      mkdir -p $appserverDir
-      build_app_server $appserverDir
-      startAppServerOption="--AppServerHostnames=$appserver --AppserverProject=$appserverDir --AppserverTargetPath=/home/${user}/appserver.tgz --AppServerCount=$appserverInUse"
-    else
-      notStartAppServer=1
-    fi
-  else
+  if [ "$UseExistingWebUrl" == "true" ] || [ $useAzureWeb -eq 1 ] || [[ "$Scenario" == "rest"* ]]; then
     notStartAppServer=1
+  else
+    appserverInUse=$(get_reduced_appserverCount $unit $scenario)
+    appserver=`python extract_ip.py -i $PrivateIps -q appserver -c $appserverInUse`
+    appserverDir=$CommandWorkingDir/appserver
+    mkdir -p $appserverDir
+    build_app_server $appserverDir
+    startAppServerOption="--AppServerHostnames=$appserver --AppserverProject=$appserverDir --AppserverTargetPath=/home/${user}/appserver.tgz --AppServerCount=$appserverInUse"
   fi
   mkdir -p $masterDir
   mkdir -p $agentDir
