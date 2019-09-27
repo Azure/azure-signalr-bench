@@ -295,7 +295,7 @@ function update_k8s_deploy_liveprobe_timeout() {
 function install_nettools() {
   local pod_name=$1
   local config_file=$2
-  kubectl exec --kubeconfig=${config_file} ${pod_name} apt-get install net-tools
+  kubectl exec -c "signalr" --kubeconfig=${config_file} ${pod_name} apt-get install net-tools
 }
 
 function get_k8s_cpu_info() {
@@ -345,7 +345,7 @@ function start_top_tracking() {
        local date_time=`date --iso-8601='seconds'`
        echo "${date_time} " >> $output_dir/${i}_top.txt
        # TODO. specify the container for exec command
-       kubectl exec $i --kubeconfig=$config_file -- bash -c "top -b -n 1" >> $output_dir/${i}_top.txt
+       kubectl exec $i --kubeconfig=$config_file -c "signalr" -- bash -c "top -b -n 1" >> $output_dir/${i}_top.txt
      done
      sleep 1
     done
@@ -369,10 +369,10 @@ function start_connection_tracking() {
   local result=$g_result
   echo "'$result'"
   # install netstat
-  for i in $result
-  do
-     kubectl exec --kubeconfig=$config_file $i apt-get install net-tools > /dev/null
-  done
+  #for i in $result
+  #do
+  #   kubectl exec --kubeconfig=$config_file $i apt-get install net-tools > /dev/null
+  #done
   local end=$((SECONDS + $duration))
   # collect connections
   while [ $SECONDS -lt $end ]
@@ -381,7 +381,7 @@ function start_connection_tracking() {
      do
        local date_time=`date --iso-8601='seconds'`
        # TODO. specify the container for exec command
-       local cli_ser_stat=`kubectl exec $i --kubeconfig=$config_file -- bash -c "curl http://localhost:5003/health/stat" 2> /dev/null`
+       local cli_ser_stat=`kubectl exec $i -c "signalr" --kubeconfig=$config_file -- bash -c "curl http://localhost:5003/health/stat" 2> /dev/null`
        echo "${date_time} ${cli_ser_stat}" >> $output_dir/${i}_connections.txt
      done
      sleep 5
@@ -408,7 +408,7 @@ function copy_syslog() {
      # this copy may fail
      mkdir -p $outdir
      k=0
-     local asrslogs=`kubectl exec ${i} --kubeconfig=$config_file -- bash -c "ls /var/log/ASRS/ASRS*"`
+     local asrslogs=`kubectl exec ${i} -c "signalr" --kubeconfig=$config_file -- bash -c "ls /var/log/ASRS/ASRS*"`
      for j in $asrslogs
      do
        kubectl cp default/${i}:${j} $outdir/${i}_${k}_ASRS.txt --kubeconfig=$config_file
@@ -438,7 +438,7 @@ function copy_syslog_include_rotated() {
   do
      # this copy may fail
      mkdir -p $outdir/${i}_ASRS
-     local asrslogs=`kubectl exec ${i} --kubeconfig=$config_file -- bash -c "ls /var/log/ASRS/ASRS*"`
+     local asrslogs=`kubectl exec ${i} -c "signalr" --kubeconfig=$config_file -- bash -c "ls /var/log/ASRS/ASRS*"`
      for j in $asrslogs
      do
        kubectl cp default/${i}:${j} $outdir/${i}_ASRS/ --kubeconfig=$config_file
