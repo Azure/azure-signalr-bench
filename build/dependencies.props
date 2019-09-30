@@ -19,6 +19,10 @@
     <MicrosoftExtensionsLoggingVersion>2.2.0</MicrosoftExtensionsLoggingVersion>
     <SystemIdentityModelTokensJwtVersion>5.4.0</SystemIdentityModelTokensJwtVersion>
 
+    <!-- ASP.NET Core 3.0 -->
+    <MicrosoftAspNetCoreAppPackageVersion>3.0.0-*</MicrosoftAspNetCoreAppPackageVersion>
+    <SystemReactiveLinqPackageVersion>4.0.0</SystemReactiveLinqPackageVersion>
+
     <!-- For Utils tools -->
     <FluentFTPVersion>24.0.0</FluentFTPVersion>
     <MicrosoftRestClientRuntimeVersion>2.3.18</MicrosoftRestClientRuntimeVersion>
