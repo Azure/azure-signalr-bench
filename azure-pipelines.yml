@@ -71,13 +71,8 @@ steps:
     msbuildArguments: '/t:SignPackages'
   enabled: false
 
-- task: CmdLine@2
-  displayName: 'Create artifacts/build'
-  inputs:
-    script: 'if not exist artifacts/build mkdir artifacts/build'
-
 - task: PublishBuildArtifacts@1
   inputs:
-    PathtoPublish: 'artifacts/build'
+    PathtoPublish: 'artifacts/packages/$(BuildConfiguration)/Shipping'
     ArtifactName: Artifacts
 
