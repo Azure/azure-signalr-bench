@@ -41,6 +41,11 @@ steps:
     script: 'if exist artifacts del /s /q artifacts'
 
 - task: CmdLine@2
+  displayName: 'Create artifacts/build'
+  inputs:
+    script: 'if not exist artifacts/build mkdir artifacts/build'
+
+- task: CmdLine@2
   displayName: 'Clean local nuget'
   inputs:
     script: 'if exist .nuget del /s /q .nuget'
@@ -76,3 +81,4 @@ steps:
   inputs:
     PathtoPublish: 'artifacts/build'
     ArtifactName: Artifacts
+
