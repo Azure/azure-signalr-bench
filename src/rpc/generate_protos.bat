@@ -26,4 +26,7 @@ set PLUGIN=%UserProfile%\.nuget\packages\Grpc.Tools\1.15.0\tools\windows_x64\grp
 if not exist build mkdir build
 %PROTOC% -Iprotos --csharp_out build  protos/rpc.proto --grpc_out build --plugin=protoc-gen-grpc=%PLUGIN%
 
+dir %UserProfile%\.nuget\packages\Google.Protobuf.Tools
+dir %UserProfile%\.nuget\packages\Grpc.Tools
+dir build
 endlocal
