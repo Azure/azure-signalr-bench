@@ -805,12 +805,12 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             if (payload.ContainsKey(SignalRConstants.ConnectionId))
             {
                 payload.TryGetValue(SignalRConstants.ConnectionId, out var connId);
-                sz += ((string)connId).Length;
+                sz += connId.ToString().Length;
             }
             if (payload.ContainsKey(SignalRConstants.GroupName))
             {
                 payload.TryGetValue(SignalRConstants.GroupName, out var grpName);
-                sz += ((string)grpName).Length;
+                sz += grpName.ToString().Length;
             }
             return sz;
         }

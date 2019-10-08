@@ -165,6 +165,94 @@ namespace SignalRChat.Hubs
         }
         #endregion
 
+        #region snippet4
+        public ChannelReader<string> StreamEcho(ChannelReader<string> stream, int delay)
+        {
+            var channel = Channel.CreateUnbounded<string>();
+            async Task WriteChannelStream()
+            {
+                Exception localException = null;
+                try
+                {
+                    while (await stream.WaitToReadAsync())
+                    {
+                        while (stream.TryRead(out var item))
+                        {
+                            Console.WriteLine(item);
+                            await channel.Writer.WriteAsync(item);
+                            await Task.Delay(delay);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    localException = ex;
+                }
+                channel.Writer.Complete(localException);
+            }
+            _ = WriteChannelStream();
+            return channel.Reader;
+        }
+
+        public ChannelReader<IDictionary<string, object>> StreamingEcho(ChannelReader<IDictionary<string, object>> stream, int delay)
+        {
+            var channel = Channel.CreateUnbounded<IDictionary<string, object>>();
+            async Task WriteChannelStream()
+            {
+                Exception localException = null;
+                try
+                {
+                    while (await stream.WaitToReadAsync())
+                    {
+                        while (stream.TryRead(out var item))
+                        {
+                            Console.WriteLine(item["payload.Timestamp"]);
+                            await channel.Writer.WriteAsync(item);
+                            await Task.Delay(delay);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    localException = ex;
+                }
+                channel.Writer.Complete(localException);
+            }
+            _ = WriteChannelStream();
+            return channel.Reader;
+        }
+        #endregion
+
+        #region streamingsendtoclient
+        public async Task StreamingSendToClient(string clientConnectionId, ChannelReader<IDictionary<string, object>> stream, int delay)
+        {
+            var channel = Channel.CreateUnbounded<IDictionary<string, object>>();
+            async Task WriteChannelStream()
+            {
+                Exception localException = null;
+                try
+                {
+                    while (await stream.WaitToReadAsync())
+                    {
+                        while (stream.TryRead(out var item))
+                        {
+                            Console.WriteLine(item["payload.Timestamp"]);
+                            await channel.Writer.WriteAsync(item);
+                            await Task.Delay(delay);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    localException = ex;
+                }
+                channel.Writer.Complete(localException);
+            }
+            _ = WriteChannelStream();
+            await Clients.Client(clientConnectionId).SendAsync("ReceiveStreaming", channel.Reader);
+        }
+        #endregion
+
         public void BroadcastMessage(string name, string message)
         {
             Clients.All.SendAsync("broadcastMessage", name, message);

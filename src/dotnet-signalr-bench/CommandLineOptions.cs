@@ -25,7 +25,7 @@ namespace Microsoft.Azure.SignalR.PerfTest.AppServer
     internal class CommandLineOptions : BaseOption
     {
         public string GetVersion()
-            => typeof(CommandLineOptions).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion;
+            => typeof(CommandLineOptions).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
 
         protected override Task OnExecuteAsync(CommandLineApplication app)
         {

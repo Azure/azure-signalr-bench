@@ -34,7 +34,8 @@ namespace SignalRChat
                 }));
 
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_3_0);
-            services.AddSignalR();
+            services.AddSignalR()
+                    .AddMessagePackProtocol();
         }
 
         [System.Obsolete]

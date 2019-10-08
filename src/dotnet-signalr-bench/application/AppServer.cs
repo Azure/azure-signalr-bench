@@ -38,7 +38,7 @@ namespace Microsoft.Azure.SignalR.PerfTest.AppServer
             };
 
             var config = GetAppServerConfig(_options);
-            var host = new WebHostBuilder()
+            IWebHost host = new WebHostBuilder()
                 .ConfigureLogging(l =>
                 {
                     l.SetMinimumLevel(_options.MinLogLevel);

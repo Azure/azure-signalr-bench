@@ -1,17 +1,24 @@
-﻿<Project>
+<?xml version="1.0" encoding="utf-8"?>
+<Project>
   <Import Project="version.props" />
   <Import Project="build\dependencies.props" />
   <Import Project="build\sources.props" />
+  <Import Project="Sdk.props" Sdk="Microsoft.DotNet.Arcade.Sdk" />
+
+  <PropertyGroup Condition="'$(CopyrightNetFoundation)' != ''">
+    <Copyright>$(CopyrightNetFoundation)</Copyright>
+  </PropertyGroup>
 
   <PropertyGroup>
     <Product>SignalR Benchmark</Product>
     <Authors>Microsoft</Authors>
     <Copyright>© Microsoft Corporation. All rights reserved.</Copyright>
     <Owners>microsoft,azure-sdk</Owners>
-    <PackageLicenseUrl>https://raw.githubusercontent.com/Azure/azure-signalr-bench/master/LICENSE</PackageLicenseUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <!--<PackageLicenseUrl>https://raw.githubusercontent.com/Azure/azure-signalr-bench/master/LICENSE</PackageLicenseUrl>-->
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <PackageProjectUrl>https://aks.ms/signalr-bench</PackageProjectUrl>
-    <PackageIconUrl>http://go.microsoft.com/fwlink/?LinkID=288890</PackageIconUrl>
+    <!--<PackageIconUrl>http://go.microsoft.com/fwlink/?LinkID=288890</PackageIconUrl>-->
     <RepositoryUrl>https://github.com/azure/azure-signalr-bench</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <RepositoryRoot>$(MSBuildThisFileDirectory)</RepositoryRoot>

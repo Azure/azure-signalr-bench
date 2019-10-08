@@ -26,7 +26,7 @@ namespace Microsoft.Azure.SignalR.PerfTest.AppServer
 
         public void SendToClient(IDictionary<string, object> data)
         {
-            var targetId = (string)data["information.ConnectionId"];
+            var targetId = data["information.ConnectionId"].ToString();
             Clients.Client(targetId).SendAsync("RecordLatency", data);
         }
 
@@ -54,7 +54,7 @@ namespace Microsoft.Azure.SignalR.PerfTest.AppServer
 
         public void SendToGroup(IDictionary<string, object> data)
         {
-            var groupName = (string)data["information.GroupName"];
+            var groupName = data["information.GroupName"].ToString();
             Clients.Group(groupName).SendAsync("RecordLatency", data);
         }
     }
