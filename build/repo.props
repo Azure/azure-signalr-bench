@@ -7,37 +7,34 @@
   </ItemGroup>
 
   <ItemGroup>
-    <FilesToSign Include="$(RepositoryRoot)src\master\bin\$(Configuration)\netcoreapp2.1\common.dll" Certificate="$(AssemblySigningCertName)" />
-    <FilesToSign Include="$(RepositoryRoot)src\master\bin\$(Configuration)\netcoreapp2.1\interface.dll" Certificate="$(AssemblySigningCertName)" />
-    <FilesToSign Include="$(RepositoryRoot)src\master\bin\$(Configuration)\netcoreapp2.1\rpc.dll" Certificate="$(AssemblySigningCertName)" />
-    <FilesToSign Include="$(RepositoryRoot)src\master\bin\$(Configuration)\netcoreapp2.1\Plugin.Microsoft.Azure.SignalR.Benchmark.dll" Certificate="$(AssemblySigningCertName)" />
-    <FilesToSign Include="$(RepositoryRoot)src\master\bin\$(Configuration)\netcoreapp2.1\master.dll" Certificate="$(AssemblySigningCertName)" />
-    <FilesToSign Include="$(RepositoryRoot)src\agent\bin\$(Configuration)\netcoreapp2.1\agent.dll" Certificate="$(AssemblySigningCertName)" />
-    <FilesToSign Include="$(RepositoryRoot)src\agent\bin\$(Configuration)\netcoreapp2.1\common.dll" Certificate="$(AssemblySigningCertName)" />
-    <FilesToSign Include="$(RepositoryRoot)src\agent\bin\$(Configuration)\netcoreapp2.1\interface.dll" Certificate="$(AssemblySigningCertName)" />
-    <FilesToSign Include="$(RepositoryRoot)src\agent\bin\$(Configuration)\netcoreapp2.1\rpc.dll" Certificate="$(AssemblySigningCertName)" />
-    <FilesToSign Include="$(RepositoryRoot)src\agent\bin\$(Configuration)\netcoreapp2.1\Plugin.Microsoft.Azure.SignalR.Benchmark.dll" Certificate="$(AssemblySigningCertName)" />
-    <FilesToSign Include="$(RepositoryRoot)src\**\bin\$(Configuration)\**\Microsoft.*.dll" Certificate="$(AssemblySigningCertName)" />
-    <FilesToSign Include="$(RepositoryRoot)src\**\bin\$(Configuration)\**\System.*.dll" Certificate="$(AssemblySigningCertName)" />
-    <FilesToSign Include="$(RepositoryRoot)src\dotnet-signalr-bench\bin\$(Configuration)\netcoreapp2.1\common.dll" Certificate="$(AssemblySigningCertName)" />
-    <FilesToSign Include="$(RepositoryRoot)src\dotnet-signalr-bench\bin\$(Configuration)\netcoreapp2.1\interface.dll" Certificate="$(AssemblySigningCertName)" />
-    <FilesToSign Include="$(RepositoryRoot)src\dotnet-signalr-bench\bin\$(Configuration)\netcoreapp2.1\rpc.dll" Certificate="$(AssemblySigningCertName)" />
-    <FilesToSign Include="$(RepositoryRoot)src\dotnet-signalr-bench\bin\$(Configuration)\netcoreapp2.1\dotnet-signalr-bench.dll" Certificate="$(AssemblySigningCertName)" />
+    <FilesToSign Include="$(RepositoryRoot)artifacts\bin\dotnet-signalr-bench\$(Configuration)\netcoreapp3.0\common.dll" Certificate="$(AssemblySigningCertName)" />
+    <FilesToSign Include="$(RepositoryRoot)artifacts\bin\dotnet-signalr-bench\$(Configuration)\netcoreapp3.0\interface.dll" Certificate="$(AssemblySigningCertName)" />
+    <FilesToSign Include="$(RepositoryRoot)artifacts\bin\dotnet-signalr-bench\$(Configuration)\netcoreapp3.0\rpc.dll" Certificate="$(AssemblySigningCertName)" />
+    <FilesToSign Include="$(RepositoryRoot)artifacts\bin\dotnet-signalr-bench\$(Configuration)\netcoreapp3.0\Plugin.Microsoft.Azure.SignalR.Benchmark.dll" Certificate="$(AssemblySigningCertName)" />
+    <FilesToSign Include="$(RepositoryRoot)artifacts\bin\dotnet-signalr-bench\$(Configuration)\netcoreapp3.0\master.dll" Certificate="$(AssemblySigningCertName)" />
+    <FilesToSign Include="$(RepositoryRoot)artifacts\bin\dotnet-signalr-bench\$(Configuration)\netcoreapp3.0\agent.dll" Certificate="$(AssemblySigningCertName)" />
+    <FilesToSign Include="$(RepositoryRoot)artifacts\bin\dotnet-signalr-bench\$(Configuration)\netcoreapp3.0\common.dll" Certificate="$(AssemblySigningCertName)" />
+    <FilesToSign Include="$(RepositoryRoot)artifacts\bin\dotnet-signalr-bench\$(Configuration)\netcoreapp3.0\interface.dll" Certificate="$(AssemblySigningCertName)" />
+    <FilesToSign Include="$(RepositoryRoot)artifacts\bin\dotnet-signalr-bench\$(Configuration)\netcoreapp3.0\rpc.dll" Certificate="$(AssemblySigningCertName)" />
+    <FilesToSign Include="$(RepositoryRoot)artifacts\bin\dotnet-signalr-bench\$(Configuration)\netcoreapp3.0\Plugin.Microsoft.Azure.SignalR.Benchmark.dll" Certificate="$(AssemblySigningCertName)" />
+    <FilesToSign Include="$(RepositoryRoot)artifacts\bin\dotnet-signalr-bench\$(Configuration)\netcoreapp3.0\Microsoft.*.dll" Certificate="$(AssemblySigningCertName)" />
+    <FilesToSign Include="$(RepositoryRoot)artifacts\bin\dotnet-signalr-bench\$(Configuration)\netcoreapp3.0\System.*.dll" Certificate="$(AssemblySigningCertName)" />
+    <FilesToSign Include="$(RepositoryRoot)artifacts\bin\dotnet-signalr-bench\$(Configuration)\netcoreapp3.0\dotnet-signalr-bench.dll" Certificate="$(AssemblySigningCertName)" />
     <!-- third-party libraries -->
-    <FilesToSign Include="$(RepositoryRoot)src\dotnet-signalr-bench\bin\$(Configuration)\netcoreapp2.1\publish\Google.Protobuf.dll" Certificate="$(AssemblySigning3rdPartyCertName)" />
-    <FilesToSign Include="$(RepositoryRoot)src\dotnet-signalr-bench\bin\$(Configuration)\netcoreapp2.1\publish\Grpc.Core.dll" Certificate="$(AssemblySigning3rdPartyCertName)" />
-    <FilesToSign Include="$(RepositoryRoot)src\dotnet-signalr-bench\bin\$(Configuration)\netcoreapp2.1\publish\Google.Protobuf.dll" Certificate="$(AssemblySigning3rdPartyCertName)" />
-    <FilesToSign Include="$(RepositoryRoot)src\dotnet-signalr-bench\bin\$(Configuration)\netcoreapp2.1\publish\MessagePack.dll" Certificate="$(AssemblySigning3rdPartyCertName)" />
-    <FilesToSign Include="$(RepositoryRoot)src\dotnet-signalr-bench\bin\$(Configuration)\netcoreapp2.1\publish\Newtonsoft.Json.Bson.dll" Certificate="$(AssemblySigning3rdPartyCertName)" />
-    <FilesToSign Include="$(RepositoryRoot)src\dotnet-signalr-bench\bin\$(Configuration)\netcoreapp2.1\publish\Newtonsoft.Json.dll" Certificate="$(AssemblySigning3rdPartyCertName)" />
-    <FilesToSign Include="$(RepositoryRoot)src\dotnet-signalr-bench\bin\$(Configuration)\netcoreapp2.1\publish\Serilog.dll" Certificate="$(AssemblySigning3rdPartyCertName)" />
-    <FilesToSign Include="$(RepositoryRoot)src\dotnet-signalr-bench\bin\$(Configuration)\netcoreapp2.1\publish\Serilog.AspNetCore.dll" Certificate="$(AssemblySigning3rdPartyCertName)" />
-    <FilesToSign Include="$(RepositoryRoot)src\dotnet-signalr-bench\bin\$(Configuration)\netcoreapp2.1\publish\Serilog.Extensions.Logging.dll" Certificate="$(AssemblySigning3rdPartyCertName)" />
-    <FilesToSign Include="$(RepositoryRoot)src\dotnet-signalr-bench\bin\$(Configuration)\netcoreapp2.1\publish\Serilog.Sinks.Console.dll" Certificate="$(AssemblySigning3rdPartyCertName)" />
-    <FilesToSign Include="$(RepositoryRoot)src\dotnet-signalr-bench\bin\$(Configuration)\netcoreapp2.1\publish\Serilog.Sinks.File.dll" Certificate="$(AssemblySigning3rdPartyCertName)" />
-    <FilesToSign Include="$(RepositoryRoot)src\dotnet-signalr-bench\bin\$(Configuration)\netcoreapp2.1\publish\YamlDotNet.dll" Certificate="$(AssemblySigning3rdPartyCertName)" />
-    <FilesToSign Include="$(RepositoryRoot)src\dotnet-signalr-bench\bin\$(Configuration)\netcoreapp2.1\publish\runtimes\win\native\grpc_csharp_ext.x64.dll" Certificate="$(AssemblySigning3rdPartyCertName)" />
-    <FilesToSign Include="$(RepositoryRoot)src\dotnet-signalr-bench\bin\$(Configuration)\netcoreapp2.1\publish\runtimes\win\native\grpc_csharp_ext.x86.dll" Certificate="$(AssemblySigning3rdPartyCertName)" />
+    <FilesToSign Include="$(RepositoryRoot)artifacts\bin\dotnet-signalr-bench\$(Configuration)\netcoreapp3.0\publish\Google.Protobuf.dll" Certificate="$(AssemblySigning3rdPartyCertName)" />
+    <FilesToSign Include="$(RepositoryRoot)artifacts\bin\dotnet-signalr-bench\$(Configuration)\netcoreapp3.0\publish\Grpc.Core.dll" Certificate="$(AssemblySigning3rdPartyCertName)" />
+    <FilesToSign Include="$(RepositoryRoot)artifacts\bin\dotnet-signalr-bench\$(Configuration)\netcoreapp3.0\publish\Google.Protobuf.dll" Certificate="$(AssemblySigning3rdPartyCertName)" />
+    <FilesToSign Include="$(RepositoryRoot)artifacts\bin\dotnet-signalr-bench\$(Configuration)\netcoreapp3.0\publish\MessagePack.dll" Certificate="$(AssemblySigning3rdPartyCertName)" />
+    <FilesToSign Include="$(RepositoryRoot)artifacts\bin\dotnet-signalr-bench\$(Configuration)\netcoreapp3.0\publish\Newtonsoft.Json.Bson.dll" Certificate="$(AssemblySigning3rdPartyCertName)" />
+    <FilesToSign Include="$(RepositoryRoot)artifacts\bin\dotnet-signalr-bench\$(Configuration)\netcoreapp3.0\publish\Newtonsoft.Json.dll" Certificate="$(AssemblySigning3rdPartyCertName)" />
+    <FilesToSign Include="$(RepositoryRoot)artifacts\bin\dotnet-signalr-bench\$(Configuration)\netcoreapp3.0\publish\Serilog.dll" Certificate="$(AssemblySigning3rdPartyCertName)" />
+    <FilesToSign Include="$(RepositoryRoot)artifacts\bin\dotnet-signalr-bench\$(Configuration)\netcoreapp3.0\publish\Serilog.AspNetCore.dll" Certificate="$(AssemblySigning3rdPartyCertName)" />
+    <FilesToSign Include="$(RepositoryRoot)artifacts\bin\dotnet-signalr-bench\$(Configuration)\netcoreapp3.0\publish\Serilog.Extensions.Logging.dll" Certificate="$(AssemblySigning3rdPartyCertName)" />
+    <FilesToSign Include="$(RepositoryRoot)artifacts\bin\dotnet-signalr-bench\$(Configuration)\netcoreapp3.0\publish\Serilog.Sinks.Console.dll" Certificate="$(AssemblySigning3rdPartyCertName)" />
+    <FilesToSign Include="$(RepositoryRoot)artifacts\bin\dotnet-signalr-bench\$(Configuration)\netcoreapp3.0\publish\Serilog.Sinks.File.dll" Certificate="$(AssemblySigning3rdPartyCertName)" />
+    <FilesToSign Include="$(RepositoryRoot)artifacts\bin\dotnet-signalr-bench\$(Configuration)\netcoreapp3.0\publish\YamlDotNet.dll" Certificate="$(AssemblySigning3rdPartyCertName)" />
+    <FilesToSign Include="$(RepositoryRoot)artifacts\bin\dotnet-signalr-bench\$(Configuration)\netcoreapp3.0\publish\runtimes\win\native\grpc_csharp_ext.x64.dll" Certificate="$(AssemblySigning3rdPartyCertName)" />
+    <FilesToSign Include="$(RepositoryRoot)artifacts\bin\dotnet-signalr-bench\$(Configuration)\netcoreapp3.0\publish\runtimes\win\native\grpc_csharp_ext.x86.dll" Certificate="$(AssemblySigning3rdPartyCertName)" />
   </ItemGroup>
 
   <ItemGroup Label="Code sign exclusions">

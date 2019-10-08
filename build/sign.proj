@@ -22,14 +22,14 @@
       <!-- The OutDir and IntermediateOutputPath properties are required by MicroBuild. MicroBuild only
            signs files that are under these paths. -->
       <OutDir>$(RepositoryRoot)\</OutDir>
-      <IntermediateOutputPath>$(RepositoryRoot)\artifacts\build</IntermediateOutputPath>
+      <IntermediateOutputPath>$(RepositoryRoot)\artifacts\packages</IntermediateOutputPath>
     </PropertyGroup>
 
     <Message Text="IntermediateOutputPath = $(IntermediateOutputPath)" />
     
     <ItemGroup>
       <!-- Adding the assemblies to sign -->
-      <FilesToSign Include="$(OutDir)artifacts\build\*.nupkg">
+      <FilesToSign Include="$(OutDir)artifacts\packages\**\*.nupkg">
         <Authenticode>NuGet</Authenticode>
       </FilesToSign>
     </ItemGroup>
