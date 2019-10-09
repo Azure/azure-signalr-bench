@@ -2,7 +2,9 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using Microsoft.AspNetCore.SignalR;
+using System;
 using System.Collections.Generic;
+using System.Threading.Channels;
 using System.Threading.Tasks;
 
 namespace Microsoft.Azure.SignalR.PerfTest.AppServer
@@ -17,6 +19,34 @@ namespace Microsoft.Azure.SignalR.PerfTest.AppServer
         public void Echo(IDictionary<string, object> data)
         {
             Clients.Client(Context.ConnectionId).SendAsync("RecordLatency", data);
+        }
+
+	    public ChannelReader<IDictionary<string, object>> StreamingEcho(ChannelReader<IDictionary<string, object>> stream, int delay)
+        {
+            var channel = Channel.CreateUnbounded<IDictionary<string, object>>();
+            async Task WriteChannelStream()
+            {
+                Exception localException = null;
+                try
+                {
+                    while (await stream.WaitToReadAsync())
+                    {
+                        while (stream.TryRead(out var item))
+                        {
+                            //Console.WriteLine(item["payload.Timestamp"]);
+                            await channel.Writer.WriteAsync(item);
+                            await Task.Delay(delay);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    localException = ex;
+                }
+                channel.Writer.Complete(localException);
+            }
+            _ = WriteChannelStream();
+            return channel.Reader;
         }
 
         public void Broadcast(IDictionary<string, object> data)
