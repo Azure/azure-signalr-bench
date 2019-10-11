@@ -211,6 +211,8 @@ function normalizeSendInterval()
 #   ToleratedMaxConnectionFailCount
 #   ToleratedMaxConnectionFailPercentage
 #   ToleratedMaxLatencyPercentage
+#   StreamingItemCount
+#   StreamingItemSendInteval
 function GenBenchmarkConfig()
 {
   local unit=$1
@@ -240,6 +242,8 @@ function GenBenchmarkConfig()
   local toleratedConnDropCountOp
   local toleratedConnDropPercentageOp
   local toleratedMaxLatencyPercentageOp
+  local streamingItemCountOp
+  local streamingItemSendIntervalOp
   if [ "$ToleratedMaxConnectionFailCount" != "" ]
   then
     toleratedConnDropCountOp="-cc $ToleratedMaxConnectionFailCount"
@@ -262,13 +266,17 @@ function GenBenchmarkConfig()
   then
      settings=aspnet_settings.yaml
      connectionTypeOption="-ct AspNet"
-  else if [[ "$Scenario" == "rest"* ]]
+  else if [[ "$Scenario" == "rest"* ]];then
        # it is rest API scenario
-       then
             connectionTypeOption="-ct CoreDirect"
             appserverUrls="$connectionString"
        fi
   fi
+  if [[ "$Scenario" == "streaming"* ]];then
+     streamingItemCountOp="-sic $StreamingItemCount"
+     streamingItemSendIntervalOp="-sisi $StreamingItemSendInteval"
+  fi
+
   local benchKind="perf"
   if [ "$kind" == "longrun" ]
   then
@@ -281,7 +289,7 @@ function GenBenchmarkConfig()
                       -c $configPath $maxConnectionOption \
                       -s $settings $connectionTypeOption \
                       -k $benchKind \
-                      $toleratedConnDropCountOp $toleratedConnDropPercentageOp $toleratedMaxLatencyPercentageOp
+                      $toleratedConnDropCountOp $toleratedConnDropPercentageOp $toleratedMaxLatencyPercentageOp $streamingItemCountOp $streamingItemSendIntervalOp
   # display part of the configuration to avoid 'write error: Resource temporarily unavailable'
   head -n 200 $configPath
   echo "......"
