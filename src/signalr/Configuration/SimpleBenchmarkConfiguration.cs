@@ -431,6 +431,22 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             return masterStep;
         }
 
+        public MasterStep StreamingEcho(BenchConfigData config, uint endIndex)
+        {
+            var masterStep = SimpleSendingScenario(
+                config.Scenario.Name,
+                config.Config.SingleStepDuration,
+                config.Scenario.Parameters.MessageSize,
+                config.Scenario.Parameters.SendingInterval,
+                config.Config.Connections,
+                0,
+                endIndex);
+            masterStep.Parameters[SignalRConstants.Method] = typeof(StreamingEcho).Name;
+            masterStep.Parameters[SignalRConstants.StreamingItemCount] = config.Scenario.Parameters.StreamingItemCount;
+            masterStep.Parameters[SignalRConstants.StreamingItemInterval] = config.Scenario.Parameters.StreamingItemSendDelay;
+            return masterStep;
+        }
+
         protected MasterStep SimpleSendingScenario(
             string typeName,
             uint stepDuration,

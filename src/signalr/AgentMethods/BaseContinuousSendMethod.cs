@@ -119,7 +119,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.AgentMethods
             }
         }
 
-        protected async Task<IDictionary<string, object>> SimpleScenarioSend(
+        protected virtual async Task<IDictionary<string, object>> SimpleScenarioSend(
             IDictionary<string, object> stepParameters,
             IDictionary<string, object> pluginParameters,
             string callbackMethod)

@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.SignalR.Client;
 using System;
 using System.Threading;
+using System.Threading.Channels;
 using System.Threading.Tasks;
 
 namespace Plugin.Microsoft.Azure.SignalR.Benchmark
@@ -192,6 +193,20 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         public void UpdateTimestampWhenConnected()
         {
             LockedUpdate();
+        }
+
+        public async Task<ChannelReader<TResult>> StreamAsChannelAsync<TResult>(string methodName, object arg1, object arg2, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var ret = await _hubConnection.StreamAsChannelAsync<TResult>(methodName, arg1, arg2, cancellationToken);
+                return ret;
+            }
+            catch
+            {
+                await MarkAsStopped();
+                throw;
+            }
         }
     }
 }

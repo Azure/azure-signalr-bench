@@ -226,6 +226,7 @@ namespace SignalRChat.Hubs
         #region streamingsendtoclient
         public async Task StreamingSendToClient(string clientConnectionId, ChannelReader<IDictionary<string, object>> stream, int delay)
         {
+            Console.WriteLine("call StreamingSendToClient");
             var channel = Channel.CreateUnbounded<IDictionary<string, object>>();
             async Task WriteChannelStream()
             {

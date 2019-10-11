@@ -4,6 +4,7 @@ using Microsoft.AspNet.SignalR.Client.Transports;
 using Serilog;
 using System;
 using System.Threading;
+using System.Threading.Channels;
 using System.Threading.Tasks;
 
 namespace Plugin.Microsoft.Azure.SignalR.Benchmark
@@ -251,6 +252,11 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         public void UpdateTimestampWhenConnected()
         {
             LockedUpdate();
+        }
+
+        public Task<ChannelReader<TResult>> StreamAsChannelAsync<TResult>(string methodName, object arg1, object arg2, CancellationToken cancellationToken = default)
+        {
+            throw new NotImplementedException();
         }
     }
 }

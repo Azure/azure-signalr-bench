@@ -26,18 +26,20 @@ config:
   arrivingRate: 50                                                                   # Optional, default is {SimpleBenchmarkModel.DEFAULT_ARRIVINGRATE}
   transport: Websockets                                                              # Optional: '{SimpleBenchmarkModel.DEFAULT_TRANSPORT}|{SimpleBenchmarkModel.SSE_TRANSPORT}|{SimpleBenchmarkModel.LONGPOLLING_TRANSPORT}', default is {SimpleBenchmarkModel.DEFAULT_TRANSPORT}
   protocol: json                                                                     # Optional: '{SimpleBenchmarkModel.DEFAULT_PROTOCOL}|{SimpleBenchmarkModel.MSGPACK_PROTOCOL}' default is {SimpleBenchmarkModel.DEFAULT_PROTOCOL}
-  singleStepDuration: 240000                                                         # Optional, default is {SimpleBenchmarkModel.DEFAULT_SINGLE_STEP_DUR} mill-seconds
+  singleStepDuration: 240000                                                         # Optional, default is {SimpleBenchmarkModel.DEFAULT_SINGLE_STEP_DUR} milli-seconds
   baseSending: 500                                                                   # Optional, the count for active sending connections when starting, default is {SimpleBenchmarkModel.DEFAULT_BASE_SENDING_STEP}
   sendingSteps: 0                                                                    # Optional: maximum value is 'Connections / BaseSending', minimum value is 1. Default is 0, means getting from 'Connections / BaseSending'
   step: 500                                                                          # Optional: default is {SimpleBenchmarkModel.DEFAULT_STEP}
   connectionType: Core                                                               # Optional: '{SimpleBenchmarkModel.DEFAULT_CONNECTION_TYPE}|{SimpleBenchmarkModel.ASPNET_CONNECTION_TYPE}', default is '{SimpleBenchmarkModel.DEFAULT_CONNECTION_TYPE}', if you use AspNet SignalR, please choose '{SimpleBenchmarkModel.ASPNET_CONNECTION_TYPE}'.
   debug: false                                                                       # Optional: dump more details if it is true, default is false
 scenario:
-  name: echo                                                                         # Optional: '{SimpleBenchmarkModel.DEFAULT_SCENARIO}|broadcast|sendToGroup|sendToClient|restSendToUser|restSendToGroup|restBroadcast|restPersistSendToUser|restPersistSendToGroup|restPersistBroadcast', default is {SimpleBenchmarkModel.DEFAULT_SCENARIO}
+  name: echo                                                                         # Optional: '{SimpleBenchmarkModel.DEFAULT_SCENARIO}|broadcast|sendToGroup|sendToClient|restSendToUser|restSendToGroup|restBroadcast|restPersistSendToUser|restPersistSendToGroup|restPersistBroadcast|streamingEcho', default is {SimpleBenchmarkModel.DEFAULT_SCENARIO}
   parameters:
     messageSize: 2048                                                                # Optional: default is {SimpleBenchmarkModel.DEFAULT_MESSAGESIZE} bytes
     sendingInterval: 1000                                                            # Optional: default is {SimpleBenchmarkModel.DEFAULT_SEND_INTERVAL} milliseconds
     groupCount: 500                                                                  # Optional: group count only valid for 'sendToGroup|restSendToGroup|restPersistSendToGroup', ignored for other scenarios
+    streamingItemCount: 2                                                            # Optional: the item count for streaming scenario. Default is 2
+    streamingItemSendDelay: 0                                                        # Optional: the delay for sending streaming item. Default is 0 milli-seconds
 ";
 
         /**

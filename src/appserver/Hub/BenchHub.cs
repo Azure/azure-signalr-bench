@@ -21,7 +21,7 @@ namespace Microsoft.Azure.SignalR.PerfTest.AppServer
             Clients.Client(Context.ConnectionId).SendAsync("RecordLatency", data);
         }
 
-	    public ChannelReader<IDictionary<string, object>> StreamingEcho(ChannelReader<IDictionary<string, object>> stream, int delay)
+        public ChannelReader<IDictionary<string, object>> StreamingEcho(ChannelReader<IDictionary<string, object>> stream, int delay)
         {
             var channel = Channel.CreateUnbounded<IDictionary<string, object>>();
             async Task WriteChannelStream()
@@ -33,9 +33,11 @@ namespace Microsoft.Azure.SignalR.PerfTest.AppServer
                     {
                         while (stream.TryRead(out var item))
                         {
-                            //Console.WriteLine(item["payload.Timestamp"]);
                             await channel.Writer.WriteAsync(item);
-                            await Task.Delay(delay);
+                            if (delay > 0)
+                            {
+                                await Task.Delay(delay);
+                            }
                         }
                     }
                 }

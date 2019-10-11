@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using MessagePack.Formatters;
+using System.IO;
 using YamlDotNet.Serialization;
 using YamlDotNet.Serialization.NamingConventions;
 
@@ -7,17 +8,20 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
     public class SimpleBenchmarkModel
     {
         // default settings
-        public const uint DEFAULT_BASE_SENDING_STEP = 500;
-        public const uint DEFAULT_STEP = 500;
-        public const uint DEFAULT_SENDING_STEPS = 0;
-        public const uint DEFAULT_CONNECTIONS = 1000;
         public const uint DEFAULT_ARRIVINGRATE = 50;
-        public const uint DEFAULT_MESSAGESIZE = 2048;
-        public const uint DEFAULT_SINGLE_STEP_DUR = 240000;
-        public const uint DEFAULT_SEND_INTERVAL = 1000;
         public const uint DEFAULT_ARRIVING_BATCH_WAIT = 1000;
+        public const uint DEFAULT_BASE_SENDING_STEP = 500;
+        public const uint DEFAULT_CONNECTIONS = 1000;
         public const double DEFAULT_CONNECT_FAIL_PERCENTAGE = 0.01;
+        public const uint DEFAULT_MESSAGESIZE = 2048;
         public const double DEFAULT_MESSAGE_LATENCY_PERCENTAGE = 0.01;
+        public const uint DEFAULT_STEP = 500;
+        public const uint DEFAULT_SEND_INTERVAL = 1000;
+        public const uint DEFAULT_SENDING_STEPS = 0;
+        public const uint DEFAULT_SINGLE_STEP_DUR = 240000;
+        public const uint DEFAULT_STREAMING_ITEM_COUNT = 2;
+        public const uint DEFAULT_STREAMING_ITEM_SENDING_DELAY = 0;
+
         public const string DEFAULT_KIND = "perf";
         public const string STRICTPERF_KIND = "perf2";
         public const string PARSERESULT_KIND = "resultparser";
@@ -31,6 +35,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         public const string DEFAULT_CONNECTION_TYPE = "Core";
         public const string ASPNET_CONNECTION_TYPE = "AspNet";
         public const string DIRECT_CONNECTION_PREFIX = "rest";
+
         public const string DEFAULT_ARRIVING_BATCH_MODE = "HighPress";
         public const string LOW_ARRIVING_BATCH_MODE = "LowPress";
         public const string DEFAULT_SCENARIO = "echo";
@@ -88,6 +93,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             public uint MessageSize { get; set; } = DEFAULT_MESSAGESIZE;
             public uint SendingInterval { get; set; } = DEFAULT_SEND_INTERVAL;
             public uint GroupCount { get; set; }
+            public uint StreamingItemCount { get; set; } = DEFAULT_STREAMING_ITEM_COUNT;
+            public uint StreamingItemSendDelay { get; set; } = DEFAULT_STREAMING_ITEM_SENDING_DELAY;
         }
 
         public SimpleBenchmarkModel()
