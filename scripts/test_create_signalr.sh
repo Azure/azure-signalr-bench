@@ -8,7 +8,7 @@ function print_usage()
 cat <<EOF
 Usage:
     General:
-    $(basename $0) <create|delete|createServerless>
+    $(basename $0) <create|createFree|delete|createServerless>
 
 EOF
     exit 1
@@ -30,6 +30,14 @@ function create()
    login
    create_group_if_not_exist $group $location
    create_signalr_service $group $name "Basic_DS2" $unit
+}
+
+function createFree()
+{
+   local acs=`cat westus2_acs_rowkey.txt`
+   login
+   create_group_if_not_exist $group $location
+   create_free_asrs_with_acs $group $name "$acs"
 }
 
 function createServerless()
@@ -56,6 +64,10 @@ while [[ $# > 0 ]]; do
     shift
     case "$key" in
         create)
+          ACTION=$key
+          shift
+            ;;
+        createFree)
           ACTION=$key
           shift
             ;;
