@@ -40,8 +40,12 @@ jobs:
     enablePublishBuildArtifacts: true
     helixRepo: Azure/azure-signalr-bench
     pool:
-      name: NetCorePublic-Pool
-      queue: BuildPool.Windows.10.Amd64.VS2017.Open
+      ${{ if eq(variables._RunAsPublic, True) }}:
+        name: NetCorePublic-Pool
+        queue: BuildPool.Windows.10.Amd64.VS2017.Open
+      ${{ if eq(variables._RunAsInternal, True) }}:
+        name: NetCoreInternal-Pool
+        queue: BuildPool.Windows.10.Amd64.VS2017
     strategy:
       matrix:
         debug_configuration:
