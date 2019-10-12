@@ -4,11 +4,11 @@ variables:
   - name: _HelixType
     value: build/product
   - name: _HelixSource
-    value: pr/dotnet/arcade-minimalci-sample/$(Build.SourceBranch)
+    value: pr/Azure/azure-signalr-bench/$(Build.SourceBranch)
   - name: _HelixTestType
     value: test/product/
   - name: _XUnitProject
-    value: $(Build.SourcesDirectory)/Hello.Tests/Hello.Tests.csproj
+    value: $(Build.SourcesDirectory)/test/signalr/Plugin.Microsoft.Azure.SignalR.Benchmark.Tests.csproj
   - name: _XUnitTargetFramework
     value: netcoreapp2.0
   - name: _XUnitRunnerVersion
@@ -52,6 +52,8 @@ jobs:
     - script: build.bat
         -configuration $(_BuildConfig)
         -prepareMachine
+        /p:DotNetSignType=test
+        /p:TeamName="Azure OSS Team"
       name: Build
       displayName: Build
       condition: succeeded()
@@ -72,6 +74,7 @@ jobs:
         Creator: azure-signalr-bench
         HelixAccessToken: $(_HelixAccessToken)
         condition: eq(variables['_BuildConfig'], 'Debug')
+        
     - task: PublishBuildArtifacts@1
       displayName: Publish Logs to VSTS
       inputs:
