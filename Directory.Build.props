@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project>
-  <Import Project="version.props" />
   <Import Project="build\dependencies.props" />
   <Import Project="build\sources.props" />
   <Import Project="Sdk.props" Sdk="Microsoft.DotNet.Arcade.Sdk" />

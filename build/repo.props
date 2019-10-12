@@ -6,6 +6,7 @@
     <DotNetCoreRuntime Include="$(MicrosoftNETCoreApp21PackageVersion)" />
   </ItemGroup>
 
+<!--
   <ItemGroup>
     <FilesToSign Include="$(RepositoryRoot)artifacts\bin\dotnet-signalr-bench\$(Configuration)\netcoreapp3.0\common.dll" Certificate="$(AssemblySigningCertName)" />
     <FilesToSign Include="$(RepositoryRoot)artifacts\bin\dotnet-signalr-bench\$(Configuration)\netcoreapp3.0\interface.dll" Certificate="$(AssemblySigningCertName)" />
@@ -48,4 +49,5 @@
     <ProjectToExclude Include="$(RepositoryRoot)src\appserver\appserver.csproj" />
     <ProjectToExclude Include="$(RepositoryRoot)test\signalr\**\*.csproj" />
   </ItemGroup>
+-->
 </Project>
