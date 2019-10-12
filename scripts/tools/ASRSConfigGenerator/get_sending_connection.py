@@ -73,6 +73,9 @@ def parse_arguments():
                                                                arg_type.group_config_mode_connection],
                         default=arg_type.group_config_mode_connection,
                         help='Group configuration mode, default is {}'.format(arg_type.group_config_mode_connection))
+    # streaming
+    parser.add_argument('-sic', '--streaming_item_count', type=int, default=2, help='Streaming item count')
+    parser.add_argument('-sisi', '--streaming_item_send_interval', type=int, default=0, help='Streaming item sending interval')
     args = parser.parse_args()
 
     return args
@@ -101,7 +104,9 @@ def main():
                                                 args.use_max_connection,
                                                 args.message_size,
                                                 args.group_type,
-                                                args.group_config_mode)
+                                                args.group_config_mode,
+                                                args.streaming_item_count,
+                                                args.streaming_item_send_interval)
 
     func="{f}(scenario_config)".format(f=args.query)
     eval(func)
