@@ -4,6 +4,7 @@ others={1:2, 2:2, 5:4, 10:4, 20:8, 50:20, 100:30}
 echo={1:2, 2:2, 5:4, 10:4, 20:8, 50:32, 100:32}
 sendToClient=others
 sendToGroup=others
+streamingEcho=others
 broadcast={1:2, 2:2, 5:2, 10:2, 20:2, 50:2, 100:2}
 
 def unit1_webappserver(s):

@@ -11,6 +11,7 @@ restSendToGroup=restSendToUser
 restPersistBroadcast=restSendToUser
 restPersistSendToGroup=restSendToUser
 restPersistSendToUser=restSendToUser
+streamingEcho=others
 
 def unit1_appserver(s):
    return s[1]

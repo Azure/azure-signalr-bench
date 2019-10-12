@@ -11,7 +11,7 @@ if __name__=="__main__":
    parser = argparse.ArgumentParser()
    parser.add_argument("-u", "--unit", help="specify the unit type: 1|2|5|10|20|50|100")
    parser.add_argument("-q", "--query", choices=["appserver","webappserver"], default="appserver", type=str, help="specify query type: appserver, or webappserver")
-   parser.add_argument("-s", "--scenario", choices=["echo", "broadcast", "sendToClient", "sendToGroup", "restPersistSendToUser", "restPersistSendToGroup", "restPersistBroadcast", "restSendToGroup", "restSendToUser", "restBroadcast", "others"], default="others", type=str, help="specify the scenario, default is other")
+   parser.add_argument("-s", "--scenario", choices=["echo", "broadcast", "sendToClient", "sendToGroup", "restPersistSendToUser", "restPersistSendToGroup", "restPersistBroadcast", "restSendToGroup", "restSendToUser", "restBroadcast", "streamingEcho", "others"], default="others", type=str, help="specify the scenario, default is other")
    args = parser.parse_args()
 
    import appserverunit

@@ -7,6 +7,7 @@ from RestSendToUser import *
 from RestBroadcast import *
 from SendToClient import *
 from SendToGroup import *
+from StreamingEcho import *
 from Util.SettingsHelper import *
 
 
@@ -31,8 +32,9 @@ def parse_arguments():
                                  scenario_type.rest_send_to_user,
                                  scenario_type.send_to_client,
                                  scenario_type.send_to_group,
+                                 scenario_type.streaming_echo,
                                  scenario_type.frequent_join_leave_group],
-                        help="Scenario, choose from <{}>|<{}>|<{}>|<{}>|<{}>|<{}>|<{}>|<{}>|<{}>|<{}>|<{}>"
+                        help="Scenario, choose from <{}>|<{}>|<{}>|<{}>|<{}>|<{}>|<{}>|<{}>|<{}>|<{}>|<{}>|<{}>"
                         .format(scenario_type.echo,
                                 scenario_type.broadcast,
                                 scenario_type.rest_persist_broadcast,
@@ -43,6 +45,7 @@ def parse_arguments():
                                 scenario_type.rest_send_to_user,
                                 scenario_type.send_to_client,
                                 scenario_type.send_to_group,
+                                scenario_type.streaming_echo,
                                 scenario_type.frequent_join_leave_group))
     parser.add_argument('-p', '--protocol', required=True, choices=[arg_type.protocol_json,
                                                                     arg_type.protocol_messagepack],
