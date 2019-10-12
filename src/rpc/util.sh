@@ -35,7 +35,7 @@ package_master() {
   local outDir=$1
   build_master
   cd ../master
-  dotnet publish -c Release -f netcoreapp2.1 -o ${outDir} --self-contained -r $PLATFORM
+  dotnet publish -c Release -f netcoreapp3.0 -o ${outDir} --self-contained -r $PLATFORM
   cd -
 }
 
@@ -43,7 +43,7 @@ package_agent() {
   local outDir=$1
   build_agent
   cd ../agent
-  dotnet publish -c Release -f netcoreapp2.1 -o ${outDir} --self-contained -r $PLATFORM
+  dotnet publish -c Release -f netcoreapp3.0 -o ${outDir} --self-contained -r $PLATFORM
   cd -
 }
 
