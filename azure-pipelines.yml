@@ -16,7 +16,7 @@ variables:
   solution: '*.sln'
   BuildPlatform: 'Any CPU'
   BuildConfiguration: 'Release'
-  MSBuildArguments: '/p:Configuration=$(BuildConfiguration) /p:EnableSigning=true /p:BuildNumber=$(BuildNumber) -build -test -pack -sign -publish'
+  MSBuildArguments: '/p:Configuration=$(BuildConfiguration) /p:EnableSigning=true /p:BuildNumber=$(BuildNumber)'
 
 steps:
 - task: NuGetCommand@2
