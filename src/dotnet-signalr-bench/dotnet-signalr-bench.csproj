@@ -8,12 +8,10 @@
     <PackageId>Microsoft.dotnet-signalr-benchmark</PackageId>
     <PackageProjectUrl>https://aka.ms/signalr_service</PackageProjectUrl>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <!--<PackageLicenseUrl>https://raw.githubusercontent.com/Azure/azure-signalr-bench/master/LICENSE</PackageLicenseUrl>-->
     <PackageTags>signalr;benchmark</PackageTags>
   </PropertyGroup>
 
   <PropertyGroup>
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <EnableSourceLink>false</EnableSourceLink>
   </PropertyGroup>
 

@@ -1,177 +1,78 @@
-variables:
-  - name: Build.Repository.Clean
-    value: true
-  - name: _HelixType
-    value: build/product
-  - name: _HelixSource
-    value: pr/dotnet/arcade-minimalci-sample/$(Build.SourceBranch)
-  - name: _HelixTestType
-    value: test/product/
-  - name: _XUnitProject
-    value: $(Build.SourcesDirectory)/Hello.Tests/Hello.Tests.csproj
-  - name: _XUnitTargetFramework
-    value: netcoreapp2.0
-  - name: _XUnitRunnerVersion
-    value: 2.4.1
-  - name: _DotNetCliPackageType
-    value: sdk
-  - name: _DotNetCliVersion
-    value: 2.1.403
-  - name: _HelixAccessToken
-    value: ''
+# ASP.NET Core (.NET Framework)
+# Build and test ASP.NET Core projects targeting the full .NET Framework.
+# Add steps that publish symbols, save build artifacts, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/dotnet-core
 
-resources:
-  containers:
-  - container: LinuxContainer
-    image: microsoft/dotnet-buildtools-prereqs:ubuntu-14.04-cross-0cd4667-20170319080304
-
-# CI and PR triggers
 trigger:
 - master
 
-pr:
-- master
+pool:
+  name: VSEng-MicroBuildVS2019
+  demands:
+  - Cmd
+  - msbuild
 
-jobs:
-- template: /eng/common/templates/job/job.yml
-  parameters:
-    name: Windows_NT
-    enableTelemetry: true
-    enablePublishBuildArtifacts: true
-    helixRepo: Azure/azure-signalr-bench
-    pool:
-      name: NetCorePublic-Pool
-      queue: BuildPool.Windows.10.Amd64.VS2017.Open
-    strategy:
-      matrix:
-        debug_configuration:
-          _BuildConfig: Debug
-        release_configuration:
-          _BuildConfig: Release
-    steps:
-    - script: build.bat
-        -configuration $(_BuildConfig)
-        -prepareMachine
-      name: Build
-      displayName: Build
-      condition: succeeded()
-    - template: /eng/common/templates/steps/send-to-helix.yml
-      parameters:
-        HelixSource: $(_HelixSource)
-        HelixType: $(_HelixTestType)
-        HelixTargetQueues: Windows.10.Amd64.Open;Windows.81.Amd64.Open;Windows.7.Amd64.Open
-        XUnitProjects: $(_XUnitProject)
-        XUnitPublishTargetFramework: $(_XUnitTargetFramework)
-        XUnitRuntimeTargetFramework: $(_XUnitTargetFramework)
-        XUnitRunnerVersion: $(_XUnitRunnerVersion)
-        IncludeDotNetCli: true
-        DotNetCliPackageType: $(_DotNetCliPackageType)
-        DotNetCliVersion: $(_DotNetCliVersion)
-        EnableXUnitReporter: true
-        WaitForWorkItemCompletion: true
-        Creator: azure-signalr-bench
-        HelixAccessToken: $(_HelixAccessToken)
-        condition: eq(variables['_BuildConfig'], 'Debug')
-    - task: PublishBuildArtifacts@1
-      displayName: Publish Logs to VSTS
-      inputs:
-        PathtoPublish: '$(Build.SourcesDirectory)/artifacts/log/$(_BuildConfig)'
-        PublishLocation: Container
-        ArtifactName: $(Agent.Os)_$(Agent.JobName)
-      continueOnError: true
-      condition: always()
+variables:
+  solution: '*.sln'
+  BuildPlatform: 'Any CPU'
+  BuildConfiguration: 'Release'
+  MSBuildArguments: '/p:Configuration=$(BuildConfiguration) /p:EnableSigning=true /p:BuildNumber=$(BuildNumber) -build -test -pack -sign -publish'
 
-- template: /eng/common/templates/job/job.yml
-  parameters:
-    name: OSX
-    enableTelemetry: true
-    enablePublishBuildArtifacts: true
-    helixRepo: Azure/azure-signalr-bench
-    pool:
-      name: Hosted macOS
-    strategy:
-      matrix:
-        debug_configuration:
-          _BuildConfig: Debug
-        release_configuration:
-          _BuildConfig: Release
-    steps:
-    - script: build.sh
-        --configuration $(_BuildConfig)
-        --prepareMachine
-      name: Build
-      displayName: Build
-      condition: succeeded()
-    - template: /eng/common/templates/steps/send-to-helix.yml
-      parameters:
-        HelixSource: $(_HelixSource)
-        HelixType: $(_HelixTestType)
-        HelixTargetQueues: OSX.1013.Amd64.Open;OSX.1014.Amd64.Open;OSX.1015.Amd64.Open
-        XUnitProjects: $(_XUnitProject)
-        XUnitPublishTargetFramework: $(_XUnitTargetFramework)
-        XUnitRuntimeTargetFramework: $(_XUnitTargetFramework)
-        XUnitRunnerVersion: $(_XUnitRunnerVersion)
-        IncludeDotNetCli: true
-        DotNetCliPackageType: $(_DotNetCliPackageType)
-        DotNetCliVersion: $(_DotNetCliVersion)
-        EnableXUnitReporter: true
-        WaitForWorkItemCompletion: true
-        Creator: azure-signalr-bench
-        HelixAccessToken: $(_HelixAccessToken)
-        condition: eq(variables['_BuildConfig'], 'Debug')
-    - task: PublishBuildArtifacts@1
-      displayName: Publish Logs to VSTS
-      inputs:
-        PathtoPublish: '$(Build.SourcesDirectory)/artifacts/log/$(_BuildConfig)'
-        PublishLocation: Container
-        ArtifactName: $(Agent.Os)_$(Agent.JobName)
-      continueOnError: true
-      condition: always()
+steps:
+- task: NuGetCommand@2
+  displayName: 'Restore Microbuild'
+  inputs:
+    restoreSolution: build/microbuild.proj
+    vstsFeed: '6a2d6fd3-0b16-40f0-b309-7175c4e86490'
 
-- template: /eng/common/templates/job/job.yml
-  parameters:
-    name: Linux
-    enableTelemetry: true
-    enablePublishBuildArtifacts: true
-    helixRepo: Azure/azure-signalr-bench
-    pool:
-      name: Hosted Ubuntu 1604
-    container: LinuxContainer
-    strategy:
-      matrix:
-        debug_configuration:
-          _BuildConfig: Debug
-        release_configuration:
-          _BuildConfig: Release
-    steps:
-    - script: build.sh
-        --configuration $(_BuildConfig)
-        --prepareMachine
-      name: Build
-      displayName: Build
-      condition: succeeded()
-    - template: /eng/common/templates/steps/send-to-helix.yml
-      parameters:
-        HelixSource: $(_HelixSource)
-        HelixType: $(_HelixTestType)
-        HelixTargetQueues: Debian.9.Amd64.Open;RedHat.7.Amd64.Open;Ubuntu.1604.Amd64.Open;Ubuntu.1604.Amd64.Open@mcr.microsoft.com/dotnet-buildtools/prereqs:fedora-28-helix-09ca40b-20190508143249
-        XUnitProjects: $(_XUnitProject)
-        XUnitPublishTargetFramework: $(_XUnitTargetFramework)
-        XUnitRuntimeTargetFramework: $(_XUnitTargetFramework)
-        XUnitRunnerVersion: $(_XUnitRunnerVersion)
-        IncludeDotNetCli: true
-        DotNetCliPackageType: $(_DotNetCliPackageType)
-        DotNetCliVersion: $(_DotNetCliVersion)
-        EnableXUnitReporter: true
-        WaitForWorkItemCompletion: true
-        Creator: azure-signalr-bench
-        HelixAccessToken: $(_HelixAccessToken)
-        condition: eq(variables['_BuildConfig'], 'Debug')
-    - task: PublishBuildArtifacts@1
-      displayName: Publish Logs to VSTS
-      inputs:
-        PathtoPublish: '$(Build.SourcesDirectory)/artifacts/log/$(_BuildConfig)'
-        PublishLocation: Container
-        ArtifactName: $(Agent.Os)_$(Agent.JobName)
-      continueOnError: true
-      condition: always()
+- task: CmdLine@2
+  displayName: 'List all local files and directories'
+  inputs:
+    script: 'dir'
+
+- task: CmdLine@2
+  displayName: 'Check variables'
+  inputs:
+    script: 'echo $(buildcounter)'
+
+- task: CmdLine@2
+  displayName: 'Clean artifacts'
+  inputs:
+    script: 'if exist artifacts del /s /q artifacts'
+
+- task: CmdLine@2
+  displayName: 'Clean local nuget'
+  inputs:
+    script: 'if exist .nuget del /s /q .nuget'
+
+- task: CmdLine@2
+  displayName: 'Clean local obj'
+  inputs:
+    script: 'if exist obj del /s /q obj'
+
+- task: MicroBuildSigningPlugin@2
+  displayName: 'Install Signing Plugin'
+  inputs:
+    signType: '$(SignType)'
+  condition: and(succeeded(), in(variables.SignType, 'real', 'test'))
+
+- task: BatchScript@1
+  inputs:
+    filename: 'build.bat'
+    arguments: '$(MSBuildArguments)'
+
+- task: MSBuild@1
+  displayName: Sign
+  inputs:
+    solution: build/sign.proj
+    msbuildVersion: '15.0'
+    msbuildArchitecture: x64
+    configuration: '$(BuildConfiguration)'
+    msbuildArguments: '/t:SignPackages'
+  enabled: false
+
+- task: PublishBuildArtifacts@1
+  inputs:
+    PathtoPublish: 'artifacts/packages/$(BuildConfiguration)/Shipping'
+    ArtifactName: Artifacts
+
