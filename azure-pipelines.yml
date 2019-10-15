@@ -71,6 +71,7 @@ steps:
     msbuildArguments: '/t:SignPackages'
   enabled: false
 
+
 - task: PublishBuildArtifacts@1
   inputs:
     PathtoPublish: 'artifacts/packages/$(BuildConfiguration)/Shipping'
