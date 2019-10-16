@@ -61,15 +61,15 @@ steps:
     filename: 'build.bat'
     arguments: '$(MSBuildArguments)'
 
-#- task: MSBuild@1
-#  displayName: Sign
-#  inputs:
-#    solution: build/sign.proj
-#    msbuildVersion: '15.0'
-#    msbuildArchitecture: x64
-#    configuration: '$(BuildConfiguration)'
-#    msbuildArguments: '/t:SignPackages'
-#  enabled: false
+- task: MSBuild@1
+  displayName: Sign
+  inputs:
+    solution: build/sign.proj
+    msbuildVersion: '15.0'
+    msbuildArchitecture: x64
+    configuration: '$(BuildConfiguration)'
+    msbuildArguments: '/t:SignPackages'
+  enabled: true
 
 
 - task: PublishBuildArtifacts@1
