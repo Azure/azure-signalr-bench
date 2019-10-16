@@ -1,15 +1,15 @@
 #!/bin/bash
 
-build()
+function build()
 {
   cd src/rpc
   ./generate_protos.sh
   cd ../..
 }
 
-arcade_build()
+function arcade_build()
 {
-  eng/common/cibuild.sh "$@"
+  sh eng/common/cibuild.sh "$@"
 }
 
 export _PackTool=true
