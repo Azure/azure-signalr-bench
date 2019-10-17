@@ -19,7 +19,7 @@ Run the tool on local machine
 
 Install the tool
 
-`dotnet tool install -g Microsoft.dotnet-signalr-benchmark --version 1.0.0-preview1-10422`
+`dotnet tool install --global Microsoft.dotnet-signalr-benchmark --version 1.0.0-preview2.19516.1`
 
 ## Run
 
@@ -309,6 +309,20 @@ scenario:
   name: sendToGroup
   parameters:
     groupCount: 500
+```
+- echo through streaming: there are 1000 client connections who send streaming message to hub which will echo message back to client through streaming API.
+```yaml
+mode: simple
+config:
+  webAppTarget: http://localhost:5050/signalrbench
+  connections: 1000
+  step: 500
+scenario:
+  name: streamingEcho
+  parameters:
+    messageSize: 1048
+    streamingItemCount: 2
+    streamingItemSendDelay: 0
 ```
 
 ## Azure SignalR Service specific scenarios.
