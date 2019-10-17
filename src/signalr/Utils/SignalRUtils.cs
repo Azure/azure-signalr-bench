@@ -610,7 +610,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
                                   httpConnectionOptions.CloseTimeout = TimeSpan.FromMinutes(closeTimeout);
                               }) into builder
                               let hubConnection = protocolString.ToLower() == "messagepack" ?
-                                                  builder.AddMessagePackProtocol().Build() : builder.Build()
+                                                  builder.AddMessagePackProtocol().Build() :
+                                                  builder.AddNewtonsoftJsonProtocol().Build()
                               select (IHubConnectionAdapter)(new SignalRCoreHubConnection(hubConnection));
 
             return connections.ToList();
@@ -704,7 +705,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
                                   httpConnectionOptions.CloseTimeout = TimeSpan.FromMinutes(closeTimeout);
                               }) into builder
                               let hubConnection = protocolString.ToLower() == "messagepack" ?
-                                                  builder.AddMessagePackProtocol().Build() : builder.Build()
+                                                  builder.AddMessagePackProtocol().Build() :
+                                                  builder.AddNewtonsoftJsonProtocol().Build()
                               select (IHubConnectionAdapter)(new SignalRCoreHubConnection(hubConnection));
 
             return connections.ToList();
@@ -805,12 +807,12 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             if (payload.ContainsKey(SignalRConstants.ConnectionId))
             {
                 payload.TryGetValue(SignalRConstants.ConnectionId, out var connId);
-                sz += ((string)connId).Length;
+                sz += connId.ToString().Length;
             }
             if (payload.ContainsKey(SignalRConstants.GroupName))
             {
                 payload.TryGetValue(SignalRConstants.GroupName, out var grpName);
-                sz += ((string)grpName).Length;
+                sz += grpName.ToString().Length;
             }
             return sz;
         }
@@ -969,6 +971,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             merged[SignalRConstants.StatisticsSendingStep] = Min(results, SignalRConstants.StatisticsSendingStep);
             merged = merged.Union(SumMessageLatencyStatistics).ToDictionary(entry => entry.Key, entry => entry.Value);
 
+            // Streaming item missing
+            merged[SignalRConstants.StatisticsStreamingItemMissing] = Sum(results, SignalRConstants.StatisticsStreamingItemMissing);
             return merged;
         }
 

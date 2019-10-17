@@ -8,38 +8,40 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         public static readonly string Type = "Type";
         public static readonly string Method = "Method";
         // Configuration parameters
-        public static readonly string ConcurrentConnection = "Parameter.ConcurrentConnection";
+        public static readonly string ActionAfterConnect = "Parameter.ActionAfterConnect";
         public static readonly string BatchMode = "Parameter.BatchMode";
         public static readonly string BatchWait = "Parameter.BatchWait";
+        public static readonly string ConcurrentConnection = "Parameter.ConcurrentConnection";
         public static readonly string ConnectionTotal = "Parameter.ConnectionTotal";
         public static readonly string ConnectionBegin = "Parameter.ConnectionBegin";
         public static readonly string ConnectionEnd = "Parameter.ConnectionEnd";
-        public static readonly string HubUrls = "Parameter.HubUrl";
-        public static readonly string HubProtocol = "Parameter.Protocol";
-        public static readonly string TransportType = "Parameter.TransportType";
+        public static readonly string CriteriaMaxFailConnectionPercentage = "Parameter.CriteriaMaxFailConnectionPercentage";
+        public static readonly string CriteriaMaxFailConnectionAmount = "Parameter.CriteriaMaxFailConnectionAmount";
+        public static readonly string CriteriaMaxFailSendingPercentage = "Parameter.CriteriaMaxFailSendingPercentage";
         public static readonly string Duration = "Parameter.Duration";
-        public static readonly string Interval = "Parameter.Interval";
-        public static readonly string RemainderBegin = "Parameter.RemainderBegin";
-        public static readonly string RemainderEnd = "Parameter.RemainderEnd";
-        public static readonly string Modulo = "Parameter.Modulo";
-        public static readonly string MessageSize = "Parameter.MessageSize";
+        public static readonly string GroupConfigMode = "Parameter.Mode";
         public static readonly string GroupCount = "Parameter.GroupCount";
         public static readonly string GroupLevelRemainderBegin = "Parameter.GroupLevelRemainderBegin";
         public static readonly string GroupLevelRemainderEnd = "Parameter.GroupLevelRemainderEnd";
         public static readonly string GroupInternalRemainderBegin = "Parameter.GroupInternalRemainderBegin";
         public static readonly string GroupInternalRemainderEnd = "Parameter.GroupInternalRemainderEnd";
         public static readonly string GroupInternalModulo = "Parameter.GroupInternalModulo";
-        public static readonly string StatisticsOutputPath = "Parameter.StatisticsOutputPath";
-        public static readonly string CriteriaMaxFailConnectionPercentage = "Parameter.CriteriaMaxFailConnectionPercentage";
-        public static readonly string CriteriaMaxFailConnectionAmount = "Parameter.CriteriaMaxFailConnectionAmount";
-        public static readonly string CriteriaMaxFailSendingPercentage = "Parameter.CriteriaMaxFailSendingPercentage";
+        public static readonly string HttpClientManager = "Parameter.HttpClientManager";
+        public static readonly string HubUrls = "Parameter.HubUrl";
+        public static readonly string HubProtocol = "Parameter.Protocol";
+        public static readonly string Interval = "Parameter.Interval";
         public static readonly string LatencyStep = "Parameter.LatencyStep";
         public static readonly string LatencyMax = "Parameter.LatencyMax";
-        public static readonly string GroupConfigMode = "Parameter.Mode";
+        public static readonly string Modulo = "Parameter.Modulo";
+        public static readonly string MessageSize = "Parameter.MessageSize";
         public static readonly string PercentileList = "Parameter.PercentileList";
-        public static readonly string ActionAfterConnect = "Parameter.ActionAfterConnect";
-        public static readonly string HttpClientManager = "Parameter.HttpClientManager";
+        public static readonly string RemainderBegin = "Parameter.RemainderBegin";
+        public static readonly string RemainderEnd = "Parameter.RemainderEnd";
+        public static readonly string StatisticsOutputPath = "Parameter.StatisticsOutputPath";
         public static readonly string StatPrintMode = "Parameter.StatPrintMode";
+        public static readonly string StreamingItemCount = "Parameter.StreamingItemCount";
+        public static readonly string StreamingItemInterval = "Parameter.StreamingItemSendInterval";
+        public static readonly string TransportType = "Parameter.TransportType";
 
         // Connection/group information
         public static readonly string ConnectionId = "information.ConnectionId";
@@ -59,16 +61,17 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         public static readonly string RepairConnectionCTS = "Plugin.RepairConnectionCTS";
 
         // Callback Name
-        public static readonly string EchoCallbackName = "Echo";
         public static readonly string BroadcastCallbackName = "Broadcast";
-        public static readonly string SendToClientCallbackName = "SendToClient";
-        public static readonly string SendToGroupCallbackName = "SendToGroup";
-        public static readonly string RecordLatencyCallbackName = "RecordLatency";
+        public static readonly string ConnectionIdCallback = "ConnectionId";
+        public static readonly string EchoCallbackName = "Echo";
+        public static readonly string GetConnectionIdCallback = "GetConnectionId";
         public static readonly string JoinGroupCallbackName = "JoinGroup";
         public static readonly string LeaveGroupCallbackName = "LeaveGroup";
-        public static readonly string GetConnectionIdCallback = "GetConnectionId";
-        public static readonly string ConnectionIdCallback = "ConnectionId";
         public static readonly string OnConnectedCallback = "OnConnected";
+        public static readonly string RecordLatencyCallbackName = "RecordLatency";
+        public static readonly string SendToClientCallbackName = "SendToClient";
+        public static readonly string SendToGroupCallbackName = "SendToGroup";
+        public static readonly string StreamingEchoCallbackName = "StreamingEcho";
 
         // Message payload
         public static readonly string Timestamp = "payload.Timestamp";
@@ -114,6 +117,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         public const string StatisticsConnectionSLA = "connection:sla";
         public const string StatisticsLatencyLessThan = "message:lt:";
         public const string StatisticsLatencyGreatEqThan = "message:ge:";
+        public const string StatisticsStreamingItemMissing = "message:streamItemMissing";
         // Constants
         public static readonly int ConnectionCloseTimeout = 100;
 

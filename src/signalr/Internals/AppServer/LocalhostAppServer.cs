@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Azure.SignalR.PerfTest.AppServer;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Serilog;
 using System;
@@ -16,7 +17,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.Internals.AppServer
     public class LocalhostAppServer
     {
         private IWebHost _host;
-        private IApplicationLifetime _lifetime;
+        private IHostApplicationLifetime _lifetime;
         private bool _started;
 
         public bool IsStarted
@@ -79,7 +80,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.Internals.AppServer
                     await _host.StartAsync(cts.Token);
                     var url = _host.ServerFeatures.Get<IServerAddressesFeature>().Addresses.FirstOrDefault();
                     Log.Information($"Localhost app server started {url}");
-                    _lifetime = _host.Services.GetRequiredService<IApplicationLifetime>();
+                    _lifetime = _host.Services.GetRequiredService<IHostApplicationLifetime>();
                     _started = true;
                     _lifetime.ApplicationStopped.Register(() =>
                     {

@@ -31,6 +31,8 @@ Key = {
     'RemainderBegin': 'Parameter.RemainderBegin',
     'RemainderEnd': 'Parameter.RemainderEnd',
     'StatisticsOutputPath': 'Parameter.StatisticsOutputPath',
+    'StreamingItemCount': 'Parameter.StreamingItemCount',
+    'StreamingItemSendInterval': 'Parameter.StreamingItemSendInterval',
     'TransportType': 'Parameter.TransportType',
     'Types': 'Types',
     'Type': 'Type'
@@ -197,6 +199,18 @@ def generate_send(type_, method, duration, interval, remainder_begin, remainder_
         }
     }
 
+def streaming_echo(type_, method, duration, interval,
+                   remainder_begin, remainder_end, modulo,
+                   message_size, streaming_item_count,
+                   streaming_item_send_interval):
+    return {
+        **generate_send(type_, method, duration, interval, remainder_begin, remainder_end, modulo,
+                         message_size),
+        **{
+            Key['StreamingItemCount']: streaming_item_count,
+            Key['StreamingItemSendInterval']: streaming_item_send_interval
+        }
+    }
 
 def send_to_client(type_, method, connection_total, duration, interval, remainder_begin, remainder_end, modulo, message_size):
     return [{

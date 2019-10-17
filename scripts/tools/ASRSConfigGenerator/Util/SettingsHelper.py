@@ -4,7 +4,8 @@ from Util.Common import *
 
 class ScenarioConfig:
     def __init__(self, type_, connections, concurrent, base_step, step, step_length,
-                 batch_mode, batch_wait, group_count=1, group_type="", group_config_mode=""):
+                 batch_mode, batch_wait, group_count, group_type, group_config_mode,
+                 streaming_item_count, streaming_item_send_interval):
         self.connections = connections
         self.concurrent = concurrent
         self.base_step = base_step
@@ -16,6 +17,8 @@ class ScenarioConfig:
         self.group_config_mode = group_config_mode
         self.batch_mode = batch_mode
         self.batch_wait = batch_wait
+        self.streaming_item_count = streaming_item_count
+        self.streaming_item_send_interval = streaming_item_send_interval
 
 
 class StatisticsConfig:
@@ -80,8 +83,17 @@ def parse_settings(path):
     return config
 
 
-def determine_scenario_config(settings, unit, scenario, transport, protocol="json", use_max_connection=True,
-                              message_size=None, group="", group_config_mode=""):
+def determine_scenario_config(settings,
+                              unit,
+                              scenario,
+                              transport,
+                              protocol,
+                              use_max_connection,
+                              message_size,
+                              group,
+                              group_config_mode,
+                              streaming_item_count,
+                              streaming_item_send_interval):
     scenario_type = ScenarioType()
 
     if scenario == scenario_type.send_to_client:
@@ -123,7 +135,8 @@ def determine_scenario_config(settings, unit, scenario, transport, protocol="jso
       group_count = 0
 
     config = ScenarioConfig(scenario, connections, concurrent, base_step, step, step_length,
-                            batch_mode, batch_wait, group_count, group, group_config_mode)
+                            batch_mode, batch_wait, group_count, group, group_config_mode,
+                            streaming_item_count, streaming_item_send_interval)
 
     return config
 

@@ -33,7 +33,9 @@ namespace Microsoft.Azure.SignalR.PerfTest.AppServer
             }
             else
             {
-                services.AddSignalR().AddMessagePackProtocol().AddAzureSignalR(option =>
+                services.AddSignalR()
+                        .AddMessagePackProtocol()
+                        .AddAzureSignalR(option =>
                 {
                     option.AccessTokenLifetime = TimeSpan.FromHours(_serverConfig.AccessTokenLifetime);
                     option.ConnectionCount = _serverConfig.ConnectionNumber;
@@ -45,11 +47,12 @@ namespace Microsoft.Azure.SignalR.PerfTest.AppServer
 
         public void Configure(IApplicationBuilder app)
         {
+            app.UseRouting();
             if (_useLocalSignalR)
             {
-                app.UseSignalR(routes =>
+                app.UseEndpoints(endpoints =>
                 {
-                    routes.MapHub<BenchHub>(HUB_NAME);
+                    endpoints.MapHub<BenchHub>(HUB_NAME);
                 });
             }
             else

@@ -60,10 +60,14 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.AgentMethods
                 connection.On(SignalRConstants.RecordLatencyCallbackName, (IDictionary<string, object> data) =>
                 {
                     var receiveTimestamp = Util.Timestamp();
-                    data.TryGetTypedValue(SignalRConstants.Timestamp, out long sendTimestamp, Convert.ToInt64);
-                    var latency = receiveTimestamp - sendTimestamp;
-                    statisticsCollector.RecordLatency(latency);
-                    SignalRUtils.RecordRecvSize(data, statisticsCollector);
+                    if (data.TryGetValue(SignalRConstants.Timestamp, out object v))
+                    {
+                        var value = v.ToString();
+                        var sendTimestamp = Convert.ToInt64(value);
+                        var latency = receiveTimestamp - sendTimestamp;
+                        statisticsCollector.RecordLatency(latency);
+                        SignalRUtils.RecordRecvSize(data, statisticsCollector);
+                    }
                 });
             }
         }

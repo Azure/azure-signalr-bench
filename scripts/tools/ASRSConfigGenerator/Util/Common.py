@@ -52,4 +52,5 @@ class ScenarioType:
         self.rest_send_to_user = "restSendToUser"
         self.send_to_client = "sendToClient"
         self.send_to_group = "sendToGroup"
+        self.streaming_echo = "streamingEcho"
         self.frequent_join_leave_group = "frequentJoinLeaveGroup"

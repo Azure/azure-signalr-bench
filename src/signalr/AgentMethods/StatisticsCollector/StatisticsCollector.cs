@@ -82,6 +82,11 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.AgentMethods.Statistics
             }
         }
 
+        public void IncreaseStreamItemMissing(long c)
+        {
+            _statistics.AddOrUpdate(SignalRConstants.StatisticsStreamingItemMissing, c, (k, v) => v + c);
+        }
+
         public virtual IDictionary<string, object> GetData()
         {
             lock(_lock)

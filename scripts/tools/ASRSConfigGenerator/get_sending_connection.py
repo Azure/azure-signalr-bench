@@ -7,6 +7,7 @@ from RestSendToUser import *
 from RestBroadcast import *
 from SendToClient import *
 from SendToGroup import *
+from StreamingEcho import *
 from Util.SettingsHelper import *
 
 
@@ -31,8 +32,9 @@ def parse_arguments():
                                  scenario_type.rest_send_to_user,
                                  scenario_type.send_to_client,
                                  scenario_type.send_to_group,
+                                 scenario_type.streaming_echo,
                                  scenario_type.frequent_join_leave_group],
-                        help="Scenario, choose from <{}>|<{}>|<{}>|<{}>|<{}>|<{}>|<{}>|<{}>|<{}>|<{}>|<{}>"
+                        help="Scenario, choose from <{}>|<{}>|<{}>|<{}>|<{}>|<{}>|<{}>|<{}>|<{}>|<{}>|<{}>|<{}>"
                         .format(scenario_type.echo,
                                 scenario_type.broadcast,
                                 scenario_type.rest_persist_broadcast,
@@ -43,6 +45,7 @@ def parse_arguments():
                                 scenario_type.rest_send_to_user,
                                 scenario_type.send_to_client,
                                 scenario_type.send_to_group,
+                                scenario_type.streaming_echo,
                                 scenario_type.frequent_join_leave_group))
     parser.add_argument('-p', '--protocol', required=True, choices=[arg_type.protocol_json,
                                                                     arg_type.protocol_messagepack],
@@ -70,6 +73,9 @@ def parse_arguments():
                                                                arg_type.group_config_mode_connection],
                         default=arg_type.group_config_mode_connection,
                         help='Group configuration mode, default is {}'.format(arg_type.group_config_mode_connection))
+    # streaming
+    parser.add_argument('-sic', '--streaming_item_count', type=int, default=2, help='Streaming item count')
+    parser.add_argument('-sisi', '--streaming_item_send_interval', type=int, default=0, help='Streaming item sending interval')
     args = parser.parse_args()
 
     return args
@@ -98,7 +104,9 @@ def main():
                                                 args.use_max_connection,
                                                 args.message_size,
                                                 args.group_type,
-                                                args.group_config_mode)
+                                                args.group_config_mode,
+                                                args.streaming_item_count,
+                                                args.streaming_item_send_interval)
 
     func="{f}(scenario_config)".format(f=args.query)
     eval(func)

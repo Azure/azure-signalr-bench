@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Azure.SignalR.Management;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Serilog;
 using System;
@@ -14,7 +15,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.Internals
     {
         private static int DEFAULT_LOCAL_PORT = 12345;
         private IWebHost _host;
-        private IApplicationLifetime _lifetime;
+        private IHostApplicationLifetime _lifetime;
         private bool _started;
         private IServiceManager _serviceManager;
 
@@ -50,7 +51,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.Internals
                     Log.Information("Starting negotiation server...");
                     await _host.StartAsync(cts.Token);
                     Log.Information("Negotiation server started");
-                    _lifetime = _host.Services.GetRequiredService<IApplicationLifetime>();
+                    _lifetime = _host.Services.GetRequiredService<IHostApplicationLifetime>();
                     _started = true;
                     _lifetime.ApplicationStopped.Register(() =>
                     {

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading;
+using System.Threading.Channels;
 using System.Threading.Tasks;
 
 namespace Plugin.Microsoft.Azure.SignalR.Benchmark
@@ -13,6 +14,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         Task SendAsync(string methodName, CancellationToken cancellationToken = default);
 
         Task SendAsync(string methodName, object arg1, CancellationToken cancellationToken = default);
+
+        Task<ChannelReader<TResult>> StreamAsChannelAsync<TResult>(string methodName, object arg1, object arg2, CancellationToken cancellationToken = default);
 
         Task<T> InvokeAsync<T>(string method);
 
