@@ -17,7 +17,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
             // Get parameters
             stepParameters.TryGetTypedValue(SignalRConstants.ConnectionTotal, out int connectionTotal, Convert.ToInt32);
             stepParameters.TryGetTypedValue(SignalRConstants.ConcurrentConnection, out int concurrentConnection, Convert.ToInt32);
-
+            stepParameters.TryGetTypedValue(SignalRConstants.Type, out string type, Convert.ToString);
             // Prepare configuration for each clients
             var packages = clients.Select((client, i) =>
             {
@@ -31,7 +31,13 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
             // Process on clients
             var results = from package in packages select package.Client.QueryAsync(package.Data);
             var task = Task.WhenAll(results);
-            return Util.TimeoutCheckedTask(task, SignalRConstants.MillisecondsToWait, nameof(Reconnect));
+            long expectedMilliseconds = SignalRConstants.MillisecondsToWait;
+            if (SignalRUtils.FetchTotalConnectionFromContext(pluginParameters, type, out int totalConnections))
+            {
+                expectedMilliseconds = SignalRUtils.GetTimeoutPerConcurrentSpeed(totalConnections, concurrentConnection);
+            }
+
+            return Util.TimeoutCheckedTask(task, expectedMilliseconds, nameof(Reconnect));
         }
     }
 }
