@@ -8,7 +8,7 @@ function print_usage()
 cat <<EOF
 Usage:
     General:
-    $(basename $0) <create|createFree|delete|createServerless>
+    $(basename $0) <create|createFree|delete|createServerless|createOnProdWestUS2>
 
 EOF
     exit 1
@@ -47,6 +47,56 @@ function createServerless()
    create_serverless_signalr_service $group $name $location $unit
 }
 
+function createOnProdWestUS2()
+{
+   login
+   create_group_if_not_exist $group $location
+   env="prod"
+   location="westus2"
+   local separatedRedis
+   local separatedRouteRedis
+   local separatedAcs
+   local separatedIngressVMSS
+   if [ -e westus2_redis_rowkey.txt ]
+   then
+     separatedRedis=`cat westus2_redis_rowkey.txt`
+   fi
+   if [ -e westus2_route_redis_rowkey.txt ]
+   then
+     separatedRouteRedis=`cat westus2_route_redis_rowkey.txt`
+   fi
+   if [ -e westus2_acs_rowkey.txt ]
+   then
+     separatedAcs=`cat westus2_acs_rowkey.txt`
+   fi
+   if [ -e westus2_vm_set.txt ]
+   then
+     separatedIngressVMSS=`cat westus2_vm_set.txt`
+   fi
+
+   if [ "$separatedRedis" == "" ]; then
+     echo "Missing tags file westus2_redis_rowkey.txt"
+     return
+   fi
+
+   if [ "$separatedRouteRedis" == "" ]; then
+     echo "Missing tags file westus2_route_redis_rowkey.txt"
+     return
+   fi
+
+   if [ "$separatedAcs" == "" ]; then
+     echo "Missing tags file westus2_acs_rowkey.txt"
+     return
+   fi
+
+   if [ "$separatedIngressVMSS" == "" ]; then
+     echo "Missing tags file westus2_vm_set.txt"
+     return
+   fi
+   create_group_if_not_exist $group $location
+   create_asrs_with_acs_redises $group $name "Basic_DS2" $unit $separatedRedis $separatedRouteRedis $separatedAcs $separatedIngressVMSS
+}
+
 function delete()
 {
    login
@@ -68,6 +118,10 @@ while [[ $# > 0 ]]; do
           shift
             ;;
         createFree)
+          ACTION=$key
+          shift
+            ;;
+        createOnProdWestUS2)
           ACTION=$key
           shift
             ;;

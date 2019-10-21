@@ -1,5 +1,5 @@
-location=southeastasia
+location=westus2
 unit=2
-group=hznginxhealth
-name=hznginxhealth
-env=dogfood
+group=hztest
+name=hztest
+env=prod
