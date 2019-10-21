@@ -65,7 +65,7 @@ steps:
   displayName: Sign
   inputs:
     solution: build/sign.proj
-    msbuildVersion: '15.0'
+    msbuildVersion: '16.0'
     msbuildArchitecture: x64
     configuration: '$(BuildConfiguration)'
     msbuildArguments: '/t:SignPackages'
