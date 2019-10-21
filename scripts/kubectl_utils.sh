@@ -843,7 +843,7 @@ function get_asrs_nginx_ssl_log() {
   do
     local prefix=nginx_ssl_
     local nginx_ssl_log=$outdir/${prefix}${i}.log
-    kubectl logs $i --kubeconfig=$config_file > $nginx_ssl_log
+    kubectl logs $i -c "signalr" --kubeconfig=$config_file > $nginx_ssl_log
     if [ -e $nginx_ssl_log ]
     then
        cd $outdir
