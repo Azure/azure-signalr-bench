@@ -19,7 +19,7 @@ Run the tool on local machine
 
 Install the tool
 
-`dotnet tool install --global Microsoft.dotnet-signalr-benchmark --version 1.0.0-preview2.19516.1`
+`dotnet tool install --global Microsoft.dotnet-signalr-benchmark --version 1.0.0-preview2.19521.1`
 
 ## Run
 
