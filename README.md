@@ -3,7 +3,7 @@
 This benchmark defines some typical performance scenarios, develops an Application Server with Azure SignalR SDK, and
 builds clients through SignalR client SDK to evaluate the performance of those scenarios.
 
-This benchmark targets to help you evaluate the throughput and latency. It can be used for benchmarking ASP.NET Core SignalR, ASP.NET SignalR and Azure SignalR Service.
+This benchmark targets to help you evaluate the throughput and latency. It can be used for benchmarking ASP.NET Core SignalR, ASP.NET SignalR and Azure SignalR Service. It is built through dotnet core 3.0 SDK.
 
 # Content
 
