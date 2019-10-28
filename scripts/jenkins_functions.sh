@@ -11,14 +11,15 @@ function set_global_env() {
       relative_dir=$2
    fi
    export JenkinsRootPath="$Jenkins_Workspace_Root"
-   export PluginScriptWorkingDir=$Jenkins_Workspace_Root/${relative_dir}/scripts/tools/ASRSConfigGenerator/
-   export PluginRpcBuildWorkingDir=$Jenkins_Workspace_Root/${relative_dir}/src/rpc/
-   export ScriptWorkingDir=$Jenkins_Workspace_Root/${relative_dir}/scripts/                     # folders to find all scripts
-   export CurrentWorkingDir=$Jenkins_Workspace_Root/${relative_dir}/scripts/tools/AzureVMMgr     # workding directory
-   export CommandWorkingDir=$Jenkins_Workspace_Root/${relative_dir}/src/utils/Commander
-   export AppServerWorkingDir=$Jenkins_Workspace_Root/${relative_dir}/src/appserver
-   export AspNetWebMgrWorkingDir=$Jenkins_Workspace_Root/${relative_dir}/src/utils/DeployWebApp
-   export WebAppMonitorWorkingDir=$Jenkins_Workspace_Root/${relative_dir}/src/utils/WebAppMonitor
+   export ASRSBenchRoot=$JenkinsRootPath/${relative_dir}
+   export PluginScriptWorkingDir=$JenkinsRootPath/${relative_dir}/scripts/tools/ASRSConfigGenerator/
+   export PluginRpcBuildWorkingDir=$JenkinsRootPath/${relative_dir}/src/rpc/
+   export ScriptWorkingDir=$JenkinsRootPath/${relative_dir}/scripts/                     # folders to find all scripts
+   export CurrentWorkingDir=$JenkinsRootPath/${relative_dir}/scripts/tools/AzureVMMgr     # workding directory
+   export CommandWorkingDir=$JenkinsRootPath/${relative_dir}/src/utils/Commander
+   export AppServerWorkingDir=$JenkinsRootPath/${relative_dir}/src/appserver
+   export AspNetWebMgrWorkingDir=$JenkinsRootPath/${relative_dir}/src/utils/DeployWebApp
+   export WebAppMonitorWorkingDir=$JenkinsRootPath/${relative_dir}/src/utils/WebAppMonitor
 ############# those configurations are shared in Jenkins folder #####
    export AgentConfig=$JenkinsRootPath'/agent.yaml'
    export PrivateIps=$JenkinsRootPath'/privateIps.yaml'
@@ -86,10 +87,15 @@ function set_job_env() {
    export NORMALIZED_JOB_NAME=${jobName}
    export CleanResourceScript=/tmp/clean_resource_${jobName}_${result_root}.sh # every job has its own script to clean resource, they will never execute concurrently.
    export MaxSendIteration=120 # we evaluate the total running time per this value
+   clean_dotnet_proj # avoid CS0579 error: Duplicate 'System.Reflection.AssemblyCompanyAttribute' attribute
    record_build_info # record the jenkins job to /tmp/send_mail.txt
    prebuild_helper_tool
    write_az_credentials_to_create_vm
    generate_clean_resource_script $CleanResourceScript
+}
+
+function clean_dotnet_proj() {
+   find $ASRSBenchRoot -iname obj|xargs rm -fr
 }
 
 # global var: $AgentConfig
