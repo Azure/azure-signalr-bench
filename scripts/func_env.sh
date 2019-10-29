@@ -783,6 +783,8 @@ function export_sql_mgr_env()
   export SQL_CONNSTR=$sqlConnStr
   export DEFAULT_SQL_TBL="AzureSignalRPerf"
   export DEFAULT_SQL_CONN_STAT_TBL="AzureSignalRLongrun"
+  local rootDir=`pwd`/..
+  find $rootDir -iname obj|xargs rm -rf # clean objs to avoid build errors
 }
 
 function drop_sql_perf_table()
