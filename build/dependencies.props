@@ -13,14 +13,14 @@
     <MicrosoftAspNetCoreSignalRProtocolNewtonsoftJsonPackageVersion>3.0.0</MicrosoftAspNetCoreSignalRProtocolNewtonsoftJsonPackageVersion>
     <MicrosoftAspNetCoreStaticFilesVersion>2.2.0</MicrosoftAspNetCoreStaticFilesVersion>
     <MicrosoftAspNetSignalRClientVersion>2.4.0</MicrosoftAspNetSignalRClientVersion>
-    <MicrosoftAzureSignalRManagementVersion>1.0.1</MicrosoftAzureSignalRManagementVersion>
-    <MicrosoftAzureSignalRVersion>1.1.1</MicrosoftAzureSignalRVersion>
+    <MicrosoftAzureSignalRManagementVersion>1.2.0</MicrosoftAzureSignalRManagementVersion>
+    <MicrosoftAzureSignalRVersion>1.2.0</MicrosoftAzureSignalRVersion>
     <MicrosoftExtensionsDependencyInjectionVersion>3.0.0</MicrosoftExtensionsDependencyInjectionVersion>
     <MicrosoftExtensionsHosting>3.0.0</MicrosoftExtensionsHosting>
     <MicrosoftExtensionsHttpVersion>3.0.0</MicrosoftExtensionsHttpVersion>
     <MicrosoftExtensionsLoggingVersion>3.0.0</MicrosoftExtensionsLoggingVersion>
     <MicrosoftExtensionsLoggingConsoleVersion>3.0.0</MicrosoftExtensionsLoggingConsoleVersion>
-    <SystemIdentityModelTokensJwtVersion>5.4.0</SystemIdentityModelTokensJwtVersion>
+    <SystemIdentityModelTokensJwtVersion>5.5.0</SystemIdentityModelTokensJwtVersion>
 
     <!-- ASP.NET Core 3.0 -->
     <MicrosoftAspNetCoreAppPackageVersion>3.0.0-*</MicrosoftAspNetCoreAppPackageVersion>
