@@ -44,8 +44,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.AgentMethods
                 pluginParameters.TryGetTypedValue($"{SignalRConstants.ConnectionIndex}.{_type}",
                     out _connectionIndex, (obj) => (List<int>)obj);
 
-                // Reset counters
-                SignalRUtils.ResetCounters(_statisticsCollector);
+                // Not reset counters because typically this step is followed the last sending step.
+                // We do not want to clear the last sending step's sending statistics
                 // Leave group
                 var connectionType = SignalRUtils.GetClientTypeFromContext(pluginParameters, _type);
                 if (connectionType == SignalREnums.ClientType.DirectConnect)
