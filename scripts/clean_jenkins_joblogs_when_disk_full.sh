@@ -5,7 +5,7 @@ function clean_any_job()
         local i j
         cd $HOME/.jenkins/jobs
         pushd `pwd`
-        for i in `du -s *|sort -k 1 -n -r|head -n 1|awkk '{print $2}'`
+        for i in `du -s *|sort -k 1 -n -r|head -n 1|awk '{print $2}'`
         do
                 cd $i/builds
                 pushd `pwd`
