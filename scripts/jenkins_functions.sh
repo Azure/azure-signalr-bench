@@ -4,7 +4,7 @@
 # input Jenkinw workspace directory
 # this function is invoked in every job entry
 function set_global_env() {
-   local relative_dir="azure-signalr-bench"
+   local relative_dir="."
    local Jenkins_Workspace_Root=$1
    if [ $# -eq 2 ]
    then
