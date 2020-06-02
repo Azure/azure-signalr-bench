@@ -49,7 +49,7 @@ function az_login_signalr_dev_sub() {
 
 function az_login_ASRS_dogfood() {
   set +x
-  local servicePrincipal=$sp_DF # hard-code here: generate_clean_resource_script generate the script using this function
+  local servicePrincipal=$sp_DF
   read clientId clientSecret tenantId subscription < <(parse_service_principal "$servicePrincipal")
 
   az login --service-principal \
@@ -62,7 +62,7 @@ function az_login_ASRS_dogfood() {
 function az_signalr_dev_credentials() {
   set +x
   local outputFile=$1
-  local servicePrincipal=$sp_INT # hard-code here: generate_clean_resource_script generate the script using this function
+  local servicePrincipal=$sp_INT
   read clientId clientSecret tenantId subscription < <(parse_service_principal "$servicePrincipal")
 cat <<EOF > $outputFile
 clientId: $clientId

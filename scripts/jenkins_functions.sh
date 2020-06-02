@@ -45,6 +45,35 @@ function write_az_credentials_to_create_vm() {
 
 # depends on set_global_env
 function set_job_env() {
+   # check required options
+   if [ -z "${sp_INT}"]; then
+     echo "Required option sp_INT is null or empty. Exit."
+     exit 1;
+   fi
+   if [ -z "${sp_DF}"]; then
+     echo "Required option sp_DF is null or empty. Exit."
+     exit 1;
+   fi
+   if [ -z "${kubeconfig_srprodacswestus2k_json}"]; then
+     echo "Required option kubeconfig_srprodacswestus2k_json is null or empty. Exit."
+     exit 1;
+   else
+     echo ${kubeconfig_srprodacswestus2k_json} > kubeconfig.srprodacswestus2k.json
+   fi
+   if [ -z "${kubeconfig_srdevacseastusa_json}"]; then
+     echo "Required option kubeconfig_srdevacseastusa_json is null or empty. Exit."
+     exit 1;
+   else
+     echo ${kubeconfig_srdevacseastusa_json} > kubeconfig.srdevacseastusa.json
+   fi
+   if [ -z "${kubeconfig_srdevacsseasiaa_json}"]; then
+     echo "Required option kubeconfig_srdevacsseasiaa_json is null or empty. Exit."
+     exit 1;
+   else
+     echo ${kubeconfig_srdevacsseasiaa_json} > kubeconfig.srdevacsseasiaa.json
+   fi
+   
+   # set optional options
    if [ "$nginx_root" == "" ]
    then
      export nginx_root=/mnt/Data/NginxRoot
