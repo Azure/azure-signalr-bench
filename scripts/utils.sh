@@ -1,31 +1,74 @@
 #!/bin/bash
 
+function parse_service_principal () (
+    local content=$1
+    local clientId=""
+    local clientSecret=""
+    local tenantId=""
+    local subscription=""
+
+    function trimAllWhiteSpace() {
+        echo "$(echo -e "$1" | tr -d '[:space:]')"
+    }
+
+    for line in $content; do
+        kvp=($(echo $line | tr ":" "\n"))
+        case ${kvp[0]} in
+            "clientId")
+                clientId=$(trimAllWhiteSpace "${kvp[1]}")
+                ;;
+            "tenantId")
+                tenantId=$(trimAllWhiteSpace "${kvp[1]}")
+                ;;
+            "clientSecret")
+                clientSecret=$(trimAllWhiteSpace "${kvp[1]}")
+                ;;
+            "subscription")
+                subscription=$(trimAllWhiteSpace "${kvp[1]}")
+                ;;
+            *)
+                echo $"[Warning]: Not supported service pricipal part ${kvp[0]} ${kvp[1]}"
+                ;;
+        esac
+    done
+
+    echo "${clientId} ${clientSecret} ${tenantId} ${subscription}"
+)
+
 function az_login_signalr_dev_sub() {
   set +x
+  local servicePrincipal=$sp_INT # hard-code here: generate_clean_resource_script generate the script using this function
+  read clientId clientSecret tenantId subscription < <(parse_service_principal "$servicePrincipal")
+  
   az login --service-principal \
-            -u $AZURE_CLIENT_ID_INT \
-            --password $AZURE_CLIENT_SECRET_INT \
-            --tenant $AZURE_TENANT_ID_INT
+            -u $clientId \
+            --password $clientSecret \
+            --tenant $tenantId
   set -x
 }
 
 function az_login_ASRS_dogfood() {
   set +x
+  local servicePrincipal=$sp_DF # hard-code here: generate_clean_resource_script generate the script using this function
+  read clientId clientSecret tenantId subscription < <(parse_service_principal "$servicePrincipal")
+
   az login --service-principal \
-            -u $AZURE_CLIENT_ID_DF \
-            --password $AZURE_CLIENT_SECRET_DF \
-            --tenant $AZURE_TENANT_ID_DF
+            -u $clientId \
+            --password $clientSecret \
+            --tenant $tenantId
   set -x
 }
 
 function az_signalr_dev_credentials() {
   set +x
   local outputFile=$1
+  local servicePrincipal=$sp_INT # hard-code here: generate_clean_resource_script generate the script using this function
+  read clientId clientSecret tenantId subscription < <(parse_service_principal "$servicePrincipal")
 cat <<EOF > $outputFile
-clientId: $AZURE_CLIENT_ID_INT
-tenantId: $AZURE_TENANT_ID_INT
-clientSecret: $AZURE_CLIENT_SECRET_INT
-subscription: $AZURE_SUBSCRIPTION_ID_INT
+clientId: $clientId
+tenantId: $tenantId
+clientSecret: $clientSecret
+subscription: $subscription
 EOF
   set -x
 }
