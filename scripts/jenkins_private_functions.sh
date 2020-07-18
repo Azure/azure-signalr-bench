@@ -482,89 +482,101 @@ function prepare_result_folder_4_scenario()
 
 function start_collect_top_for_signalr_and_nginx()
 {
-    local k8s_result_dir=$env_statistic_folder
-    local monitorDuration=$(($sigbench_run_duration * $MaxSendIteration))
-    cd $ScriptWorkingDir
-    . ./func_env.sh
-    . ./kubectl_utils.sh
-    local service_name=$(extract_servicename_from_connectionstring $ConnectionString)
-    if [ "$service_name" != "" ]
+    if [ "$internal" == "true" ]
     then
-       nohup sh collect_pod_top.sh $service_name $k8s_result_dir $monitorDuration &
-       collect_pod_top_pid=$!
-       if [ "$g_nginx_ns" != "" ]
-       then
-          nohup sh collect_nginx_top.sh $service_name $g_nginx_ns $k8s_result_dir $monitorDuration &
-          collect_nginx_top_pid=$!
-       fi
-       nohup sh collect_connections.sh $service_name $k8s_result_dir $monitorDuration &
-       collect_conn_pid=$!
+      local k8s_result_dir=$env_statistic_folder
+      local monitorDuration=$(($sigbench_run_duration * $MaxSendIteration))
+      cd $ScriptWorkingDir
+      . ./func_env.sh
+      . ./kubectl_utils.sh
+      local service_name=$(extract_servicename_from_connectionstring $ConnectionString)
+      if [ "$service_name" != "" ]
+      then
+        nohup sh collect_pod_top.sh $service_name $k8s_result_dir $monitorDuration &
+        collect_pod_top_pid=$!
+        if [ "$g_nginx_ns" != "" ]
+        then
+            nohup sh collect_nginx_top.sh $service_name $g_nginx_ns $k8s_result_dir $monitorDuration &
+            collect_nginx_top_pid=$!
+        fi
+        nohup sh collect_connections.sh $service_name $k8s_result_dir $monitorDuration &
+        collect_conn_pid=$!
+      fi
     fi
 }
 
 function stop_collect_top_for_signalr_and_nginx()
 {
-    if [ "$collect_pod_top_pid" != "" ]
+    if [ "$internal" == "true" ]
     then
-      # kill the process if it is alive
-      local a=`ps -o pid= -p $collect_pod_top_pid`
-      if [ "$a" != "" ]
+      if [ "$collect_pod_top_pid" != "" ]
       then
-         kill $collect_pod_top_pid
+        # kill the process if it is alive
+        local a=`ps -o pid= -p $collect_pod_top_pid`
+        if [ "$a" != "" ]
+        then
+          kill $collect_pod_top_pid
+        fi
       fi
-    fi
-    if [ "$collect_nginx_top_pid" != "" ]
-    then
-      local a=`ps -o pid= -p $collect_nginx_top_pid`
-      if [ "$a" != "" ]
+      if [ "$collect_nginx_top_pid" != "" ]
       then
-         kill $collect_nginx_top_pid
+        local a=`ps -o pid= -p $collect_nginx_top_pid`
+        if [ "$a" != "" ]
+        then
+          kill $collect_nginx_top_pid
+        fi
       fi
-    fi
-    if [ "$collect_conn_pid" != "" ]
-    then
-       local a=`ps -o pid= -p $collect_conn_pid`
-       if [ "$a" != "" ]
-       then
-          kill $collect_conn_pid
-       fi
+      if [ "$collect_conn_pid" != "" ]
+      then
+        local a=`ps -o pid= -p $collect_conn_pid`
+        if [ "$a" != "" ]
+        then
+            kill $collect_conn_pid
+        fi
+      fi
     fi
 }
 
 function copy_log_from_k8s()
 {
-    local k8s_result_dir=$env_statistic_folder
-    cd $ScriptWorkingDir
-    . ./func_env.sh
-    . ./kubectl_utils.sh
-    local service_name=$(extract_servicename_from_connectionstring $ConnectionString)
-    disable_exit_immediately_when_fail
-    if [ "$service_name" != "" ]
-    then
-    ############# copy pod log ############
-       copy_syslog $service_name $k8s_result_dir
-       get_asrs_nginx_ssl_log $service_name $k8s_result_dir
-       get_nginx_cpu_info $service_name "$g_nginx_ns" $k8s_result_dir
-       get_nginx_log $service_name "$g_nginx_ns" $k8s_result_dir
-       get_nginx_pod_detail $service_name "$g_nginx_ns" $k8s_result_dir
-       get_k8s_cpu_info $service_name $k8s_result_dir
-       get_k8s_pod_status $service_name $k8s_result_dir
+   if [ "$internal" == "true" ]
+   then
+      local k8s_result_dir=$env_statistic_folder
+      cd $ScriptWorkingDir
+      . ./func_env.sh
+      . ./kubectl_utils.sh
+      local service_name=$(extract_servicename_from_connectionstring $ConnectionString)
+      disable_exit_immediately_when_fail
+      if [ "$service_name" != "" ]
+      then
+      ############# copy pod log ############
+        copy_syslog $service_name $k8s_result_dir
+        get_asrs_nginx_ssl_log $service_name $k8s_result_dir
+        get_nginx_cpu_info $service_name "$g_nginx_ns" $k8s_result_dir
+        get_nginx_log $service_name "$g_nginx_ns" $k8s_result_dir
+        get_nginx_pod_detail $service_name "$g_nginx_ns" $k8s_result_dir
+        get_k8s_cpu_info $service_name $k8s_result_dir
+        get_k8s_pod_status $service_name $k8s_result_dir
+      fi
+      enable_exit_immediately_when_fail
     fi
-    enable_exit_immediately_when_fail
 }
 
 function reboot_all_pods()
 {
-   local connectionString=$1
-   cd $ScriptWorkingDir
-   . ./kubectl_utils.sh
-   disable_exit_immediately_when_fail
-   local service_name=$(extract_servicename_from_connectionstring $connectionString)
-   if [ "$service_name" != "" ] && [ "$RebootASRS" != "false" ]
+   if [ "$internal" == "true" ]
    then
-     restart_all_pods $service_name
+    local connectionString=$1
+    cd $ScriptWorkingDir
+    . ./kubectl_utils.sh
+    disable_exit_immediately_when_fail
+    local service_name=$(extract_servicename_from_connectionstring $connectionString)
+    if [ "$service_name" != "" ] && [ "$RebootASRS" != "false" ]
+    then
+      restart_all_pods $service_name
+    fi
+    enable_exit_immediately_when_fail
    fi
-   enable_exit_immediately_when_fail
 }
 
 function run_on_scenario() {

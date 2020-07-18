@@ -111,6 +111,12 @@ function set_job_env() {
    else
      export GitRepo=$GitRepo
    fi
+   if [ "$internal" == "" ]
+   then
+     export internal="true"
+   else
+     export internal="false"
+   fi
    export ASRSResourceGroup="hzatpf"$result_root
    export SignalrServiceName="atpf"${result_root} #-`date +%H%M%S`
    if [ "$kind" == "" ] || [ "$kind" == "perf" ]
