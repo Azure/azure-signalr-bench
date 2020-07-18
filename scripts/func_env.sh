@@ -548,6 +548,8 @@ EOF
 
 
 function gen_final_report() {
+  . ./func_env.sh
+  
   #sh gen_all_tabs.sh
   if [ "$kind" == "" ]
   then
