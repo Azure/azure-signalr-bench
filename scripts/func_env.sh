@@ -564,6 +564,7 @@ function gen_final_report() {
   sh gen_appserver_exception.sh $nginx_root $result_root
   sh gen_nginx_error.sh $nginx_root $result_root
   sh send_mail.sh $nginx_root/$result_root/allunits.html
+  echo "Final resport: http://$nginx_dns:8000/$result_root/allunits.html"
 }
 
 iterate_all_vms() {
