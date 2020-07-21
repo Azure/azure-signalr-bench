@@ -129,7 +129,7 @@ namespace Commander
         protected void WaitAppServerStarted()
         {
             var recheckTimeout = 600;
-            var keyWords = "HttpConnection Started";
+            var keyWords = "is now connected to";
             CreateAppServerLogDirIfNotExist();
             var remoteAppLogFilePath = GetRemoteAppServerLogPath();
             string content = null;
