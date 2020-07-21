@@ -8,7 +8,7 @@ namespace Microsoft.Azure.SignalRBench.Tests
 {
     public static class TaskExtensions
     {
-        public static async Task WithTimeout(this Task task, TimeSpan? timeout = default)
+        public static async Task OrTimeout(this Task task, TimeSpan? timeout = default)
         {
             var delay = Task.Delay(timeout ?? TimeSpan.FromSeconds(5));
             if (delay == await Task.WhenAny(task, delay))
@@ -18,7 +18,7 @@ namespace Microsoft.Azure.SignalRBench.Tests
             await task;
         }
 
-        public static async Task<T> WithTimeout<T>(this Task<T> task, TimeSpan? timeout = default)
+        public static async Task<T> OrTimeout<T>(this Task<T> task, TimeSpan? timeout = default)
         {
             var delay = Task.Delay(timeout ?? TimeSpan.FromSeconds(5));
             if (delay == await Task.WhenAny(task, delay))

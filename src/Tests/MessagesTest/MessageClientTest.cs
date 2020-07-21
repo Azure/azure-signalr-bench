@@ -37,14 +37,14 @@ namespace Microsoft.Azure.SignalRBench.Tests.MessagesTest
                     }));
 
             await client.SendCommandAsync(sender, expectedCommand);
-            var cmd = await commandTcs.Task.WithTimeout();
+            var cmd = await commandTcs.Task.OrTimeout();
             Assert.Equal(expectedCommand, cmd.Command);
             Assert.Equal(sender, cmd.Sender);
             Assert.True(cmd.AckId > 0);
             Assert.Null(cmd.Parameters);
 
             await client.AckCompletedAsync(cmd);
-            var ack = await ackTcs.Task.WithTimeout();
+            var ack = await ackTcs.Task.OrTimeout();
             Assert.Equal(sender, ack.Sender);
             Assert.Equal(cmd.AckId, ack.AckId);
             Assert.True(ack.IsCompleted);
