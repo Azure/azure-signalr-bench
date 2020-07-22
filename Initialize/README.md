@@ -1,1 +1,1 @@
-# Add Scripts for Initialize AKS, Storage, ACR.
+# Using init.sh to Initialize AKS, Storage, KEYVAULT.
