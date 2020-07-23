@@ -8,9 +8,9 @@ Command
     $(basename $0)
 Arguments
    --prefix|-p                          [Requied] Used to distingush your perf resources with others'
-   --subscription|-set                  [Requied] The subscriton used to create resources
-   --location|-local                    [Requied] The location used to create resouces
-   --help|-h                            : Print help
+   --subscription|-s                    [Requied] The subscriton used to create resources
+   --location|-l                        [Requied] The location used to create resouces
+   --help|-h                            Print help
 EOF
 }
 
@@ -44,12 +44,11 @@ while [[ "$#" > 0 ]];do
             exit
         ;;
         *)
-            echo "ERROR: Unknow argument '$key'" 1>$2
+            echo "ERROR: Unknow argument '$key'" 1>&2
             print_usage
             exit -1
     esac
 done
-    
 throw_if_empty "subscription" $subscription
 throw_if_empty "prefix" $PREFIX
 throw_if_empty "location" $LOCATION    
@@ -96,13 +95,18 @@ fi
 
 if  [[ -z $(az aks show --name $KUBERNETES_SEVICES -g $RESOURCE_GROUP 2>/dev/null) ]];then
     echo "start to create kubernetes services $KUBERNETES_SEVICES. May cost several minutes, waiting..."
-    az aks create -n $KUBERNETES_SEVICES  --vm-set-type AvailabilitySet --kubernetes-version 1.16.10 --load-balancer-managed-outbound-ip-count 2 \
-    --load-balancer-outbound-ports 8000 --enable-managed-identity -s Standard_B4ms --nodepool-name perf --generate-ssh-keys 
+    az aks create -n $KUBERNETES_SEVICES  --vm-set-type VirtualMachineScaleSets  --kubernetes-version 1.16.10  --enable-managed-identity -s Standard_B4ms --nodepool-name captain --generate-ssh-keys \
+    --load-balancer-managed-outbound-ip-count  3 
     echo "start to create kubernetes services $KUBERNETES_SEVICES created."
     echo "start getting kube/config"
-    az aks get-credentials  -n $KUBERNETES_SEVICES 
+    az aks get-credentials -a -n $KUBERNETES_SEVICES -f ~/.kube/perf
     echo "upload kube/config to $KEYVAULT"
-    az keyvault secret set --vault-name $KEYVAULT -n $KV_KUBE_CONFIG -f ~/.kube/config >/dev/null
+    az keyvault secret set --vault-name $KEYVAULT -n $KV_KUBE_CONFIG -f ~/.kube/perf >/dev/null
+    agentpool_msi_object_id=$(az aks show -n $KUBERNETES_SEVICES  --query identityProfile.kubeletidentity.objectId -o tsv)
+    echo "grant aks-agent-pool-msi keyvault permission"
+    az keyvault set-policy --name $KEYVAULT --object-id $agentpool_msi_object_id  --secret-permissions  delete get list  set >/dev/null
+    echo "grant aks-agent-pool-msi contibutor role of $SUBSCTIPTION"
+    az role assignment create --role "Contributor" --assignee-object-id $agentpool_msi_object_id --scope "/subscriptions/$SUBSCTIPTION"
 else 
     echo "$KUBERNETES_SEVICES already exists. Skip creating.."
 fi
