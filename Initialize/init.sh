@@ -2,6 +2,9 @@
 set -e 
 trap "exit" INT
 
+DIR=$(cd `dirname $0` && cd ../src/Pods && pwd)
+source $DIR/common.sh
+
 function print_usage {
     cat <<EOF
 Command 
@@ -13,15 +16,6 @@ Arguments
    --cloud|-c                           [Optional] The cloud used to create resources
    --help|-h                            Print help
 EOF
-}
-
-function throw_if_empty {
-    local name="$1"
-    local value="$2"
-    if [[ -z "$value" ]];then
-        echo "ERROR: Parameter $name cannot be empty." 1>&2
-        exit -1
-    fi
 }
 
 while [[ "$#" > 0 ]];do
@@ -54,28 +48,11 @@ while [[ "$#" > 0 ]];do
             exit -1
     esac
 done
+
 throw_if_empty "prefix" $PREFIX
 throw_if_empty "location" $LOCATION    
 
-if [[ ! -z $CLOUD ]];then
-    az cloud set -n $CLOUD
-fi
-
-if [[ ! -z $SUBSCTIPTION ]];then
-   az account set -s $SUBSCTIPTION
-else 
-   SUBSCTIPTION=$(az account show --query "id" -o tsv)
-fi
-
-##
-PREFIX="${PREFIX}perf"
-RESOURCE_GROUP="${PREFIX}rg"
-STORAGE_ACCOUNT="${PREFIX}sa"
-KEYVAULT="${PREFIX}kv"
-KUBERNETES_SEVICES="${PREFIX}aks"
-
-KV_SA_ACCESS_KEY="sa-accessKey"
-KV_KUBE_CONFIG="kube-config"
+init_common
 
 if [[ $(az group exists -n $RESOURCE_GROUP) == "false" ]]; then
    echo "start to create resouce group $RESOURCE_GROUP"
@@ -102,6 +79,7 @@ if [[ -z $(az storage account show -n $STORAGE_ACCOUNT  -g $RESOURCE_GROUP 2>/de
     access_key=$(az storage account keys list -n $STORAGE_ACCOUNT --query [0].value -o tsv)
     az keyvault secret set --vault-name $KEYVAULT -n  $KV_SA_ACCESS_KEY --value "$access_key" 
     echo "storage account $STORAGE_ACCOUNT created."
+    az storage share create --account-name $STORAGE_ACCOUNT --quoto 20 -n $SA_SHARE
 else 
     echo "storage account $STORAGE_ACCOUNT already exists. Skip creating.."
 fi
