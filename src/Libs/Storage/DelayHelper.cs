@@ -17,7 +17,7 @@ namespace Azure.SignalRBench.Storage
             while (TimeSpan.FromMilliseconds(delay) < maxSpan)
             {
                 yield return TimeSpan.FromMilliseconds(delay);
-                delay = delay * 7 / 10;
+                delay += delay >> 1;
             }
             while (true)
             {
