@@ -90,7 +90,8 @@ az configure --defaults group=$RESOURCE_GROUP
 if [[ -z $(az keyvault  show -n $KEYVAULT 2>/dev/null) ]];then
     echo "start to create keyvault $KEYVAULT"
     az keyvault create -n $KEYVAULT 
-    echo "keyvault $KEYVAULT created."
+    echo "keyvault $KEYVAULT created. Grant current user permission"
+    az keyvault set-policy --name $KEYVAULT --upn $(az account show --query user.name)  --secret-permissions  delete get list  set >/dev/null
 else 
     echo "keyvault $KEYVAULT already exists. Skip creating.."
 fi
@@ -98,7 +99,7 @@ fi
 if [[ -z $(az storage account show -n $STORAGE_ACCOUNT  -g $RESOURCE_GROUP 2>/dev/null) ]];then
     echo "start to create storage account $STORAGE_ACCOUNT"
     az storage account create -n $STORAGE_ACCOUNT >/dev/null
-    access_key=$(az storage account keys list -n biqianperfsa --query [0].value -o tsv)
+    access_key=$(az storage account keys list -n $STORAGE_ACCOUNT --query [0].value -o tsv)
     az keyvault secret set --vault-name $KEYVAULT -n  $KV_SA_ACCESS_KEY --value "$access_key" 
     echo "storage account $STORAGE_ACCOUNT created."
 else 
