@@ -4,7 +4,7 @@
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
-namespace Microsoft.Azure.SignalRBench.Messages
+namespace Azure.SignalRBench.Messages
 {
     public class CommandMessage : Message
     {

@@ -3,10 +3,10 @@
 
 using System.Threading.Tasks;
 
-using Microsoft.Azure.SignalRBench.Messages;
+using Azure.SignalRBench.Messages;
 using Xunit;
 
-namespace Microsoft.Azure.SignalRBench.Tests.MessagesTest
+namespace Azure.SignalRBench.Tests.MessagesTest
 {
     public class MessageClientTest
     {

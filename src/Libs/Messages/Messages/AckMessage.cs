@@ -3,7 +3,7 @@
 
 using Newtonsoft.Json;
 
-namespace Microsoft.Azure.SignalRBench.Messages
+namespace Azure.SignalRBench.Messages
 {
     public class AckMessage : Message
     {

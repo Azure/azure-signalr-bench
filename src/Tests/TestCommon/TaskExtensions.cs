@@ -4,7 +4,7 @@
 using System;
 using System.Threading.Tasks;
 
-namespace Microsoft.Azure.SignalRBench.Tests
+namespace Azure.SignalRBench.Tests
 {
     public static class TaskExtensions
     {
