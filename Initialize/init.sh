@@ -8,8 +8,9 @@ Command
     $(basename $0)
 Arguments
    --prefix|-p                          [Requied] Used to distingush your perf resources with others'
-   --subscription|-s                    [Requied] The subscriton used to create resources
    --location|-l                        [Requied] The location used to create resouces
+   --subscription|-s                    [Optional] The subscriton used to create resources
+   --cloud|-c                           [Optional] The cloud used to create resources
    --help|-h                            Print help
 EOF
 }
@@ -31,6 +32,10 @@ while [[ "$#" > 0 ]];do
             PREFIX="$1"
             shift
         ;;
+        --cloud|-c)
+            CLOUD="$1"
+            shift
+        ;;
         --subscription|-s)
             SUBSCTIPTION="$1"
             shift
@@ -49,11 +54,18 @@ while [[ "$#" > 0 ]];do
             exit -1
     esac
 done
-throw_if_empty "subscription" $subscription
 throw_if_empty "prefix" $PREFIX
 throw_if_empty "location" $LOCATION    
 
-az account set -s $subscription
+if [[ ! -z $CLOUD ]];then
+    az cloud set -n $CLOUD
+fi
+
+if [[ ! -z $SUBSCTIPTION ]];then
+   az account set -s $SUBSCTIPTION
+else 
+   SUBSCTIPTION=$(az account show --query "id" -o tsv)
+fi
 
 ##
 PREFIX="${PREFIX}perf"
@@ -95,7 +107,7 @@ fi
 
 if  [[ -z $(az aks show --name $KUBERNETES_SEVICES -g $RESOURCE_GROUP 2>/dev/null) ]];then
     echo "start to create kubernetes services $KUBERNETES_SEVICES. May cost several minutes, waiting..."
-    az aks create -n $KUBERNETES_SEVICES  --vm-set-type VirtualMachineScaleSets  --kubernetes-version 1.16.10  --enable-managed-identity -s Standard_B4ms --nodepool-name captain --generate-ssh-keys \
+    az aks create -n $KUBERNETES_SEVICES  --vm-set-type VirtualMachineScaleSets  --kubernetes-version 1.16.10  --enable-managed-identity -s Standard_D4s_v3 --nodepool-name captain --generate-ssh-keys \
     --load-balancer-managed-outbound-ip-count  3 
     echo "start to create kubernetes services $KUBERNETES_SEVICES created."
     echo "start getting kube/config"
