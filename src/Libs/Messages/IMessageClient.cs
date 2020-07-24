@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 using Newtonsoft.Json.Linq;
 
-namespace Microsoft.Azure.SignalRBench.Messages
+namespace Azure.SignalRBench.Messages
 {
     public interface IMessageClient
     {

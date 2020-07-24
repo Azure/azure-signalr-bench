@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 using Newtonsoft.Json;
 
-namespace Microsoft.Azure.SignalRBench.Messages
+namespace Azure.SignalRBench.Messages
 {
     public abstract class MessageHandler
     {
