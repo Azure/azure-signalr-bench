@@ -3,7 +3,7 @@
 
 using Xunit;
 
-namespace Microsoft.Azure.SignalRBench.Tests
+namespace Azure.SignalRBench.Tests
 {
     public static class Requirements
     {
@@ -12,6 +12,13 @@ namespace Microsoft.Azure.SignalRBench.Tests
             var redis = TestConfiguration.Instance.Redis;
             Skip.If(string.IsNullOrEmpty(redis), "Redis is required.");
             return redis;
+        }
+
+        public static string RequireStorage()
+        {
+            var storage = TestConfiguration.Instance.Storage;
+            Skip.If(string.IsNullOrEmpty(storage), "Storage is required.");
+            return storage;
         }
     }
 }

@@ -3,7 +3,7 @@
 
 using System.Threading.Tasks;
 
-namespace Microsoft.Azure.SignalRBench.Messages
+namespace Azure.SignalRBench.Messages
 {
     public static class MessageClientExtensions
     {

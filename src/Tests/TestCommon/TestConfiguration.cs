@@ -5,7 +5,7 @@ using System.IO;
 
 using Microsoft.Extensions.Configuration;
 
-namespace Microsoft.Azure.SignalRBench.Tests
+namespace Azure.SignalRBench.Tests
 {
     public class TestConfiguration
     {
@@ -27,8 +27,11 @@ namespace Microsoft.Azure.SignalRBench.Tests
         private void Init()
         {
             Redis = _configuration["redis"];
+            Storage = _configuration["storage"];
         }
 
         public string Redis { get; set; }
+
+        public string Storage { get; set; }
     }
 }
