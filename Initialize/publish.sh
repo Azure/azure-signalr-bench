@@ -49,8 +49,18 @@ throw_if_empty "prefix" $PREFIX
 
 init_common
 
+echo "create dir:mainifest"
+az storage directory create -n "mainifest" --account-name $STORAGE_ACCOUNT -s $SA_SHARE
+
+DIR=$DIR/../src/Pods
 cd $DIR/Portal
 rm -rf  publish
 echo "start to publish the Portal"
 dotnet publish --self-contained true -r linux-x64 -c release -o publish /p:useapphost=true
+zip -r portal.zip publish
+echo "create dir:portal"
+az storage directory create -n "mainifest/portal" --account-name $STORAGE_ACCOUNT -s $SA_SHARE
+az storage file upload --account-name $STORAGE_ACCOUNT -s $SA_SHARE --source portal.zip -p mainifest/portal
+echo "upload portal succeeded"
+
 

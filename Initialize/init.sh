@@ -2,7 +2,7 @@
 set -e 
 trap "exit" INT
 
-DIR=$(cd `dirname $0` && cd ../src/Pods && pwd)
+DIR=$(cd `dirname $0` && pwd)
 source $DIR/common.sh
 
 function print_usage {
@@ -68,7 +68,7 @@ if [[ -z $(az keyvault  show -n $KEYVAULT 2>/dev/null) ]];then
     echo "start to create keyvault $KEYVAULT"
     az keyvault create -n $KEYVAULT 
     echo "keyvault $KEYVAULT created. Grant current user permission"
-    az keyvault set-policy --name $KEYVAULT --upn $(az account show --query user.name)  --secret-permissions  delete get list  set >/dev/null
+    az keyvault set-policy --name $KEYVAULT --upn $(az account show --query user.name -o tsv )  --secret-permissions  delete get list  set >/dev/null
 else 
     echo "keyvault $KEYVAULT already exists. Skip creating.."
 fi

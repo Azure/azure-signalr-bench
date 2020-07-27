@@ -1,0 +1,24 @@
+kind: Pod
+apiVersion: v1
+metadata:
+  name: mypod8
+spec:
+  containers:
+  - name: mypod8
+    image: nginx:1.15.5
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 250m
+        memory: 256Mi
+    volumeMounts:
+    - mountPath: "/mnt/azure"
+      name: volume
+    command: ["unzip"]
+    args: ["/mnt/perf/portal.zip","-d /mnt/perf/portal"]
+  volumes:
+    - name: volume
+      persistentVolumeClaim:
+        claimName: my-azurefile12
