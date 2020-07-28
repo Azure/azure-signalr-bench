@@ -32,21 +32,21 @@ namespace Azure.SignalRBench.Tests.StorageTest
             await table.InsertAsync(entity);
             Assert.NotNull(entity.ETag);
 
-            var retrived = await table.GetAsync(entity.PartitionKey, entity.RowKey);
-            Assert.NotNull(retrived);
-            Assert.Equal(entity, retrived, TestEntityComparer.Instance);
+            var retrieved = await table.GetAsync(entity.PartitionKey, entity.RowKey);
+            Assert.NotNull(retrieved);
+            Assert.Equal(entity, retrieved, TestEntityComparer.Instance);
 
-            retrived.Code++;
-            await table.UpdateAsync(retrived);
-            Assert.NotEqual(entity.ETag, retrived.ETag);
+            retrieved.Code++;
+            await table.UpdateAsync(retrieved);
+            Assert.NotEqual(entity.ETag, retrieved.ETag);
 
             var retrived2 = await table.GetAsync(entity.PartitionKey, entity.RowKey);
             Assert.NotNull(retrived2);
-            Assert.Equal(retrived, retrived2, TestEntityComparer.Instance);
+            Assert.Equal(retrieved, retrived2, TestEntityComparer.Instance);
 
             await Assert.ThrowsAsync<StorageException>(() => table.DeleteAsync(entity));
 
-            await table.DeleteAsync(retrived);
+            await table.DeleteAsync(retrieved);
             Assert.Null(await table.GetAsync(entity.PartitionKey, entity.RowKey));
         }
 
@@ -72,33 +72,33 @@ namespace Azure.SignalRBench.Tests.StorageTest
                 entities,
                 Enumerable.Repeat((Action<TestEntity>)(entity => Assert.NotNull(entity.ETag)), Count).ToArray());
 
-            var retrived = await table.QueryAsync(
+            var retrieved = await table.QueryAsync(
                 from row in table.Rows
                 where row.PartitionKey == pk
                 select row).ToListAsync();
-            Assert.NotNull(retrived);
-            Assert.Equal(entities, retrived, TestEntityComparer.Instance);
+            Assert.NotNull(retrieved);
+            Assert.Equal(entities, retrieved, TestEntityComparer.Instance);
 
-            foreach (var item in retrived)
+            foreach (var item in retrieved)
             {
                 item.Code++;
             }
-            await table.BatchUpdateAsync(retrived);
+            await table.BatchUpdateAsync(retrieved);
             for (int i = 0; i < entities.Count; i++)
             {
-                Assert.NotEqual(entities[i].ETag, retrived[i].ETag);
+                Assert.NotEqual(entities[i].ETag, retrieved[i].ETag);
             }
 
-            var retrived2 = await table.QueryAsync(
+            var retrieved2 = await table.QueryAsync(
                 from row in table.Rows
                 where row.PartitionKey == pk
                 select row).ToListAsync();
-            Assert.NotNull(retrived2);
-            Assert.Equal(retrived, retrived2, TestEntityComparer.Instance);
+            Assert.NotNull(retrieved2);
+            Assert.Equal(retrieved, retrieved2, TestEntityComparer.Instance);
 
             await Assert.ThrowsAsync<StorageException>(() => table.BatchDeleteAsync(entities));
 
-            await table.BatchDeleteAsync(retrived);
+            await table.BatchDeleteAsync(retrieved);
             Assert.Empty(await table.QueryAsync(
                 from row in table.Rows
                 where row.PartitionKey == pk
