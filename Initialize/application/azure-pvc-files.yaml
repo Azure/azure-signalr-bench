@@ -1,11 +1,13 @@
 kind: Pod
 apiVersion: v1
 metadata:
-  name: mypod8
+  name: mypod25
+  labels:
+     app: portal1
 spec:
   containers:
-  - name: mypod8
-    image: nginx:1.15.5
+  - name: mypod25
+    image: signalrbenchmark/perf:1.3
     resources:
       requests:
         cpu: 100m
@@ -16,8 +18,8 @@ spec:
     volumeMounts:
     - mountPath: "/mnt/azure"
       name: volume
-    command: ["unzip"]
-    args: ["/mnt/perf/portal.zip","-d /mnt/perf/portal"]
+    command: ["/bin/sh","-c"]
+    args: ["cd /mnt/azure; unzip portal.zip -d ./portal7 && echo hi >>test && sleep 100000"]
   volumes:
     - name: volume
       persistentVolumeClaim:

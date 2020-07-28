@@ -23,7 +23,7 @@ while [[ "$#" > 0 ]];do
     shift
     case $key in 
         --prefix|-p)
-            PREFIX="$1"
+            PREFIX0="$1"
             shift
         ;;
         --cloud|-c)
@@ -49,7 +49,7 @@ while [[ "$#" > 0 ]];do
     esac
 done
 
-throw_if_empty "prefix" $PREFIX
+throw_if_empty "prefix" $PREFIX0
 throw_if_empty "location" $LOCATION    
 
 init_common

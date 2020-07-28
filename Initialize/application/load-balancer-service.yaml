@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    service.beta.kubernetes.io/azure-load-balancer-resource-group: MC_biqianperfrg_biqianperfaks_eastus
+  name: azure-load-balancer
+spec:
+  loadBalancerIP: 52.149.189.7
+  type: LoadBalancer
+  ports:
+  - port: 80
+  selector:
+    app: azure-load-balancer

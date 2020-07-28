@@ -56,7 +56,7 @@ DIR=$DIR/../src/Pods
 cd $DIR/Portal
 rm -rf  publish
 echo "start to publish the Portal"
-dotnet publish --self-contained true -r linux-x64 -c release -o publish /p:useapphost=true
+dotnet publish --self-contained true -r linux-x64 -c release -o publish /p:useapphost=true /p:PublishSingleFile=true
 zip -r portal.zip publish
 echo "create dir:portal"
 az storage directory create -n "mainifest/portal" --account-name $STORAGE_ACCOUNT -s $SA_SHARE
