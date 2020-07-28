@@ -27,9 +27,7 @@ namespace Azure.SignalRBench.Storage
             _container = container;
             _serviceClient = new BlobServiceClient(connectionString);
             _client = _serviceClient.GetBlobContainerClient(container);
-            _credential = new StorageSharedKeyCredential(
-                _serviceClient.AccountName,
-                ConnectionStringHelper.GetAccountKeyFromConnectionString(connectionString));
+            _credential = ConnectionStringHelper.GetCredential(connectionString);
         }
 
         public Task CreateIfNotExistedAsync() =>

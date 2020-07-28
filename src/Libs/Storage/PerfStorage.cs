@@ -1,7 +1,10 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System;
 using System.Threading.Tasks;
+
+using Microsoft.Azure.Cosmos.Table;
 
 namespace Azure.SignalRBench.Storage
 {
@@ -38,6 +41,16 @@ namespace Azure.SignalRBench.Storage
         {
             var result = new FileShare(_connectionString, name);
             return new ValueTask<IFileShare>(result);
+        }
+
+        public async ValueTask<ITableAccessor<T>> GetTableAsync<T>(string name)
+            where T : class, ITableEntity, new()
+        {
+            var (accountName, accountKey, endpointSuffix) = ConnectionStringHelper.ParseConnectionString(_connectionString);
+            var client = new CloudTableClient(new Uri($"https://{accountName}.table.{endpointSuffix}/"), new StorageCredentials(accountName, accountKey));
+            var cloudTable = client.GetTableReference(name);
+            await cloudTable.CreateIfNotExistsAsync();
+            return new TableAccessor<T>(cloudTable);
         }
     }
 }

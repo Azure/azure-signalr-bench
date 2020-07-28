@@ -25,13 +25,11 @@ namespace Azure.SignalRBench.Storage
             _connectionString = connectionString;
             _shareName = shareName;
             _client = new ShareClient(_connectionString, _shareName);
-            _credential = new StorageSharedKeyCredential(
-                _client.AccountName,
-                ConnectionStringHelper.GetAccountKeyFromConnectionString(connectionString));
+            _credential = ConnectionStringHelper.GetCredential(_connectionString);
         }
 
         public Task CreateIfNotExistsAsync(int quotaInGB) =>
-            new ShareClient(_connectionString, _shareName).CreateIfNotExistsAsync(quotaInGB: quotaInGB);
+            _client.CreateIfNotExistsAsync(quotaInGB: quotaInGB);
 
         public async Task<bool> CopyAsync(string path, Uri uri, CancellationToken cancellationToken = default)
         {
