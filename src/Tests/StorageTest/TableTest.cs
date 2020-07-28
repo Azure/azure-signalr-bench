@@ -126,11 +126,28 @@ namespace Azure.SignalRBench.Tests.StorageTest
                 entities,
                 Enumerable.Repeat((Action<TestEntity>)(entity => Assert.NotNull(entity.ETag)), Count).ToArray());
 
-            var list = await table.QueryAsync(
+            var list1 = await table.QueryAsync(
                 from row in table.Rows
-                where row.PartitionKey == pk && row.RowKey > (ColumnValue)"000" && row.RowKey < (ColumnValue)"010"
+                where row.PartitionKey == pk
+                where row.RowKey > (ColumnValue)"000" && row.RowKey < (ColumnValue)"010"
                 select row).ToListAsync();
-            Assert.Equal(entities.Skip(1).Take(9), list, TestEntityComparer.Instance);
+            Assert.Equal(entities.Skip(1).Take(9), list1, TestEntityComparer.Instance);
+
+            var list2 = await table.QueryAsync(
+                from row in table.Rows
+                where row.PartitionKey == pk
+                where row.RowKey < (ColumnValue)"003" || row.Code >= Count - 3
+                select row).ToListAsync();
+            Assert.Equal(entities.Take(3).Concat(entities.TakeLast(3)), list2, TestEntityComparer.Instance);
+
+            var random = new Random();
+            var codeToFind = random.Next(Count);
+            var actual = await table.GetFirstOrDefaultAsync(
+                from row in table.Rows
+                where row.PartitionKey == pk && row.Code == codeToFind
+                select row);
+            Assert.NotNull(actual);
+            Assert.Equal(entities.ElementAt(codeToFind), actual, TestEntityComparer.Instance);
 
             await table.BatchDeleteAsync(entities);
         }

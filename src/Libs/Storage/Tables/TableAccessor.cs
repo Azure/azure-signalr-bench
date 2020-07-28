@@ -21,7 +21,7 @@ namespace Azure.SignalRBench.Storage
             _table = table;
         }
 
-        public TableQuery<T> Rows { get; } = new TableQuery<T>();
+        public TableQuery<T> Rows => new TableQuery<T>();
 
         public async Task<T> GetAsync(string partitionKey, string rowKey, CancellationToken cancellationToken)
         {
@@ -90,10 +90,6 @@ namespace Azure.SignalRBench.Storage
 
         public async Task<T> GetFirstOrDefaultAsync(TableQuery<T> query, CancellationToken cancellationToken)
         {
-            //var c = new CloudTableClient(new Uri(""), new StorageCredentials("account", "key"));
-            //var t = c.GetTableReference("table");
-            //await t.CreateIfNotExistsAsync();
-
             var entities = await _table.ExecuteQuerySegmentedAsync(query.Take(1), null, cancellationToken: cancellationToken);
             return entities.FirstOrDefault();
         }
