@@ -1,0 +1,35 @@
+apiVersion: apps/v1 # for versions before 1.9.0 use apps/v1beta2
+kind: Deployment
+metadata:
+  name: coordinator
+spec:
+  selector:
+    matchLabels:
+      app: coordinator
+  replicas: 2 # tells deployment to run 2 pods matching the template
+  template:
+    metadata:
+      labels:
+        app: coordinator
+    spec:
+      containers:
+        - name: coordinator
+          image: signalrbenchmark/perf:1.3
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 250m
+              memory: 256Mi
+          volumeMounts:
+            - mountPath: "/mnt/perf"
+              name: volume
+          command: ["/bin/sh", "-c"]
+          args: ["cp /mnt/perf/manifest/Coordinator/Coordinator.zip /home ; cd /home ; unzip Coordinator.zip ; ./Coordinator; tail -f /dev/null"]
+      volumes:
+        - name: volume
+          azureFile:
+            secretName: azure-secret
+            shareName: perf
+            readOnly: false

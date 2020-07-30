@@ -2,12 +2,12 @@
 set -e
 trap "exit" INT
 
-DIR=$(cd `dirname $0` && pwd)
+DIR=$(cd $(dirname $0) && pwd)
 source $DIR/common.sh
 
 PREFIX=""
 
-function print_usage {
+function print_usage() {
     cat <<EOF
 Command 
     $(basename $0)
@@ -15,52 +15,106 @@ Arguments
    --prefix|-p                          [Requied] Used to distingush your perf resources with others'
    --subscription|-s                    [Optional] The subscriton used to create resources
    --cloud|-c                           [Optional] The cloud used to create resources
+   --all|-a                             [Optional] publish portal,coordinator and compiler
+   --portal                             [Optional] publish portal
+   --coordinator                        [Optional] publish coordinator
+   --compiler                           [Optional] publish compiler
+   --server                             [Optional] publish compiler
+   --client                             [Optional] publish compiler
    --help|-h                            Print help
 EOF
 }
 
-while [[ "$#" > 0 ]];do
+while [[ "$#" > 0 ]]; do
     key="$1"
     shift
-    case $key in 
-        --prefix|-p)
-            PREFIX="$1"
-            shift
+    case $key in
+    --prefix | -p)
+        PREFIX="$1"
+        shift
         ;;
-        --cloud|-c)
-            CLOUD="$1"
-            shift
+    --cloud | -c)
+        CLOUD="$1"
+        shift
         ;;
-        --subscription|-s)
-            SUBSCTIPTION="$1"
-            shift
+    --subscription | -s)
+        SUBSCTIPTION="$1"
+        shift
         ;;
-        --help|h)
-            print_usage
-            exit
+    --portal)
+        PORTAL=true
         ;;
-        *)
-            echo "ERROR: Unknow argument '$key'" 1>&2
-            print_usage
-            exit -1
+    --coordinator)
+        COORDINATOR=true
+        ;;
+    --compiler)
+        COMPILER=true
+        ;;
+    --appserver)
+        APPSERVER=true
+        ;;
+    --client)
+        CLIENT=true
+        ;;
+    --all | -a)
+        ALL=true
+        ;;
+    --help | -h)
+        print_usage
+        exit
+        ;;
+    *)
+        echo "ERROR: Unknow argument '$key'" 1>&2
+        print_usage
+        exit -1
+        ;;
     esac
 done
+
+function publish() {
+    Pod=$1
+    cd $DIR/../src/Pods/$Pod
+    rm -rf publish
+    echo "start to publish $Pod"
+    dotnet publish -r linux-x64 -c release -o publish /p:useapphost=true
+    cd publish && zip -r ${Pod}.zip *
+    echo "create dir:$Pod"
+    az storage directory create -n "manifest/$Pod" --account-name $STORAGE_ACCOUNT -s $SA_SHARE
+    az storage file upload --account-name $STORAGE_ACCOUNT -s $SA_SHARE --source $Pod.zip -p manifest/$Pod
+    echo "upload $Pod succeeded"
+}
+
 throw_if_empty "prefix" $PREFIX
 
 init_common
+init_aks_group
 
-echo "create dir:mainifest"
-az storage directory create -n "mainifest" --account-name $STORAGE_ACCOUNT -s $SA_SHARE
+if [[ $ALL || $PORTAL ]]; then
+    publish Portal
+    cd $DIR/yaml
+    PORTAL_IP=$(az network public-ip show -n $PORTAL_IP_NAME -g $RESOURCE_GROUP --query "ipAddress" -o tsv)
+    cat load-balancer-service.yaml | replace RESOURCE_GROUP_PLACE_HOLDER $RESOURCE_GROUP | replace PORTAL_IP_PLACE_HOLDER $PORTAL_IP | kubectl apply -f -
+    kubectl apply -f portal.yaml
+    domain=$(az network public-ip show -n $PORTAL_IP_NAME -g $RESOURCE_GROUP --query dnsSettings.fqdn -o tsv)
+    echo "portal domain: $domain "
+fi
 
-DIR=$DIR/../src/Pods
-cd $DIR/Portal
-rm -rf  publish
-echo "start to publish the Portal"
-dotnet publish --self-contained true -r linux-x64 -c release -o publish /p:useapphost=true /p:PublishSingleFile=true
-zip -r portal.zip publish
-echo "create dir:portal"
-az storage directory create -n "mainifest/portal" --account-name $STORAGE_ACCOUNT -s $SA_SHARE
-az storage file upload --account-name $STORAGE_ACCOUNT -s $SA_SHARE --source portal.zip -p mainifest/portal
-echo "upload portal succeeded"
+if [[ $ALL || $COORDINATOR ]]; then
+    publish Coordinator
+    cd $DIR/yaml
+    kubectl apply -f coordinator.yaml
+fi
 
+if [[ $ALL || $COMPILER ]]; then
+    publish Compiler
+    cd $DIR/yaml
+    kubectl apply -f compiler.yaml
+fi
 
+if [[ $ALL || $APPSERVER ]]; then
+    publish AppServer
+fi
+
+if [[ $ALL || $CLIENT ]]; then
+    publish Client
+fi
