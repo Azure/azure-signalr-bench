@@ -3,6 +3,8 @@
 
 using System.Threading.Tasks;
 
+using Microsoft.Azure.Cosmos.Table;
+
 namespace Azure.SignalRBench.Storage
 {
     public interface IPerfStorage
@@ -13,6 +15,7 @@ namespace Azure.SignalRBench.Storage
 
         ValueTask<IFileShare> GetFileShareAsync(string name);
 
-        // todo : table
+        ValueTask<ITableAccessor<T>> GetTableAsync<T>(string name)
+            where T : class, ITableEntity, new();
     }
 }
