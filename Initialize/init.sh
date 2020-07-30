@@ -83,6 +83,14 @@ else
     echo "IP $PORTAL_IP_NAME already exists. Skip creating.."
 fi
 
+if [[ -z $(az monitor log-analytics workspace show-n $WORK_SPACE -g $RESOURCE_GROUP 2>/dev/null) ]]; then
+    echo "start to init workspace $WORK_SPACE"
+    az monitor log-analytics workspace create -n $WORK_SPACE -g $RESOURCE_GROUP
+    echo "work space:$WORK_SPACE init"
+else
+    echo "work space:$WORK_SPACE already exists. Skip creating.."
+fi
+
 if [[ -z $(az storage account show -n $STORAGE_ACCOUNT -g $RESOURCE_GROUP 2>/dev/null) ]]; then
     echo "start to create storage account $STORAGE_ACCOUNT"
     az storage account create -n $STORAGE_ACCOUNT >/dev/null
@@ -98,8 +106,9 @@ fi
 
 if [[ -z $(az aks show --name $KUBERNETES_SEVICES -g $RESOURCE_GROUP 2>/dev/null) ]]; then
     echo "start to create kubernetes services $KUBERNETES_SEVICES. May cost several minutes, waiting..."
+    work_space_resource_id=$(az monitor log-analytics workspace show -g biqianperfrg -n biqianperfla --query id -o tsv)
     az aks create -n $KUBERNETES_SEVICES --vm-set-type VirtualMachineScaleSets --kubernetes-version 1.16.10 --enable-managed-identity -s Standard_D4s_v3 --nodepool-name captain --generate-ssh-keys \
-        --load-balancer-managed-outbound-ip-count 3
+        --load-balancer-managed-outbound-ip-count 3 --workspace-resource-id "$work_space_resource_id"
     echo "start to create kubernetes services $KUBERNETES_SEVICES created."
     echo "start getting kube/config"
     az aks get-credentials -a -n $KUBERNETES_SEVICES -f ~/.kube/perf

@@ -56,6 +56,9 @@ while [[ "$#" > 0 ]]; do
     --client)
         CLIENT=true
         ;;
+    --redis)
+        REDIS=true
+        ;;
     --all | -a)
         ALL=true
         ;;
@@ -91,7 +94,7 @@ init_aks_group
 
 if [[ $ALL || $PORTAL ]]; then
     publish Portal
-    cd $DIR/yaml
+    cd $DIR/yaml/portal
     PORTAL_IP=$(az network public-ip show -n $PORTAL_IP_NAME -g $RESOURCE_GROUP --query "ipAddress" -o tsv)
     cat load-balancer-service.yaml | replace RESOURCE_GROUP_PLACE_HOLDER $RESOURCE_GROUP | replace PORTAL_IP_PLACE_HOLDER $PORTAL_IP | kubectl apply -f -
     kubectl apply -f portal.yaml
@@ -101,13 +104,13 @@ fi
 
 if [[ $ALL || $COORDINATOR ]]; then
     publish Coordinator
-    cd $DIR/yaml
+    cd $DIR/yaml/coordinator
     kubectl apply -f coordinator.yaml
 fi
 
 if [[ $ALL || $COMPILER ]]; then
     publish Compiler
-    cd $DIR/yaml
+    cd $DIR/yaml/compiler
     kubectl apply -f compiler.yaml
 fi
 
@@ -117,4 +120,12 @@ fi
 
 if [[ $ALL || $CLIENT ]]; then
     publish Client
+fi
+
+if [[ $ALL || $REDIS ]]; then
+    ##This redis has only one instance. Change this to cluster mode later
+    cd $DIR/yaml/redis
+    kubectl apply -f redis-master-deployment.yaml
+    kubectl apply -f redis-master-service.yaml
+    echo "redis dns inside cluster: redis-master "
 fi
