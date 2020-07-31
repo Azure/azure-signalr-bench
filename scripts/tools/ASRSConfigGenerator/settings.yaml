@@ -112,9 +112,9 @@ scenario:sendToClient,transport:Websockets,protocol:json,message_size:256:
   base_step: [1000, 2000, 5000, 5000, 10000, 15000, 15000]
   step: [200, 200, 1000, 1000, 2000, 5000, 5000]
   step_length: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
-  concurrent: [25, 25, 25, 25, 40, 150, 250]
+  concurrent: [150, 150, 150, 150, 150, 150, 150]
   batch_mode: ["LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress"]
-  batch_wait: [500, 500, 500, 500, 500, 500, 500]
+  batch_wait: [1000, 1000, 1000, 1000, 1000, 1000, 1000]
 
 
 # send to group
