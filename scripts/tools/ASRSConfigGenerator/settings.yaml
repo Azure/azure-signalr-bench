@@ -26,7 +26,7 @@ scenario:echo,transport:Websockets:
   step_length: [1500, 3000, 7500, 15000, 30000, 75000, 150000, 150000, 150000, 150000, 150000, 150000, 150000, 150000, 150000]
   concurrent: [50, 50, 50, 50, 50, 50, 50]
   batch_mode: ["LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress"]
-  batch_wait: [1500, 1500, 1500, 1500, 1500, 1500, 1500]
+  batch_wait: [5000, 5000, 5000, 5000, 5000, 5000, 5000]
 
 scenario:echo,transport:LongPolling:
   normal_connection: [500, 1000, 2500, 5000, 10000, 25000, 50000]
@@ -36,7 +36,7 @@ scenario:echo,transport:LongPolling:
   step_length: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
   concurrent: [50, 50, 50, 50, 50, 50, 50]
   batch_mode: ["LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress"]
-  batch_wait: [1500, 1500, 1500, 1500, 1500, 1500, 1500]
+  batch_wait: [5000, 5000, 5000, 5000, 5000, 5000, 5000]
 
 
 scenario:echo,transport:ServerSentEvents:
@@ -47,7 +47,7 @@ scenario:echo,transport:ServerSentEvents:
   step_length: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
   concurrent: [50, 50, 50, 50, 50, 50, 50]
   batch_mode: ["LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress"]
-  batch_wait: [1500, 1500, 1500, 1500, 1500, 1500, 1500]
+  batch_wait: [5000, 5000, 5000, 5000, 5000, 5000, 5000]
 
 
 # broadcast for all transport types
@@ -59,7 +59,7 @@ scenario:broadcast,transport:Websockets:
   step_length: [10, 10, 10, 10, 10, 10, 10]
   concurrent: [50, 50, 50, 50, 50, 50, 50]
   batch_mode: ["LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress"]
-  batch_wait: [1500, 1500, 1500, 1500, 1500, 1500, 1500]
+  batch_wait: [5000, 5000, 5000, 5000, 5000, 5000, 5000]
 
 
 scenario:broadcast,transport:LongPolling:
@@ -70,7 +70,7 @@ scenario:broadcast,transport:LongPolling:
   step_length: [10, 10, 10, 10, 10, 10, 10]
   concurrent: [50, 50, 50, 50, 50, 50, 50]
   batch_mode: ["LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress"]
-  batch_wait: [1500, 1500, 1500, 1500, 1500, 1500, 1500]
+  batch_wait: [5000, 5000, 5000, 5000, 5000, 5000, 5000]
 
 
 scenario:broadcast,transport:ServerSentEvents:
@@ -81,7 +81,7 @@ scenario:broadcast,transport:ServerSentEvents:
   step_length: [10, 10, 10, 10, 10, 10, 10]
   concurrent: [50, 50, 50, 50, 50, 50, 50]
   batch_mode: ["LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress"]
-  batch_wait: [1500, 1500, 1500, 1500, 1500, 1500, 1500]
+  batch_wait: [5000, 5000, 5000, 5000, 5000, 5000, 5000]
 
 
 # send to client for all message sizes
@@ -93,7 +93,7 @@ scenario:sendToClient,transport:Websockets,protocol:json,message_size:131072:
   step_length: [1500, 3000, 7500, 15000, 30000, 75000, 150000, 150000, 150000, 150000, 150000, 150000, 150000, 150000, 150000]
   concurrent: [50, 50, 50, 50, 50, 50, 50]
   batch_mode: ["LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress"]
-  batch_wait: [1500, 1500, 1500, 1500, 1500, 1500, 1500]
+  batch_wait: [5000, 5000, 5000, 5000, 5000, 5000, 5000]
 
 scenario:sendToClient,transport:Websockets,protocol:json,message_size:16384:
   normal_connection: [1000, 2000, 5000, 10000, 20000, 50000, 100000, 150000, 200000, 250000, 300000, 350000, 400000, 450000, 500000]
@@ -103,7 +103,7 @@ scenario:sendToClient,transport:Websockets,protocol:json,message_size:16384:
   step_length: [1500, 3000, 7500, 15000, 30000, 75000, 150000, 150000, 150000, 150000, 150000, 150000, 150000, 150000, 150000]
   concurrent: [50, 50, 50, 50, 50, 50, 50]
   batch_mode: ["LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress"]
-  batch_wait: [1500, 1500, 1500, 1500, 1500, 1500, 1500]
+  batch_wait: [5000, 5000, 5000, 5000, 5000, 5000, 5000]
 
 scenario:sendToClient,transport:Websockets,protocol:json,message_size:2048:
   normal_connection: [1000, 2000, 5000, 10000, 20000, 50000, 100000, 150000, 200000, 250000, 300000, 350000, 400000, 450000, 500000]
@@ -116,7 +116,7 @@ scenario:sendToClient,transport:Websockets,protocol:json,message_size:2048:
   step_length: [1500, 3000, 7500, 15000, 30000, 75000, 150000, 150000, 150000, 150000, 150000, 150000, 150000, 150000, 150000]
   concurrent: [50, 50, 50, 50, 50, 50, 50]
   batch_mode: ["LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress"]
-  batch_wait: [1500, 1500, 1500, 1500, 1500, 1500, 1500]
+  batch_wait: [5000, 5000, 5000, 5000, 5000, 5000, 5000]
 
 scenario:sendToClient,transport:Websockets,protocol:json,message_size:256:
   normal_connection: [1000, 2000, 5000, 10000, 20000, 50000, 100000, 150000, 200000, 250000, 300000, 350000, 400000, 450000, 500000]
@@ -126,7 +126,7 @@ scenario:sendToClient,transport:Websockets,protocol:json,message_size:256:
   step_length: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
   concurrent: [50, 50, 50, 50, 50, 50, 50]
   batch_mode: ["LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress"]
-  batch_wait: [1500, 1500, 1500, 1500, 1500, 1500, 1500]
+  batch_wait: [5000, 5000, 5000, 5000, 5000, 5000, 5000]
 
 
 # send to group
@@ -138,7 +138,7 @@ scenario:sendToGroup,transport:Websockets,group:tiny:
   step_length: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
   concurrent: [50, 50, 50, 50, 50, 50, 50]
   batch_mode: ["LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress"]
-  batch_wait: [1500, 1500, 1500, 1500, 1500, 1500, 1500]
+  batch_wait: [5000, 5000, 5000, 5000, 5000, 5000, 5000]
   group_count: [1000, 2000, 5000, 10000, 20000, 50000, 100000]
   max_group_count: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
 
@@ -151,7 +151,7 @@ scenario:sendToGroup,transport:Websockets,group:small:
   step_length: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
   concurrent: [50, 50, 50, 50, 50, 50, 50]
   batch_mode: ["LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress"]
-  batch_wait: [1500, 1500, 1500, 1500, 1500, 1500, 1500]
+  batch_wait: [5000, 5000, 5000, 5000, 5000, 5000, 5000]
   group_count: [100, 200, 500, 1000, 2000, 5000, 10000]
   max_group_count: [150, 300, 750, 1500, 3000, 7500, 15000]
 
@@ -164,7 +164,7 @@ scenario:sendToGroup,transport:Websockets,group:big:
   step_length: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
   concurrent: [50, 50, 50, 50, 50, 50, 50]
   batch_mode: ["LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress"]
-  batch_wait: [1500, 1500, 1500, 1500, 1500, 1500, 1500]
+  batch_wait: [5000, 5000, 5000, 5000, 5000, 5000, 5000]
   group_count: [10, 10, 10, 10, 10, 10, 10]
   max_group_count: [10, 10, 10, 10, 10, 10, 10]
 
@@ -177,7 +177,7 @@ scenario:frequentJoinLeaveGroup,transport:Websockets,group:tiny:
   step_length: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
   concurrent: [50, 50, 50, 50, 50, 50, 50]
   batch_mode: ["LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress"]
-  batch_wait: [1500, 1500, 1500, 1500, 1500, 1500, 1500]
+  batch_wait: [5000, 5000, 5000, 5000, 5000, 5000, 5000]
   group_count: [1000, 2000, 5000, 10000, 20000, 50000, 100000]
 
 
@@ -189,7 +189,7 @@ scenario:frequentJoinLeaveGroup,transport:Websockets,group:small:
   step_length: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
   concurrent: [50, 50, 50, 50, 50, 50, 50]
   batch_mode: ["LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress"]
-  batch_wait: [1500, 1500, 1500, 1500, 1500, 1500, 1500]
+  batch_wait: [5000, 5000, 5000, 5000, 5000, 5000, 5000]
   group_count: [100, 200, 500, 1000, 2000, 5000, 10000]
 
 
@@ -202,7 +202,7 @@ scenario:frequentJoinLeaveGroup,transport:Websockets,group:big:
   step_length: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
   concurrent: [50, 50, 50, 50, 50, 50, 50]
   batch_mode: ["LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress"]
-  batch_wait: [1500, 1500, 1500, 1500, 1500, 1500, 1500]
+  batch_wait: [5000, 5000, 5000, 5000, 5000, 5000, 5000]
   group_count: [10, 10, 10, 10, 10, 10, 10]
 
 # REST API
@@ -214,7 +214,7 @@ scenario:restSendToUser,transport:Websockets:
   step_length: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
   concurrent: [50, 50, 50, 50, 50, 50, 50]
   batch_mode: ["LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress"]
-  batch_wait: [1500, 1500, 1500, 1500, 1500, 1500, 1500]
+  batch_wait: [5000, 5000, 5000, 5000, 5000, 5000, 5000]
   #batch_mode: ["HighPress", "HighPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress"]
   #batch_wait: [1000, 1000, 1000, 1000, 1000, 1000, 1000]
 
@@ -227,7 +227,7 @@ scenario:restBroadcast,transport:Websockets:
   step_length: [10, 10, 10, 10, 10, 10, 10]
   concurrent: [50, 50, 50, 50, 50, 50, 50]
   batch_mode: ["LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress"]
-  batch_wait: [1500, 1500, 1500, 1500, 1500, 1500, 1500]
+  batch_wait: [5000, 5000, 5000, 5000, 5000, 5000, 5000]
 
 scenario:restSendToGroup,transport:Websockets,group:tiny:
   normal_connection: [1000, 2000, 5000, 10000, 20000, 50000, 100000]
@@ -237,7 +237,7 @@ scenario:restSendToGroup,transport:Websockets,group:tiny:
   step_length: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
   concurrent: [50, 50, 50, 50, 50, 50, 50]
   batch_mode: ["LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress"]
-  batch_wait: [1500, 1500, 1500, 1500, 1500, 1500, 1500]
+  batch_wait: [5000, 5000, 5000, 5000, 5000, 5000, 5000]
   group_count: [1000, 2000, 5000, 10000, 20000, 50000, 100000]
 
 scenario:restSendToGroup,transport:Websockets,group:small:
@@ -248,7 +248,7 @@ scenario:restSendToGroup,transport:Websockets,group:small:
   step_length: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
   concurrent: [50, 50, 50, 50, 50, 50, 50]
   batch_mode: ["LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress"]
-  batch_wait: [1500, 1500, 1500, 1500, 1500, 1500, 1500]
+  batch_wait: [5000, 5000, 5000, 5000, 5000, 5000, 5000]
   group_count: [100, 200, 500, 1000, 2000, 5000, 10000]
   max_group_count: [150, 300, 750, 1500, 3000, 7500, 15000]
 
@@ -260,7 +260,7 @@ scenario:restSendToGroup,transport:Websockets,group:big:
   step_length: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
   concurrent: [50, 50, 50, 50, 50, 50, 50]
   batch_mode: ["LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress"]
-  batch_wait: [1500, 1500, 1500, 1500, 1500, 1500, 1500]
+  batch_wait: [5000, 5000, 5000, 5000, 5000, 5000, 5000]
   group_count: [10, 10, 10, 10, 10, 10, 10]
   max_group_count: [10, 10, 10, 10, 10, 10, 10]
 
@@ -272,7 +272,7 @@ scenario:restPersistSendToUser,transport:Websockets:
   step_length: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
   concurrent: [50, 50, 50, 50, 50, 50, 50]
   batch_mode: ["LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress"]
-  batch_wait: [1500, 1500, 1500, 1500, 1500, 1500, 1500]
+  batch_wait: [5000, 5000, 5000, 5000, 5000, 5000, 5000]
 
 
 scenario:restPersistBroadcast,transport:Websockets:
@@ -283,7 +283,7 @@ scenario:restPersistBroadcast,transport:Websockets:
   step_length: [10, 10, 10, 10, 10, 10, 10]
   concurrent: [50, 50, 50, 50, 50, 50, 50]
   batch_mode: ["LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress"]
-  batch_wait: [1500, 1500, 1500, 1500, 1500, 1500, 1500]
+  batch_wait: [5000, 5000, 5000, 5000, 5000, 5000, 5000]
 
 scenario:restPersistSendToGroup,transport:Websockets,group:tiny:
   normal_connection: [1000, 2000, 5000, 10000, 20000, 50000, 100000]
@@ -293,7 +293,7 @@ scenario:restPersistSendToGroup,transport:Websockets,group:tiny:
   step_length: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
   concurrent: [50, 50, 50, 50, 50, 50, 50]
   batch_mode: ["LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress"]
-  batch_wait: [1500, 1500, 1500, 1500, 1500, 1500, 1500]
+  batch_wait: [5000, 5000, 5000, 5000, 5000, 5000, 5000]
   group_count: [1000, 2000, 5000, 10000, 20000, 50000, 100000]
 
 scenario:restPersistSendToGroup,transport:Websockets,group:small:
@@ -304,7 +304,7 @@ scenario:restPersistSendToGroup,transport:Websockets,group:small:
   step_length: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
   concurrent: [50, 50, 50, 50, 50, 50, 50]
   batch_mode: ["LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress"]
-  batch_wait: [1500, 1500, 1500, 1500, 1500, 1500, 1500]
+  batch_wait: [5000, 5000, 5000, 5000, 5000, 5000, 5000]
   group_count: [100, 200, 500, 1000, 2000, 5000, 10000]
   max_group_count: [150, 300, 750, 1500, 3000, 7500, 15000]
 
@@ -317,7 +317,7 @@ scenario:restPersistSendToGroup,transport:Websockets,group:big:
   step_length: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
   concurrent: [50, 50, 50, 50, 50, 50, 50]
   batch_mode: ["LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress"]
-  batch_wait: [1500, 1500, 1500, 1500, 1500, 1500, 1500]
+  batch_wait: [5000, 5000, 5000, 5000, 5000, 5000, 5000]
   group_count: [10, 10, 10, 10, 10, 10, 10]
   max_group_count: [10, 10, 10, 10, 10, 10, 10]
 
@@ -330,4 +330,4 @@ scenario:streamingEcho,transport:Websockets:
   step_length: [1500, 3000, 7500, 15000, 30000, 75000, 150000, 150000, 150000, 150000, 150000, 150000, 150000, 150000, 150000]
   concurrent: [50, 50, 50, 50, 50, 50, 50]
   batch_mode: ["LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress"]
-  batch_wait: [1500, 1500, 1500, 1500, 1500, 1500, 1500]
+  batch_wait: [5000, 5000, 5000, 5000, 5000, 5000, 5000]
