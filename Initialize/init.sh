@@ -106,27 +106,35 @@ fi
 
 if [[ -z $(az aks show --name $KUBERNETES_SEVICES -g $RESOURCE_GROUP 2>/dev/null) ]]; then
     echo "start to create kubernetes services $KUBERNETES_SEVICES. May cost several minutes, waiting..."
-    work_space_resource_id=$(az monitor log-analytics workspace show -g biqianperfrg -n biqianperfla --query id -o tsv)
+    work_space_resource_id=$(az monitor log-analytics workspace show -g $RESOURCE_GROUP -n $WORK_SPACE --query id -o tsv)
     az aks create -n $KUBERNETES_SEVICES --vm-set-type VirtualMachineScaleSets --kubernetes-version 1.16.10 --enable-managed-identity -s Standard_D4s_v3 --nodepool-name captain --generate-ssh-keys \
         --load-balancer-managed-outbound-ip-count 3 --workspace-resource-id "$work_space_resource_id"
     echo "start to create kubernetes services $KUBERNETES_SEVICES created."
     echo "start getting kube/config"
-    az aks get-credentials -a -n $KUBERNETES_SEVICES -f ~/.kube/perf
+    az aks get-credentials -a -n $KUBERNETES_SEVICES  --overwrite-existing -f  ~/.kube/perf
     echo "upload kube/config to $KEYVAULT"
     az keyvault secret set --vault-name $KEYVAULT -n $KV_KUBE_CONFIG -f ~/.kube/perf >/dev/null
     agentpool_msi_object_id=$(az aks show -n $KUBERNETES_SEVICES --query identityProfile.kubeletidentity.objectId -o tsv)
     echo "grant aks-agent-pool-msi keyvault permission"
     az keyvault set-policy --name $KEYVAULT --object-id $agentpool_msi_object_id --secret-permissions delete get list set >/dev/null
-    echo "grant aks-agent-pool-msi contibutor role of $SUBSCTIPTION"
-    az role assignment create --role "Contributor" --assignee-object-id $agentpool_msi_object_id --scope "/subscriptions/$SUBSCTIPTION"
 
     STORAGE_KEY=$(az storage account keys list --resource-group $RESOURCE_GROUP --account-name $STORAGE_ACCOUNT --query "[0].value" -o tsv)
     kubectl create secret generic azure-secret --from-literal=azurestorageaccountname=$STORAGE_ACCOUNT --from-literal=azurestorageaccountkey=$STORAGE_KEY
-    principalId=$(az aks show -g $RESOURCE_GROUP -n $KUBERNETES_SEVICES --query "identity.principalId" -o tsv)
-    echo $principalId
-    az role assignment create --assignee $principalId --role "Network Contributor" --scope /subscriptions/$SUBSCTIPTION
 else
     echo "$KUBERNETES_SEVICES already exists. Skip creating.."
 fi
+
+if [[ -z $(az ad sp show  --id $SERVICE_PRINCIPAL 2>/dec/null) ]]; then
+  echo "start to create service principal $SERVICE_PRINCIPAL"
+  sp=$(az ad sp create-for-rbac -n "biqianperfsp" --role contributor  --scopes /subscriptions/$SUBSCTIPTION)
+  echo "add $SERVICE_PRINCIPAL to keyvault"
+  az keyvault secret set  --vault-name $KEYVAULT -n "service-principal" --value  "$sp"
+fi
+
+echo "set keyvault constants"
+az keyvault secret set  --vault-name $KEYVAULT -n "prefix" --value  $PREFIX
+az keyvault secret set  --vault-name $KEYVAULT -n "subscription" --value $SUBSCTIPTION
+cloud_name=$(az cloud show --query name -o tsv)
+​az keyvault secret set  --vault-name $KEYVAULT -n "cloud" --value  $cloud_name
 
 echo "init has completed."

@@ -7,7 +7,7 @@ namespace Azure.SignalRBench.Storage
     {
         internal static class KeyVaultKey
         {
-            public const string StorageConnectionString = "StorageConnectionString";
+            public const string StorageConnectionString = "sa-accessKey";
         }
     }
 }
