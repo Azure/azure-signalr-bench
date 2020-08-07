@@ -83,7 +83,7 @@ else
     echo "IP $PORTAL_IP_NAME already exists. Skip creating.."
 fi
 
-if [[ -z $(az monitor log-analytics workspace show-n $WORK_SPACE -g $RESOURCE_GROUP 2>/dev/null) ]]; then
+if [[ -z $(az monitor log-analytics workspace show -n $WORK_SPACE -g $RESOURCE_GROUP 2>/dev/null) ]]; then
     echo "start to init workspace $WORK_SPACE"
     az monitor log-analytics workspace create -n $WORK_SPACE -g $RESOURCE_GROUP
     echo "work space:$WORK_SPACE init"
@@ -97,7 +97,7 @@ if [[ -z $(az storage account show -n $STORAGE_ACCOUNT -g $RESOURCE_GROUP 2>/dev
     access_key=$(az storage account keys list -n $STORAGE_ACCOUNT --query [0].value -o tsv)
     az keyvault secret set --vault-name $KEYVAULT -n $KV_SA_ACCESS_KEY --value "$access_key"
     echo "storage account $STORAGE_ACCOUNT created."
-    az storage share create --account-name $STORAGE_ACCOUNT --quoto 20 -n $SA_SHARE
+    az storage share create --account-name $STORAGE_ACCOUNT --quota 20 -n $SA_SHARE
     echo "create dir:manifest"
     az storage directory create -n "manifest" --account-name $STORAGE_ACCOUNT -s $SA_SHARE
 else
@@ -108,7 +108,7 @@ if [[ -z $(az aks show --name $KUBERNETES_SEVICES -g $RESOURCE_GROUP 2>/dev/null
     echo "start to create kubernetes services $KUBERNETES_SEVICES. May cost several minutes, waiting..."
     work_space_resource_id=$(az monitor log-analytics workspace show -g $RESOURCE_GROUP -n $WORK_SPACE --query id -o tsv)
     az aks create -n $KUBERNETES_SEVICES --vm-set-type VirtualMachineScaleSets --kubernetes-version 1.16.10 --enable-managed-identity -s Standard_D4s_v3 --nodepool-name captain --generate-ssh-keys \
-        --load-balancer-managed-outbound-ip-count 3 --workspace-resource-id "$work_space_resource_id"
+        --load-balancer-managed-outbound-ip-count 3 --workspace-resource-id "$work_space_resource_id" --enable-addons monitoring
     echo "start to create kubernetes services $KUBERNETES_SEVICES created."
     echo "start getting kube/config"
     az aks get-credentials -a -n $KUBERNETES_SEVICES  --overwrite-existing -f  ~/.kube/perf
@@ -117,24 +117,25 @@ if [[ -z $(az aks show --name $KUBERNETES_SEVICES -g $RESOURCE_GROUP 2>/dev/null
     agentpool_msi_object_id=$(az aks show -n $KUBERNETES_SEVICES --query identityProfile.kubeletidentity.objectId -o tsv)
     echo "grant aks-agent-pool-msi keyvault permission"
     az keyvault set-policy --name $KEYVAULT --object-id $agentpool_msi_object_id --secret-permissions delete get list set >/dev/null
-
     STORAGE_KEY=$(az storage account keys list --resource-group $RESOURCE_GROUP --account-name $STORAGE_ACCOUNT --query "[0].value" -o tsv)
-    kubectl create secret generic azure-secret --from-literal=azurestorageaccountname=$STORAGE_ACCOUNT --from-literal=azurestorageaccountkey=$STORAGE_KEY
+    kubectl create secret generic azure-secret --from-literal=azurestorageaccountname=$STORAGE_ACCOUNT --from-literal=azurestorageaccountkey=$STORAGE_KEY --kubeconfig   ~/.kube/perf
 else
     echo "$KUBERNETES_SEVICES already exists. Skip creating.."
 fi
 
-if [[ -z $(az ad sp show  --id $SERVICE_PRINCIPAL 2>/dec/null) ]]; then
+if [[ -z $(az ad sp show  --id http://$SERVICE_PRINCIPAL 2>/dev/null) ]]; then
   echo "start to create service principal $SERVICE_PRINCIPAL"
-  sp=$(az ad sp create-for-rbac -n "biqianperfsp" --role contributor  --scopes /subscriptions/$SUBSCTIPTION)
+  sp=$(az ad sp create-for-rbac -n $SERVICE_PRINCIPAL --role contributor  --scopes /subscriptions/$SUBSCTIPTION)
   echo "add $SERVICE_PRINCIPAL to keyvault"
   az keyvault secret set  --vault-name $KEYVAULT -n "service-principal" --value  "$sp"
+else
+    echo "$SERVICE_PRINCIPAL already exists. Skip creating.."
 fi
 
 echo "set keyvault constants"
 az keyvault secret set  --vault-name $KEYVAULT -n "prefix" --value  $PREFIX
 az keyvault secret set  --vault-name $KEYVAULT -n "subscription" --value $SUBSCTIPTION
 cloud_name=$(az cloud show --query name -o tsv)
-​az keyvault secret set  --vault-name $KEYVAULT -n "cloud" --value  $cloud_name
+az keyvault secret set  --vault-name $KEYVAULT -n "cloud" --value $cloud_name
 
 echo "init has completed."
