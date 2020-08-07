@@ -1083,7 +1083,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             // {
             //     expectedMilliseconds = SignalRConstants.MillisecondsToWait;
             // }
-            return long.MaxValue;
+            return 864000000L; // 10 day
         }
     }
 }
