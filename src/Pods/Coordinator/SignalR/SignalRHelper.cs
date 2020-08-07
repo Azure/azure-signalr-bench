@@ -7,7 +7,6 @@ namespace Coordinator.SignalR
         private ISignalROperations signalROperations;
         private ISignalROperations signalRPPEOperations;
 
-
         public SignalRHelper()
         {
             signalROperations = getSignalROperations();
@@ -21,6 +20,7 @@ namespace Coordinator.SignalR
             signalrManagementClient.SubscriptionId = PerfConfig.SUBSCRIPTION;
             return signalrManagementClient.SignalR;
         }
+
         private ISignalROperations getSignalRPPEOperations()
         {
             var signalrManagementClient = new SignalRManagementClient(PerfConfig.PPE.SERVICE_PRINCIPAL);

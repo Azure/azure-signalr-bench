@@ -5,28 +5,32 @@ using Coordinator;
 using Coordinator.SignalR;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Org.BouncyCastle.Asn1.Cmp;
 using System;
 
-public class Program
+namespace Coordinator
 {
-    public static void Main(string[] args)
+    class Program
     {
-        CreateHostBuilder(args).Build().Run();
-    }
+        static void Main(string[] args)
+        {
+            CreateHostBuilder(args).Build().Run();
+        }
 
-    public static IHostBuilder CreateHostBuilder(string[] args) =>
-        Host.CreateDefaultBuilder(args)
-            .ConfigureServices((hostContext, services) =>
-            {
-                var config = hostContext.Configuration;
-                string kvUrl = config["kvUrl"];
-                var secretClient = new SecretClient(new Uri(kvUrl), new DefaultAzureCredential());
-                PerfConfig.Init(secretClient);
-                services.AddSingleton(sp => secretClient);
-                services.AddSingleton(sp => new PerfStorageProvider(kvUrl, null));
-                services.AddSingleton<KubeCtlHelper>();
-                services.AddSingleton<AksHelper>();
-                services.AddSingleton<SignalRHelper>();
-                services.AddHostedService<Worker>();
-            });
+        public static IHostBuilder CreateHostBuilder(string[] args) =>
+            Host.CreateDefaultBuilder(args)
+                .ConfigureServices((hostContext, services) =>
+                {
+                    var config = hostContext.Configuration;
+                    string kvUrl = config["kvUrl"];
+                    var secretClient = new SecretClient(new Uri(kvUrl), new DefaultAzureCredential());
+                    PerfConfig.Init(secretClient);
+                    services.AddSingleton(sp => secretClient);
+                    services.AddSingleton(sp => new PerfStorageProvider(kvUrl, null));
+                    services.AddSingleton<KubeCtlHelper>();
+                    services.AddSingleton<AksHelper>();
+                    services.AddSingleton<SignalRHelper>();
+                    services.AddHostedService<Worker>();
+                });
+    }
 }

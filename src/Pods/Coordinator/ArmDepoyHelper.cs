@@ -22,7 +22,5 @@ namespace Coordinator
         {
             await azure.Deployments.Define(deploymentName).WithExistingResourceGroup(PerfConfig.RESOUCE_GROUP).WithTemplate(deployTemplate.ToString()).WithParameters(deployParams).WithMode(Microsoft.Azure.Management.ResourceManager.Fluent.Models.DeploymentMode.Incremental).BeginCreateAsync();
         }
-
-
     }
 }
