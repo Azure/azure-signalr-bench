@@ -38,10 +38,8 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.MasterMethods
             var task = Task.WhenAll(results);
             // we wait until the default timeout reached
             long expectedMilliseconds = SignalRConstants.MillisecondsToWait;
-            if (SignalRUtils.FetchTotalConnectionFromContext(pluginParameters, type, out int totalConnections))
-            {
-                expectedMilliseconds = SignalRUtils.GetTimeoutPerConcurrentSpeed(totalConnections, concurrentConnection);
-            }
+            SignalRUtils.FetchTotalConnectionFromContext(pluginParameters, type, out int totalConnections);
+            expectedMilliseconds = SignalRUtils.GetTimeoutPerConcurrentSpeed(Math.Max(totalConnections, 10000000000000000), concurrentConnection);
 
             return Util.TimeoutCheckedTask(task, expectedMilliseconds, nameof(StartConnection));
         }
