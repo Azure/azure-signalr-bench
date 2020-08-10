@@ -149,6 +149,7 @@ namespace Common
 
         public static async Task LowPressBatchProcess<T>(IList<T> source, Func<T, Task> f, int max, int milliseconds)
         {
+            var rand = new Random();
             var nextBatch = max;
             var left = source.Count;
             if (left < nextBatch)
@@ -167,6 +168,7 @@ namespace Common
                         var item = source[index];
                         tasks.Add(Task.Run(async () =>
                         {
+                            await Task.Delay(rand.Next(milliseconds));
                             await f(item);
                         }));
                     }
@@ -179,7 +181,7 @@ namespace Common
                         nextBatch = left;
                     }
                 } while (left > 0);
-                await Task.WhenAll(tasks).OrTimeout();
+                await Task.WhenAll(tasks);
             }
             catch (Exception e)
             {
