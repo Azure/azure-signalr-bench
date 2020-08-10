@@ -158,10 +158,10 @@ namespace Common
             }
             try
             {
-                var tasks = new List<Task>(left);
                 var i = 0;
                 do
                 {
+                    var tasks = new List<Task>();
                     for (var j = 0; j < nextBatch; j++)
                     {
                         var index = i + j;
@@ -173,15 +173,15 @@ namespace Common
                         }));
                     }
 
-                    await Task.Delay(TimeSpan.FromMilliseconds(milliseconds));
                     i += nextBatch;
                     left = left - nextBatch;
                     if (left < nextBatch)
                     {
                         nextBatch = left;
                     }
+                    await Task.WhenAll(tasks);
+                    await Task.Delay(TimeSpan.FromMilliseconds(milliseconds));
                 } while (left > 0);
-                await Task.WhenAll(tasks);
             }
             catch (Exception e)
             {

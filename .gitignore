@@ -13,7 +13,8 @@ nupkg/
 *.user
 *.userosscache
 *.sln.docstates
-
+.dotnet/
+artifacts/
 # Build results
 [Dd]ebug/
 [Dd]ebugPublic/
