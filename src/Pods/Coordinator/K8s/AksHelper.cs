@@ -10,14 +10,14 @@ namespace Coordinator
 {
     internal class AksHelper
     {
-        private IAgentPoolsOperations agentPoolsOperations;
+        private readonly IAgentPoolsOperations _agentPoolsOperations;
 
         public AksHelper()
         {
-            agentPoolsOperations = getAgentPool();
+            _agentPoolsOperations = GetAgentPool();
         }
 
-        private IAgentPoolsOperations getAgentPool()
+        private IAgentPoolsOperations GetAgentPool()
         {
             var restClient = ContainerServiceManager.Authenticate(PerfConfig.ServicePrincipal, PerfConfig.Subscription).RestClient;
             var managementClient = new ContainerServiceManagementClient(restClient)
@@ -29,7 +29,7 @@ namespace Coordinator
 
         public async Task CreateOrUpdateAgentPool(string agentPoolName, AgentPoolInner agentPoolInner)
         {
-            await agentPoolsOperations.CreateOrUpdateAsync(PerfConfig.ResourceGroup, PerfConfig.AKS, agentPoolName,
+            await _agentPoolsOperations.CreateOrUpdateAsync(PerfConfig.ResourceGroup, PerfConfig.AKS, agentPoolName,
               agentPoolInner);
         }
     }

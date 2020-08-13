@@ -9,11 +9,11 @@ namespace Coordinator
 {
     internal class KubeCtlHelper
     {
-        private Kubernetes kubernetes;
+        private readonly Kubernetes _kubernetes;
 
         public KubeCtlHelper()
         {
-            kubernetes = getKubeClient();
+            _kubernetes = getKubeClient();
         }
         public Kubernetes getKubeClient()
         {

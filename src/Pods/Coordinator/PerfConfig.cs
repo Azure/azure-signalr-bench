@@ -96,6 +96,7 @@ namespace Coordinator
             }
             catch (Exception e)
             {
+                Console.WriteLine("PerfInit error, exiting", e);
                 Environment.Exit(1);
             }
             //init ppe
@@ -103,10 +104,10 @@ namespace Coordinator
 
         private class Sp
         {
-            public string appId;
-            public string name;
-            public string password;
-            public string tenant;
+            internal string appId;
+            internal string name;
+            internal string password;
+            internal string tenant;
         }
     }
 }

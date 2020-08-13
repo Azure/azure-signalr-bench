@@ -7,24 +7,24 @@ namespace Coordinator.SignalR
 {
     internal class SignalRHelper
     {
-        private ISignalROperations signalROperations;
-        private ISignalROperations signalRPPEOperations;
+        private readonly ISignalROperations _signalROperations;
+        private readonly ISignalROperations _signalRPPEOperations;
 
         public SignalRHelper()
         {
-            signalROperations = getSignalROperations();
+            _signalROperations = GetSignalROperations();
             // Deal with this part later
             //  signalRPPEOperations = getSignalRPPEOperations();
         }
 
-        private ISignalROperations getSignalROperations()
+        private ISignalROperations GetSignalROperations()
         {
             var signalrManagementClient = new SignalRManagementClient(PerfConfig.ServicePrincipal);
             signalrManagementClient.SubscriptionId = PerfConfig.Subscription;
             return signalrManagementClient.SignalR;
         }
 
-        private ISignalROperations getSignalRPPEOperations()
+        private ISignalROperations GetSignalRPPEOperations()
         {
             var signalrManagementClient = new SignalRManagementClient(PerfConfig.PPE.ServicePrincipal);
             signalrManagementClient.SubscriptionId = PerfConfig.PPE.Subscription;

@@ -7,6 +7,7 @@ using Azure.SignalRBench.Storage;
 using Coordinator.SignalR;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using System;
 
 namespace Coordinator
@@ -20,6 +21,11 @@ namespace Coordinator
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
+            .ConfigureLogging((ILoggingBuilder logging) =>
+            {
+                logging.ClearProviders();
+                logging.AddConsole();
+            })
                 .ConfigureServices((hostContext, services) =>
                 {
                     var config = hostContext.Configuration;
