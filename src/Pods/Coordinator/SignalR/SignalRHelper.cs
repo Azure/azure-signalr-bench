@@ -1,30 +1,25 @@
-﻿using Microsoft.Azure.Management.SignalR;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using Microsoft.Azure.Management.SignalR;
 
 namespace Coordinator.SignalR
 {
-    class SignalRHelper
+    internal class SignalRHelper
     {
-        private ISignalROperations signalROperations;
-        private ISignalROperations signalRPPEOperations;
+        private readonly ISignalROperations _signalROperations;
 
         public SignalRHelper()
         {
-            signalROperations = getSignalROperations();
+            _signalROperations = GetSignalROperations();
             // Deal with this part later
             //  signalRPPEOperations = getSignalRPPEOperations();
         }
 
-        private ISignalROperations getSignalROperations()
+        private ISignalROperations GetSignalROperations()
         {
-            var signalrManagementClient = new SignalRManagementClient(PerfConfig.SERVICE_PRINCIPAL);
-            signalrManagementClient.SubscriptionId = PerfConfig.SUBSCRIPTION;
-            return signalrManagementClient.SignalR;
-        }
-
-        private ISignalROperations getSignalRPPEOperations()
-        {
-            var signalrManagementClient = new SignalRManagementClient(PerfConfig.PPE.SERVICE_PRINCIPAL);
-            signalrManagementClient.SubscriptionId = PerfConfig.PPE.SUBSCRIPTION;
+            var signalrManagementClient = new SignalRManagementClient(PerfConfig.ServicePrincipal);
+            signalrManagementClient.SubscriptionId = PerfConfig.Subscription;
             return signalrManagementClient.SignalR;
         }
     }

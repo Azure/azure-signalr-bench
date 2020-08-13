@@ -1,32 +1,35 @@
-﻿using Microsoft.Azure.Management.ContainerService.Fluent;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using Microsoft.Azure.Management.ContainerService.Fluent;
 using Microsoft.Azure.Management.ContainerService.Fluent.Models;
 using Microsoft.Azure.Management.ResourceManager.Fluent;
 using System.Threading.Tasks;
 
 namespace Coordinator
 {
-    class AksHelper
+    internal class AksHelper
     {
-        private IAgentPoolsOperations agentPoolsOperations;
+        private readonly IAgentPoolsOperations _agentPoolsOperations;
 
         public AksHelper()
         {
-            agentPoolsOperations = getAgentPool();
+            _agentPoolsOperations = GetAgentPool();
         }
 
-        private IAgentPoolsOperations getAgentPool()
+        private IAgentPoolsOperations GetAgentPool()
         {
-            var restClient = ContainerServiceManager.Authenticate(PerfConfig.SERVICE_PRINCIPAL, PerfConfig.SUBSCRIPTION).RestClient;
+            var restClient = ContainerServiceManager.Authenticate(PerfConfig.ServicePrincipal, PerfConfig.Subscription).RestClient;
             var managementClient = new ContainerServiceManagementClient(restClient)
             {
-                SubscriptionId = PerfConfig.SUBSCRIPTION
+                SubscriptionId = PerfConfig.Subscription
             };
             return managementClient.AgentPools;
         }
 
         public async Task CreateOrUpdateAgentPool(string agentPoolName, AgentPoolInner agentPoolInner)
         {
-            await agentPoolsOperations.CreateOrUpdateAsync(PerfConfig.RESOUCE_GROUP, PerfConfig.AKS, agentPoolName,
+            await _agentPoolsOperations.CreateOrUpdateAsync(PerfConfig.ResourceGroup, PerfConfig.AKS, agentPoolName,
               agentPoolInner);
         }
     }

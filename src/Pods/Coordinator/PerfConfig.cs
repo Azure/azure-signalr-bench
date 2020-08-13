@@ -1,4 +1,7 @@
-﻿using Azure.Security.KeyVault.Secrets;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using Azure.Security.KeyVault.Secrets;
 using Microsoft.Azure.Management.ResourceManager.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent.Authentication;
 using Newtonsoft.Json;
@@ -8,15 +11,15 @@ using System.Threading.Tasks;
 
 namespace Coordinator
 {
-    class PerfConfig
+    public class PerfConfig
     {
-        public static string PREFIX_PERF { get; private set; }
+        public static string PrefixPerf { get; private set; }
 
-        public static string RESOUCE_GROUP
+        public static string ResourceGroup
         {
             get
             {
-                return PREFIX_PERF + "rg";
+                return PrefixPerf + "rg";
             }
         }
 
@@ -24,26 +27,26 @@ namespace Coordinator
         {
             get
             {
-                return PREFIX_PERF + "aks";
+                return PrefixPerf + "aks";
             }
         }
 
-        public static AzureEnvironment AZURE_ENVIRONMENT;
+        public static AzureEnvironment AzureEnvironment;
 
-        public static string SUBSCRIPTION { get; private set; }
+        public static string Subscription { get; private set; }
 
-        public static AzureCredentials SERVICE_PRINCIPAL { get; private set; }
+        public static AzureCredentials ServicePrincipal { get; private set; }
 
-        public static string KUBE_CONFIG { get; private set; }
+        public static string KubeConfig { get; private set; }
 
         public static class Queue
         {
-            public static string PORTAL_JOB = "portal-job";
+            public static readonly string PortalJob = "portal-job";
         }
 
         public static class PPE
         {
-            public static AzureEnvironment CLOUD
+            public static AzureEnvironment Cloud
             {
                 get
                 {
@@ -58,52 +61,44 @@ namespace Coordinator
                 }
             }
 
-            public static string SUBSCRIPTION { get; private set; }
+            public static string Subscription { get; private set; }
 
-            public static AzureCredentials SERVICE_PRINCIPAL { get; private set; }
+            public static AzureCredentials ServicePrincipal { get; private set; }
         }
 
         public static void Init(SecretClient SecretClient)
         {
-            SP sp = null;
+            dynamic sp = null;
             var taskList = new List<Task>
             {
-                Task.Run(async () => PREFIX_PERF = (await SecretClient.GetSecretAsync("prefix")).Value.Value),
-                Task.Run(async () => SUBSCRIPTION = (await SecretClient.GetSecretAsync("subscription")).Value.Value),
-                Task.Run(async () => sp = JsonConvert.DeserializeObject<SP>((await SecretClient.GetSecretAsync("service-principal")).Value.Value)),
+                Task.Run(async () => PrefixPerf = (await SecretClient.GetSecretAsync("prefix")).Value.Value),
+                Task.Run(async () => Subscription = (await SecretClient.GetSecretAsync("subscription")).Value.Value),
+                Task.Run(async () => sp = JsonConvert.DeserializeObject<dynamic>((await SecretClient.GetSecretAsync("service-principal")).Value.Value)),
                 Task.Run(async () =>
                 {
                     string cloud = (await SecretClient.GetSecretAsync("cloud")).Value.Value;
                     cloud = cloud == "AzureCloud" ? "AzureGlobalCloud" : cloud;
-                     AZURE_ENVIRONMENT =
-                            AzureEnvironment.FromName(cloud);
+                    AzureEnvironment = AzureEnvironment.FromName(cloud);
                 }),
-                Task.Run(async () => KUBE_CONFIG = (await SecretClient.GetSecretAsync("kube-config")).Value.Value),
+                Task.Run(async () => KubeConfig = (await SecretClient.GetSecretAsync("kube-config")).Value.Value),
             };
 
             try
             {
                 Task.WaitAll(taskList.ToArray());
 
-                SERVICE_PRINCIPAL = SdkContext.AzureCredentialsFactory.FromServicePrincipal(
+                ServicePrincipal = SdkContext.AzureCredentialsFactory.FromServicePrincipal(
                     sp.appId,
                     sp.password,
-                    sp.tenant, AZURE_ENVIRONMENT
+                    sp.tenant,
+                    AzureEnvironment
                 );
             }
             catch (Exception e)
             {
+                Console.WriteLine("PerfInit error, exiting", e);
                 Environment.Exit(1);
             }
-            //init ppe
-        }
-
-        private class SP
-        {
-            public string appId;
-            public string name;
-            public string password;
-            public string tenant;
         }
     }
 }
