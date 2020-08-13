@@ -35,6 +35,8 @@ namespace Coordinator
 
         public static string Subscription { get; private set; }
 
+        public static string Location { get; private set; }
+
         public static AzureCredentials ServicePrincipal { get; private set; }
 
         public static string KubeConfig { get; private set; }
@@ -73,6 +75,7 @@ namespace Coordinator
             {
                 Task.Run(async () => PrefixPerf = (await SecretClient.GetSecretAsync("prefix")).Value.Value),
                 Task.Run(async () => Subscription = (await SecretClient.GetSecretAsync("subscription")).Value.Value),
+                Task.Run(async () => Location = (await SecretClient.GetSecretAsync("location")).Value.Value),
                 Task.Run(async () => sp = JsonConvert.DeserializeObject<dynamic>((await SecretClient.GetSecretAsync("service-principal")).Value.Value)),
                 Task.Run(async () =>
                 {
@@ -88,9 +91,9 @@ namespace Coordinator
                 Task.WaitAll(taskList.ToArray());
 
                 ServicePrincipal = SdkContext.AzureCredentialsFactory.FromServicePrincipal(
-                    sp.appId,
-                    sp.password,
-                    sp.tenant,
+                    sp.appId.ToString(),
+                    sp.password.ToString(),
+                    sp.tenant.ToString(),
                     AzureEnvironment
                 );
             }
