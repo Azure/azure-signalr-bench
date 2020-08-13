@@ -21,11 +21,11 @@ namespace Coordinator
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
-            .ConfigureLogging((ILoggingBuilder logging) =>
-            {
-                logging.ClearProviders();
-                logging.AddConsole();
-            })
+                 .ConfigureLogging((ILoggingBuilder logging) =>
+                 {
+                     logging.ClearProviders();
+                     logging.AddConsole();
+                 })
                 .ConfigureServices((hostContext, services) =>
                 {
                     var config = hostContext.Configuration;

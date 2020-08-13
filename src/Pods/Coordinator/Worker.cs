@@ -5,6 +5,7 @@ using Azure.Security.KeyVault.Secrets;
 using Azure.SignalRBench.Storage;
 using Coordinator.SignalR;
 using Microsoft.Extensions.Hosting;
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -39,7 +40,7 @@ namespace Coordinator
 
         public Task StopAsync(CancellationToken cancellationToken)
         {
-            return Task.FromCanceled(cancellationToken);
+            throw new Exception();
         }
     }
 }

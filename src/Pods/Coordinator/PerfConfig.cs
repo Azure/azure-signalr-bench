@@ -41,7 +41,7 @@ namespace Coordinator
 
         public static class Queue
         {
-            public static string PortalJob = "portal-job";
+            public static readonly string PortalJob = "portal-job";
         }
 
         public static class PPE
@@ -78,8 +78,7 @@ namespace Coordinator
                 {
                     string cloud = (await SecretClient.GetSecretAsync("cloud")).Value.Value;
                     cloud = cloud == "AzureCloud" ? "AzureGlobalCloud" : cloud;
-                     AzureEnvironment =
-                            AzureEnvironment.FromName(cloud);
+                    AzureEnvironment = AzureEnvironment.FromName(cloud);
                 }),
                 Task.Run(async () => KubeConfig = (await SecretClient.GetSecretAsync("kube-config")).Value.Value),
             };
@@ -91,7 +90,8 @@ namespace Coordinator
                 ServicePrincipal = SdkContext.AzureCredentialsFactory.FromServicePrincipal(
                     sp.appId,
                     sp.password,
-                    sp.tenant, AzureEnvironment
+                    sp.tenant,
+                    AzureEnvironment
                 );
             }
             catch (Exception e)
@@ -99,7 +99,6 @@ namespace Coordinator
                 Console.WriteLine("PerfInit error, exiting", e);
                 Environment.Exit(1);
             }
-            //init ppe
         }
     }
 }
