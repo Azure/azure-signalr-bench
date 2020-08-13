@@ -8,15 +8,15 @@ using System.Threading.Tasks;
 
 namespace Coordinator
 {
-    class PerfConfig
+    public class PerfConfig
     {
-        public static string PREFIX_PERF { get; private set; }
+        public static string PrefixPerf { get; private set; }
 
-        public static string RESOUCE_GROUP
+        public static string ResourceGroup
         {
             get
             {
-                return PREFIX_PERF + "rg";
+                return PrefixPerf + "rg";
             }
         }
 
@@ -24,26 +24,26 @@ namespace Coordinator
         {
             get
             {
-                return PREFIX_PERF + "aks";
+                return PrefixPerf + "aks";
             }
         }
 
-        public static AzureEnvironment AZURE_ENVIRONMENT;
+        public static AzureEnvironment AzureEnvironment;
 
-        public static string SUBSCRIPTION { get; private set; }
+        public static string Subscription { get; private set; }
 
-        public static AzureCredentials SERVICE_PRINCIPAL { get; private set; }
+        public static AzureCredentials ServicePrincipal { get; private set; }
 
-        public static string KUBE_CONFIG { get; private set; }
+        public static string KubeConfig { get; private set; }
 
         public static class Queue
         {
-            public static string PORTAL_JOB = "portal-job";
+            public static string PortalJob = "portal-job";
         }
 
         public static class PPE
         {
-            public static AzureEnvironment CLOUD
+            public static AzureEnvironment Cloud
             {
                 get
                 {
@@ -58,37 +58,37 @@ namespace Coordinator
                 }
             }
 
-            public static string SUBSCRIPTION { get; private set; }
+            public static string Subscription { get; private set; }
 
-            public static AzureCredentials SERVICE_PRINCIPAL { get; private set; }
+            public static AzureCredentials ServicePrincipal { get; private set; }
         }
 
         public static void Init(SecretClient SecretClient)
         {
-            SP sp = null;
+            Sp sp = null;
             var taskList = new List<Task>
             {
-                Task.Run(async () => PREFIX_PERF = (await SecretClient.GetSecretAsync("prefix")).Value.Value),
-                Task.Run(async () => SUBSCRIPTION = (await SecretClient.GetSecretAsync("subscription")).Value.Value),
-                Task.Run(async () => sp = JsonConvert.DeserializeObject<SP>((await SecretClient.GetSecretAsync("service-principal")).Value.Value)),
+                Task.Run(async () => PrefixPerf = (await SecretClient.GetSecretAsync("prefix")).Value.Value),
+                Task.Run(async () => Subscription = (await SecretClient.GetSecretAsync("subscription")).Value.Value),
+                Task.Run(async () => sp = JsonConvert.DeserializeObject<Sp>((await SecretClient.GetSecretAsync("service-principal")).Value.Value)),
                 Task.Run(async () =>
                 {
                     string cloud = (await SecretClient.GetSecretAsync("cloud")).Value.Value;
                     cloud = cloud == "AzureCloud" ? "AzureGlobalCloud" : cloud;
-                     AZURE_ENVIRONMENT =
+                     AzureEnvironment =
                             AzureEnvironment.FromName(cloud);
                 }),
-                Task.Run(async () => KUBE_CONFIG = (await SecretClient.GetSecretAsync("kube-config")).Value.Value),
+                Task.Run(async () => KubeConfig = (await SecretClient.GetSecretAsync("kube-config")).Value.Value),
             };
 
             try
             {
                 Task.WaitAll(taskList.ToArray());
 
-                SERVICE_PRINCIPAL = SdkContext.AzureCredentialsFactory.FromServicePrincipal(
+                ServicePrincipal = SdkContext.AzureCredentialsFactory.FromServicePrincipal(
                     sp.appId,
                     sp.password,
-                    sp.tenant, AZURE_ENVIRONMENT
+                    sp.tenant, AzureEnvironment
                 );
             }
             catch (Exception e)
@@ -98,7 +98,7 @@ namespace Coordinator
             //init ppe
         }
 
-        private class SP
+        private class Sp
         {
             public string appId;
             public string name;

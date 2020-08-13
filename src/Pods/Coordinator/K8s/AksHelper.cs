@@ -16,17 +16,17 @@ namespace Coordinator
 
         private IAgentPoolsOperations getAgentPool()
         {
-            var restClient = ContainerServiceManager.Authenticate(PerfConfig.SERVICE_PRINCIPAL, PerfConfig.SUBSCRIPTION).RestClient;
+            var restClient = ContainerServiceManager.Authenticate(PerfConfig.ServicePrincipal, PerfConfig.Subscription).RestClient;
             var managementClient = new ContainerServiceManagementClient(restClient)
             {
-                SubscriptionId = PerfConfig.SUBSCRIPTION
+                SubscriptionId = PerfConfig.Subscription
             };
             return managementClient.AgentPools;
         }
 
         public async Task CreateOrUpdateAgentPool(string agentPoolName, AgentPoolInner agentPoolInner)
         {
-            await agentPoolsOperations.CreateOrUpdateAsync(PerfConfig.RESOUCE_GROUP, PerfConfig.AKS, agentPoolName,
+            await agentPoolsOperations.CreateOrUpdateAsync(PerfConfig.ResourceGroup, PerfConfig.AKS, agentPoolName,
               agentPoolInner);
         }
     }

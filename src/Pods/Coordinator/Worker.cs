@@ -27,7 +27,7 @@ namespace Coordinator
         public async Task StartAsync(CancellationToken cancellationToken)
         {
             var perfStorage = await _perfStorageProvider.GetPerfStorageAsync();
-            var queue = await perfStorage.GetQueueAsync<string>(PerfConfig.Queue.PORTAL_JOB);
+            var queue = await perfStorage.GetQueueAsync<string>(PerfConfig.Queue.PortalJob);
             await foreach (var message in queue.Consume())
             {
                 // do the job

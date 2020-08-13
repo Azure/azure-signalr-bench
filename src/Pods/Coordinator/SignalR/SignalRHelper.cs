@@ -16,15 +16,15 @@ namespace Coordinator.SignalR
 
         private ISignalROperations getSignalROperations()
         {
-            var signalrManagementClient = new SignalRManagementClient(PerfConfig.SERVICE_PRINCIPAL);
-            signalrManagementClient.SubscriptionId = PerfConfig.SUBSCRIPTION;
+            var signalrManagementClient = new SignalRManagementClient(PerfConfig.ServicePrincipal);
+            signalrManagementClient.SubscriptionId = PerfConfig.Subscription;
             return signalrManagementClient.SignalR;
         }
 
         private ISignalROperations getSignalRPPEOperations()
         {
-            var signalrManagementClient = new SignalRManagementClient(PerfConfig.PPE.SERVICE_PRINCIPAL);
-            signalrManagementClient.SubscriptionId = PerfConfig.PPE.SUBSCRIPTION;
+            var signalrManagementClient = new SignalRManagementClient(PerfConfig.PPE.ServicePrincipal);
+            signalrManagementClient.SubscriptionId = PerfConfig.PPE.Subscription;
             return signalrManagementClient.SignalR;
         }
     }
