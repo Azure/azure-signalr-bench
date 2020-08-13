@@ -1,11 +1,14 @@
-﻿using Microsoft.Azure.Management.ContainerService.Fluent;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using Microsoft.Azure.Management.ContainerService.Fluent;
 using Microsoft.Azure.Management.ContainerService.Fluent.Models;
 using Microsoft.Azure.Management.ResourceManager.Fluent;
 using System.Threading.Tasks;
 
 namespace Coordinator
 {
-    class AksHelper
+    internal class AksHelper
     {
         private IAgentPoolsOperations agentPoolsOperations;
 

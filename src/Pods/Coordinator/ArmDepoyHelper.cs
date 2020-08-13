@@ -1,4 +1,7 @@
-﻿using Microsoft.Azure.Management.Fluent;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using Microsoft.Azure.Management.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent.Models;
 using Newtonsoft.Json.Linq;
@@ -7,7 +10,7 @@ using MAzure = Microsoft.Azure.Management.Fluent.Azure;
 
 namespace Coordinator
 {
-    class ArmDeployHelper
+    internal class ArmDeployHelper
     {
         public IAzure GetAzure(AzureEnvironment azureEnvironment)
         {

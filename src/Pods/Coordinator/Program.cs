@@ -1,16 +1,17 @@
-﻿using Azure.Identity;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using Azure.Identity;
 using Azure.Security.KeyVault.Secrets;
 using Azure.SignalRBench.Storage;
-using Coordinator;
 using Coordinator.SignalR;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Org.BouncyCastle.Asn1.Cmp;
 using System;
 
 namespace Coordinator
 {
-    class Program
+    internal class Program
     {
         static void Main(string[] args)
         {

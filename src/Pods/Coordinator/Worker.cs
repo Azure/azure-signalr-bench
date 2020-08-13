@@ -1,4 +1,7 @@
-﻿using Azure.Security.KeyVault.Secrets;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using Azure.Security.KeyVault.Secrets;
 using Azure.SignalRBench.Storage;
 using Coordinator.SignalR;
 using Microsoft.Extensions.Hosting;
@@ -7,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace Coordinator
 {
-    class Worker : IHostedService
+    internal class Worker : IHostedService
     {
         private SecretClient _secretClient;
         private PerfStorageProvider _perfStorageProvider;

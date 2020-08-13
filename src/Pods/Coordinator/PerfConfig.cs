@@ -1,4 +1,7 @@
-﻿using Azure.Security.KeyVault.Secrets;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
+using Azure.Security.KeyVault.Secrets;
 using Microsoft.Azure.Management.ResourceManager.Fluent;
 using Microsoft.Azure.Management.ResourceManager.Fluent.Authentication;
 using Newtonsoft.Json;
