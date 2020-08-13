@@ -12,6 +12,8 @@ function init_common() {
     KV_KUBE_CONFIG="kube-config"
     SA_SHARE="perf"
     PORTAL_DNS="${PREFIX_PERF}-portal"
+    WORK_SPACE="${PREFIX_PERF}la"
+    SERVICE_PRINCIPAL="${PREFIX_PERF}sp"
 
     if [[ ! -z $CLOUD ]]; then
         az cloud set -n $CLOUD
@@ -27,7 +29,7 @@ function init_common() {
 function init_aks_group() {
     echo "init aks configs"
     AKS_RESOURCE_GROUP=$(az aks show -g $RESOURCE_GROUP -n $KUBERNETES_SEVICES --query nodeResourceGroup -o tsv)
-    az aks get-credentials -g $RESOURCE_GROUP -n $KUBERNETES_SEVICES -a
+    az aks get-credentials -g $RESOURCE_GROUP -n $KUBERNETES_SEVICES -a  --overwrite-existing
 }
 
 function throw_if_empty() {

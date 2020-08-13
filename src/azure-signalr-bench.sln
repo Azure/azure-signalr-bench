@@ -33,7 +33,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MessagesTest", "Tests\Messa
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestCommon", "Tests\TestCommon\TestCommon.csproj", "{7EEC5B83-DC8B-42FE-B14B-CADFD2D41465}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StorageTest", "Tests\StorageTest\StorageTest.csproj", "{DBB2FE47-13CF-4539-B9B1-17DDDDC35987}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "StorageTest", "Tests\StorageTest\StorageTest.csproj", "{DBB2FE47-13CF-4539-B9B1-17DDDDC35987}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
