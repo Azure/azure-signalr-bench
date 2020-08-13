@@ -68,12 +68,12 @@ namespace Coordinator
 
         public static void Init(SecretClient SecretClient)
         {
-            Sp sp = null;
+            dynamic sp = null;
             var taskList = new List<Task>
             {
                 Task.Run(async () => PrefixPerf = (await SecretClient.GetSecretAsync("prefix")).Value.Value),
                 Task.Run(async () => Subscription = (await SecretClient.GetSecretAsync("subscription")).Value.Value),
-                Task.Run(async () => sp = JsonConvert.DeserializeObject<Sp>((await SecretClient.GetSecretAsync("service-principal")).Value.Value)),
+                Task.Run(async () => sp = JsonConvert.DeserializeObject<dynamic>((await SecretClient.GetSecretAsync("service-principal")).Value.Value)),
                 Task.Run(async () =>
                 {
                     string cloud = (await SecretClient.GetSecretAsync("cloud")).Value.Value;
@@ -100,14 +100,6 @@ namespace Coordinator
                 Environment.Exit(1);
             }
             //init ppe
-        }
-
-        private class Sp
-        {
-            internal string appId;
-            internal string name;
-            internal string password;
-            internal string tenant;
         }
     }
 }

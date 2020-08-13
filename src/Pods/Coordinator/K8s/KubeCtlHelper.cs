@@ -13,9 +13,9 @@ namespace Coordinator
 
         public KubeCtlHelper()
         {
-            _kubernetes = getKubeClient();
+            _kubernetes = GetKubeClient();
         }
-        public Kubernetes getKubeClient()
+        public Kubernetes GetKubeClient()
         {
             using (var stream = new MemoryStream(Encoding.UTF8.GetBytes(PerfConfig.KubeConfig)))
             {

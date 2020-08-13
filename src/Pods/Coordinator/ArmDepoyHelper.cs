@@ -23,6 +23,7 @@ namespace Coordinator
                 return MAzure.Configure().Authenticate(PerfConfig.ServicePrincipal).WithSubscription(PerfConfig.Subscription);
             }
         }
+
         public async Task Deploy(string deploymentName, IAzure azure, JObject deployTemplate, JObject deployParams)
         {
             await azure.Deployments.Define(deploymentName).WithExistingResourceGroup(PerfConfig.ResourceGroup).WithTemplate(deployTemplate.ToString()).WithParameters(deployParams).WithMode(DeploymentMode.Incremental).BeginCreateAsync();
