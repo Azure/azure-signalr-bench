@@ -94,7 +94,7 @@ fi
 if [[ -z $(az storage account show -n $STORAGE_ACCOUNT -g $RESOURCE_GROUP 2>/dev/null) ]]; then
     echo "start to create storage account $STORAGE_ACCOUNT"
     az storage account create -n $STORAGE_ACCOUNT >/dev/null
-    access_key=$(az storage account keys list -n $STORAGE_ACCOUNT --query [0].value -o tsv)
+    access_key=$(az storage account show-connection-string -n $STORAGE_ACCOUNT --query connectionString  -o tsv)
     az keyvault secret set --vault-name $KEYVAULT -n $KV_SA_ACCESS_KEY --value "$access_key"
     echo "storage account $STORAGE_ACCOUNT created."
     az storage share create --account-name $STORAGE_ACCOUNT --quota 20 -n $SA_SHARE
@@ -137,5 +137,5 @@ az keyvault secret set  --vault-name $KEYVAULT -n "prefix" --value  $PREFIX
 az keyvault secret set  --vault-name $KEYVAULT -n "subscription" --value $SUBSCTIPTION
 cloud_name=$(az cloud show --query name -o tsv)
 az keyvault secret set  --vault-name $KEYVAULT -n "cloud" --value $cloud_name
-
+az keyvault secret set  --vault-name $KEYVAULT -n "location" --value $LOCATION
 echo "init has completed."
