@@ -1019,7 +1019,7 @@ namespace JenkinsScript
                 case "StandardD32sV3":
                     return VirtualMachineSizeTypes.StandardD32sV3;
                 default:
-                    return VirtualMachineSizeTypes.StandardDS1;
+                    return VirtualMachineSizeTypes.Parse(vmSizeName);
             }
         }
 
