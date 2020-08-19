@@ -38,18 +38,18 @@ namespace Azure.SignalRBench.Messages
             return result;
         }
 
-        public async Task<int> SendCommandAsync(string target, string command, JObject parameters = null)
+        public async Task SendCommandAsync(string target, CommandMessage commandMessage)
         {
             var ackId = Interlocked.Increment(ref _ackId);
-            var message = new CommandMessage { Command = command, Sender = _sender, Parameters = parameters, AckId = ackId };
-            await _subscriber.PublishAsync($"{target}:{MessageType.Command}", JsonConvert.SerializeObject(message));
-            return ackId;
+            commandMessage.Sender = _sender;
+            commandMessage.AckId = ackId;
+            await _subscriber.PublishAsync($"{target}:{MessageType.Command}", JsonConvert.SerializeObject(commandMessage));
         }
 
-        public async Task AckAsync(string target, int ackId, bool isCompleted, double? progress = null)
+        public async Task AckAsync(CommandMessage commandMessage, bool isCompleted, double? progress = null)
         {
-            var message = new AckMessage { Sender = _sender, AckId = ackId, IsCompleted = isCompleted, Progress = progress };
-            await _subscriber.PublishAsync($"{target}:{MessageType.Ack}", JsonConvert.SerializeObject(message));
+            var message = new AckMessage { Sender = _sender, AckId = commandMessage.AckId, IsCompleted = isCompleted, Progress = progress };
+            await _subscriber.PublishAsync($"{commandMessage.Sender}:{MessageType.Ack}", JsonConvert.SerializeObject(message));
         }
 
         public void Dispose()

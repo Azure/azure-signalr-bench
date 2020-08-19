@@ -9,7 +9,7 @@ namespace Azure.SignalRBench.Messages
 {
     public interface IMessageClient
     {
-        Task AckAsync(string target, int ackId, bool isCompleted, double? progress = null);
-        Task<int> SendCommandAsync(string target, string command, JObject parameters = null);
+        Task AckAsync(CommandMessage message, bool isCompleted, double? progress = null);
+        Task SendCommandAsync(string target, CommandMessage message);
     }
 }

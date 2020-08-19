@@ -35,8 +35,8 @@ namespace Azure.SignalRBench.Tests.MessagesTest
                         ackTcs.TrySetResult(ack);
                         return Task.CompletedTask;
                     }));
-
-            await client.SendCommandAsync(sender, expectedCommand);
+            var command = new CommandMessage { Command = expectedCommand };
+            await client.SendCommandAsync(sender, command);
             var cmd = await commandTcs.Task.OrTimeout();
             Assert.Equal(expectedCommand, cmd.Command);
             Assert.Equal(sender, cmd.Sender);
