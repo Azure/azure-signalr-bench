@@ -42,13 +42,6 @@ namespace Azure.SignalRBench.Messages
             return message;
         }
 
-        public static async Task<CommandMessage> JoinGroupsAsync(this IMessageClient client, JoinGroupsParameters parameters)
-        {
-            var message = new CommandMessage { Command = Commands.Clients.JoinGroups, Parameters = JObject.FromObject(parameters) };
-            await client.SendCommandAsync(Roles.Clients, message);
-            return message;
-        }
-
         public static async Task<CommandMessage> SetScenarioAsync(this IMessageClient client, SetScenarioParameters parameters)
         {
             var message = new CommandMessage { Command = Commands.Clients.SetScenario, Parameters = JObject.FromObject(parameters) };

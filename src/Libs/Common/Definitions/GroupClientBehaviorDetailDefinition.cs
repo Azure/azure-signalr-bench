@@ -6,5 +6,7 @@ namespace Azure.SignalRBench.Common
     public class GroupClientBehaviorDetailDefinition : ClientBehaviorDetailDefinition
     {
         public string GroupFamily { get; set; }
+        public int GroupCount { get; set; }
+        public int GroupSize { get; set; }
     }
 }
