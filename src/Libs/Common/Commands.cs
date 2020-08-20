@@ -13,8 +13,7 @@ namespace Azure.SignalRBench.Common
         public static class Clients
         {
             public static readonly string StartClientConnections = "StartClientConnections";
-            public static readonly string CloseClientConnections = "CloseClientConnections";
-            public static readonly string JoinGroups = "JoinGroups";
+            public static readonly string StopClientConnections = "StopClientConnections";
             public static readonly string StartScenario = "StartScenario";
             public static readonly string StopScenario = "StopScenario";
             public static readonly string SetScenario = "SetScenario";

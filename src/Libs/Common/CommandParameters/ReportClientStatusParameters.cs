@@ -7,10 +7,11 @@ namespace Azure.SignalRBench.Common
 {
     public class ReportClientStatusParameters
     {
+        public int TotalReconnectCount { get; set; }
         public int ConnectedCount { get; set; }
         public int ConnectingCount { get; set; }
         public int MessageSent { get; set; }
         public int MessageRecieved { get; set; }
-        public Dictionary<int, int> Latency { get; set; }
+        public Dictionary<LatencyClass, int> Latency { get; set; }
     }
 }
