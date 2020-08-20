@@ -37,7 +37,7 @@ namespace Azure.SignalRBench.Messages
 
         public static async Task<CommandMessage> StopClientConnectionsAsync(this IMessageClient client, StopClientConnectionsParameters parameters)
         {
-            var message = new CommandMessage { Command = Commands.Clients.CloseClientConnections, Parameters = JObject.FromObject(parameters) };
+            var message = new CommandMessage { Command = Commands.Clients.StopClientConnections, Parameters = JObject.FromObject(parameters) };
             await client.SendCommandAsync(Roles.Clients, message);
             return message;
         }

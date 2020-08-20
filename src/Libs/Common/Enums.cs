@@ -24,4 +24,16 @@ namespace Azure.SignalRBench.Common
         Broadcast,
         GroupBroadcast,
     }
+
+    [JsonConverter(typeof(StringEnumConverter))]
+    public enum LatencyClass
+    {
+        LessThan50ms,
+        LessThan100ms,
+        LessThan200ms,
+        LessThan500ms,
+        LessThan1s,
+        LessThan2s,
+        LessThan5s,
+    }
 }
