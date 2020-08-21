@@ -158,11 +158,11 @@ prefix: ${vmPrefix}
 location: ${VMLocation}
 
 # agents (the first one will be master)
-agentVmSize: Standard_D2as_v4
+agentVmSize: StandardDS2V2
 agentVmCount: ${clientVmCount}
 
 # app server
-appSvrVmSize: Standard_D4as_v4
+appSvrVmSize: StandardF4sV2
 appSvrVmCount: ${serverVmCount}
 EOF
 
