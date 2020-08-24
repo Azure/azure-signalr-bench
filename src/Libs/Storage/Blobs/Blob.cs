@@ -39,7 +39,7 @@ namespace Azure.SignalRBench.Storage
             return client.DownloadToAsync(destination, cancellationToken);
         }
 
-        public Task UploadAsync(string path, Stream source, IDictionary<string, string> metadata = null, CancellationToken cancellationToken = default)
+        public Task UploadAsync(string path, Stream source, IDictionary<string, string>? metadata = null, CancellationToken cancellationToken = default)
         {
             var client = _client.GetBlockBlobClient(path);
             return client.UploadAsync(source, metadata: metadata, cancellationToken: cancellationToken);
@@ -65,7 +65,7 @@ namespace Azure.SignalRBench.Storage
             return response.Value;
         }
 
-        public async Task<IDictionary<string, string>> GetMetadataAsync(string path, CancellationToken cancellationToken = default)
+        public async Task<IDictionary<string, string>?> GetMetadataAsync(string path, CancellationToken cancellationToken = default)
         {
             var client = _client.GetBlobClient(path);
             var response = await client.GetPropertiesAsync(cancellationToken: cancellationToken);

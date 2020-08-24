@@ -12,6 +12,6 @@ namespace Azure.SignalRBench.Common
         public int ConnectingCount { get; set; }
         public int MessageSent { get; set; }
         public int MessageRecieved { get; set; }
-        public Dictionary<LatencyClass, int> Latency { get; set; }
+        public Dictionary<LatencyClass, int> Latency { get; set; } = new Dictionary<LatencyClass, int>();
     }
 }

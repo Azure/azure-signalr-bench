@@ -8,16 +8,16 @@ namespace Azure.SignalRBench.Common
     public class ScenarioDefinition
     {
         public ClientBehavior ClientBehavior { get; set; }
-        public ClientLifetimeDefinition ClientLifetime { get; set; }
-        public MessageDefinition Messages { get; set; }
-        public JObject Detail { get; set; }
+        public ClientLifetimeDefinition ClientLifetime { get; set; } = new ClientLifetimeDefinition();
+        public MessageDefinition Messages { get; set; } = new MessageDefinition();
+        public JObject? Detail { get; set; }
 
-        public T GetDetail<T>()
+        public T? GetDetail<T>()
             where T : ClientBehaviorDetailDefinition
-            => Detail.ToObject<T>();
+            => Detail?.ToObject<T>();
 
-        public void SetDetail<T>(T detail)
+        public void SetDetail<T>(T? detail)
             where T : ClientBehaviorDetailDefinition
-            => Detail = JObject.FromObject(detail);
+            => Detail = detail == null ? null : JObject.FromObject(detail);
     }
 }

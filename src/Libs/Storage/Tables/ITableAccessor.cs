@@ -27,8 +27,8 @@ namespace Azure.SignalRBench.Storage
 
         Task BatchDeleteAsync(IReadOnlyList<T> entities, CancellationToken cancellationToken = default);
 
-        Task<T> GetFirstOrDefaultAsync(TableQuery<T> query = null, CancellationToken cancellationToken = default);
+        Task<T?> GetFirstOrDefaultAsync(TableQuery<T> query, CancellationToken cancellationToken = default);
 
-        IAsyncEnumerable<T> QueryAsync(TableQuery<T> query = null, CancellationToken cancellationToken = default);
+        IAsyncEnumerable<T> QueryAsync(TableQuery<T> query, CancellationToken cancellationToken = default);
     }
 }
