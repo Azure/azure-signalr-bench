@@ -15,6 +15,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Libs\Common\Common.csproj" />
+    <ProjectReference Include="..\..\Libs\Storage\Storage.csproj" />
     <ProjectReference Include="..\TestCommon\TestCommon.csproj" />
   </ItemGroup>
 
