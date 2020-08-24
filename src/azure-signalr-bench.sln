@@ -35,7 +35,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestCommon", "Tests\TestCom
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "StorageTest", "Tests\StorageTest\StorageTest.csproj", "{DBB2FE47-13CF-4539-B9B1-17DDDDC35987}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common", "Libs\Common\Common.csproj", "{EAA8215B-65D6-43ED-8351-845C7F93A525}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Common", "Libs\Common\Common.csproj", "{EAA8215B-65D6-43ED-8351-845C7F93A525}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CommonTest", "Tests\CommonTest\CommonTest.csproj", "{0EDB7D79-C03E-435F-9177-33BED48489A9}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -87,6 +89,10 @@ Global
 		{EAA8215B-65D6-43ED-8351-845C7F93A525}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{EAA8215B-65D6-43ED-8351-845C7F93A525}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{EAA8215B-65D6-43ED-8351-845C7F93A525}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0EDB7D79-C03E-435F-9177-33BED48489A9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0EDB7D79-C03E-435F-9177-33BED48489A9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0EDB7D79-C03E-435F-9177-33BED48489A9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0EDB7D79-C03E-435F-9177-33BED48489A9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -103,6 +109,7 @@ Global
 		{7EEC5B83-DC8B-42FE-B14B-CADFD2D41465} = {AF9D2FC3-5909-43B4-8A40-5A48A1FEB3B2}
 		{DBB2FE47-13CF-4539-B9B1-17DDDDC35987} = {AF9D2FC3-5909-43B4-8A40-5A48A1FEB3B2}
 		{EAA8215B-65D6-43ED-8351-845C7F93A525} = {F977B835-277F-4EA8-84DD-B5E7711E437C}
+		{0EDB7D79-C03E-435F-9177-33BED48489A9} = {AF9D2FC3-5909-43B4-8A40-5A48A1FEB3B2}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {74A95D59-392F-476C-8DE7-7FECE6F9E7BE}
