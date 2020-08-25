@@ -25,7 +25,7 @@ namespace Azure.SignalRBench.Common
         private readonly string _prefix;
         private readonly string _suffix;
         private bool _isStopping;
-        private AppendBlobClient _current;
+        private AppendBlobClient? _current;
         private DateTime _expiresAt;
 
         public BlobLoggerProvider(string prefix, string suffix, string connectionString)
@@ -101,7 +101,7 @@ namespace Azure.SignalRBench.Common
             _stopped.TrySetResult(true);
         }
 
-        private async ValueTask<LogItem> TryTakeAsync()
+        private async ValueTask<LogItem?> TryTakeAsync()
         {
             const int MaxDelay = 10;
             for (int i = 0; i < MaxDelay; i++)
@@ -153,7 +153,9 @@ namespace Azure.SignalRBench.Common
             {
                 try
                 {
+#pragma warning disable CS8602 // Dereference of a possibly null reference.
                     await _current.AppendBlockAsync(ms);
+#pragma warning restore CS8602 // Dereference of a possibly null reference.
                     return;
                 }
                 catch (Exception)
@@ -182,7 +184,7 @@ namespace Azure.SignalRBench.Common
                 _categoryName = categoryName;
             }
 
-            public IDisposable BeginScope<TState>(TState state) => null;
+            public IDisposable BeginScope<TState>(TState state) => Disposable.Instance;
 
             public bool IsEnabled(LogLevel logLevel) => logLevel >= _provider.LogLevel;
 
@@ -196,7 +198,7 @@ namespace Azure.SignalRBench.Common
                         ext[pair.Key] = JToken.FromObject(pair.Value);
                     }
                 }
-                else
+                else if (state != null)
                 {
                     ext["State"] = JToken.FromObject(state);
                 }
@@ -213,19 +215,28 @@ namespace Azure.SignalRBench.Common
                         Extensions = ext,
                     });
             }
+
+            private sealed class Disposable : IDisposable
+            {
+                public static readonly Disposable Instance = new Disposable();
+
+                public void Dispose()
+                {
+                }
+            }
         }
 
         private sealed class LogItem
         {
             public DateTime EventTime { get; set; }
             public int EventId { get; set; }
-            public string EventName { get; set; }
+            public string EventName { get; set; } = string.Empty;
             public int ThreadId { get; set; }
-            public string Logger { get; set; }
-            public string Text { get; set; }
-            public string Exception { get; set; }
+            public string Logger { get; set; } = string.Empty;
+            public string Text { get; set; } = string.Empty;
+            public string? Exception { get; set; }
             [JsonExtensionData(ReadData = false, WriteData = true)]
-            public Dictionary<string, JToken> Extensions { get; set; }
+            public Dictionary<string, JToken>? Extensions { get; set; }
         }
     }
 }

@@ -3,6 +3,8 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <RootNamespace>Azure.SignalRBench.Messages</RootNamespace>
+    <langversion>8</langversion>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>

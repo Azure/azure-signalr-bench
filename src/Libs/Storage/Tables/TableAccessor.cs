@@ -88,7 +88,7 @@ namespace Azure.SignalRBench.Storage
             return _table.ExecuteBatchAsync(batch, cancellationToken: cancellationToken);
         }
 
-        public async Task<T> GetFirstOrDefaultAsync(TableQuery<T> query, CancellationToken cancellationToken)
+        public async Task<T?> GetFirstOrDefaultAsync(TableQuery<T> query, CancellationToken cancellationToken)
         {
             var entities = await _table.ExecuteQuerySegmentedAsync(query.Take(1), null, cancellationToken: cancellationToken);
             return entities.FirstOrDefault();
@@ -96,7 +96,7 @@ namespace Azure.SignalRBench.Storage
 
         public async IAsyncEnumerable<T> QueryAsync(TableQuery<T> query, [EnumeratorCancellation] CancellationToken cancellationToken)
         {
-            TableContinuationToken token = null;
+            TableContinuationToken? token = null;
             do
             {
                 var entities = await _table.ExecuteQuerySegmentedAsync(query, token, cancellationToken: cancellationToken);

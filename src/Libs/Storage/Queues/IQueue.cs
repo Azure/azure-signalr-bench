@@ -11,7 +11,7 @@ namespace Azure.SignalRBench.Storage
     {
         Task CreateIfNotExistedAsync();
 
-        Task<QueueMessage<T>> ReceiveAsync(TimeSpan? visibilityTimeout = null, CancellationToken cancellationToken = default);
+        Task<QueueMessage<T>?> ReceiveAsync(TimeSpan? visibilityTimeout = null, CancellationToken cancellationToken = default);
 
         Task DeleteAsync(QueueMessage<T> message, CancellationToken cancellationToken = default);
 

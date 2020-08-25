@@ -5,6 +5,6 @@ namespace Azure.SignalRBench.Common
 {
     public class ReportReadyParameters
     {
-        public string Role { get; set; }
+        public string Role { get; set; } = string.Empty;
     }
 }

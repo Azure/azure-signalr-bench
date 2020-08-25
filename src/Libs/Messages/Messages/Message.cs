@@ -8,6 +8,6 @@ namespace Azure.SignalRBench.Messages
     public abstract class Message
     {
         [JsonProperty(Required = Required.Always)]
-        public string Sender { get; set; }
+        public string Sender { get; set; } = string.Empty;
     }
 }

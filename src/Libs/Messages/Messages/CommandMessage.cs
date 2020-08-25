@@ -9,11 +9,11 @@ namespace Azure.SignalRBench.Messages
     public class CommandMessage : Message
     {
         [JsonProperty(Required = Required.Always)]
-        public string Command { get; set; }
+        public string Command { get; set; } = string.Empty;
 
         [JsonProperty(Required = Required.Always)]
         public int AckId { get; set; }
 
-        public JObject Parameters { get; set; }
+        public JObject? Parameters { get; set; }
     }
 }

@@ -22,7 +22,7 @@ namespace Azure.SignalRBench.Storage
         public Task CreateIfNotExistedAsync() =>
             _client.CreateIfNotExistsAsync();
 
-        public async Task<QueueMessage<T>> ReceiveAsync(
+        public async Task<QueueMessage<T>?> ReceiveAsync(
             TimeSpan? visibilityTimeout,
             CancellationToken cancellationToken)
         {
