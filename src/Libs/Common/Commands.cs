@@ -17,6 +17,7 @@ namespace Azure.SignalRBench.Common
             public static readonly string StartScenario = "StartScenario";
             public static readonly string StopScenario = "StopScenario";
             public static readonly string SetScenario = "SetScenario";
+            public static readonly string SetClientRange = "SetClientRange";
         }
 
         public static class AppServer
