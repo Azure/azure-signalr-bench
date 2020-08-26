@@ -3,7 +3,7 @@
 
 using System;
 
-namespace Client
+namespace Azure.SignalRBench.Client
 {
     class Program
     {
