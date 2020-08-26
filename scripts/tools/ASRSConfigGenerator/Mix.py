@@ -16,10 +16,12 @@ protocol = 'json'
 statistic_latency_max = 1000
 statistic_latency_step = 100
 
+arg_type = ArgType()
+
 pre_sending = [
     init_statistics_collector(scenarios[0], statistic_latency_max, statistic_latency_step) + init_statistics_collector(scenarios[1], statistic_latency_max, statistic_latency_step),
     collect_statistics(scenarios[0], interval, counters[0]) + collect_statistics(scenarios[1], interval, counters[1]),
-    create_connection(scenarios[0], connections, url, protocol, transport_type) + create_connection(scenarios[1], connections, url, protocol, transport_type),
+    create_connection(scenarios[0], connections, url, protocol, transport_type, arg_type.connection_type_core) + create_connection(scenarios[1], connections, url, protocol, transport_type, arg_type.connection_type_core),
     start_connection(scenarios[0], concurrent_connection) + start_connection(scenarios[1], concurrent_connection),
     register_callback_record_latency(scenarios[0]) + register_callback_record_latency(scenarios[1])
 ]
@@ -32,7 +34,7 @@ pre_sending = [
 #       (s t e p  - 1)            (s t e p  - 2)
 # steps are executed in order while sub-steps in the same step are executed parallelly
 sending = [
-    echo(scenarios[0], duration, interval, 0, connections, connections, message_size) + broadcast(scenarios[0], duration, interval, 0, 1, connections, message_size),
+    [generate_send(scenarios[0], "Echo", duration, interval, 0, connections, connections, message_size)] + [generate_send(scenarios[0], "Broadcast", duration, interval, 0, 1, connections, message_size)],
     wait(scenarios[0], interval) + wait(scenarios[1], interval)
 ]
 
