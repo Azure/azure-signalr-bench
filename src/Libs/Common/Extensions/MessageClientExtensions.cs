@@ -63,10 +63,10 @@ namespace Azure.SignalRBench.Messages
             return message;
         }
 
-        public static async Task<CommandMessage> SetClientRangeAsync(this IMessageClient client, SetClientRangeParameters parameters)
+        public static async Task<CommandMessage> SetClientRangeAsync(this IMessageClient client, string clientInstance, SetClientRangeParameters parameters)
         {
             var message = new CommandMessage { Command = Commands.Clients.SetClientRange, Parameters = JObject.FromObject(parameters) };
-            await client.SendCommandAsync(Roles.Clients, message);
+            await client.SendCommandAsync(clientInstance, message);
             return message;
         }
 
