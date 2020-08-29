@@ -379,10 +379,10 @@ function RunCommonScenario()
     send=`python3 get_sending_connection.py -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q sendingSteps $maxConnectionOption`
   else
     if [ $extensionType == 2 ]; then
-      GenBenchmarkConfig $unit $Scenario $Transport $MessageEncoding $appserverUrls $extension $config_path "$connectionString" None
-      connection=`python3 get_sending_connection.py -g $extension -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q totalConnections $maxConnectionOption`
-      concurrentConnection=`python3 get_sending_connection.py -g $extension -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q concurrentConnection $maxConnectionOption`
-      send=`python3 get_sending_connection.py -g $extension -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q sendingSteps $maxConnectionOption`
+      GenBenchmarkConfig $unit $Scenario $Transport $MessageEncoding $appserverUrls $extension $config_path "$connectionString" $sendToClientMsgSize
+      connection=`python3 get_sending_connection.py -ms $sendToClientMsgSize -g $extension -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q totalConnections $maxConnectionOption`
+      concurrentConnection=`python3 get_sending_connection.py -ms $sendToClientMsgSize -g $extension -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q concurrentConnection $maxConnectionOption`
+      send=`python3 get_sending_connection.py -ms $sendToClientMsgSize -g $extension -u $unit -S $Scenario -t $Transport -p $MessageEncoding -q sendingSteps $maxConnectionOption`
     else
       if [ $extensionType == 3 ]; then
         GenBenchmarkConfig $unit $Scenario $Transport $MessageEncoding $appserverUrls None $config_path "$connectionString" $extension
