@@ -105,6 +105,16 @@ scenario:sendToClient,transport:Websockets,protocol:json,message_size:16384:
   batch_mode: ["LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress"]
   batch_wait: [1000, 1000, 1000, 1000, 1000, 1000, 1000]
 
+scenario:sendToClient,transport:Websockets,protocol:json,message_size:19456:
+  normal_connection: [1000, 2000, 5000, 10000, 20000, 50000, 100000, 150000, 200000, 250000, 300000, 350000, 400000, 450000, 500000]
+  max_connection: [1500, 3000, 7500, 15000, 30000, 75000, 150000, 200000, 250000, 300000, 350000, 400000, 450000, 500000, 550000]
+  base_step: [400, 400, 500, 1000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000, 2000]
+  step: [100, 100, 100, 500, 500, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000]
+  step_length: [1500, 3000, 7500, 15000, 30000, 75000, 150000, 150000, 150000, 150000, 150000, 150000, 150000, 150000, 150000]
+  concurrent: [150, 150, 150, 150, 150, 150, 150]
+  batch_mode: ["LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress"]
+  batch_wait: [1000, 1000, 1000, 1000, 1000, 1000, 1000]
+
 scenario:sendToClient,transport:Websockets,protocol:json,message_size:2048:
   normal_connection: [1000, 2000, 5000, 10000, 20000, 50000, 100000, 150000, 200000, 250000, 300000, 350000, 400000, 450000, 500000]
   max_connection: [1500, 3000, 7500, 15000, 30000, 75000, 150000, 200000, 250000, 300000, 350000, 400000, 450000, 500000, 550000]
