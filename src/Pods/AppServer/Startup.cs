@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using AppServer;
 using Azure.SignalRBench.Common;
 using Azure.SignalRBench.Messages;
 using Microsoft.AspNetCore.Builder;
@@ -21,7 +20,6 @@ namespace Azure.SignalRBench.AppServer
         internal const string HUB_NAME = "/signalrbench";
         private const string ASRSConnectionStringKey = "SignalR:ConnectionString";
         private const string ASRSConnectionNumberKey = "SignalR:ConnectionNumber";
-
 
         private readonly ILogger<Startup> _logger;
 

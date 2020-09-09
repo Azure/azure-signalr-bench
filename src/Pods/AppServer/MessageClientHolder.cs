@@ -12,7 +12,6 @@ namespace Azure.SignalRBench.AppServer
     public class MessageClientHolder
     {
         private MessageClient messageClient;
-        private const string RedisConnectionStringKey = "Redis:SignalR:ConnectionString";
 
         public MessageClientHolder(IConfiguration configuration, ILogger<MessageClientHolder> logger)
         {
@@ -23,7 +22,7 @@ namespace Azure.SignalRBench.AppServer
                 Environment.Exit(1);
                 return Task.CompletedTask;
             });
-            Task.Run(async () => messageClient = await MessageClient.ConnectAsync(configuration[RedisConnectionStringKey], sender, crash));
+            Task.Run(async () => messageClient = await MessageClient.ConnectAsync(configuration[Constants.EnvVariableKey.RedisConnectionStringKey], sender, crash));
         }
     }
 }
