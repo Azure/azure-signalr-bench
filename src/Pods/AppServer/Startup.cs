@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using AppServer;
 using Azure.SignalRBench.Common;
 using Azure.SignalRBench.Messages;
 using Microsoft.AspNetCore.Builder;
@@ -18,15 +19,16 @@ namespace Azure.SignalRBench.AppServer
     public class Startup
     {
         internal const string HUB_NAME = "/signalrbench";
-        private const string ASRSConnectionStringKey = "Azure:SignalR:ConnectionString";
-        private const string ASRSConnectionNumberKey = "Azure:SignalR:ConnectionNumber";
-        private const string RedisConnectionStringKey = "Redis:SignalR:ConnectionString";
+        private const string ASRSConnectionStringKey = "SignalR:ConnectionString";
+        private const string ASRSConnectionNumberKey = "SignalR:ConnectionNumber";
 
 
-        public Startup(IConfiguration configuration)
+        private readonly ILogger<Startup> _logger;
+
+        public Startup(IConfiguration configuration, ILogger<Startup> logger)
         {
             Configuration = configuration;
-            AddComandHandlers(configuration[RedisConnectionStringKey]);
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         public IConfiguration Configuration { get; }
@@ -40,6 +42,7 @@ namespace Azure.SignalRBench.AppServer
                      option.ConnectionCount = Configuration[ASRSConnectionStringKey] != null ? Configuration.GetValue<int>(ASRSConnectionNumberKey) : 5;
                      option.ConnectionString = Configuration[ASRSConnectionStringKey];
                  });
+            services.AddSingleton<MessageClientHolder>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -51,17 +54,6 @@ namespace Azure.SignalRBench.AppServer
             {
                 routes.MapHub<BenchHub>(HUB_NAME);
             });
-        }
-
-        private void AddComandHandlers(string connectionString)
-        {
-            const string sender = "AppServer";
-            var crash = MessageHandler.CreateCommandHandler(Commands.General.Crash, cmd =>
-               {
-                   Environment.Exit(1);
-                   return Task.CompletedTask;
-               });
-            Task.Run(async () => await MessageClient.ConnectAsync(connectionString, sender, crash));
         }
     }
 }
