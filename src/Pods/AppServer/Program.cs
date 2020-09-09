@@ -14,6 +14,8 @@ namespace Azure.SignalRBench.AppServer
     public class Program
     {
         private const string StorageConnectionStringKey = "Storage:SignalR:ConnectionString";
+        private const string PodNameStringKey = "Podname";
+
         public static void Main(string[] args)
         {
             CreateHostBuilder(args).Build().Run();
@@ -29,7 +31,7 @@ namespace Azure.SignalRBench.AppServer
               {
                   logging.ClearProviders();
                   logging.AddConsole();
-                  logging.AddProvider(new BlobLoggerProvider(configuration[StorageConnectionStringKey], "appserver", ""));
+                  logging.AddProvider(new BlobLoggerProvider(configuration[StorageConnectionStringKey], "appserver", configuration[PodNameStringKey]));
               })
               .ConfigureWebHostDefaults(webBuilder =>
               {
