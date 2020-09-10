@@ -9,5 +9,10 @@
     <PackageReference Include="Microsoft.Azure.SignalR" Version="1.5.1" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\Libs\Common\Common.csproj" />
+    <ProjectReference Include="..\..\Libs\Messages\Messages.csproj" />
+  </ItemGroup>
+
 
 </Project>
