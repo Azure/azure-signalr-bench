@@ -9,5 +9,6 @@ namespace Azure.SignalRBench.Common
         public int Rate { get; set; }
         public SignalRProtocol Protocol { get; set; }
         public bool IsAnonymous { get; set; }
+        public string Url { get; set; }
     }
 }

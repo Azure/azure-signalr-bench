@@ -15,12 +15,12 @@ namespace Azure.SignalRBench.Client
     {
         private readonly HubConnection _connection;
         private readonly string[] _groups;
-        private readonly ClientAgentContext _context;
+        public ClientAgentContext Context { get; }
 
         public ClientAgent(string url, SignalRProtocol protocol, string[] groups, string? userName, ClientAgentContext context)
         {
             _groups = groups;
-            _context = context;
+            Context = context;
             _connection = new HubConnectionBuilder()
                 .WithUrl(
                     url,
@@ -44,7 +44,7 @@ namespace Azure.SignalRBench.Client
         public async Task StartAsync(CancellationToken cancellationToken)
         {
             await _connection.StartAsync(cancellationToken);
-            await _context.OnConnected(this, _groups.Length > 0);
+            await Context.OnConnected(this, _groups.Length > 0);
         }
 
         public Task StopAsync() => _connection.StopAsync();

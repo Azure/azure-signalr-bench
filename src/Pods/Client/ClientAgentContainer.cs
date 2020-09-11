@@ -2,7 +2,10 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using Azure.SignalRBench.Common;
+using Azure.SignalRBench.Messages;
+using Newtonsoft.Json.Linq;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
@@ -85,6 +88,24 @@ namespace Azure.SignalRBench.Client
             }
         }
 
+        public async Task StartScenario(IEnumerable<int> connectionIDs, ScenarioDefinition scenario, CancellationToken cancellation)
+        {
+            string payload = Util.GenerateRandomData(scenario.Messages.Size);
+            var connections = from i in connectionIDs select _clients[i];
+            var clientBehavior = scenario.GetDetail<ClientBehaviorDetailDefinition>();
+            switch (scenario.ClientBehavior)
+            {
+                case ClientBehavior.Echo:
+                    await Task.WhenAll(from connection in connections select connection.ContinueSend(payload, clientBehavior.Interval, clientBehavior.Duration, connection.EchoAsync, cancellation));
+                    break;
+                case ClientBehavior.Broadcast:
+                    await Task.WhenAll(from connection in connections select connection.ContinueSend(payload, clientBehavior.Interval, clientBehavior.Duration, connection.BroadcastAsync, cancellation));
+                    break;
+                default:
+                    throw new NotImplementedException();
+            }
+        }
+
         private SemaphoreSlim GetRateControlSemaphore(double rate, CancellationToken cancellationToken)
         {
             int maxCount = (int)Math.Ceiling(rate);
@@ -111,6 +132,18 @@ namespace Azure.SignalRBench.Client
                     semaphore.Release(releaseCount);
                 }
             }
+        }
+
+        public void ScheduleReportedStatus(CancellationTokenSource cts)
+        {
+            Task.Run(async () =>
+            {
+                while (!cts.IsCancellationRequested)
+                {
+                    await Task.Delay(1000);
+                    await MessageClientHolder.Client.ReportClientStatusAsync(_context.ClientStatus());
+                }
+            });
         }
 
         private static string[] GetGroups(SetScenarioParameters scenario, int clientIndex)
