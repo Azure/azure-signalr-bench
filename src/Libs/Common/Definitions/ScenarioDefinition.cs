@@ -8,8 +8,6 @@ namespace Azure.SignalRBench.Common
     public class ScenarioDefinition
     {
         public ClientBehavior ClientBehavior { get; set; }
-        public ClientLifetimeDefinition ClientLifetime { get; set; } = new ClientLifetimeDefinition();
-        public MessageDefinition Messages { get; set; } = new MessageDefinition();
         public JObject? Detail { get; set; }
 
         public T? GetDetail<T>()

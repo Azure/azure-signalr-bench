@@ -1,10 +1,8 @@
 ﻿using Azure.SignalRBench.Client.Exceptions;
 using Azure.SignalRBench.Common;
-using Azure.SignalRBench.Messages;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -12,71 +10,366 @@ namespace Azure.SignalRBench.Client
 {
     public class ScenarioState : IScenarioState
     {
-        private ClientAgentContainer clientAgentContainer;
-        private volatile SetClientRangeParameters _setClientRangeParameters;
-        private volatile SetScenarioParameters _setScenarioParameters;
-        private CancellationTokenSource cts;
-        private volatile State state = State.Uninited;
-        private int[] localConnectionIDs;
-        public void SetClientRange(SetClientRangeParameters setClientRangeParameters)
+        private readonly MessageClientHolder _messageClientHolder;
+        private ScenarioBaseState _stateMachine;
+
+        public ScenarioState(MessageClientHolder messageClientHolder)
         {
-            if (state != State.Uninited)
+            _messageClientHolder = messageClientHolder;
+            _stateMachine = new InitState(this);
+        }
+
+        public void SetClientRange(SetClientRangeParameters setClientRangeParameters) =>
+            _stateMachine.SetClientRange(setClientRangeParameters);
+
+        public void SetSenario(SetScenarioParameters setScenarioParameters) =>
+            _stateMachine.SetSenario(setScenarioParameters);
+
+        public Task StartClientConnections(StartClientConnectionsParameters startClientConnectionsParameters) =>
+            _stateMachine.StartClientConnections(startClientConnectionsParameters);
+
+        public void StartSenario(StartScenarioParameters startScenarioParameters) =>
+            _stateMachine.StartSenario(startScenarioParameters);
+
+        public void StopSenario(StopScenarioParameters stopScenario) =>
+            _stateMachine.StopSenario(stopScenario);
+
+        public Task StopClientConnections(StopClientConnectionsParameters stopClientConnectionsParameters) =>
+            _stateMachine.StopClientConnections(stopClientConnectionsParameters);
+
+        private abstract class ScenarioBaseState
+        {
+            public ScenarioState ScenarioState { get; }
+
+            public ScenarioBaseState(ScenarioState scenarioState)
+            {
+                ScenarioState = scenarioState;
+            }
+
+            public void SetState(ScenarioBaseState state)
+            {
+                ScenarioState._stateMachine = state;
+            }
+
+            public virtual void SetClientRange(SetClientRangeParameters setClientRangeParameters) =>
                 throw new InvalidScenarioStateException();
-            _setClientRangeParameters = setClientRangeParameters;
-            state = State.ClientRangeSet;
-        }
-
-        public void SetSenario(SetScenarioParameters setScenarioParameters)
-        {
-            if (state != State.ClientRangeSet)
+            public virtual Task StartClientConnections(StartClientConnectionsParameters startClientConnectionsParameters) =>
                 throw new InvalidScenarioStateException();
-            _setScenarioParameters = setScenarioParameters;
-            state = State.SceneriaSet;
-        }
-
-        public async Task StartClientConnections(StartClientConnectionsParameters startClientConnectionsParameters)
-        {
-            if (state != State.SceneriaSet)
+            public virtual void SetSenario(SetScenarioParameters setScenarioParameters) =>
                 throw new InvalidScenarioStateException();
-            cts = new CancellationTokenSource();
-            clientAgentContainer = new ClientAgentContainer(_setClientRangeParameters, startClientConnectionsParameters.Protocol,
-                startClientConnectionsParameters.IsAnonymous, startClientConnectionsParameters.Url);
-            clientAgentContainer.ScheduleReportedStatus(cts);
-            await clientAgentContainer.StartAsync(startClientConnectionsParameters.Rate, _setScenarioParameters, cts.Token);
-            localConnectionIDs = Util.GenerateConnectionID(startClientConnectionsParameters.TotalCount, _setClientRangeParameters.StartId, _setClientRangeParameters.Count);
-            state = State.ConnectionEstablished;
-        }
-
-        public async Task StartSenario(StartScenarioParameters startScenarioParameters)
-        {
-            if (state != State.ConnectionEstablished)
+            public virtual void StartSenario(StartScenarioParameters startScenarioParameters) =>
                 throw new InvalidScenarioStateException();
-            var count = _setClientRangeParameters.Count;
-            var scenario = _setScenarioParameters.Scenarios[startScenarioParameters.index];
-            var connections = from i in Enumerable.Range(0, count)
-                              where localConnectionIDs[i] < scenario.GetDetail<ClientBehaviorDetailDefinition>()?.Count
-                              select i;
-            await clientAgentContainer.StartScenario(connections, scenario, cts.Token);
-        }
-
-        public async Task StopClientConnections(StopClientConnectionsParameters stopClientConnectionsParameters)
-        {
-            if (state != State.ConnectionEstablished)
+            public virtual void StopSenario(StopScenarioParameters stopScenario) =>
                 throw new InvalidScenarioStateException();
-            cts.Cancel();
-            await clientAgentContainer.StopAsync(stopClientConnectionsParameters.Rate);
-            state = State.SceneriaSet;
+            public virtual Task StopClientConnections(StopClientConnectionsParameters stopClientConnectionsParameters) =>
+                throw new InvalidScenarioStateException();
         }
 
-        public Task StopSenario(StopScenarioParameters stopScenario)
+        private sealed class InitState : ScenarioBaseState
         {
-            cts.Cancel();
-            return Task.CompletedTask;
-        }
-    }
+            public InitState(ScenarioState scenarioState)
+                : base(scenarioState) { }
 
-    internal enum State
-    {
-        Uninited, ClientRangeSet, SceneriaSet, ConnectionEstablished
+            public override void SetClientRange(SetClientRangeParameters setClientRangeParameters)
+            {
+                SetState(new ClientRangeReadyState(ScenarioState, setClientRangeParameters.StartId, setClientRangeParameters.Count));
+            }
+        }
+
+        private sealed class ClientRangeReadyState : ScenarioBaseState
+        {
+            public int StartId { get; }
+
+            public int LocalCount { get; }
+
+            public ClientRangeReadyState(ScenarioState scenarioState, int startId, int localCount)
+                : base(scenarioState)
+            {
+                StartId = startId;
+                LocalCount = localCount;
+            }
+
+            public override async Task StartClientConnections(StartClientConnectionsParameters p)
+            {
+                var indexMap = Util.GenerateIndexMap(p.TotalCount, StartId, LocalCount);
+                var clientAgentContainer = new ClientAgentContainer(
+                    ScenarioState._messageClientHolder,
+                    StartId,
+                    LocalCount,
+                    p.Protocol,
+                    p.IsAnonymous,
+                    p.Url,
+                    p.ClientLifetime,
+                    GetGroupsFunc(p.TotalCount, indexMap, p.GroupDefinitions));
+                await clientAgentContainer.StartAsync(p.Rate, default);
+                SetState(new ClientsReadyState(ScenarioState, p.TotalCount, indexMap, p.GroupDefinitions, clientAgentContainer));
+                return;
+            }
+
+            private Func<int, string[]> GetGroupsFunc(int total, int[] indexMap, GroupDefinition[] groupDefinitions)
+            {
+                if (groupDefinitions.Length == 0)
+                {
+                    return _ => Array.Empty<string>();
+                }
+
+                return index =>
+                {
+                    var mapId = indexMap[index];
+                    var result = new List<string>();
+                    var current = 0;
+                    foreach (var gd in groupDefinitions)
+                    {
+                        for (int gi = 0; gi < gd.GroupCount; gi++)
+                        {
+                            if (IsInGroup(mapId, current, gd.GroupSize, total))
+                            {
+                                result.Add(gd.GroupFamily + "_" + gi.ToString());
+                            }
+                            current += gd.GroupSize;
+                            current %= total;
+                        }
+                    }
+                    return result.ToArray();
+                };
+            }
+
+            private static bool IsInGroup(int index, int start, int size, int total)
+            {
+                int end = start + size;
+                if (index >= start && index < end)
+                {
+                    return true;
+                }
+                if (end >= total)
+                {
+                    return index + total < end;
+                }
+                return false;
+            }
+        }
+
+        private sealed class ClientsReadyState : ScenarioBaseState
+        {
+            public int TotalConnectionCount { get; }
+
+            public int[] IndexMap { get; }
+
+            public GroupDefinition[] GroupDefinitions { get; }
+
+            public ClientAgentContainer ClientAgentContainer { get; }
+
+            public ClientsReadyState(ScenarioState scenarioState, int totalConnectionCount, int[] indexMap, GroupDefinition[] groupDefinitions, ClientAgentContainer clientAgentContainer)
+                : base(scenarioState)
+            {
+                TotalConnectionCount = totalConnectionCount;
+                IndexMap = indexMap;
+                GroupDefinitions = groupDefinitions;
+                ClientAgentContainer = clientAgentContainer;
+            }
+
+            public override void SetSenario(SetScenarioParameters setScenarioParameters)
+            {
+                ParseParameters(setScenarioParameters, out var listen, out var echoList, out var broadcastList, out var groupBroadcastList);
+                var counts = echoList.Select(x => x.Count)
+                    .Concat(broadcastList.Select(x => x.Count))
+                    .Concat(groupBroadcastList.Select(x => x.Count));
+                var max = counts.Max();
+                if (listen > TotalConnectionCount - max)
+                {
+                    listen = TotalConnectionCount - max;
+                }
+                var sum = counts.Sum();
+                if (listen < TotalConnectionCount - sum)
+                {
+                    listen = TotalConnectionCount - sum;
+                }
+                SetState(
+                    new ScenarioReadyState(
+                        ScenarioState,
+                        TotalConnectionCount,
+                        IndexMap,
+                        ClientAgentContainer,
+                        CreateSettings(listen, echoList, broadcastList, groupBroadcastList)));
+            }
+
+            private static void ParseParameters(
+                SetScenarioParameters setScenarioParameters,
+                out int listen,
+                out List<ClientBehaviorDetailDefinition> echoList,
+                out List<ClientBehaviorDetailDefinition> broadcastList,
+                out List<GroupClientBehaviorDetailDefinition> groupBroadcastList)
+            {
+                listen = 0;
+                echoList = new List<ClientBehaviorDetailDefinition>();
+                broadcastList = new List<ClientBehaviorDetailDefinition>();
+                groupBroadcastList = new List<GroupClientBehaviorDetailDefinition>();
+                foreach (var scenario in setScenarioParameters.Scenarios)
+                {
+                    switch (scenario.ClientBehavior)
+                    {
+                        case ClientBehavior.Listen:
+                            listen = Math.Max(listen, scenario.GetDetail<ClientBehaviorDetailDefinition>()?.Count ?? 0);
+                            break;
+                        case ClientBehavior.Echo:
+                            var echo = scenario.GetDetail<ClientBehaviorDetailDefinition>();
+                            if (echo != null && echo.Count > 0)
+                            {
+                                echoList.Add(echo);
+                            }
+                            break;
+                        case ClientBehavior.Broadcast:
+                            var broadcast = scenario.GetDetail<ClientBehaviorDetailDefinition>();
+                            if (broadcast != null && broadcast.Count > 0)
+                            {
+                                broadcastList.Add(broadcast);
+                            }
+                            break;
+                        case ClientBehavior.GroupBroadcast:
+                            var groupBroadcast = scenario.GetDetail<GroupClientBehaviorDetailDefinition>();
+                            if (groupBroadcast != null && groupBroadcast.Count > 0)
+                            {
+                                groupBroadcastList.Add(groupBroadcast);
+                            }
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            }
+
+            private ClientAgentBehaviorSettings CreateSettings(
+                int listen,
+                List<ClientBehaviorDetailDefinition> echoList,
+                List<ClientBehaviorDetailDefinition> broadcastList,
+                List<GroupClientBehaviorDetailDefinition> groupBroadcastList)
+            {
+                var result = new ClientAgentBehaviorSettings(listen);
+                int nonListen = TotalConnectionCount - listen;
+                int current = 0;
+                current = AddBehavior(
+                    echoList,
+                    nonListen,
+                    current,
+                    (s, e, item) => result.AddEcho(s, e, item.MessageSize, item.Interval));
+                current = AddBehavior(
+                    broadcastList,
+                    nonListen,
+                    current,
+                    (s, e, item) => result.AddBroadcast(s, e, item.MessageSize, item.Interval));
+                current = AddBehavior(
+                    groupBroadcastList,
+                    nonListen,
+                    current,
+                    (s, e, item) =>
+                        result.AddGroup(
+                            s,
+                            e,
+                            item.MessageSize,
+                            item.GroupFamily,
+                            GroupDefinitions.Single(g => g.GroupFamily == item.GroupFamily).GroupCount,
+                            item.Interval));
+                return result;
+            }
+
+            private static int AddBehavior<T>(
+                List<T> list,
+                int nonListen,
+                int current,
+                Action<int, int, T> add)
+                where T : ClientBehaviorDetailDefinition
+            {
+                foreach (var item in list)
+                {
+                    if (item.Count == nonListen)
+                    {
+                        add(0, nonListen, item);
+                        continue;
+                    }
+                    var end = current + item.Count;
+                    if (end > nonListen)
+                    {
+                        add(current, nonListen, item);
+                        add(0, end % nonListen, item);
+                        current = end % nonListen;
+                    }
+                    else
+                    {
+                        add(current, end, item);
+                        current = end;
+                    }
+                }
+
+                return current;
+            }
+        }
+
+        private sealed class ScenarioReadyState : ScenarioBaseState
+        {
+            public ScenarioReadyState(ScenarioState scenarioState, int totalConnectionCount, int[] indexMap, ClientAgentContainer clientAgentContainer, ClientAgentBehaviorSettings settings)
+                : base(scenarioState)
+            {
+                TotalConnectionCount = totalConnectionCount;
+                IndexMap = indexMap;
+                ClientAgentContainer = clientAgentContainer;
+                Settings = settings;
+            }
+
+            public int TotalConnectionCount { get; }
+
+            public int[] IndexMap { get; }
+
+            public ClientAgentContainer ClientAgentContainer { get; }
+
+            public ClientAgentBehaviorSettings Settings { get; }
+
+            public override void StartSenario(StartScenarioParameters startScenarioParameters)
+            {
+                var cts = new CancellationTokenSource();
+                ClientAgentContainer.StartScenario(index => Settings.GetClientAgentBehavior(IndexMap[index]), cts.Token);
+                SetState(new RunningState(ScenarioState, TotalConnectionCount, IndexMap, ClientAgentContainer, Settings, cts));
+            }
+
+            public override async Task StopClientConnections(StopClientConnectionsParameters stopClientConnectionsParameters)
+            {
+                await ClientAgentContainer.StopAsync(stopClientConnectionsParameters.Rate);
+                SetState(new InitState(ScenarioState));
+            }
+        }
+
+        private sealed class RunningState : ScenarioBaseState
+        {
+            public RunningState(
+                ScenarioState scenarioState,
+                int totalConnectionCount,
+                int[] indexMap,
+                ClientAgentContainer clientAgentContainer,
+                ClientAgentBehaviorSettings settings,
+                CancellationTokenSource cts)
+                : base(scenarioState)
+            {
+                TotalConnectionCount = totalConnectionCount;
+                IndexMap = indexMap;
+                ClientAgentContainer = clientAgentContainer;
+                Settings = settings;
+                Cts = cts;
+            }
+
+            public int TotalConnectionCount { get; }
+
+            public ClientAgentContainer ClientAgentContainer { get; }
+
+            public int[] IndexMap { get; }
+
+            public ClientAgentBehaviorSettings Settings { get; }
+
+            public CancellationTokenSource Cts { get; }
+
+            public override void StopSenario(StopScenarioParameters stopScenario)
+            {
+                Cts.Cancel();
+                SetState(new ScenarioReadyState(ScenarioState, TotalConnectionCount, IndexMap, ClientAgentContainer, Settings));
+            }
+        }
     }
 }

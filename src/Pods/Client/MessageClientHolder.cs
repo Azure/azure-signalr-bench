@@ -12,7 +12,7 @@ namespace Azure.SignalRBench.Client
 {
     public class MessageClientHolder
     {
-        public static MessageClient Client { get; private set; }
+        public MessageClient Client { get; private set; }
         private ILogger<MessageClientHolder> _logger;
         private IScenarioState _scenarioState;
 
@@ -84,7 +84,7 @@ namespace Azure.SignalRBench.Client
           {
               _logger.LogWarning("Start scenario..");
               var startScenarioParameters = cmd.Parameters?.ToObject<StartScenarioParameters>();
-              await _scenarioState.StartSenario(startScenarioParameters);
+              _scenarioState.StartSenario(startScenarioParameters);
               await Client.AckAsync(cmd, true);
           });
 
@@ -93,7 +93,7 @@ namespace Azure.SignalRBench.Client
           {
               _logger.LogWarning("Stop scenario..");
               var stopScenarioParameters = cmd.Parameters?.ToObject<StopScenarioParameters>();
-              await _scenarioState.StopSenario(stopScenarioParameters);
+              _scenarioState.StopSenario(stopScenarioParameters);
               await Client.AckAsync(cmd, true);
           });
     }

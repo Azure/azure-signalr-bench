@@ -1,0 +1,163 @@
+﻿using Azure.SignalRBench.Common;
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace Azure.SignalRBench.Client
+{
+    public sealed class ClientAgentBehaviorSettings
+    {
+        private readonly List<ClientBehaviorSetting> _settings = new List<ClientBehaviorSetting>();
+
+        public ClientAgentBehaviorSettings(int listenCount)
+        {
+            ListenCount = listenCount;
+        }
+
+        public int ListenCount { get; }
+
+        public void AddEcho(int start, int end, int size, TimeSpan interval)
+        {
+            _settings.Add(new EchoSetting(start, end, size, interval));
+        }
+
+        public void AddBroadcast(int start, int end, int size, TimeSpan interval)
+        {
+            _settings.Add(new BroadcastSetting(start, end, size, interval));
+        }
+
+        public void AddGroup(int start, int end, int size, string groupFamily, int groupCount, TimeSpan interval)
+        {
+            _settings.Add(new GroupSetting(start, end, size, groupFamily, groupCount, interval));
+        }
+
+        public Action<ClientAgent, CancellationToken> GetClientAgentBehavior(int index)
+        {
+            Action<ClientAgent, CancellationToken>? action = null;
+            foreach (var setting in _settings)
+            {
+                if (setting.Match(index))
+                {
+                    action += (ca, ct) => _ = setting.GetBehavior(ca, ct);
+                }
+            }
+            return action ?? EmptyAction;
+        }
+
+        private Action<ClientAgent, CancellationToken> EmptyAction { get; } = (ca, ct) => { };
+
+        private abstract class ClientBehaviorSetting
+        {
+            protected ClientBehaviorSetting(int start, int end, int size)
+            {
+                Start = start;
+                End = end;
+                Payload = Util.GenerateRandomData(size);
+            }
+
+            public int Start { get; }
+
+            public int End { get; }
+
+            public string Payload { get; }
+
+            public bool Match(int index)
+            {
+                return index >= Start && index <= End;
+            }
+
+            public abstract Task GetBehavior(ClientAgent clientAgent, CancellationToken cancellationToken);
+        }
+
+        private sealed class EchoSetting : ClientBehaviorSetting
+        {
+            public EchoSetting(int start, int end, int size, TimeSpan interval)
+                : base(start, end, size)
+            {
+                Interval = interval;
+            }
+
+            public TimeSpan Interval { get; }
+
+            public async override Task GetBehavior(ClientAgent clientAgent, CancellationToken cancellationToken)
+            {
+                await Task.Delay(Interval * StaticRandom.NextDouble());
+                while (!cancellationToken.IsCancellationRequested)
+                {
+                    try
+                    {
+                        await clientAgent.EchoAsync(Payload);
+                        clientAgent.Context.IncreaseMessageSent();
+                    }
+                    catch (Exception)
+                    {
+                    }
+                    await Task.Delay(Interval);
+                }
+            }
+        }
+
+        private sealed class BroadcastSetting : ClientBehaviorSetting
+        {
+            public BroadcastSetting(int start, int end, int size, TimeSpan interval)
+                : base(start, end, size)
+            {
+                Interval = interval;
+            }
+
+            public TimeSpan Interval { get; }
+
+            public async override Task GetBehavior(ClientAgent clientAgent, CancellationToken cancellationToken)
+            {
+                await Task.Delay(Interval * StaticRandom.NextDouble());
+                while (!cancellationToken.IsCancellationRequested)
+                {
+                    try
+                    {
+                        await clientAgent.BroadcastAsync(Payload);
+                        clientAgent.Context.IncreaseMessageSent();
+                    }
+                    catch (Exception)
+                    {
+                    }
+                    await Task.Delay(Interval);
+                }
+            }
+        }
+
+        private sealed class GroupSetting : ClientBehaviorSetting
+        {
+            public GroupSetting(int start, int end, int size, string groupFamily, int groupCount, TimeSpan interval)
+              : base(start, end, size)
+            {
+                GroupFamily = groupFamily;
+                GroupCount = groupCount;
+                Interval = interval;
+            }
+
+            public string GroupFamily { get; }
+
+            public int GroupCount { get; }
+
+            public TimeSpan Interval { get; }
+
+            public async override Task GetBehavior(ClientAgent clientAgent, CancellationToken cancellationToken)
+            {
+                await Task.Delay(Interval * StaticRandom.NextDouble());
+                while (!cancellationToken.IsCancellationRequested)
+                {
+                    try
+                    {
+                        await clientAgent.GroupBroadcastAsync(GroupFamily + "_" + StaticRandom.Next(GroupCount).ToString(), Payload);
+                        clientAgent.Context.IncreaseMessageSent();
+                    }
+                    catch (Exception)
+                    {
+                    }
+                    await Task.Delay(Interval);
+                }
+            }
+        }
+    }
+}

@@ -8,7 +8,9 @@ namespace Azure.SignalRBench.Common
     public class ClientBehaviorDetailDefinition
     {
         public int Count { get; set; }
-        public TimeSpan Duration { get; set; }
+
         public TimeSpan Interval { get; set; }
+
+        public int MessageSize { get; set; }
     }
 }

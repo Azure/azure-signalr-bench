@@ -5,6 +5,5 @@ namespace Azure.SignalRBench.Common
 {
     public class StartScenarioParameters
     {
-       public int index { get; set; }
     }
 }

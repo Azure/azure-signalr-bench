@@ -84,13 +84,6 @@ namespace Azure.SignalRBench.Client
             _dict.AddOrUpdate(agent, ClientAgentStatus.Connected, (a, s) => ClientAgentStatus.Connected);
         }
 
-        public async Task OnReConnected(ClientAgent agent, bool hasGroups)
-        {
-            Interlocked.Increment(ref _totalReconnectedCount);
-            Interlocked.Decrement(ref _reconnectingCount);
-            await OnConnected(agent, hasGroups);
-        }
-
         public Task OnReconnecting(ClientAgent agent)
         {
             Interlocked.Increment(ref _reconnectingCount);
@@ -109,7 +102,7 @@ namespace Azure.SignalRBench.Client
             {
                 TotalReconnectCount = TotalReconnectedCount,
                 ConnectedCount = ConnectedAgentCount,
-                ReConnectingCount = ReconnectingCount,
+                ReconnectingCount = ReconnectingCount,
                 MessageRecieved = RecievedMessageCount,
                 MessageSent = SentMessageCount,
                 Latency = GetLatency(),

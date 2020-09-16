@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Connections;
 using Microsoft.AspNetCore.Http.Connections;
 using Microsoft.AspNetCore.SignalR.Client;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -14,12 +15,13 @@ namespace Azure.SignalRBench.Client
     public class ClientAgent
     {
         private readonly HubConnection _connection;
-        private readonly string[] _groups;
+
         public ClientAgentContext Context { get; }
 
-        public ClientAgent(string url, SignalRProtocol protocol, string[] groups, string? userName, ClientAgentContext context)
+        public string[] Groups { get; } = Array.Empty<string>();
+
+        public ClientAgent(string url, SignalRProtocol protocol, string? userName, string[] groups, ClientAgentContext context)
         {
-            _groups = groups;
             Context = context;
             _connection = new HubConnectionBuilder()
                 .WithUrl(
@@ -37,14 +39,14 @@ namespace Azure.SignalRBench.Client
                 .Build();
             _connection.On<long, string>(nameof(context.Measure), context.Measure);
             _connection.Reconnecting += _ => context.OnReconnecting(this);
-            _connection.Reconnected += _ => context.OnConnected(this, groups.Length > 0);
+            _connection.Reconnected += _ => context.OnConnected(this, Groups.Length > 0);
             _connection.Closed += _ => context.OnClosed(this);
         }
 
         public async Task StartAsync(CancellationToken cancellationToken)
         {
             await _connection.StartAsync(cancellationToken);
-            await Context.OnConnected(this, _groups.Length > 0);
+            await Context.OnConnected(this, Groups.Length > 0);
         }
 
         public Task StopAsync() => _connection.StopAsync();
@@ -59,7 +61,7 @@ namespace Azure.SignalRBench.Client
             _connection.SendAsync("GroupBroadcast", group, DateTime.UtcNow.Ticks, payload);
 
         public Task JoinGroupAsync() =>
-            Task.WhenAll(_connection.SendAsync("JoinGroups", _groups));
+            Task.WhenAll(_connection.SendAsync("JoinGroups", Groups));
 
         private sealed class RetryPolicy : IRetryPolicy
         {

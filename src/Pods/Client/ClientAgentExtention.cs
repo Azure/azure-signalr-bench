@@ -13,16 +13,12 @@ namespace Azure.SignalRBench.Client
         {
             await Task.Delay(StaticRandom.Next((int)interval.TotalMilliseconds));
             var cts = new CancellationTokenSource(duration);
-            using (var linkSource = CancellationTokenSource.CreateLinkedTokenSource(cts.Token, cancellationToken))
+            using var linkSource = CancellationTokenSource.CreateLinkedTokenSource(cts.Token, cancellationToken);
+            while (!linkSource.IsCancellationRequested)
             {
-                {
-                    while (!linkSource.IsCancellationRequested)
-                    {
-                        await func(payload);
-                        client.Context.IncreaseMessageSent();
-                        await Task.Delay(interval);
-                    }
-                }
+                await func(payload);
+                client.Context.IncreaseMessageSent();
+                await Task.Delay(interval);
             }
         }
 
@@ -30,16 +26,12 @@ namespace Azure.SignalRBench.Client
         {
             await Task.Delay(StaticRandom.Next((int)interval.TotalMilliseconds));
             var cts = new CancellationTokenSource(duration);
-            using (var linkSource = CancellationTokenSource.CreateLinkedTokenSource(cts.Token, cancellationToken))
+            using var linkSource = CancellationTokenSource.CreateLinkedTokenSource(cts.Token, cancellationToken);
+            while (!linkSource.IsCancellationRequested)
             {
-                {
-                    while (!linkSource.IsCancellationRequested)
-                    {
-                        await func(group, payload);
-                        client.Context.IncreaseMessageSent();
-                        await Task.Delay(interval);
-                    }
-                }
+                await func(group, payload);
+                client.Context.IncreaseMessageSent();
+                await Task.Delay(interval);
             }
         }
     }

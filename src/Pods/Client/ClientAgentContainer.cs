@@ -16,17 +16,33 @@ namespace Azure.SignalRBench.Client
     public class ClientAgentContainer
     {
         private readonly ClientAgentContext _context = new ClientAgentContext();
+        private readonly MessageClientHolder _messageClientHolder;
         private readonly ClientAgent[] _clients;
-        private readonly SetClientRangeParameters _clientRange;
 
-        public ClientAgentContainer(SetClientRangeParameters clientRange, SignalRProtocol protocol, bool isAnonymous, string url)
+        public ClientAgentContainer(
+            MessageClientHolder messageClientHolder,
+            int startId,
+            int localCount,
+            SignalRProtocol protocol,
+            bool isAnonymous,
+            string url,
+            ClientLifetimeDefinition lifetimeDefinition,
+            Func<int, string[]> groupFunc)
         {
-            _clients = new ClientAgent[clientRange.Count];
-            _clientRange = clientRange;
+            _messageClientHolder = messageClientHolder;
+            StartId = startId;
+            LocalCount = localCount;
             Url = url;
             Protocol = protocol;
             IsAnonymous = isAnonymous;
+            LifetimeDefinition = lifetimeDefinition;
+            GroupFunc = groupFunc;
+            _clients = new ClientAgent[localCount];
         }
+
+        public int StartId { get; }
+
+        public int LocalCount { get; }
 
         public string Url { get; }
 
@@ -34,11 +50,15 @@ namespace Azure.SignalRBench.Client
 
         public bool IsAnonymous { get; }
 
-        public async Task StartAsync(double rate, SetScenarioParameters scenario, CancellationToken cancellationToken)
+        public ClientLifetimeDefinition LifetimeDefinition { get; }
+
+        public Func<int, string[]>? GroupFunc { get; }
+
+        public async Task StartAsync(double rate, CancellationToken cancellationToken)
         {
             for (int i = 0; i < _clients.Length; i++)
             {
-                _clients[i] = new ClientAgent(Url, Protocol, GetGroups(scenario, _clientRange.StartId + i), IsAnonymous ? null : $"user{_clientRange.StartId + i}", _context);
+                _clients[i] = new ClientAgent(Url, Protocol, IsAnonymous ? null : $"user{StartId + i}", GroupFunc(i), _context);
             }
             using var cts = new CancellationTokenSource();
             using var linkSource = CancellationTokenSource.CreateLinkedTokenSource(cts.Token, cancellationToken);
@@ -88,21 +108,11 @@ namespace Azure.SignalRBench.Client
             }
         }
 
-        public async Task StartScenario(IEnumerable<int> connectionIDs, ScenarioDefinition scenario, CancellationToken cancellation)
+        public void StartScenario(Func<int, Action<ClientAgent, CancellationToken>> func, CancellationToken cancellation)
         {
-            string payload = Util.GenerateRandomData(scenario.Messages.Size);
-            var connections = from i in connectionIDs select _clients[i];
-            var clientBehavior = scenario.GetDetail<ClientBehaviorDetailDefinition>();
-            switch (scenario.ClientBehavior)
+            for (int i = 0; i < _clients.Length; i++)
             {
-                case ClientBehavior.Echo:
-                    await Task.WhenAll(from connection in connections select connection.ContinueSend(payload, clientBehavior.Interval, clientBehavior.Duration, connection.EchoAsync, cancellation));
-                    break;
-                case ClientBehavior.Broadcast:
-                    await Task.WhenAll(from connection in connections select connection.ContinueSend(payload, clientBehavior.Interval, clientBehavior.Duration, connection.BroadcastAsync, cancellation));
-                    break;
-                default:
-                    throw new NotImplementedException();
+                func(i)(_clients[i], cancellation);
             }
         }
 
@@ -141,7 +151,7 @@ namespace Azure.SignalRBench.Client
                 while (!cts.IsCancellationRequested)
                 {
                     await Task.Delay(1000);
-                    await MessageClientHolder.Client.ReportClientStatusAsync(_context.ClientStatus());
+                    await _messageClientHolder.Client.ReportClientStatusAsync(_context.ClientStatus());
                 }
             });
         }
