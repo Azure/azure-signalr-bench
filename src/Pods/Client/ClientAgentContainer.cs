@@ -2,7 +2,10 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using Azure.SignalRBench.Common;
+using Azure.SignalRBench.Messages;
+using Newtonsoft.Json.Linq;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
@@ -13,17 +16,33 @@ namespace Azure.SignalRBench.Client
     public class ClientAgentContainer
     {
         private readonly ClientAgentContext _context = new ClientAgentContext();
+        private readonly MessageClientHolder _messageClientHolder;
         private readonly ClientAgent[] _clients;
-        private readonly SetClientRangeParameters _clientRange;
 
-        public ClientAgentContainer(SetClientRangeParameters clientRange, SignalRProtocol protocol, bool isAnonymous, string url)
+        public ClientAgentContainer(
+            MessageClientHolder messageClientHolder,
+            int startId,
+            int localCount,
+            SignalRProtocol protocol,
+            bool isAnonymous,
+            string url,
+            ClientLifetimeDefinition lifetimeDefinition,
+            Func<int, string[]> groupFunc)
         {
-            _clients = new ClientAgent[clientRange.Count];
-            _clientRange = clientRange;
+            _messageClientHolder = messageClientHolder;
+            StartId = startId;
+            LocalCount = localCount;
             Url = url;
             Protocol = protocol;
             IsAnonymous = isAnonymous;
+            LifetimeDefinition = lifetimeDefinition;
+            GroupFunc = groupFunc;
+            _clients = new ClientAgent[localCount];
         }
+
+        public int StartId { get; }
+
+        public int LocalCount { get; }
 
         public string Url { get; }
 
@@ -31,11 +50,15 @@ namespace Azure.SignalRBench.Client
 
         public bool IsAnonymous { get; }
 
-        public async Task StartAsync(double rate, SetScenarioParameters scenario, CancellationToken cancellationToken)
+        public ClientLifetimeDefinition LifetimeDefinition { get; }
+
+        public Func<int, string[]>? GroupFunc { get; }
+
+        public async Task StartAsync(double rate, CancellationToken cancellationToken)
         {
             for (int i = 0; i < _clients.Length; i++)
             {
-                _clients[i] = new ClientAgent(Url, Protocol, GetGroups(scenario, _clientRange.StartId + i), IsAnonymous ? null : $"user{_clientRange.StartId + i}", _context);
+                _clients[i] = new ClientAgent(Url, Protocol, IsAnonymous ? null : $"user{StartId + i}", GroupFunc(i), _context);
             }
             using var cts = new CancellationTokenSource();
             using var linkSource = CancellationTokenSource.CreateLinkedTokenSource(cts.Token, cancellationToken);
@@ -85,6 +108,14 @@ namespace Azure.SignalRBench.Client
             }
         }
 
+        public void StartScenario(Func<int, Action<ClientAgent, CancellationToken>> func, CancellationToken cancellation)
+        {
+            for (int i = 0; i < _clients.Length; i++)
+            {
+                func(i)(_clients[i], cancellation);
+            }
+        }
+
         private SemaphoreSlim GetRateControlSemaphore(double rate, CancellationToken cancellationToken)
         {
             int maxCount = (int)Math.Ceiling(rate);
@@ -111,6 +142,18 @@ namespace Azure.SignalRBench.Client
                     semaphore.Release(releaseCount);
                 }
             }
+        }
+
+        public void ScheduleReportedStatus(CancellationTokenSource cts)
+        {
+            Task.Run(async () =>
+            {
+                while (!cts.IsCancellationRequested)
+                {
+                    await Task.Delay(1000);
+                    await _messageClientHolder.Client.ReportClientStatusAsync(_context.ClientStatus());
+                }
+            });
         }
 
         private static string[] GetGroups(SetScenarioParameters scenario, int clientIndex)

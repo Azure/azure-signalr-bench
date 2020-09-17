@@ -3,9 +3,10 @@
 
 namespace Azure.SignalRBench.Common
 {
-    public class MessageDefinition
+    public class GroupDefinition
     {
-        public int Size { get; set; }
-        public int Count { get; set; }
+        public string GroupFamily { get; set; } = string.Empty;
+        public int GroupCount { get; set; }
+        public int GroupSize { get; set; }
     }
 }

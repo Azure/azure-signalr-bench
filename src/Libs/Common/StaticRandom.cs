@@ -40,5 +40,13 @@ namespace Azure.SignalRBench.Common
                 return _random.Next(minValue, maxValue);
             }
         }
+
+        public static void NextBytes(byte[] buffer)
+        {
+            lock (_random)
+            {
+                _random.NextBytes(buffer);
+            }
+        }
     }
 }
