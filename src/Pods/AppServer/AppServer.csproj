@@ -2,6 +2,9 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
+    <RootNamespace>Azure.SignalRBench.AppServer</RootNamespace>
+    <langversion>8</langversion>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>

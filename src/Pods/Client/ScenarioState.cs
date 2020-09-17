@@ -1,10 +1,14 @@
-﻿using Azure.SignalRBench.Client.Exceptions;
-using Azure.SignalRBench.Common;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+
+using Azure.SignalRBench.Client.Exceptions;
+using Azure.SignalRBench.Common;
 
 namespace Azure.SignalRBench.Client
 {
@@ -91,7 +95,7 @@ namespace Azure.SignalRBench.Client
 
             public override async Task StartClientConnections(StartClientConnectionsParameters p)
             {
-                var indexMap = Util.GenerateIndexMap(p.TotalCount, StartId, LocalCount);
+                var indexMap = GenerateIndexMap(p.TotalCount, StartId, LocalCount);
                 var clientAgentContainer = new ClientAgentContainer(
                     ScenarioState._messageClientHolder,
                     StartId,
@@ -104,6 +108,14 @@ namespace Azure.SignalRBench.Client
                 await clientAgentContainer.StartAsync(p.Rate, default);
                 SetState(new ClientsReadyState(ScenarioState, p.TotalCount, indexMap, p.GroupDefinitions, clientAgentContainer));
                 return;
+            }
+
+            private static int[] GenerateIndexMap(int total, int startIndex, int count)
+            {
+                var rand = new Random(total);
+                return (from id in Enumerable.Range(0, total)
+                        orderby rand.Next()
+                        select id).Skip(startIndex).Take(count).ToArray();
             }
 
             private Func<int, string[]> GetGroupsFunc(int total, int[] indexMap, GroupDefinition[] groupDefinitions)

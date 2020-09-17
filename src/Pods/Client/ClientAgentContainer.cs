@@ -1,15 +1,14 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using Azure.SignalRBench.Common;
-using Azure.SignalRBench.Messages;
-using Newtonsoft.Json.Linq;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+
+using Azure.SignalRBench.Common;
+using Azure.SignalRBench.Messages;
 
 namespace Azure.SignalRBench.Client
 {
@@ -108,11 +107,12 @@ namespace Azure.SignalRBench.Client
             }
         }
 
-        public void StartScenario(Func<int, Action<ClientAgent, CancellationToken>> func, CancellationToken cancellation)
+        public void StartScenario(Func<int, Action<ClientAgent, CancellationToken>> func, CancellationToken cancellationToken)
         {
+            ScheduleReportedStatus(cancellationToken);
             for (int i = 0; i < _clients.Length; i++)
             {
-                func(i)(_clients[i], cancellation);
+                func(i)(_clients[i], cancellationToken);
             }
         }
 
@@ -144,22 +144,16 @@ namespace Azure.SignalRBench.Client
             }
         }
 
-        public void ScheduleReportedStatus(CancellationTokenSource cts)
+        public void ScheduleReportedStatus(CancellationToken cancellationToken)
         {
             Task.Run(async () =>
             {
-                while (!cts.IsCancellationRequested)
+                while (true)
                 {
-                    await Task.Delay(1000);
+                    await Task.Delay(1000, cancellationToken);
                     await _messageClientHolder.Client.ReportClientStatusAsync(_context.ClientStatus());
                 }
             });
-        }
-
-        private static string[] GetGroups(SetScenarioParameters scenario, int clientIndex)
-        {
-            // todo : get groups.
-            return Array.Empty<string>();
         }
     }
 }
