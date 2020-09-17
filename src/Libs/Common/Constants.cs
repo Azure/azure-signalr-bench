@@ -12,8 +12,9 @@ namespace Azure.SignalRBench.Common
 
         public static class EnvVariableKey
         {
-            public const string StorageConnectionStringKey = "Storage:SignalR:ConnectionString";
-            public const string RedisConnectionStringKey = "Redis:SignalR:ConnectionString";
+            public const string TestIdKey = "TestId";
+            public const string StorageConnectionStringKey = "Storage";
+            public const string RedisConnectionStringKey = "Redis";
             public const string PodNameStringKey = "Podname";
         }
     }

@@ -11,31 +11,31 @@ namespace Azure.SignalRBench.Client
     public class ScenarioState : IScenarioState
     {
         private readonly MessageClientHolder _messageClientHolder;
-        private ScenarioBaseState _stateMachine;
+        private ScenarioBaseState _state;
 
         public ScenarioState(MessageClientHolder messageClientHolder)
         {
             _messageClientHolder = messageClientHolder;
-            _stateMachine = new InitState(this);
+            _state = new InitState(this);
         }
 
         public void SetClientRange(SetClientRangeParameters setClientRangeParameters) =>
-            _stateMachine.SetClientRange(setClientRangeParameters);
+            _state.SetClientRange(setClientRangeParameters);
 
         public void SetSenario(SetScenarioParameters setScenarioParameters) =>
-            _stateMachine.SetSenario(setScenarioParameters);
+            _state.SetSenario(setScenarioParameters);
 
         public Task StartClientConnections(StartClientConnectionsParameters startClientConnectionsParameters) =>
-            _stateMachine.StartClientConnections(startClientConnectionsParameters);
+            _state.StartClientConnections(startClientConnectionsParameters);
 
         public void StartSenario(StartScenarioParameters startScenarioParameters) =>
-            _stateMachine.StartSenario(startScenarioParameters);
+            _state.StartSenario(startScenarioParameters);
 
         public void StopSenario(StopScenarioParameters stopScenario) =>
-            _stateMachine.StopSenario(stopScenario);
+            _state.StopSenario(stopScenario);
 
         public Task StopClientConnections(StopClientConnectionsParameters stopClientConnectionsParameters) =>
-            _stateMachine.StopClientConnections(stopClientConnectionsParameters);
+            _state.StopClientConnections(stopClientConnectionsParameters);
 
         private abstract class ScenarioBaseState
         {
@@ -48,7 +48,7 @@ namespace Azure.SignalRBench.Client
 
             public void SetState(ScenarioBaseState state)
             {
-                ScenarioState._stateMachine = state;
+                ScenarioState._state = state;
             }
 
             public virtual void SetClientRange(SetClientRangeParameters setClientRangeParameters) =>

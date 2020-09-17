@@ -2,19 +2,16 @@
 using Azure.SignalRBench.Messages;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json.Linq;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace Azure.SignalRBench.Client
 {
     public class MessageClientHolder
     {
-        public MessageClient Client { get; private set; }
-        private ILogger<MessageClientHolder> _logger;
-        private IScenarioState _scenarioState;
+        private MessageClient? _client;
+        private readonly ILogger<MessageClientHolder> _logger;
+        private readonly IScenarioState _scenarioState;
 
         public MessageClientHolder(IConfiguration configuration, ILogger<MessageClientHolder> logger, IScenarioState scenarioState)
         {
@@ -22,6 +19,8 @@ namespace Azure.SignalRBench.Client
             _scenarioState = scenarioState;
             AddMessageHandlers(configuration[Constants.EnvVariableKey.RedisConnectionStringKey]);
         }
+
+        public MessageClient Client => _client ?? throw new InvalidOperationException();
 
         private void AddMessageHandlers(string connectionString)
         {
@@ -32,7 +31,7 @@ namespace Azure.SignalRBench.Client
             var setScenario = SetScenarioHandler();
             var startScenario = StartScenarioHandler();
             var stopScenario = StopScenarioHandler();
-            Task.Run(async () => Client = await MessageClient.ConnectAsync(connectionString, Roles.AppServers, crash, setClientRange, startConnections, stopConnections, setScenario, startScenario, stopScenario));
+            Task.Run(async () => _client = await MessageClient.ConnectAsync(connectionString, Roles.AppServers, crash, setClientRange, startConnections, stopConnections, setScenario, startScenario, stopScenario));
         }
 
         private MessageHandler CrashHandler()

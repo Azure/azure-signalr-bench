@@ -20,15 +20,19 @@ namespace Azure.SignalRBench.Client
         public static IHostBuilder CreateHostBuilder(string[] args)
         {
             var configuration = new ConfigurationBuilder()
-              .AddEnvironmentVariables()
-              .Build();
+                .AddEnvironmentVariables()
+                .Build();
             return Host.CreateDefaultBuilder(args)
-                 .ConfigureLogging((ILoggingBuilder logging) =>
-                 {
-                     logging.ClearProviders();
-                     logging.AddConsole();
-                     logging.AddProvider(new BlobLoggerProvider(configuration[Constants.EnvVariableKey.StorageConnectionStringKey], Roles.Clients, configuration[Constants.EnvVariableKey.PodNameStringKey]));
-                 })
+                .ConfigureLogging((ILoggingBuilder logging) =>
+                {
+                    logging.ClearProviders();
+                    logging.AddConsole();
+                    logging.AddProvider(
+                        new BlobLoggerProvider(
+                            $"{configuration[Constants.EnvVariableKey.TestIdKey]}/{Roles.Clients}_{configuration[Constants.EnvVariableKey.PodNameStringKey]}",
+                            ".log",
+                            configuration[Constants.EnvVariableKey.StorageConnectionStringKey]));
+                })
                 .ConfigureServices((hostContext, services) =>
                 {
                     services.AddSingleton<MessageClientHolder>();
