@@ -1,8 +1,6 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
+// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 using Azure.SignalRBench.Common;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -28,7 +26,11 @@ namespace Azure.SignalRBench.AppServer
               {
                   logging.ClearProviders();
                   logging.AddConsole();
-                  logging.AddProvider(new BlobLoggerProvider(configuration[Constants.EnvVariableKey.StorageConnectionStringKey], Roles.AppServers, configuration[Constants.EnvVariableKey.PodNameStringKey]));
+                  logging.AddProvider(
+                      new BlobLoggerProvider(
+                          $"{configuration[Constants.EnvVariableKey.TestIdKey]}/{Roles.AppServers}_{configuration[Constants.EnvVariableKey.PodNameStringKey]}",
+                          ".log",
+                          configuration[Constants.EnvVariableKey.StorageConnectionStringKey]));
               })
               .ConfigureWebHostDefaults(webBuilder =>
               {

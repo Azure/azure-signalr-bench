@@ -1,8 +1,12 @@
-﻿using Azure.SignalRBench.Common;
+﻿// Copyright (c) Microsoft. All rights reserved.
+// Licensed under the MIT license. See LICENSE file in the project root for full license information.
+
 using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+
+using Azure.SignalRBench.Common;
 
 namespace Azure.SignalRBench.Client
 {
@@ -39,7 +43,7 @@ namespace Azure.SignalRBench.Client
             {
                 if (setting.Match(index))
                 {
-                    action += (ca, ct) => _ = setting.GetBehavior(ca, ct);
+                    action += (ca, ct) => _ = setting.RunAsync(ca, ct);
                 }
             }
             return action ?? EmptyAction;
@@ -53,7 +57,7 @@ namespace Azure.SignalRBench.Client
             {
                 Start = start;
                 End = end;
-                Payload = Util.GenerateRandomData(size);
+                Payload = GenerateRandomData(size);
             }
 
             public int Start { get; }
@@ -67,7 +71,14 @@ namespace Azure.SignalRBench.Client
                 return index >= Start && index <= End;
             }
 
-            public abstract Task GetBehavior(ClientAgent clientAgent, CancellationToken cancellationToken);
+            public abstract Task RunAsync(ClientAgent clientAgent, CancellationToken cancellationToken);
+
+            private static string GenerateRandomData(int size)
+            {
+                var message = new byte[size * 3 / 4 + 1];
+                StaticRandom.NextBytes(message);
+                return Convert.ToBase64String(message).Substring(0, size);
+            }
         }
 
         private sealed class EchoSetting : ClientBehaviorSetting
@@ -80,7 +91,7 @@ namespace Azure.SignalRBench.Client
 
             public TimeSpan Interval { get; }
 
-            public async override Task GetBehavior(ClientAgent clientAgent, CancellationToken cancellationToken)
+            public async override Task RunAsync(ClientAgent clientAgent, CancellationToken cancellationToken)
             {
                 await Task.Delay(Interval * StaticRandom.NextDouble());
                 while (!cancellationToken.IsCancellationRequested)
@@ -108,7 +119,7 @@ namespace Azure.SignalRBench.Client
 
             public TimeSpan Interval { get; }
 
-            public async override Task GetBehavior(ClientAgent clientAgent, CancellationToken cancellationToken)
+            public async override Task RunAsync(ClientAgent clientAgent, CancellationToken cancellationToken)
             {
                 await Task.Delay(Interval * StaticRandom.NextDouble());
                 while (!cancellationToken.IsCancellationRequested)
@@ -142,7 +153,7 @@ namespace Azure.SignalRBench.Client
 
             public TimeSpan Interval { get; }
 
-            public async override Task GetBehavior(ClientAgent clientAgent, CancellationToken cancellationToken)
+            public async override Task RunAsync(ClientAgent clientAgent, CancellationToken cancellationToken)
             {
                 await Task.Delay(Interval * StaticRandom.NextDouble());
                 while (!cancellationToken.IsCancellationRequested)
