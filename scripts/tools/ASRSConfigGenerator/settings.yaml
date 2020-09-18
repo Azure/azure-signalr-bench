@@ -171,9 +171,9 @@ scenario:sendToGroup,transport:Websockets,group:tiny,message_size:51200:
   base_step: [100, 200, 500, 1000, 2000, 5000, 50]
   step: [50, 50, 50, 50, 50, 50, 50]
   step_length: [1500000, 3000000, 7500000, 15000000, 30000000, 75000000, 15000000]
-  concurrent: [150, 150, 150, 150, 150, 150, 500]
+  concurrent: [150, 150, 150, 150, 150, 150, 1000]
   batch_mode: ["LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress"]
-  batch_wait: [1000, 1000, 1000, 1000, 1000, 1000, 1000]
+  batch_wait: [1000, 1000, 1000, 1000, 1000, 1000, 500]
   group_count: [1000, 2000, 5000, 10000, 20000, 50000, 100000]
   max_group_count: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
 
