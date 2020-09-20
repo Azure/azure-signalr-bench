@@ -40,6 +40,7 @@ namespace Microsoft.Azure.SignalR.PerfTest.AppServer
                     option.AccessTokenLifetime = TimeSpan.FromHours(_serverConfig.AccessTokenLifetime);
                     option.ConnectionCount = _serverConfig.ConnectionNumber;
                     option.ConnectionString = _serverConfig.ConnectionString;
+                    option.ServerStickyMode = ServerStickyMode.Preferred;
                 });
             }
             services.Replace(ServiceDescriptor.Singleton(typeof(ILoggerFactory), typeof(TimedLoggerFactory)));
