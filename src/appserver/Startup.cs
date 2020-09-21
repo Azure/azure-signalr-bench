@@ -6,6 +6,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 using System;
+using Microsoft.AspNetCore.SignalR;
+using Microsoft.Azure.SignalR;
 
 namespace Microsoft.Azure.SignalR.PerfTest.AppServer
 {
@@ -33,16 +35,21 @@ namespace Microsoft.Azure.SignalR.PerfTest.AppServer
             }
             else
             {
-                services.AddSignalR(o =>
+                services
+                    .AddSignalR(o =>
+                    {
+                        o.EnableDetailedErrors = true;
+                    })
+                    .AddMessagePackProtocol()
+                    .AddAzureSignalR(option =>
+                    {
+                        option.AccessTokenLifetime = TimeSpan.FromHours(_serverConfig.AccessTokenLifetime);
+                        option.ConnectionCount = _serverConfig.ConnectionNumber;
+                        option.ConnectionString = _serverConfig.ConnectionString;
+                    });
+                services.Configure<HubOptions>(options =>
                 {
-                    o.EnableDetailedErrors = true;
-                })
-                        .AddMessagePackProtocol()
-                        .AddAzureSignalR(option =>
-                {
-                    option.AccessTokenLifetime = TimeSpan.FromHours(_serverConfig.AccessTokenLifetime);
-                    option.ConnectionCount = _serverConfig.ConnectionNumber;
-                    option.ConnectionString = _serverConfig.ConnectionString;
+                    options.MaximumReceiveMessageSize = null;
                 });
             }
             services.Replace(ServiceDescriptor.Singleton(typeof(ILoggerFactory), typeof(TimedLoggerFactory)));
