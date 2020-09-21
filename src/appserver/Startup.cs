@@ -44,7 +44,7 @@ namespace Microsoft.Azure.SignalR.PerfTest.AppServer
                     .AddAzureSignalR(option =>
                     {
                         option.AccessTokenLifetime = TimeSpan.FromHours(_serverConfig.AccessTokenLifetime);
-                        option.ConnectionCount = _serverConfig.ConnectionNumber;
+                        option.ConnectionCount = 10;//_serverConfig.ConnectionNumber;
                         option.ConnectionString = _serverConfig.ConnectionString;
                     });
                 services.Configure<HubOptions>(options =>
