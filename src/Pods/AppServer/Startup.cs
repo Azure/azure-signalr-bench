@@ -37,6 +37,7 @@ namespace Azure.SignalRBench.AppServer
                      option.ConnectionString = Configuration[ASRSConnectionStringKey];
                  });
             services.AddSingleton<MessageClientHolder>();
+            services.AddHostedService<ServerHostedService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

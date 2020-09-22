@@ -2,7 +2,6 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using Azure.SignalRBench.Common;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -18,24 +17,22 @@ namespace Azure.SignalRBench.Client
 
         public static IHostBuilder CreateHostBuilder(string[] args)
         {
-            var configuration = new ConfigurationBuilder()
-                .AddEnvironmentVariables()
-                .Build();
             return Host.CreateDefaultBuilder(args)
-                .ConfigureLogging((ILoggingBuilder logging) =>
+                .ConfigureLogging((context, logging) =>
                 {
                     logging.ClearProviders();
                     logging.AddConsole();
                     logging.AddProvider(
                         new BlobLoggerProvider(
-                            $"{configuration[Constants.EnvVariableKey.TestIdKey]}/{Roles.Clients}_{configuration[Constants.EnvVariableKey.PodNameStringKey]}",
+                            $"{context.Configuration[Constants.EnvVariableKey.TestIdKey]}/{Roles.Clients}_{context.Configuration[Constants.EnvVariableKey.PodNameStringKey]}",
                             ".log",
-                            configuration[Constants.EnvVariableKey.StorageConnectionStringKey]));
+                            context.Configuration[Constants.EnvVariableKey.StorageConnectionStringKey]));
                 })
                 .ConfigureServices((hostContext, services) =>
                 {
                     services.AddSingleton<MessageClientHolder>();
                     services.AddSingleton<IScenarioState, ScenarioState>();
+                    services.AddHostedService<ClientHostedService>();
                 });
         }
     }

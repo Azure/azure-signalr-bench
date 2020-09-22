@@ -3,7 +3,6 @@
 
 using Azure.SignalRBench.Common;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
@@ -18,19 +17,16 @@ namespace Azure.SignalRBench.AppServer
 
         public static IHostBuilder CreateHostBuilder(string[] args)
         {
-            var configuration = new ConfigurationBuilder()
-               .AddEnvironmentVariables()
-               .Build();
             return Host.CreateDefaultBuilder(args)
-              .ConfigureLogging((ILoggingBuilder logging) =>
+              .ConfigureLogging((context, logging) =>
               {
                   logging.ClearProviders();
                   logging.AddConsole();
                   logging.AddProvider(
                       new BlobLoggerProvider(
-                          $"{configuration[Constants.EnvVariableKey.TestIdKey]}/{Roles.AppServers}_{configuration[Constants.EnvVariableKey.PodNameStringKey]}",
+                          $"{context.Configuration[Constants.EnvVariableKey.TestIdKey]}/{Roles.AppServers}_{context.Configuration[Constants.EnvVariableKey.PodNameStringKey]}",
                           ".log",
-                          configuration[Constants.EnvVariableKey.StorageConnectionStringKey]));
+                          context.Configuration[Constants.EnvVariableKey.StorageConnectionStringKey]));
               })
               .ConfigureWebHostDefaults(webBuilder =>
               {
