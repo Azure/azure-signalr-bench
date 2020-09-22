@@ -6,112 +6,129 @@ using System.Threading.Tasks;
 
 using Azure.SignalRBench.Common;
 using Azure.SignalRBench.Messages;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 
 namespace Azure.SignalRBench.Client
 {
     public class MessageClientHolder
     {
-        private MessageClient? _client;
-        private readonly ILogger<MessageClientHolder> _logger;
         private readonly IScenarioState _scenarioState;
+        private readonly ILogger<MessageClientHolder> _logger;
 
-        public MessageClientHolder(IConfiguration configuration, ILogger<MessageClientHolder> logger, IScenarioState scenarioState)
+        private MessageClient? _client;
+
+        public MessageClientHolder(IScenarioState scenarioState, ILogger<MessageClientHolder> logger)
         {
-            _logger = logger;
             _scenarioState = scenarioState;
-            AddMessageHandlers(configuration[Constants.EnvVariableKey.RedisConnectionStringKey]);
+            _logger = logger;
         }
 
         public MessageClient Client => _client ?? throw new InvalidOperationException();
 
-        private void AddMessageHandlers(string connectionString)
+        public async Task AddMessageHandlers(string connectionString, string podName)
         {
-            var crash = CrashHandler();
-            var setClientRange = SetClientRangeHandler();
-            var startConnections = StartConnectionsHandler();
-            var stopConnections = StopConnectionsHandler();
-            var setScenario = SetScenarioHandler();
-            var startScenario = StartScenarioHandler();
-            var stopScenario = StopScenarioHandler();
-            Task.Run(async () => _client = await MessageClient.ConnectAsync(connectionString, Roles.AppServers, crash, setClientRange, startConnections, stopConnections, setScenario, startScenario, stopScenario));
+            if (_client != null)
+            {
+                throw new InvalidOperationException();
+            }
+            _client = await MessageClient.ConnectAsync(
+                connectionString,
+                podName);
+            await _client.WithHandlers(
+                MessageHandler.CreateCommandHandler(Commands.General.Crash, Crash),
+                MessageHandler.CreateCommandHandler(Roles.Clients, Commands.General.Crash, Crash),
+                MessageHandler.CreateCommandHandler(Commands.Clients.SetClientRange, SetClientRange),
+                MessageHandler.CreateCommandHandler(Roles.Clients, Commands.Clients.StartClientConnections, StartClientConnections),
+                MessageHandler.CreateCommandHandler(Roles.Clients, Commands.Clients.StopClientConnections, StopClientConnections),
+                MessageHandler.CreateCommandHandler(Roles.Clients, Commands.Clients.SetScenario, SetScenario),
+                MessageHandler.CreateCommandHandler(Roles.Clients, Commands.Clients.StartScenario, StartScenario),
+                MessageHandler.CreateCommandHandler(Roles.Clients, Commands.Clients.StopScenario, StopScenario));
         }
 
-        private MessageHandler CrashHandler() =>
-            MessageHandler.CreateCommandHandler(
-                Commands.General.Crash,
-                cmd =>
-                {
-                    _logger.LogWarning("AppServer start to crash..");
-                    Environment.Exit(1);
-                    return Task.CompletedTask;
-                });
+        private Task Crash(CommandMessage commandMessage)
+        {
+            _logger.LogWarning("Clients start to crash..");
+            Environment.Exit(1);
+            return Task.CompletedTask;
+        }
 
-        private MessageHandler SetClientRangeHandler() =>
-            MessageHandler.CreateCommandHandler(
-                Commands.Clients.SetClientRange,
-                async cmd =>
-                {
-                    _logger.LogInformation("Start to set client range..");
-                    var setClientRangeParameters = cmd.Parameters?.ToObject<SetClientRangeParameters>();
-                    _scenarioState.SetClientRange(setClientRangeParameters);
-                    await Client.AckAsync(cmd, true);
-                });
+        private async Task SetClientRange(CommandMessage commandMessage)
+        {
+            _logger.LogInformation("Start to set client range: {parameter}", JsonConvert.SerializeObject(commandMessage.Parameters));
+            var setClientRangeParameters = commandMessage.Parameters?.ToObject<SetClientRangeParameters>();
+            if (setClientRangeParameters == null)
+            {
+                _logger.LogError("Unable to handle range message, parameter cannot be null.");
+                return;
+            }
+            _scenarioState.SetClientRange(setClientRangeParameters);
+            await Client.AckAsync(commandMessage, true);
+        }
 
-        private MessageHandler StartConnectionsHandler() =>
-            MessageHandler.CreateCommandHandler(
-                Commands.Clients.StartClientConnections,
-                async cmd =>
-                {
-                    _logger.LogWarning("Start connections..");
-                    var startConnectionsParameters = cmd.Parameters?.ToObject<StartClientConnectionsParameters>();
-                    await _scenarioState.StartClientConnections(startConnectionsParameters);
-                    await Client.AckAsync(cmd, true);
-                });
+        private async Task StartClientConnections(CommandMessage commandMessage)
+        {
+            _logger.LogInformation("Start connections: {parameter}", JsonConvert.SerializeObject(commandMessage.Parameters));
+            var startConnectionsParameters = commandMessage.Parameters?.ToObject<StartClientConnectionsParameters>();
+            if (startConnectionsParameters == null)
+            {
+                _logger.LogError("Unable to handle start client connections message, parameter cannot be null.");
+                return;
+            }
+            await _scenarioState.StartClientConnections(startConnectionsParameters);
+            await Client.AckAsync(commandMessage, true);
+        }
 
-        private MessageHandler StopConnectionsHandler() =>
-            MessageHandler.CreateCommandHandler(
-                Commands.Clients.StopClientConnections,
-                async cmd =>
-                {
-                    _logger.LogWarning("Stop connections..");
-                    var stopConnectionsParameters = cmd.Parameters?.ToObject<StopClientConnectionsParameters>();
-                    await _scenarioState.StopClientConnections(stopConnectionsParameters);
-                    await Client.AckAsync(cmd, true);
-                });
+        private async Task StopClientConnections(CommandMessage commandMessage)
+        {
+            _logger.LogInformation("Stop connections: {parameter}", JsonConvert.SerializeObject(commandMessage.Parameters));
+            var stopConnectionsParameters = commandMessage.Parameters?.ToObject<StopClientConnectionsParameters>();
+            if (stopConnectionsParameters == null)
+            {
+                _logger.LogError("Unable to handle stop client connections message, parameter cannot be null.");
+                return;
+            }
+            await _scenarioState.StopClientConnections(stopConnectionsParameters);
+            await Client.AckAsync(commandMessage, true);
+        }
 
-        private MessageHandler SetScenarioHandler() =>
-            MessageHandler.CreateCommandHandler(
-                Commands.Clients.SetScenario,
-                async cmd =>
-                {
-                    _logger.LogInformation("Start to set scenario..");
-                    var setSenarioParameters = cmd.Parameters?.ToObject<SetScenarioParameters>();
-                    _scenarioState.SetSenario(setSenarioParameters);
-                    await Client.AckAsync(cmd, true);
-                });
+        private async Task SetScenario(CommandMessage commandMessage)
+        {
+            _logger.LogInformation("Start to set scenario: {parameter}", JsonConvert.SerializeObject(commandMessage.Parameters));
+            var setSenarioParameters = commandMessage.Parameters?.ToObject<SetScenarioParameters>();
+            if (setSenarioParameters == null)
+            {
+                _logger.LogError("Unable to handle set scenario message, parameter cannot be null.");
+                return;
+            }
+            _scenarioState.SetSenario(setSenarioParameters);
+            await Client.AckAsync(commandMessage, true);
+        }
 
-        private MessageHandler StartScenarioHandler() =>
-            MessageHandler.CreateCommandHandler(
-                Commands.Clients.StartClientConnections,
-                async cmd =>
-                {
-                    _logger.LogWarning("Start scenario..");
-                    var startScenarioParameters = cmd.Parameters?.ToObject<StartScenarioParameters>();
-                    _scenarioState.StartSenario(startScenarioParameters);
-                    await Client.AckAsync(cmd, true);
-                });
+        private async Task StartScenario(CommandMessage commandMessage)
+        {
+            _logger.LogInformation("Start scenario: {parameter}", JsonConvert.SerializeObject(commandMessage.Parameters));
+            var startScenarioParameters = commandMessage.Parameters?.ToObject<StartScenarioParameters>();
+            if (startScenarioParameters == null)
+            {
+                _logger.LogError("Unable to handle start scenario message, parameter cannot be null.");
+                return;
+            }
+            _scenarioState.StartSenario(startScenarioParameters);
+            await Client.AckAsync(commandMessage, true);
+        }
 
-        private MessageHandler StopScenarioHandler() =>
-            MessageHandler.CreateCommandHandler(
-                Commands.Clients.StartClientConnections,
-                async cmd =>
-                {
-                    _logger.LogWarning("Stop scenario..");
-                    var stopScenarioParameters = cmd.Parameters?.ToObject<StopScenarioParameters>();
-                    _scenarioState.StopSenario(stopScenarioParameters);
-                    await Client.AckAsync(cmd, true);
-                });
+        private async Task StopScenario(CommandMessage commandMessage)
+        {
+            _logger.LogInformation("Stop scenario: {parameter}", JsonConvert.SerializeObject(commandMessage.Parameters));
+            var stopScenarioParameters = commandMessage.Parameters?.ToObject<StopScenarioParameters>();
+            if (stopScenarioParameters == null)
+            {
+                _logger.LogError("Unable to handle stop scenario message, parameter cannot be null.");
+                return;
+            }
+            _scenarioState.StopSenario(stopScenarioParameters);
+            await Client.AckAsync(commandMessage, true);
+        }
     }
 }
