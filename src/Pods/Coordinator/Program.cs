@@ -32,10 +32,12 @@ namespace Azure.SignalRBench.Coordinator
                         sp => new SecretClient(
                             new Uri(hostContext.Configuration[Constants.ConfigurationKeys.KeyVaultUrlKey]),
                             new DefaultAzureCredential()));
+                    services.AddSingleton<PerfStorageProvider>();
                     services.AddSingleton<K8sProvider>();
                     services.AddSingleton<AksProvider>();
                     services.AddSingleton<ArmProvider>();
                     services.AddSingleton<SignalRProvider>();
+                    services.AddSingleton<TestScheduler>();
                     services.AddHostedService<CoordinatorHostedService>();
                 });
     }

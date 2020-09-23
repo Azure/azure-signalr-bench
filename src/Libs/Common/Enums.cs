@@ -56,4 +56,12 @@ namespace Azure.SignalRBench.Common
         LessThan5s,
         MoreThan5s,
     }
+
+    [JsonConverter(typeof(StringEnumConverter))]
+    public enum TestCategory
+    {
+        AspnetCore,
+        AspnetCoreServerless,
+        Aspnet,
+    }
 }
