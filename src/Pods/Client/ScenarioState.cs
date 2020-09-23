@@ -9,17 +9,20 @@ using System.Threading.Tasks;
 
 using Azure.SignalRBench.Client.Exceptions;
 using Azure.SignalRBench.Common;
+using Microsoft.Extensions.Logging;
 
 namespace Azure.SignalRBench.Client
 {
     public class ScenarioState : IScenarioState
     {
         private readonly MessageClientHolder _messageClientHolder;
+        private readonly ILoggerFactory _loggerFactory;
         private ScenarioBaseState _state;
 
-        public ScenarioState(MessageClientHolder messageClientHolder)
+        public ScenarioState(MessageClientHolder messageClientHolder, ILoggerFactory loggerFactory)
         {
             _messageClientHolder = messageClientHolder;
+            _loggerFactory = loggerFactory;
             _state = new InitState(this);
         }
 
@@ -54,6 +57,8 @@ namespace Azure.SignalRBench.Client
             {
                 ScenarioState._state = state;
             }
+
+            public ILogger<T> GetLogger<T>() => ScenarioState._loggerFactory.CreateLogger<T>();
 
             public virtual void SetClientRange(SetClientRangeParameters setClientRangeParameters) =>
                 throw new InvalidScenarioStateException();
@@ -104,7 +109,8 @@ namespace Azure.SignalRBench.Client
                     p.IsAnonymous,
                     p.Url,
                     p.ClientLifetime,
-                    GetGroupsFunc(p.TotalCount, indexMap, p.GroupDefinitions));
+                    GetGroupsFunc(p.TotalCount, indexMap, p.GroupDefinitions),
+                    GetLogger<ClientAgentContainer>());
                 await clientAgentContainer.StartAsync(p.Rate, default);
                 SetState(new ClientsReadyState(ScenarioState, p.TotalCount, indexMap, p.GroupDefinitions, clientAgentContainer));
                 return;
@@ -268,19 +274,23 @@ namespace Azure.SignalRBench.Client
                     broadcastList,
                     nonListen,
                     current,
-                    (s, e, item) => result.AddBroadcast(s, e, item.MessageSize, item.Interval));
+                    (s, e, item) => result.AddBroadcast(s, e, item.MessageSize, TotalConnectionCount, item.Interval));
                 current = AddBehavior(
                     groupBroadcastList,
                     nonListen,
                     current,
                     (s, e, item) =>
+                    {
+                        var gd = GroupDefinitions.Single(g => g.GroupFamily == item.GroupFamily);
                         result.AddGroup(
                             s,
                             e,
                             item.MessageSize,
                             item.GroupFamily,
-                            GroupDefinitions.Single(g => g.GroupFamily == item.GroupFamily).GroupCount,
-                            item.Interval));
+                            gd.GroupCount,
+                            gd.GroupSize,
+                            item.Interval);
+                    });
                 return result;
             }
 
@@ -338,7 +348,7 @@ namespace Azure.SignalRBench.Client
             public override void StartSenario(StartScenarioParameters startScenarioParameters)
             {
                 var cts = new CancellationTokenSource();
-                ClientAgentContainer.StartScenario(index => Settings.GetClientAgentBehavior(IndexMap[index]), cts.Token);
+                ClientAgentContainer.StartScenario(index => Settings.GetClientAgentBehavior(IndexMap[index], GetLogger<ClientAgent>()), cts.Token);
                 SetState(new RunningState(ScenarioState, TotalConnectionCount, IndexMap, ClientAgentContainer, Settings, cts));
             }
 

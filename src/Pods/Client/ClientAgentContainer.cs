@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 
 using Azure.SignalRBench.Common;
 using Azure.SignalRBench.Messages;
+using Microsoft.Extensions.Logging;
 
 namespace Azure.SignalRBench.Client
 {
@@ -17,6 +18,7 @@ namespace Azure.SignalRBench.Client
         private readonly ClientAgentContext _context = new ClientAgentContext();
         private readonly MessageClientHolder _messageClientHolder;
         private readonly ClientAgent[] _clients;
+        private readonly ILogger<ClientAgentContainer> _logger;
 
         public ClientAgentContainer(
             MessageClientHolder messageClientHolder,
@@ -26,7 +28,8 @@ namespace Azure.SignalRBench.Client
             bool isAnonymous,
             string url,
             ClientLifetimeDefinition lifetimeDefinition,
-            Func<int, string[]> groupFunc)
+            Func<int, string[]> groupFunc,
+            ILogger<ClientAgentContainer> logger)
         {
             _messageClientHolder = messageClientHolder;
             StartId = startId;
@@ -36,6 +39,7 @@ namespace Azure.SignalRBench.Client
             IsAnonymous = isAnonymous;
             LifetimeDefinition = lifetimeDefinition;
             GroupFunc = groupFunc;
+            _logger = logger;
             _clients = new ClientAgent[localCount];
         }
 
@@ -75,9 +79,9 @@ namespace Azure.SignalRBench.Client
                                 await c.StartAsync(cancellationToken);
                                 return;
                             }
-                            catch (Exception)
+                            catch (Exception ex)
                             {
-                                // todo : log.
+                                _logger.LogError(ex, "Failed to start client.");
                             }
                         }
                     }));

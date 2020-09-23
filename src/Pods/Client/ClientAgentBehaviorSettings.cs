@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using Azure.SignalRBench.Common;
+using Microsoft.Extensions.Logging;
 
 namespace Azure.SignalRBench.Client
 {
@@ -26,24 +27,24 @@ namespace Azure.SignalRBench.Client
             _settings.Add(new EchoSetting(start, end, size, interval));
         }
 
-        public void AddBroadcast(int start, int end, int size, TimeSpan interval)
+        public void AddBroadcast(int start, int end, int size, int totalConnectionCount, TimeSpan interval)
         {
-            _settings.Add(new BroadcastSetting(start, end, size, interval));
+            _settings.Add(new BroadcastSetting(start, end, size, totalConnectionCount, interval));
         }
 
-        public void AddGroup(int start, int end, int size, string groupFamily, int groupCount, TimeSpan interval)
+        public void AddGroup(int start, int end, int size, string groupFamily, int groupCount, int groupSize, TimeSpan interval)
         {
-            _settings.Add(new GroupSetting(start, end, size, groupFamily, groupCount, interval));
+            _settings.Add(new GroupSetting(start, end, size, groupFamily, groupCount, groupSize, interval));
         }
 
-        public Action<ClientAgent, CancellationToken> GetClientAgentBehavior(int index)
+        public Action<ClientAgent, CancellationToken> GetClientAgentBehavior(int index, ILogger<ClientAgent> logger)
         {
             Action<ClientAgent, CancellationToken>? action = null;
             foreach (var setting in _settings)
             {
                 if (setting.Match(index))
                 {
-                    action += (ca, ct) => _ = setting.RunAsync(ca, ct);
+                    action += (ca, ct) => _ = setting.RunAsync(ca, index, logger, ct);
                 }
             }
             return action ?? EmptyAction;
@@ -71,7 +72,7 @@ namespace Azure.SignalRBench.Client
                 return index >= Start && index <= End;
             }
 
-            public abstract Task RunAsync(ClientAgent clientAgent, CancellationToken cancellationToken);
+            public abstract Task RunAsync(ClientAgent clientAgent, int clientId, ILogger<ClientAgent> logger, CancellationToken cancellationToken);
 
             private static string GenerateRandomData(int size)
             {
@@ -91,7 +92,7 @@ namespace Azure.SignalRBench.Client
 
             public TimeSpan Interval { get; }
 
-            public async override Task RunAsync(ClientAgent clientAgent, CancellationToken cancellationToken)
+            public async override Task RunAsync(ClientAgent clientAgent, int clientId, ILogger<ClientAgent> logger, CancellationToken cancellationToken)
             {
                 await Task.Delay(Interval * StaticRandom.NextDouble());
                 while (!cancellationToken.IsCancellationRequested)
@@ -99,10 +100,11 @@ namespace Azure.SignalRBench.Client
                     try
                     {
                         await clientAgent.EchoAsync(Payload);
-                        clientAgent.Context.IncreaseMessageSent();
+                        clientAgent.Context.IncreaseMessageSent(1);
                     }
-                    catch (Exception)
+                    catch (Exception ex)
                     {
+                        logger.LogWarning(ex, "Failed to send echo message: clientId={clientId}.", clientId);
                     }
                     await Task.Delay(Interval);
                 }
@@ -111,15 +113,18 @@ namespace Azure.SignalRBench.Client
 
         private sealed class BroadcastSetting : ClientBehaviorSetting
         {
-            public BroadcastSetting(int start, int end, int size, TimeSpan interval)
+            public BroadcastSetting(int start, int end, int size, int totalConnectionCount, TimeSpan interval)
                 : base(start, end, size)
             {
                 Interval = interval;
+                TotalConnectionCount = totalConnectionCount;
             }
 
             public TimeSpan Interval { get; }
 
-            public async override Task RunAsync(ClientAgent clientAgent, CancellationToken cancellationToken)
+            public int TotalConnectionCount { get; }
+
+            public async override Task RunAsync(ClientAgent clientAgent, int clientId, ILogger<ClientAgent> logger, CancellationToken cancellationToken)
             {
                 await Task.Delay(Interval * StaticRandom.NextDouble());
                 while (!cancellationToken.IsCancellationRequested)
@@ -127,10 +132,11 @@ namespace Azure.SignalRBench.Client
                     try
                     {
                         await clientAgent.BroadcastAsync(Payload);
-                        clientAgent.Context.IncreaseMessageSent();
+                        clientAgent.Context.IncreaseMessageSent(TotalConnectionCount);
                     }
-                    catch (Exception)
+                    catch (Exception ex)
                     {
+                        logger.LogWarning(ex, "Failed to send broadcast message: clientId={clientId}.", clientId);
                     }
                     await Task.Delay(Interval);
                 }
@@ -139,11 +145,12 @@ namespace Azure.SignalRBench.Client
 
         private sealed class GroupSetting : ClientBehaviorSetting
         {
-            public GroupSetting(int start, int end, int size, string groupFamily, int groupCount, TimeSpan interval)
+            public GroupSetting(int start, int end, int size, string groupFamily, int groupCount, int groupSize, TimeSpan interval)
               : base(start, end, size)
             {
                 GroupFamily = groupFamily;
                 GroupCount = groupCount;
+                GroupSize = groupSize;
                 Interval = interval;
             }
 
@@ -151,20 +158,24 @@ namespace Azure.SignalRBench.Client
 
             public int GroupCount { get; }
 
+            public int GroupSize { get; }
+
             public TimeSpan Interval { get; }
 
-            public async override Task RunAsync(ClientAgent clientAgent, CancellationToken cancellationToken)
+            public async override Task RunAsync(ClientAgent clientAgent, int clientId, ILogger<ClientAgent> logger, CancellationToken cancellationToken)
             {
                 await Task.Delay(Interval * StaticRandom.NextDouble());
                 while (!cancellationToken.IsCancellationRequested)
                 {
+                    int groupIndex = StaticRandom.Next(GroupCount);
                     try
                     {
-                        await clientAgent.GroupBroadcastAsync(GroupFamily + "_" + StaticRandom.Next(GroupCount).ToString(), Payload);
-                        clientAgent.Context.IncreaseMessageSent();
+                        await clientAgent.GroupBroadcastAsync(GroupFamily + "_" + groupIndex.ToString(), Payload);
+                        clientAgent.Context.IncreaseMessageSent(GroupSize);
                     }
-                    catch (Exception)
+                    catch (Exception ex)
                     {
+                        logger.LogWarning(ex, "Failed to send echo message: clientId={clientId}, groupFamily={groupFamily}, groupIndex={groupIndex}, groupSize={groupSize}.", clientId, GroupFamily, groupIndex, GroupSize);
                     }
                     await Task.Delay(Interval);
                 }

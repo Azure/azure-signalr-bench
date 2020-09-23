@@ -18,6 +18,7 @@ namespace Azure.SignalRBench.Client
             new ConcurrentDictionary<ClientAgent, ClientAgentStatus>();
         private readonly Latency _latency = new Latency();
         private int _recievedMessageCount;
+        private int _expectedRecievedMessageCount;
         private int _sentMessageCount;
         private int _reconnectingCount;
         private int _totalReconnectedCount;
@@ -29,6 +30,8 @@ namespace Azure.SignalRBench.Client
         public int SentMessageCount => Volatile.Read(ref _sentMessageCount);
 
         public int RecievedMessageCount => Volatile.Read(ref _recievedMessageCount);
+
+        public int ExpectedRecievedMessageCount => Volatile.Read(ref _expectedRecievedMessageCount);
 
         public int ConnectedAgentCount => _dict.Count(p => p.Value == ClientAgentStatus.Connected);
 
@@ -70,9 +73,10 @@ namespace Azure.SignalRBench.Client
             }
         }
 
-        public void IncreaseMessageSent()
+        public void IncreaseMessageSent(int expectedRecieverCount = 1)
         {
             Interlocked.Increment(ref _sentMessageCount);
+            Interlocked.Add(ref _expectedRecievedMessageCount, expectedRecieverCount);
         }
 
         public async Task OnConnected(ClientAgent agent, bool hasGroups)
