@@ -51,7 +51,7 @@ namespace Azure.SignalRBench.Client
 
         public ClientLifetimeDefinition LifetimeDefinition { get; }
 
-        public Func<int, string[]>? GroupFunc { get; }
+        public Func<int, string[]> GroupFunc { get; }
 
         public async Task StartAsync(double rate, CancellationToken cancellationToken)
         {
