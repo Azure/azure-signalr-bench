@@ -24,9 +24,9 @@ namespace Azure.SignalRBench.Client
                     logging.AddConsole();
                     logging.AddProvider(
                         new BlobLoggerProvider(
-                            $"{context.Configuration[Constants.EnvVariableKey.TestIdKey]}/{Roles.Clients}_{context.Configuration[Constants.EnvVariableKey.PodNameStringKey]}",
+                            $"{context.Configuration[Constants.ConfigurationKeys.TestIdKey]}/{Roles.Clients}_{context.Configuration[Constants.ConfigurationKeys.PodNameStringKey]}",
                             ".log",
-                            context.Configuration[Constants.EnvVariableKey.StorageConnectionStringKey]));
+                            context.Configuration[Constants.ConfigurationKeys.StorageConnectionStringKey]));
                 })
                 .ConfigureServices((hostContext, services) =>
                 {

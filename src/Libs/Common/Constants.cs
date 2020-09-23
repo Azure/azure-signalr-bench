@@ -5,17 +5,29 @@ namespace Azure.SignalRBench.Common
 {
     public static class Constants
     {
-        public static class KeyVaultKey
+        public static class KeyVaultKeys
         {
-            public const string StorageConnectionString = "sa-accessKey";
+            public const string StorageConnectionStringKey = "sa-accessKey";
+            public const string PrefixKey = "prefix";
+            public const string SubscriptionKey = "subscription";
+            public const string LocationKey = "location";
+            public const string CloudKey = "cloud";
+            public const string ServicePrincipalKey = "service-principal";
+            public const string KubeConfigKey = "kube-config";
         }
 
-        public static class EnvVariableKey
+        public static class ConfigurationKeys
         {
-            public const string TestIdKey = "TestId";
-            public const string StorageConnectionStringKey = "Storage";
-            public const string RedisConnectionStringKey = "Redis";
+            public const string KeyVaultUrlKey = "kvUrl";
+            public const string TestIdKey = "testId";
+            public const string StorageConnectionStringKey = "storage";
+            public const string RedisConnectionStringKey = "redis";
             public const string PodNameStringKey = "Podname";
+        }
+
+        public static class QueueNames
+        {
+            public const string PortalJob = "portal-job";
         }
     }
 }
