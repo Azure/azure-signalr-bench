@@ -1,7 +1,6 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
@@ -15,7 +14,7 @@ using Newtonsoft.Json.Linq;
 
 namespace Azure.SignalRBench.Coordinator
 {
-    internal class CoordinatorHostedService : IHostedService
+    public class CoordinatorHostedService : IHostedService
     {
         private readonly SecretClient _secretClient;
         private readonly K8sProvider _k8sProvider;
@@ -59,11 +58,8 @@ namespace Azure.SignalRBench.Coordinator
             var prefix = (await prefixTask).Value.Value;
             var subscription = (await subscriptionTask).Value.Value;
             var azureEnvironment = GetAzureEnvironment((await cloudTask).Value.Value);
-            var obj = JsonConvert.DeserializeObject<JObject>((await servicePrincipalTask).Value.Value);
-            if (obj == null)
-            {
+            var obj = JsonConvert.DeserializeObject<JObject>((await servicePrincipalTask).Value.Value) ??
                 throw new InvalidDataException("Unexpected null for service principal.");
-            }
             var servicePrincipal = SdkContext.AzureCredentialsFactory.FromServicePrincipal(
                 obj["appId"]?.Value<string>() ?? throw new InvalidDataException("Unexpected null for ServicePrincipal.AppId."),
                 obj["password"]?.Value<string>() ?? throw new InvalidDataException("Unexpected null for ServicePrincipal.Password."),
@@ -73,7 +69,7 @@ namespace Azure.SignalRBench.Coordinator
             _aksProvider.Initialize(servicePrincipal, subscription, prefix + "rg", prefix + "aks");
             _armProvider.Initialize(servicePrincipal, subscription, prefix + "rg");
             _signalRProvider.Initialize(servicePrincipal, subscription);
-            _scheduler.Start(await _storageProvider.Storage.GetQueueAsync<TestJob>(Constants.QueueNames.PortalJob, true));
+            await _scheduler.StartAsync();
         }
 
         public async Task StopAsync(CancellationToken cancellationToken)
@@ -81,24 +77,19 @@ namespace Azure.SignalRBench.Coordinator
             await _scheduler.StopAsync();
         }
 
-        private static AzureEnvironment GetAzureEnvironment(string name)
-        {
-            switch (name)
+        private static AzureEnvironment GetAzureEnvironment(string name) =>
+            name switch
             {
-                case "AzureCloud":
-                    return AzureEnvironment.FromName("AzureGlobalCloud");
-                case "PPE":
-                    return new AzureEnvironment
-                    {
-                        GraphEndpoint = "https://graph.ppe.windows.net/",
-                        AuthenticationEndpoint = "https://login.windows-ppe.net",
-                        Name = "PPE",
-                        ManagementEndpoint = "https://umapi-preview.core.windows-int.net/",
-                        ResourceManagerEndpoint = "https://api-dogfood.resources.windows-int.net/"
-                    };
-                default:
-                    return AzureEnvironment.FromName(name) ?? throw new InvalidDataException("Unknown azure cloud name.");
-            }
-        }
+                "AzureCloud" => AzureEnvironment.FromName("AzureGlobalCloud"),
+                "PPE" => new AzureEnvironment
+                {
+                    GraphEndpoint = "https://graph.ppe.windows.net/",
+                    AuthenticationEndpoint = "https://login.windows-ppe.net",
+                    Name = "PPE",
+                    ManagementEndpoint = "https://umapi-preview.core.windows-int.net/",
+                    ResourceManagerEndpoint = "https://api-dogfood.resources.windows-int.net/"
+                },
+                _ => AzureEnvironment.FromName(name) ?? throw new InvalidDataException("Unknown azure cloud name."),
+            };
     }
 }
