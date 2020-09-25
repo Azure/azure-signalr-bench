@@ -5,9 +5,6 @@ namespace Azure.SignalRBench.Common
 {
     public static class RedisKeys
     {
-        public static readonly string TestIdKey = "TestId";
-        public static readonly string AsrsConnectionStringKey = "AsrsConnectionString";
-        public static readonly string NegotiationUrlKey = "NegotiationUrl";
-        public static readonly string ClientIdsKey = "ClientIds";
+        public static string GetClientIdsKey(string testId) => $"{testId}_ClientIds";
     }
 }

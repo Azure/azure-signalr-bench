@@ -4,7 +4,8 @@
 using System;
 using System.IO;
 using System.Text;
-
+using System.Threading;
+using System.Threading.Tasks;
 using k8s;
 
 namespace Azure.SignalRBench.Coordinator
@@ -19,6 +20,30 @@ namespace Azure.SignalRBench.Coordinator
         {
             using var stream = new MemoryStream(Encoding.UTF8.GetBytes(config));
             _k8s = new Kubernetes(KubernetesClientConfiguration.BuildConfigFromConfigFile(stream));
+        }
+
+        internal Task CreateServerPodsAsync(string testId, int nodePoolIndex, string[] asrsConnectionStrings, CancellationToken cancellationToken)
+        {
+            // todo
+            return Task.CompletedTask;
+        }
+
+        internal Task CreateClientPodsAsync(string testId, int nodePoolIndex, string url, CancellationToken cancellationToken)
+        {
+            // todo
+            return Task.CompletedTask;
+        }
+
+        internal Task DeleteClientPodsAsync(string testId, int nodePoolIndex)
+        {
+            // todo
+            return Task.CompletedTask;
+        }
+
+        internal Task DeleteServerPodsAsync(string testId, int nodePoolIndex)
+        {
+            // todo
+            return Task.CompletedTask;
         }
     }
 }

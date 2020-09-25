@@ -23,13 +23,13 @@ namespace Azure.SignalRBench.AppServer
         public MessageClient MessageClient =>
             _messageClient ?? throw new InvalidOperationException();
 
-        public async Task InitializeAsync(string connectionString, string podName)
+        public async Task InitializeAsync(string testId, string connectionString, string podName)
         {
             if (_messageClient != null)
             {
                 throw new InvalidOperationException();
             }
-            _messageClient = await MessageClient.ConnectAsync(connectionString, podName);
+            _messageClient = await MessageClient.ConnectAsync(connectionString, testId, podName);
             await _messageClient.WithHandlers(
                 MessageHandler.CreateCommandHandler(Commands.General.Crash, Crash),
                 MessageHandler.CreateCommandHandler(Roles.AppServers, Commands.General.Crash, Crash));

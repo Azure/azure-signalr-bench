@@ -26,15 +26,13 @@ namespace Azure.SignalRBench.Client
 
         public MessageClient Client => _client ?? throw new InvalidOperationException();
 
-        public async Task AddMessageHandlers(string connectionString, string podName)
+        public async Task InitializeAsync(string testId, string connectionString, string podName)
         {
             if (_client != null)
             {
                 throw new InvalidOperationException();
             }
-            _client = await MessageClient.ConnectAsync(
-                connectionString,
-                podName);
+            _client = await MessageClient.ConnectAsync(connectionString, testId, podName);
             await _client.WithHandlers(
                 MessageHandler.CreateCommandHandler(Commands.General.Crash, Crash),
                 MessageHandler.CreateCommandHandler(Roles.Clients, Commands.General.Crash, Crash),

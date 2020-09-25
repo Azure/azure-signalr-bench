@@ -48,7 +48,7 @@ namespace Azure.SignalRBench.Coordinator
 
             var prefixTask = _secretClient.GetSecretAsync(Constants.KeyVaultKeys.PrefixKey);
             var subscriptionTask = _secretClient.GetSecretAsync(Constants.KeyVaultKeys.SubscriptionKey);
-            //var locationTask = _secretClient.GetSecretAsync(Constants.KeyVaultKeys.LocationKey);
+            var locationTask = _secretClient.GetSecretAsync(Constants.KeyVaultKeys.LocationKey);
             var servicePrincipalTask = _secretClient.GetSecretAsync(Constants.KeyVaultKeys.ServicePrincipalKey);
             var cloudTask = _secretClient.GetSecretAsync(Constants.KeyVaultKeys.CloudKey);
             var k8sTask = _secretClient.GetSecretAsync(Constants.KeyVaultKeys.KubeConfigKey);
@@ -69,7 +69,7 @@ namespace Azure.SignalRBench.Coordinator
             _aksProvider.Initialize(servicePrincipal, subscription, prefix + "rg", prefix + "aks");
             _armProvider.Initialize(servicePrincipal, subscription, prefix + "rg");
             _signalRProvider.Initialize(servicePrincipal, subscription);
-            await _scheduler.StartAsync();
+            await _scheduler.StartAsync((await locationTask).Value.Value);
         }
 
         public async Task StopAsync(CancellationToken cancellationToken)

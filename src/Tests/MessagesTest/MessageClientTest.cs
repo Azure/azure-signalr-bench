@@ -13,13 +13,14 @@ namespace Azure.SignalRBench.Tests.MessagesTest
         [SkippableFact]
         public async Task TestMessageClient()
         {
+            const string TestId = nameof(TestMessageClient);
             var redis = Requirements.RequireRedis();
-            const string sender1 = nameof(TestMessageClient) + "1";
-            const string sender2 = nameof(TestMessageClient) + "2";
+            const string sender1 = "1";
+            const string sender2 = "2";
             const string expectedCommand = "Test";
             var commandTcs = new TaskCompletionSource<CommandMessage>();
             var ackTcs = new TaskCompletionSource<AckMessage>();
-            using var client1 = await MessageClient.ConnectAsync(redis, sender1);
+            using var client1 = await MessageClient.ConnectAsync(redis, TestId, sender1);
             await client1.WithHandlers(
                 MessageHandler.CreateAckHandler(
                     expectedCommand,
@@ -28,7 +29,7 @@ namespace Azure.SignalRBench.Tests.MessagesTest
                         ackTcs.TrySetResult(ack);
                         return Task.CompletedTask;
                     }));
-            using var client2 = await MessageClient.ConnectAsync(redis, sender2);
+            using var client2 = await MessageClient.ConnectAsync(redis, TestId, sender2);
             await client2.WithHandlers(
                 MessageHandler.CreateCommandHandler(
                     expectedCommand,

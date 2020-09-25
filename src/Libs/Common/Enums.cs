@@ -64,4 +64,10 @@ namespace Azure.SignalRBench.Common
         AspnetCoreServerless,
         Aspnet,
     }
+
+    public enum SignalRServiceMode
+    {
+        Default,
+        Serverless,
+    }
 }

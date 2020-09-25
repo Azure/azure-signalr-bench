@@ -24,6 +24,7 @@ namespace Azure.SignalRBench.AppServer
         public async Task StartAsync(CancellationToken cancellationToken)
         {
             await _messageClientHolder.InitializeAsync(
+                _configuration[Constants.ConfigurationKeys.TestIdKey],
                 _configuration[Constants.ConfigurationKeys.RedisConnectionStringKey],
                 _configuration[Constants.ConfigurationKeys.PodNameStringKey]);
         }
