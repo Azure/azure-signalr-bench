@@ -51,7 +51,7 @@ namespace Azure.SignalRBench.Coordinator
 
         public SignalRProvider SignalRProvider { get; }
 
-        public string DefaultLocation { get; }
+        public string DefaultLocation => _defaultLocation ?? throw new InvalidOperationException();
 
         public async Task StartAsync(string defaultLocation)
         {
@@ -182,12 +182,13 @@ namespace Azure.SignalRBench.Coordinator
 
         private async Task CreatePodsAsync(TestJob job, int nodePoolIndex, string[] asrsConnectionStrings, int clientAgentCount, int clientPodCount, int serverPodCount, MessageClient messageClient, CancellationToken cancellationToken)
         {
-            var ranges = new Dictionary<string, SetClientRangeParameters>();
+            var clients = new Dictionary<string, SetClientRangeParameters>();
+            var servers = new List<string>();
             await messageClient.WithHandlers(
                 MessageHandler.CreateCommandHandler(
                     Roles.Coordinator,
                     Commands.Coordinator.ReportReady,
-                    GetReportReady(clientAgentCount, clientPodCount, serverPodCount, ranges, out var clientPodReady, out var serverPodReady)));
+                    GetReportReady(clientAgentCount, clientPodCount, serverPodCount, clients, servers, out var clientPodReady, out var serverPodReady)));
 
             _logger.LogInformation("Test job {testId}: Creating server pods.", job.TestId);
             await K8sProvider.CreateServerPodsAsync(job.TestId, nodePoolIndex, asrsConnectionStrings, cancellationToken);
@@ -208,36 +209,18 @@ namespace Azure.SignalRBench.Coordinator
                     _logger.LogInformation("Test job {testId}: Server pods ready.", job.TestId);
                 }));
 
-            var acks = new Dictionary<string, TaskCompletionSource<bool>>();
+            var clientCompleteTask = await messageClient.WhenAllAck(
+                clients.Keys,
+                Commands.Clients.SetClientRange,
+                m => m.IsCompleted && clients.ContainsKey(m.Sender),
+                cancellationToken);
 
-            foreach (var pair in ranges)
-            {
-                acks[pair.Key] = new TaskCompletionSource<bool>();
-            }
-
-            await messageClient.WithHandlers(
-                MessageHandler.CreateAckHandler(
-                    Commands.Coordinator.ReportReady,
-                    ack =>
-                    {
-                        if (ack.IsCompleted)
-                        {
-                            acks[ack.Sender].TrySetResult(true);
-                        }
-                        return Task.CompletedTask;
-                    }));
-
-            foreach (var pair in ranges)
+            foreach (var pair in clients)
             {
                 await messageClient.SetClientRangeAsync(pair.Key, pair.Value);
             }
 
-            var task = Task.WhenAll(acks.Select(x => x.Value.Task));
-
-            if (task != await Task.WhenAny(task, Task.Delay(TimeSpan.FromMinutes(5), cancellationToken)))
-            {
-                throw new TaskCanceledException();
-            }
+            await clientCompleteTask;
         }
 
         private async Task<string[]> PrepairAsrsInstancesAsync(TestJob job, CancellationToken cancellationToken)
@@ -282,6 +265,7 @@ namespace Azure.SignalRBench.Coordinator
             int clientPodCount,
             int serverPodCount,
             Dictionary<string, SetClientRangeParameters> clientRangeDictionary,
+            List<string> serverPods,
             out Task clientPodsReady,
             out Task serverPodsReady)
         {
@@ -340,6 +324,7 @@ namespace Azure.SignalRBench.Coordinator
                     {
                         serverPodsReadyTcs.TrySetResult(null);
                     }
+                    serverPods.Add(m.Sender);
                 }
                 else
                 {

@@ -1,15 +1,20 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+
 using Azure.SignalRBench.Common;
 using Newtonsoft.Json.Linq;
-using System.Threading.Tasks;
 
 namespace Azure.SignalRBench.Messages
 {
     public static class MessageClientExtensions
     {
-        #region MyRegion
+        #region General
 
         public static async Task<CommandMessage> CrashAsync(this IMessageClient client, string instanceId)
         {
@@ -108,6 +113,43 @@ namespace Azure.SignalRBench.Messages
 
         public static Task AckProgressAsync(this IMessageClient client, CommandMessage command, double progress) =>
             client.AckAsync(command, false, progress);
+
+        public static async Task<Task> WhenAllAck(
+            this MessageClient messageClient,
+            IReadOnlyCollection<string> senders,
+            string command,
+            Func<AckMessage, bool> filter,
+            CancellationToken cancellationToken)
+        {
+            var acks = new Dictionary<string, TaskCompletionSource<bool>>();
+
+            foreach (var sender in senders)
+            {
+                acks[sender] = new TaskCompletionSource<bool>();
+            }
+
+            await messageClient.WithHandlers(
+                MessageHandler.CreateAckHandler(
+                    command,
+                    ack =>
+                    {
+                        if (filter(ack))
+                        {
+                            acks[ack.Sender].TrySetResult(true);
+                        }
+                        return Task.CompletedTask;
+                    }));
+
+            return Task.Run(async () =>
+            {
+                var task = Task.WhenAll(acks.Select(x => x.Value.Task));
+
+                if (task != await Task.WhenAny(task, Task.Delay(TimeSpan.FromMinutes(5), cancellationToken)))
+                {
+                    throw new TaskCanceledException();
+                }
+            });
+        }
 
         #endregion
     }
