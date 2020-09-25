@@ -138,6 +138,15 @@ scenario:sendToClient,transport:Websockets,protocol:json,message_size:256:
   batch_mode: ["LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress"]
   batch_wait: [1000, 1000, 1000, 1000, 1000, 1000, 1000]
 
+scenario:sendToClient,transport:Websockets,protocol:messagepack,message_size:256:
+  normal_connection: [1000, 2000, 5000, 10000, 20000, 50000, 100000, 150000, 200000, 250000, 300000, 350000, 400000, 450000, 500000]
+  max_connection: [1500, 3000, 7500, 15000, 30000, 75000, 150000, 200000, 250000, 300000, 350000, 400000, 450000, 500000, 550000]
+  base_step: [1000, 2000, 5000, 5000, 10000, 15000, 15000]
+  step: [200, 200, 1000, 1000, 2000, 5000, 5000]
+  step_length: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
+  concurrent: [150, 150, 150, 150, 150, 150, 150]
+  batch_mode: ["LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress"]
+  batch_wait: [1000, 1000, 1000, 1000, 1000, 1000, 1000]
 
 # send to group
 scenario:sendToGroup,transport:Websockets,group:tiny,message_size:256:
