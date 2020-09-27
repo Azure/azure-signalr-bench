@@ -255,7 +255,7 @@ namespace Azure.SignalRBench.Coordinator
                 cancellationToken);
             _logger.LogInformation("Test job {testId}: SignalR service instance created.", job.TestId);
             _logger.LogInformation("Test job {testId}: Retrieving SignalR service connection string.", job.TestId);
-            var result = await SignalRProvider.CreateInstanceKeyAsync(job.TestId, name, ss.Location ?? DefaultLocation, cancellationToken);
+            var result = await SignalRProvider.CreateKeyAsync(job.TestId, name, ss.Location ?? DefaultLocation, cancellationToken);
             _logger.LogInformation("Test job {testId}: SignalR service connection string retrieved.", job.TestId);
             return result;
         }
