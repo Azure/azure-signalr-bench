@@ -38,6 +38,7 @@ namespace Azure.SignalRBench.Coordinator
                     services.AddSingleton<ArmProvider>();
                     services.AddSingleton<SignalRProvider>();
                     services.AddSingleton<TestScheduler>();
+                    services.AddSingleton<TestRunnerFactory>();
                     services.AddHostedService<CoordinatorHostedService>();
                 });
     }

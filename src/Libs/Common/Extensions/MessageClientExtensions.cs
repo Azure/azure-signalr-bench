@@ -135,7 +135,10 @@ namespace Azure.SignalRBench.Messages
                     {
                         if (filter(ack))
                         {
-                            acks[ack.Sender].TrySetResult(true);
+                            if (acks.TryGetValue(ack.Sender, out var tcs))
+                            {
+                                tcs.TrySetResult(true);
+                            }
                         }
                         return Task.CompletedTask;
                     }));
