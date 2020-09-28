@@ -2,23 +2,17 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
 using Azure.SignalRBench.Common;
-using Azure.SignalRBench.Messages;
 using Azure.SignalRBench.Storage;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
 namespace Azure.SignalRBench.Coordinator
 {
     public class TestScheduler
     {
-        private const double MaxClientCountInPod = 3000;
-
         private readonly CancellationTokenSource _cts = new CancellationTokenSource();
         private readonly ILogger<TestScheduler> _logger;
         private string? _defaultLocation;

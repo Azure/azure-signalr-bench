@@ -10,5 +10,9 @@ namespace Azure.SignalRBench.Common
         public int TotalConnectionCount { get; set; }
         public GroupDefinition[] GroupDefinitions { get; set; } = Array.Empty<GroupDefinition>();
         public RoundSetting[] Rounds { get; set; } = Array.Empty<RoundSetting>();
+        public ClientLifetimeDefinition ClientLifetime { get; set; } = new ClientLifetimeDefinition();
+        public bool IsAnonymous { get; set; }
+        public SignalRProtocol Protocol { get; set; }
+        public double Rate { get; set; }
     }
 }

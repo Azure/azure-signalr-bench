@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -17,7 +18,12 @@ namespace Azure.SignalRBench.Coordinator
     {
         private const double MaxClientCountInPod = 3000;
 
+        private readonly Dictionary<string, SetClientRangeParameters> _clients =
+            new Dictionary<string, SetClientRangeParameters>();
+        private readonly List<string> _serverPods = new List<string>();
         private readonly ILogger<TestRunner> _logger;
+
+        private string _url = string.Empty;
 
         public TestRunner(
             TestJob job,
@@ -79,14 +85,15 @@ namespace Azure.SignalRBench.Coordinator
             try
             {
                 await CreatePodsAsync(await asrsConnectionStringsTask, clientAgentCount, clientPodCount, serverPodCount, messageClient, cancellationToken);
-                // todo: clients connect.
-                // todo: set scenario.
-                // todo: round 1,2,3...
-                // {
-                // todo: start
-                // todo: stop
-                // }
-                // todo: client disconnect.
+                await StartClientConnectionsAsync(messageClient, cancellationToken);
+                foreach (var round in Job.ScenarioSetting.Rounds)
+                {
+                    await SetScenarioAsync(messageClient, round, cancellationToken);
+                    await StartScenarioAsync(messageClient, cancellationToken);
+                    await Task.Delay(TimeSpan.FromMinutes(round.DurationInMinutes), cancellationToken);
+                    await StopScenarioAsync(messageClient, cancellationToken);
+                }
+                await StopClientConnectionsAsync(messageClient, cancellationToken);
             }
             finally
             {
@@ -101,44 +108,6 @@ namespace Azure.SignalRBench.Coordinator
                     group ss by ss.Location ?? DefaultLocation into g
                     select SignalRProvider.DeleteResourceGroupAsync(Job.TestId, g.Key));
             }
-        }
-
-        private async Task CreatePodsAsync(string[] asrsConnectionStrings, int clientAgentCount, int clientPodCount, int serverPodCount, MessageClient messageClient, CancellationToken cancellationToken)
-        {
-            var clients = new Dictionary<string, SetClientRangeParameters>();
-            var servers = new List<string>();
-            await messageClient.WithHandlers(
-                MessageHandler.CreateCommandHandler(
-                    Roles.Coordinator,
-                    Commands.Coordinator.ReportReady,
-                    GetReportReady(clientAgentCount, clientPodCount, serverPodCount, clients, servers, out var clientPodReady, out var serverPodReady)));
-
-            _logger.LogInformation("Test job {testId}: Creating server pods.", Job.TestId);
-            await K8sProvider.CreateServerPodsAsync(Job.TestId, NodePoolIndex, asrsConnectionStrings, cancellationToken);
-            // todo: get url for negotiate.
-            string url = string.Empty;
-            _logger.LogInformation("Test job {testId}: Creating client pods.", Job.TestId);
-            await K8sProvider.CreateClientPodsAsync(Job.TestId, NodePoolIndex, url, cancellationToken);
-
-            await Task.WhenAll(
-                Task.Run(async () =>
-                {
-                    await clientPodReady;
-                    _logger.LogInformation("Test job {testId}: Client pods ready.", Job.TestId);
-                }),
-                Task.Run(async () =>
-                {
-                    await serverPodReady;
-                    _logger.LogInformation("Test job {testId}: Server pods ready.", Job.TestId);
-                }));
-
-            var clientCompleteTask = await messageClient.WhenAllAck(
-                clients.Keys,
-                Commands.Clients.SetClientRange,
-                m => m.IsCompleted,
-                cancellationToken);
-            await Task.WhenAll(clients.Select(pair => messageClient.SetClientRangeAsync(pair.Key, pair.Value)));
-            await clientCompleteTask;
         }
 
         private async Task<string[]> PrepairAsrsInstancesAsync(CancellationToken cancellationToken)
@@ -182,8 +151,6 @@ namespace Azure.SignalRBench.Coordinator
             int clientAgentCount,
             int clientPodCount,
             int serverPodCount,
-            Dictionary<string, SetClientRangeParameters> clientRangeDictionary,
-            List<string> serverPods,
             out Task clientPodsReady,
             out Task serverPodsReady)
         {
@@ -207,7 +174,7 @@ namespace Azure.SignalRBench.Coordinator
                     clientReadyCount++;
                     if (clientReadyCount < clientAgentCount)
                     {
-                        clientRangeDictionary[m.Sender] =
+                        _clients[m.Sender] =
                             new SetClientRangeParameters
                             {
                                 StartId = (clientReadyCount - 1) * countPerPod,
@@ -216,7 +183,7 @@ namespace Azure.SignalRBench.Coordinator
                     }
                     else if (clientReadyCount == clientAgentCount)
                     {
-                        clientRangeDictionary[m.Sender] =
+                        _clients[m.Sender] =
                             new SetClientRangeParameters
                             {
                                 StartId = (clientReadyCount - 1) * countPerPod,
@@ -227,7 +194,7 @@ namespace Azure.SignalRBench.Coordinator
                     else
                     {
                         // todo: log
-                        clientRangeDictionary[m.Sender] =
+                        _clients[m.Sender] =
                             new SetClientRangeParameters
                             {
                                 StartId = 0,
@@ -242,7 +209,7 @@ namespace Azure.SignalRBench.Coordinator
                     {
                         serverPodsReadyTcs.TrySetResult(null);
                     }
-                    serverPods.Add(m.Sender);
+                    _serverPods.Add(m.Sender);
                 }
                 else
                 {
@@ -250,6 +217,159 @@ namespace Azure.SignalRBench.Coordinator
                 }
                 return Task.CompletedTask;
             };
+        }
+
+        private async Task CreatePodsAsync(
+            string[] asrsConnectionStrings,
+            int clientAgentCount,
+            int clientPodCount,
+            int serverPodCount,
+            MessageClient messageClient,
+            CancellationToken cancellationToken)
+        {
+            await messageClient.WithHandlers(
+                MessageHandler.CreateCommandHandler(
+                    Roles.Coordinator,
+                    Commands.Coordinator.ReportReady,
+                    GetReportReady(clientAgentCount, clientPodCount, serverPodCount, out var clientPodReady, out var serverPodReady)));
+
+            _logger.LogInformation("Test job {testId}: Creating server pods.", Job.TestId);
+            _url = await K8sProvider.CreateServerPodsAsync(Job.TestId, NodePoolIndex, asrsConnectionStrings, cancellationToken);
+            _logger.LogInformation("Test job {testId}: Creating client pods.", Job.TestId);
+            await K8sProvider.CreateClientPodsAsync(Job.TestId, NodePoolIndex, _url, cancellationToken);
+
+            await Task.WhenAll(
+                Task.Run(async () =>
+                {
+                    await clientPodReady;
+                    _logger.LogInformation("Test job {testId}: Client pods ready.", Job.TestId);
+                }),
+                Task.Run(async () =>
+                {
+                    await serverPodReady;
+                    _logger.LogInformation("Test job {testId}: Server pods ready.", Job.TestId);
+                }));
+
+            var clientCompleteTask = await messageClient.WhenAllAck(
+                _clients.Keys,
+                Commands.Clients.SetClientRange,
+                m => m.IsCompleted,
+                cancellationToken);
+            await Task.WhenAll(_clients.Select(pair => messageClient.SetClientRangeAsync(pair.Key, pair.Value)));
+            await clientCompleteTask;
+        }
+
+        private async Task StartClientConnectionsAsync(
+            MessageClient messageClient,
+            CancellationToken cancellationToken)
+        {
+            var task = await messageClient.WhenAllAck(
+                _clients.Keys,
+                Commands.Clients.StartClientConnections,
+                m => m.IsCompleted,
+                cancellationToken);
+            await messageClient.StartClientConnectionsAsync(
+                new StartClientConnectionsParameters
+                {
+                    ClientLifetime = Job.ScenarioSetting.ClientLifetime,
+                    TotalCount = Job.ScenarioSetting.TotalConnectionCount,
+                    GroupDefinitions = Job.ScenarioSetting.GroupDefinitions,
+                    IsAnonymous = Job.ScenarioSetting.IsAnonymous,
+                    Protocol = Job.ScenarioSetting.Protocol,
+                    Rate = Job.ScenarioSetting.Rate / _clients.Count,
+                    Url = _url,
+                });
+            await task;
+        }
+
+        private async Task SetScenarioAsync(
+            MessageClient messageClient,
+            RoundSetting round,
+            CancellationToken cancellationToken)
+        {
+            var task = await messageClient.WhenAllAck(
+                _clients.Keys,
+                Commands.Clients.SetScenario,
+                m => m.IsCompleted,
+                cancellationToken);
+            await messageClient.SetScenarioAsync(
+                new SetScenarioParameters
+                {
+                    Scenarios = Array.ConvertAll(
+                        round.ClientSettings,
+                        cs =>
+                        {
+                            var sd = new ScenarioDefinition { ClientBehavior = cs.Behavior };
+                            if (cs.Behavior == ClientBehavior.GroupBroadcast)
+                            {
+                                sd.SetDetail(
+                                    new GroupClientBehaviorDetailDefinition
+                                    {
+                                        Count = cs.Count,
+                                        Interval = TimeSpan.FromMilliseconds(cs.IntervalInMilliseconds),
+                                        MessageSize = cs.MessageSize,
+                                        GroupFamily = cs.GroupFamily ?? throw new InvalidDataException("Group family is required."),
+                                    });
+                            }
+                            else
+                            {
+                                sd.SetDetail(
+                                    new ClientBehaviorDetailDefinition
+                                    {
+                                        Count = cs.Count,
+                                        Interval = TimeSpan.FromMilliseconds(cs.IntervalInMilliseconds),
+                                        MessageSize = cs.MessageSize,
+                                    });
+                            }
+                            return sd;
+                        }),
+                });
+            await task;
+        }
+
+        private async Task StartScenarioAsync(
+            MessageClient messageClient,
+            CancellationToken cancellationToken)
+        {
+            var task = await messageClient.WhenAllAck(
+                _clients.Keys,
+                Commands.Clients.StartScenario,
+                m => m.IsCompleted,
+                cancellationToken);
+            await messageClient.StartScenarioAsync(
+                new StartScenarioParameters());
+            await task;
+        }
+
+        private async Task StopScenarioAsync(
+            MessageClient messageClient,
+            CancellationToken cancellationToken)
+        {
+            var task = await messageClient.WhenAllAck(
+                _clients.Keys,
+                Commands.Clients.StopScenario,
+                m => m.IsCompleted,
+                cancellationToken);
+            await messageClient.StopScenarioAsync(
+                new StopScenarioParameters());
+            await task;
+        }
+
+        private async Task StopClientConnectionsAsync(
+            MessageClient messageClient,
+            CancellationToken cancellationToken)
+        {
+            var task = await messageClient.WhenAllAck(
+                _clients.Keys,
+                Commands.Clients.StopClientConnections,
+                m => m.IsCompleted,
+                cancellationToken);
+            await messageClient.StopClientConnectionsAsync(
+                new StopClientConnectionsParameters
+                {
+                    Rate = Job.ScenarioSetting.Rate / _clients.Count,
+                });
+            await task;
         }
     }
 }

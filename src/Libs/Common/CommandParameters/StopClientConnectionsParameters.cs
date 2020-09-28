@@ -5,6 +5,6 @@ namespace Azure.SignalRBench.Common
 {
     public class StopClientConnectionsParameters
     {
-        public int Rate { get; set; }
+        public double Rate { get; set; }
     }
 }

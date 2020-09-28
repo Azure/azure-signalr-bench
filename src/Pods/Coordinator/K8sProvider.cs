@@ -22,27 +22,29 @@ namespace Azure.SignalRBench.Coordinator
             _k8s = new Kubernetes(KubernetesClientConfiguration.BuildConfigFromConfigFile(stream));
         }
 
-        public Task CreateServerPodsAsync(string testId, int nodePoolIndex, string[] asrsConnectionStrings, CancellationToken cancellationToken)
+        public Task<string> CreateServerPodsAsync(string testId, int nodePoolIndex, string[] asrsConnectionStrings, CancellationToken cancellationToken)
         {
-            // todo
-            return Task.CompletedTask;
+            // todo: create service
+            // todo: create server deployment
+            return Task.FromResult(string.Empty);
         }
 
         public Task CreateClientPodsAsync(string testId, int nodePoolIndex, string url, CancellationToken cancellationToken)
         {
-            // todo
+            // todo: create client deployment
             return Task.CompletedTask;
         }
 
         public Task DeleteClientPodsAsync(string testId, int nodePoolIndex)
         {
-            // todo
+            // todo: delete client deployment
             return Task.CompletedTask;
         }
 
         public Task DeleteServerPodsAsync(string testId, int nodePoolIndex)
         {
-            // todo
+            // todo: delete service
+            // todo: delete server deployment
             return Task.CompletedTask;
         }
     }

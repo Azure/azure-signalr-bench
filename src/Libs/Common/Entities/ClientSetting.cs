@@ -8,6 +8,7 @@ namespace Azure.SignalRBench.Common
         public ClientBehavior Behavior { get; set; }
         public int IntervalInMilliseconds { get; set; }
         public int Count { get; set; }
+        public int MessageSize { get; set; }
         public string? GroupFamily { get; set; }
     }
 }
