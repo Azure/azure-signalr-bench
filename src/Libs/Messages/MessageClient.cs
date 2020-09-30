@@ -55,9 +55,9 @@ namespace Azure.SignalRBench.Messages
             await _subscriber.PublishAsync($"{_testId}:{target}:{commandMessage.Command}:{nameof(MessageType.Command)}", JsonConvert.SerializeObject(commandMessage));
         }
 
-        public async Task AckAsync(CommandMessage commandMessage, bool isCompleted, double? progress = null)
+        public async Task AckAsync(CommandMessage commandMessage, AckStatus status, string? error = null, double? progress = null)
         {
-            var message = new AckMessage { Sender = _sender, AckId = commandMessage.AckId, IsCompleted = isCompleted, Progress = progress };
+            var message = new AckMessage { Sender = _sender, AckId = commandMessage.AckId, Status = status, Error = error, Progress = progress };
             await _subscriber.PublishAsync($"{_testId}:{commandMessage.Sender}:{commandMessage.Command}:{nameof(MessageType.Ack)}", JsonConvert.SerializeObject(message));
         }
 

@@ -57,11 +57,13 @@ namespace Azure.SignalRBench.Client
             var setClientRangeParameters = commandMessage.Parameters?.ToObject<SetClientRangeParameters>();
             if (setClientRangeParameters == null)
             {
-                _logger.LogError("Unable to handle range message, parameter cannot be null.");
+                const string error = "Unable to handle range message, parameter cannot be null.";
+                _logger.LogError(error);
+                await Client.AckFaultedAsync(commandMessage, error);
                 return;
             }
             _scenarioState.SetClientRange(setClientRangeParameters);
-            await Client.AckAsync(commandMessage, true);
+            await Client.AckCompletedAsync(commandMessage);
         }
 
         private async Task StartClientConnections(CommandMessage commandMessage)
@@ -70,11 +72,13 @@ namespace Azure.SignalRBench.Client
             var startConnectionsParameters = commandMessage.Parameters?.ToObject<StartClientConnectionsParameters>();
             if (startConnectionsParameters == null)
             {
-                _logger.LogError("Unable to handle start client connections message, parameter cannot be null.");
+                const string error = "Unable to handle start client connections message, parameter cannot be null.";
+                _logger.LogError(error);
+                await Client.AckFaultedAsync(commandMessage, error);
                 return;
             }
             await _scenarioState.StartClientConnections(startConnectionsParameters);
-            await Client.AckAsync(commandMessage, true);
+            await Client.AckCompletedAsync(commandMessage);
         }
 
         private async Task StopClientConnections(CommandMessage commandMessage)
@@ -83,11 +87,13 @@ namespace Azure.SignalRBench.Client
             var stopConnectionsParameters = commandMessage.Parameters?.ToObject<StopClientConnectionsParameters>();
             if (stopConnectionsParameters == null)
             {
-                _logger.LogError("Unable to handle stop client connections message, parameter cannot be null.");
+                const string error = "Unable to handle stop client connections message, parameter cannot be null.";
+                _logger.LogError(error);
+                await Client.AckFaultedAsync(commandMessage, error);
                 return;
             }
             await _scenarioState.StopClientConnections(stopConnectionsParameters);
-            await Client.AckAsync(commandMessage, true);
+            await Client.AckCompletedAsync(commandMessage);
         }
 
         private async Task SetScenario(CommandMessage commandMessage)
@@ -96,11 +102,13 @@ namespace Azure.SignalRBench.Client
             var setSenarioParameters = commandMessage.Parameters?.ToObject<SetScenarioParameters>();
             if (setSenarioParameters == null)
             {
-                _logger.LogError("Unable to handle set scenario message, parameter cannot be null.");
+                const string error = "Unable to handle set scenario message, parameter cannot be null.";
+                _logger.LogError(error);
+                await Client.AckFaultedAsync(commandMessage, error);
                 return;
             }
             _scenarioState.SetSenario(setSenarioParameters);
-            await Client.AckAsync(commandMessage, true);
+            await Client.AckCompletedAsync(commandMessage);
         }
 
         private async Task StartScenario(CommandMessage commandMessage)
@@ -109,11 +117,13 @@ namespace Azure.SignalRBench.Client
             var startScenarioParameters = commandMessage.Parameters?.ToObject<StartScenarioParameters>();
             if (startScenarioParameters == null)
             {
-                _logger.LogError("Unable to handle start scenario message, parameter cannot be null.");
+                const string error = "Unable to handle start scenario message, parameter cannot be null.";
+                _logger.LogError(error);
+                await Client.AckFaultedAsync(commandMessage, error);
                 return;
             }
             _scenarioState.StartSenario(startScenarioParameters);
-            await Client.AckAsync(commandMessage, true);
+            await Client.AckCompletedAsync(commandMessage);
         }
 
         private async Task StopScenario(CommandMessage commandMessage)
@@ -122,11 +132,13 @@ namespace Azure.SignalRBench.Client
             var stopScenarioParameters = commandMessage.Parameters?.ToObject<StopScenarioParameters>();
             if (stopScenarioParameters == null)
             {
-                _logger.LogError("Unable to handle stop scenario message, parameter cannot be null.");
+                const string error = "Unable to handle stop scenario message, parameter cannot be null.";
+                _logger.LogError(error);
+                await Client.AckFaultedAsync(commandMessage, error);
                 return;
             }
             _scenarioState.StopSenario(stopScenarioParameters);
-            await Client.AckAsync(commandMessage, true);
+            await Client.AckCompletedAsync(commandMessage);
         }
     }
 }

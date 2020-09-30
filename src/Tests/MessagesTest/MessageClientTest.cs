@@ -52,7 +52,7 @@ namespace Azure.SignalRBench.Tests.MessagesTest
             var ack = await ackTcs.Task.OrTimeout();
             Assert.Equal(sender2, ack.Sender);
             Assert.Equal(cmd.AckId, ack.AckId);
-            Assert.True(ack.IsCompleted);
+            Assert.Equal(AckStatus.Completed, ack.Status);
             Assert.Null(ack.Progress);
         }
     }

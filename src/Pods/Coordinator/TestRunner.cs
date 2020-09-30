@@ -250,10 +250,9 @@ namespace Azure.SignalRBench.Coordinator
                     _logger.LogInformation("Test job {testId}: Server pods ready.", Job.TestId);
                 }));
 
-            var clientCompleteTask = await messageClient.WhenAllAck(
+            var clientCompleteTask = await messageClient.GetWhenAllAckAsync(
                 _clients.Keys,
                 Commands.Clients.SetClientRange,
-                m => m.IsCompleted,
                 cancellationToken);
             await Task.WhenAll(_clients.Select(pair => messageClient.SetClientRangeAsync(pair.Key, pair.Value)));
             await clientCompleteTask;
@@ -263,10 +262,9 @@ namespace Azure.SignalRBench.Coordinator
             MessageClient messageClient,
             CancellationToken cancellationToken)
         {
-            var task = await messageClient.WhenAllAck(
+            var task = await messageClient.GetWhenAllAckAsync(
                 _clients.Keys,
                 Commands.Clients.StartClientConnections,
-                m => m.IsCompleted,
                 cancellationToken);
             await messageClient.StartClientConnectionsAsync(
                 new StartClientConnectionsParameters
@@ -287,10 +285,9 @@ namespace Azure.SignalRBench.Coordinator
             RoundSetting round,
             CancellationToken cancellationToken)
         {
-            var task = await messageClient.WhenAllAck(
+            var task = await messageClient.GetWhenAllAckAsync(
                 _clients.Keys,
                 Commands.Clients.SetScenario,
-                m => m.IsCompleted,
                 cancellationToken);
             await messageClient.SetScenarioAsync(
                 new SetScenarioParameters
@@ -331,10 +328,9 @@ namespace Azure.SignalRBench.Coordinator
             MessageClient messageClient,
             CancellationToken cancellationToken)
         {
-            var task = await messageClient.WhenAllAck(
+            var task = await messageClient.GetWhenAllAckAsync(
                 _clients.Keys,
                 Commands.Clients.StartScenario,
-                m => m.IsCompleted,
                 cancellationToken);
             await messageClient.StartScenarioAsync(
                 new StartScenarioParameters());
@@ -345,10 +341,9 @@ namespace Azure.SignalRBench.Coordinator
             MessageClient messageClient,
             CancellationToken cancellationToken)
         {
-            var task = await messageClient.WhenAllAck(
+            var task = await messageClient.GetWhenAllAckAsync(
                 _clients.Keys,
                 Commands.Clients.StopScenario,
-                m => m.IsCompleted,
                 cancellationToken);
             await messageClient.StopScenarioAsync(
                 new StopScenarioParameters());
@@ -359,10 +354,9 @@ namespace Azure.SignalRBench.Coordinator
             MessageClient messageClient,
             CancellationToken cancellationToken)
         {
-            var task = await messageClient.WhenAllAck(
+            var task = await messageClient.GetWhenAllAckAsync(
                 _clients.Keys,
                 Commands.Clients.StopClientConnections,
-                m => m.IsCompleted,
                 cancellationToken);
             await messageClient.StopClientConnectionsAsync(
                 new StopClientConnectionsParameters

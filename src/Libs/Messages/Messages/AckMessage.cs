@@ -11,7 +11,9 @@ namespace Azure.SignalRBench.Messages
         public int AckId { get; set; }
 
         [JsonProperty(Required = Required.Always)]
-        public bool IsCompleted { get; set; }
+        public AckStatus Status { get; set; }
+
+        public string? Error { get; set; }
 
         public double? Progress { get; set; }
     }

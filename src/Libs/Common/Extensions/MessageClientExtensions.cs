@@ -109,16 +109,21 @@ namespace Azure.SignalRBench.Messages
         #region Ack
 
         public static Task AckCompletedAsync(this IMessageClient client, CommandMessage command) =>
-            client.AckAsync(command, true);
+            client.AckAsync(command, AckStatus.Completed);
+
+        public static Task AckCanceledAsync(this IMessageClient client, CommandMessage command) =>
+            client.AckAsync(command, AckStatus.Canceled);
+
+        public static Task AckFaultedAsync(this IMessageClient client, CommandMessage command, string error) =>
+            client.AckAsync(command, AckStatus.Faulted, error);
 
         public static Task AckProgressAsync(this IMessageClient client, CommandMessage command, double progress) =>
-            client.AckAsync(command, false, progress);
+            client.AckAsync(command, AckStatus.Running, progress: progress);
 
-        public static async Task<Task> WhenAllAck(
+        public static async Task<Task> GetWhenAllAckAsync(
             this MessageClient messageClient,
             IReadOnlyCollection<string> senders,
             string command,
-            Func<AckMessage, bool> filter,
             CancellationToken cancellationToken)
         {
             var acks = new Dictionary<string, TaskCompletionSource<bool>>();
@@ -133,25 +138,44 @@ namespace Azure.SignalRBench.Messages
                     command,
                     ack =>
                     {
-                        if (filter(ack))
+                        if (acks.TryGetValue(ack.Sender, out var tcs))
                         {
-                            if (acks.TryGetValue(ack.Sender, out var tcs))
+                            switch (ack.Status)
                             {
-                                tcs.TrySetResult(true);
+                                case AckStatus.Canceled:
+                                    tcs.TrySetCanceled();
+                                    break;
+                                case AckStatus.Faulted:
+                                    tcs.TrySetException(new RpcFaultedException(ack.Error ?? string.Empty));
+                                    break;
+                                case AckStatus.Completed:
+                                    tcs.TrySetResult(true);
+                                    break;
+                                case AckStatus.Running:
+                                default:
+                                    break;
                             }
                         }
                         return Task.CompletedTask;
                     }));
 
-            return Task.Run(async () =>
-            {
-                var task = Task.WhenAll(acks.Select(x => x.Value.Task));
+            _ = CancelAfter(TimeSpan.FromMinutes(5));
+            return Task.WhenAll(acks.Select(x => x.Value.Task));
 
-                if (task != await Task.WhenAny(task, Task.Delay(TimeSpan.FromMinutes(5), cancellationToken)))
+            async Task CancelAfter(TimeSpan span)
+            {
+                try
                 {
-                    throw new TaskCanceledException();
+                    await Task.Delay(span, cancellationToken);
                 }
-            });
+                finally
+                {
+                    foreach (var pair in acks)
+                    {
+                        pair.Value.TrySetCanceled();
+                    }
+                }
+            }
         }
 
         #endregion
