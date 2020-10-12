@@ -69,14 +69,15 @@ namespace Azure.SignalRBench.Coordinator
         private async Task RunAsync(IQueue<TestJob> queue, CancellationToken cancellationToken)
         {
             int poolCount = await AksProvider.GetNodePoolCountAsync();
-            _runningTasks = new Task[poolCount];
-            Array.Fill(_runningTasks, Task.CompletedTask);
+            var runningTasks = new Task[poolCount];
+            Array.Fill(runningTasks, Task.CompletedTask);
+            _runningTasks = runningTasks;
             await foreach (var message in queue.Consume(TimeSpan.FromMinutes(30), cancellationToken))
             {
                 _logger.LogInformation("Recieve test job: {testId}.", message.Value.TestId);
-                var index = Array.FindIndex(_runningTasks, t => t.IsCompleted);
-                _runningTasks[index] = RunOneAsync(queue, message, index, cancellationToken);
-                await Task.WhenAny(_runningTasks);
+                var index = Array.FindIndex(runningTasks, t => t.IsCompleted);
+                runningTasks[index] = RunOneAsync(queue, message, index, cancellationToken);
+                await Task.WhenAny(runningTasks);
             }
         }
 
