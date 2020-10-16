@@ -24,13 +24,19 @@ namespace Azure.SignalRBench.Coordinator
 
         private ISignalROperations SignalROperations => _signalROperations ?? throw new InvalidOperationException();
 
+        public Task CreateResourceGroupAsync(string resourceGroup, string location)
+        {
+            // todo
+            return Task.CompletedTask;
+        }
+
         public Task CreateInstanceAsync(string resourceGroup, string name, string location, string tier, int size, SignalRServiceMode mode, CancellationToken cancellationToken)
         {
             // todo
             return Task.CompletedTask;
         }
 
-        public Task<string> CreateKeyAsync(string resourceGroup, string name, string location, CancellationToken cancellationToken)
+        public Task<string> GetKeyAsync(string resourceGroup, string name, string location, CancellationToken cancellationToken)
         {
             // todo
             return Task.FromResult(string.Empty);

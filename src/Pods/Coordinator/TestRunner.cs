@@ -132,6 +132,7 @@ namespace Azure.SignalRBench.Coordinator
         private async Task<string> CreateAsrsAsync(ServiceSetting ss, string name, CancellationToken cancellationToken)
         {
             _logger.LogInformation("Test job {testId}: Creating SignalR service instance.", Job.TestId);
+            await SignalRProvider.CreateResourceGroupAsync(Job.TestId, ss.Location ?? DefaultLocation);
             await SignalRProvider.CreateInstanceAsync(
                 Job.TestId,
                 name,
@@ -142,7 +143,7 @@ namespace Azure.SignalRBench.Coordinator
                 cancellationToken);
             _logger.LogInformation("Test job {testId}: SignalR service instance created.", Job.TestId);
             _logger.LogInformation("Test job {testId}: Retrieving SignalR service connection string.", Job.TestId);
-            var result = await SignalRProvider.CreateKeyAsync(Job.TestId, name, ss.Location ?? DefaultLocation, cancellationToken);
+            var result = await SignalRProvider.GetKeyAsync(Job.TestId, name, ss.Location ?? DefaultLocation, cancellationToken);
             _logger.LogInformation("Test job {testId}: SignalR service connection string retrieved.", Job.TestId);
             return result;
         }
