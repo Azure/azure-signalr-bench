@@ -14,7 +14,7 @@ using MAzure = Microsoft.Azure.Management.Fluent.Azure;
 
 namespace Azure.SignalRBench.Coordinator
 {
-    public class ArmProvider
+    public class ArmProvider : IArmProvider
     {
         private string? _resourceGroup;
         private IAzure? _azure;

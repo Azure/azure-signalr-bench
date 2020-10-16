@@ -20,9 +20,9 @@ namespace Azure.SignalRBench.Coordinator
 
         public TestScheduler(
             PerfStorageProvider storageProvider,
-            AksProvider aksProvider,
-            K8sProvider k8sProvider,
-            SignalRProvider signalRProvider,
+            IAksProvider aksProvider,
+            IK8sProvider k8sProvider,
+            ISignalRProvider signalRProvider,
             TestRunnerFactory testRunnerFactory,
             ILogger<TestScheduler> logger)
         {
@@ -36,11 +36,11 @@ namespace Azure.SignalRBench.Coordinator
 
         public PerfStorageProvider StorageProvider { get; }
 
-        public AksProvider AksProvider { get; }
+        public IAksProvider AksProvider { get; }
 
-        public K8sProvider K8sProvider { get; }
+        public IK8sProvider K8sProvider { get; }
 
-        public SignalRProvider SignalRProvider { get; }
+        public ISignalRProvider SignalRProvider { get; }
 
         public TestRunnerFactory TestRunnerFactory { get; }
 
@@ -68,7 +68,7 @@ namespace Azure.SignalRBench.Coordinator
 
         private async Task RunAsync(IQueue<TestJob> queue, CancellationToken cancellationToken)
         {
-            int poolCount = await AksProvider.GetNodePoolCountAsync();
+            int poolCount = await AksProvider.GetNodePoolCountAsync(cancellationToken);
             var runningTasks = new Task[poolCount];
             Array.Fill(runningTasks, Task.CompletedTask);
             _runningTasks = runningTasks;

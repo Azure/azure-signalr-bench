@@ -11,7 +11,7 @@ using Microsoft.Azure.Management.SignalR;
 
 namespace Azure.SignalRBench.Coordinator
 {
-    public class SignalRProvider
+    public class SignalRProvider : ISignalRProvider
     {
         private ISignalROperations? _signalROperations;
 

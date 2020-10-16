@@ -17,20 +17,20 @@ namespace Azure.SignalRBench.Coordinator
     public class CoordinatorHostedService : IHostedService
     {
         private readonly SecretClient _secretClient;
-        private readonly K8sProvider _k8sProvider;
-        private readonly AksProvider _aksProvider;
-        private readonly ArmProvider _armProvider;
-        private readonly SignalRProvider _signalRProvider;
+        private readonly IK8sProvider _k8sProvider;
+        private readonly IAksProvider _aksProvider;
+        private readonly IArmProvider _armProvider;
+        private readonly ISignalRProvider _signalRProvider;
         private readonly PerfStorageProvider _storageProvider;
         private readonly TestScheduler _scheduler;
 
         public CoordinatorHostedService(
             SecretClient secretClient,
             PerfStorageProvider storageProvider,
-            K8sProvider k8sProvider,
-            AksProvider aksProvider,
-            ArmProvider armProvider,
-            SignalRProvider signalRProvider,
+            IK8sProvider k8sProvider,
+            IAksProvider aksProvider,
+            IArmProvider armProvider,
+            ISignalRProvider signalRProvider,
             TestScheduler scheduler)
         {
             _secretClient = secretClient;

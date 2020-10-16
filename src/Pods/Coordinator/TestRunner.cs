@@ -30,9 +30,9 @@ namespace Azure.SignalRBench.Coordinator
             string podName,
             string redisConnectionString,
             int nodePoolIndex,
-            AksProvider aksProvider,
-            K8sProvider k8sProvider,
-            SignalRProvider signalRProvider,
+            IAksProvider aksProvider,
+            IK8sProvider k8sProvider,
+            ISignalRProvider signalRProvider,
             string defaultLocation,
             ILogger<TestRunner> logger)
         {
@@ -55,11 +55,11 @@ namespace Azure.SignalRBench.Coordinator
 
         public int NodePoolIndex { get; set; }
 
-        public AksProvider AksProvider { get; }
+        public IAksProvider AksProvider { get; }
 
-        public K8sProvider K8sProvider { get; }
+        public IK8sProvider K8sProvider { get; }
 
-        public SignalRProvider SignalRProvider { get; }
+        public ISignalRProvider SignalRProvider { get; }
 
         public string DefaultLocation { get; }
 

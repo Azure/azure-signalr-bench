@@ -15,9 +15,9 @@ namespace Azure.SignalRBench.Coordinator
 
         public TestRunnerFactory(
             IConfiguration configuration,
-            AksProvider aksProvider,
-            K8sProvider k8sProvider,
-            SignalRProvider signalRProvider,
+            IAksProvider aksProvider,
+            IK8sProvider k8sProvider,
+            ISignalRProvider signalRProvider,
             ILogger<TestRunner> logger)
         {
             _podName = configuration[Constants.ConfigurationKeys.PodNameStringKey];
@@ -28,11 +28,11 @@ namespace Azure.SignalRBench.Coordinator
             _logger = logger;
         }
 
-        public AksProvider AksProvider { get; }
+        public IAksProvider AksProvider { get; }
 
-        public K8sProvider K8sProvider { get; }
+        public IK8sProvider K8sProvider { get; }
 
-        public SignalRProvider SignalRProvider { get; }
+        public ISignalRProvider SignalRProvider { get; }
 
         public TestRunner Create(
             TestJob job,

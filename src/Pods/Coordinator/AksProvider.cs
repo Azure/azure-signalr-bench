@@ -12,9 +12,9 @@ using Microsoft.Azure.Management.ResourceManager.Fluent.Authentication;
 
 namespace Azure.SignalRBench.Coordinator
 {
-    public class AksProvider
+    public class AksProvider : IAksProvider
     {
-        private IAgentPoolsOperations? _agentPoolsOperations;
+        private IAgentPoolsOperations? _client;
         private string? _resourceGroup;
         private string? _aksName;
 
@@ -27,28 +27,56 @@ namespace Azure.SignalRBench.Coordinator
             {
                 SubscriptionId = subscription
             };
-            _agentPoolsOperations = managementClient.AgentPools;
+            _client = managementClient.AgentPools;
         }
 
-        public async Task CreateOrUpdateAgentPool(string agentPoolName, AgentPoolInner agentPoolInner)
+        public async Task CreateOrUpdateAgentPool(int nodePoolIndex, string vmSize, int nodeCount, string osType, CancellationToken cancellationToken)
         {
-            if (_agentPoolsOperations == null)
+            if (_client == null)
             {
                 throw new InvalidOperationException();
             }
-            await _agentPoolsOperations.CreateOrUpdateAsync(_resourceGroup, _aksName, agentPoolName, agentPoolInner);
+            await _client.CreateOrUpdateAsync(
+                _resourceGroup,
+                _aksName,
+                ToPoolName(nodePoolIndex),
+                new AgentPoolInner
+                {
+                    AgentPoolType = AgentPoolType.VirtualMachineScaleSets,
+                    Count = nodeCount,
+                    EnableAutoScaling = false,
+                    EnableNodePublicIP = true,
+                    OsType = OSType.Parse(osType),
+                    VmSize = ContainerServiceVMSizeTypes.Parse(vmSize),
+                    NodeTaints = new[] { $"pool:{nodePoolIndex}" },
+                },
+                cancellationToken);
         }
 
-        public Task EnsureNodeCountAsync(int poolId, int count, CancellationToken cancellationToken)
+        public async Task EnsureNodeCountAsync(int nodePoolIndex, int nodeCount, CancellationToken cancellationToken)
         {
-            // todo
-            return Task.CompletedTask;
+            if (_client == null)
+            {
+                throw new InvalidOperationException();
+            }
+            var pool = await _client.GetAsync(_resourceGroup, _aksName, ToPoolName(nodePoolIndex), cancellationToken);
+            if (pool.Count == nodeCount)
+            {
+                return;
+            }
+            await CreateOrUpdateAgentPool(nodePoolIndex, pool.VmSize.Value, nodeCount, pool.OsType.Value, cancellationToken);
         }
 
-        public Task<int> GetNodePoolCountAsync()
+        public Task<int> GetNodePoolCountAsync(CancellationToken cancellationToken)
         {
+            if (_client == null)
+            {
+                throw new InvalidOperationException();
+            }
             // todo
             return Task.FromResult(1);
         }
+
+        private string ToPoolName(int nodePoolIndex) => $"Pool{nodePoolIndex}";
     }
 }

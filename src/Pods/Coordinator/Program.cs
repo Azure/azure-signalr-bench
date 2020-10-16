@@ -33,10 +33,10 @@ namespace Azure.SignalRBench.Coordinator
                             new Uri(hostContext.Configuration[Constants.ConfigurationKeys.KeyVaultUrlKey]),
                             new DefaultAzureCredential()));
                     services.AddSingleton<PerfStorageProvider>();
-                    services.AddSingleton<K8sProvider>();
-                    services.AddSingleton<AksProvider>();
-                    services.AddSingleton<ArmProvider>();
-                    services.AddSingleton<SignalRProvider>();
+                    services.AddSingleton<IK8sProvider, K8sProvider>();
+                    services.AddSingleton<IAksProvider, AksProvider>();
+                    services.AddSingleton<IArmProvider, ArmProvider>();
+                    services.AddSingleton<ISignalRProvider, SignalRProvider>();
                     services.AddSingleton<TestScheduler>();
                     services.AddSingleton<TestRunnerFactory>();
                     services.AddHostedService<CoordinatorHostedService>();

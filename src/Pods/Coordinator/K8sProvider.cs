@@ -10,7 +10,7 @@ using k8s;
 
 namespace Azure.SignalRBench.Coordinator
 {
-    public class K8sProvider
+    public class K8sProvider : IK8sProvider
     {
         private Kubernetes? _k8s;
 
