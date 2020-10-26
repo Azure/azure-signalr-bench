@@ -1,3 +1,5 @@
+#!/bin/bash
+
 function vsts_trigger_jenkins_perf_test {
     # do NOT support scenario list
     # only support one variable changes
