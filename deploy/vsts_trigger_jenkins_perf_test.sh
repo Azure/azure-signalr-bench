@@ -26,6 +26,7 @@ function vsts_trigger_jenkins_perf_test {
     local release_id=${21}
     local aspnet=${22}
     local service_mode=${23}
+    local duration=${24}
 
     for ms in ${message_sizes[*]}; do \
     for ts in ${transport_types[*]}; do \
@@ -48,7 +49,7 @@ function vsts_trigger_jenkins_perf_test {
     --data build_type="$build_type" \
     --data GroupTypeList="$gp" \
     --data AspNetSignalR="$aspnet" \
-    --data sigbench_run_duration="60" \
+    --data sigbench_run_duration="$duration" \
     --data ServiceMode="$service_mode" \
     --data build_title_extra="Release Name: ${release_name} ID: ${release_id}" ; done; done; done; done;
 }
