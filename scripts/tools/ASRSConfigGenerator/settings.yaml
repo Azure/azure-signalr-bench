@@ -31,7 +31,7 @@ scenario:echo,transport:Websockets:
 scenario:echo,transport:LongPolling:
   normal_connection: [500, 1000, 2500, 5000, 10000, 25000, 50000]
   max_connection: [750, 1500, 3000, 7500, 15000, 30000, 75000]
-  base_step: [200, 200, 200, 200, 500, 1000, 8000]
+  base_step: [200, 200, 200, 200, 500, 1000, 16000]
   step: [50, 50, 100, 200, 500, 500, 1000]
   step_length: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
   concurrent: [150, 150, 150, 150, 150, 150, 500]
@@ -152,7 +152,7 @@ scenario:sendToClient,transport:Websockets,protocol:messagepack,message_size:256
 scenario:sendToGroup,transport:Websockets,group:tiny,message_size:256:
   normal_connection: [1000, 2000, 5000, 10000, 20000, 50000, 100000]
   max_connection: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
-  base_step: [800, 1000, 1000, 1000, 1000, 1000, 1000]
+  base_step: [800, 1000, 1000, 1000, 1000, 1000, 80000]
   step: [100, 200, 500, 1000, 2000, 5000, 5000]
   step_length: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
   concurrent: [150, 150, 150, 150, 150, 150, 500]
