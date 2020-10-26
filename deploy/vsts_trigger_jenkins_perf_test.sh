@@ -30,21 +30,21 @@ function vsts_trigger_jenkins_perf_test {
     for ts in ${transport_types[*]}; do \
     for gp in ${group_types[*]}; do \
     for i in ${run_indexes[*]}; do curl  $build_url \
-    --user $user_name:$api_token \
-    --data ASRSLocation=$asrs_location \
-    --data bench_serviceunit_list=${units[i]} \
-    --data bench_scenario_list=$scenarios \
-    --data bench_transport_list=$ts \
-    --data bench_encoding_list=$protocols \
-    --data sendToClientMsgSize=$ms \
-    --data VMLocation=$vm_location \
-    --data GlobalVmImageId=$vm_image \
-    --data BenchServerGroup=$vnet_resource_group \
-    --data VnetName=$vnet_name \
-    --data SubnetName=$vnet_subnet \
-    --data clientVmCount=${client_vm_count[i]} \
-    --data serverVmCount=${server_vm_count[i]} \
-    --data build_type=$build_type \
-    --data GroupTypeList=$gp \
+    --user "$user_name:$api_token" \
+    --data ASRSLocation="$asrs_location" \
+    --data bench_serviceunit_list="${units[i]}" \
+    --data bench_scenario_list="$scenarios" \
+    --data bench_transport_list="$ts" \
+    --data bench_encoding_list="$protocols" \
+    --data sendToClientMsgSize="$ms" \
+    --data VMLocation="$vm_location" \
+    --data GlobalVmImageId="$vm_image" \
+    --data BenchServerGroup="$vnet_resource_group" \
+    --data VnetName="$vnet_name" \
+    --data SubnetName="$vnet_subnet" \
+    --data clientVmCount="${client_vm_count[i]}" \
+    --data serverVmCount="${server_vm_count[i]}" \
+    --data build_type="$build_type" \
+    --data GroupTypeList="$gp" \
     --data build_title_extra="Release Name: ${release_name} ID: ${release_id}" ; done; done; done; done;
 }
