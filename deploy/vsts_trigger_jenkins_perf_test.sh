@@ -46,5 +46,5 @@ function vsts_trigger_jenkins_perf_test {
     --data serverVmCount=${server_vm_count[i]} \
     --data build_type=$19 \
     --data GroupTypeList=$gp \
-    --data build_title_extra="Release Name: ${release_name} ID: ${release_id}" ; done; done;
+    --data build_title_extra="Release Name: ${release_name} ID: ${release_id}" ; done; done; done; done;
 }
