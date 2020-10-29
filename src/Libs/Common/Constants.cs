@@ -23,6 +23,8 @@ namespace Azure.SignalRBench.Common
             public const string StorageConnectionStringKey = "storage";
             public const string RedisConnectionStringKey = "redis";
             public const string PodNameStringKey = "Podname";
+            public const string ConnectionString = "connectionString";
+            public const string AppServerUrl = "appServerUrl";
         }
 
         public static class QueueNames

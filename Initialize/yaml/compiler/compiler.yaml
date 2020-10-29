@@ -12,6 +12,8 @@ spec:
       labels:
         app: compiler
     spec:
+      nodeSelector:
+        agentpool: captain
       containers:
         - name: compiler
           image: signalrbenchmark/perf:1.3

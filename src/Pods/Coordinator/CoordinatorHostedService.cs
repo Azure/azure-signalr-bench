@@ -66,8 +66,8 @@ namespace Azure.SignalRBench.Coordinator
                 obj["tenant"]?.Value<string>() ?? throw new InvalidDataException("Unexpected null for ServicePrincipal.Tenant."),
                 azureEnvironment);
 
-            _aksProvider.Initialize(servicePrincipal, subscription, prefix + "rg", prefix + "aks");
-            _armProvider.Initialize(servicePrincipal, subscription, prefix + "rg");
+            _aksProvider.Initialize(servicePrincipal, subscription, prefix + "perfrg", prefix + "perfaks");
+            _armProvider.Initialize(servicePrincipal, subscription, prefix + "perfrg");
             _signalRProvider.Initialize(servicePrincipal, subscription);
             await _scheduler.StartAsync((await locationTask).Value.Value);
         }

@@ -12,6 +12,8 @@ spec:
       labels:
         app: portal
     spec:
+      nodeSelector:
+        agentpool: captain
       containers:
         - name: portal
           image: signalrbenchmark/perf:1.3

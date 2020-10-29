@@ -12,6 +12,8 @@ spec:
       labels:
         app: coordinator
     spec:
+      nodeSelector:
+        agentpool: captain
       containers:
         - name: coordinator
           image: signalrbenchmark/perf:1.3

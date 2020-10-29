@@ -16,6 +16,8 @@ spec:
         role: master
         tier: backend
     spec:
+      nodeSelector:
+        agentpool: captain
       containers:
       - name: master
         image: redis

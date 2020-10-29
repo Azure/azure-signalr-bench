@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -67,16 +68,22 @@ namespace Azure.SignalRBench.Coordinator
             await CreateOrUpdateAgentPool(nodePoolIndex, pool.VmSize.Value, nodeCount, pool.OsType.Value, cancellationToken);
         }
 
-        public Task<int> GetNodePoolCountAsync(CancellationToken cancellationToken)
+        public async Task<int> GetNodePoolCountAsync(CancellationToken cancellationToken)
         {
             if (_client == null)
             {
                 throw new InvalidOperationException();
             }
-            // todo
-            return Task.FromResult(1);
+            var pools = await _client.ListAsync(_resourceGroup, _aksName, cancellationToken);
+            var count = pools.Where(p => p.Name.Contains("pool")).Count();
+            while (pools.NextPageLink != null)
+            {
+                pools = await _client.ListAsync(_resourceGroup, _aksName, cancellationToken);
+                count += pools.Where(p => p.Name.Contains("pool")).Count();
+            }
+            return count;
         }
 
-        private string ToPoolName(int nodePoolIndex) => $"Pool{nodePoolIndex}";
+        public static string ToPoolName(int nodePoolIndex) => $"pool{nodePoolIndex}";
     }
 }
