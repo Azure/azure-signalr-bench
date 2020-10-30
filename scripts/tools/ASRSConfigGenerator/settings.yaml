@@ -186,6 +186,18 @@ scenario:sendToGroup,transport:Websockets,group:big,message_size:256:
   group_count: [10, 10, 10, 10, 10, 10, 10]
   max_group_count: [10, 10, 10, 10, 10, 10, 10]
 
+scenario:sendToGroup,transport:Websockets,group:big,message_size:16384:
+  normal_connection: [1000, 2000, 5000, 10000, 20000, 50000, 100000]
+  max_connection: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
+  base_step: [20, 20, 10, 10, 10, 10, 10]
+  step: [5, 5, 10, 10, 10, 10, 10]
+  step_length: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
+  concurrent: [150, 150, 150, 150, 150, 150, 500]
+  batch_mode: ["LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress"]
+  batch_wait: [1000, 1000, 1000, 1000, 1000, 1000, 500]
+  group_count: [10, 10, 10, 10, 10, 10, 10]
+  max_group_count: [10, 10, 10, 10, 10, 10, 10]
+
 # frequently join leave group
 scenario:frequentJoinLeaveGroup,transport:Websockets,group:tiny:
   normal_connection: [1000, 2000, 5000, 10000, 20000, 50000, 100000]
