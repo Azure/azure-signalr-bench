@@ -118,7 +118,7 @@ namespace Azure.SignalRBench.Coordinator
                                 },
                                 Args=new List<String>()
                                 {
-                                    "cp /mnt/perf/manifest/AppServer/AppServer.zip /home ; cd /home ; unzip AppServer.zip ; ./AppServer;tail -f /dev/null"
+                                    "cp /mnt/perf/manifest/AppServer/AppServer.zip /home ; cd /home ; unzip AppServer.zip ;exec ./AppServer;"
                                 },
                                 Env=new List<V1EnvVar>()
                                 {
@@ -213,7 +213,7 @@ namespace Azure.SignalRBench.Coordinator
                                 },
                                 Args=new List<String>()
                                 {
-                                    "cp /mnt/perf/manifest/Client/Client.zip /home ; cd /home ; unzip Client.zip ; ./Client;tail -f /dev/null"
+                                    "cp /mnt/perf/manifest/Client/Client.zip /home ; cd /home ; unzip Client.zip ; exec ./Client"
                                 },
                                 Env=new List<V1EnvVar>()
                                 {

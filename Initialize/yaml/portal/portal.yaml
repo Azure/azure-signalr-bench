@@ -28,7 +28,7 @@ spec:
             - mountPath: "/mnt/perf"
               name: volume
           command: ["/bin/sh", "-c"]
-          args: ["cp /mnt/perf/manifest/Portal/Portal.zip /home ; cd /home ; unzip Portal.zip ; ./Portal"]
+          args: ["cp /mnt/perf/manifest/Portal/Portal.zip /home ; cd /home ; unzip Portal.zip ; exec./Portal"]
       volumes:
         - name: volume
           azureFile:
