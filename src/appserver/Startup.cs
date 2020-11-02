@@ -29,17 +29,17 @@ namespace Microsoft.Azure.SignalR.PerfTest.AppServer
         {
             if (_useLocalSignalR)
             {
-                services.AddSignalR().AddMessagePackProtocol();
+                services.AddSignalR(o => o.MaximumReceiveMessageSize = null).AddMessagePackProtocol();
             }
             else
             {
-                services.AddSignalR()
+                services.AddSignalR(o => o.MaximumReceiveMessageSize = null)
                         .AddMessagePackProtocol()
                         .AddAzureSignalR(option =>
                 {
                     option.AccessTokenLifetime = TimeSpan.FromHours(_serverConfig.AccessTokenLifetime);
                     option.ConnectionCount = _serverConfig.ConnectionNumber;
-                    option.ConnectionString = _serverConfig.ConnectionString;
+                    option.Endpoints = Array.ConvertAll(_serverConfig.ConnectionString.Split("!"), c => new ServiceEndpoint(c));
                 });
             }
             services.Replace(ServiceDescriptor.Singleton(typeof(ILoggerFactory), typeof(TimedLoggerFactory)));
