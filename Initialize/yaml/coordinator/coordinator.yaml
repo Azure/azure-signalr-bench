@@ -12,6 +12,8 @@ spec:
       labels:
         app: coordinator
     spec:
+      nodeSelector:
+        agentpool: captain
       containers:
         - name: coordinator
           image: signalrbenchmark/perf:1.3
@@ -26,7 +28,7 @@ spec:
             - mountPath: "/mnt/perf"
               name: volume
           command: ["/bin/sh", "-c"]
-          args: ["cp /mnt/perf/manifest/Coordinator/Coordinator.zip /home ; cd /home ; unzip Coordinator.zip ; ./Coordinator; tail -f /dev/null"]
+          args: ["cp /mnt/perf/manifest/Coordinator/Coordinator.zip /home ; cd /home ; unzip Coordinator.zip ;exec ./Coordinator;"]
       volumes:
         - name: volume
           azureFile:

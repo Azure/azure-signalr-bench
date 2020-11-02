@@ -12,6 +12,8 @@ spec:
       labels:
         app: compiler
     spec:
+      nodeSelector:
+        agentpool: captain
       containers:
         - name: compiler
           image: signalrbenchmark/perf:1.3
@@ -26,7 +28,7 @@ spec:
             - mountPath: "/mnt/perf"
               name: volume
           command: ["/bin/sh", "-c"]
-          args: ["cp /mnt/perf/manifest/Compiler/Compiler.zip /home ; cd /home ; unzip Compiler.zip ; ./Compiler;tail -f /dev/null"]
+          args: ["cp /mnt/perf/manifest/Compiler/Compiler.zip /home ; cd /home ; unzip Compiler.zip ;exec ./Compiler;"]
       volumes:
         - name: volume
           azureFile:
