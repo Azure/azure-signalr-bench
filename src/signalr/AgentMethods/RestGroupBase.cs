@@ -13,32 +13,32 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.AgentMethods
         protected override async Task SendMessages(IEnumerable<Package> packages)
         {
             var hubContext = await CreateHubContextAsync();
-            await Task.WhenAll(from package in packages
-                               let index = ConnectionIndex[package.LocalIndex]
-                               let groupIndex = index % GroupCount
-                               let indexInGroup = index / GroupCount
-                               let connection = package.Connection
-                               let data = package.Data
-                               let restApiClient = hubContext
-                               where Mode == SignalREnums.GroupConfigMode.Group
-                                     && IsSending(indexInGroup, GroupInternalModulo, GroupInternalRemainderBegin, GroupInternalRemainderEnd)
-                                     && IsSending(groupIndex, GroupCount, GroupLevelRemainderBegin, GroupLevelRemainderEnd)
-                                     || Mode == SignalREnums.GroupConfigMode.Connection
-                                     && IsSending(index, Modulo, RemainderBegin, RemainderEnd)
-                               select ContinuousSend((GroupName: SignalRUtils.GroupName(Type, index % GroupCount),
-                                                      RestApiProvider: restApiClient),
-                                                      data,
-                                                      SendToGroup,
-                                                      TimeSpan.FromMilliseconds(Duration),
-                                                      TimeSpan.FromMilliseconds(Interval),
-                                                      TimeSpan.FromMilliseconds(1),
-                                                      TimeSpan.FromMilliseconds(Interval)));
+            await Task.WhenAll(
+                from package in packages
+                let index = ConnectionIndex[package.LocalIndex]
+                let groupIndex = index % GroupCount
+                let indexInGroup = index / GroupCount
+                let connection = package.Connection
+                let data = package.Data
+                let restApiClient = hubContext
+                where Mode == SignalREnums.GroupConfigMode.Group
+                      && IsSending(indexInGroup, GroupInternalModulo, GroupInternalRemainderBegin, GroupInternalRemainderEnd)
+                      && IsSending(groupIndex, GroupCount, GroupLevelRemainderBegin, GroupLevelRemainderEnd)
+                      || Mode == SignalREnums.GroupConfigMode.Connection
+                      && IsSending(index, Modulo, RemainderBegin, RemainderEnd)
+                select ContinuousSend(
+                    (GroupName: SignalRUtils.GroupName(Type, index % GroupCount), RestApiProvider: restApiClient),
+                    data,
+                    SendToGroup,
+                    TimeSpan.FromMilliseconds(Duration),
+                    TimeSpan.FromMilliseconds(Interval),
+                    TimeSpan.FromMilliseconds(1),
+                    TimeSpan.FromMilliseconds(Interval)));
         }
 
         private async Task SendToGroup(
-            (string GroupName,
-             IServiceHubContext RestApiProvider) package,
-             IDictionary<string, object> data)
+            (string GroupName, IServiceHubContext RestApiProvider) package,
+            BenchMessage data)
         {
             try
             {

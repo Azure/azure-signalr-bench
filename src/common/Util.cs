@@ -95,7 +95,7 @@ namespace Common
             }
         }
 
-        public static void WriteFile(string content, string path, bool append=false)
+        public static void WriteFile(string content, string path, bool append = false)
         {
             using (StreamWriter sw = new StreamWriter(path, append))
             {
@@ -135,11 +135,7 @@ namespace Common
             return (begin, end);
         }
 
-        public static long Timestamp()
-        {
-            var unixDateTime = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
-            return unixDateTime;
-        }
+        public static long Timestamp() => DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
 
         public static string Timestamp2DateTimeStr(long timestamp)
         {
@@ -228,29 +224,29 @@ namespace Common
                 .Build())
             {
                 await Task.WhenAll(from item in source
-                                 select Task.Run(async () =>
-                                 {
-                                     try
-                                     {
-                                         await tokenBucket.WaitAsync();
-                                         try
-                                         {
-                                             await f(item);
-                                         }
-                                         catch (System.OperationCanceledException e)
-                                         {
-                                             Log.Warning($"see cancellation in {f.Method.Name}: {e.Message}");
-                                         }
-                                         finally
-                                         {
-                                             tokenBucket.Release();
-                                         }
-                                     }
-                                     catch (Exception e)
-                                     {
-                                         Log.Error($"{e.Message}");
-                                     }
-                                 }));
+                                   select Task.Run(async () =>
+                                   {
+                                       try
+                                       {
+                                           await tokenBucket.WaitAsync();
+                                           try
+                                           {
+                                               await f(item);
+                                           }
+                                           catch (System.OperationCanceledException e)
+                                           {
+                                               Log.Warning($"see cancellation in {f.Method.Name}: {e.Message}");
+                                           }
+                                           finally
+                                           {
+                                               tokenBucket.Release();
+                                           }
+                                       }
+                                       catch (Exception e)
+                                       {
+                                           Log.Error($"{e.Message}");
+                                       }
+                                   }));
             }
         }
 

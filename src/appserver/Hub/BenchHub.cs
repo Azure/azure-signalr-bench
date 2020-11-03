@@ -1,11 +1,13 @@
 // Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using Microsoft.AspNetCore.SignalR;
 using System;
 using System.Collections.Generic;
 using System.Threading.Channels;
 using System.Threading.Tasks;
+
+using Microsoft.AspNetCore.SignalR;
+using Plugin.Microsoft.Azure.SignalR.Benchmark;
 
 namespace Microsoft.Azure.SignalR.PerfTest.AppServer
 {
@@ -16,14 +18,14 @@ namespace Microsoft.Azure.SignalR.PerfTest.AppServer
             await Clients.Client(Context.ConnectionId).SendAsync("OnConnected", Context.ConnectionId);
         }
 
-        public void Echo(IDictionary<string, object> data)
+        public void Echo(BenchMessage data)
         {
             Clients.Client(Context.ConnectionId).SendAsync("RecordLatency", data);
         }
 
-        public ChannelReader<IDictionary<string, object>> StreamingEcho(ChannelReader<IDictionary<string, object>> stream, int delay)
+        public ChannelReader<BenchMessage> StreamingEcho(ChannelReader<BenchMessage> stream, int delay)
         {
-            var channel = Channel.CreateUnbounded<IDictionary<string, object>>();
+            var channel = Channel.CreateUnbounded<BenchMessage>();
             async Task WriteChannelStream()
             {
                 Exception localException = null;
@@ -51,15 +53,14 @@ namespace Microsoft.Azure.SignalR.PerfTest.AppServer
             return channel.Reader;
         }
 
-        public void Broadcast(IDictionary<string, object> data)
+        public void Broadcast(BenchMessage data)
         {
             Clients.All.SendAsync("RecordLatency", data);
         }
 
-        public void SendToClient(IDictionary<string, object> data)
+        public void SendToClient(BenchMessage data)
         {
-            var targetId = data["information.ConnectionId"].ToString();
-            Clients.Client(targetId).SendAsync("RecordLatency", data);
+            Clients.Client(data.Target).SendAsync("RecordLatency", data);
         }
 
         public void ConnectionId()
@@ -84,10 +85,9 @@ namespace Microsoft.Azure.SignalR.PerfTest.AppServer
             await Clients.Client(Context.ConnectionId).SendAsync("LeaveGroup");
         }
 
-        public void SendToGroup(IDictionary<string, object> data)
+        public void SendToGroup(BenchMessage data)
         {
-            var groupName = data["information.GroupName"].ToString();
-            Clients.Group(groupName).SendAsync("RecordLatency", data);
+            Clients.Group(data.Target).SendAsync("RecordLatency", data);
         }
     }
 }

@@ -31,10 +31,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.AgentMethods
                 LoadParametersAndContext(stepParameters, pluginParameters);
 
                 // Generate necessary data
-                var data = new Dictionary<string, object>
-                {
-                    { SignalRConstants.MessageBlob, SignalRUtils.GenerateRandomData(MessageSize) } // message payload
-                };
+                var data = new BenchMessage { MessageBlob = SignalRUtils.GenerateRandomData(MessageSize) };
 
                 // Reset counters
                 UpdateStatistics(StatisticsCollector, RemainderEnd);
@@ -70,16 +67,16 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.AgentMethods
             string CallbackMethod,
             int streamCount,
             int streamItemInterval) package,
-            IDictionary<string, object> data)
+            BenchMessage data)
         {
-            async Task StreamingWriter(ChannelWriter<IDictionary<string, object>> writer, IDictionary<string, object> sentData, int count, int streamItemWaiting)
+            async Task StreamingWriter(ChannelWriter<BenchMessage> writer, BenchMessage sentData, int count, int streamItemWaiting)
             {
                 Exception localException = null;
                 try
                 {
                     for (var i = 0; i < count; i++)
                     {
-                        sentData[SignalRConstants.Timestamp] = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds().ToString();
+                        sentData.Timestamp = Util.Timestamp();
                         await writer.WriteAsync(sentData);
                         if (streamItemWaiting > 0)
                         {
@@ -102,26 +99,21 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.AgentMethods
                 if (package.Connection.GetStat() != SignalREnums.ConnectionInternalStat.Active)
                     return;
                 var payload = GenPayload(data);
-                var channel = Channel.CreateUnbounded<IDictionary<string, object>>();
+                var channel = Channel.CreateUnbounded<BenchMessage>();
                 _ = StreamingWriter(channel.Writer, payload, package.streamCount, package.streamItemInterval);
                 using (var c = new CancellationTokenSource(TimeSpan.FromSeconds(5 * package.streamCount)))
                 {
                     int recvCount = 0;
-                    var stream = await package.Connection.StreamAsChannelAsync<IDictionary<string, object>>(package.CallbackMethod, channel.Reader, package.streamItemInterval, c.Token);
+                    var stream = await package.Connection.StreamAsChannelAsync<BenchMessage>(package.CallbackMethod, channel.Reader, package.streamItemInterval, c.Token);
                     while (await stream.WaitToReadAsync(c.Token))
                     {
                         while (stream.TryRead(out var item))
                         {
                             var receiveTimestamp = Util.Timestamp();
-                            if (item.TryGetValue(SignalRConstants.Timestamp, out object v))
-                            {
-                                var value = v.ToString();
-                                var sendTimestamp = Convert.ToInt64(value);
-                                var latency = receiveTimestamp - sendTimestamp;
-                                StatisticsCollector.RecordLatency(latency);
-                                SignalRUtils.RecordRecvSize(item, StatisticsCollector);
-                                recvCount++;
-                            }
+                            var latency = receiveTimestamp - item.Timestamp;
+                            StatisticsCollector.RecordLatency(latency);
+                            SignalRUtils.RecordRecvSize(item, StatisticsCollector);
+                            recvCount++;
                         }
                     }
                     if (recvCount < package.streamCount)
@@ -130,7 +122,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.AgentMethods
                         StatisticsCollector.IncreaseStreamItemMissing(1);
                     }
                 }
-                
+
             }
             catch (Exception ex)
             {

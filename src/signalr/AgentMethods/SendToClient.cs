@@ -29,22 +29,18 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.AgentMethods
                 UpdateStatistics(StatisticsCollector, RemainderEnd);
 
                 // Send messages
-                await Task.WhenAll(from i in Enumerable.Range(0, Connections.Count)
-                                   let data = new Dictionary<string, object>
-                                   {
-                                       { SignalRConstants.MessageBlob, messageBlob }, // message payload
-                                       { SignalRConstants.ConnectionId, connectionIds[i]}
-                                   }
-                                   where ConnectionIndex[i] % Modulo >= RemainderBegin && ConnectionIndex[i] % Modulo < RemainderEnd
-                                   select ContinuousSend((Connection: Connections[i],
-                                                          LocalIndex: i,
-                                                          CallbackMethod: SignalRConstants.SendToClientCallbackName),
-                                                          data,
-                                                          BaseSendAsync,
-                                                          TimeSpan.FromMilliseconds(Duration),
-                                                          TimeSpan.FromMilliseconds(Interval),
-                                                          TimeSpan.FromMilliseconds(1),
-                                                          TimeSpan.FromMilliseconds(Interval)));
+                await Task.WhenAll(
+                    from i in Enumerable.Range(0, Connections.Count)
+                    let data = new BenchMessage { MessageBlob = messageBlob, Target = connectionIds[i] }
+                    where ConnectionIndex[i] % Modulo >= RemainderBegin && ConnectionIndex[i] % Modulo < RemainderEnd
+                    select ContinuousSend(
+                        (Connection: Connections[i], LocalIndex: i, CallbackMethod: SignalRConstants.SendToClientCallbackName),
+                        data,
+                        BaseSendAsync,
+                        TimeSpan.FromMilliseconds(Duration),
+                        TimeSpan.FromMilliseconds(Interval),
+                        TimeSpan.FromMilliseconds(1),
+                        TimeSpan.FromMilliseconds(Interval)));
                 Log.Information($"Finish {GetType().Name} {RemainderEnd}");
                 return null;
             }

@@ -782,43 +782,13 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
             return Convert.ToBase64String(message).Substring(0, len);
         }
 
-        private static long EvaluatePayloadSize(IDictionary<string, object> payload)
-        {
-            long sz = 0;
-            if (payload.ContainsKey(SignalRConstants.MessageBlob))
-            {
-                payload.TryGetValue(SignalRConstants.MessageBlob, out var messageBlob);
-
-                if (messageBlob.GetType() == typeof(string))
-                {
-                    var array = (string)messageBlob;
-                    sz += array.Length;
-                }
-                else if (messageBlob.GetType() == typeof (byte[]))
-                {
-                    var array = (byte[])messageBlob;
-                    sz += array.Length;
-                }
-            }
-            if (payload.ContainsKey(SignalRConstants.Timestamp))
-            {
-                sz += sizeof(long);
-            }
-            if (payload.ContainsKey(SignalRConstants.ConnectionId))
-            {
-                payload.TryGetValue(SignalRConstants.ConnectionId, out var connId);
-                sz += connId.ToString().Length;
-            }
-            if (payload.ContainsKey(SignalRConstants.GroupName))
-            {
-                payload.TryGetValue(SignalRConstants.GroupName, out var grpName);
-                sz += grpName.ToString().Length;
-            }
-            return sz;
-        }
+        private static long EvaluatePayloadSize(BenchMessage payload) =>
+            payload.MessageBlob.Length +
+            sizeof(long) +
+            payload.Target?.Length ?? 0;
 
         public static void RecordSend(
-            IDictionary<string, object> payload,
+            BenchMessage payload,
             StatisticsCollector StatisticsCollector)
         {
             var sz = EvaluatePayloadSize(payload);
@@ -827,7 +797,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
         }
 
         public static void RecordRecvSize(
-            IDictionary<string, object> payload,
+            BenchMessage payload,
             StatisticsCollector StatisticsCollector)
         {
             var sz = EvaluatePayloadSize(payload);

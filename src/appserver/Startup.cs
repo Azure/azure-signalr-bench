@@ -1,11 +1,12 @@
 // Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System;
+
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
-using System;
 
 namespace Microsoft.Azure.SignalR.PerfTest.AppServer
 {
@@ -13,14 +14,14 @@ namespace Microsoft.Azure.SignalR.PerfTest.AppServer
     {
         internal const string HUB_NAME = "/signalrbench";
 
-        private AppServerConfig _serverConfig;
-        private bool _useLocalSignalR;
+        private readonly AppServerConfig _serverConfig;
+        private readonly bool _useLocalSignalR;
 
         public Startup(AppServerConfig serverConfig)
         {
             _serverConfig = serverConfig;
             Console.BackgroundColor = ConsoleColor.DarkMagenta;
-            _useLocalSignalR = _serverConfig.SignalRType == 0 ? true : false;
+            _useLocalSignalR = _serverConfig.SignalRType == 0;
             Console.WriteLine($"use local signalr: {_useLocalSignalR}");
             Console.BackgroundColor = ConsoleColor.Black;
         }
