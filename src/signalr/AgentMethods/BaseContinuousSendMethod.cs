@@ -71,11 +71,14 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.AgentMethods
             SetSendingStep(statisticsCollector, sendingStep);
         }
 
-        protected async Task ContinuousSend<T, TKey, TValue>(
-        T connection, IDictionary<TKey, TValue> data, 
-        Func<T, IDictionary<TKey, TValue>, Task> f, 
-        TimeSpan duration, TimeSpan interval,
-        TimeSpan delayMin, TimeSpan delayMax)
+        protected async Task ContinuousSend<T>(
+            T connection,
+            BenchMessage data,
+            Func<T, BenchMessage, Task> f,
+            TimeSpan duration,
+            TimeSpan interval,
+            TimeSpan delayMin,
+            TimeSpan delayMax)
         {
             // Random delay in [delayMin, delayMax) ms
             var rand = new Random();
@@ -83,21 +86,17 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.AgentMethods
             await Task.Delay(randomDelay);
 
             // Send message continuously
-            using (var cts = new CancellationTokenSource(duration))
+            using var cts = new CancellationTokenSource(duration);
+            while (!cts.IsCancellationRequested)
             {
-                while (!cts.IsCancellationRequested)
-                {
-                    await f(connection, data); // TODO: await may cause bad send rate
-                    await Task.Delay(interval);
-                }
+                await f(connection, data); // TODO: await may cause bad send rate
+                await Task.Delay(interval);
             }
         }
 
         protected async Task BaseSendAsync(
-            (IHubConnectionAdapter Connection,
-            int LocalIndex,
-            string CallbackMethod) package,
-            IDictionary<string, object> data)
+            (IHubConnectionAdapter Connection, int LocalIndex, string CallbackMethod) package,
+            BenchMessage data)
         {
             try
             {
@@ -131,26 +130,23 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.AgentMethods
                 LoadParametersAndContext(stepParameters, pluginParameters);
 
                 // Generate necessary data
-                var data = new Dictionary<string, object>
-                {
-                    { SignalRConstants.MessageBlob, SignalRUtils.GenerateRandomData(MessageSize) } // message payload
-                };
+                var data = new BenchMessage { MessageBlob = SignalRUtils.GenerateRandomData(MessageSize) };
 
                 // Reset counters
                 UpdateStatistics(StatisticsCollector, RemainderEnd);
 
                 // Send messages
-                await Task.WhenAll(from i in Enumerable.Range(0, Connections.Count)
-                                   where ConnectionIndex[i] % Modulo >= RemainderBegin && ConnectionIndex[i] % Modulo < RemainderEnd
-                                   select ContinuousSend((Connection: Connections[i],
-                                                          LocalIndex: i,
-                                                          CallbackMethod: callbackMethod),
-                                                          data,
-                                                          BaseSendAsync,
-                                                          TimeSpan.FromMilliseconds(Duration),
-                                                          TimeSpan.FromMilliseconds(Interval),
-                                                          TimeSpan.FromMilliseconds(1),
-                                                          TimeSpan.FromMilliseconds(Interval)));
+                await Task.WhenAll(
+                    from i in Enumerable.Range(0, Connections.Count)
+                    where ConnectionIndex[i] % Modulo >= RemainderBegin && ConnectionIndex[i] % Modulo < RemainderEnd
+                    select ContinuousSend(
+                        (Connection: Connections[i], LocalIndex: i, CallbackMethod: callbackMethod),
+                        data,
+                        BaseSendAsync,
+                        TimeSpan.FromMilliseconds(Duration),
+                        TimeSpan.FromMilliseconds(Interval),
+                        TimeSpan.FromMilliseconds(1),
+                        TimeSpan.FromMilliseconds(Interval)));
                 Log.Information($"Finish {GetType().Name} {RemainderEnd}");
                 return null;
             }
@@ -162,11 +158,11 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.AgentMethods
             }
         }
 
-        protected IDictionary<string, object> GenPayload(IDictionary<string, object> data)
+        protected BenchMessage GenPayload(BenchMessage data)
         {
             // Prepare payload
-            var payload = new Dictionary<string, object>(data);
-            payload[SignalRConstants.Timestamp] = Util.Timestamp();
+            var payload = data.Clone();
+            payload.Timestamp = Util.Timestamp();
             return payload;
         }
     }

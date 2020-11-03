@@ -48,7 +48,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.AgentMethods
         protected async Task SendMsgToUser(
             (string UserId,
              RestApiProvider RestApiProvider) package,
-             IDictionary<string, object> data)
+             BenchMessage data)
         {
             try
             {
@@ -79,48 +79,45 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.AgentMethods
         {
             var httpClientManager = SignalRUtils.FetchHttpClientManagerFromContext(StepParameters, PluginParameters);
             // Generate necessary data
-            var data = new Dictionary<string, object>
-            {
-                { SignalRConstants.MessageBlob, SignalRUtils.GenerateRandomData(MessageSize) } // message payload
-            };
+            var data = new BenchMessage { MessageBlob = SignalRUtils.GenerateRandomData(MessageSize) };
             var connectionString = SignalRUtils.FetchConnectionStringFromContext(PluginParameters, Type);
-            await Task.WhenAll(from i in Enumerable.Range(0, ConnectionIndex.Count)
-                               where ConnectionIndex[i] % Modulo >= RemainderBegin && ConnectionIndex[i] % Modulo < RemainderEnd
-                               let restApiClient = new RestApiProvider(connectionString, SignalRConstants.DefaultRestHubName, httpClientManager.GetHttpClient(i))
-                               let userId = SignalRUtils.GenClientUserIdFromConnectionIndex(ConnectionIndex[i])
-                               select ContinuousSend((UserId: userId,
-                                                      RestApiClient: restApiClient),
-                                                      data,
-                                                      SendMsgToUser,
-                                                      TimeSpan.FromMilliseconds(Duration),
-                                                      TimeSpan.FromMilliseconds(Interval),
-                                                      TimeSpan.FromMilliseconds(1),
-                                                      TimeSpan.FromMilliseconds(Interval)));
+            await Task.WhenAll(
+                from i in Enumerable.Range(0, ConnectionIndex.Count)
+                where ConnectionIndex[i] % Modulo >= RemainderBegin && ConnectionIndex[i] % Modulo < RemainderEnd
+                let restApiClient = new RestApiProvider(connectionString, SignalRConstants.DefaultRestHubName, httpClientManager.GetHttpClient(i))
+                let userId = SignalRUtils.GenClientUserIdFromConnectionIndex(ConnectionIndex[i])
+                select ContinuousSend(
+                    (UserId: userId, RestApiClient: restApiClient),
+                    data,
+                    SendMsgToUser,
+                    TimeSpan.FromMilliseconds(Duration),
+                    TimeSpan.FromMilliseconds(Interval),
+                    TimeSpan.FromMilliseconds(1),
+                    TimeSpan.FromMilliseconds(Interval)));
         }
 
         protected async Task RestBroadcastMessage(IServiceHubContext hubContext)
         {
             // Generate necessary data
-            var data = new Dictionary<string, object>
-            {
-                { SignalRConstants.MessageBlob, SignalRUtils.GenerateRandomData(MessageSize) } // message payload
-            };
+            var data = new BenchMessage { MessageBlob = SignalRUtils.GenerateRandomData(MessageSize) };
             // Send messages
-            await Task.WhenAll(from i in Enumerable.Range(0, ConnectionIndex.Count)
-                               where ConnectionIndex[i] % Modulo >= RemainderBegin && ConnectionIndex[i] % Modulo < RemainderEnd
-                               let restApiClient = hubContext
-                               select ContinuousSend(restApiClient,
-                                                     data,
-                                                     BroadcastMsg,
-                                                     TimeSpan.FromMilliseconds(Duration),
-                                                     TimeSpan.FromMilliseconds(Interval),
-                                                     TimeSpan.FromMilliseconds(1),
-                                                     TimeSpan.FromMilliseconds(Interval)));
+            await Task.WhenAll(
+                from i in Enumerable.Range(0, ConnectionIndex.Count)
+                where ConnectionIndex[i] % Modulo >= RemainderBegin && ConnectionIndex[i] % Modulo < RemainderEnd
+                let restApiClient = hubContext
+                select ContinuousSend(
+                    restApiClient,
+                    data,
+                    BroadcastMsg,
+                    TimeSpan.FromMilliseconds(Duration),
+                    TimeSpan.FromMilliseconds(Interval),
+                    TimeSpan.FromMilliseconds(1),
+                    TimeSpan.FromMilliseconds(Interval)));
         }
 
         protected async Task BroadcastMsg(
              IServiceHubContext restApiProvider,
-             IDictionary<string, object> data)
+             BenchMessage data)
         {
             try
             {

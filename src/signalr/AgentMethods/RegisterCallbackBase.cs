@@ -40,14 +40,16 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.AgentMethods
         {
             foreach (var connection in connections)
             {
-                connection.On(SignalRConstants.RecordLatencyCallbackName, (IDictionary<string, object> data) =>
-                {
-                    //var receiveTimestamp = Util.Timestamp();
-                    //data.TryGetTypedValue(SignalRConstants.Timestamp, out long sendTimestamp, Convert.ToInt64);
-                    //var latency = receiveTimestamp - sendTimestamp;
-                    //statisticsCollector.RecordLatency(latency);
-                    SignalRUtils.RecordRecvSize(data, statisticsCollector);
-                });
+                connection.On(
+                    SignalRConstants.RecordLatencyCallbackName,
+                    (BenchMessage data) =>
+                    {
+                        //var receiveTimestamp = Util.Timestamp();
+                        //data.TryGetTypedValue(SignalRConstants.Timestamp, out long sendTimestamp, Convert.ToInt64);
+                        //var latency = receiveTimestamp - sendTimestamp;
+                        //statisticsCollector.RecordLatency(latency);
+                        SignalRUtils.RecordRecvSize(data, statisticsCollector);
+                    });
             }
         }
 
@@ -57,25 +59,22 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.AgentMethods
         {
             foreach (var connection in connections)
             {
-                connection.On(SignalRConstants.RecordLatencyCallbackName, (IDictionary<string, object> data) =>
-                {
-                    var receiveTimestamp = Util.Timestamp();
-                    if (data.TryGetValue(SignalRConstants.Timestamp, out object v))
+                connection.On(
+                    SignalRConstants.RecordLatencyCallbackName,
+                    (BenchMessage data) =>
                     {
-                        var value = v.ToString();
-                        var sendTimestamp = Convert.ToInt64(value);
-                        var latency = receiveTimestamp - sendTimestamp;
+                        var receiveTimestamp = Util.Timestamp();
+                        var latency = receiveTimestamp - data.Timestamp;
                         statisticsCollector.RecordLatency(latency);
                         SignalRUtils.RecordRecvSize(data, statisticsCollector);
-                    }
-                });
+                    });
             }
         }
 
         public static void SetCallbackJoinGroup(
             IList<IHubConnectionAdapter> connections,
             StatisticsCollector statisticsCollector,
-            string methodName=null)
+            string methodName = null)
         {
             foreach (var connection in connections)
             {

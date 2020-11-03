@@ -24,7 +24,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.AgentMethods
                                     IsSending(indexInGroup, GroupInternalModulo, GroupInternalRemainderBegin, GroupInternalRemainderEnd)
                                 let isSendConnectionMode = Mode == SignalREnums.GroupConfigMode.Connection &&
                                     IsSending(index, Modulo, RemainderBegin, RemainderEnd)
-                                select Mode == SignalREnums.GroupConfigMode.Group ? 
+                                select Mode == SignalREnums.GroupConfigMode.Group ?
                                 GenerateTaskForGroupMode(package.LocalIndex, data, isSendGroupLevel, isSendGroupInternal) : GenerateTaskForGroupMode(package.LocalIndex, data, true, isSendConnectionMode));
 
         }
@@ -42,36 +42,35 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.AgentMethods
                                LocalIndex = i,
                                Connection = Connections[i],
                                GroupName = groupName,
-                               Data = new Dictionary<string, object>
-                                   {
-                                       { SignalRConstants.MessageBlob, messageBlob }, // message payload
-                                       { SignalRConstants.GroupName, groupName},
-                                       { _isIngroup, false}
-                                  }
+                               Data = new BenchMessage { MessageBlob = messageBlob, Target = groupName }
                            };
 
             return packages;
         }
 
-        private Task GenerateTaskForGroupMode(int localIndex, IDictionary<string, object> data, bool isSendGroupLevel, bool isSendGroupInternal)
+        private Task GenerateTaskForGroupMode(int localIndex, BenchMessage data, bool isSendGroupLevel, bool isSendGroupInternal)
         {
             if (isSendGroupLevel && isSendGroupInternal)
             {
-                return ContinuousSend((Connection: Connections[localIndex],
-                                       LocalIndex: localIndex,
-                                       CallbackMethod: SignalRConstants.SendToGroupCallbackName),
-                                       data,
-                                       BaseSendAsync,
-                                       TimeSpan.FromMilliseconds(Duration),
-                                       TimeSpan.FromMilliseconds(Interval),
-                                       TimeSpan.FromMilliseconds(1),
-                                       TimeSpan.FromMilliseconds(Interval));
+                return ContinuousSend(
+                    (Connection: Connections[localIndex], LocalIndex: localIndex, CallbackMethod: SignalRConstants.SendToGroupCallbackName),
+                    data,
+                    BaseSendAsync,
+                    TimeSpan.FromMilliseconds(Duration),
+                    TimeSpan.FromMilliseconds(Interval),
+                    TimeSpan.FromMilliseconds(1),
+                    TimeSpan.FromMilliseconds(Interval));
             }
             else if (isSendGroupLevel && !isSendGroupInternal)
             {
-                return ContinuousSend(localIndex, data, JoinLeaveGroup,
-                                TimeSpan.FromMilliseconds(Duration), TimeSpan.FromMilliseconds(Interval),
-                                TimeSpan.FromMilliseconds(1), TimeSpan.FromMilliseconds(Interval));
+                return ContinuousSend(
+                    localIndex,
+                    data,
+                    JoinLeaveGroup,
+                    TimeSpan.FromMilliseconds(Duration),
+                    TimeSpan.FromMilliseconds(Interval),
+                    TimeSpan.FromMilliseconds(1),
+                    TimeSpan.FromMilliseconds(Interval));
             }
             return Task.CompletedTask;
         }

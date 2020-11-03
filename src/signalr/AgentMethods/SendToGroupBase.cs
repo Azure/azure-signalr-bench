@@ -29,7 +29,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.AgentMethods
             public int LocalIndex;
             public IHubConnectionAdapter Connection;
             public string GroupName;
-            public Dictionary<string, object> Data;
+            public BenchMessage Data;
         }
 
         public async Task<IDictionary<string, object>> Do(
@@ -122,26 +122,21 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.AgentMethods
             // TODO: for group count is larger than connections, we need to tune groupName parameters
             var packages = from i in Enumerable.Range(0, Connections.Count)
                            let groupName = SignalRUtils.GroupName(Type, ConnectionIndex[i] % GroupCount)
-                           select 
-                           new Package
+                           select new Package
                            {
                                LocalIndex = i,
                                Connection = Connections[i],
                                GroupName = groupName,
-                               Data = new Dictionary<string, object>
-                               {
-                                   { SignalRConstants.MessageBlob, messageBlob },
-                                   { SignalRConstants.GroupName, groupName }
-                               }
+                               Data = new BenchMessage { MessageBlob = messageBlob, Target = groupName }
                            };
             return packages;
         }
 
-        protected virtual async Task JoinLeaveGroup(int localIndex, IDictionary<string, object> data)
+        protected virtual async Task JoinLeaveGroup(int localIndex, BenchMessage data)
         {
             // Extract data
-            data.TryGetTypedValue(SignalRConstants.GroupName, out string groupName, Convert.ToString);
-            data.TryGetTypedValue(_isIngroup, out bool isInGroup, Convert.ToBoolean);
+            var groupName = data.Target;
+            var isInGroup = data.GetIsInGroup();
 
             // Join or leave groups
             if (isInGroup)
@@ -149,6 +144,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.AgentMethods
                 try
                 {
                     await Connections[localIndex].SendAsync(SignalRConstants.LeaveGroupCallbackName, groupName);
+                    data.SetIsInGroup(false);
                 }
                 catch
                 {
@@ -160,14 +156,13 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.AgentMethods
                 try
                 {
                     await Connections[localIndex].SendAsync(SignalRConstants.JoinGroupCallbackName, groupName);
+                    data.SetIsInGroup(true);
                 }
                 catch
                 {
                     StatisticsCollector.IncreaseJoinGroupFail();
                 }
             }
-
-            data[_isIngroup] = !isInGroup;
         }
     }
 }
