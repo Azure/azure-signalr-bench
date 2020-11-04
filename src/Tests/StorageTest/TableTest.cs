@@ -71,11 +71,11 @@ namespace Azure.SignalRBench.Tests.StorageTest
             Assert.Collection(
                 entities,
                 Enumerable.Repeat((Action<TestEntity>)(entity => Assert.NotNull(entity.ETag)), Count).ToArray());
-
+          //  table.Rows.Where(row=>row.PartitionKey).
             var retrieved = await table.QueryAsync(
                 from row in table.Rows
                 where row.PartitionKey == pk
-                select row).ToListAsync();
+                select 1).ToListAsync();
             Assert.NotNull(retrieved);
             Assert.Equal(entities, retrieved, TestEntityComparer.Instance);
 

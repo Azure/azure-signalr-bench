@@ -27,6 +27,11 @@ namespace Azure.SignalRBench.Common
             public const string AppServerUrl = "appServerUrl";
         }
 
+        public static class TableNames
+        {
+            public const string TestConfig = "testconfig";
+            public const string TestInstance = "testinstance";
+        }
         public static class QueueNames
         {
             public const string PortalJob = "portal-job";
