@@ -70,8 +70,9 @@ namespace Portal
 
             app.UseEndpoints(endpoints =>
             {
-                endpoints.MapControllerRoute("testconfig", "testconfig/{action}");
-                endpoints.MapControllerRoute("teststatus", "teststatus/{action}");
+                endpoints.MapControllers();
+                //endpoints.MapControllerRoute("testconfig", "testconfig/{action}");
+                //endpoints.MapControllerRoute("teststatus", "teststatus/{action}");
 
                 //endpoints.MapControllerRoute(
                 //    name: "default",

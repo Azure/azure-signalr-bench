@@ -25,7 +25,7 @@ namespace Portal.Controllers
         [HttpGet]
         public async Task<IEnumerable<TestStatusEntity>> Get()
         {
-            var table = await _perfStorage.GetTableAsync<TestStatusEntity>(Constants.TableNames.TestInstance);
+            var table = await _perfStorage.GetTableAsync<TestStatusEntity>(Constants.TableNames.TestStatus);
             var rows= await table.QueryAsync(table.Rows
                                                    ).ToListAsync();
             return rows;

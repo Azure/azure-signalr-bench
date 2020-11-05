@@ -9,5 +9,6 @@ namespace Portal.Entities
     public class TestStatusEntity :TableEntity
     {
         public string Status { get; set; }
+   //     public string Time { get; set; }
     }
 }

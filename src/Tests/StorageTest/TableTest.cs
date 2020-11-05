@@ -75,7 +75,7 @@ namespace Azure.SignalRBench.Tests.StorageTest
             var retrieved = await table.QueryAsync(
                 from row in table.Rows
                 where row.PartitionKey == pk
-                select 1).ToListAsync();
+                select row).ToListAsync();
             Assert.NotNull(retrieved);
             Assert.Equal(entities, retrieved, TestEntityComparer.Instance);
 

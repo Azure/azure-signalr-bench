@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    service.beta.kubernetes.io/azure-load-balancer-resource-group: RESOURCE_GROUP_PLACE_HOLDER
+  name: redis-master
+  labels:
+    app: redis
+    role: master
+    tier: backend
+spec:
+  loadBalancerIP: PORTAL_IP_PLACE_HOLDER
+  type: LoadBalancer
+  ports:
+  - port: 6379
+    targetPort: 6379
+  selector:
+    app: redis
+    role: master
+    tier: backend
+

@@ -9,6 +9,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Pods", "Pods", "{ADAB79C6-C
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Coordinator", "Pods\Coordinator\Coordinator.csproj", "{736683BA-DBB6-45C0-9A53-AE1082DE0107}"
+	ProjectSection(ProjectDependencies) = postProject
+		{EAA8215B-65D6-43ED-8351-845C7F93A525} = {EAA8215B-65D6-43ED-8351-845C7F93A525}
+	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Client", "Pods\Client\Client.csproj", "{1E0D71B9-AB7B-48F6-9A52-93E3C545CA9A}"
 EndProject
@@ -37,7 +40,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CommonTest", "Tests\CommonT
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AppServer", "Pods\AppServer\AppServer.csproj", "{4368B80F-0583-488B-9630-AC03C4F56635}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Portal", "Portal\Portal.csproj", "{08BE184F-4316-4C1F-A351-AED37411E7D2}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Portal", "Pods\Portal\Portal.csproj", "{08BE184F-4316-4C1F-A351-AED37411E7D2}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

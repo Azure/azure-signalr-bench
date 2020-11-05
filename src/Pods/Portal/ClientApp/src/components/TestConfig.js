@@ -34,8 +34,20 @@ export class TestConfig extends Component {
         this.state.obj[e.target.name] = parseInt(e.target.value);
         console.log(JSON.stringify(this.state.obj))
     }
-    async handleSubmit() {
 
+    async handleStart(e) {
+       var json= e.target.getAttribute("value")
+        console.log(json)
+        await fetch('testconfig/starttest', {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+            },
+            body: json
+        });
+    }
+    async handleSubmit() {
         await fetch('testconfig', {
             method: 'PUT',
             headers: {
@@ -52,7 +64,7 @@ export class TestConfig extends Component {
         this.populateTestConfigData();
     }
 
-    static renderTestConfigsTable(testConfigs) {
+     renderTestConfigsTable(testConfigs) {
         return (
             <table className='table table-striped' aria-labelledby="tabelLabel">
                 <thead>
@@ -60,19 +72,22 @@ export class TestConfig extends Component {
                         <th>TestId</th>
                         <th>SignalRUnitSize</th>
                         <th>ClientConnections</th>
-                        <th>ServerUnitSize</th>
-
+                        <th>ServerNum</th>
+                        <th>Start</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {testConfigs.map(testConfig =>
-                        <tr key={testConfig.rowKey}>
+                    {testConfigs.map(testConfig => {
+                        var json=JSON.stringify(testConfig)
+                        return <tr key={testConfig.rowKey}>
                             <td>{testConfig.rowKey}</td>
                             <td>{testConfig.signalRUnitSize}</td>
                             <td>{testConfig.clientCons}</td>
                             <td>{testConfig.serverNum}</td>
-
+                            <td ><button className="link" value={json} onClick={this.handleStart}>Run</button></td>
                         </tr>
+                    }
+
                     )}
                 </tbody>
             </table>
@@ -82,7 +97,7 @@ export class TestConfig extends Component {
         console.log("render")
         let contents = this.state.loading
             ? <p><em>Loading...</em></p>
-            : TestConfig.renderTestConfigsTable(this.state.testConfigs);
+            : this.renderTestConfigsTable(this.state.testConfigs);
         return (
             <>
                 <Button variant="primary" onClick={this.handleShow}>

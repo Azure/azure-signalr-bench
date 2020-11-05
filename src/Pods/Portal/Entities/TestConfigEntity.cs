@@ -4,23 +4,26 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.Azure.Cosmos.Table;
+using Newtonsoft.Json;
 
 namespace Portal.Entities
 {
     public class TestConfigEntity :TableEntity
     {
-
         public int ClientCons { get; set; }
 
         public int SignalRUnitSize { get; set; }
 
         public int ServerNum { get; set; }
 
-        public TestJob ToTestJob()
+        public int Index { get; set; } = 0;
+
+        public TestJob ToTestJob(int index)
         {
             var testJob = new TestJob()
             {
-                TestId = PartitionKey + '-' + RowKey,
+                TestId = PartitionKey + '-' + index,
                 TestMethod = TestCategory.AspnetCore,
                 ServiceSetting = new ServiceSetting[] { new ServiceSetting()
                 {
@@ -52,9 +55,14 @@ namespace Portal.Entities
                     IsAnonymous = true,
                     Protocol = SignalRProtocol.WebSocketsWithJson,
                     Rate = 1,
+                },
+                ServerSetting=new ServerSetting()
+                {
+                    ServerCount=ServerNum
                 }
-
+             
             };
+            Console.WriteLine(JsonConvert.SerializeObject(testJob));
             return testJob;
         }
     }

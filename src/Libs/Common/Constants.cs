@@ -29,8 +29,10 @@ namespace Azure.SignalRBench.Common
 
         public static class TableNames
         {
-            public const string TestConfig = "testconfig";
-            public const string TestInstance = "testinstance";
+            public const string TestConfig = "testConfig";
+            public const string TestStatus = "testStatus";
+            public const string Counter = "testCount";
+
         }
         public static class QueueNames
         {

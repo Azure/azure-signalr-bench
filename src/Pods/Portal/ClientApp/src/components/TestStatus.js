@@ -10,9 +10,9 @@ export class TestStatus extends Component {
         this.state = {
             loading: true
         };
-       // this.populateTestsData.bind(this)
+        // this.populateTestsData.bind(this)
     }
- 
+
 
     componentDidMount() {
         this.populateTestStatusData();
@@ -24,22 +24,27 @@ export class TestStatus extends Component {
                 <thead>
                     <tr>
                         <th>TestId</th>
+                        <th>Round</th>
                         <th>Time</th>
                         <th>Status</th>
-
+                        <th>Report</th>
                     </tr>
                 </thead>
                 <tbody>
-                    {testStatuses.map(testStatus =>
-                        <tr key={testStatus.partitionKey+test.rowKey}>
+                    {testStatuses.map(testStatus => {
+                        var trkey = testStatus.partitionKey + testStatus.rowKey;
+                      //  console.log()
+                        return <tr key={trkey}>
                             <td>{testStatus.partitionKey}</td>
                             <td>{testStatus.rowKey}</td>
+                            <td>{testStatus.timestamp}</td>
                             <td>{testStatus.status}</td>
-
                         </tr>
+                    }
+
                     )}
                 </tbody>
-            </table>
+            </table >
         );
     }
     render() {

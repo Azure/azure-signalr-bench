@@ -76,7 +76,7 @@ namespace Azure.SignalRBench.Coordinator
             _logger.LogInformation("Test job {testId}: Client pods count: {count}.", Job.TestId, clientPodCount);
             var serverPodCount = Job.ServerSetting.ServerCount;
             _logger.LogInformation("Test job {testId}: Server pods count: {count}.", Job.TestId, serverPodCount);
-            var nodeCount = clientAgentCount + serverPodCount;
+            var nodeCount = clientPodCount + serverPodCount;
             _logger.LogInformation("Test job {testId}: Node count: {count}.", Job.TestId, nodeCount);
 
             var asrsConnectionStringsTask = PrepairAsrsInstancesAsync(cancellationToken);

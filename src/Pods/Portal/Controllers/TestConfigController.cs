@@ -12,7 +12,7 @@ using Portal.Entities;
 
 namespace Portal.Controllers
 {
-    [Route("[controller]")]
+    [Route("TestConfig")]
     [ApiController]
     public class TestConfigController : ControllerBase
     {
@@ -42,19 +42,24 @@ namespace Portal.Controllers
             Console.WriteLine(testConfigEntity.ToString());
         }
 
-        [HttpPost]
+        [HttpPost("StartTest")]
         public async Task StartTestAsync(TestConfigEntity testConfigEntity)
         {
+            //increse counter first
+            var configTable =await _perfStorage.GetTableAsync<TestConfigEntity>(Constants.TableNames.TestConfig);
+            var latestTestConfig =await configTable.GetFirstOrDefaultAsync(from row in configTable.Rows where row.PartitionKey == testConfigEntity.PartitionKey select row);
+            latestTestConfig.Index += 1;
+            await configTable.UpdateAsync(latestTestConfig);
             var queue= await _perfStorage.GetQueueAsync<TestJob>(Constants.QueueNames.PortalJob, true);
-            await queue.SendAsync(testConfigEntity.ToTestJob());
-            var table = await _perfStorage.GetTableAsync<TestStatusEntity>(Constants.TableNames.TestConfig);
+            await queue.SendAsync(testConfigEntity.ToTestJob(latestTestConfig.Index));
+            var statusTable = await _perfStorage.GetTableAsync<TestStatusEntity>(Constants.TableNames.TestStatus);
             var testEntity = new TestStatusEntity()
             {
-                PartitionKey = testConfigEntity.PartitionKey,
-                RowKey = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ssZ"),
+                PartitionKey = latestTestConfig.PartitionKey,
+                RowKey = latestTestConfig.Index.ToString(),
                 Status = "Init"
             };
-            await table.InsertAsync(testEntity);
+            await statusTable.InsertAsync(testEntity);
         }
 
         // DELETE api/<ValuesController>/5
