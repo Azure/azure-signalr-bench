@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
-
+using Azure.SignalRBench.Common;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
@@ -14,15 +14,13 @@ namespace Azure.SignalRBench.AppServer
     public class Startup
     {
         internal const string HUB_NAME = "/signalrbench";
-        private const string ASRSConnectionStringKey = "SignalR:ConnectionString";
-        private const string ASRSConnectionNumberKey = "SignalR:ConnectionNumber";
 
-        private readonly ILogger<Startup> _logger;
+      //  private readonly ILogger<Startup> _logger;
 
-        public Startup(IConfiguration configuration, ILogger<Startup> logger)
+        public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+         //   _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         public IConfiguration Configuration { get; }
@@ -33,8 +31,8 @@ namespace Azure.SignalRBench.AppServer
             services.AddSignalR().AddMessagePackProtocol()
                  .AddAzureSignalR(option =>
                  {
-                     option.ConnectionCount = Configuration[ASRSConnectionStringKey] != null ? Configuration.GetValue<int>(ASRSConnectionNumberKey) : 5;
-                     option.ConnectionString = Configuration[ASRSConnectionStringKey];
+                     option.ConnectionCount = Configuration[Constants.ConfigurationKeys.ConnectionNum] != null ? Configuration.GetValue<int>(Constants.ConfigurationKeys.ConnectionNum) : 5;
+                     option.ConnectionString = Configuration[Constants.ConfigurationKeys.ConnectionString];
                  });
             services.AddSingleton<MessageClientHolder>();
             services.AddHostedService<ServerHostedService>();

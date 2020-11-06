@@ -61,7 +61,7 @@ namespace Azure.SignalRBench.Coordinator
                 throw new InvalidOperationException();
             }
             var pool = await _client.GetAsync(_resourceGroup, _aksName, ToPoolName(nodePoolIndex), cancellationToken);
-            if (pool.Count == nodeCount)
+            if (nodeCount<3||pool.Count == nodeCount)
             {
                 return;
             }

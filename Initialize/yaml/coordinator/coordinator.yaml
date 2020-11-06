@@ -30,6 +30,8 @@ spec:
           command: ["/bin/sh", "-c"]
           args: ["cp /mnt/perf/manifest/Coordinator/Coordinator.zip /home ; cd /home ; unzip Coordinator.zip ;exec ./Coordinator;"]
           env:
+            - name: kvUrl
+              value:KVURL_PLACE_HOLDER
             - name: PodName
               valueFrom:
                 fieldRef:

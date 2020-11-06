@@ -33,6 +33,7 @@ namespace Azure.SignalRBench.AppServer
             await _messageClient.WithHandlers(
                 MessageHandler.CreateCommandHandler(Commands.General.Crash, Crash),
                 MessageHandler.CreateCommandHandler(Roles.AppServers, Commands.General.Crash, Crash));
+            await _messageClient.ReportReadyAsync(new ReportReadyParameters() { Role = Roles.AppServers });
         }
 
         private Task Crash(CommandMessage command)

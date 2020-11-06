@@ -52,7 +52,6 @@ namespace Azure.SignalRBench.Coordinator
             var servicePrincipalTask = _secretClient.GetSecretAsync(Constants.KeyVaultKeys.ServicePrincipalKey);
             var cloudTask = _secretClient.GetSecretAsync(Constants.KeyVaultKeys.CloudKey);
             var k8sTask = _secretClient.GetSecretAsync(Constants.KeyVaultKeys.KubeConfigKey);
-
             _storageProvider.Initialize((await storageTask).Value.Value);
             _k8sProvider.Initialize((await k8sTask).Value.Value);
             var prefix = (await prefixTask).Value.Value;

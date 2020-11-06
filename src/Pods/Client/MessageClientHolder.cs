@@ -42,6 +42,7 @@ namespace Azure.SignalRBench.Client
                 MessageHandler.CreateCommandHandler(Roles.Clients, Commands.Clients.SetScenario, SetScenario),
                 MessageHandler.CreateCommandHandler(Roles.Clients, Commands.Clients.StartScenario, StartScenario),
                 MessageHandler.CreateCommandHandler(Roles.Clients, Commands.Clients.StopScenario, StopScenario));
+            await _client.ReportReadyAsync(new ReportReadyParameters() { Role=Roles.Clients});
         }
 
         private Task Crash(CommandMessage commandMessage)
@@ -77,7 +78,7 @@ namespace Azure.SignalRBench.Client
                 await Client.AckFaultedAsync(commandMessage, error);
                 return;
             }
-            await _scenarioState.StartClientConnections(startConnectionsParameters);
+            await _scenarioState.StartClientConnections(this,startConnectionsParameters);
             await Client.AckCompletedAsync(commandMessage);
         }
 

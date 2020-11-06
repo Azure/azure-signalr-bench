@@ -29,6 +29,9 @@ spec:
               name: volume
           command: ["/bin/sh", "-c"]
           args: ["cp /mnt/perf/manifest/Portal/Portal.zip /home ; cd /home ; unzip Portal.zip ; exec ./Portal"]
+          env:
+            - name: kvUrl
+              value:KVURL_PLACE_HOLDER
       volumes:
         - name: volume
           azureFile:

@@ -15,13 +15,11 @@ namespace Azure.SignalRBench.Client
 {
     public class ScenarioState : IScenarioState
     {
-        private readonly MessageClientHolder _messageClientHolder;
         private readonly ILoggerFactory _loggerFactory;
         private ScenarioBaseState _state;
 
-        public ScenarioState(MessageClientHolder messageClientHolder, ILoggerFactory loggerFactory)
+        public ScenarioState( ILoggerFactory loggerFactory)
         {
-            _messageClientHolder = messageClientHolder;
             _loggerFactory = loggerFactory;
             _state = new InitState(this);
         }
@@ -32,8 +30,8 @@ namespace Azure.SignalRBench.Client
         public void SetSenario(SetScenarioParameters setScenarioParameters) =>
             _state.SetSenario(setScenarioParameters);
 
-        public Task StartClientConnections(StartClientConnectionsParameters startClientConnectionsParameters) =>
-            _state.StartClientConnections(startClientConnectionsParameters);
+        public Task StartClientConnections(MessageClientHolder messageClientHolder,StartClientConnectionsParameters startClientConnectionsParameters) =>
+            _state.StartClientConnections(messageClientHolder,startClientConnectionsParameters);
 
         public void StartSenario(StartScenarioParameters startScenarioParameters) =>
             _state.StartSenario(startScenarioParameters);
@@ -62,7 +60,7 @@ namespace Azure.SignalRBench.Client
 
             public virtual void SetClientRange(SetClientRangeParameters setClientRangeParameters) =>
                 throw new InvalidScenarioStateException();
-            public virtual Task StartClientConnections(StartClientConnectionsParameters startClientConnectionsParameters) =>
+            public virtual Task StartClientConnections(MessageClientHolder messageClientHolder,StartClientConnectionsParameters startClientConnectionsParameters) =>
                 throw new InvalidScenarioStateException();
             public virtual void SetSenario(SetScenarioParameters setScenarioParameters) =>
                 throw new InvalidScenarioStateException();
@@ -98,11 +96,11 @@ namespace Azure.SignalRBench.Client
                 LocalCount = localCount;
             }
 
-            public override async Task StartClientConnections(StartClientConnectionsParameters p)
+            public override async Task StartClientConnections(MessageClientHolder messageClientHolder,StartClientConnectionsParameters p)
             {
                 var indexMap = GenerateIndexMap(p.TotalCount, StartId, LocalCount);
                 var clientAgentContainer = new ClientAgentContainer(
-                    ScenarioState._messageClientHolder,
+                    messageClientHolder,
                     StartId,
                     LocalCount,
                     p.Protocol,

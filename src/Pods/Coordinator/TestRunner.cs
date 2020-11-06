@@ -94,6 +94,9 @@ namespace Azure.SignalRBench.Coordinator
                     await StopScenarioAsync(messageClient, cancellationToken);
                 }
                 await StopClientConnectionsAsync(messageClient, cancellationToken);
+            }catch(Exception e)
+            {
+                _logger.LogError("Test job {testId} throw exception", Job.TestId);
             }
             finally
             {
@@ -118,7 +121,7 @@ namespace Azure.SignalRBench.Coordinator
                 var ss = Job.ServiceSetting[i];
                 if (ss.AsrsConnectionString == null)
                 {
-                    asrsConnectionStrings[i] = await CreateAsrsAsync(ss, Job.TestId + i.ToString(), cancellationToken);
+                    asrsConnectionStrings[i] = await CreateAsrsAsync(ss, Job.TestId +'-'+ i.ToString(), cancellationToken);
                 }
                 else
                 {
@@ -173,7 +176,7 @@ namespace Azure.SignalRBench.Coordinator
                 if (p.Role == Roles.Clients)
                 {
                     clientReadyCount++;
-                    if (clientReadyCount < clientAgentCount)
+                    if (clientReadyCount < clientPodCount)
                     {
                         _clients[m.Sender] =
                             new SetClientRangeParameters
@@ -182,7 +185,7 @@ namespace Azure.SignalRBench.Coordinator
                                 Count = clientPodCount,
                             };
                     }
-                    else if (clientReadyCount == clientAgentCount)
+                    else if (clientReadyCount == clientPodCount)
                     {
                         _clients[m.Sender] =
                             new SetClientRangeParameters
@@ -235,9 +238,9 @@ namespace Azure.SignalRBench.Coordinator
                     GetReportReady(clientAgentCount, clientPodCount, serverPodCount, out var clientPodReady, out var serverPodReady)));
 
             _logger.LogInformation("Test job {testId}: Creating server pods.", Job.TestId);
-            _url = await K8sProvider.CreateServerPodsAsync(Job.TestId, NodePoolIndex, asrsConnectionStrings, cancellationToken);
+            _url = await K8sProvider.CreateServerPodsAsync(Job.TestId, NodePoolIndex, asrsConnectionStrings, serverPodCount, cancellationToken);
             _logger.LogInformation("Test job {testId}: Creating client pods.", Job.TestId);
-            await K8sProvider.CreateClientPodsAsync(Job.TestId, NodePoolIndex, _url, cancellationToken);
+            await K8sProvider.CreateClientPodsAsync(Job.TestId, NodePoolIndex, _url, clientPodCount, cancellationToken);
 
             await Task.WhenAll(
                 Task.Run(async () =>

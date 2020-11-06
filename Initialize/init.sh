@@ -76,7 +76,7 @@ fi
 
 if [[ -z $(az network public-ip show -n $PORTAL_IP_NAME -g $RESOURCE_GROUP 2>/dev/null) ]]; then
     echo "start to init portal ip $PORTAL_IP_NAME"
-    az network public-ip create -n $PORTAL_IP_NAME -g $RESOURCE_GROUP --dns-name $PORTAL_DNS
+    az network public-ip create -n $PORTAL_IP_NAME -g $RESOURCE_GROUP --dns-name $PORTAL_DNS --sku Standard --allocation-method  Static
     domain=$(az network public-ip show -n $PORTAL_IP_NAME -g $RESOURCE_GROUP --query dnsSettings.fqdn -o tsv)
     echo "portal domain:$domain init"
 else

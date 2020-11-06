@@ -11,6 +11,8 @@ using System.Threading.Tasks;
 using Azure.SignalRBench.Common;
 using k8s;
 using k8s.Models;
+using Microsoft.Azure.Management.Storage.Fluent;
+using Microsoft.Extensions.Configuration;
 
 namespace Azure.SignalRBench.Coordinator
 {
@@ -20,16 +22,22 @@ namespace Azure.SignalRBench.Coordinator
         private const string _appserver = "appserver";
         private const string _client = "client";
         private Kubernetes? _k8s;
-
+        private PerfStorageProvider _perfStorageProvider;
+        private string _redisConnectionString;
         public Kubernetes K8s => _k8s ?? throw new InvalidOperationException();
 
+        public K8sProvider(PerfStorageProvider perfStorageProvider, IConfiguration configuration)
+        {
+            _perfStorageProvider = perfStorageProvider;
+            _redisConnectionString = configuration[Constants.ConfigurationKeys.RedisConnectionStringKey];
+        }
         public void Initialize(string config)
         {
             using var stream = new MemoryStream(Encoding.UTF8.GetBytes(config));
             _k8s = new Kubernetes(KubernetesClientConfiguration.BuildConfigFromConfigFile(stream));
         }
 
-        public async Task<string> CreateServerPodsAsync(string testId, int nodePoolIndex, string[] asrsConnectionStrings, CancellationToken cancellationToken)
+        public async Task<string> CreateServerPodsAsync(string testId, int nodePoolIndex, string[] asrsConnectionStrings,int serverPodCount, CancellationToken cancellationToken)
         {
             var name = _appserver + "-" + testId;
             var service = new V1Service()
@@ -65,7 +73,7 @@ namespace Azure.SignalRBench.Coordinator
                 },
                 Spec = new V1DeploymentSpec
                 {
-                    Replicas = 1,
+                    Replicas = serverPodCount,
                     Selector = new V1LabelSelector()
                     {
                         MatchLabels = new Dictionary<string, string>
@@ -122,8 +130,12 @@ namespace Azure.SignalRBench.Coordinator
                                 },
                                 Env=new List<V1EnvVar>()
                                 {
+                                    new V1EnvVar(Constants.ConfigurationKeys.PodNameStringKey,valueFrom:new V1EnvVarSource(fieldRef:new V1ObjectFieldSelector("metadata.name") ) ),
                                     new V1EnvVar(Constants.ConfigurationKeys.TestIdKey,testId),
-                                    new V1EnvVar(Constants.ConfigurationKeys.ConnectionString,string.Join(",",asrsConnectionStrings))
+                                    new V1EnvVar(Constants.ConfigurationKeys.ConnectionString,string.Join(",",asrsConnectionStrings)),
+                                    new V1EnvVar(Constants.ConfigurationKeys.StorageConnectionStringKey,_perfStorageProvider.ConnectionString),
+                                    new V1EnvVar(Constants.ConfigurationKeys.RedisConnectionStringKey,_redisConnectionString),
+
                                 }
                             },
                             },
@@ -143,7 +155,7 @@ namespace Azure.SignalRBench.Coordinator
             return name;
         }
 
-        public async Task CreateClientPodsAsync(string testId, int nodePoolIndex, string url, CancellationToken cancellationToken)
+        public async Task CreateClientPodsAsync(string testId, int nodePoolIndex, string url,int clientPodCount, CancellationToken cancellationToken)
         {
             var name = _client + '-' + testId;
             V1Deployment deployment = new V1Deployment()
@@ -160,7 +172,7 @@ namespace Azure.SignalRBench.Coordinator
                 },
                 Spec = new V1DeploymentSpec
                 {
-                    Replicas = 1,
+                    Replicas = clientPodCount,
                     Selector = new V1LabelSelector()
                     {
                         MatchLabels = new Dictionary<string, string>
@@ -217,8 +229,11 @@ namespace Azure.SignalRBench.Coordinator
                                 },
                                 Env=new List<V1EnvVar>()
                                 {
+                                    new V1EnvVar(Constants.ConfigurationKeys.PodNameStringKey,valueFrom:new V1EnvVarSource(fieldRef:new V1ObjectFieldSelector("metadata.name") ) ),
                                     new V1EnvVar(Constants.ConfigurationKeys.TestIdKey,testId),
-                                    new V1EnvVar(Constants.ConfigurationKeys.AppServerUrl,url)
+                                    new V1EnvVar(Constants.ConfigurationKeys.AppServerUrl,url),
+                                    new V1EnvVar(Constants.ConfigurationKeys.StorageConnectionStringKey,_perfStorageProvider.ConnectionString),
+                                    new V1EnvVar(Constants.ConfigurationKeys.RedisConnectionStringKey,_redisConnectionString),
                                 }
                             },
                             },
