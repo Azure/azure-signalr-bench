@@ -13,8 +13,8 @@ class SendToClient(ParentClass.BaseScenario):
         for epoch in range(0, self.scenario_config.step_length):
             remainder_end = self.scenario_config.base_step + epoch * remainder_end_dx
 
-            if remainder_end - remainder_begin > self.scenario_config.connections:
-                break
+            # if remainder_end - remainder_begin > self.scenario_config.connections:
+            #     break
 
             # conditional stop and reconnect
             if epoch > 0:

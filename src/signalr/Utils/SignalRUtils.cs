@@ -1048,12 +1048,12 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
 
         public static long GetTimeoutPerConcurrentSpeed(int totalConnection, int concurrentConnections)
         {
-            long expectedMilliseconds = (totalConnection / concurrentConnections) * 1000 * 2;
-            if (expectedMilliseconds < SignalRConstants.MillisecondsToWait)
-            {
-                expectedMilliseconds = SignalRConstants.MillisecondsToWait;
-            }
-            return expectedMilliseconds;
+            // long expectedMilliseconds = (totalConnection / concurrentConnections) * 1000 * 2 * 1000000;
+            // if (expectedMilliseconds < SignalRConstants.MillisecondsToWait)
+            // {
+            //     expectedMilliseconds = SignalRConstants.MillisecondsToWait;
+            // }
+            return 864000000L; // 10 day
         }
     }
 }

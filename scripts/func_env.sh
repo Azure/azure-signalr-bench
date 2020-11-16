@@ -562,6 +562,7 @@ function gen_final_report() {
   sh gen_appserver_exception.sh $nginx_root $result_root
   sh gen_nginx_error.sh $nginx_root $result_root
   sh send_mail.sh $nginx_root/$result_root/allunits.html
+  echo "final report: http://$nginx_server_dns/$result_root/allunits.html"
 }
 
 iterate_all_vms() {

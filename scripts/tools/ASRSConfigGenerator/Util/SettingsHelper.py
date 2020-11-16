@@ -100,7 +100,7 @@ def determine_scenario_config(settings,
         key = "{}:{},{}:{},{}:{},{}:{}".format("scenario", scenario, "transport", transport, "protocol", protocol,
                                                "message_size", message_size)
     elif scenario.endswith("Group"): # scenarios end with "Group" will automatically check group value
-        key = "{}:{},{}:{},{}:{}".format("scenario", scenario, "transport", transport, "group", group)
+        key = "{}:{},{}:{},{}:{},{}:{}".format("scenario", scenario, "transport", transport, "group", group, "message_size", message_size)
     else:
         key = "{}:{},{}:{}".format("scenario", scenario, "transport", transport)
 

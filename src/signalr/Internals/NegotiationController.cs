@@ -2,6 +2,7 @@
 using Microsoft.Azure.SignalR.Management;
 using Serilog;
 using System.Collections.Generic;
+using System;
 
 namespace Plugin.Microsoft.Azure.SignalR.Benchmark.Internals
 {
@@ -26,7 +27,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark.Internals
             return new JsonResult(new Dictionary<string, string>()
             {
                 { "url", _serviceManager.GetClientEndpoint(hub) },
-                { "accessToken", _serviceManager.GenerateClientAccessToken(hub, user) }
+                { "accessToken", _serviceManager.GenerateClientAccessToken(hub, user, lifeTime: new TimeSpan(10, 0, 0, 0, 0)) }
             });
         }
     }
