@@ -41,6 +41,7 @@ namespace Microsoft.Azure.SignalR.PerfTest.AppServer
                     option.AccessTokenLifetime = TimeSpan.FromHours(_serverConfig.AccessTokenLifetime);
                     option.ConnectionCount = _serverConfig.ConnectionNumber;
                     option.Endpoints = Array.ConvertAll(_serverConfig.ConnectionString.Split("!"), c => new ServiceEndpoint(c));
+                    option.DiagnosticClientFilter = ctx => true;
                 });
             }
             services.Replace(ServiceDescriptor.Singleton(typeof(ILoggerFactory), typeof(TimedLoggerFactory)));
