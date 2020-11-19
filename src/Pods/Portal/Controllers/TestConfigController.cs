@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Azure.SignalRBench.Common;
@@ -27,9 +28,13 @@ namespace Portal.Controllers
         [HttpGet]
         public async Task<IEnumerable<TestConfigEntity>> Get()
         {
+            var s = new Stopwatch();
+            s.Start();
             var table = await _perfStorage.GetTableAsync<TestConfigEntity>(Constants.TableNames.TestConfig);
             var rows = await table.QueryAsync(table.Rows
                                                    ).ToListAsync();
+            s.Stop();
+            Console.WriteLine(s.ElapsedMilliseconds);
             return rows;
         }
 

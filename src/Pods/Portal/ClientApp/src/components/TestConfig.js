@@ -8,7 +8,7 @@ export class TestConfig extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            show: false, loading: true, obj: { serverNum: 1, signalRUnitSize:1 }
+            show: false, loading: true, obj: {  signalRUnitSize:1 }
         };
         this.handleClose = this.handleClose.bind(this);
         this.handleShow = this.handleShow.bind(this);
@@ -27,11 +27,19 @@ export class TestConfig extends Component {
         })
     }
     handleChange(e) {
+        if(e.target.value==null||e.target.value==""){
+            delete this.state.obj[e.target.name]
+        }
+        else
         this.state.obj[e.target.name] = e.target.value
         console.log(JSON.stringify(this.state.obj))
     }
     handleChangeNum(e) {
-        this.state.obj[e.target.name] = parseInt(e.target.value);
+        if(e.target.value==null||e.target.value==""){
+            delete this.state.obj[e.target.name]
+        }
+        else
+          this.state.obj[e.target.name] = parseInt(e.target.value);
         console.log(JSON.stringify(this.state.obj))
     }
 
@@ -128,11 +136,48 @@ export class TestConfig extends Component {
                             </Form.Group>
                             <Form.Group >
                                 <Form.Label>Total client connections</Form.Label>
-                                <Form.Control name="clientCons" onChange={this.handleChangeNum} placeholder="set the test server number" />
+                                <Form.Control name="clientCons" onChange={this.handleChangeNum} placeholder="set the Total Client connections. (Default:3000)" />
                             </Form.Group>
                             <Form.Group >
                                 <Form.Label>Server number</Form.Label>
-                                <Form.Control name="serverNum" onChange={this.handleChangeNum} placeholder="set the test server number" />
+                                <Form.Control name="serverNum" onChange={this.handleChangeNum} placeholder="set the test server number. (Default:1)" />
+                            </Form.Group>
+                            <Form.Group  >
+                                <Form.Label>Testing Scenerio</Form.Label>
+                                <Form.Control name="Scenario" onChange={this.handleChangeNum} as="select">
+                                    <option>Echo</option>
+                                    <option>Broadcast</option>
+                                </Form.Control>
+                            </Form.Group>
+                            <Form.Group  >
+                                <Form.Label>Protocol</Form.Label>
+                                <Form.Control name="Protocol" onChange={this.handleChangeNum} as="select">
+                                    <option>WebSocketsWithJson</option>
+                                    <option>WebSocketsWithMessagePack</option>
+                                    <option>ServerSideEventsWithJson</option>
+                                    <option>LongPollingWithMessagePack</option>
+                                    <option>LongPollingWithJson</option>
+                                </Form.Control>
+                            </Form.Group>
+                            <Form.Group >
+                                <Form.Label>Round Start Index</Form.Label>
+                                <Form.Control name="Start" onChange={this.handleChangeNum} placeholder="set the num of connections that send requests at the first round. (Default:0)" />
+                            </Form.Group>
+                            <Form.Group >
+                                <Form.Label>Round Step Size </Form.Label>
+                                <Form.Control name="Start" onChange={this.handleChangeNum} placeholder="set the step between rounds. (Default:5) " />
+                            </Form.Group>
+                            <Form.Group >
+                                <Form.Label>Round End Index</Form.Label>
+                                <Form.Control name="Start" onChange={this.handleChangeNum} placeholder="set the num of connections that send requests at the last round. (Default:10)" />
+                            </Form.Group>
+                            <Form.Group >
+                                <Form.Label>MessageSize </Form.Label>
+                                <Form.Control name="MessageSize" onChange={this.handleChangeNum} placeholder="set the message size. (Default:1024) [unit KB]) " />
+                            </Form.Group>
+                            <Form.Group >
+                                <Form.Label>Interval </Form.Label>
+                                <Form.Control name="MessageSize" onChange={this.handleChangeNum} placeholder="set the message size. (Default:1024) [unit KB]) " />
                             </Form.Group>
                         </Form>
                     </Modal.Body>
