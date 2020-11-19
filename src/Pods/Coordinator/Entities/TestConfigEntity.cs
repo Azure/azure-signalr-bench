@@ -1,13 +1,9 @@
-﻿using Azure.SignalRBench.Common;
-using Microsoft.Azure.Cosmos.Table;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System;
+using Azure.SignalRBench.Common;
 using Microsoft.Azure.Cosmos.Table;
 using Newtonsoft.Json;
 
-namespace Portal.Entities
+namespace Azure.SignalRBench.Coordinator.Entities
 {
     public class TestConfigEntity :TableEntity
     {
@@ -54,7 +50,7 @@ namespace Portal.Entities
                     },
                     IsAnonymous = true,
                     Protocol = SignalRProtocol.WebSocketsWithJson,
-                    Rate = 1,
+                    Rate = 200,
                 },
                 ServerSetting=new ServerSetting()
                 {

@@ -8,7 +8,7 @@ namespace Azure.SignalRBench.Coordinator
 {
     public interface IK8sProvider
     {
-        Task CreateClientPodsAsync(string testId, int nodePoolIndex, string url,int clientPodCount, CancellationToken cancellationToken);
+        Task CreateClientPodsAsync(string testId, int nodePoolIndex,int clientPodCount, CancellationToken cancellationToken);
         Task<string> CreateServerPodsAsync(string testId, int nodePoolIndex, string[] asrsConnectionStrings,int serverPodCount, CancellationToken cancellationToken);
         Task DeleteClientPodsAsync(string testId, int nodePoolIndex);
         Task DeleteServerPodsAsync(string testId, int nodePoolIndex);

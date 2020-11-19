@@ -1,14 +1,15 @@
 ﻿using Microsoft.Azure.Cosmos.Table;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
-namespace Portal.Entities
+namespace Azure.SignalRBench.Coordinator.Entities
 {
     public class TestStatusEntity :TableEntity
     {
         public string Status { get; set; }
    //     public string Time { get; set; }
+        public string Report { get; set; }
+
+        public bool Healthy { get; set; }
+
+
     }
 }

@@ -8,7 +8,7 @@ export class TestConfig extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            show: false, loading: true, obj: { serverNum: 1 }
+            show: false, loading: true, obj: { serverNum: 1, signalRUnitSize:1 }
         };
         this.handleClose = this.handleClose.bind(this);
         this.handleShow = this.handleShow.bind(this);

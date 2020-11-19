@@ -50,7 +50,7 @@ namespace Azure.SignalRBench.Coordinator
                 },
                 Spec = new V1ServiceSpec()
                 {
-                    Ports = new List<V1ServicePort> { new V1ServicePort(port: 6379, targetPort: 6379) },
+                    Ports = new List<V1ServicePort> { new V1ServicePort(port: 80, targetPort: 8080) },
                     Selector = new Dictionary<string, string>()
                     {
                         ["app"] = name
@@ -155,7 +155,7 @@ namespace Azure.SignalRBench.Coordinator
             return name;
         }
 
-        public async Task CreateClientPodsAsync(string testId, int nodePoolIndex, string url,int clientPodCount, CancellationToken cancellationToken)
+        public async Task CreateClientPodsAsync(string testId, int nodePoolIndex, int clientPodCount, CancellationToken cancellationToken)
         {
             var name = _client + '-' + testId;
             V1Deployment deployment = new V1Deployment()
@@ -231,7 +231,6 @@ namespace Azure.SignalRBench.Coordinator
                                 {
                                     new V1EnvVar(Constants.ConfigurationKeys.PodNameStringKey,valueFrom:new V1EnvVarSource(fieldRef:new V1ObjectFieldSelector("metadata.name") ) ),
                                     new V1EnvVar(Constants.ConfigurationKeys.TestIdKey,testId),
-                                    new V1EnvVar(Constants.ConfigurationKeys.AppServerUrl,url),
                                     new V1EnvVar(Constants.ConfigurationKeys.StorageConnectionStringKey,_perfStorageProvider.ConnectionString),
                                     new V1EnvVar(Constants.ConfigurationKeys.RedisConnectionStringKey,_redisConnectionString),
                                 }

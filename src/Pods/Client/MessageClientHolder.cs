@@ -43,6 +43,7 @@ namespace Azure.SignalRBench.Client
                 MessageHandler.CreateCommandHandler(Roles.Clients, Commands.Clients.StartScenario, StartScenario),
                 MessageHandler.CreateCommandHandler(Roles.Clients, Commands.Clients.StopScenario, StopScenario));
             await _client.ReportReadyAsync(new ReportReadyParameters() { Role=Roles.Clients});
+            _logger.LogInformation("Message client handlers inited.");
         }
 
         private Task Crash(CommandMessage commandMessage)
@@ -64,7 +65,9 @@ namespace Azure.SignalRBench.Client
                 return;
             }
             _scenarioState.SetClientRange(setClientRangeParameters);
+            _logger.LogInformation("Client range set.");
             await Client.AckCompletedAsync(commandMessage);
+            _logger.LogInformation("Client range acked.");
         }
 
         private async Task StartClientConnections(CommandMessage commandMessage)
@@ -80,6 +83,7 @@ namespace Azure.SignalRBench.Client
             }
             await _scenarioState.StartClientConnections(this,startConnectionsParameters);
             await Client.AckCompletedAsync(commandMessage);
+            _logger.LogInformation("Start client connections acked.");
         }
 
         private async Task StopClientConnections(CommandMessage commandMessage)

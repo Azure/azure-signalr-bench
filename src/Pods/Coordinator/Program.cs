@@ -6,6 +6,8 @@ using System;
 using Azure.Identity;
 using Azure.Security.KeyVault.Secrets;
 using Azure.SignalRBench.Common;
+using Azure.SignalRBench.Storage;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -32,6 +34,13 @@ namespace Azure.SignalRBench.Coordinator
                         sp => new SecretClient(
                             new Uri(hostContext.Configuration[Constants.ConfigurationKeys.KeyVaultUrlKey]),
                             new DefaultAzureCredential()));
+                    services.AddSingleton<IPerfStorage>(sp =>
+                        {
+                            var secretClient = sp.GetService<SecretClient>();
+                            var connectionString = secretClient.GetSecretAsync(Constants.KeyVaultKeys.StorageConnectionStringKey).GetAwaiter().GetResult().Value.Value;
+                            return new PerfStorage(connectionString);
+                        }
+                    );
                     services.AddSingleton<PerfStorageProvider>();
                     services.AddSingleton<IK8sProvider, K8sProvider>();
                     services.AddSingleton<IAksProvider, AksProvider>();

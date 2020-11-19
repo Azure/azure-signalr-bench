@@ -25,7 +25,7 @@ namespace Azure.SignalRBench.Client
             Context = context;
             _connection = new HubConnectionBuilder()
                 .WithUrl(
-                    url,
+                    url+"signalrbench",
                     o =>
                     {
                         o.Transports = (HttpTransportType)((int)protocol & 0xF);
@@ -34,7 +34,8 @@ namespace Azure.SignalRBench.Client
                         {
                             o.Headers.Add("user", userName);
                         }
-                    })
+                    }
+                    )
                 .WithAutomaticReconnect(RetryPolicy.Instance)
                 .Build();
             _connection.On<long, string>(nameof(context.Measure), context.Measure);
@@ -45,7 +46,15 @@ namespace Azure.SignalRBench.Client
 
         public async Task StartAsync(CancellationToken cancellationToken)
         {
-            await _connection.StartAsync(cancellationToken);
+            try
+            {
+                await _connection.StartAsync(cancellationToken);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                // throw;
+            }
             await Context.OnConnected(this, Groups.Length > 0);
         }
 

@@ -65,31 +65,46 @@ namespace Azure.SignalRBench.Client
             }
             using var cts = new CancellationTokenSource();
             using var linkSource = CancellationTokenSource.CreateLinkedTokenSource(cts.Token, cancellationToken);
-            using var semaphore = GetRateControlSemaphore(rate, linkSource.Token);
             try
             {
-                await Task.WhenAll(
-                    _clients.Select(async c =>
-                    {
-                        await semaphore.WaitAsync(cancellationToken);
-                        while (!cancellationToken.IsCancellationRequested)
+                using var semaphore = GetRateControlSemaphore(rate, linkSource.Token);
+                try
+                {
+                    // for (int i = 0; i < _clients.Length; i++)
+                    // {
+                    //     await _clients[i].StartAsync(cancellationToken);
+                    //     await Task.Delay(10);
+                    // }
+                    await Task.WhenAll(
+                        _clients.Select(async c =>
                         {
-                            try
+                            await semaphore.WaitAsync(cancellationToken);
+                            while (!cancellationToken.IsCancellationRequested)
                             {
-                                await c.StartAsync(cancellationToken);
-                                return;
+                                try
+                                {
+                                    await c.StartAsync(cancellationToken);
+                                    _logger.LogInformation("Connected.");
+                                    return;
+                                }
+                                catch (Exception ex)
+                                {
+                                    _logger.LogError(ex, "Failed to start client.");
+                                }
                             }
-                            catch (Exception ex)
-                            {
-                                _logger.LogError(ex, "Failed to start client.");
-                            }
-                        }
-                    }));
+                        }));
+                }
+                finally
+                {
+                    cts.Cancel();
+                }
             }
-            finally
+            catch (Exception e)
             {
-                cts.Cancel();
+                Console.WriteLine(e);
+                throw;
             }
+           
         }
 
         public async Task StopAsync(double rate)
@@ -155,6 +170,7 @@ namespace Azure.SignalRBench.Client
                 while (true)
                 {
                     await Task.Delay(1000, cancellationToken);
+                    _logger.LogInformation("reportClientStatus");
                     await _messageClientHolder.Client.ReportClientStatusAsync(_context.ClientStatus());
                 }
             });

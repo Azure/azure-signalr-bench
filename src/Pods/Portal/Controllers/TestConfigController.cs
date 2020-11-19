@@ -1,12 +1,13 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Azure.SignalRBench.Common;
+using Azure.SignalRBench.Coordinator.Entities;
 using Azure.SignalRBench.Storage;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Cosmos.Table;
-using Portal.Entities;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -16,9 +17,9 @@ namespace Portal.Controllers
     [ApiController]
     public class TestConfigController : ControllerBase
     {
-        private PerfStorage _perfStorage;
+        private IPerfStorage _perfStorage;
 
-        public TestConfigController(PerfStorage perfStorage)
+        public TestConfigController(IPerfStorage perfStorage)
         {
             _perfStorage = perfStorage;
         }
@@ -57,9 +58,31 @@ namespace Portal.Controllers
             {
                 PartitionKey = latestTestConfig.PartitionKey,
                 RowKey = latestTestConfig.Index.ToString(),
-                Status = "Init"
+                Status = "Init",
+                // result = new ConcurrentDictionary<string, ReportClientStatusParameters>()
+                // {
+                //     ["1"]=new ReportClientStatusParameters()
+                //     {
+                //         TotalReconnectCount = 1,
+                //         ConnectedCount = 1,
+                //         MessageRecieved =1,
+                //         Latency = new Dictionary<LatencyClass, int>()
+                //         {
+                //             [LatencyClass.LessThan1s]=1
+                //         }
+                //     }
+                // }
+                Report = ""
             };
+            try
+            {
             await statusTable.InsertAsync(testEntity);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                throw;
+            }
         }
 
         // DELETE api/<ValuesController>/5

@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using Azure.SignalRBench.Common;
+using Azure.SignalRBench.Storage;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
@@ -18,6 +19,7 @@ namespace Azure.SignalRBench.Coordinator
             IAksProvider aksProvider,
             IK8sProvider k8sProvider,
             ISignalRProvider signalRProvider,
+            IPerfStorage perfStorage,
             ILogger<TestRunner> logger)
         {
             _podName = configuration[Constants.ConfigurationKeys.PodNameStringKey];
@@ -25,12 +27,15 @@ namespace Azure.SignalRBench.Coordinator
             AksProvider = aksProvider;
             K8sProvider = k8sProvider;
             SignalRProvider = signalRProvider;
+            PerfStorage = perfStorage;
             _logger = logger;
         }
 
         public IAksProvider AksProvider { get; }
 
         public IK8sProvider K8sProvider { get; }
+        
+        public IPerfStorage PerfStorage { get; }
 
         public ISignalRProvider SignalRProvider { get; }
 
@@ -46,6 +51,7 @@ namespace Azure.SignalRBench.Coordinator
                 AksProvider,
                 K8sProvider,
                 SignalRProvider,
+                PerfStorage,
                 defaultLocation,
                 _logger);
     }

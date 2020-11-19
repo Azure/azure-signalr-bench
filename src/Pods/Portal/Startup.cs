@@ -32,7 +32,7 @@ namespace Portal
                        sp => new SecretClient(
                            new Uri(Configuration[Constants.ConfigurationKeys.KeyVaultUrlKey]),
                            new DefaultAzureCredential()));
-            services.AddSingleton(sp =>
+            services.AddSingleton<IPerfStorage>(sp =>
             {
                 var secretClient = sp.GetService<SecretClient>();
                 var connectionString = secretClient.GetSecretAsync(Constants.KeyVaultKeys.StorageConnectionStringKey).GetAwaiter().GetResult().Value.Value;

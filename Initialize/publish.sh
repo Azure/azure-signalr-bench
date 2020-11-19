@@ -50,7 +50,7 @@ while [[ "$#" > 0 ]]; do
     --compiler)
         COMPILER=true
         ;;
-    --appserver)
+    --server)
         APPSERVER=true
         ;;
     --client)
@@ -96,7 +96,6 @@ if [[ $ALL || $PORTAL ]]; then
    # publish Portal
     cd $DIR/yaml/portal
     PORTAL_IP=$(az network public-ip show -n $PORTAL_IP_NAME -g $RESOURCE_GROUP --query "ipAddress" -o tsv)
-    exit
     cat load-balancer-service.yaml | replace RESOURCE_GROUP_PLACE_HOLDER $RESOURCE_GROUP | replace PORTAL_IP_PLACE_HOLDER $PORTAL_IP | replace KVURL_PLACE_HOLDER $KVURL | kubectl apply -f -
     kubectl apply -f portal.yaml
     domain=$(az network public-ip show -n $PORTAL_IP_NAME -g $RESOURCE_GROUP --query dnsSettings.fqdn -o tsv)
@@ -127,10 +126,7 @@ if [[ $ALL || $REDIS ]]; then
     ##This redis has only one instance. Change this to cluster mode later
     cd $DIR/yaml/redis
     PORTAL_IP=$(az network public-ip show -n $PORTAL_IP_NAME -g $RESOURCE_GROUP --query "ipAddress" -o tsv)
-    cat redis-master-service2.yaml | replace RESOURCE_GROUP_PLACE_HOLDER $RESOURCE_GROUP | replace PORTAL_IP_PLACE_HOLDER $PORTAL_IP | replace KVURL_PLACE_HOLDER $KVURL | kubectl apply -f -
+    cat redis-master-service2.yaml | replace RESOURCE_GROUP_PLACE_HOLDER $RESOURCE_GROUP  | kubectl apply -f -
     kubectl apply -f redis-master-deployment.yaml
-  #  kubectl apply -f redis-master-service2.yaml
     echo "redis dns inside cluster: redis-master "
-    domain=$(az network public-ip show -n $PORTAL_IP_NAME -g $RESOURCE_GROUP --query dnsSettings.fqdn -o tsv)
-    echo "redis domain: $domain "
 fi

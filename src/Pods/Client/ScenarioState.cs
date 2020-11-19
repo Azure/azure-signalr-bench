@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -89,16 +90,20 @@ namespace Azure.SignalRBench.Client
 
             public int LocalCount { get; }
 
+            private ILogger<ClientRangeReadyState> _logger;
+
             public ClientRangeReadyState(ScenarioState scenarioState, int startId, int localCount)
                 : base(scenarioState)
             {
                 StartId = startId;
                 LocalCount = localCount;
+                _logger = GetLogger<ClientRangeReadyState>();
             }
 
             public override async Task StartClientConnections(MessageClientHolder messageClientHolder,StartClientConnectionsParameters p)
             {
                 var indexMap = GenerateIndexMap(p.TotalCount, StartId, LocalCount);
+                _logger.LogInformation("Indexmap generated.");
                 var clientAgentContainer = new ClientAgentContainer(
                     messageClientHolder,
                     StartId,
@@ -110,6 +115,7 @@ namespace Azure.SignalRBench.Client
                     GetGroupsFunc(p.TotalCount, indexMap, p.GroupDefinitions),
                     GetLogger<ClientAgentContainer>());
                 await clientAgentContainer.StartAsync(p.Rate, default);
+                _logger.LogInformation("Connections started.");
                 SetState(new ClientsReadyState(ScenarioState, p.TotalCount, indexMap, p.GroupDefinitions, clientAgentContainer));
                 return;
             }
