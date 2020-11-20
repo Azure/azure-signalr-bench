@@ -1,7 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
 using Azure.SignalRBench.Common;
 using Microsoft.Azure.Cosmos.Table;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 
 namespace Azure.SignalRBench.Coordinator.Entities
 {
@@ -9,6 +11,7 @@ namespace Azure.SignalRBench.Coordinator.Entities
     {
         public int ClientCons { get; set; } = 3000;
 
+        public string ConnectionString { get; set; } = null;
         public int SignalRUnitSize { get; set; }
 
         public int ServerNum { get; set; } = 1;
@@ -20,9 +23,11 @@ namespace Azure.SignalRBench.Coordinator.Entities
         public int Step { get; set; } = 5;
 
         public int End { get; set; } = 10;
-
+        
         public ClientBehavior Scenario { get; set; } = ClientBehavior.Echo;
 
+        //seconds
+        public int RoundDurations { get; set; } = 60;
         public int Interval { get; set; } = 1000;
 
         public int MessageSize { get; set; } = 1024;
@@ -30,12 +35,31 @@ namespace Azure.SignalRBench.Coordinator.Entities
         public SignalRProtocol Protocol { get; set; } = SignalRProtocol.WebSocketsWithJson;
         public TestJob ToTestJob(int index)
         {
+            //creating round settings
+            var roundsettings = new List<RoundSetting>();
+            for (int i = Start; i <= End; i += Step)
+            {
+                roundsettings.Add(new RoundSetting()
+                {
+                    DurationInSeconds = RoundDurations,
+                   ClientSettings = new []{new  ClientSetting()
+                    {
+                        Behavior=Scenario,
+                        IntervalInMilliseconds=Interval,
+                        Count=i,
+                        MessageSize=MessageSize,
+                        GroupFamily=null,
+                    }
+                   }
+                });
+            }
             var testJob = new TestJob()
             {
                 TestId = PartitionKey + '-' + index,
                 TestMethod = TestCategory.AspnetCore,
-                ServiceSetting = new ServiceSetting[] { new ServiceSetting()
+                ServiceSetting = new [] { new ServiceSetting()
                 {
+                    AsrsConnectionString = ConnectionString,
                     Location = "eastus",
                     Tier = "standard",
                     Size = SignalRUnitSize,
@@ -43,33 +67,15 @@ namespace Azure.SignalRBench.Coordinator.Entities
                 ScenarioSetting = new ScenarioSetting()
                 {
                     TotalConnectionCount = ClientCons,
-                    Rounds = new RoundSetting[]
-                    {
-                        new RoundSetting()
-                        {
-                            DurationInMinutes=1,
-                            ClientSettings=new ClientSetting[]
-                            {
-                                new ClientSetting()
-                                {
-                                    Behavior=ClientBehavior.Echo,
-                                    IntervalInMilliseconds=1000,
-                                    Count=10,
-                                    MessageSize=1024,
-                                    GroupFamily=null,
-                                }
-                            }
-                        }
-                    },
+                    Rounds = roundsettings.ToArray(),
                     IsAnonymous = true,
-                    Protocol = SignalRProtocol.WebSocketsWithJson,
+                    Protocol = Protocol,
                     Rate = 200,
                 },
                 ServerSetting=new ServerSetting()
                 {
                     ServerCount=ServerNum
                 }
-             
             };
             Console.WriteLine(JsonConvert.SerializeObject(testJob));
             return testJob;

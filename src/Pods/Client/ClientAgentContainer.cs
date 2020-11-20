@@ -19,6 +19,7 @@ namespace Azure.SignalRBench.Client
         private readonly MessageClientHolder _messageClientHolder;
         private readonly ClientAgent[] _clients;
         private readonly ILogger<ClientAgentContainer> _logger;
+        private bool slowDown = false;
 
         public ClientAgentContainer(
             MessageClientHolder messageClientHolder,
@@ -89,6 +90,7 @@ namespace Azure.SignalRBench.Client
                                 }
                                 catch (Exception ex)
                                 {
+                                    Volatile.Write(ref slowDown,true);
                                     _logger.LogError(ex, "Failed to start client.");
                                 }
                             }
@@ -113,12 +115,15 @@ namespace Azure.SignalRBench.Client
             using var semaphore = GetRateControlSemaphore(rate, cts.Token);
             try
             {
+                _logger.LogInformation("Start stop connections");
                 await Task.WhenAll(
                     _clients.Select(async c =>
                     {
                         await semaphore.WaitAsync();
                         await c.StopAsync();
+                        _logger.LogInformation("Connection Stopped.");
                     }));
+                _logger.LogInformation("All connections Stopped.");
             }
             finally
             {
@@ -158,6 +163,11 @@ namespace Azure.SignalRBench.Client
                 var releaseCount = Math.Min((int)releaseCountRaw, maxCount - semaphore.CurrentCount);
                 if (releaseCount > 0)
                 {
+                    if (Volatile.Read(ref slowDown))
+                    {
+                        await Task.Delay(20,cancellationToken);
+                        Volatile.Write(ref slowDown,false);
+                    }
                     semaphore.Release(releaseCount);
                 }
             }

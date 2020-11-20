@@ -7,7 +7,7 @@ namespace Azure.SignalRBench.Common
 {
     public class RoundSetting
     {
-        public int DurationInMinutes { get; set; }
+        public int DurationInSeconds { get; set; }
         public ClientSetting[] ClientSettings { get; set; } = Array.Empty<ClientSetting>();
     }
 }

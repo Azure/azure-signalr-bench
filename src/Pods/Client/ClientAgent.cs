@@ -4,7 +4,6 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-
 using Azure.SignalRBench.Common;
 using Microsoft.AspNetCore.Connections;
 using Microsoft.AspNetCore.Http.Connections;
@@ -20,22 +19,23 @@ namespace Azure.SignalRBench.Client
 
         public string[] Groups { get; } = Array.Empty<string>();
 
-        public ClientAgent(string url, SignalRProtocol protocol, string? userName, string[] groups, ClientAgentContext context)
+        public ClientAgent(string url, SignalRProtocol protocol, string? userName, string[] groups,
+            ClientAgentContext context)
         {
             Context = context;
             _connection = new HubConnectionBuilder()
                 .WithUrl(
-                    url+"signalrbench",
+                    url + "signalrbench",
                     o =>
                     {
-                        o.Transports = (HttpTransportType)((int)protocol & 0xF);
-                        o.DefaultTransferFormat = (TransferFormat)((int)protocol >> 4);
+                        o.Transports = (HttpTransportType) ((int) protocol & 0xF);
+                        o.DefaultTransferFormat = (TransferFormat) ((int) protocol >> 4);
                         if (userName != null)
                         {
                             o.Headers.Add("user", userName);
                         }
                     }
-                    )
+                )
                 .WithAutomaticReconnect(RetryPolicy.Instance)
                 .Build();
             _connection.On<long, string>(nameof(context.Measure), context.Measure);
@@ -46,15 +46,7 @@ namespace Azure.SignalRBench.Client
 
         public async Task StartAsync(CancellationToken cancellationToken)
         {
-            try
-            {
-                await _connection.StartAsync(cancellationToken);
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e);
-                // throw;
-            }
+            await _connection.StartAsync(cancellationToken);
             await Context.OnConnected(this, Groups.Length > 0);
         }
 

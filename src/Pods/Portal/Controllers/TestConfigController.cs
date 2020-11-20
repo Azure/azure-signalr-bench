@@ -64,19 +64,7 @@ namespace Portal.Controllers
                 PartitionKey = latestTestConfig.PartitionKey,
                 RowKey = latestTestConfig.Index.ToString(),
                 Status = "Init",
-                // result = new ConcurrentDictionary<string, ReportClientStatusParameters>()
-                // {
-                //     ["1"]=new ReportClientStatusParameters()
-                //     {
-                //         TotalReconnectCount = 1,
-                //         ConnectedCount = 1,
-                //         MessageRecieved =1,
-                //         Latency = new Dictionary<LatencyClass, int>()
-                //         {
-                //             [LatencyClass.LessThan1s]=1
-                //         }
-                //     }
-                // }
+                Healthy = true,
                 Report = ""
             };
             try

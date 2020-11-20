@@ -76,7 +76,7 @@ namespace Azure.SignalRBench.Coordinator
 
         public async Task RunAsync(CancellationToken cancellationToken)
         {
-            Job.TestId = Environment.GetEnvironmentVariable(Constants.ConfigurationKeys.TestIdKey);
+       //     Job.TestId = Environment.GetEnvironmentVariable(Constants.ConfigurationKeys.TestIdKey);
             if (Job.ServiceSetting.Length == 0)
             {
                 _logger.LogWarning("Test job {testId}: No service configuration.", Job.TestId);
@@ -94,14 +94,14 @@ namespace Azure.SignalRBench.Coordinator
             _logger.LogInformation("Test job {testId}: Node count: {count}.", Job.TestId, nodeCount);
            var  asrsConnectionStringsTask = PrepairAsrsInstancesAsync(cancellationToken);
 
-          //  await AksProvider.EnsureNodeCountAsync(NodePoolIndex, nodeCount, cancellationToken);
+            await AksProvider.EnsureNodeCountAsync(NodePoolIndex, nodeCount, cancellationToken);
             using var messageClient = await MessageClient.ConnectAsync(RedisConnectionString, Job.TestId, PodName);
             await messageClient.WithHandlers(MessageHandler.CreateCommandHandler(Roles.Coordinator,Commands.Coordinator.ReportClientStatus,CollectClientStatus));
             try
             {
                 await UpdateTestStatus("Creating pods");
                 await CreatePodsAsync(await asrsConnectionStringsTask, clientAgentCount, clientPodCount, serverPodCount, messageClient, cancellationToken);
-               await UpdateTestStatus("Stanting client connections");
+               await UpdateTestStatus("Starting client connections");
                 await StartClientConnectionsAsync(messageClient, cancellationToken);
                 int i = 0;
                 foreach (var round in Job.ScenarioSetting.Rounds)
@@ -111,7 +111,7 @@ namespace Azure.SignalRBench.Coordinator
                     _clientStatus.Clear();
                     await SetScenarioAsync(messageClient, round, cancellationToken);
                     await StartScenarioAsync(messageClient, cancellationToken);
-                    await Task.Delay(TimeSpan.FromMinutes(round.DurationInMinutes), cancellationToken);
+                    await Task.Delay(TimeSpan.FromSeconds(round.DurationInSeconds), cancellationToken);
                     await StopScenarioAsync(messageClient, cancellationToken);
                     await UpdateTestReports();
                 }
@@ -177,24 +177,24 @@ namespace Azure.SignalRBench.Coordinator
         
         private async Task<string[]> PrepairAsrsInstancesAsync(CancellationToken cancellationToken)
         {
-            // var asrsConnectionStrings = new string[Job.ServiceSetting.Length];
-            // for (int i = 0; i < Job.ServiceSetting.Length; i++)
-            // {
-            //     var ss = Job.ServiceSetting[i];
-            //     if (ss.AsrsConnectionString == null)
-            //     {
-            //         asrsConnectionStrings[i] = await CreateAsrsAsync(ss, Job.TestId +'-'+ i.ToString(), cancellationToken);
-            //     }
-            //     else
-            //     {
-            //         asrsConnectionStrings[i] = ss.AsrsConnectionString;
-            //     }
-            // }
-            //
-            // return asrsConnectionStrings;
-            await Task.Delay((100));
-            return
-               new string[]{Environment.GetEnvironmentVariable(Constants.ConfigurationKeys.ConnectionString)};
+            var asrsConnectionStrings = new string[Job.ServiceSetting.Length];
+            for (int i = 0; i < Job.ServiceSetting.Length; i++)
+            {
+                var ss = Job.ServiceSetting[i];
+                if (ss.AsrsConnectionString == null)
+                {
+                    asrsConnectionStrings[i] = await CreateAsrsAsync(ss, Job.TestId +'-'+ i.ToString(), cancellationToken);
+                }
+                else
+                {
+                    asrsConnectionStrings[i] = ss.AsrsConnectionString;
+                }
+            }
+            
+            return asrsConnectionStrings;
+            // await Task.Delay((100));
+            // return
+            //    new string[]{Environment.GetEnvironmentVariable(Constants.ConfigurationKeys.ConnectionString)};
 
         }
 
@@ -313,9 +313,9 @@ namespace Azure.SignalRBench.Coordinator
                     GetReportReady(clientAgentCount, clientPodCount, serverPodCount, out var clientPodReady, out var serverPodReady)));
 
             _logger.LogInformation("Test job {testId}: Creating server pods.", Job.TestId);
-          //  _url = await K8sProvider.CreateServerPodsAsync(Job.TestId, NodePoolIndex, asrsConnectionStrings, serverPodCount, cancellationToken);
+            _url ="http://"+ await K8sProvider.CreateServerPodsAsync(Job.TestId, NodePoolIndex, asrsConnectionStrings, serverPodCount, cancellationToken)+"/";
             _logger.LogInformation("Test job {testId}: Creating client pods.", Job.TestId);
-         //   await K8sProvider.CreateClientPodsAsync(Job.TestId, NodePoolIndex, _url, clientPodCount, cancellationToken);
+             await K8sProvider.CreateClientPodsAsync(Job.TestId, NodePoolIndex, clientPodCount, cancellationToken);
 
             await Task.WhenAll(
                 Task.Run(async () =>

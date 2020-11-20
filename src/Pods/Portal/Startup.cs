@@ -13,6 +13,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Portal.Controllers;
 using System;
+using System.Text.Json.Serialization;
+using Newtonsoft.Json;
 
 namespace Portal
 {
@@ -39,8 +41,11 @@ namespace Portal
                 return new PerfStorage(connectionString);
             }
                 );
-            services.AddControllersWithViews();
-            
+            services.AddControllersWithViews().AddJsonOptions(options =>
+            {
+                options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+              //  options.JsonSerializerOptions.IgnoreNullValues =true;
+            });
             // In production, the React files will be served from this directory
             services.AddSpaStaticFiles(configuration =>
             {

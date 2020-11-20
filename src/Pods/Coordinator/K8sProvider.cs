@@ -107,13 +107,13 @@ namespace Azure.SignalRBench.Coordinator
                                 {
                                     Requests=new Dictionary<string, ResourceQuantity>()
                                     {
-                                        ["cpu"]=new ResourceQuantity("100m"),
-                                        ["memory"]=new ResourceQuantity("128Mi")
+                                        ["cpu"]=new ResourceQuantity("3000m"),
+                                        ["memory"]=new ResourceQuantity("12000Mi")
                                     },
                                     Limits=new Dictionary<string, ResourceQuantity>()
                                     {
-                                        ["cpu"]=new ResourceQuantity("250m"),
-                                        ["memory"]=new ResourceQuantity("256Mi")
+                                        ["cpu"]=new ResourceQuantity("3000m"),
+                                        ["memory"]=new ResourceQuantity("12000Mi")
                                     }
                                 },
                                 VolumeMounts=new List<V1VolumeMount>()
@@ -206,13 +206,13 @@ namespace Azure.SignalRBench.Coordinator
                                 {
                                     Requests=new Dictionary<string, ResourceQuantity>()
                                     {
-                                        ["cpu"]=new ResourceQuantity("100m"),
-                                        ["memory"]=new ResourceQuantity("128Mi")
+                                        ["cpu"]=new ResourceQuantity("3000m"),
+                                        ["memory"]=new ResourceQuantity("12000Mi")
                                     },
                                     Limits=new Dictionary<string, ResourceQuantity>()
                                     {
-                                        ["cpu"]=new ResourceQuantity("250m"),
-                                        ["memory"]=new ResourceQuantity("256Mi")
+                                        ["cpu"]=new ResourceQuantity("3000m"),
+                                        ["memory"]=new ResourceQuantity("12000Mi")
                                     }
                                 },
                                 VolumeMounts=new List<V1VolumeMount>()

@@ -15,6 +15,7 @@ export class TestConfig extends Component {
         this.handleChange = this.handleChange.bind(this);
         this.handleChangeNum = this.handleChangeNum.bind(this);
         this.handleSubmit = this.handleSubmit.bind(this);
+        this.unitRef=React.createRef();
     }
     handleClose() {
         this.setState({
@@ -27,6 +28,14 @@ export class TestConfig extends Component {
         })
     }
     handleChange(e) {
+        if(e.target.name=="connectionString"){
+            console.log("disable")
+            console.log(this)
+            if(e.target.value)
+                 this.unitRef.current.disabled=true
+            else
+                 this.unitRef.current.disabled=false
+        }
         if(e.target.value==null||e.target.value==""){
             delete this.state.obj[e.target.name]
         }
@@ -77,7 +86,7 @@ export class TestConfig extends Component {
             <table className='table table-striped' aria-labelledby="tabelLabel">
                 <thead>
                     <tr>
-                        <th>TestId</th>
+                        <th>TestName</th>
                         <th>SignalRUnitSize</th>
                         <th>ClientConnections</th>
                         <th>ServerNum</th>
@@ -114,17 +123,21 @@ export class TestConfig extends Component {
 
                 <Modal show={this.state.show} onHide={this.handleClose}>
                     <Modal.Header closeButton>
-                        <Modal.Title>Modal heading</Modal.Title>
+                        <Modal.Title>Create a test job config</Modal.Title>
                     </Modal.Header>
                     <Modal.Body>
-                        <Form >
+                        <Form  name="CreateConfigForm">
                             <Form.Group >
                                 <Form.Label >TestName</Form.Label>
                                 <Form.Control name="rowKey" onChange={this.handleChange} placeholder="give a unique name for this test" />
                             </Form.Group>
+                            <Form.Group >
+                                <Form.Label >ConnectionString</Form.Label>
+                                <Form.Control name="connectionString" onChange={this.handleChange} placeholder="ASR Connection String. If set, the below one will be ignored." />
+                            </Form.Group>
                             <Form.Group  >
                                 <Form.Label>Signarl unit size</Form.Label>
-                                <Form.Control name="signalRUnitSize" onChange={this.handleChangeNum} as="select">
+                                <Form.Control ref={this.unitRef} name="signalRUnitSize" onChange={this.handleChangeNum} as="select">
                                     <option>1</option>
                                     <option>2</option>
                                     <option>5</option>
@@ -144,14 +157,14 @@ export class TestConfig extends Component {
                             </Form.Group>
                             <Form.Group  >
                                 <Form.Label>Testing Scenerio</Form.Label>
-                                <Form.Control name="Scenario" onChange={this.handleChangeNum} as="select">
+                                <Form.Control name="Scenario" onChange={this.handleChange} as="select">
                                     <option>Echo</option>
                                     <option>Broadcast</option>
                                 </Form.Control>
                             </Form.Group>
                             <Form.Group  >
                                 <Form.Label>Protocol</Form.Label>
-                                <Form.Control name="Protocol" onChange={this.handleChangeNum} as="select">
+                                <Form.Control name="Protocol" onChange={this.handleChange} as="select">
                                     <option>WebSocketsWithJson</option>
                                     <option>WebSocketsWithMessagePack</option>
                                     <option>ServerSideEventsWithJson</option>
@@ -161,15 +174,15 @@ export class TestConfig extends Component {
                             </Form.Group>
                             <Form.Group >
                                 <Form.Label>Round Start Index</Form.Label>
-                                <Form.Control name="Start" onChange={this.handleChangeNum} placeholder="set the num of connections that send requests at the first round. (Default:0)" />
+                                <Form.Control name="Start" onChange={this.handleChangeNum} placeholder="Number of connections sending requests at first round. (0)" />
                             </Form.Group>
                             <Form.Group >
                                 <Form.Label>Round Step Size </Form.Label>
-                                <Form.Control name="Start" onChange={this.handleChangeNum} placeholder="set the step between rounds. (Default:5) " />
+                                <Form.Control name="Step" onChange={this.handleChangeNum} placeholder="set the step between rounds. (Default:5) " />
                             </Form.Group>
                             <Form.Group >
                                 <Form.Label>Round End Index</Form.Label>
-                                <Form.Control name="Start" onChange={this.handleChangeNum} placeholder="set the num of connections that send requests at the last round. (Default:10)" />
+                                <Form.Control name="End" onChange={this.handleChangeNum} placeholder="Number of connections sending requests at first round. (10)" />
                             </Form.Group>
                             <Form.Group >
                                 <Form.Label>MessageSize </Form.Label>
@@ -177,7 +190,7 @@ export class TestConfig extends Component {
                             </Form.Group>
                             <Form.Group >
                                 <Form.Label>Interval </Form.Label>
-                                <Form.Control name="MessageSize" onChange={this.handleChangeNum} placeholder="set the message size. (Default:1024) [unit KB]) " />
+                                <Form.Control name="Interval" onChange={this.handleChangeNum} placeholder="message sending interval  (Default:1000) [unit ms]) " />
                             </Form.Group>
                         </Form>
                     </Modal.Body>
