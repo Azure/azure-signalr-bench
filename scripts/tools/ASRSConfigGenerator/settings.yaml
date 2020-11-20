@@ -18,7 +18,7 @@ unit_map:
 - 500
 
 # echo for all transport types
-scenario:echo,transport:Websockets:
+scenario:echo,transport:Websockets,protocol:json:
   normal_connection: [1000, 2000, 5000, 10000, 20000, 50000, 100000, 150000, 200000, 250000, 300000, 350000, 400000, 450000, 500000]
   max_connection: [1500, 3000, 7500, 15000, 30000, 75000, 150000, 200000, 250000, 300000, 350000, 400000, 450000, 500000, 550000]
   base_step:   [1000, 2000, 5000, 5000, 5000, 5000, 200000, 5000, 5000, 5000, 5000, 5000, 5000, 5000, 5000]
@@ -28,7 +28,17 @@ scenario:echo,transport:Websockets:
   batch_mode: ["LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress"]
   batch_wait: [500, 500, 500, 500, 500, 500, 500]
 
-scenario:echo,transport:LongPolling:
+scenario:echo,transport:Websockets,protocol:messagepack:
+  normal_connection: [1000, 2000, 5000, 10000, 20000, 50000, 100000, 150000, 200000, 250000, 300000, 350000, 400000, 450000, 500000]
+  max_connection: [1500, 3000, 7500, 15000, 30000, 75000, 150000, 200000, 250000, 300000, 350000, 400000, 450000, 500000, 550000]
+  base_step:   [1000, 2000, 5000, 5000, 5000, 5000, 200000, 5000, 5000, 5000, 5000, 5000, 5000, 5000, 5000]
+  step:        [ 500, 1000, 2500, 5000, 5000, 5000, 5000, 5000, 5000, 5000, 5000, 5000, 5000, 5000, 5000]
+  step_length: [1500, 1500, 1500, 1500, 1500, 1500, 1500, 150000, 150000, 150000, 150000, 150000, 150000, 150000, 150000]
+  concurrent: [150, 150, 150, 150, 200, 250, 500]
+  batch_mode: ["LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress", "LowPress"]
+  batch_wait: [500, 500, 500, 500, 500, 500, 500]
+
+scenario:echo,transport:LongPolling,protocol:json:
   normal_connection: [500, 1000, 2500, 5000, 10000, 25000, 50000]
   max_connection: [750, 1500, 3000, 7500, 15000, 30000, 75000]
   base_step: [200, 200, 200, 200, 500, 1000, 16000]
@@ -39,7 +49,7 @@ scenario:echo,transport:LongPolling:
   batch_wait: [1000, 1000, 1000, 1000, 1000, 1000, 500]
 
 
-scenario:echo,transport:ServerSentEvents:
+scenario:echo,transport:ServerSentEvents,protocol:json:
   normal_connection: [1000, 2000, 5000, 10000, 20000, 50000, 100000]
   max_connection: [1500, 3000, 7500, 15000, 30000, 75000, 150000]
   base_step: [400, 400, 600, 1000, 1000, 2000, 15000]
