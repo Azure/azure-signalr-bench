@@ -17,7 +17,8 @@ export class TestStatus extends Component {
 
 
     componentDidMount() {
-        this.populateTestStatusData();
+        this.populateTestStatusData(this);
+        setInterval(()=>this.populateTestStatusData(this),5000)
     }
 
     async report(e) {
@@ -32,7 +33,7 @@ export class TestStatus extends Component {
                 <thead>
                     <tr>
                         <th>TestId</th>
-                        <th>Round</th>
+                        <th>Index</th>
                         <th>Time</th>
                         <th>Status</th>
                         <th>Report</th>
@@ -117,10 +118,13 @@ export class TestStatus extends Component {
         );
     }
 
-    async populateTestStatusData() {
-        const response = await fetch('teststatus');
+    async populateTestStatusData(testStatus) {
+        var key=testStatus.props.match.params.key;
+        if(key===undefined)
+             key="";
+        const response = await fetch('teststatus/list/'+key);
         const data = await response.json();
-        this.setState({ testStatuses: data, loading: false });
+        testStatus.setState({ testStatuses: data, loading: false });
     }
 
 

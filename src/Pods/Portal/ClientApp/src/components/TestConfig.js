@@ -17,6 +17,7 @@ export class TestConfig extends Component {
         this.handleSubmit = this.handleSubmit.bind(this);
         this.unitRef=React.createRef();
     }
+    
     handleClose() {
         this.setState({
             show: false
@@ -31,8 +32,9 @@ export class TestConfig extends Component {
         if(e.target.name=="connectionString"){
             console.log("disable")
             console.log(this)
-            if(e.target.value)
+            if(e.target.value){
                  this.unitRef.current.disabled=true
+            }
             else
                  this.unitRef.current.disabled=false
         }
@@ -62,6 +64,9 @@ export class TestConfig extends Component {
                 'Content-Type': 'application/json',
             },
             body: json
+        }).then(res=>{
+            console.log(res)
+            window.open("/test-status/"+json["partitionKey"])
         });
     }
     async handleSubmit() {
@@ -96,8 +101,9 @@ export class TestConfig extends Component {
                 <tbody>
                     {testConfigs.map(testConfig => {
                         var json=JSON.stringify(testConfig)
+                        var link="/test-status/"+testConfig.rowKey;
                         return <tr key={testConfig.rowKey}>
-                            <td>{testConfig.rowKey}</td>
+                            <td><a href={link}>{testConfig.rowKey}</a></td>
                             <td>{testConfig.signalRUnitSize}</td>
                             <td>{testConfig.clientCons}</td>
                             <td>{testConfig.serverNum}</td>
@@ -173,6 +179,10 @@ export class TestConfig extends Component {
                                 </Form.Control>
                             </Form.Group>
                             <Form.Group >
+                                <Form.Label>Round Durations</Form.Label>
+                                <Form.Control name="RoundDuration" onChange={this.handleChangeNum} placeholder="Time each round takes. (60)[Unit: s]" />
+                            </Form.Group>
+                            <Form.Group >
                                 <Form.Label>Round Start Index</Form.Label>
                                 <Form.Control name="Start" onChange={this.handleChangeNum} placeholder="Number of connections sending requests at first round. (0)" />
                             </Form.Group>
@@ -182,14 +192,14 @@ export class TestConfig extends Component {
                             </Form.Group>
                             <Form.Group >
                                 <Form.Label>Round End Index</Form.Label>
-                                <Form.Control name="End" onChange={this.handleChangeNum} placeholder="Number of connections sending requests at first round. (10)" />
+                                <Form.Control name="End" onChange={this.handleChangeNum} placeholder="Number of connections sending requests at first round. (Start)" />
                             </Form.Group>
                             <Form.Group >
                                 <Form.Label>MessageSize </Form.Label>
-                                <Form.Control name="MessageSize" onChange={this.handleChangeNum} placeholder="set the message size. (Default:1024) [unit KB]) " />
+                                <Form.Control name="MessageSize" onChange={this.handleChangeNum} placeholder="set the message size. (Default:2048) [unit KB]) " />
                             </Form.Group>
                             <Form.Group >
-                                <Form.Label>Interval </Form.Label>
+                                <Form.Label>Sending Interval </Form.Label>
                                 <Form.Control name="Interval" onChange={this.handleChangeNum} placeholder="message sending interval  (Default:1000) [unit ms]) " />
                             </Form.Group>
                         </Form>

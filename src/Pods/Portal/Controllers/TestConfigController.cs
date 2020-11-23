@@ -33,6 +33,7 @@ namespace Portal.Controllers
             var table = await _perfStorage.GetTableAsync<TestConfigEntity>(Constants.TableNames.TestConfig);
             var rows = await table.QueryAsync(table.Rows
                                                    ).ToListAsync();
+            rows.Sort((a,b)=>b.Timestamp.CompareTo(a.Timestamp));
             s.Stop();
             Console.WriteLine(s.ElapsedMilliseconds);
             return rows;

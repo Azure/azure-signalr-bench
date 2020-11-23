@@ -22,7 +22,7 @@ namespace Azure.SignalRBench.Coordinator.Entities
 
         public int Step { get; set; } = 5;
 
-        public int End { get; set; } = 10;
+        public int End { get; set; } = -1;
         
         public ClientBehavior Scenario { get; set; } = ClientBehavior.Echo;
 
@@ -30,13 +30,14 @@ namespace Azure.SignalRBench.Coordinator.Entities
         public int RoundDurations { get; set; } = 60;
         public int Interval { get; set; } = 1000;
 
-        public int MessageSize { get; set; } = 1024;
+        public int MessageSize { get; set; } = 2048;
         
         public SignalRProtocol Protocol { get; set; } = SignalRProtocol.WebSocketsWithJson;
         public TestJob ToTestJob(int index)
         {
             //creating round settings
             var roundsettings = new List<RoundSetting>();
+            End = End == -1 ? Start : End;
             for (int i = Start; i <= End; i += Step)
             {
                 roundsettings.Add(new RoundSetting()

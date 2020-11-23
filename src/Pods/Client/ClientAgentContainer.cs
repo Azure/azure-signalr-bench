@@ -68,33 +68,45 @@ namespace Azure.SignalRBench.Client
             using var linkSource = CancellationTokenSource.CreateLinkedTokenSource(cts.Token, cancellationToken);
             try
             {
-                using var semaphore = GetRateControlSemaphore(rate, linkSource.Token);
+               // using var semaphore = GetRateControlSemaphore(rate, linkSource.Token);
+              using  var semaphore=new SemaphoreSlim((int)rate);
+                var count = 0;
                 try
                 {
-                    // for (int i = 0; i < _clients.Length; i++)
-                    // {
-                    //     await _clients[i].StartAsync(cancellationToken);
-                    //     await Task.Delay(10);
-                    // }
                     await Task.WhenAll(
-                        _clients.Select(async c =>
+                        _clients.Select(async (c,index) =>
                         {
                             await semaphore.WaitAsync(cancellationToken);
                             while (!cancellationToken.IsCancellationRequested)
                             {
+                                var stopWatch=new Stopwatch();
+                                stopWatch.Start();
                                 try
                                 {
                                     await c.StartAsync(cancellationToken);
-                                    _logger.LogInformation("Connected.");
+                                    Interlocked.Add(ref count,1);
+                                    _logger.LogInformation($"Total {Volatile.Read(ref count)} Connected.");
+                                    stopWatch.Stop();
+                                    _logger.LogInformation($"rate :{rate} Time cost:{stopWatch.ElapsedMilliseconds}");
+                                    await Task.Delay(1000);
+                                    semaphore.Release(1);
                                     return;
                                 }
                                 catch (Exception ex)
                                 {
-                                    Volatile.Write(ref slowDown,true);
-                                    _logger.LogError(ex, "Failed to start client.");
+                                    stopWatch.Stop();
+                                    _logger.LogInformation($"fail Time cost:{stopWatch.ElapsedMilliseconds}");
+
+                                    await Task.Delay(1000);
+                                    Volatile.Write(ref slowDown, true);
+                                    _logger.LogError(ex, $"Failed to start {index} client.");
                                 }
                             }
                         }));
+                }
+                catch (Exception e)
+                {
+                    _logger.LogError(e,"Start connections error");
                 }
                 finally
                 {
