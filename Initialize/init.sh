@@ -63,7 +63,7 @@ else
     echo "resouce group $RESOURCE_GROUP already exists. Skip creating.."
 fi
 
-az configure --defaults group=$RESOURCE_GROUP
+az configure --defaults group=$RESOURCE_GROUPa
 
 if [[ -z $(az keyvault show -n $KEYVAULT 2>/dev/null) ]]; then
     echo "start to create keyvault $KEYVAULT"
@@ -108,7 +108,7 @@ if [[ -z $(az aks show --name $KUBERNETES_SEVICES -g $RESOURCE_GROUP 2>/dev/null
     echo "start to create kubernetes services $KUBERNETES_SEVICES. May cost several minutes, waiting..."
     work_space_resource_id=$(az monitor log-analytics workspace show -g $RESOURCE_GROUP -n $WORK_SPACE --query id -o tsv)
     az aks create -n $KUBERNETES_SEVICES --vm-set-type VirtualMachineScaleSets --kubernetes-version 1.17.11 --enable-managed-identity -s Standard_D4s_v3 --nodepool-name captain --generate-ssh-keys \
-        --load-balancer-managed-outbound-ip-count 3 --workspace-resource-id "$work_space_resource_id" --enable-addons monitoring
+        --load-balancer-managed-outbound-ip-count 10 --load-balancer-outbound-ports 20000 --workspace-resource-id "$work_space_resource_id" --enable-addons monitoring
     echo "create agentpool pool0 for appserver and client"
     az aks nodepool add -n pool0 --cluster-name $KUBERNETES_SEVICES --kubernetes-version 1.17.11 -c 3  -s Standard_D4s_v3
     echo "start to create kubernetes services $KUBERNETES_SEVICES created."

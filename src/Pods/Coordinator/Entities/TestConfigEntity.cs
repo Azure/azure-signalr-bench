@@ -18,7 +18,7 @@ namespace Azure.SignalRBench.Coordinator.Entities
 
         public int Index { get; set; } = 0;
 
-        public int Start { get; set; } = 0;
+        public int Start { get; set; } = 1;
 
         public int Step { get; set; } = 5;
 

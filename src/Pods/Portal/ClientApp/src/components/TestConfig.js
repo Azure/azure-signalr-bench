@@ -66,7 +66,9 @@ export class TestConfig extends Component {
             body: json
         }).then(res=>{
             console.log(res)
-            window.open("/test-status/"+json["partitionKey"])
+            JSON.parse(json)
+            var j=JSON.parse(json);
+            window.open("/test-status/"+j["partitionKey"])
         });
     }
     async handleSubmit() {
@@ -184,7 +186,7 @@ export class TestConfig extends Component {
                             </Form.Group>
                             <Form.Group >
                                 <Form.Label>Round Start Index</Form.Label>
-                                <Form.Control name="Start" onChange={this.handleChangeNum} placeholder="Number of connections sending requests at first round. (0)" />
+                                <Form.Control name="Start" onChange={this.handleChangeNum} placeholder="Number of connections sending requests at first round. (1)" />
                             </Form.Group>
                             <Form.Group >
                                 <Form.Label>Round Step Size </Form.Label>

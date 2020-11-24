@@ -19,7 +19,7 @@ namespace Azure.SignalRBench.Coordinator
 {
     public class TestRunner
     {
-        private const double MaxClientCountInPod = 3000;
+        private const double MaxClientCountInPod = 30000;
 
         private readonly Dictionary<string, SetClientRangeParameters> _clients =
             new Dictionary<string, SetClientRangeParameters>();
