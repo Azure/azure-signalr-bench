@@ -33,7 +33,8 @@ namespace Azure.SignalRBench.Common
             var serviceClient = new BlobServiceClient(connectionString);
             _prefix = prefix;
             _suffix = suffix;
-            _client = serviceClient.GetBlobContainerClient("logs");
+            _client = serviceClient.GetBlobContainerClient("logs"); 
+            _client.CreateIfNotExists();
             _ = StartDequeue();
         }
 

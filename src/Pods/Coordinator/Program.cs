@@ -27,6 +27,7 @@ namespace Azure.SignalRBench.Coordinator
                  {
                      logging.ClearProviders();
                      logging.AddConsole();
+              
                  })
                 .ConfigureServices((hostContext, services) =>
                 {
