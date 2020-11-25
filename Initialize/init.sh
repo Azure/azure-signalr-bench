@@ -63,11 +63,11 @@ else
     echo "resouce group $RESOURCE_GROUP already exists. Skip creating.."
 fi
 
-az configure --defaults group=$RESOURCE_GROUPa
+az configure --defaults group=$RESOURCE_GROUP
 
 if [[ -z $(az keyvault show -n $KEYVAULT 2>/dev/null) ]]; then
     echo "start to create keyvault $KEYVAULT"
-    az keyvault create -n $KEYVAULT
+    az keyvault create -n $KEYVAULT -g $RESOURCE_GROUP
     echo "keyvault $KEYVAULT created. Grant current user permission"
     az keyvault set-policy --name $KEYVAULT --upn $(az account show --query user.name -o tsv) --secret-permissions delete get list set >/dev/null
 else
@@ -104,13 +104,15 @@ else
     echo "storage account $STORAGE_ACCOUNT already exists. Skip creating.."
 fi
 
-if [[ -z $(az aks show --name $KUBERNETES_SEVICES -g $RESOURCE_GROUP 2>/dev/null) ]]; then
-    echo "start to create kubernetes services $KUBERNETES_SEVICES. May cost several minutes, waiting..."
-    work_space_resource_id=$(az monitor log-analytics workspace show -g $RESOURCE_GROUP -n $WORK_SPACE --query id -o tsv)
-    az aks create -n $KUBERNETES_SEVICES --vm-set-type VirtualMachineScaleSets --kubernetes-version 1.17.11 --enable-managed-identity -s Standard_D4s_v3 --nodepool-name captain --generate-ssh-keys \
-        --load-balancer-managed-outbound-ip-count 10 --load-balancer-outbound-ports 20000 --workspace-resource-id "$work_space_resource_id" --enable-addons monitoring
-    echo "create agentpool pool0 for appserver and client"
-    az aks nodepool add -n pool0 --cluster-name $KUBERNETES_SEVICES --kubernetes-version 1.17.11 -c 3  -s Standard_D4s_v3
+#if [[ -z $(az aks show --name $KUBERNETES_SEVICES -g $RESOURCE_GROUP 2>/dev/null) ]]; then
+#    echo "start to create kubernetes services $KUBERNETES_SEVICES. May cost several minutes, waiting..."
+#    work_space_resource_id=$(az monitor log-analytics workspace show -g $RESOURCE_GROUP -n $WORK_SPACE --query id -o tsv)
+#    az aks create -n $KUBERNETES_SEVICES --vm-set-type VirtualMachineScaleSets --kubernetes-version 1.17.11 --enable-managed-identity -s Standard_D4s_v3 --nodepool-name captain --generate-ssh-keys \
+#        --load-balancer-managed-outbound-ip-count 20 --load-balancer-outbound-ports 20000 --workspace-resource-id "$work_space_resource_id" --enable-addons monitoring
+#    echo "create agentpool pool0,pool1 for appserver and client"
+#    az aks nodepool add -n pool0 --cluster-name $KUBERNETES_SEVICES --kubernetes-version 1.17.11 -c 10  -s Standard_D4s_v3
+#    az aks nodepool add -n pool1 --cluster-name $KUBERNETES_SEVICES --kubernetes-version 1.17.11 -c 10  -s Standard_D4s_v3
+
     echo "start to create kubernetes services $KUBERNETES_SEVICES created."
     echo "start getting kube/config"
     rm ~/.kube/perf
@@ -125,9 +127,9 @@ if [[ -z $(az aks show --name $KUBERNETES_SEVICES -g $RESOURCE_GROUP 2>/dev/null
     aks_principal_id=$(az aks show -n $KUBERNETES_SEVICES --query identity.principalId -o tsv)
     echo "grant aks_principal_id=$aks_principal_id permission to  $RESOURCE_GROUP to auth service IP binding"
     az role assignment create --role owner -g $RESOURCE_GROUP --assignee-object-id $aks_principal_id --assignee-principal-type ServicePrincipal
-else
-    echo "$KUBERNETES_SEVICES already exists. Skip creating.."
-fi
+#else
+#    echo "$KUBERNETES_SEVICES already exists. Skip creating.."
+#fi
 
 if [[ -z $(az ad sp show  --id http://$SERVICE_PRINCIPAL 2>/dev/null) ]]; then
   echo "start to create service principal $SERVICE_PRINCIPAL"

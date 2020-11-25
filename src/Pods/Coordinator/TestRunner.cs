@@ -19,7 +19,7 @@ namespace Azure.SignalRBench.Coordinator
 {
     public class TestRunner
     {
-        private const double MaxClientCountInPod = 30000;
+        private const double MaxClientCountInPod = 5000;
 
         private readonly Dictionary<string, SetClientRangeParameters> _clients =
             new Dictionary<string, SetClientRangeParameters>();
@@ -420,8 +420,8 @@ namespace Azure.SignalRBench.Coordinator
                             return sd;
                         }),
                 });
-            _logger.LogInformation(" set scenario acked.");
             await task;
+            _logger.LogInformation(" set scenario acked.");
         }
 
         private async Task StartScenarioAsync(

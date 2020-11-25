@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Azure.SignalRBench.Common;
 using Azure.SignalRBench.Coordinator.Entities;
@@ -35,6 +36,12 @@ namespace Portal.Controllers
             var rows = await table.QueryAsync(table.Rows
                                                    ).ToListAsync();
             rows.Sort((a,b)=>b.Timestamp.CompareTo(a.Timestamp));
+            rows= rows.Select(r =>
+            {
+                r.ConnectionString = r.ConnectionString!=null?
+                                     Regex.Replace(r.ConnectionString, "AccessKey=.*;V", "AccessKey=***;V"):null;
+                return r;
+            }).ToList();
             s.Stop();
             Console.WriteLine(s.ElapsedMilliseconds);
             return rows;
@@ -45,26 +52,27 @@ namespace Portal.Controllers
         public async Task CreateTestConfig(TestConfigEntity testConfigEntity)
         {
             testConfigEntity.PartitionKey = testConfigEntity.RowKey;
+            testConfigEntity.Init();
             var table = await _perfStorage.GetTableAsync<TestConfigEntity>(Constants.TableNames.TestConfig);
             await table.InsertAsync(testConfigEntity);
             Console.WriteLine(testConfigEntity.ToString());
         }
 
         [HttpPost("StartTest")]
-        public async Task StartTestAsync(TestConfigEntity testConfigEntity)
+        public async Task StartTestAsync(String testConfigEntityKey)
         {
             //increse counter first
             var configTable =await _perfStorage.GetTableAsync<TestConfigEntity>(Constants.TableNames.TestConfig);
-            var latestTestConfig =await configTable.GetFirstOrDefaultAsync(from row in configTable.Rows where row.PartitionKey == testConfigEntity.PartitionKey select row);
-            latestTestConfig.Index += 1;
+            var latestTestConfig =await configTable.GetFirstOrDefaultAsync(from row in configTable.Rows where row.PartitionKey == testConfigEntityKey select row);
+            latestTestConfig.InstanceIndex += 1;
             await configTable.UpdateAsync(latestTestConfig);
             var queue= await _perfStorage.GetQueueAsync<TestJob>(Constants.QueueNames.PortalJob, true);
-            await queue.SendAsync(testConfigEntity.ToTestJob(latestTestConfig.Index));
+            await queue.SendAsync(latestTestConfig.ToTestJob(latestTestConfig.InstanceIndex));
             var statusTable = await _perfStorage.GetTableAsync<TestStatusEntity>(Constants.TableNames.TestStatus);
             var testEntity = new TestStatusEntity()
             {
                 PartitionKey = latestTestConfig.PartitionKey,
-                RowKey = latestTestConfig.Index.ToString(),
+                RowKey = latestTestConfig.InstanceIndex.ToString(),
                 Status = "Init",
                 Healthy = true,
                 Report = ""
@@ -82,8 +90,16 @@ namespace Portal.Controllers
 
         // DELETE api/<ValuesController>/5
         [HttpDelete("{id}")]
-        public void Delete(int id)
+        public async Task Delete(string key)
         {
+            var configTable = await _perfStorage.GetTableAsync<TestConfigEntity>(Constants.TableNames.TestConfig); 
+            var config =await configTable.GetFirstOrDefaultAsync(from row in configTable.Rows where row.PartitionKey == key select row);
+            await configTable.DeleteAsync(config);
+            var statusTable = await _perfStorage.GetTableAsync<TestStatusEntity>(Constants.TableNames.TestStatus);
+            var statuses =
+                await statusTable.QueryAsync(from row in statusTable.Rows where row.PartitionKey == key select row).ToListAsync();
+            
+            await statusTable.BatchDeleteAsync(statuses);
         }
 
     }

@@ -3,7 +3,7 @@ kind: Service
 metadata:
   annotations:
     service.beta.kubernetes.io/azure-load-balancer-resource-group: RESOURCE_GROUP_PLACE_HOLDER
-  name: azure-load-balancer
+  name: portal
 spec:
   loadBalancerIP: PORTAL_IP_PLACE_HOLDER
   type: LoadBalancer

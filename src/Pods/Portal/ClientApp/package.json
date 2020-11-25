@@ -10,10 +10,13 @@
     "react": "^16.0.0",
     "react-bootstrap": "^1.4.0",
     "react-dom": "^16.0.0",
+    "react-json-view": "^1.19.1",
     "react-router-dom": "^5.1.2",
     "react-scripts": "^3.4.1",
     "reactstrap": "^8.4.1",
-    "rimraf": "^2.6.2"
+    "rimraf": "^2.6.2",
+    "semantic-ui-css": "^2.4.1",
+    "semantic-ui-react": "^2.0.1"
   },
   "devDependencies": {
     "ajv": "^6.9.1",

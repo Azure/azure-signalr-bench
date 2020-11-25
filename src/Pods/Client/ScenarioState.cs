@@ -18,7 +18,8 @@ namespace Azure.SignalRBench.Client
     {
         private readonly ILoggerFactory _loggerFactory;
         private ScenarioBaseState _state;
-
+        private ScenarioBaseState _save = null;
+        
         public ScenarioState( ILoggerFactory loggerFactory)
         {
             _loggerFactory = loggerFactory;
@@ -55,6 +56,11 @@ namespace Azure.SignalRBench.Client
             public void SetState(ScenarioBaseState state)
             {
                 ScenarioState._state = state;
+            }
+
+            public void Save()
+            {
+                ScenarioState._save = this;
             }
 
             public ILogger<T> GetLogger<T>() => ScenarioState._loggerFactory.CreateLogger<T>();
@@ -188,6 +194,7 @@ namespace Azure.SignalRBench.Client
                 IndexMap = indexMap;
                 GroupDefinitions = groupDefinitions;
                 ClientAgentContainer = clientAgentContainer;
+                Save();
             }
 
             public override void SetSenario(SetScenarioParameters setScenarioParameters)
@@ -215,6 +222,12 @@ namespace Azure.SignalRBench.Client
                         CreateSettings(listen, echoList, broadcastList, groupBroadcastList)));
             }
 
+            public override async Task StopClientConnections(StopClientConnectionsParameters stopClientConnectionsParameters)
+            {
+                await ClientAgentContainer.StopAsync(stopClientConnectionsParameters.Rate);
+                SetState(new InitState(ScenarioState));
+            }
+            
             private static void ParseParameters(
                 SetScenarioParameters setScenarioParameters,
                 out int listen,
@@ -356,11 +369,7 @@ namespace Azure.SignalRBench.Client
                 SetState(new RunningState(ScenarioState, TotalConnectionCount, IndexMap, ClientAgentContainer, Settings, cts));
             }
 
-            public override async Task StopClientConnections(StopClientConnectionsParameters stopClientConnectionsParameters)
-            {
-                await ClientAgentContainer.StopAsync(stopClientConnectionsParameters.Rate);
-                SetState(new InitState(ScenarioState));
-            }
+           
         }
 
         private sealed class RunningState : ScenarioBaseState
@@ -394,7 +403,7 @@ namespace Azure.SignalRBench.Client
             public override void StopSenario(StopScenarioParameters stopScenario)
             {
                 Cts.Cancel();
-                SetState(new ScenarioReadyState(ScenarioState, TotalConnectionCount, IndexMap, ClientAgentContainer, Settings));
+                SetState(ScenarioState._save);
             }
         }
     }

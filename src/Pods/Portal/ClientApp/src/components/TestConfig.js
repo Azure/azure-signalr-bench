@@ -1,23 +1,66 @@
 ﻿import React, { Component, useEffect, useState } from 'react';
 //import { Modal, Button } from 'antd';
-import Button from 'react-bootstrap/Button'
+//import Button from 'react-bootstrap/Button'
 import Modal from 'react-bootstrap/Modal'
 import Form from 'react-bootstrap/Form'
+import ReactJson from 'react-json-view'
+
+import { Search, Grid, Header, Segment, Divider,Button,Icon } from 'semantic-ui-react'
+
 
 export class TestConfig extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            show: false, loading: true, obj: {  signalRUnitSize:1 }
+            show: false, loading: true, obj: {  signalRUnitSize:1 },
+            showjson:false,
+            json:{},
+            testConfigs:[],
+            total:[]
         };
         this.handleClose = this.handleClose.bind(this);
         this.handleShow = this.handleShow.bind(this);
+        this.handleJsonClose = this.handleJsonClose.bind(this);
+        this.handleJsonShow = this.handleJsonShow.bind(this);
         this.handleChange = this.handleChange.bind(this);
         this.handleChangeNum = this.handleChangeNum.bind(this);
         this.handleSubmit = this.handleSubmit.bind(this);
+        this.handleSearchChange = this.handleSearchChange.bind(this);
+
         this.unitRef=React.createRef();
     }
-    
+    handleSearchChange(e,data){
+        if(data.value!=undefined){
+            console.log(data.value)
+            var testConfigs=this.state.total.filter(x=> x.rowKey.includes(data.value))
+            this.setState({testConfigs:testConfigs})
+        }
+        else
+            this.setState({testConfig:this.state.total})
+          
+       
+        console.log(testConfigs)
+    }
+    handleJsonClose() {
+        this.setState({
+            showjson: false
+        })
+    }
+    handleJsonShow(e) {
+        var content= JSON.parse(e.target.getAttribute("value"))
+        delete content["eTag"]
+        content["TestName"]=content["rowKey"]
+        delete content["rowKey"]
+        delete content["partitionKey"]
+        if(content["connectionString"])
+            delete content["signalRUnitSize"]
+        console.log(content)
+        this.setState({
+            showjson: true,
+            json:content
+
+        })
+    }
     handleClose() {
         this.setState({
             show: false
@@ -55,7 +98,11 @@ export class TestConfig extends Component {
     }
 
     async handleStart(e) {
-       var json= e.target.getAttribute("value")
+        console.log(e.target)
+        console.log(e.target.class)
+        e.persist()
+        e.target.setAttribute("class","ui teal loading button")
+        var json= e.target.getAttribute("value")
         console.log(json)
         await fetch('testconfig/starttest', {
             method: 'POST',
@@ -69,7 +116,8 @@ export class TestConfig extends Component {
             JSON.parse(json)
             var j=JSON.parse(json);
             window.open("/test-status/"+j["partitionKey"])
-        });
+        })
+        e.target.setAttribute("class","ui teal button")  
     }
     async handleSubmit() {
         await fetch('testconfig', {
@@ -90,13 +138,14 @@ export class TestConfig extends Component {
 
      renderTestConfigsTable(testConfigs) {
         return (
-            <table className='table table-striped' aria-labelledby="tabelLabel">
+            <table className='table table-striped' aria-labelledby="tabelLabel" >
                 <thead>
                     <tr>
                         <th>TestName</th>
-                        <th>SignalRUnitSize</th>
+                        <th>timestamp</th>
                         <th>ClientConnections</th>
                         <th>ServerNum</th>
+                        <th>Config</th>
                         <th>Start</th>
                     </tr>
                 </thead>
@@ -106,10 +155,12 @@ export class TestConfig extends Component {
                         var link="/test-status/"+testConfig.rowKey;
                         return <tr key={testConfig.rowKey}>
                             <td><a href={link}>{testConfig.rowKey}</a></td>
-                            <td>{testConfig.signalRUnitSize}</td>
+                            <td>{testConfig.timestamp}</td>
                             <td>{testConfig.clientCons}</td>
                             <td>{testConfig.serverNum}</td>
-                            <td ><button className="link" value={json} onClick={this.handleStart}>Run</button></td>
+                            <td><Icon size="large" name='file code outline' value={json} onClick={this.handleJsonShow} /></td>
+                            {/* <td ><Button color="teal" value={json} onClick={this.handleJsonShow}>Json</Button></td> */}
+                            <td ><Button color="teal" value={json} onClick={this.handleStart}>Run</Button></td>
                         </tr>
                     }
 
@@ -118,6 +169,7 @@ export class TestConfig extends Component {
             </table>
         );
     }
+
     render() {
         console.log("render")
         let contents = this.state.loading
@@ -125,10 +177,15 @@ export class TestConfig extends Component {
             : this.renderTestConfigsTable(this.state.testConfigs);
         return (
             <>
-                <Button variant="primary" onClick={this.handleShow}>
-                    Create Test Job
-      </Button>
-
+            
+    
+      
+              <Modal show={this.state.showjson} size="lg" onHide={this.handleJsonClose}> 
+              <Modal.Header closeButton>
+                        <Modal.Title>Config details</Modal.Title>
+                    </Modal.Header>
+                 <ReactJson src={this.state.json} displayDataTypes={false} sortKeys={true} name={false} />
+              </Modal>
                 <Modal show={this.state.show} onHide={this.handleClose}>
                     <Modal.Header closeButton>
                         <Modal.Title>Create a test job config</Modal.Title>
@@ -182,7 +239,7 @@ export class TestConfig extends Component {
                             </Form.Group>
                             <Form.Group >
                                 <Form.Label>Round Durations</Form.Label>
-                                <Form.Control name="RoundDuration" onChange={this.handleChangeNum} placeholder="Time each round takes. (60)[Unit: s]" />
+                                <Form.Control name="RoundDurations" onChange={this.handleChangeNum} placeholder="Time each round takes. (60)[Unit: s]" />
                             </Form.Group>
                             <Form.Group >
                                 <Form.Label>Round Start Index</Form.Label>
@@ -217,8 +274,34 @@ export class TestConfig extends Component {
                 </Modal>
 
 
+
                 <div>
                     <h1 id="tabelLabel" >Test Job Configs</h1>
+
+  <Segment basic textAlign='center'>
+    
+  <Button
+      color='teal'
+      content='Create New TestConfig'
+      icon='add'
+      labelPosition='left'
+      onClick={this.handleShow}
+    />
+    <Divider horizontal>Search by TestName</Divider>
+    <Grid.Column verticalAlign='middle'>
+                          <Search
+                      loading={false} icon='search'
+                     onSearchChange={this.handleSearchChange}
+                    // results={results}
+                          // value={value}
+                     showNoResults={false}
+
+                     />
+      </Grid.Column>
+   
+  </Segment>
+
+                   
                     {contents}
                 </div>
             </>
@@ -228,7 +311,7 @@ export class TestConfig extends Component {
     async populateTestConfigData() {
         const response = await fetch('testconfig');
         const data = await response.json();
-        this.setState({ testConfigs: data, loading: false });
+        this.setState({ testConfigs: data, loading: false,total:data });
     }
 
 

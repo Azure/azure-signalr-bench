@@ -11,20 +11,20 @@ namespace Azure.SignalRBench.Coordinator.Entities
     {
         public int ClientCons { get; set; } = 3000;
 
-        public string ConnectionString { get; set; } = null;
+        public string? ConnectionString { get; set; } 
         public int SignalRUnitSize { get; set; }
 
         public int ServerNum { get; set; } = 1;
 
-        public int Index { get; set; } = 0;
+        public int InstanceIndex { get; set; } = 0;
 
         public int Start { get; set; } = 1;
 
         public int Step { get; set; } = 5;
 
-        public int End { get; set; } = -1;
+        public int End { get; set; } =-1;
         
-        public ClientBehavior Scenario { get; set; } = ClientBehavior.Echo;
+        public string Scenario { get; set; } = ClientBehavior.Echo.ToString();
 
         //seconds
         public int RoundDurations { get; set; } = 60;
@@ -32,12 +32,17 @@ namespace Azure.SignalRBench.Coordinator.Entities
 
         public int MessageSize { get; set; } = 2048;
         
-        public SignalRProtocol Protocol { get; set; } = SignalRProtocol.WebSocketsWithJson;
+        public string Protocol { get; set; } = SignalRProtocol.WebSocketsWithJson.ToString();
+
+        public void Init()
+        {
+            End = End <Start ? Start : End;
+        }
+        
         public TestJob ToTestJob(int index)
         {
             //creating round settings
             var roundsettings = new List<RoundSetting>();
-            End = End == -1 ? Start : End;
             for (int i = Start; i <= End; i += Step)
             {
                 roundsettings.Add(new RoundSetting()
@@ -45,7 +50,7 @@ namespace Azure.SignalRBench.Coordinator.Entities
                     DurationInSeconds = RoundDurations,
                    ClientSettings = new []{new  ClientSetting()
                     {
-                        Behavior=Scenario,
+                        Behavior=Enum.TryParse(Scenario,out ClientBehavior behavior)?behavior:throw new Exception($"Unknown Scenario {Scenario}"),
                         IntervalInMilliseconds=Interval,
                         Count=i,
                         MessageSize=MessageSize,
@@ -60,7 +65,7 @@ namespace Azure.SignalRBench.Coordinator.Entities
                 TestMethod = TestCategory.AspnetCore,
                 ServiceSetting = new [] { new ServiceSetting()
                 {
-                    AsrsConnectionString = ConnectionString,
+                    AsrsConnectionString = ConnectionString?.Trim(),
                     Location = "eastus",
                     Tier = "standard",
                     Size = SignalRUnitSize,
@@ -70,7 +75,7 @@ namespace Azure.SignalRBench.Coordinator.Entities
                     TotalConnectionCount = ClientCons,
                     Rounds = roundsettings.ToArray(),
                     IsAnonymous = true,
-                    Protocol = Protocol,
+                    Protocol =Enum.TryParse(Protocol,out  SignalRProtocol protocol)?protocol:throw new Exception($"Unknown Protocol {Protocol}"),
                     Rate = 200,
                 },
                 ServerSetting=new ServerSetting()

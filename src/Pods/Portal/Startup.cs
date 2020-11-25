@@ -81,7 +81,7 @@ namespace Portal
 
                 //endpoints.MapControllerRoute(
                 //    name: "default",
-                //    pattern: "{controller}/{action=Index}/{id?}");
+                //    pattern: "{controller}/{action=InstanceIndex}/{id?}");
             });
 
             app.UseSpa(spa =>
