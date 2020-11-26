@@ -26,13 +26,14 @@ export class TestConfig extends Component {
         this.handleChangeNum = this.handleChangeNum.bind(this);
         this.handleSubmit = this.handleSubmit.bind(this);
         this.handleSearchChange = this.handleSearchChange.bind(this);
+        this.handleDelete=this.handleDelete.bind(this);
 
         this.unitRef=React.createRef();
     }
     handleSearchChange(e,data){
-        if(data.value!=undefined){
+        if(data.value!=undefined&&data.value.trim()){
             console.log(data.value)
-            var testConfigs=this.state.total.filter(x=> x.rowKey.includes(data.value))
+            var testConfigs=this.state.total.filter(x=> x.rowKey.includes(data.value.trim()))
             this.setState({testConfigs:testConfigs})
         }
         else
@@ -85,7 +86,7 @@ export class TestConfig extends Component {
             delete this.state.obj[e.target.name]
         }
         else
-        this.state.obj[e.target.name] = e.target.value
+        this.state.obj[e.target.name] = e.target.value.trim()
         console.log(JSON.stringify(this.state.obj))
     }
     handleChangeNum(e) {
@@ -102,22 +103,37 @@ export class TestConfig extends Component {
         console.log(e.target.class)
         e.persist()
         e.target.setAttribute("class","ui teal loading button")
-        var json= e.target.getAttribute("value")
-        console.log(json)
+        var key= e.target.getAttribute("value")
         await fetch('testconfig/starttest', {
             method: 'POST',
             headers: {
                 'Accept': 'application/json',
                 'Content-Type': 'application/json',
             },
-            body: json
+            body: {key:key}
         }).then(res=>{
             console.log(res)
-            JSON.parse(json)
-            var j=JSON.parse(json);
-            window.open("/test-status/"+j["partitionKey"])
+            window.open("/test-status/"+key)
         })
         e.target.setAttribute("class","ui teal button")  
+    }
+    async handleDelete(e) {
+        console.log(e.target)
+        console.log(e.target.class)
+        e.persist()
+        e.target.setAttribute("class","ui orange loading button")
+        var key= e.target.getAttribute("value")
+        await fetch('testconfig/'+key, {
+            method: 'Delete',
+            headers: {
+                'Accept': 'application/json',
+             //   'Content-Type': 'application/json',
+            },
+           // body: {key:key}
+        }).then(res=>{
+        })
+        await this.populateTestConfigData()
+     //   e.target.setAttribute("class","ui teal button")  
     }
     async handleSubmit() {
         await fetch('testconfig', {
@@ -147,6 +163,8 @@ export class TestConfig extends Component {
                         <th>ServerNum</th>
                         <th>Config</th>
                         <th>Start</th>
+                        <th>Remove</th>
+
                     </tr>
                 </thead>
                 <tbody>
@@ -160,7 +178,8 @@ export class TestConfig extends Component {
                             <td>{testConfig.serverNum}</td>
                             <td><Icon size="large" name='file code outline' value={json} onClick={this.handleJsonShow} /></td>
                             {/* <td ><Button color="teal" value={json} onClick={this.handleJsonShow}>Json</Button></td> */}
-                            <td ><Button color="teal" value={json} onClick={this.handleStart}>Run</Button></td>
+                            <td ><Button color="teal" value={testConfig["partitionKey"]} onClick={this.handleStart}>Run</Button></td>
+                            <td ><Button color="orange"  value={testConfig["partitionKey"]} onClick={this.handleDelete}>Delete</Button></td>
                         </tr>
                     }
 

@@ -1,8 +1,10 @@
 ﻿import React, { Component, useEffect, useState } from 'react';
 //import { Modal, Button } from 'antd';
-import Button from 'react-bootstrap/Button'
+//import Button from 'react-bootstrap/Button'
 import Modal from 'react-bootstrap/Modal'
 import Form from 'react-bootstrap/Form'
+import { Search, Grid, Header, Segment, Divider,Button,Icon } from 'semantic-ui-react'
+
 
 export class TestStatus extends Component {
     constructor(props) {
@@ -10,9 +12,12 @@ export class TestStatus extends Component {
         this.state = {
             loading: true,
             show: false,
-            report:[]
+            report:[],
+            errorShow:false,
+            error:""
         };
        this.report= this.report.bind(this)
+       this.errorInfo=this.errorInfo.bind(this)
     }
 
 
@@ -24,7 +29,12 @@ export class TestStatus extends Component {
     async report(e) {
         console.log("report")
         var json= e.target.getAttribute("value")
-        this.setState({show:true,report:JSON.parse(json)})
+        this.setState({error:true,report:JSON.parse(json)})
+     }
+     async errorInfo(e) {
+        console.log("error")
+        var error= e.target.getAttribute("value")
+        this.setState({errorShow:true,error:error})
      }
 
      renderTestStatusTable(testStatuses) {
@@ -44,12 +54,22 @@ export class TestStatus extends Component {
                         var trkey = testStatus.partitionKey + testStatus.rowKey;
                       //  console.log()
                       var colorstyle=testStatus.healthy?"green":"red";
+                      var clz="ui disabled button"
+                      var data=testStatus.report
+                      var cb=this.report
+                      if(!testStatus.healthy){
+                          clz="ui red button"
+                          data=testStatus.errorInfo
+                          cb=this.errorInfo
+                      }else if(testStatus.report){
+                          clz="ui teal button"
+                      }
                         return <tr key={trkey}>
                             <td>{testStatus.partitionKey}</td>
                             <td>{testStatus.rowKey}</td>
                             <td>{testStatus.timestamp}</td>
                             <td ><font color={colorstyle}>{testStatus.status}</font></td>
-                            <td ><button className="link" value={testStatus.report} onClick={this.report}>Report</button></td>
+                            <td ><button className={clz} value={data} onClick={cb}>Report</button></td>
                         </tr>
                     }
 
@@ -111,8 +131,19 @@ export class TestStatus extends Component {
                     </Modal.Body>
                     <Modal.Footer>
                     </Modal.Footer>
-                </Modal>
 
+
+                </Modal>
+                <Modal show={this.state.errorShow} size="lg" onHide={()=>this.setState({errorShow:false})}>
+                    <Modal.Header closeButton>
+                        <Modal.Title>Test Report</Modal.Title>
+                    </Modal.Header>
+                    <Modal.Body>
+                        {this.state.error}
+                    </Modal.Body>
+                    <Modal.Footer>
+                    </Modal.Footer>
+                </Modal>
                 
             </>
         );

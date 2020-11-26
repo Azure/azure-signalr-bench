@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using Azure.Security.KeyVault.Secrets;
 using Azure.SignalRBench.Common;
 using Azure.SignalRBench.Coordinator.Entities;
 using Azure.SignalRBench.Storage;
@@ -21,6 +22,7 @@ namespace Portal.Controllers
     public class TestConfigController : ControllerBase
     {
         private IPerfStorage _perfStorage;
+      
 
         public TestConfigController(IPerfStorage perfStorage)
         {
@@ -30,6 +32,7 @@ namespace Portal.Controllers
         [HttpGet]
         public async Task<IEnumerable<TestConfigEntity>> Get()
         {
+
             var s = new Stopwatch();
             s.Start();
             var table = await _perfStorage.GetTableAsync<TestConfigEntity>(Constants.TableNames.TestConfig);
@@ -75,7 +78,8 @@ namespace Portal.Controllers
                 RowKey = latestTestConfig.InstanceIndex.ToString(),
                 Status = "Init",
                 Healthy = true,
-                Report = ""
+                Report = "",
+                ErrorInfo = ""
             };
             try
             {
@@ -89,7 +93,7 @@ namespace Portal.Controllers
         }
 
         // DELETE api/<ValuesController>/5
-        [HttpDelete("{id}")]
+        [HttpDelete("{key}")]
         public async Task Delete(string key)
         {
             var configTable = await _perfStorage.GetTableAsync<TestConfigEntity>(Constants.TableNames.TestConfig); 
@@ -98,7 +102,7 @@ namespace Portal.Controllers
             var statusTable = await _perfStorage.GetTableAsync<TestStatusEntity>(Constants.TableNames.TestStatus);
             var statuses =
                 await statusTable.QueryAsync(from row in statusTable.Rows where row.PartitionKey == key select row).ToListAsync();
-            
+            if(statuses.Count>0)
             await statusTable.BatchDeleteAsync(statuses);
         }
 

@@ -129,30 +129,46 @@ namespace Azure.SignalRBench.Coordinator
             }
             catch (Exception e)
             {
-                await UpdateTestStatus($"Testing Round failed", false);
-                _logger.LogError("Test job {testId} throw exception: {e}", Job.TestId, e);
+                await UpdateTestStatus("Testing Round failed ", false,e);
             }
             finally
             {
-                _logger.LogInformation("Test job {testId}: Removing client pods.", Job.TestId);
-                await K8sProvider.DeleteClientPodsAsync(Job.TestId, NodePoolIndex);
-                _logger.LogInformation("Test job {testId}: Removing server pods.", Job.TestId);
-                await K8sProvider.DeleteServerPodsAsync(Job.TestId, NodePoolIndex);
-                _logger.LogInformation("Test job {testId}: Removing service instances.", Job.TestId);
-                await Task.WhenAll(
-                    from ss in Job.ServiceSetting
-                    where ss.AsrsConnectionString == null
-                    group ss by ss.Location ?? DefaultLocation
-                    into g
-                    select SignalRProvider.DeleteResourceGroupAsync(Job.TestId, g.Key));
+                try
+                {
+                    _logger.LogInformation("Test job {testId}: Removing client pods.", Job.TestId);
+                    await K8sProvider.DeleteClientPodsAsync(Job.TestId, NodePoolIndex);
+                    _logger.LogInformation("Test job {testId}: Removing server pods.", Job.TestId);
+                    await K8sProvider.DeleteServerPodsAsync(Job.TestId, NodePoolIndex);
+                    _logger.LogInformation("Test job {testId}: Removing service instances.", Job.TestId);
+                    await Task.WhenAll(
+                        from ss in Job.ServiceSetting
+                        where ss.AsrsConnectionString == null
+                        group ss by ss.Location ?? DefaultLocation
+                        into g
+                        select SignalRProvider.DeleteResourceGroupAsync(Job.TestId, g.Key));
+                }
+                catch (Exception ignore)
+                {
+                  await  UpdateTestStatus("Clean up failed", false, ignore);
+                }
+                
             }
         }
 
-        private async Task UpdateTestStatus(string currentStatus, bool healthy = true)
+        private async Task UpdateTestStatus(string currentStatus, bool healthy = true,Exception? e=default)
         {
-            _logger.LogInformation(currentStatus);
             _testStatusEntity.Status = currentStatus;
             _testStatusEntity.Healthy = healthy;
+            if (healthy)
+            {
+                _logger.LogInformation(currentStatus);
+            }
+            else
+            {
+                _logger.LogError(e,currentStatus);
+                if(e!=null)
+                  _testStatusEntity.ErrorInfo+="   \n  <br> <br>    "+ e;
+            }
             await _testStatusAccessor.UpdateAsync(_testStatusEntity);
         }
 
