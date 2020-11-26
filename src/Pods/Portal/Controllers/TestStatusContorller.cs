@@ -14,7 +14,6 @@ namespace Portal.Controllers
 {
     [Route("teststatus")]
     [ApiController]
-    [Authorize]
     public class TestStatusContorller : ControllerBase
     {
         private IPerfStorage _perfStorage;

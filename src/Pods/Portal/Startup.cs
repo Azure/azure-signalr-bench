@@ -46,16 +46,16 @@ namespace Portal
             services.AddAuthorization(options =>
             {
                 options.FallbackPolicy = new AuthorizationPolicyBuilder()
-                    .RequireAuthenticatedUser()
+                    .RequireRole(Constants.Roles.Contributor)
                     .Build();
             });
-            services.AddControllersWithViews(options =>
-            {
-                var policy = new AuthorizationPolicyBuilder()
-                    .RequireAuthenticatedUser()
-                    .Build();
-                options.Filters.Add(new AuthorizeFilter(policy));
-            });
+            // services.AddControllersWithViews(options =>
+            // {
+            //     var policy = new AuthorizationPolicyBuilder()
+            //         .RequireAuthenticatedUser()
+            //         .Build();
+            //     options.Filters.Add(new AuthorizeFilter(policy));
+            // });
             services
                 .AddRazorPages()
                 .AddMicrosoftIdentityUI();
@@ -99,12 +99,14 @@ namespace Portal
         }
         
         app.UseHttpsRedirection();
-        
+       
         app.UseRouting();
-        
+   
+        app.UseSpaStaticFiles();
+        app.UseStaticFiles();
         app.UseAuthentication();
         app.UseAuthorization();
-        app.UseSpaStaticFiles();
+      
         app.UseEndpoints(endpoints =>
         {
             endpoints.MapControllers();
@@ -116,16 +118,16 @@ namespace Portal
             //     name: "default",
             //     pattern: "{controller}/{action=InstanceIndex}/{id?}");
         });
-        
         app.UseSpa(spa =>
         {
             spa.Options.SourcePath = "ClientApp";
         
             if (env.IsDevelopment())
             {
-                spa.UseReactDevelopmentServer(npmScript: "start");
+              //  spa.UseReactDevelopmentServer(npmScript: "start");
             }
         });
+       
         }
     }
 }

@@ -22,7 +22,6 @@ namespace Portal.Controllers
 {
     [Route("Home")]
     [ApiController]
-    [Authorize]
     public class HomeController : ControllerBase
     {
         private IPerfStorage _perfStorage;
@@ -30,6 +29,7 @@ namespace Portal.Controllers
         private static string? location;
         private static string? k8sUrl;
 
+        
         public HomeController(IPerfStorage perfStorage,SecretClient secretClient)
         {
             _perfStorage = perfStorage;
@@ -37,8 +37,9 @@ namespace Portal.Controllers
         }
 
         [HttpGet("info")]
-        public async Task<JObject> Get()
+        public async Task<string> Get()
         {
+            return "{\"info\":\"haha\"}";
             JObject info=new JObject();
             List<Task> tasks=new List<Task>();
             if (location == null)
@@ -56,7 +57,7 @@ namespace Portal.Controllers
             }
 
             await Task.WhenAll(tasks);
-            return info;
+            return "info";
         }
     }
 }

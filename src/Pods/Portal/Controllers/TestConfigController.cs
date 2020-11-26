@@ -20,8 +20,6 @@ namespace Portal.Controllers
 {
     [Route("TestConfig")]
     [ApiController]
-    [Authorize]
-
     public class TestConfigController : ControllerBase
     {
         private IPerfStorage _perfStorage;
