@@ -4,6 +4,7 @@
 import Modal from 'react-bootstrap/Modal'
 import Form from 'react-bootstrap/Form'
 import ReactJson from 'react-json-view'
+import {Util} from './Util'
 
 import { Search, Grid, Header, Segment, Divider,Button,Icon } from 'semantic-ui-react'
 
@@ -104,17 +105,18 @@ export class TestConfig extends Component {
         e.persist()
         e.target.setAttribute("class","ui teal loading button")
         var key= e.target.getAttribute("value")
-        await fetch('testconfig/starttest', {
+       const response= await fetch('testconfig/starttest', {
             method: 'POST',
             headers: {
                 'Accept': 'application/json',
                 'Content-Type': 'application/json',
             },
-            body: {key:key}
-        }).then(res=>{
-            console.log(res)
-            window.open("/test-status/"+key)
+            body: {key:key},
+            redirect:'manual'
         })
+        await Util.CheckAuth(response)
+        console.log(res)
+        window.open("/test-status/" + key)
         e.target.setAttribute("class","ui teal button")  
     }
     async handleDelete(e) {
@@ -123,27 +125,28 @@ export class TestConfig extends Component {
         e.persist()
         e.target.setAttribute("class","ui orange loading button")
         var key= e.target.getAttribute("value")
-        await fetch('testconfig/'+key, {
+        response= await fetch('testconfig/'+key, {
             method: 'Delete',
             headers: {
                 'Accept': 'application/json',
-             //   'Content-Type': 'application/json',
             },
-           // body: {key:key}
-        }).then(res=>{
+            redirect:'manual'
         })
+        await Util.CheckAuth(response)
         await this.populateTestConfigData()
      //   e.target.setAttribute("class","ui teal button")  
     }
     async handleSubmit() {
-        await fetch('testconfig', {
+       response= await fetch('testconfig', {
             method: 'PUT',
             headers: {
                 'Accept': 'application/json',
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify(this.state.obj)
+            body: JSON.stringify(this.state.obj),
+            redirect:'manual'
         });
+        await Util.CheckAuth(response)
         this.state.show = false;
         await this.populateTestConfigData();
     }
@@ -328,7 +331,10 @@ export class TestConfig extends Component {
     }
 
     async populateTestConfigData() {
-        const response = await fetch('testconfig');
+        const response = await fetch('testconfig',{
+            redirect:"manual"
+        });
+        await Util.CheckAuth(response)
         const data = await response.json();
         this.setState({ testConfigs: data, loading: false,total:data });
     }

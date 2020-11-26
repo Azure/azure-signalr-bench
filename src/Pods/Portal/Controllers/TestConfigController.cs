@@ -9,6 +9,7 @@ using Azure.Security.KeyVault.Secrets;
 using Azure.SignalRBench.Common;
 using Azure.SignalRBench.Coordinator.Entities;
 using Azure.SignalRBench.Storage;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Cosmos.Table;
 using Microsoft.Extensions.Logging;
@@ -19,6 +20,8 @@ namespace Portal.Controllers
 {
     [Route("TestConfig")]
     [ApiController]
+    [Authorize]
+
     public class TestConfigController : ControllerBase
     {
         private IPerfStorage _perfStorage;

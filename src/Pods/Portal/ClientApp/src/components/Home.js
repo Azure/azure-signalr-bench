@@ -1,4 +1,6 @@
 import React, { Component } from 'react';
+import {Util} from './Util';
+
 
 export class Home extends Component {
   static displayName = Home.name;
@@ -34,8 +36,12 @@ export class Home extends Component {
   }
 
   async info() {
-    const response = await fetch('home/info');
-    const data = await response.json();
+    const response = await fetch('home/info',{
+      redirect: 'manual'
+    })
+    console.log(response)
+    Util.CheckAuth(response)
+    const data =  response.json();
     this.setState({ info: data});
   }
 }

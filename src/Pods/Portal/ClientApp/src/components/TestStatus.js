@@ -4,7 +4,7 @@
 import Modal from 'react-bootstrap/Modal'
 import Form from 'react-bootstrap/Form'
 import { Search, Grid, Header, Segment, Divider,Button,Icon } from 'semantic-ui-react'
-
+import {Util} from './Util'
 
 export class TestStatus extends Component {
     constructor(props) {
@@ -153,7 +153,10 @@ export class TestStatus extends Component {
         var key=testStatus.props.match.params.key;
         if(key===undefined)
              key="";
-        const response = await fetch('teststatus/list/'+key);
+        const response = await fetch('teststatus/list/'+key,{
+            redirect:'manual'
+        });
+       await Util.CheckAuth(response)
         const data = await response.json();
         testStatus.setState({ testStatuses: data, loading: false });
     }

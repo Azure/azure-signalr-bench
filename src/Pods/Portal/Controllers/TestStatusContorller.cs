@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Azure.SignalRBench.Common;
 using Azure.SignalRBench.Coordinator.Entities;
 using Azure.SignalRBench.Storage;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
@@ -13,6 +14,7 @@ namespace Portal.Controllers
 {
     [Route("teststatus")]
     [ApiController]
+    [Authorize]
     public class TestStatusContorller : ControllerBase
     {
         private IPerfStorage _perfStorage;
