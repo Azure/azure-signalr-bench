@@ -43,12 +43,12 @@ namespace Portal
             
             services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
                 .AddMicrosoftIdentityWebApp(Configuration.GetSection("AzureAd"));
-            services.AddAuthorization(options =>
-            {
-                options.FallbackPolicy = new AuthorizationPolicyBuilder()
-                    .RequireRole(Constants.Roles.Contributor)
-                    .Build();
-            });
+            // services.AddAuthorization(options =>
+            // {
+            //     options.FallbackPolicy = new AuthorizationPolicyBuilder()
+            //         .RequireRole(Constants.Roles.Contributor)
+            //         .Build();
+            // });
             // services.AddControllersWithViews(options =>
             // {
             //     var policy = new AuthorizationPolicyBuilder()

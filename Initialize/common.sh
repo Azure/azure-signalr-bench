@@ -2,7 +2,7 @@
 
 function init_common() {
     echo "init naming conventions and configs"
-    PREFIX_PERF="${PREFIX}perf"
+    PREFIX_PERF="${PREFIX}perfv2"
     RESOURCE_GROUP="${PREFIX_PERF}rg"
     STORAGE_ACCOUNT="${PREFIX_PERF}sa"
     KEYVAULT="${PREFIX_PERF}kv"

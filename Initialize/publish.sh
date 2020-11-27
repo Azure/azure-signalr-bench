@@ -93,11 +93,12 @@ init_common
 init_aks_group
 
 if [[ $ALL || $PORTAL ]]; then
-   # publish Portal
+ #   publish Portal
     cd $DIR/yaml/portal
-  #  PORTAL_IP=$(az network public-ip show -n $PORTAL_IP_NAME -g $RESOURCE_GROUP --query "ipAddress" -o tsv)
-    cat load-balancer-service.yaml | replace RESOURCE_GROUP_PLACE_HOLDER $RESOURCE_GROUP | replace PORTAL_IP_PLACE_HOLDER $PORTAL_IP | replace KVURL_PLACE_HOLDER $KVURL | kubectl apply -f -
-    kubectl apply -f portal.yaml
+    PORTAL_IP=$(az network public-ip show -n $PORTAL_IP_NAME -g $RESOURCE_GROUP --query "ipAddress" -o tsv)
+   echo "ip is {$PORTAL_IP}"
+    cat portal-service.yaml | replace RESOURCE_GROUP_PLACE_HOLDER $RESOURCE_GROUP | replace PORTAL_IP_PLACE_HOLDER $PORTAL_IP | replace KVURL_PLACE_HOLDER $KVURL | kubectl apply -f -
+  #  kubectl apply -f portal.yaml
     domain=$(az network public-ip show -n $PORTAL_IP_NAME -g $RESOURCE_GROUP --query dnsSettings.fqdn -o tsv)
     echo "portal domain: $domain "
 fi

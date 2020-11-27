@@ -115,7 +115,6 @@ export class TestConfig extends Component {
             redirect:'manual'
         })
         await Util.CheckAuth(response)
-        console.log(res)
         window.open("/test-status/" + key)
         e.target.setAttribute("class","ui teal button")  
     }
@@ -125,7 +124,7 @@ export class TestConfig extends Component {
         e.persist()
         e.target.setAttribute("class","ui orange loading button")
         var key= e.target.getAttribute("value")
-        response= await fetch('testconfig/'+key, {
+       const response= await fetch('testconfig/'+key, {
             method: 'Delete',
             headers: {
                 'Accept': 'application/json',
@@ -137,7 +136,7 @@ export class TestConfig extends Component {
      //   e.target.setAttribute("class","ui teal button")  
     }
     async handleSubmit() {
-       response= await fetch('testconfig', {
+     const  response= await fetch('testconfig', {
             method: 'PUT',
             headers: {
                 'Accept': 'application/json',
