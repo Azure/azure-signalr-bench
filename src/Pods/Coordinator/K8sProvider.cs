@@ -2,12 +2,11 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+
 using Azure.SignalRBench.Common;
 using k8s;
 using k8s.Models;
@@ -42,14 +41,17 @@ namespace Azure.SignalRBench.Coordinator
                 },
                 Spec = new V1ServiceSpec()
                 {
-                    Ports = new List<V1ServicePort> { new V1ServicePort(port: 6379, targetPort: 6379) },
-                    Selector = new Dictionary<string, string>()
+                    Ports =
+                    {
+                        new V1ServicePort(port: 6379, targetPort: 6379)
+                    },
+                    Selector =
                     {
                         ["app"] = name
                     }
                 }
             };
-            await _k8s.CreateNamespacedServiceAsync(service, _default,cancellationToken: cancellationToken);
+            await _k8s.CreateNamespacedServiceAsync(service, _default, cancellationToken: cancellationToken);
 
             V1Deployment deployment = new V1Deployment()
             {
@@ -58,7 +60,7 @@ namespace Azure.SignalRBench.Coordinator
                 Metadata = new V1ObjectMeta()
                 {
                     Name = name,
-                    Labels = new Dictionary<string, string>()
+                    Labels =
                     {
                         [Constants.ConfigurationKeys.TestIdKey] = testId
                     }
@@ -66,72 +68,72 @@ namespace Azure.SignalRBench.Coordinator
                 Spec = new V1DeploymentSpec
                 {
                     Replicas = 1,
-                    Selector = new V1LabelSelector()
+                    Selector =
                     {
-                        MatchLabels = new Dictionary<string, string>
+                        MatchLabels =
                         {
                             { "app", name }
                         }
                     },
                     Template = new V1PodTemplateSpec()
                     {
-                        Metadata = new V1ObjectMeta()
+                        Metadata =
                         {
                             CreationTimestamp = null,
-                            Labels = new Dictionary<string, string>
+                            Labels =
                             {
                                 ["app"] = name,
                             }
                         },
                         Spec = new V1PodSpec
                         {
-                            NodeSelector = new Dictionary<String, String>()
+                            NodeSelector =
                             {
                                 ["agentpool"] = AksProvider.ToPoolName(nodePoolIndex)
                             },
-                            Containers = new List<V1Container>()
+                            Containers =
                             {
-                            new V1Container()
-                            {
-                                Name = name,
-                                Image = "signalrbenchmark/perf:1.3",
-                                Resources=new V1ResourceRequirements()
+                                new V1Container()
                                 {
-                                    Requests=new Dictionary<string, ResourceQuantity>()
+                                    Name = name,
+                                    Image = "signalrbenchmark/perf:1.3",
+                                    Resources =
                                     {
-                                        ["cpu"]=new ResourceQuantity("100m"),
-                                        ["memory"]=new ResourceQuantity("128Mi")
+                                        Requests =
+                                        {
+                                            ["cpu"] = new ResourceQuantity("100m"),
+                                            ["memory"] = new ResourceQuantity("128Mi")
+                                        },
+                                        Limits =
+                                        {
+                                            ["cpu"] = new ResourceQuantity("250m"),
+                                            ["memory"] = new ResourceQuantity("256Mi")
+                                        }
                                     },
-                                    Limits=new Dictionary<string, ResourceQuantity>()
+                                    VolumeMounts =
                                     {
-                                        ["cpu"]=new ResourceQuantity("250m"),
-                                        ["memory"]=new ResourceQuantity("256Mi")
+                                        new V1VolumeMount("/mnt/perf","volume")
+                                    },
+                                    Command =
+                                    {
+                                        "/bin/sh", "-c"
+                                    },
+                                    Args =
+                                    {
+                                        "cp /mnt/perf/manifest/AppServer/AppServer.zip /home ; cd /home ; unzip AppServer.zip ;exec ./AppServer;"
+                                    },
+                                    Env =
+                                    {
+                                        new V1EnvVar(Constants.ConfigurationKeys.TestIdKey, testId),
+                                        new V1EnvVar(Constants.ConfigurationKeys.ConnectionString, string.Join(",", asrsConnectionStrings))
                                     }
                                 },
-                                VolumeMounts=new List<V1VolumeMount>()
-                                {
-                                    new V1VolumeMount("/mnt/perf","volume")
-                                },
-                                Command=new List<string>()
-                                {
-                                    "/bin/sh", "-c"
-                                },
-                                Args=new List<String>()
-                                {
-                                    "cp /mnt/perf/manifest/AppServer/AppServer.zip /home ; cd /home ; unzip AppServer.zip ;exec ./AppServer;"
-                                },
-                                Env=new List<V1EnvVar>()
-                                {
-                                    new V1EnvVar(Constants.ConfigurationKeys.TestIdKey,testId),
-                                    new V1EnvVar(Constants.ConfigurationKeys.ConnectionString,string.Join(",",asrsConnectionStrings))
-                                }
                             },
-                            },
-                            Volumes = new List<V1Volume>()
+                            Volumes =
                             {
                                 new V1Volume("volume")
                                 {
-                                    AzureFile=new V1AzureFileVolumeSource("azure-secret","perf",false)
+                                    AzureFile = new V1AzureFileVolumeSource("azure-secret", "perf", false)
                                 }
                             }
                         },
@@ -139,7 +141,7 @@ namespace Azure.SignalRBench.Coordinator
                     }
                 }
             };
-            await _k8s.CreateNamespacedDeploymentAsync(deployment, _default,cancellationToken:cancellationToken);
+            await _k8s.CreateNamespacedDeploymentAsync(deployment, _default, cancellationToken: cancellationToken);
             return name;
         }
 
@@ -150,91 +152,90 @@ namespace Azure.SignalRBench.Coordinator
             {
                 ApiVersion = "apps/v1",
                 Kind = "Deployment",
-                Metadata = new V1ObjectMeta()
+                Metadata =
                 {
                     Name = name,
-                    Labels = new Dictionary<string, string>()
+                    Labels =
                     {
                         [Constants.ConfigurationKeys.TestIdKey] = testId
                     }
                 },
-                Spec = new V1DeploymentSpec
+                Spec =
                 {
                     Replicas = 1,
-                    Selector = new V1LabelSelector()
+                    Selector =
                     {
-                        MatchLabels = new Dictionary<string, string>
+                        MatchLabels =
                         {
                             { "app", name }
                         }
                     },
-                    Template = new V1PodTemplateSpec()
+                    Template =
                     {
-                        Metadata = new V1ObjectMeta()
+                        Metadata =
                         {
                             CreationTimestamp = null,
-                            Labels = new Dictionary<string, string>
+                            Labels =
                             {
                                 ["app"] = name,
                             }
                         },
-                        Spec = new V1PodSpec
+                        Spec =
                         {
-                            NodeSelector = new Dictionary<String, String>()
+                            NodeSelector =
                             {
                                 ["agentpool"] = AksProvider.ToPoolName(nodePoolIndex)
                             },
-                            Containers = new List<V1Container>()
+                            Containers =
                             {
-                            new V1Container()
-                            {
-                                Name = name,
-                                Image = "signalrbenchmark/perf:1.3",
-                                Resources=new V1ResourceRequirements()
+                                new V1Container()
                                 {
-                                    Requests=new Dictionary<string, ResourceQuantity>()
+                                    Name = name,
+                                    Image = "signalrbenchmark/perf:1.3",
+                                    Resources =
                                     {
-                                        ["cpu"]=new ResourceQuantity("100m"),
-                                        ["memory"]=new ResourceQuantity("128Mi")
+                                        Requests =
+                                        {
+                                            ["cpu"] = new ResourceQuantity("100m"),
+                                            ["memory"] = new ResourceQuantity("128Mi")
+                                        },
+                                        Limits =
+                                        {
+                                            ["cpu"] = new ResourceQuantity("250m"),
+                                            ["memory"] = new ResourceQuantity("256Mi")
+                                        }
                                     },
-                                    Limits=new Dictionary<string, ResourceQuantity>()
+                                    VolumeMounts =
                                     {
-                                        ["cpu"]=new ResourceQuantity("250m"),
-                                        ["memory"]=new ResourceQuantity("256Mi")
+                                        new V1VolumeMount("/mnt/perf","volume")
+                                    },
+                                    Command =
+                                    {
+                                        "/bin/sh", "-c"
+                                    },
+                                    Args =
+                                    {
+                                        "cp /mnt/perf/manifest/Client/Client.zip /home ; cd /home ; unzip Client.zip ; exec ./Client"
+                                    },
+                                    Env =
+                                    {
+                                        new V1EnvVar(Constants.ConfigurationKeys.TestIdKey,testId),
+                                        new V1EnvVar(Constants.ConfigurationKeys.AppServerUrl,url)
                                     }
                                 },
-                                VolumeMounts=new List<V1VolumeMount>()
-                                {
-                                    new V1VolumeMount("/mnt/perf","volume")
-                                },
-                                Command=new List<string>()
-                                {
-                                    "/bin/sh", "-c"
-                                },
-                                Args=new List<String>()
-                                {
-                                    "cp /mnt/perf/manifest/Client/Client.zip /home ; cd /home ; unzip Client.zip ; exec ./Client"
-                                },
-                                Env=new List<V1EnvVar>()
-                                {
-                                    new V1EnvVar(Constants.ConfigurationKeys.TestIdKey,testId),
-                                    new V1EnvVar(Constants.ConfigurationKeys.AppServerUrl,url)
-                                }
                             },
-                            },
-                            Volumes = new List<V1Volume>()
+                            Volumes =
                             {
                                 new V1Volume("volume")
                                 {
-                                    AzureFile=new V1AzureFileVolumeSource("azure-secret","perf",false)
+                                    AzureFile = new V1AzureFileVolumeSource("azure-secret", "perf", false)
                                 }
                             }
                         },
-
                     }
                 }
             };
-            await _k8s.CreateNamespacedDeploymentAsync(deployment, _default,cancellationToken:cancellationToken);
+            await _k8s.CreateNamespacedDeploymentAsync(deployment, _default, cancellationToken: cancellationToken);
         }
 
         public async Task DeleteClientPodsAsync(string testId, int nodePoolIndex)
