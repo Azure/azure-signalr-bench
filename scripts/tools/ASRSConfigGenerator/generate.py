@@ -101,11 +101,11 @@ SignalRBenchmarkPlugin, Plugin.Microsoft.Azure.SignalR.Benchmark')
                         help='Path of output benchmark configuration')
 
     # args for conditional stop
-    parser.add_argument('-cc', '--criteria_max_fail_connection_amount', type=int, default=100, help='Criteria for max \
+    parser.add_argument('-cc', '--criteria_max_fail_connection_amount', type=int, default=100000000, help='Criteria for max \
 failed connection amount')
-    parser.add_argument('-cp', '--criteria_max_fail_connection_percentage', type=float, default=0.01, help='Criteria \
+    parser.add_argument('-cp', '--criteria_max_fail_connection_percentage', type=float, default=200, help='Criteria \
 for max failed connection percentage')
-    parser.add_argument('-cs', '--criteria_max_fail_sending_percentage', type=float, default=0.01, help='Criteria \
+    parser.add_argument('-cs', '--criteria_max_fail_sending_percentage', type=float, default=200, help='Criteria \
 for max failed sending percentage')
 
     # args for statistics collector
