@@ -1,14 +1,10 @@
 apiVersion: v1
 kind: Service
 metadata:
-  annotations:
-    service.beta.kubernetes.io/azure-load-balancer-resource-group: RESOURCE_GROUP_PLACE_HOLDER
   name: portal
 spec:
-  loadBalancerIP: PORTAL_IP_PLACE_HOLDER
-  type: LoadBalancer
   ports:
-    - port: 443
+    - port: 80
       targetPort: 80
   selector:
     app: portal

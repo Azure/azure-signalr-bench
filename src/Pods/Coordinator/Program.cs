@@ -34,7 +34,10 @@ namespace Azure.SignalRBench.Coordinator
                     services.AddSingleton(
                         sp => new SecretClient(
                             new Uri(hostContext.Configuration[Constants.ConfigurationKeys.KeyVaultUrlKey]),
-                            new DefaultAzureCredential()));
+                            new DefaultAzureCredential(new DefaultAzureCredentialOptions()
+                            {
+                                ManagedIdentityClientId=hostContext.Configuration[Constants.ConfigurationKeys.MsiAppId]
+                            })));
                     services.AddSingleton<IPerfStorage>(sp =>
                         {
                             var secretClient = sp.GetService<SecretClient>();

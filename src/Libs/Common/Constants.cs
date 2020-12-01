@@ -25,6 +25,7 @@ namespace Azure.SignalRBench.Common
             public const string PodNameStringKey = "Podname";
             public const string ConnectionString = "connectionString";
             public const string ConnectionNum = "connectionNum";
+            public const string MsiAppId = "msiAppId";
         }
 
         public static class TableNames

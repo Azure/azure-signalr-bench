@@ -32,6 +32,8 @@ spec:
           env:
             - name: kvUrl
               value: KVURL_PLACE_HOLDER
+            - name: msiAppId
+              value: MSI_PLACE_HOLDER
       volumes:
         - name: volume
           azureFile:

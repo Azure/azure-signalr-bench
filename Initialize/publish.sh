@@ -93,20 +93,18 @@ init_common
 init_aks_group
 
 if [[ $ALL || $PORTAL ]]; then
- #   publish Portal
+    publish Portal
     cd $DIR/yaml/portal
-    PORTAL_IP=$(az network public-ip show -n $PORTAL_IP_NAME -g $RESOURCE_GROUP --query "ipAddress" -o tsv)
-   echo "ip is {$PORTAL_IP}"
-    cat portal-service.yaml | replace RESOURCE_GROUP_PLACE_HOLDER $RESOURCE_GROUP | replace PORTAL_IP_PLACE_HOLDER $PORTAL_IP | replace KVURL_PLACE_HOLDER $KVURL | kubectl apply -f -
-  #  kubectl apply -f portal.yaml
+    cat portal.yaml | replace KVURL_PLACE_HOLDER $KVURL | replace MSI_PLACE_HOLDER $AGENTPOOL_MSI_CLIENT_ID | kubectl apply -f -
+    kubectl apply -f portal-service.yaml 
     domain=$(az network public-ip show -n $PORTAL_IP_NAME -g $RESOURCE_GROUP --query dnsSettings.fqdn -o tsv)
-    echo "portal domain: $domain "
+    echo " portal domain: $domain "
 fi
 
 if [[ $ALL || $COORDINATOR ]]; then
-    publish Coordinator
+  #  publish Coordinator
     cd $DIR/yaml/coordinator
-    kubectl apply -f coordinator.yaml
+    cat coordinator.yaml | replace KVURL_PLACE_HOLDER $KVURL | replace MSI_PLACE_HOLDER $AGENTPOOL_MSI_CLIENT_ID | kubectl  apply -f -
 fi
 
 if [[ $ALL || $COMPILER ]]; then

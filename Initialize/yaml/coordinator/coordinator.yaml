@@ -6,7 +6,7 @@ spec:
   selector:
     matchLabels:
       app: coordinator
-  replicas: 2 # tells deployment to run 2 pods matching the template
+  replicas: 1 
   template:
     metadata:
       labels:
@@ -38,6 +38,8 @@ spec:
                    fieldPath: metadata.name
             - name: redis
               value: redis-master
+            - name: msiAppId
+              value: MSI_PLACE_HOLDER
       volumes:
         - name: volume
           azureFile:
