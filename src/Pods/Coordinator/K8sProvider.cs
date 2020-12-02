@@ -29,7 +29,7 @@ namespace Azure.SignalRBench.Coordinator
         public K8sProvider(PerfStorageProvider perfStorageProvider, IConfiguration configuration)
         {
             _perfStorageProvider = perfStorageProvider;
-            _redisConnectionString = configuration[Constants.ConfigurationKeys.RedisConnectionStringKey];
+            _redisConnectionString = configuration[Constant.ConfigurationKeys.RedisConnectionStringKey];
         }
         public void Initialize(string config)
         {
@@ -68,7 +68,7 @@ namespace Azure.SignalRBench.Coordinator
                     Name = name,
                     Labels = new Dictionary<string, string>()
                     {
-                        [Constants.ConfigurationKeys.TestIdKey] = testId
+                        [Constant.ConfigurationKeys.TestIdKey] = testId
                     }
                 },
                 Spec = new V1DeploymentSpec
@@ -130,11 +130,11 @@ namespace Azure.SignalRBench.Coordinator
                                 },
                                 Env=new List<V1EnvVar>()
                                 {
-                                    new V1EnvVar(Constants.ConfigurationKeys.PodNameStringKey,valueFrom:new V1EnvVarSource(fieldRef:new V1ObjectFieldSelector("metadata.name") ) ),
-                                    new V1EnvVar(Constants.ConfigurationKeys.TestIdKey,testId),
-                                    new V1EnvVar(Constants.ConfigurationKeys.ConnectionString,string.Join(",",asrsConnectionStrings)),
-                                    new V1EnvVar(Constants.ConfigurationKeys.StorageConnectionStringKey,_perfStorageProvider.ConnectionString),
-                                    new V1EnvVar(Constants.ConfigurationKeys.RedisConnectionStringKey,_redisConnectionString),
+                                    new V1EnvVar(Constant.ConfigurationKeys.PodNameStringKey,valueFrom:new V1EnvVarSource(fieldRef:new V1ObjectFieldSelector("metadata.name") ) ),
+                                    new V1EnvVar(Constant.ConfigurationKeys.TestIdKey,testId),
+                                    new V1EnvVar(Constant.ConfigurationKeys.ConnectionString,string.Join(",",asrsConnectionStrings)),
+                                    new V1EnvVar(Constant.ConfigurationKeys.StorageConnectionStringKey,_perfStorageProvider.ConnectionString),
+                                    new V1EnvVar(Constant.ConfigurationKeys.RedisConnectionStringKey,_redisConnectionString),
 
                                 }
                             },
@@ -167,7 +167,7 @@ namespace Azure.SignalRBench.Coordinator
                     Name = name,
                     Labels = new Dictionary<string, string>()
                     {
-                        [Constants.ConfigurationKeys.TestIdKey] = testId
+                        [Constant.ConfigurationKeys.TestIdKey] = testId
                     }
                 },
                 Spec = new V1DeploymentSpec
@@ -229,10 +229,10 @@ namespace Azure.SignalRBench.Coordinator
                                 },
                                 Env=new List<V1EnvVar>()
                                 {
-                                    new V1EnvVar(Constants.ConfigurationKeys.PodNameStringKey,valueFrom:new V1EnvVarSource(fieldRef:new V1ObjectFieldSelector("metadata.name") ) ),
-                                    new V1EnvVar(Constants.ConfigurationKeys.TestIdKey,testId),
-                                    new V1EnvVar(Constants.ConfigurationKeys.StorageConnectionStringKey,_perfStorageProvider.ConnectionString),
-                                    new V1EnvVar(Constants.ConfigurationKeys.RedisConnectionStringKey,_redisConnectionString),
+                                    new V1EnvVar(Constant.ConfigurationKeys.PodNameStringKey,valueFrom:new V1EnvVarSource(fieldRef:new V1ObjectFieldSelector("metadata.name") ) ),
+                                    new V1EnvVar(Constant.ConfigurationKeys.TestIdKey,testId),
+                                    new V1EnvVar(Constant.ConfigurationKeys.StorageConnectionStringKey,_perfStorageProvider.ConnectionString),
+                                    new V1EnvVar(Constant.ConfigurationKeys.RedisConnectionStringKey,_redisConnectionString),
                                 }
                             },
                             },

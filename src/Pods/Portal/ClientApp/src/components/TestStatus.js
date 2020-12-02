@@ -26,8 +26,9 @@ export class TestStatus extends Component {
     }
 
     async report(e) {
+        console.log("report")
         var json= e.target.getAttribute("value")
-        this.setState({error:true,report:JSON.parse(json)})
+        this.setState({show:true,report:JSON.parse(json)})
      }
      async errorInfo(e) {
         var error= e.target.getAttribute("value")
@@ -42,6 +43,7 @@ export class TestStatus extends Component {
                         <th>TestId</th>
                         <th>Index</th>
                         <th>Time</th>
+                        <th>Creater</th>
                         <th>Status</th>
                         <th>Report</th>
                     </tr>
@@ -50,20 +52,21 @@ export class TestStatus extends Component {
                     {testStatuses.map(testStatus => {
                         var trkey = testStatus.partitionKey + testStatus.rowKey;
                       var colorstyle=testStatus.healthy?"green":"red";
-                      var clz="ui disabled button"
+                      var clz="ui disabled mini button"
                       var data=testStatus.report
                       var cb=this.report
                       if(!testStatus.healthy){
-                          clz="ui red button"
+                          clz="ui red mini button"
                           data=testStatus.errorInfo
                           cb=this.errorInfo
                       }else if(testStatus.report){
-                          clz="ui teal button"
+                          clz="ui teal mini button"
                       }
                         return <tr key={trkey}>
                             <td>{testStatus.partitionKey}</td>
                             <td>{testStatus.rowKey}</td>
                             <td>{testStatus.timestamp}</td>
+                            <td>{testStatus.user}</td>
                             <td ><font color={colorstyle}>{testStatus.status}</font></td>
                             <td ><button className={clz} value={data} onClick={cb}>Report</button></td>
                         </tr>

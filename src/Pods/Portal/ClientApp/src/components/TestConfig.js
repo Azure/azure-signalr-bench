@@ -89,24 +89,23 @@ export class TestConfig extends Component {
 
     async handleStart(e) {
         e.persist()
-        e.target.setAttribute("class", "ui teal loading button")
+        e.target.setAttribute("class", "ui teal loading mini button")
         var key = e.target.getAttribute("value")
-        const response = await fetch('testconfig/starttest', {
+        const response = await fetch('testconfig/starttest/'+key, {
             method: 'POST',
             headers: {
                 'Accept': 'application/json',
-                'Content-Type': 'application/json',
             },
             body: { key: key },
             redirect: 'manual'
         })
         await Util.CheckAuth(response)
         window.open("/test-status/" + key)
-        e.target.setAttribute("class", "ui teal button")
+        e.target.setAttribute("class", "ui teal mini button")
     }
     async handleDelete(e) {
         e.persist()
-        e.target.setAttribute("class", "ui orange loading button")
+        e.target.setAttribute("class", "ui orange loading mini button")
         var key = e.target.getAttribute("value")
         const response = await fetch('testconfig/' + key, {
             method: 'Delete',
@@ -119,6 +118,12 @@ export class TestConfig extends Component {
         await this.populateTestConfigData()
     }
     async handleSubmit() {
+        console.log(this.state.obj)
+        const testName=this.state.obj["rowKey"]
+        if(!(testName.match("[a-z0-9]([-a-z0-9]*[a-z0-9])?"))){
+            alert("invalid testName. Should be of format [a-z0-9]([-a-z0-9]*[a-z0-9])")
+            return
+        }
         const response = await fetch('testconfig', {
             method: 'PUT',
             headers: {
@@ -145,7 +150,7 @@ export class TestConfig extends Component {
                         <th>TestName</th>
                         <th>timestamp</th>
                         <th>ClientConnections</th>
-                        <th>ServerNum</th>
+                        <th>Creater</th>
                         <th>Config</th>
                         <th>Start</th>
                         <th>Remove</th>
@@ -160,10 +165,10 @@ export class TestConfig extends Component {
                             <td><a href={link}>{testConfig.rowKey}</a></td>
                             <td>{testConfig.timestamp}</td>
                             <td>{testConfig.clientCons}</td>
-                            <td>{testConfig.serverNum}</td>
+                            <td>{testConfig.user}</td>
                             <td><Icon size="large" name='file code outline' value={json} onClick={this.handleJsonShow} /></td>
-                            <td ><Button color="teal" value={testConfig["partitionKey"]} onClick={this.handleStart}>Run</Button></td>
-                            <td ><Button color="orange" value={testConfig["partitionKey"]} onClick={this.handleDelete}>Delete</Button></td>
+                            <td ><Button color="teal" size='mini' value={testConfig["partitionKey"]} onClick={this.handleStart}>Run</Button></td>
+                            <td ><Button color="orange" size='mini' value={testConfig["partitionKey"]} onClick={this.handleDelete}>Delete</Button></td>
                         </tr>
                     }
                     )}

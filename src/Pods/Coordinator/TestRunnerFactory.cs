@@ -22,8 +22,8 @@ namespace Azure.SignalRBench.Coordinator
             IPerfStorage perfStorage,
             ILogger<TestRunner> logger)
         {
-            _podName = configuration[Constants.ConfigurationKeys.PodNameStringKey];
-            _redisConnectionString = configuration[Constants.ConfigurationKeys.RedisConnectionStringKey];
+            _podName = configuration[Constant.ConfigurationKeys.PodNameStringKey];
+            _redisConnectionString = configuration[Constant.ConfigurationKeys.RedisConnectionStringKey];
             AksProvider = aksProvider;
             K8sProvider = k8sProvider;
             SignalRProvider = signalRProvider;

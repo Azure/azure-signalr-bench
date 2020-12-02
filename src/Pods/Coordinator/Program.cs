@@ -33,15 +33,15 @@ namespace Azure.SignalRBench.Coordinator
                 {
                     services.AddSingleton(
                         sp => new SecretClient(
-                            new Uri(hostContext.Configuration[Constants.ConfigurationKeys.KeyVaultUrlKey]),
+                            new Uri(hostContext.Configuration[Constant.ConfigurationKeys.KeyVaultUrlKey]),
                             new DefaultAzureCredential(new DefaultAzureCredentialOptions()
                             {
-                                ManagedIdentityClientId=hostContext.Configuration[Constants.ConfigurationKeys.MsiAppId]
+                                ManagedIdentityClientId=hostContext.Configuration[Constant.ConfigurationKeys.MsiAppId]
                             })));
                     services.AddSingleton<IPerfStorage>(sp =>
                         {
                             var secretClient = sp.GetService<SecretClient>();
-                            var connectionString = secretClient.GetSecretAsync(Constants.KeyVaultKeys.StorageConnectionStringKey).GetAwaiter().GetResult().Value.Value;
+                            var connectionString = secretClient.GetSecretAsync(Constant.KeyVaultKeys.StorageConnectionStringKey).GetAwaiter().GetResult().Value.Value;
                             return new PerfStorage(connectionString);
                         }
                     );

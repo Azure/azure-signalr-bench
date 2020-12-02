@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Cosmos.Table;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -34,7 +35,7 @@ namespace Portal.Controllers
         [HttpGet]
         public async Task<IEnumerable<TestConfigEntity>> Get()
         {
-            var table = await _perfStorage.GetTableAsync<TestConfigEntity>(Constants.TableNames.TestConfig);
+            var table = await _perfStorage.GetTableAsync<TestConfigEntity>(Constant.TableNames.TestConfig);
             var rows = await table.QueryAsync(table.Rows
             ).ToListAsync();
             rows.Sort((a, b) => b.Timestamp.CompareTo(a.Timestamp));
@@ -52,27 +53,29 @@ namespace Portal.Controllers
         [HttpPut]
         public async Task CreateTestConfig(TestConfigEntity testConfigEntity)
         {
+            testConfigEntity.User= User.Identity.Name;
             testConfigEntity.PartitionKey = testConfigEntity.RowKey;
             testConfigEntity.Init();
-            var table = await _perfStorage.GetTableAsync<TestConfigEntity>(Constants.TableNames.TestConfig);
+            var table = await _perfStorage.GetTableAsync<TestConfigEntity>(Constant.TableNames.TestConfig);
             await table.InsertAsync(testConfigEntity);
-            _logger.LogInformation($"Create Test config:{testConfigEntity.ToString()}");
+            _logger.LogInformation($"Create Test config:{JsonConvert.SerializeObject(testConfigEntity)}");
         }
 
-        [HttpPost("StartTest")]
+        [HttpPost("StartTest/{testConfigEntityKey}")]
         public async Task StartTestAsync(String testConfigEntityKey)
         {
-            var configTable = await _perfStorage.GetTableAsync<TestConfigEntity>(Constants.TableNames.TestConfig);
+            var configTable = await _perfStorage.GetTableAsync<TestConfigEntity>(Constant.TableNames.TestConfig);
             var latestTestConfig = await configTable.GetFirstOrDefaultAsync(from row in configTable.Rows
                 where row.PartitionKey == testConfigEntityKey
                 select row);
             latestTestConfig.InstanceIndex += 1;
             await configTable.UpdateAsync(latestTestConfig);
-            var queue = await _perfStorage.GetQueueAsync<TestJob>(Constants.QueueNames.PortalJob, true);
+            var queue = await _perfStorage.GetQueueAsync<TestJob>(Constant.QueueNames.PortalJob, true);
             await queue.SendAsync(latestTestConfig.ToTestJob(latestTestConfig.InstanceIndex));
-            var statusTable = await _perfStorage.GetTableAsync<TestStatusEntity>(Constants.TableNames.TestStatus);
+            var statusTable = await _perfStorage.GetTableAsync<TestStatusEntity>(Constant.TableNames.TestStatus);
             var testEntity = new TestStatusEntity()
             {
+                User = User.Identity.Name,
                 PartitionKey = latestTestConfig.PartitionKey,
                 RowKey = latestTestConfig.InstanceIndex.ToString(),
                 Status = "Init",
@@ -94,13 +97,13 @@ namespace Portal.Controllers
         [HttpDelete("{key}")]
         public async Task Delete(string key)
         {
-            var configTable = await _perfStorage.GetTableAsync<TestConfigEntity>(Constants.TableNames.TestConfig);
+            var configTable = await _perfStorage.GetTableAsync<TestConfigEntity>(Constant.TableNames.TestConfig);
             var config =
                 await configTable.GetFirstOrDefaultAsync(from row in configTable.Rows
                     where row.PartitionKey == key
                     select row);
             await configTable.DeleteAsync(config);
-            var statusTable = await _perfStorage.GetTableAsync<TestStatusEntity>(Constants.TableNames.TestStatus);
+            var statusTable = await _perfStorage.GetTableAsync<TestStatusEntity>(Constant.TableNames.TestStatus);
             var statuses =
                 await statusTable.QueryAsync(from row in statusTable.Rows where row.PartitionKey == key select row)
                     .ToListAsync();

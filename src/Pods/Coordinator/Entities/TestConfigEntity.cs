@@ -9,6 +9,7 @@ namespace Azure.SignalRBench.Coordinator.Entities
 {
     public class TestConfigEntity :TableEntity
     {
+        public string? User { get; set; }
         public int ClientCons { get; set; } = 3000;
 
         public string? ConnectionString { get; set; } 
@@ -33,6 +34,8 @@ namespace Azure.SignalRBench.Coordinator.Entities
         public int MessageSize { get; set; } = 2048;
         
         public string Protocol { get; set; } = SignalRProtocol.WebSocketsWithJson.ToString();
+
+        public int Rate { get; set; } = 200;
 
         public void Init()
         {
@@ -76,7 +79,7 @@ namespace Azure.SignalRBench.Coordinator.Entities
                     Rounds = roundsettings.ToArray(),
                     IsAnonymous = true,
                     Protocol =Enum.TryParse(Protocol,out  SignalRProtocol protocol)?protocol:throw new Exception($"Unknown Protocol {Protocol}"),
-                    Rate = 200,
+                    Rate = Rate,
                 },
                 ServerSetting=new ServerSetting()
                 {

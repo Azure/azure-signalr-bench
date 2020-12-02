@@ -24,7 +24,6 @@ using Microsoft.Extensions.FileProviders;
 using Microsoft.Identity.Web.UI;
 using Microsoft.Identity.Web;
 using Newtonsoft.Json;
-using Constants = Azure.SignalRBench.Common.Constants;
 
 namespace Portal
 {
@@ -53,7 +52,7 @@ namespace Portal
             services.AddAuthorization(options =>
             {
                 options.FallbackPolicy = new AuthorizationPolicyBuilder()
-                    .RequireRole(Constants.Roles.Contributor)
+                    .RequireRole(Constant.Roles.Contributor)
                     .Build();
             });
             services
@@ -62,10 +61,10 @@ namespace Portal
 
             services.AddSingleton(
                 sp => new SecretClient(
-                    new Uri(Configuration[Constants.ConfigurationKeys.KeyVaultUrlKey]), new DefaultAzureCredential(
+                    new Uri(Configuration[Constant.ConfigurationKeys.KeyVaultUrlKey]), new DefaultAzureCredential(
                         new DefaultAzureCredentialOptions()
                         {
-                            ManagedIdentityClientId = Configuration[Constants.ConfigurationKeys.MsiAppId]
+                            ManagedIdentityClientId = Configuration[Constant.ConfigurationKeys.MsiAppId]
                         })
                 ));
             services.AddSingleton<IPerfStorage>(sp =>

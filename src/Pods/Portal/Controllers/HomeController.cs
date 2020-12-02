@@ -41,6 +41,7 @@ namespace Portal.Controllers
         [HttpGet("info")]
         public async Task<string> Get()
         {
+            var p = this.HttpContext.User;
             return "{\"info\":\"Todo\"}";
         }
     }

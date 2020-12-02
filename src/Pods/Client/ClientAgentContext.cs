@@ -145,5 +145,10 @@ namespace Azure.SignalRBench.Client
             public int LessThan5s;
             public int MoreThan5s;
         }
+
+        public void Reset()
+        {
+            _dict.Clear();
+        }
     }
 }

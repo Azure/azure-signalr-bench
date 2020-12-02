@@ -7,7 +7,7 @@ export class Util {
       if (response.type == "opaqueredirect") {
          await new Promise(r => setTimeout(r, 1000));
          console.log("need to login")
-         window.location.href = "/signin-oidc"
+        // window.location.href = "/signin-oidc"
       }
    }
 }
