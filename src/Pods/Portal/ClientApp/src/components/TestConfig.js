@@ -1,23 +1,21 @@
 ﻿import React, { Component, useEffect, useState } from 'react';
-//import { Modal, Button } from 'antd';
-//import Button from 'react-bootstrap/Button'
 import Modal from 'react-bootstrap/Modal'
 import Form from 'react-bootstrap/Form'
 import ReactJson from 'react-json-view'
-import {Util} from './Util'
+import { Util } from './Util'
 
-import { Search, Grid, Header, Segment, Divider,Button,Icon } from 'semantic-ui-react'
+import { Search, Grid, Header, Segment, Divider, Button, Icon } from 'semantic-ui-react'
 
 
 export class TestConfig extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            show: false, loading: true, obj: {  signalRUnitSize:1 },
-            showjson:false,
-            json:{},
-            testConfigs:[],
-            total:[]
+            show: false, loading: true, obj: { signalRUnitSize: 1 },
+            showjson: false,
+            json: {},
+            testConfigs: [],
+            total: []
         };
         this.handleClose = this.handleClose.bind(this);
         this.handleShow = this.handleShow.bind(this);
@@ -27,21 +25,17 @@ export class TestConfig extends Component {
         this.handleChangeNum = this.handleChangeNum.bind(this);
         this.handleSubmit = this.handleSubmit.bind(this);
         this.handleSearchChange = this.handleSearchChange.bind(this);
-        this.handleDelete=this.handleDelete.bind(this);
+        this.handleDelete = this.handleDelete.bind(this);
 
-        this.unitRef=React.createRef();
+        this.unitRef = React.createRef();
     }
-    handleSearchChange(e,data){
-        if(data.value!=undefined&&data.value.trim()){
-            console.log(data.value)
-            var testConfigs=this.state.total.filter(x=> x.rowKey.includes(data.value.trim()))
-            this.setState({testConfigs:testConfigs})
+    handleSearchChange(e, data) {
+        if (data.value != undefined && data.value.trim()) {
+            var testConfigs = this.state.total.filter(x => x.rowKey.includes(data.value.trim()))
+            this.setState({ testConfigs: testConfigs })
         }
         else
-            this.setState({testConfig:this.state.total})
-          
-       
-        console.log(testConfigs)
+            this.setState({ testConfig: this.state.total })
     }
     handleJsonClose() {
         this.setState({
@@ -49,18 +43,16 @@ export class TestConfig extends Component {
         })
     }
     handleJsonShow(e) {
-        var content= JSON.parse(e.target.getAttribute("value"))
+        var content = JSON.parse(e.target.getAttribute("value"))
         delete content["eTag"]
-        content["TestName"]=content["rowKey"]
+        content["TestName"] = content["rowKey"]
         delete content["rowKey"]
         delete content["partitionKey"]
-        if(content["connectionString"])
+        if (content["connectionString"])
             delete content["signalRUnitSize"]
-        console.log(content)
         this.setState({
             showjson: true,
-            json:content
-
+            json: content
         })
     }
     handleClose() {
@@ -74,76 +66,67 @@ export class TestConfig extends Component {
         })
     }
     handleChange(e) {
-        if(e.target.name=="connectionString"){
-            console.log("disable")
-            console.log(this)
-            if(e.target.value){
-                 this.unitRef.current.disabled=true
+        if (e.target.name == "connectionString") {
+            if (e.target.value) {
+                this.unitRef.current.disabled = true
             }
             else
-                 this.unitRef.current.disabled=false
+                this.unitRef.current.disabled = false
         }
-        if(e.target.value==null||e.target.value==""){
+        if (e.target.value == null || e.target.value == "") {
             delete this.state.obj[e.target.name]
         }
         else
-        this.state.obj[e.target.name] = e.target.value.trim()
-        console.log(JSON.stringify(this.state.obj))
+            this.state.obj[e.target.name] = e.target.value.trim()
     }
     handleChangeNum(e) {
-        if(e.target.value==null||e.target.value==""){
+        if (e.target.value == null || e.target.value == "") {
             delete this.state.obj[e.target.name]
         }
         else
-          this.state.obj[e.target.name] = parseInt(e.target.value);
-        console.log(JSON.stringify(this.state.obj))
+            this.state.obj[e.target.name] = parseInt(e.target.value);
     }
 
     async handleStart(e) {
-        console.log(e.target)
-        console.log(e.target.class)
         e.persist()
-        e.target.setAttribute("class","ui teal loading button")
-        var key= e.target.getAttribute("value")
-       const response= await fetch('testconfig/starttest', {
+        e.target.setAttribute("class", "ui teal loading button")
+        var key = e.target.getAttribute("value")
+        const response = await fetch('testconfig/starttest', {
             method: 'POST',
             headers: {
                 'Accept': 'application/json',
                 'Content-Type': 'application/json',
             },
-            body: {key:key},
-            redirect:'manual'
+            body: { key: key },
+            redirect: 'manual'
         })
         await Util.CheckAuth(response)
         window.open("/test-status/" + key)
-        e.target.setAttribute("class","ui teal button")  
+        e.target.setAttribute("class", "ui teal button")
     }
     async handleDelete(e) {
-        console.log(e.target)
-        console.log(e.target.class)
         e.persist()
-        e.target.setAttribute("class","ui orange loading button")
-        var key= e.target.getAttribute("value")
-       const response= await fetch('testconfig/'+key, {
+        e.target.setAttribute("class", "ui orange loading button")
+        var key = e.target.getAttribute("value")
+        const response = await fetch('testconfig/' + key, {
             method: 'Delete',
             headers: {
                 'Accept': 'application/json',
             },
-            redirect:'manual'
+            redirect: 'manual'
         })
         await Util.CheckAuth(response)
         await this.populateTestConfigData()
-     //   e.target.setAttribute("class","ui teal button")  
     }
     async handleSubmit() {
-     const  response= await fetch('testconfig', {
+        const response = await fetch('testconfig', {
             method: 'PUT',
             headers: {
                 'Accept': 'application/json',
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify(this.state.obj),
-            redirect:'manual'
+            redirect: 'manual'
         });
         await Util.CheckAuth(response)
         this.state.show = false;
@@ -154,7 +137,7 @@ export class TestConfig extends Component {
         this.populateTestConfigData();
     }
 
-     renderTestConfigsTable(testConfigs) {
+    renderTestConfigsTable(testConfigs) {
         return (
             <table className='table table-striped' aria-labelledby="tabelLabel" >
                 <thead>
@@ -171,20 +154,18 @@ export class TestConfig extends Component {
                 </thead>
                 <tbody>
                     {testConfigs.map(testConfig => {
-                        var json=JSON.stringify(testConfig)
-                        var link="/test-status/"+testConfig.rowKey;
+                        var json = JSON.stringify(testConfig)
+                        var link = "/test-status/" + testConfig.rowKey;
                         return <tr key={testConfig.rowKey}>
                             <td><a href={link}>{testConfig.rowKey}</a></td>
                             <td>{testConfig.timestamp}</td>
                             <td>{testConfig.clientCons}</td>
                             <td>{testConfig.serverNum}</td>
                             <td><Icon size="large" name='file code outline' value={json} onClick={this.handleJsonShow} /></td>
-                            {/* <td ><Button color="teal" value={json} onClick={this.handleJsonShow}>Json</Button></td> */}
                             <td ><Button color="teal" value={testConfig["partitionKey"]} onClick={this.handleStart}>Run</Button></td>
-                            <td ><Button color="orange"  value={testConfig["partitionKey"]} onClick={this.handleDelete}>Delete</Button></td>
+                            <td ><Button color="orange" value={testConfig["partitionKey"]} onClick={this.handleDelete}>Delete</Button></td>
                         </tr>
                     }
-
                     )}
                 </tbody>
             </table>
@@ -192,27 +173,23 @@ export class TestConfig extends Component {
     }
 
     render() {
-        console.log("render")
         let contents = this.state.loading
             ? <p><em>Loading...</em></p>
             : this.renderTestConfigsTable(this.state.testConfigs);
         return (
             <>
-            
-    
-      
-              <Modal show={this.state.showjson} size="lg" onHide={this.handleJsonClose}> 
-              <Modal.Header closeButton>
+                <Modal show={this.state.showjson} size="lg" onHide={this.handleJsonClose}>
+                    <Modal.Header closeButton>
                         <Modal.Title>Config details</Modal.Title>
                     </Modal.Header>
-                 <ReactJson src={this.state.json} displayDataTypes={false} sortKeys={true} name={false} />
-              </Modal>
+                    <ReactJson src={this.state.json} displayDataTypes={false} sortKeys={true} name={false} />
+                </Modal>
                 <Modal show={this.state.show} onHide={this.handleClose}>
                     <Modal.Header closeButton>
                         <Modal.Title>Create a test job config</Modal.Title>
                     </Modal.Header>
                     <Modal.Body>
-                        <Form  name="CreateConfigForm">
+                        <Form name="CreateConfigForm">
                             <Form.Group >
                                 <Form.Label >TestName</Form.Label>
                                 <Form.Control name="rowKey" onChange={this.handleChange} placeholder="give a unique name for this test" />
@@ -299,30 +276,27 @@ export class TestConfig extends Component {
                 <div>
                     <h1 id="tabelLabel" >Test Job Configs</h1>
 
-  <Segment basic textAlign='center'>
-    
-  <Button
-      color='teal'
-      content='Create New TestConfig'
-      icon='add'
-      labelPosition='left'
-      onClick={this.handleShow}
-    />
-    <Divider horizontal>Search by TestName</Divider>
-    <Grid.Column verticalAlign='middle'>
-                          <Search
-                      loading={false} icon='search'
-                     onSearchChange={this.handleSearchChange}
-                    // results={results}
-                          // value={value}
-                     showNoResults={false}
+                    <Segment basic textAlign='center'>
 
-                     />
-      </Grid.Column>
-   
-  </Segment>
+                        <Button
+                            color='teal'
+                            content='Create New TestConfig'
+                            icon='add'
+                            labelPosition='left'
+                            onClick={this.handleShow}
+                        />
+                        <Divider horizontal>Search by TestName</Divider>
+                        <Grid.Column verticalAlign='middle'>
+                            <Search
+                                loading={false} icon='search'
+                                onSearchChange={this.handleSearchChange}
+                                showNoResults={false}
 
-                   
+                            />
+                        </Grid.Column>
+
+                    </Segment>
+
                     {contents}
                 </div>
             </>
@@ -330,12 +304,12 @@ export class TestConfig extends Component {
     }
 
     async populateTestConfigData() {
-        const response = await fetch('testconfig',{
-            redirect:"manual"
+        const response = await fetch('testconfig', {
+            redirect: "manual"
         });
         await Util.CheckAuth(response)
         const data = await response.json();
-        this.setState({ testConfigs: data, loading: false,total:data });
+        this.setState({ testConfigs: data, loading: false, total: data });
     }
 
 

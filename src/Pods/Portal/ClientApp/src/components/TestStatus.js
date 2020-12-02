@@ -2,7 +2,6 @@
 //import { Modal, Button } from 'antd';
 //import Button from 'react-bootstrap/Button'
 import Modal from 'react-bootstrap/Modal'
-import Form from 'react-bootstrap/Form'
 import { Search, Grid, Header, Segment, Divider,Button,Icon } from 'semantic-ui-react'
 import {Util} from './Util'
 
@@ -27,12 +26,10 @@ export class TestStatus extends Component {
     }
 
     async report(e) {
-        console.log("report")
         var json= e.target.getAttribute("value")
         this.setState({error:true,report:JSON.parse(json)})
      }
      async errorInfo(e) {
-        console.log("error")
         var error= e.target.getAttribute("value")
         this.setState({errorShow:true,error:error})
      }
@@ -52,7 +49,6 @@ export class TestStatus extends Component {
                 <tbody>
                     {testStatuses.map(testStatus => {
                         var trkey = testStatus.partitionKey + testStatus.rowKey;
-                      //  console.log()
                       var colorstyle=testStatus.healthy?"green":"red";
                       var clz="ui disabled button"
                       var data=testStatus.report
@@ -79,8 +75,6 @@ export class TestStatus extends Component {
         );
     }
     render() {
-        console.log(this.state.report)
-        console.log("render")
         let contents = this.state.loading
             ? <p><em>Loading...</em></p>
             : this.renderTestStatusTable(this.state.testStatuses);
