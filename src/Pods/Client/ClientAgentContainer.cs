@@ -67,8 +67,6 @@ namespace Azure.SignalRBench.Client
 
             using var cts = new CancellationTokenSource();
             using var linkSource = CancellationTokenSource.CreateLinkedTokenSource(cts.Token, cancellationToken);
-            try
-            {
                 using var semaphore = GetRateControlSemaphore(rate, linkSource.Token);
                 var count = 0;
                 try
@@ -108,12 +106,6 @@ namespace Azure.SignalRBench.Client
                 {
                     cts.Cancel();
                 }
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine(e);
-                throw;
-            }
         }
 
         public async Task StopAsync(double rate)

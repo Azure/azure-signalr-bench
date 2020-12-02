@@ -131,7 +131,7 @@ namespace Azure.SignalRBench.Client
             }
             catch (Exception e)
             {
-                _logger.LogError("Set scenario error {e}", e);
+                _logger.LogError(e,"Set scenario error");
             }
         }
 
