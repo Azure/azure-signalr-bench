@@ -7,6 +7,7 @@ using Azure.SignalRBench.Coordinator.Entities;
 using Azure.SignalRBench.Storage;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -17,10 +18,12 @@ namespace Portal.Controllers
     public class TestStatusContorller : ControllerBase
     {
         private IPerfStorage _perfStorage;
+        private ILogger<TestStatusContorller> _logger;
 
-        public TestStatusContorller(IPerfStorage perfStorage)
+        public TestStatusContorller(IPerfStorage perfStorage,ILogger<TestStatusContorller> logger)
         {
             _perfStorage = perfStorage;
+            _logger = logger;
         }
 
         [HttpGet("list/{key?}")]
@@ -39,7 +42,7 @@ namespace Portal.Controllers
             }
             catch (Exception e)
             {
-                Console.WriteLine(e);
+                _logger.LogError(e,"Get test status error");
                 throw;
             }
         }

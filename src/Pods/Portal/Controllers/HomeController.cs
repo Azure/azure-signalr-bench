@@ -26,38 +26,22 @@ namespace Portal.Controllers
     {
         private IPerfStorage _perfStorage;
         private SecretClient _secretClient;
+        private ILogger<HomeController> _logger;
         private static string? location;
         private static string? k8sUrl;
 
         
-        public HomeController(IPerfStorage perfStorage,SecretClient secretClient)
+        public HomeController(IPerfStorage perfStorage,SecretClient secretClient,ILogger<HomeController> logger)
         {
             _perfStorage = perfStorage;
             _secretClient = secretClient;
+            _logger = logger;
         }
 
         [HttpGet("info")]
         public async Task<string> Get()
         {
-            return "{\"info\":\"haha\"}";
-            JObject info=new JObject();
-            List<Task> tasks=new List<Task>();
-            if (location == null)
-            {
-                tasks.Add(Task.Run(async () =>
-                {
-                 var res= await  _secretClient.GetSecretAsync(Constants.KeyVaultKeys.LocationKey);
-                 location = res.Value.Value;
-                 info.Add(Constants.KeyVaultKeys.LocationKey,location); 
-                })); 
-            }
-            else
-            {
-                info.Add(Constants.KeyVaultKeys.LocationKey,location); 
-            }
-
-            await Task.WhenAll(tasks);
-            return "info";
+            return "{\"info\":\"Todo\"}";
         }
     }
 }

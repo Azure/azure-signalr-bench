@@ -56,17 +56,9 @@ namespace Portal
                     .RequireRole(Constants.Roles.Contributor)
                     .Build();
             });
-            // services.AddControllersWithViews(options =>
-            // {
-            //     var policy = new AuthorizationPolicyBuilder()
-            //         .RequireAuthenticatedUser()
-            //         .Build();
-            //     options.Filters.Add(new AuthorizeFilter(policy));
-            // });
             services
                 .AddRazorPages()
                 .AddMicrosoftIdentityUI();
-
 
             services.AddSingleton(
                 sp => new SecretClient(
@@ -79,17 +71,15 @@ namespace Portal
             services.AddSingleton<IPerfStorage>(sp =>
                 {
                     var secretClient = sp.GetService<SecretClient>();
-                    Console.WriteLine($"log1：{Constants.KeyVaultKeys.StorageConnectionStringKey}");
                     try
                     {
                         var connectionString = secretClient.GetSecretAsync("sa-accessKey").GetAwaiter().GetResult()
                             .Value.Value;
-                        Console.WriteLine($"Connection str:{connectionString}");
                         return new PerfStorage(connectionString);
                     }
                     catch (Exception e)
                     {
-                        Console.WriteLine($"Connection error:{e.ToString()}");
+                        Console.WriteLine($"Connection error:{e}");
                     }
 
                     return null;
@@ -140,12 +130,6 @@ namespace Portal
             {
                 endpoints.MapControllers();
                 endpoints.MapRazorPages();
-                //endpoints.MapControllerRoute("testconfig", "testconfig/{action}");
-                //endpoints.MapControllerRoute("teststatus", "teststatus/{action}");
-
-                // endpoints.MapControllerRoute(
-                //     name: "default",
-                //     pattern: "{controller}/{action=InstanceIndex}/{id?}");
             });
             app.UseSpa(spa =>
             {
