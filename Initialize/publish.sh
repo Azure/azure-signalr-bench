@@ -102,7 +102,7 @@ if [[ $ALL || $PORTAL ]]; then
 fi
 
 if [[ $ALL || $COORDINATOR ]]; then
-  #  publish Coordinator
+    publish Coordinator
     cd $DIR/yaml/coordinator
     cat coordinator.yaml | replace KVURL_PLACE_HOLDER $KVURL | replace MSI_PLACE_HOLDER $AGENTPOOL_MSI_CLIENT_ID | kubectl  apply -f -
 fi

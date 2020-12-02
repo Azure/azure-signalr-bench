@@ -241,6 +241,10 @@ export class TestConfig extends Component {
                                 </Form.Control>
                             </Form.Group>
                             <Form.Group >
+                                <Form.Label>Connection Rate</Form.Label>
+                                <Form.Control name="Rate" onChange={this.handleChangeNum} placeholder="set the Connection Rate. (Default:200)" />
+                            </Form.Group>
+                            <Form.Group >
                                 <Form.Label>Round Durations</Form.Label>
                                 <Form.Control name="RoundDurations" onChange={this.handleChangeNum} placeholder="Time each round takes. (60)[Unit: s]" />
                             </Form.Group>
