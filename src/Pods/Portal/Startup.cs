@@ -69,41 +69,39 @@ namespace Portal
 
 
             services.AddSingleton(
-                      sp => new SecretClient(
-                           new Uri(Configuration[Constants.ConfigurationKeys.KeyVaultUrlKey]), new DefaultAzureCredential(new DefaultAzureCredentialOptions()
-                           {
-                               ManagedIdentityClientId = Configuration[Constants.ConfigurationKeys.MsiAppId]
-                           })
-                          ));
+                sp => new SecretClient(
+                    new Uri(Configuration[Constants.ConfigurationKeys.KeyVaultUrlKey]), new DefaultAzureCredential(
+                        new DefaultAzureCredentialOptions()
+                        {
+                            ManagedIdentityClientId = Configuration[Constants.ConfigurationKeys.MsiAppId]
+                        })
+                ));
             services.AddSingleton<IPerfStorage>(sp =>
-            {
-                var secretClient = sp.GetService<SecretClient>();
-                Console.WriteLine($"log1：{Constants.KeyVaultKeys.StorageConnectionStringKey}");
-                try
                 {
-                    var connectionString = secretClient.GetSecretAsync("sa-accessKey").GetAwaiter().GetResult().Value.Value;
-                    Console.WriteLine($"Connection str:{connectionString}");
-                    return new PerfStorage(connectionString);
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine($"Connection error:{e.ToString()}");
+                    var secretClient = sp.GetService<SecretClient>();
+                    Console.WriteLine($"log1：{Constants.KeyVaultKeys.StorageConnectionStringKey}");
+                    try
+                    {
+                        var connectionString = secretClient.GetSecretAsync("sa-accessKey").GetAwaiter().GetResult()
+                            .Value.Value;
+                        Console.WriteLine($"Connection str:{connectionString}");
+                        return new PerfStorage(connectionString);
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine($"Connection error:{e.ToString()}");
+                    }
 
+                    return null;
                 }
-                return null;
-
-            }
-                );
+            );
             services.AddControllersWithViews().AddJsonOptions(options =>
             {
                 options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
                 //  options.JsonSerializerOptions.IgnoreNullValues =true;
             });
             // In production, the React files will be served from this directory
-            services.AddSpaStaticFiles(configuration =>
-            {
-                configuration.RootPath = "ClientApp/build";
-            });
+            services.AddSpaStaticFiles(configuration => { configuration.RootPath = "ClientApp/build"; });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -135,19 +133,20 @@ namespace Portal
             app.UseStaticFiles();
             app.UseAuthentication();
             app.UseAuthorization();
-            app.UseMiddleware<ReverseProxyMiddleware>();
+            if (env.IsProduction())
+                app.UseMiddleware<ReverseProxyMiddleware>();
 
             app.UseEndpoints(endpoints =>
-        {
-            endpoints.MapControllers();
-            endpoints.MapRazorPages();
-            //endpoints.MapControllerRoute("testconfig", "testconfig/{action}");
-            //endpoints.MapControllerRoute("teststatus", "teststatus/{action}");
+            {
+                endpoints.MapControllers();
+                endpoints.MapRazorPages();
+                //endpoints.MapControllerRoute("testconfig", "testconfig/{action}");
+                //endpoints.MapControllerRoute("teststatus", "teststatus/{action}");
 
-            // endpoints.MapControllerRoute(
-            //     name: "default",
-            //     pattern: "{controller}/{action=InstanceIndex}/{id?}");
-        });
+                // endpoints.MapControllerRoute(
+                //     name: "default",
+                //     pattern: "{controller}/{action=InstanceIndex}/{id?}");
+            });
             app.UseSpa(spa =>
             {
                 spa.Options.SourcePath = "ClientApp";
@@ -157,7 +156,6 @@ namespace Portal
                     spa.UseReactDevelopmentServer(npmScript: "start");
                 }
             });
-
         }
     }
 }

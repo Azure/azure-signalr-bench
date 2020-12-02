@@ -20,12 +20,17 @@ export class Home extends Component {
         <h1>SignalR Perf V2</h1>
         <p>Welcome to use perf , Here are some useful links:</p>
         <ul>
-          <li><a href='https://get.asp.net/'>ASP.NET Core</a> and <a href='https://msdn.microsoft.com/en-us/library/67ef8sbd.aspx'>C#</a> for cross-platform server-side code</li>
-          <li><a href='https://facebook.github.io/react/'>React</a> for client-side code</li>
-          <li><a href='http://getbootstrap.com/'>Bootstrap</a> for layout and styling</li>
+          <li><a href='/k8s/' target="_blank">K8s Dashboard</a> to check client and server details</li>
         </ul>
         <p>To do List</p>
         <ul>
+          <li><strong>Metrics</strong>. For example,  <em>CPU</em> and <em>memory</em> info for reviewing</li>
+          <li><strong>Long run test</strong> </li>
+          <li><strong>Periodic tests</strong>  </li>
+        </ul>
+        <p>Done List</p>
+        <ul>
+          <li><strong>On demand test</strong></li>
           <li><strong>Delete button</strong>. For example, delete <em>TestConfig</em> or <em>TestStatus</em></li>
           <li><strong>Search</strong> </li>
           <li><strong>Authentication</strong>  <code>ASRS</code> </li>
