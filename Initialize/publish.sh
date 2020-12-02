@@ -125,7 +125,8 @@ if [[ $ALL || $REDIS ]]; then
     ##This redis has only one instance. Change this to cluster mode later
     cd $DIR/yaml/redis
     PORTAL_IP=$(az network public-ip show -n $PORTAL_IP_NAME -g $RESOURCE_GROUP --query "ipAddress" -o tsv)
-    cat redis-master-service2.yaml | replace RESOURCE_GROUP_PLACE_HOLDER $RESOURCE_GROUP  | kubectl apply -f -
     kubectl apply -f redis-master-deployment.yaml
+    kubectl apply -f redis-master-service.yaml
+    # cat redis-master-test.yaml | replace RESOURCE_GROUP_PLACE_HOLDER $RESOURCE_GROUP  | kubectl apply -f -
     echo "redis dns inside cluster: redis-master "
 fi
