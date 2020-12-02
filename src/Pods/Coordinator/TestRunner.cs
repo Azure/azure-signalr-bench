@@ -81,7 +81,6 @@ namespace Azure.SignalRBench.Coordinator
 
         public async Task RunAsync(CancellationToken cancellationToken)
         {
-            //     Job.TestId = Environment.GetEnvironmentVariable(Constants.ConfigurationKeys.TestIdKey);
             if (Job.ServiceSetting.Length == 0)
             {
                 _logger.LogWarning("Test job {testId}: No service configuration.", Job.TestId);
@@ -221,9 +220,6 @@ namespace Azure.SignalRBench.Coordinator
             }
 
             return asrsConnectionStrings;
-            // await Task.Delay((100));
-            // return
-            //    new string[]{Environment.GetEnvironmentVariable(Constants.ConfigurationKeys.ConnectionString)};
         }
 
         private async Task<string> CreateAsrsAsync(ServiceSetting ss, string name, CancellationToken cancellationToken)
