@@ -83,9 +83,8 @@ namespace Azure.SignalRBench.Client
                                 {
                                     await c.StartAsync(cancellationToken);
                                     Interlocked.Add(ref count, 1);
-                                    _logger.LogInformation($"Total {Volatile.Read(ref count)} Connected.");
                                     stopWatch.Stop();
-                                    _logger.LogInformation($"rate :{rate} Time cost:{stopWatch.ElapsedMilliseconds}");
+                                    _logger.LogInformation($"{Volatile.Read(ref count)} Connected. rate :{rate} Time cost:{stopWatch.ElapsedMilliseconds}");
                                     return;
                                 }
                                 catch (Exception ex)
@@ -93,7 +92,7 @@ namespace Azure.SignalRBench.Client
                                     stopWatch.Stop();
                                     Volatile.Write(ref slowDown, true);
                                     _logger.LogError(ex,
-                                        $"Failed to start {Volatile.Read(ref count)} client.,fail Time cost:{stopWatch.ElapsedMilliseconds}");
+                                        $"Failed to start {Volatile.Read(ref count)+1} client.,fail Time cost:{stopWatch.ElapsedMilliseconds}");
                                 }
                             }
                         }));

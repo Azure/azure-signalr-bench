@@ -31,11 +31,14 @@ export class TestConfig extends Component {
     }
     handleSearchChange(e, data) {
         if (data.value != undefined && data.value.trim()) {
+            console.log("data.value:"+data.value)
             var testConfigs = this.state.total.filter(x => x.rowKey.includes(data.value.trim()))
             this.setState({ testConfigs: testConfigs })
         }
-        else
-            this.setState({ testConfig: this.state.total })
+        else{
+            console.log("nul:"+this.state.total)
+            this.setState({ testConfigs: this.state.total })
+        }
     }
     handleJsonClose() {
         this.setState({
@@ -284,9 +287,7 @@ export class TestConfig extends Component {
 
                 <div>
                     <h1 id="tabelLabel" >Test Job Configs</h1>
-
                     <Segment basic textAlign='center'>
-
                         <Button
                             color='teal'
                             content='Create New TestConfig'
@@ -300,7 +301,6 @@ export class TestConfig extends Component {
                                 loading={false} icon='search'
                                 onSearchChange={this.handleSearchChange}
                                 showNoResults={false}
-
                             />
                         </Grid.Column>
 

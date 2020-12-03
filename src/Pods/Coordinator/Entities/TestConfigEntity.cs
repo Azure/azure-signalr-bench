@@ -39,6 +39,8 @@ namespace Azure.SignalRBench.Coordinator.Entities
 
         public void Init()
         {
+            Start = Start > ClientCons ? ClientCons : Start;
+            End = End > ClientCons ? ClientCons : End;
             End = End <Start ? Start : End;
         }
         
