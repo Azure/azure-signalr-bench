@@ -96,6 +96,7 @@ export class TestStatus extends Component {
                 <thead>
                     <tr>
                         <th>Round</th>
+                        <th>Receive total</th>
                         <th>0-50ms</th>
                         <th>50-100ms</th>
                         <th>100-200ms</th>
@@ -111,6 +112,7 @@ export class TestStatus extends Component {
                         this.state.report.map((v,i)=>{
                             return <tr key={i}> 
                             <td>{i}</td>
+                            <td>{v.MessageRecieved}</td>
                             <td>{(parseFloat(v.Latency.LessThan50ms/v.MessageRecieved*100).toFixed(2)+"%")}</td>
                             <td>{(parseFloat(v.Latency.LessThan100ms/v.MessageRecieved*100).toFixed(2)+"%")}</td>
                             <td>{(parseFloat(v.Latency.LessThan200ms/v.MessageRecieved*100).toFixed(2)+"%")}</td>

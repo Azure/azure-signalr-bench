@@ -4,6 +4,7 @@
 using System;
 using System.Diagnostics;
 using System.Linq;
+using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using Azure.SignalRBench.Common;
@@ -34,7 +35,20 @@ namespace Azure.SignalRBench.Client
             _messageClientHolder = messageClientHolder;
             StartId = startId;
             LocalCount = localCount;
-            Url = url;
+            //try to resolve service url
+            try
+            {
+                var ips=Dns.GetHostAddresses(url);
+                Console.WriteLine(($"ip count:{ips.Length}"));
+                Console.WriteLine($"url is set to:{ips[0].ToString()}");
+                Url ="http://"+ ips[0].ToString()+"/";
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"resolve name {Url} failed");
+                Console.WriteLine(e);
+                throw;
+            }
             Protocol = protocol;
             IsAnonymous = isAnonymous;
             LifetimeDefinition = lifetimeDefinition;
@@ -110,16 +124,16 @@ namespace Azure.SignalRBench.Client
         public async Task StopAsync(double rate)
         {
             using var cts = new CancellationTokenSource();
-            using var semaphore = GetRateControlSemaphore(rate, cts.Token);
+         //   using var semaphore = GetRateControlSemaphore(rate, cts.Token);
             try
             {
                 _logger.LogInformation("Start stop connections");
                 await Task.WhenAll(
                     _clients.Select(async c =>
                     {
-                        await semaphore.WaitAsync();
+                     //   await semaphore.WaitAsync();
                         await c.StopAsync();
-                        _logger.LogInformation("Connection Stopped.");
+                  //      _logger.LogInformation("Connection Stopped.");
                     }));
                 _logger.LogInformation("All connections Stopped.");
             }
@@ -132,6 +146,7 @@ namespace Azure.SignalRBench.Client
         public void StartScenario(Func<int, Action<ClientAgent, CancellationToken>> func,
             CancellationToken cancellationToken)
         {
+            _context.Reset();
             ScheduleReportedStatus(cancellationToken);
             for (int i = 0; i < _clients.Length; i++)
             {
