@@ -211,9 +211,9 @@ function append_agents_to_env_file() {
 	localip=`echo "$localip"|awk '{$1=$1};1'`
 	if [ "$agents_g" != "" ]
 	then
-		agents_g=${agents_g}",${localip}:7000"
+		agents_g=${agents_g}",${localip}:8099"
 	else
-		agents_g="${localip}:7000"
+		agents_g="${localip}:8099"
 	fi
 }
 

@@ -37,9 +37,9 @@ namespace Microsoft.Azure.SignalR.PerfTest.AppServer
     [Command(Name = "agent", FullName = "agent", Description = "Agent command options")]
     internal class AgentCommandOptions : BaseOption
     {
-        [Option("-p|--port", Description = "Port to use [7000]. Default is 7000")]
+        [Option("-p|--port", Description = "Port to use [8099]. Default is 8099")]
         [Range(1024, 65535, ErrorMessage = "Invalid port. Ports must be in the range of 1024 to 65535.")]
-        public int Port { get; } = 7000;
+        public int Port { get; } = 8099;
 
         [Option(Description = "Show more console output.")]
         public bool Verbose { get; }
@@ -82,8 +82,8 @@ namespace Microsoft.Azure.SignalR.PerfTest.AppServer
     internal class ControllerCommandOptions : BaseOption
     {
         [Option("-a|--agentlist",
-            Description = "Specify the agents endpoint list with ',' as separator. for example, '10.172.1.5:7000,10.172.1.6:7000', Default is 'localhost:7000'")]
-        public string AgentList { get; } = "localhost:7000";
+            Description = "Specify the agents endpoint list with ',' as separator. for example, '10.172.1.5:8099,10.172.1.6:8099', Default is 'localhost:8099'")]
+        public string AgentList { get; } = "localhost:8099";
 
         [Option("-c|--configuration",
             Description = "Specify the configuration YAML filename. If it is '?', it will print help for all options of the configuration.")]

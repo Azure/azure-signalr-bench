@@ -7,7 +7,7 @@ namespace Rpc.Agent
     class ArgsOption
     {
         // Rpc
-        [Option("RpcPort", Required = false, Default = 7000, HelpText = "Port to be conencted from remote hosts.")]
+        [Option("RpcPort", Required = false, Default = 8099, HelpText = "Port to be conencted from remote hosts.")]
         public int RpcPort { get; set; }
 
         [Option("PidFile", Required = false, Default = "agent-pid.txt")]

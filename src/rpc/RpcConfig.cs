@@ -38,7 +38,7 @@ namespace Rpc.Service
         /// <summary>
         /// Agent listening port
         /// </summary>
-        public int RpcPort { get; set; } = 7000;
+        public int RpcPort { get; set; } = 8099;
 
         /// <summary>
         /// Agent binding address
