@@ -31,14 +31,11 @@ export class TestConfig extends Component {
     }
     handleSearchChange(e, data) {
         if (data.value != undefined && data.value.trim()) {
-            console.log("data.value:"+data.value)
             var testConfigs = this.state.total.filter(x => x.rowKey.includes(data.value.trim()))
             this.setState({ testConfigs: testConfigs })
         }
-        else{
-            console.log("nul:"+this.state.total)
-            this.setState({ testConfigs: this.state.total })
-        }
+        else
+            this.setState({ testConfig: this.state.total })
     }
     handleJsonClose() {
         this.setState({
@@ -79,8 +76,10 @@ export class TestConfig extends Component {
         if (e.target.value == null || e.target.value == "") {
             delete this.state.obj[e.target.name]
         }
-        else
-            this.state.obj[e.target.name] = e.target.value.trim()
+        else{
+            var value=e.target.value.replaceAll("\"","").trim();
+            this.state.obj[e.target.name] = value
+        }
     }
     handleChangeNum(e) {
         if (e.target.value == null || e.target.value == "") {
@@ -223,8 +222,12 @@ export class TestConfig extends Component {
                                 <Form.Control name="clientCons" onChange={this.handleChangeNum} placeholder="set the Total Client connections. (Default:3000)" />
                             </Form.Group>
                             <Form.Group >
+                                <Form.Label>Client number</Form.Label>
+                                <Form.Control name="clientNum" onChange={this.handleChangeNum} placeholder="set the test client number. (Default:Total con/5000)" />
+                            </Form.Group>
+                            <Form.Group >
                                 <Form.Label>Server number</Form.Label>
-                                <Form.Control name="serverNum" onChange={this.handleChangeNum} placeholder="set the test server number. (Default:1)" />
+                                <Form.Control name="serverNum" onChange={this.handleChangeNum} placeholder="set the test server number. (Default:ClientNum/2)" />
                             </Form.Group>
                             <Form.Group  >
                                 <Form.Label>Testing Scenerio</Form.Label>
@@ -252,12 +255,12 @@ export class TestConfig extends Component {
                                 <Form.Control name="RoundDurations" onChange={this.handleChangeNum} placeholder="Time each round takes. (60)[Unit: s]" />
                             </Form.Group>
                             <Form.Group >
-                                <Form.Label>Round Start Index</Form.Label>
-                                <Form.Control name="Start" onChange={this.handleChangeNum} placeholder="Number of connections sending requests at first round. (1)" />
+                                <Form.Label>Round Nums </Form.Label>
+                                <Form.Control name="RoundNum" onChange={this.handleChangeNum} placeholder="how many rounds to test. (Default:5) " />
                             </Form.Group>
                             <Form.Group >
-                                <Form.Label>Round Step Size </Form.Label>
-                                <Form.Control name="Step" onChange={this.handleChangeNum} placeholder="set the step between rounds. (Default:5) " />
+                                <Form.Label>Round Start Index</Form.Label>
+                                <Form.Control name="Start" onChange={this.handleChangeNum} placeholder="Number of connections sending requests at first round. (1)" />
                             </Form.Group>
                             <Form.Group >
                                 <Form.Label>Round End Index</Form.Label>

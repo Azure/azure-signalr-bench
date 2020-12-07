@@ -11,6 +11,6 @@ namespace Azure.SignalRBench.Common
         public TestCategory TestMethod { get; set; }
         public ServiceSetting[] ServiceSetting { get; set; } = Array.Empty<ServiceSetting>();
         public ScenarioSetting ScenarioSetting { get; set; } = new ScenarioSetting();
-        public ServerSetting ServerSetting { get; set; } = new ServerSetting();
+        public PodSetting PodSetting { get; set; } = new PodSetting();
     }
 }

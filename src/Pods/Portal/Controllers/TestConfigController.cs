@@ -39,13 +39,13 @@ namespace Portal.Controllers
             var rows = await table.QueryAsync(table.Rows
             ).ToListAsync();
             rows.Sort((a, b) => b.Timestamp.CompareTo(a.Timestamp));
-            rows = rows.Select(r =>
-            {
-                r.ConnectionString = r.ConnectionString != null
-                    ? Regex.Replace(r.ConnectionString, "AccessKey=.*;V", "AccessKey=***;V")
-                    : null;
-                return r;
-            }).ToList();
+            // rows = rows.Select(r =>
+            // {
+            //     r.ConnectionString = r.ConnectionString != null
+            //         ? Regex.Replace(r.ConnectionString, "AccessKey=.*;V", "AccessKey=***;V")
+            //         : null;
+            //     return r;
+            // }).ToList();
             return rows;
         }
 

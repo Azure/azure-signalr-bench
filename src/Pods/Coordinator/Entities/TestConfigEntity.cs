@@ -15,13 +15,15 @@ namespace Azure.SignalRBench.Coordinator.Entities
         public string? ConnectionString { get; set; } 
         public int SignalRUnitSize { get; set; }
 
-        public int ServerNum { get; set; } = 1;
+        public int ServerNum { get; set; } = -1;
+
+        public int ClientNum { get; set; } = -1;
 
         public int InstanceIndex { get; set; } = 0;
 
         public int Start { get; set; } = 1;
 
-        public int Step { get; set; } = 5;
+        public int RoundNum { get; set; } = 5;
 
         public int End { get; set; } =-1;
         
@@ -42,26 +44,45 @@ namespace Azure.SignalRBench.Coordinator.Entities
             Start = Start > ClientCons ? ClientCons : Start;
             End = End > ClientCons ? ClientCons : End;
             End = End <Start ? Start : End;
+            if (ClientNum <= 0)
+            {
+                ClientNum = (int) Math.Ceiling((double) ClientCons / PerfConstants.Number.ConnectionsPerClient);
+            }
+
+            if (ServerNum <= 0)
+            {
+                ServerNum = (int) Math.Ceiling((double)ClientNum/2);
+            }
+
+            if (RoundNum <= 0)
+            {
+                RoundNum = 5;
+            }
         }
         
         public TestJob ToTestJob(int index)
         {
             //creating round settings
             var roundsettings = new List<RoundSetting>();
-            for (int i = Start; i <= End; i += Step)
+            int current = Start;
+            int step =(int)Math.Ceiling((double)(End - Start)/ RoundNum);
+            int count = current;
+            for (int i = 0; i < RoundNum; i++)
             {
+                current += step * i;
+                count = current > End ? End : current;
                 roundsettings.Add(new RoundSetting()
                 {
                     DurationInSeconds = RoundDurations,
-                   ClientSettings = new []{new  ClientSetting()
-                    {
-                        Behavior=Enum.TryParse(Scenario,out ClientBehavior behavior)?behavior:throw new Exception($"Unknown Scenario {Scenario}"),
-                        IntervalInMilliseconds=Interval,
-                        Count=i,
-                        MessageSize=MessageSize,
-                        GroupFamily=null,
+                    ClientSettings = new []{new  ClientSetting()
+                        {
+                            Behavior=Enum.TryParse(Scenario,out ClientBehavior behavior)?behavior:throw new Exception($"Unknown Scenario {Scenario}"),
+                            IntervalInMilliseconds=Interval,
+                            Count=count,
+                            MessageSize=MessageSize,
+                            GroupFamily=null,
+                        }
                     }
-                   }
                 });
             }
             var testJob = new TestJob()
@@ -83,10 +104,12 @@ namespace Azure.SignalRBench.Coordinator.Entities
                     Protocol =Enum.TryParse(Protocol,out  SignalRProtocol protocol)?protocol:throw new Exception($"Unknown Protocol {Protocol}"),
                     Rate = Rate,
                 },
-                ServerSetting=new ServerSetting()
+                PodSetting=new PodSetting()
                 {
-                    ServerCount=ServerNum
-                }
+                    ServerCount= ServerNum,
+                    ClientCount = ClientNum
+                },
+               
             };
             Console.WriteLine(JsonConvert.SerializeObject(testJob));
             return testJob;

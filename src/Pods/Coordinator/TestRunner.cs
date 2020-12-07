@@ -93,20 +93,21 @@ namespace Azure.SignalRBench.Coordinator
             var clientAgentCount = Job.ScenarioSetting.TotalConnectionCount;
             var clientPodCount = (int) Math.Ceiling(clientAgentCount / MaxClientCountInPod);
             _logger.LogInformation("Test job {testId}: Client pods count: {count}.", Job.TestId, clientPodCount);
-            var serverPodCount = Job.ServerSetting.ServerCount;
+            var serverPodCount = Job.PodSetting.ServerCount;
             _logger.LogInformation("Test job {testId}: Server pods count: {count}.", Job.TestId, serverPodCount);
             var nodeCount = clientPodCount + serverPodCount;
             _logger.LogInformation("Test job {testId}: Node count: {count}.", Job.TestId, nodeCount);
             var asrsConnectionStringsTask = PrepairAsrsInstancesAsync(cancellationToken);
-            await UpdateTestStatus("Creating vms");
+            await UpdateTestStatus("Creating vms [SignalRs]");
             await AksProvider.EnsureNodeCountAsync(NodePoolIndex, nodeCount, cancellationToken);
             using var messageClient = await MessageClient.ConnectAsync(RedisConnectionString, Job.TestId, PodName);
             await messageClient.WithHandlers(MessageHandler.CreateCommandHandler(Roles.Coordinator,
                 Commands.Coordinator.ReportClientStatus, CollectClientStatus));
             try
             {
+                var asrsConnectionStrings = await asrsConnectionStringsTask;
                 await UpdateTestStatus("Creating pods");
-                await CreatePodsAsync(await asrsConnectionStringsTask, clientAgentCount, clientPodCount, serverPodCount,
+                await CreatePodsAsync(asrsConnectionStrings, clientAgentCount, clientPodCount, serverPodCount,
                     messageClient, cancellationToken);
                 await UpdateTestStatus("Starting client connections");
                 await StartClientConnectionsAsync(messageClient, cancellationToken);
@@ -212,7 +213,7 @@ namespace Azure.SignalRBench.Coordinator
                 if (ss.AsrsConnectionString == null)
                 {
                     asrsConnectionStrings[i] =
-                        await CreateAsrsAsync(ss, Job.TestId + '-' + i.ToString(), cancellationToken);
+                        await CreateAsrsAsync(ss, PerfConstants.ConfigurationKeys.PerfV2+"-"+Job.TestId + '-' + i, cancellationToken);
                 }
                 else
                 {

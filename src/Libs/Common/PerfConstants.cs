@@ -26,6 +26,7 @@ namespace Azure.SignalRBench.Common
             public const string ConnectionString = "connectionString";
             public const string ConnectionNum = "connectionNum";
             public const string MsiAppId = "msiAppId";
+            public const string PerfV2 = "perfv2";
         }
 
         public static class TableNames
@@ -45,5 +46,11 @@ namespace Azure.SignalRBench.Common
             public const string Admin = "Admin";
             public const string Contributor = "Contributor";
         }
+
+        public static class Number
+        {
+            public const int ConnectionsPerClient = 5000;
+        }
+        
     }
 }
