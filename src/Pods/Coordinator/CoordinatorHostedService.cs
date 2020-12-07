@@ -19,7 +19,6 @@ namespace Azure.SignalRBench.Coordinator
         private readonly SecretClient _secretClient;
         private readonly IK8sProvider _k8sProvider;
         private readonly IAksProvider _aksProvider;
-        private readonly IArmProvider _armProvider;
         private readonly ISignalRProvider _signalRProvider;
         private readonly PerfStorageProvider _storageProvider;
         private readonly TestScheduler _scheduler;
@@ -29,7 +28,6 @@ namespace Azure.SignalRBench.Coordinator
             PerfStorageProvider storageProvider,
             IK8sProvider k8sProvider,
             IAksProvider aksProvider,
-            IArmProvider armProvider,
             ISignalRProvider signalRProvider,
             TestScheduler scheduler)
         {
@@ -37,7 +35,6 @@ namespace Azure.SignalRBench.Coordinator
             _storageProvider = storageProvider;
             _k8sProvider = k8sProvider;
             _aksProvider = aksProvider;
-            _armProvider = armProvider;
             _signalRProvider = signalRProvider;
             _scheduler = scheduler;
         }
@@ -67,7 +64,6 @@ namespace Azure.SignalRBench.Coordinator
                 azureEnvironment);
 
             _aksProvider.Initialize(servicePrincipal, subscription, prefix + "perfrg", prefix + "perfaks");
-            _armProvider.Initialize(servicePrincipal, subscription, prefix + "perfrg");
             _signalRProvider.Initialize(servicePrincipal, subscription);
             await _scheduler.StartAsync((await locationTask).Value.Value);
         }

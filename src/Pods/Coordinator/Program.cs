@@ -35,7 +35,6 @@ namespace Azure.SignalRBench.Coordinator
                     services.AddSingleton<PerfStorageProvider>();
                     services.AddSingleton<IK8sProvider, K8sProvider>();
                     services.AddSingleton<IAksProvider, AksProvider>();
-                    services.AddSingleton<IArmProvider, ArmProvider>();
                     services.AddSingleton<ISignalRProvider, SignalRProvider>();
                     services.AddSingleton<TestScheduler>();
                     services.AddSingleton<TestRunnerFactory>();
