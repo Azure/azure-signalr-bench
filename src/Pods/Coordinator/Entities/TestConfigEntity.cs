@@ -65,11 +65,11 @@ namespace Azure.SignalRBench.Coordinator.Entities
             //creating round settings
             var roundsettings = new List<RoundSetting>();
             int current = Start;
-            int step =(int)Math.Ceiling((double)(End - Start)/ RoundNum);
+            int step =RoundNum>1?(int)Math.Ceiling((double)(End - Start)/(RoundNum-1)):0;
             int count = current;
             for (int i = 0; i < RoundNum; i++)
             {
-                current += step * i;
+                current += step ;
                 count = current > End ? End : current;
                 roundsettings.Add(new RoundSetting()
                 {

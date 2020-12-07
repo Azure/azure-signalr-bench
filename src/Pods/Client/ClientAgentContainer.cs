@@ -119,6 +119,7 @@ namespace Azure.SignalRBench.Client
                 {
                     cts.Cancel();
                 }
+                ScheduleReportedStatus(cancellationToken);
         }
 
         public async Task StopAsync(double rate)
@@ -147,7 +148,6 @@ namespace Azure.SignalRBench.Client
             CancellationToken cancellationToken)
         {
             _context.Reset();
-            ScheduleReportedStatus(cancellationToken);
             for (int i = 0; i < _clients.Length; i++)
             {
                 func(i)(_clients[i], cancellationToken);

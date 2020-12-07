@@ -122,6 +122,8 @@ namespace Azure.SignalRBench.Coordinator
                     await StartScenarioAsync(messageClient, cancellationToken);
                     await Task.Delay(TimeSpan.FromSeconds(round.DurationInSeconds), cancellationToken);
                     await StopScenarioAsync(messageClient, cancellationToken);
+                    //wait for the last message to come back
+                    await Task.Delay(5000);
                     await UpdateTestReports();
                 }
 

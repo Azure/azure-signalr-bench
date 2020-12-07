@@ -87,7 +87,13 @@ namespace Azure.SignalRBench.Client
                 await agent.JoinGroupAsync();
             }
 
-            _dict.AddOrUpdate(agent, ClientAgentStatus.Connected, (a, s) => ClientAgentStatus.Connected);
+            _dict.AddOrUpdate(agent, ClientAgentStatus.Connected, (a, s) =>
+            {
+                if (s == ClientAgentStatus.Reconnecting)
+                    Interlocked.Increment(ref _totalReconnectedCount);
+                return ClientAgentStatus.Connected;
+
+            });
         }
 
         public Task OnReconnecting(ClientAgent agent)
