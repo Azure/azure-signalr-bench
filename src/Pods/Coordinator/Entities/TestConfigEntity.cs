@@ -69,7 +69,6 @@ namespace Azure.SignalRBench.Coordinator.Entities
             int count = current;
             for (int i = 0; i < RoundNum; i++)
             {
-                current += step ;
                 count = current > End ? End : current;
                 roundsettings.Add(new RoundSetting()
                 {
@@ -84,6 +83,7 @@ namespace Azure.SignalRBench.Coordinator.Entities
                         }
                     }
                 });
+                current += step ;
             }
             var testJob = new TestJob()
             {

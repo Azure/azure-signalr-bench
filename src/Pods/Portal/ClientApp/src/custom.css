@@ -12,3 +12,9 @@ code {
   background-color: #1b6ec2;
   border-color: #1861ac;
 }
+
+.modalCss {
+  width: 90%;
+  background-Color: "DodgerBlue";
+  max-width: none!important;
+}

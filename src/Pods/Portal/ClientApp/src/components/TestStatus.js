@@ -4,7 +4,6 @@
 import Modal from 'react-bootstrap/Modal'
 import { Search, Grid, Header, Segment, Divider,Button,Icon } from 'semantic-ui-react'
 import {Util} from './Util'
-
 export class TestStatus extends Component {
     constructor(props) {
         super(props);
@@ -87,16 +86,20 @@ export class TestStatus extends Component {
                     <h1 id="tabelLabel" >Test Jobs</h1>
                     {contents}
                 </div>
-                <Modal show={this.state.show} size="lg" onHide={()=>this.setState({show:false})}>
+               
+                <Modal show={this.state.show} dialogClassName="modalCss" onHide={()=>this.setState({show:false})}>
                     <Modal.Header closeButton>
                         <Modal.Title>Test Report</Modal.Title>
                     </Modal.Header>
-                    <Modal.Body>
+                    <Modal.Body  >
                     <table className='table table-striped' aria-labelledby="tabelLabel">
                 <thead>
                     <tr>
                         <th>Round</th>
-                        <th>Receive total</th>
+                        <th>Send</th>
+                        <th>Receive</th>
+                        <th>Reconnected</th>
+                        <th>Reconnecting</th>
                         <th>0-50ms</th>
                         <th>50-100ms</th>
                         <th>100-200ms</th>
@@ -112,7 +115,10 @@ export class TestStatus extends Component {
                         this.state.report.map((v,i)=>{
                             return <tr key={i}> 
                             <td>{i}</td>
+                            <td>{v.MessageSent}</td>
                             <td>{v.MessageRecieved}</td>
+                            <td>{v.TotalReconnectCount}</td>
+                            <td>{v.ReconnectingCount}</td>
                             <td>{(parseFloat(v.Latency.LessThan50ms/v.MessageRecieved*100).toFixed(2)+"%")}</td>
                             <td>{(parseFloat(v.Latency.LessThan100ms/v.MessageRecieved*100).toFixed(2)+"%")}</td>
                             <td>{(parseFloat(v.Latency.LessThan200ms/v.MessageRecieved*100).toFixed(2)+"%")}</td>

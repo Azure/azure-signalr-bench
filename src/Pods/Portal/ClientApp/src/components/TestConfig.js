@@ -185,7 +185,7 @@ export class TestConfig extends Component {
             : this.renderTestConfigsTable(this.state.testConfigs);
         return (
             <>
-                <Modal show={this.state.showjson} size="lg" onHide={this.handleJsonClose}>
+                <Modal show={this.state.showjson} dialogClassName="modalCss" onHide={this.handleJsonClose}>
                     <Modal.Header closeButton>
                         <Modal.Title>Config details</Modal.Title>
                     </Modal.Header>
