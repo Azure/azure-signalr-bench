@@ -112,7 +112,8 @@ namespace Azure.SignalRBench.Client
 
         private async Task SetScenario(CommandMessage commandMessage)
         {
-            try{
+            try
+            {
                 var param = JsonConvert.SerializeObject(commandMessage.Parameters);
                 _logger.LogInformation($"Start to set scenario: {param}");
                 var setSenarioParameters = commandMessage.Parameters?.ToObject<SetScenarioParameters>();
