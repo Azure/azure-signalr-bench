@@ -89,6 +89,7 @@ namespace Azure.SignalRBench.Coordinator
 
             _testStatusAccessor = await PerfStorage.GetTableAsync<TestStatusEntity>(PerfConstants.TableNames.TestStatus);
             int idx = Job.TestId.LastIndexOf('-');
+            await Task.Delay(2000);
             _testStatusEntity = await _testStatusAccessor.GetAsync(Job.TestId.Substring(0,idx), Job.TestId.Substring(idx+1));
             var clientAgentCount = Job.ScenarioSetting.TotalConnectionCount;
             var clientPodCount = (int) Math.Ceiling(clientAgentCount / MaxClientCountInPod);

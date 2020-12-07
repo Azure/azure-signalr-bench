@@ -69,7 +69,7 @@ namespace Azure.SignalRBench.Client
 
             public bool Match(int index)
             {
-                return index >= Start && index <= End;
+                return index >= Start && index <End;
             }
 
             public abstract Task RunAsync(ClientAgent clientAgent, int clientId, ILogger<ClientAgent> logger, CancellationToken cancellationToken);
