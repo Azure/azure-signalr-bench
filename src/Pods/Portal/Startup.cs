@@ -52,7 +52,7 @@ namespace Portal
             services.AddAuthorization(options =>
             {
                 options.FallbackPolicy = new AuthorizationPolicyBuilder()
-                    .RequireRole(Constant.Roles.Contributor)
+                    .RequireRole(PerfConstants.Roles.Contributor)
                     .Build();
             });
             services
@@ -61,10 +61,10 @@ namespace Portal
 
             services.AddSingleton(
                 sp => new SecretClient(
-                    new Uri(Configuration[Constant.ConfigurationKeys.KeyVaultUrlKey]), new DefaultAzureCredential(
+                    new Uri(Configuration[PerfConstants.ConfigurationKeys.KeyVaultUrlKey]), new DefaultAzureCredential(
                         new DefaultAzureCredentialOptions()
                         {
-                            ManagedIdentityClientId = Configuration[Constant.ConfigurationKeys.MsiAppId]
+                            ManagedIdentityClientId = Configuration[PerfConstants.ConfigurationKeys.MsiAppId]
                         })
                 ));
             services.AddSingleton<IPerfStorage>(sp =>

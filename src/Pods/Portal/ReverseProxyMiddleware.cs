@@ -1,4 +1,4 @@
-﻿﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Primitives;
 using System;
@@ -13,16 +13,16 @@ namespace Portal
 {
     public class ReverseProxyMiddleware
     {
-        private static  HttpClient _httpClient ;
+        private static HttpClient _httpClient;
         private readonly RequestDelegate _nextMiddleware;
         private string token;
         public ReverseProxyMiddleware(RequestDelegate nextMiddleware)
         {
             var httpClientHandler = new HttpClientHandler();
-                httpClientHandler.ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => { return true; };
-                _httpClient = new HttpClient(httpClientHandler);
+            httpClientHandler.ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => { return true; };
+            _httpClient = new HttpClient(httpClientHandler);
             _nextMiddleware = nextMiddleware;
-            token=File.ReadAllText("/var/run/secrets/kubernetes.io/serviceaccount/token");
+            token = File.ReadAllText("/var/run/secrets/kubernetes.io/serviceaccount/token");
         }
 
         public async Task Invoke(HttpContext context)
@@ -32,7 +32,7 @@ namespace Portal
             if (targetUri != null)
             {
                 var targetRequestMessage = CreateTargetMessage(context, targetUri);
-                targetRequestMessage.Headers.Add("Authorization",$"Bearer {token}");
+                targetRequestMessage.Headers.Add("Authorization", $"Bearer {token}");
 
                 using (var responseMessage = await _httpClient.SendAsync(targetRequestMessage, HttpCompletionOption.ResponseHeadersRead, context.RequestAborted))
                 {
@@ -51,7 +51,7 @@ namespace Portal
 
         private async Task ProcessResponseContent(HttpContext context, HttpResponseMessage responseMessage)
         {
-            var content = await responseMessage.Content.ReadAsByteArrayAsync(); 
+            var content = await responseMessage.Content.ReadAsByteArrayAsync();
             await context.Response.Body.WriteAsync(content);
         }
 
@@ -63,7 +63,7 @@ namespace Portal
             requestMessage.RequestUri = targetUri;
             requestMessage.Headers.Host = targetUri.Host;
             requestMessage.Method = GetMethod(context.Request.Method);
-           
+
             return requestMessage;
         }
 
@@ -117,7 +117,7 @@ namespace Portal
             PathString remainingPath;
             if (request.Path.StartsWithSegments("/k8s", out remainingPath))
             {
-                targetUri=new Uri("https://kubernetes-dashboard" + remainingPath);
+                targetUri = new Uri("https://kubernetes-dashboard" + remainingPath);
 
             }
             return targetUri;

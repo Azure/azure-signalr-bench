@@ -49,7 +49,7 @@ namespace Azure.SignalRBench.Coordinator
         public async Task StartAsync(string defaultLocation)
         {
             _defaultLocation = defaultLocation;
-            var queue = await StorageProvider.Storage.GetQueueAsync<TestJob>(Constant.QueueNames.PortalJob, true);
+            var queue = await StorageProvider.Storage.GetQueueAsync<TestJob>(PerfConstants.QueueNames.PortalJob, true);
             // create table.
             _ = RunAsync(queue, _cts.Token);
         }

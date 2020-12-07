@@ -3,7 +3,7 @@
 
 namespace Azure.SignalRBench.Common
 {
-    public static class Constant
+    public static class PerfConstants
     {
         public static class KeyVaultKeys
         {

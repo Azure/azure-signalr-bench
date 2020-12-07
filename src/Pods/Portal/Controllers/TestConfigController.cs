@@ -35,7 +35,7 @@ namespace Portal.Controllers
         [HttpGet]
         public async Task<IEnumerable<TestConfigEntity>> Get()
         {
-            var table = await _perfStorage.GetTableAsync<TestConfigEntity>(Constant.TableNames.TestConfig);
+            var table = await _perfStorage.GetTableAsync<TestConfigEntity>(PerfConstants.TableNames.TestConfig);
             var rows = await table.QueryAsync(table.Rows
             ).ToListAsync();
             rows.Sort((a, b) => b.Timestamp.CompareTo(a.Timestamp));
@@ -53,10 +53,10 @@ namespace Portal.Controllers
         [HttpPut]
         public async Task CreateTestConfig(TestConfigEntity testConfigEntity)
         {
-            testConfigEntity.User= User.Identity.Name;
+            testConfigEntity.User = User.Identity.Name;
             testConfigEntity.PartitionKey = testConfigEntity.RowKey;
             testConfigEntity.Init();
-            var table = await _perfStorage.GetTableAsync<TestConfigEntity>(Constant.TableNames.TestConfig);
+            var table = await _perfStorage.GetTableAsync<TestConfigEntity>(PerfConstants.TableNames.TestConfig);
             await table.InsertAsync(testConfigEntity);
             _logger.LogInformation($"Create Test config:{JsonConvert.SerializeObject(testConfigEntity)}");
         }
@@ -64,15 +64,15 @@ namespace Portal.Controllers
         [HttpPost("StartTest/{testConfigEntityKey}")]
         public async Task StartTestAsync(String testConfigEntityKey)
         {
-            var configTable = await _perfStorage.GetTableAsync<TestConfigEntity>(Constant.TableNames.TestConfig);
+            var configTable = await _perfStorage.GetTableAsync<TestConfigEntity>(PerfConstants.TableNames.TestConfig);
             var latestTestConfig = await configTable.GetFirstOrDefaultAsync(from row in configTable.Rows
-                where row.PartitionKey == testConfigEntityKey
-                select row);
+                                                                            where row.PartitionKey == testConfigEntityKey
+                                                                            select row);
             latestTestConfig.InstanceIndex += 1;
             await configTable.UpdateAsync(latestTestConfig);
-            var queue = await _perfStorage.GetQueueAsync<TestJob>(Constant.QueueNames.PortalJob, true);
+            var queue = await _perfStorage.GetQueueAsync<TestJob>(PerfConstants.QueueNames.PortalJob, true);
             await queue.SendAsync(latestTestConfig.ToTestJob(latestTestConfig.InstanceIndex));
-            var statusTable = await _perfStorage.GetTableAsync<TestStatusEntity>(Constant.TableNames.TestStatus);
+            var statusTable = await _perfStorage.GetTableAsync<TestStatusEntity>(PerfConstants.TableNames.TestStatus);
             var testEntity = new TestStatusEntity()
             {
                 User = User.Identity.Name,
@@ -89,7 +89,7 @@ namespace Portal.Controllers
             }
             catch (Exception e)
             {
-                _logger.LogError(e,"Start test error");
+                _logger.LogError(e, "Start test error");
                 throw;
             }
         }
@@ -97,13 +97,13 @@ namespace Portal.Controllers
         [HttpDelete("{key}")]
         public async Task Delete(string key)
         {
-            var configTable = await _perfStorage.GetTableAsync<TestConfigEntity>(Constant.TableNames.TestConfig);
+            var configTable = await _perfStorage.GetTableAsync<TestConfigEntity>(PerfConstants.TableNames.TestConfig);
             var config =
                 await configTable.GetFirstOrDefaultAsync(from row in configTable.Rows
-                    where row.PartitionKey == key
-                    select row);
+                                                         where row.PartitionKey == key
+                                                         select row);
             await configTable.DeleteAsync(config);
-            var statusTable = await _perfStorage.GetTableAsync<TestStatusEntity>(Constant.TableNames.TestStatus);
+            var statusTable = await _perfStorage.GetTableAsync<TestStatusEntity>(PerfConstants.TableNames.TestStatus);
             var statuses =
                 await statusTable.QueryAsync(from row in statusTable.Rows where row.PartitionKey == key select row)
                     .ToListAsync();

@@ -87,7 +87,7 @@ namespace Azure.SignalRBench.Coordinator
                 return;
             }
 
-            _testStatusAccessor = await PerfStorage.GetTableAsync<TestStatusEntity>(Constant.TableNames.TestStatus);
+            _testStatusAccessor = await PerfStorage.GetTableAsync<TestStatusEntity>(PerfConstants.TableNames.TestStatus);
             int idx = Job.TestId.LastIndexOf('-');
             _testStatusEntity = await _testStatusAccessor.GetAsync(Job.TestId.Substring(0,idx), Job.TestId.Substring(idx+1));
             var clientAgentCount = Job.ScenarioSetting.TotalConnectionCount;

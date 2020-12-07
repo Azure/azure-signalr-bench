@@ -30,8 +30,8 @@ namespace Portal.Controllers
         private static string? location;
         private static string? k8sUrl;
 
-        
-        public HomeController(IPerfStorage perfStorage,SecretClient secretClient,ILogger<HomeController> logger)
+
+        public HomeController(IPerfStorage perfStorage, SecretClient secretClient, ILogger<HomeController> logger)
         {
             _perfStorage = perfStorage;
             _secretClient = secretClient;
