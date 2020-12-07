@@ -41,15 +41,14 @@ namespace Azure.SignalRBench.Coordinator
 
         public async Task StartAsync(CancellationToken cancellationToken)
         {
-            var storageTask = _secretClient.GetSecretAsync(Constants.KeyVaultKeys.StorageConnectionStringKey);
+            var storageTask = _secretClient.GetSecretAsync(PerfConstants.KeyVaultKeys.StorageConnectionStringKey);
 
-            var prefixTask = _secretClient.GetSecretAsync(Constants.KeyVaultKeys.PrefixKey);
-            var subscriptionTask = _secretClient.GetSecretAsync(Constants.KeyVaultKeys.SubscriptionKey);
-            var locationTask = _secretClient.GetSecretAsync(Constants.KeyVaultKeys.LocationKey);
-            var servicePrincipalTask = _secretClient.GetSecretAsync(Constants.KeyVaultKeys.ServicePrincipalKey);
-            var cloudTask = _secretClient.GetSecretAsync(Constants.KeyVaultKeys.CloudKey);
-            var k8sTask = _secretClient.GetSecretAsync(Constants.KeyVaultKeys.KubeConfigKey);
-
+            var prefixTask = _secretClient.GetSecretAsync(PerfConstants.KeyVaultKeys.PrefixKey);
+            var subscriptionTask = _secretClient.GetSecretAsync(PerfConstants.KeyVaultKeys.SubscriptionKey);
+            var locationTask = _secretClient.GetSecretAsync(PerfConstants.KeyVaultKeys.LocationKey);
+            var servicePrincipalTask = _secretClient.GetSecretAsync(PerfConstants.KeyVaultKeys.ServicePrincipalKey);
+            var cloudTask = _secretClient.GetSecretAsync(PerfConstants.KeyVaultKeys.CloudKey);
+            var k8sTask = _secretClient.GetSecretAsync(PerfConstants.KeyVaultKeys.KubeConfigKey);
             _storageProvider.Initialize((await storageTask).Value.Value);
             _k8sProvider.Initialize((await k8sTask).Value.Value);
             var prefix = (await prefixTask).Value.Value;
@@ -63,7 +62,7 @@ namespace Azure.SignalRBench.Coordinator
                 obj["tenant"]?.Value<string>() ?? throw new InvalidDataException("Unexpected null for ServicePrincipal.Tenant."),
                 azureEnvironment);
 
-            _aksProvider.Initialize(servicePrincipal, subscription, prefix + "perfrg", prefix + "perfaks");
+            _aksProvider.Initialize(servicePrincipal, subscription, prefix + PerfConstants.ConfigurationKeys.PerfV2+"rg", prefix +PerfConstants.ConfigurationKeys.PerfV2+ "aks");
             _signalRProvider.Initialize(servicePrincipal, subscription);
             await _scheduler.StartAsync((await locationTask).Value.Value);
         }

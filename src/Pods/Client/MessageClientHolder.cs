@@ -3,7 +3,6 @@
 
 using System;
 using System.Threading.Tasks;
-
 using Azure.SignalRBench.Common;
 using Azure.SignalRBench.Messages;
 using Microsoft.Extensions.Logging;
@@ -32,16 +31,21 @@ namespace Azure.SignalRBench.Client
             {
                 throw new InvalidOperationException();
             }
+
             _client = await MessageClient.ConnectAsync(connectionString, testId, podName);
             await _client.WithHandlers(
                 MessageHandler.CreateCommandHandler(Commands.General.Crash, Crash),
                 MessageHandler.CreateCommandHandler(Roles.Clients, Commands.General.Crash, Crash),
                 MessageHandler.CreateCommandHandler(Commands.Clients.SetClientRange, SetClientRange),
-                MessageHandler.CreateCommandHandler(Roles.Clients, Commands.Clients.StartClientConnections, StartClientConnections),
-                MessageHandler.CreateCommandHandler(Roles.Clients, Commands.Clients.StopClientConnections, StopClientConnections),
+                MessageHandler.CreateCommandHandler(Roles.Clients, Commands.Clients.StartClientConnections,
+                    StartClientConnections),
+                MessageHandler.CreateCommandHandler(Roles.Clients, Commands.Clients.StopClientConnections,
+                    StopClientConnections),
                 MessageHandler.CreateCommandHandler(Roles.Clients, Commands.Clients.SetScenario, SetScenario),
                 MessageHandler.CreateCommandHandler(Roles.Clients, Commands.Clients.StartScenario, StartScenario),
                 MessageHandler.CreateCommandHandler(Roles.Clients, Commands.Clients.StopScenario, StopScenario));
+            await _client.ReportReadyAsync(new ReportReadyParameters() {Role = Roles.Clients});
+            _logger.LogInformation("Message client handlers inited.");
         }
 
         private Task Crash(CommandMessage commandMessage)
@@ -53,7 +57,8 @@ namespace Azure.SignalRBench.Client
 
         private async Task SetClientRange(CommandMessage commandMessage)
         {
-            _logger.LogInformation("Start to set client range: {parameter}", JsonConvert.SerializeObject(commandMessage.Parameters));
+            _logger.LogInformation("Start to set client range: {parameter}",
+                JsonConvert.SerializeObject(commandMessage.Parameters));
             var setClientRangeParameters = commandMessage.Parameters?.ToObject<SetClientRangeParameters>();
             if (setClientRangeParameters == null)
             {
@@ -62,13 +67,17 @@ namespace Azure.SignalRBench.Client
                 await Client.AckFaultedAsync(commandMessage, error);
                 return;
             }
+
             _scenarioState.SetClientRange(setClientRangeParameters);
+            _logger.LogInformation("Client range set.");
             await Client.AckCompletedAsync(commandMessage);
+            _logger.LogInformation("Client range acked.");
         }
 
         private async Task StartClientConnections(CommandMessage commandMessage)
         {
-            _logger.LogInformation("Start connections: {parameter}", JsonConvert.SerializeObject(commandMessage.Parameters));
+            _logger.LogInformation("Start connections: {parameter}",
+                JsonConvert.SerializeObject(commandMessage.Parameters));
             var startConnectionsParameters = commandMessage.Parameters?.ToObject<StartClientConnectionsParameters>();
             if (startConnectionsParameters == null)
             {
@@ -77,13 +86,16 @@ namespace Azure.SignalRBench.Client
                 await Client.AckFaultedAsync(commandMessage, error);
                 return;
             }
-            await _scenarioState.StartClientConnections(startConnectionsParameters);
+
+            await _scenarioState.StartClientConnections(this, startConnectionsParameters);
             await Client.AckCompletedAsync(commandMessage);
+            _logger.LogInformation("Start client connections acked.");
         }
 
         private async Task StopClientConnections(CommandMessage commandMessage)
         {
-            _logger.LogInformation("Stop connections: {parameter}", JsonConvert.SerializeObject(commandMessage.Parameters));
+            _logger.LogInformation("Stop connections: {parameter}",
+                JsonConvert.SerializeObject(commandMessage.Parameters));
             var stopConnectionsParameters = commandMessage.Parameters?.ToObject<StopClientConnectionsParameters>();
             if (stopConnectionsParameters == null)
             {
@@ -92,28 +104,41 @@ namespace Azure.SignalRBench.Client
                 await Client.AckFaultedAsync(commandMessage, error);
                 return;
             }
+
             await _scenarioState.StopClientConnections(stopConnectionsParameters);
             await Client.AckCompletedAsync(commandMessage);
+            _logger.LogInformation("Stop client connections acked.");
         }
 
         private async Task SetScenario(CommandMessage commandMessage)
         {
-            _logger.LogInformation("Start to set scenario: {parameter}", JsonConvert.SerializeObject(commandMessage.Parameters));
-            var setSenarioParameters = commandMessage.Parameters?.ToObject<SetScenarioParameters>();
-            if (setSenarioParameters == null)
+            try
             {
-                const string error = "Unable to handle set scenario message, parameter cannot be null.";
-                _logger.LogError(error);
-                await Client.AckFaultedAsync(commandMessage, error);
-                return;
+                var param = JsonConvert.SerializeObject(commandMessage.Parameters);
+                _logger.LogInformation($"Start to set scenario: {param}");
+                var setSenarioParameters = commandMessage.Parameters?.ToObject<SetScenarioParameters>();
+                if (setSenarioParameters == null)
+                {
+                    const string error = "Unable to handle set scenario message, parameter cannot be null.";
+                    _logger.LogError(error);
+                    await Client.AckFaultedAsync(commandMessage, error);
+                    return;
+                }
+
+                _scenarioState.SetSenario(setSenarioParameters);
+                await Client.AckCompletedAsync(commandMessage);
+                _logger.LogInformation("Set scenario acked.");
             }
-            _scenarioState.SetSenario(setSenarioParameters);
-            await Client.AckCompletedAsync(commandMessage);
+            catch (Exception e)
+            {
+                _logger.LogError(e,"Set scenario error");
+            }
         }
 
         private async Task StartScenario(CommandMessage commandMessage)
         {
-            _logger.LogInformation("Start scenario: {parameter}", JsonConvert.SerializeObject(commandMessage.Parameters));
+            _logger.LogInformation("Start scenario: {parameter}",
+                JsonConvert.SerializeObject(commandMessage.Parameters));
             var startScenarioParameters = commandMessage.Parameters?.ToObject<StartScenarioParameters>();
             if (startScenarioParameters == null)
             {
@@ -122,13 +147,16 @@ namespace Azure.SignalRBench.Client
                 await Client.AckFaultedAsync(commandMessage, error);
                 return;
             }
+
             _scenarioState.StartSenario(startScenarioParameters);
             await Client.AckCompletedAsync(commandMessage);
+            _logger.LogInformation("Start scenario acked.");
         }
 
         private async Task StopScenario(CommandMessage commandMessage)
         {
-            _logger.LogInformation("Stop scenario: {parameter}", JsonConvert.SerializeObject(commandMessage.Parameters));
+            _logger.LogInformation("Stop scenario: {parameter}",
+                JsonConvert.SerializeObject(commandMessage.Parameters));
             var stopScenarioParameters = commandMessage.Parameters?.ToObject<StopScenarioParameters>();
             if (stopScenarioParameters == null)
             {
@@ -137,6 +165,7 @@ namespace Azure.SignalRBench.Client
                 await Client.AckFaultedAsync(commandMessage, error);
                 return;
             }
+
             _scenarioState.StopSenario(stopScenarioParameters);
             await Client.AckCompletedAsync(commandMessage);
         }

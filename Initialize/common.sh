@@ -2,7 +2,7 @@
 
 function init_common() {
     echo "init naming conventions and configs"
-    PREFIX_PERF="${PREFIX}perf"
+    PREFIX_PERF="${PREFIX}perfv2"
     RESOURCE_GROUP="${PREFIX_PERF}rg"
     STORAGE_ACCOUNT="${PREFIX_PERF}sa"
     KEYVAULT="${PREFIX_PERF}kv"
@@ -14,6 +14,7 @@ function init_common() {
     PORTAL_DNS="${PREFIX_PERF}-portal"
     WORK_SPACE="${PREFIX_PERF}la"
     SERVICE_PRINCIPAL="${PREFIX_PERF}sp"
+    KVURL="https://${KEYVAULT}.vault.azure.net/"
 
     if [[ ! -z $CLOUD ]]; then
         az cloud set -n $CLOUD
@@ -29,6 +30,7 @@ function init_common() {
 function init_aks_group() {
     echo "init aks configs"
     AKS_RESOURCE_GROUP=$(az aks show -g $RESOURCE_GROUP -n $KUBERNETES_SEVICES --query nodeResourceGroup -o tsv)
+    AGENTPOOL_MSI_CLIENT_ID=$(az aks show -n $KUBERNETES_SEVICES --query identityProfile.kubeletidentity.clientId -o tsv)
     az aks get-credentials -g $RESOURCE_GROUP -n $KUBERNETES_SEVICES -a  --overwrite-existing
 }
 

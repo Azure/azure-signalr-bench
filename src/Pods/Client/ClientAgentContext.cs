@@ -7,7 +7,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-
 using Azure.SignalRBench.Common;
 
 namespace Azure.SignalRBench.Client
@@ -16,7 +15,8 @@ namespace Azure.SignalRBench.Client
     {
         private readonly ConcurrentDictionary<ClientAgent, ClientAgentStatus> _dict =
             new ConcurrentDictionary<ClientAgent, ClientAgentStatus>();
-        private readonly Latency _latency = new Latency();
+
+        private Latency _latency = new Latency();
         private int _recievedMessageCount;
         private int _expectedRecievedMessageCount;
         private int _sentMessageCount;
@@ -86,6 +86,7 @@ namespace Azure.SignalRBench.Client
                 _dict.AddOrUpdate(agent, ClientAgentStatus.Connected, (a, s) => ClientAgentStatus.JoiningGroups);
                 await agent.JoinGroupAsync();
             }
+
             _dict.AddOrUpdate(agent, ClientAgentStatus.Connected, (a, s) => ClientAgentStatus.Connected);
         }
 
@@ -144,6 +145,17 @@ namespace Azure.SignalRBench.Client
             public int LessThan2s;
             public int LessThan5s;
             public int MoreThan5s;
+        }
+
+        public void Reset()
+        {
+            _dict.Clear();
+            _latency = new Latency();
+            _recievedMessageCount = 0;
+            _expectedRecievedMessageCount = 0;
+            _sentMessageCount = 0;
+            _reconnectingCount = 0;
+            _totalReconnectedCount = 0;
         }
     }
 }

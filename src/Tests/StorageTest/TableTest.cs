@@ -71,7 +71,7 @@ namespace Azure.SignalRBench.Tests.StorageTest
             Assert.Collection(
                 entities,
                 Enumerable.Repeat((Action<TestEntity>)(entity => Assert.NotNull(entity.ETag)), Count).ToArray());
-
+          //  table.Rows.Where(row=>row.PartitionKey).
             var retrieved = await table.QueryAsync(
                 from row in table.Rows
                 where row.PartitionKey == pk

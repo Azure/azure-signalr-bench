@@ -159,7 +159,7 @@ namespace Azure.SignalRBench.Messages
                         return Task.CompletedTask;
                     }));
 
-            _ = CancelAfter(TimeSpan.FromMinutes(5));
+            _ = CancelAfter(TimeSpan.FromMinutes(60));
             return Task.WhenAll(acks.Select(x => x.Value.Task));
 
             async Task CancelAfter(TimeSpan span)

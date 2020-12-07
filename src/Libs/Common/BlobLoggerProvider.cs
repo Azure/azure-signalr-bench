@@ -33,7 +33,8 @@ namespace Azure.SignalRBench.Common
             var serviceClient = new BlobServiceClient(connectionString);
             _prefix = prefix;
             _suffix = suffix;
-            _client = serviceClient.GetBlobContainerClient("logs");
+            _client = serviceClient.GetBlobContainerClient("logs"); 
+            _client.CreateIfNotExists();
             _ = StartDequeue();
         }
 
@@ -195,7 +196,16 @@ namespace Azure.SignalRBench.Common
                 {
                     foreach (var pair in pairs)
                     {
-                        ext[pair.Key] = JToken.FromObject(pair.Value);
+                        try
+                        {
+                            ext[pair.Key] =JToken.FromObject(pair.Value??String.Empty);
+                        }
+                        catch (Exception e)
+                        {
+                            Console.WriteLine(e);
+                            throw;
+                        }
+                       
                     }
                 }
                 else if (state != null)

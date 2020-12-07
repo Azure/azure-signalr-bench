@@ -49,7 +49,7 @@ namespace Azure.SignalRBench.Coordinator
                     EnableNodePublicIP = true,
                     OsType = OSType.Parse(osType),
                     VmSize = ContainerServiceVMSizeTypes.Parse(vmSize),
-                    NodeTaints = new[] { $"pool:{nodePoolIndex}" },
+                  //  NodeTaints = new[] { $"pool:{nodePoolIndex}" },
                 },
                 cancellationToken);
         }
@@ -61,7 +61,7 @@ namespace Azure.SignalRBench.Coordinator
                 throw new InvalidOperationException();
             }
             var pool = await _client.GetAsync(_resourceGroup, _aksName, ToPoolName(nodePoolIndex), cancellationToken);
-            if (pool.Count == nodeCount)
+            if (pool.Count >= nodeCount)
             {
                 return;
             }

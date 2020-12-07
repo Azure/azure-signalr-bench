@@ -170,7 +170,7 @@ namespace Azure.SignalRBench.Client
                     int groupIndex = StaticRandom.Next(GroupCount);
                     try
                     {
-                        await clientAgent.GroupBroadcastAsync(GroupFamily + "_" + groupIndex.ToString(), Payload);
+                        await clientAgent.GroupBroadcastAsync(GroupFamily + "_" + groupIndex, Payload);
                         clientAgent.Context.IncreaseMessageSent(GroupSize);
                     }
                     catch (Exception ex)
