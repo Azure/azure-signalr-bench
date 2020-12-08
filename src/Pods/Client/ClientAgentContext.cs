@@ -20,12 +20,11 @@ namespace Azure.SignalRBench.Client
         private int _recievedMessageCount;
         private int _expectedRecievedMessageCount;
         private int _sentMessageCount;
-        private int _reconnectingCount;
         private int _totalReconnectedCount;
 
         public int TotalReconnectedCount => Volatile.Read(ref _totalReconnectedCount);
 
-        public int ReconnectingCount => Volatile.Read(ref _reconnectingCount);
+        public int ReconnectingCount =>  _dict.Count(p => p.Value == ClientAgentStatus.Reconnecting);
 
         public int SentMessageCount => Volatile.Read(ref _sentMessageCount);
 
@@ -98,7 +97,6 @@ namespace Azure.SignalRBench.Client
 
         public Task OnReconnecting(ClientAgent agent)
         {
-            Interlocked.Increment(ref _reconnectingCount);
             _dict.AddOrUpdate(agent, ClientAgentStatus.Reconnecting, (a, s) => ClientAgentStatus.Reconnecting);
             return Task.CompletedTask;
         }
@@ -155,12 +153,11 @@ namespace Azure.SignalRBench.Client
 
         public void Reset()
         {
-            _dict.Clear();
+          //  _dict.Clear();
             _latency = new Latency();
             _recievedMessageCount = 0;
             _expectedRecievedMessageCount = 0;
             _sentMessageCount = 0;
-            _reconnectingCount = 0;
             _totalReconnectedCount = 0;
         }
     }
