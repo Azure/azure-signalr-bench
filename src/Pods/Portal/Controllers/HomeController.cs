@@ -13,8 +13,10 @@ using Azure.SignalRBench.Storage;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Cosmos.Table;
+using Microsoft.Azure.Management.Storage.Fluent.Models;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Linq;
+using Portal.Entity;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -39,10 +41,13 @@ namespace Portal.Controllers
         }
 
         [HttpGet("info")]
-        public async Task<string> Get()
+        public async Task<BasicInfo> Get()
         {
-            var p = this.HttpContext.User;
-            return "{\"info\":\"Todo\"}";
+            var basicInfo = new BasicInfo()
+            {
+                User = User.Identity.Name
+            };
+            return basicInfo;
         }
     }
 }

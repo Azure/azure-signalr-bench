@@ -123,7 +123,6 @@ namespace Azure.SignalRBench.Coordinator
                 foreach (var round in Job.ScenarioSetting.Rounds)
                 {
                     i++;
-                    _timer.Reset();
                     await UpdateTestStatus($"Testing Round {i}");
                     _clientStatus.Clear();
                     await SetScenarioAsync(messageClient, round, cancellationToken);
@@ -177,10 +176,12 @@ namespace Azure.SignalRBench.Coordinator
             {
                 _totalConnected = _clientStatus.Select(p =>
                 {
-                    _logger.LogInformation($"{p.Key} connected:"+p.Value.ConnectedCount);
+                    _logger.LogInformation($"{p.Key} connected:{p.Value.ConnectedCount} , reconnecting:{p.Value.ReconnectingCount} , totalReconnected:{p.Value.TotalReconnectCount}");
                     return p.Value.ConnectedCount;
                 }).Sum();
-                _logger.LogInformation($"\n reported client count:[ {_clientStatus.Count} ]");
+                var totalReconnectiong = _clientStatus.Select(p => p.Value.ReconnectingCount).Sum();
+                var totalReconnectedCount = _clientStatus.Select(p => p.Value.TotalReconnectCount).Sum();
+                _logger.LogInformation($"\n [Total] reported client count:[ {_clientStatus.Count} ], Reconnected:{totalReconnectedCount} , Reconnecting:{totalReconnectiong}, connected:{_totalConnected}");
                 _logger.LogInformation("Total connected:"+_totalConnected+"\n");
                 await UpdateTestStatus($"Connected:{_totalConnected}/{this.Job.ScenarioSetting.TotalConnectionCount}");
                 if (_totalConnected == Job.ScenarioSetting.TotalConnectionCount)
