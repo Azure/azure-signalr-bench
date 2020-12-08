@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -27,8 +28,8 @@ namespace Azure.SignalRBench.Coordinator
         private readonly ConcurrentDictionary<string, ReportClientStatusParameters> _clientStatus =
             new ConcurrentDictionary<string, ReportClientStatusParameters>();
 
-        private readonly List<ReportClientStatusParameters>
-            _clientStatusList = new List<ReportClientStatusParameters>();
+        private readonly List<RoundStatus>
+            _roundStatusList = new List<RoundStatus>();
 
         private readonly List<string> _serverPods = new List<string>();
         private readonly ILogger<TestRunner> _logger;
@@ -36,6 +37,8 @@ namespace Azure.SignalRBench.Coordinator
 
         private string _url = "http://localhost:8080/";
         private TestStatusEntity _testStatusEntity;
+        private int _totalConnected = 0;
+        private Stopwatch _timer=new Stopwatch();
 
         public TestRunner(
             TestJob job,
@@ -86,7 +89,7 @@ namespace Azure.SignalRBench.Coordinator
                 _logger.LogWarning("Test job {testId}: No service configuration.", Job.TestId);
                 return;
             }
-
+            _timer.Start();
             _testStatusAccessor = await PerfStorage.GetTableAsync<TestStatusEntity>(PerfConstants.TableNames.TestStatus);
             int idx = Job.TestId.LastIndexOf('-');
             await Task.Delay(2000);
@@ -104,6 +107,7 @@ namespace Azure.SignalRBench.Coordinator
             using var messageClient = await MessageClient.ConnectAsync(RedisConnectionString, Job.TestId, PodName);
             await messageClient.WithHandlers(MessageHandler.CreateCommandHandler(Roles.Coordinator,
                 Commands.Coordinator.ReportClientStatus, CollectClientStatus));
+            var scheduleCts=new CancellationTokenSource();
             try
             {
                 var asrsConnectionStrings = await asrsConnectionStringsTask;
@@ -111,11 +115,15 @@ namespace Azure.SignalRBench.Coordinator
                 await CreatePodsAsync(asrsConnectionStrings, clientAgentCount, clientPodCount, serverPodCount,
                     messageClient, cancellationToken);
                 await UpdateTestStatus("Starting client connections");
+                _=ScheduleStateUpdate(scheduleCts.Token);
                 await StartClientConnectionsAsync(messageClient, cancellationToken);
+                scheduleCts.Cancel();
+                await Task.Delay(2000);
                 int i = 0;
                 foreach (var round in Job.ScenarioSetting.Rounds)
                 {
                     i++;
+                    _timer.Reset();
                     await UpdateTestStatus($"Testing Round {i}");
                     _clientStatus.Clear();
                     await SetScenarioAsync(messageClient, round, cancellationToken);
@@ -124,7 +132,7 @@ namespace Azure.SignalRBench.Coordinator
                     await StopScenarioAsync(messageClient, cancellationToken);
                     //wait for the last message to come back
                     await Task.Delay(5000);
-                    await UpdateTestReports();
+                    await UpdateTestReports(round);
                 }
 
                 await UpdateTestStatus($"Stopping client connections");
@@ -137,6 +145,9 @@ namespace Azure.SignalRBench.Coordinator
             }
             finally
             {
+                if(!scheduleCts.IsCancellationRequested)
+                  scheduleCts.Cancel();
+                _timer.Stop();
                 try
                 {
                     _logger.LogInformation("Test job {testId}: Removing client pods.", Job.TestId);
@@ -159,9 +170,31 @@ namespace Azure.SignalRBench.Coordinator
             }
         }
 
+        public async Task ScheduleStateUpdate(CancellationToken ctx)
+        {
+            _logger.LogInformation("Start to record client connection status...");
+            while (!ctx.IsCancellationRequested)
+            {
+                _totalConnected = _clientStatus.Select(p =>
+                {
+                    _logger.LogInformation($"{p.Key} connected:"+p.Value.ConnectedCount);
+                    return p.Value.ConnectedCount;
+                }).Sum();
+                _logger.LogInformation($"\n reported client count:[ {_clientStatus.Count} ]");
+                _logger.LogInformation("Total connected:"+_totalConnected+"\n");
+                await UpdateTestStatus($"Connected:{_totalConnected}/{this.Job.ScenarioSetting.TotalConnectionCount}");
+                if (_totalConnected == Job.ScenarioSetting.TotalConnectionCount)
+                {
+                    _logger.LogInformation("All connections established");
+                    return;
+                }
+                await Task.Delay(2000);
+            }
+        }
         private async Task UpdateTestStatus(string currentStatus, bool healthy = true,Exception? e=default)
         {
-            _testStatusEntity.Status = currentStatus;
+            var sec=_timer.ElapsedMilliseconds / 1000;
+            _testStatusEntity.Status = currentStatus+" ["+sec+"sec]";
             _testStatusEntity.Healthy = healthy;
             if (healthy)
             {
@@ -173,37 +206,39 @@ namespace Azure.SignalRBench.Coordinator
                 if(e!=null)
                   _testStatusEntity.ErrorInfo+="   \n  \n     "+ e;
             }
+
             await _testStatusAccessor.UpdateAsync(_testStatusEntity);
         }
 
-        private async Task UpdateTestReports()
+        private async Task UpdateTestReports(RoundSetting round)
         {
-            var combindClientStatus = new ReportClientStatusParameters()
+            var roundStatus = new RoundStatus()
             {
                 ConnectedCount = 0,
                 Latency = new Dictionary<LatencyClass, int>(),
                 MessageRecieved = 0,
                 MessageSent = 0,
                 ReconnectingCount = 0,
-                TotalReconnectCount = 0
+                TotalReconnectCount = 0,
+                //for now, there is only one clientsetting in one round
+                ActiveConnection = round.ClientSettings[0].Count
             };
             foreach (var v in _clientStatus.Values)
             {
-                combindClientStatus.ConnectedCount += v.ConnectedCount;
-                combindClientStatus.MessageRecieved += v.MessageRecieved;
-                combindClientStatus.MessageSent += v.MessageSent;
-                combindClientStatus.ReconnectingCount += v.ReconnectingCount;
-                combindClientStatus.TotalReconnectCount += v.TotalReconnectCount;
+                roundStatus.ConnectedCount += v.ConnectedCount;
+                roundStatus.MessageRecieved += v.MessageRecieved;
+                roundStatus.MessageSent += v.MessageSent;
+                roundStatus.ReconnectingCount += v.ReconnectingCount;
+                roundStatus.TotalReconnectCount += v.TotalReconnectCount;
                 foreach (var kv in v.Latency)
                 {
-                    if (!combindClientStatus.Latency.ContainsKey(kv.Key))
-                        combindClientStatus.Latency[kv.Key] = 0;
-                    combindClientStatus.Latency[kv.Key] = combindClientStatus.Latency[kv.Key] + kv.Value;
+                    if (!roundStatus.Latency.ContainsKey(kv.Key))
+                        roundStatus.Latency[kv.Key] = 0;
+                    roundStatus.Latency[kv.Key] = roundStatus.Latency[kv.Key] + kv.Value;
                 }
             }
-
-            _clientStatusList.Add(combindClientStatus);
-            _testStatusEntity.Report = JsonConvert.SerializeObject(_clientStatusList);
+            _roundStatusList.Add(roundStatus);
+            _testStatusEntity.Report = JsonConvert.SerializeObject(_roundStatusList);
             await _testStatusAccessor.UpdateAsync(_testStatusEntity);
         }
 
@@ -249,8 +284,8 @@ namespace Azure.SignalRBench.Coordinator
 
         private Task CollectClientStatus(CommandMessage msg)
         {
-            var p = msg.Parameters.ToObject<ReportClientStatusParameters>();
-            _clientStatus[msg.Sender] = p;
+            var status = msg.Parameters.ToObject<ReportClientStatusParameters>();
+            _clientStatus[msg.Sender] = status;
             return Task.CompletedTask;
         }
 

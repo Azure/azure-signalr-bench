@@ -78,7 +78,7 @@ namespace Azure.SignalRBench.Client
                 _clients[i] = new ClientAgent(Url, Protocol, IsAnonymous ? null : $"user{StartId + i}", GroupFunc(i),
                     _context);
             }
-
+            ScheduleReportedStatus(cancellationToken);
             using var cts = new CancellationTokenSource();
             using var linkSource = CancellationTokenSource.CreateLinkedTokenSource(cts.Token, cancellationToken);
                 using var semaphore = GetRateControlSemaphore(rate, linkSource.Token);
@@ -119,7 +119,6 @@ namespace Azure.SignalRBench.Client
                 {
                     cts.Cancel();
                 }
-                ScheduleReportedStatus(cancellationToken);
         }
 
         public async Task StopAsync(double rate)

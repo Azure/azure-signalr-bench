@@ -71,7 +71,6 @@ namespace Portal.Controllers
             latestTestConfig.InstanceIndex += 1;
             await configTable.UpdateAsync(latestTestConfig);
             var queue = await _perfStorage.GetQueueAsync<TestJob>(PerfConstants.QueueNames.PortalJob, true);
-            await queue.SendAsync(latestTestConfig.ToTestJob(latestTestConfig.InstanceIndex));
             var statusTable = await _perfStorage.GetTableAsync<TestStatusEntity>(PerfConstants.TableNames.TestStatus);
             var testEntity = new TestStatusEntity()
             {
@@ -81,11 +80,13 @@ namespace Portal.Controllers
                 Status = "Init",
                 Healthy = true,
                 Report = "",
-                ErrorInfo = ""
+                ErrorInfo = "",
+                Config = JsonConvert.SerializeObject(latestTestConfig)
             };
             try
             {
                 await statusTable.InsertAsync(testEntity);
+                await queue.SendAsync(latestTestConfig.ToTestJob(latestTestConfig.InstanceIndex));
             }
             catch (Exception e)
             {
