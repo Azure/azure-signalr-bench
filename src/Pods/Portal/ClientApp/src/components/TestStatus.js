@@ -10,9 +10,10 @@ export class TestStatus extends Component {
         this.state = {
             loading: true,
             show: false,
-            report:[],
+           // report:[],
             errorShow:false,
-            error:""
+            error:"",
+            currentTestStatus:{}
         };
        this.report= this.report.bind(this)
        this.errorInfo=this.errorInfo.bind(this)
@@ -26,8 +27,8 @@ export class TestStatus extends Component {
 
     async report(e) {
         console.log("report")
-        var json= e.target.getAttribute("value")
-        this.setState({show:true,report:JSON.parse(json)})
+        var json= JSON.parse(e.target.getAttribute("value"))
+        this.setState({show:true,currentTestStatus:json})
      }
      async errorInfo(e) {
         var error= e.target.getAttribute("value")
@@ -52,7 +53,7 @@ export class TestStatus extends Component {
                         var trkey = testStatus.partitionKey + testStatus.rowKey;
                       var colorstyle=testStatus.healthy?"green":"red";
                       var clz="ui disabled mini button"
-                      var data=testStatus.report
+                      var data=JSON.stringify(testStatus)
                       var cb=this.report
                       if(!testStatus.healthy){
                           clz="ui red mini button"
@@ -80,6 +81,21 @@ export class TestStatus extends Component {
         let contents = this.state.loading
             ? <p><em>Loading...</em></p>
             : this.renderTestStatusTable(this.state.testStatuses);
+        const state=this.state.currentTestStatus;
+        console.log("state is:")
+        console.log(state)
+        var report=[];
+        var config={};
+        var label="";
+        if(state['report']!=undefined){
+            report=JSON.parse(state['report'])
+        }
+       if(state['config']!=undefined){
+           config=JSON.parse(state['config'])
+        var totalCon=config['ClientCons'];
+        var protocal=config['Protocol']
+        label="[ Total connection:"+totalCon+  ", Protocal: "+protocal+" ]"
+       }
         return (
             <>
                 <div>
@@ -89,13 +105,15 @@ export class TestStatus extends Component {
                
                 <Modal show={this.state.show} dialogClassName="modalCss" onHide={()=>this.setState({show:false})}>
                     <Modal.Header closeButton>
-                        <Modal.Title>Test Report</Modal.Title>
+                       {/* <Modal.Title>Test Report </Modal.Title> */}
                     </Modal.Header>
                     <Modal.Body  >
+                    <h4 class="configCss"> {label}</h4>
                     <table className='table table-striped' aria-labelledby="tabelLabel">
                 <thead>
                     <tr>
                         <th>Round</th>
+                        <th>Active</th>
                         <th>Send</th>
                         <th>Receive</th>
                         <th>Reconnected</th>
@@ -112,9 +130,10 @@ export class TestStatus extends Component {
                 </thead>
                 <tbody>
                     {
-                        this.state.report.map((v,i)=>{
+                        report.map((v,i)=>{
                             return <tr key={i}> 
-                            <td>{i}</td>
+                            <td>{i+1}</td>
+                            <th>{v.ActiveConnection}</th>
                             <td>{v.MessageSent}</td>
                             <td>{v.MessageRecieved}</td>
                             <td>{v.TotalReconnectCount}</td>

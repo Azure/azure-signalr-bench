@@ -18,3 +18,7 @@ code {
   background-Color: "DodgerBlue";
   max-width: none!important;
 }
+.configCss {
+  font-size: large;
+  color: chocolate;
+}
