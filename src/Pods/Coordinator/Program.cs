@@ -26,8 +26,12 @@ namespace Azure.SignalRBench.Coordinator
                  .ConfigureLogging((ILoggingBuilder logging) =>
                  {
                      logging.ClearProviders();
-                     logging.AddConsole();
-              
+                     logging.AddConsole(options =>
+                     {
+                         options.IncludeScopes = true;
+                         options.DisableColors = false;
+                         options.TimestampFormat = "hh:mm:ss ";
+                     });
                  })
                 .ConfigureServices((hostContext, services) =>
                 {
