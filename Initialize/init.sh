@@ -111,6 +111,7 @@ if [[ -z $(az aks show --name $KUBERNETES_SEVICES -g $RESOURCE_GROUP 2>/dev/null
         --load-balancer-managed-outbound-ip-count 10 --load-balancer-outbound-ports 10000 --workspace-resource-id "$work_space_resource_id" --enable-addons monitoring
     echo "create agentpool pool0,pool1 for appserver and client"
     az aks nodepool add -n pool0 --cluster-name $KUBERNETES_SEVICES --kubernetes-version 1.18.10 -c 3  -s Standard_D4s_v3
+    az aks enable-addons -n  $KUBERNETES_SEVICES -g $RESOURCE_GROUP  -a kube-dashboard
     echo "start to create kubernetes services $KUBERNETES_SEVICES created."
     echo "start getting kube/config"
     rm ~/.kube/perf || true
