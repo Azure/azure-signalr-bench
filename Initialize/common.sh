@@ -30,7 +30,7 @@ function init_common() {
 function init_aks_group() {
     echo "init aks configs"
     AKS_RESOURCE_GROUP=$(az aks show -g $RESOURCE_GROUP -n $KUBERNETES_SEVICES --query nodeResourceGroup -o tsv)
-    AGENTPOOL_MSI_CLIENT_ID=$(az aks show -n $KUBERNETES_SEVICES --query identityProfile.kubeletidentity.clientId -o tsv)
+    AGENTPOOL_MSI_CLIENT_ID=$(az aks show -n $KUBERNETES_SEVICES -g $RESOURCE_GROUP --query identityProfile.kubeletidentity.clientId -o tsv)
     az aks get-credentials -g $RESOURCE_GROUP -n $KUBERNETES_SEVICES -a  --overwrite-existing
 }
 

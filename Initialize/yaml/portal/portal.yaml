@@ -12,7 +12,7 @@ spec:
       labels:
         app: portal
     spec:
-      serviceAccountName: test
+      serviceAccountName: perfdashboard
       nodeSelector:
         agentpool: captain
       containers:

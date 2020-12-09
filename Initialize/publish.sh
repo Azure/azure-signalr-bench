@@ -135,6 +135,11 @@ if [[ $ALL || $REDIS ]]; then
 fi
 
 if [[ $ALL || $INGRESS ]]; then
+  cd $DIR/yaml/ingress
+  kubectl apply -f service-account.yaml
+  kubectl apply -f cluster-role.yaml
+  kubectl apply -f role-binding-sa.yaml
+  exit
   domain=$(az network public-ip show -n $PORTAL_IP_NAME -g $RESOURCE_GROUP --query dnsSettings.fqdn -o tsv)
   echo $domain
   ip=$(az network public-ip show -n $PORTAL_IP_NAME -g $RESOURCE_GROUP --query ipAddress -o tsv)
@@ -152,11 +157,13 @@ if [[ $ALL || $INGRESS ]]; then
     --set controller.nodeSelector."beta\.kubernetes\.io/os"=linux \
     --set defaultBackend.nodeSelector."beta\.kubernetes\.io/os"=linux \
     --set controller.service.loadBalancerIP="$ip" \
-    --set controller.service.annotations."service\.beta\.kubernetes\.io/azure-dns-label-name"="$PORTAL_DNS" || true
+    --set controller.deployment.spec.template.annotations."nginx\.ingress\.kubernetes\.io/proxy-buffer-size"=10m \
+    --set controller.service.annotations."service\.beta\.kubernetes\.io/azure-dns-label-name"="$PORTAL_DNS" \
+    --set controller.service.annotations."service\.beta\.kubernetes\.io/azure-load-balancer-resource-group"="$RESOURCE_GROUP"  || true
   # Label the cert-manager namespace to disable resource validation
   kubectl label namespace ingress-basic cert-manager.io/disable-validation=true || true
   # Add the Jetstack Helm repository
-  helm repo add jetstack https://charts.jetstack.io 
+  helm repo add jetstack https://charts.jetstack.io
   # Update your local Helm chart repository cache
   helm repo update
   # Install the cert-manager Helm chart
@@ -167,7 +174,6 @@ if [[ $ALL || $INGRESS ]]; then
     --set installCRDs=true \
     --set nodeSelector."beta\.kubernetes\.io/os"=linux \
     jetstack/cert-manager || true
-  cd $DIR/yaml/ingress
   kubectl apply -f cluster-issuer.yaml
   kubectl apply -f dashboard-ext.yaml
   cat portal-ingress.yaml | replace PORTAL_DOMAIN_PLACE_HOLDER $domain | kubectl apply -f -
