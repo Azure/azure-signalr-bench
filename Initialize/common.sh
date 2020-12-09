@@ -11,7 +11,7 @@ function init_common() {
     KV_SA_ACCESS_KEY="sa-accessKey"
     KV_KUBE_CONFIG="kube-config"
     SA_SHARE="perf"
-    PORTAL_DNS="${PREFIX_PERF}-portal"
+    PORTAL_DNS="${PREFIX_PERF}"
     WORK_SPACE="${PREFIX_PERF}la"
     SERVICE_PRINCIPAL="${PREFIX_PERF}sp"
     KVURL="https://${KEYVAULT}.vault.azure.net/"
