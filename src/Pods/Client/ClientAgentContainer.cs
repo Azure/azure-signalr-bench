@@ -196,7 +196,7 @@ namespace Azure.SignalRBench.Client
                 while (true)
                 {
                     await Task.Delay(1000, cancellationToken);
-                    _logger.LogInformation("reportClientStatus");
+                   // _logger.LogInformation("reportClientStatus");
                     await _messageClientHolder.Client.ReportClientStatusAsync(_context.ClientStatus());
                 }
             });

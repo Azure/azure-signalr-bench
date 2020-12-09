@@ -82,7 +82,10 @@ namespace Azure.SignalRBench.Client
         private sealed class InitState : ScenarioBaseState
         {
             public InitState(ScenarioState scenarioState)
-                : base(scenarioState) { }
+                : base(scenarioState)
+            {
+                Save();
+            }
 
             public override void SetClientRange(SetClientRangeParameters setClientRangeParameters)
             {
@@ -194,7 +197,6 @@ namespace Azure.SignalRBench.Client
                 IndexMap = indexMap;
                 GroupDefinitions = groupDefinitions;
                 ClientAgentContainer = clientAgentContainer;
-                Save();
             }
 
             public override void SetSenario(SetScenarioParameters setScenarioParameters)
