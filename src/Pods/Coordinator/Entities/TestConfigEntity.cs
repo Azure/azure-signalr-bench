@@ -105,7 +105,7 @@ namespace Azure.SignalRBench.Coordinator.Entities
                 ScenarioSetting = new ScenarioSetting()
                 {
                     TotalConnectionCount = ClientCons,
-                    TotalConnectionRound = 3,
+                    TotalConnectionRound = ConnectEstablishRoundNum,
                     Rounds = roundsettings.ToArray(),
                     IsAnonymous = true,
                     Protocol =Enum.TryParse(Protocol,out  SignalRProtocol protocol)?protocol:throw new Exception($"Unknown Protocol {Protocol}"),

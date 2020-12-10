@@ -223,7 +223,7 @@ export class TestConfig extends Component {
                             </Form.Group>
                             <Form.Group >
                                 <Form.Label>Total client connections establish round num</Form.Label>
-                                <Form.Control name="clientCons" onChange={this.handleChangeNum} placeholder="Establish all connections gradually. (Default:1)" />
+                                <Form.Control name="ConnectEstablishRoundNum" onChange={this.handleChangeNum} placeholder="Establish all connections gradually. (Default:1)" />
                             </Form.Group>
                             <Form.Group >
                                 <Form.Label>Client number</Form.Label>
