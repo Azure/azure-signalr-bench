@@ -102,6 +102,7 @@ namespace Azure.SignalRBench.Client
                         {
                             if (i < continueIndex)
                                 return;
+                            var index= Interlocked.Add(ref count, 1);
                             await semaphore.WaitAsync(cancellationToken);
                             while (!cancellationToken.IsCancellationRequested)
                             {
@@ -109,7 +110,6 @@ namespace Azure.SignalRBench.Client
                                 stopWatch.Start();
                                 try
                                 {
-                                    var index= Interlocked.Add(ref count, 1);
                                     _logger.LogInformation($"{index} start to connect");
                                     await c.StartAsync(cancellationToken);
                                     stopWatch.Stop();

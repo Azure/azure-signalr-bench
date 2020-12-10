@@ -20,7 +20,6 @@ namespace Azure.SignalRBench.Coordinator
 {
     public class TestRunner
     {
-        private const double MaxClientCountInPod = 5000;
 
         private readonly Dictionary<string, SetClientRangeParameters> _clients =
             new Dictionary<string, SetClientRangeParameters>();
@@ -95,7 +94,7 @@ namespace Azure.SignalRBench.Coordinator
             await Task.Delay(2000);
             _testStatusEntity = await _testStatusAccessor.GetAsync(Job.TestId.Substring(0,idx), Job.TestId.Substring(idx+1));
             var clientAgentCount = Job.ScenarioSetting.TotalConnectionCount;
-            var clientPodCount = (int) Math.Ceiling(clientAgentCount / MaxClientCountInPod);
+            var clientPodCount = Job.PodSetting.ClientCount;
             _logger.LogInformation("Test job {testId}: Client pods count: {count}.", Job.TestId, clientPodCount);
             var serverPodCount = Job.PodSetting.ServerCount;
             _logger.LogInformation("Test job {testId}: Server pods count: {count}.", Job.TestId, serverPodCount);
