@@ -17,9 +17,10 @@ namespace Azure.SignalRBench.Client
     {
         private readonly ClientAgentContext _context = new ClientAgentContext();
         private readonly MessageClientHolder _messageClientHolder;
-        private readonly ClientAgent[] _clients;
+        private  ClientAgent[] _clients;
         private readonly ILogger<ClientAgentContainer> _logger;
         private bool slowDown = false;
+        private int startReport = 1;
 
         public ClientAgentContainer(
             MessageClientHolder messageClientHolder,
@@ -34,7 +35,6 @@ namespace Azure.SignalRBench.Client
         {
             _messageClientHolder = messageClientHolder;
             StartId = startId;
-            LocalCount = localCount;
             //try to resolve service url
             try
             {
@@ -57,9 +57,7 @@ namespace Azure.SignalRBench.Client
             _clients = new ClientAgent[localCount];
         }
 
-        public int StartId { get; }
-
-        public int LocalCount { get; }
+        public int StartId { get; set; }
 
         public string Url { get; }
 
@@ -69,11 +67,25 @@ namespace Azure.SignalRBench.Client
 
         public ClientLifetimeDefinition LifetimeDefinition { get; }
 
-        public Func<int, string[]> GroupFunc { get; }
+        public Func<int, string[]> GroupFunc { get; set; }
 
-        public async Task StartAsync(double rate, CancellationToken cancellationToken)
+        public int ExpandConnections(int startId, int localCount)
         {
+            StartId = startId;
+            var tmp=new ClientAgent[localCount];
             for (int i = 0; i < _clients.Length; i++)
+            {
+                tmp[i] = _clients[i];
+            }
+
+            int continueIndex = _clients.Length;
+            _clients = tmp;
+            return continueIndex;
+        }
+        
+        public async Task StartAsync(double rate, CancellationToken cancellationToken,int continueIndex=0)
+        {
+            for (int i = continueIndex; i < _clients.Length; i++)
             {
                 _clients[i] = new ClientAgent(Url, Protocol, IsAnonymous ? null : $"user{StartId + i}", GroupFunc(i),
                     _context);
@@ -82,12 +94,14 @@ namespace Azure.SignalRBench.Client
             using var cts = new CancellationTokenSource();
             using var linkSource = CancellationTokenSource.CreateLinkedTokenSource(cts.Token, cancellationToken);
                 using var semaphore = GetRateControlSemaphore(rate, linkSource.Token);
-                var count = 0;
+                var count = continueIndex;
                 try
                 {
                     await Task.WhenAll(
-                        _clients.Select(async (c) =>
+                        _clients.Select(async (c,i) =>
                         {
+                            if (i < continueIndex)
+                                return;
                             await semaphore.WaitAsync(cancellationToken);
                             while (!cancellationToken.IsCancellationRequested)
                             {
@@ -95,10 +109,12 @@ namespace Azure.SignalRBench.Client
                                 stopWatch.Start();
                                 try
                                 {
+                                    var index= Interlocked.Add(ref count, 1);
+                                    _logger.LogInformation($"{index} start to connect");
                                     await c.StartAsync(cancellationToken);
-                                    Interlocked.Add(ref count, 1);
                                     stopWatch.Stop();
-                                    _logger.LogInformation($"{Volatile.Read(ref count)} Connected. rate :{rate} Time cost:{stopWatch.ElapsedMilliseconds}");
+                                    _logger.LogInformation($"{index} Connected. rate :{rate} Time cost:{stopWatch.ElapsedMilliseconds}");
+                                   
                                     return;
                                 }
                                 catch (Exception ex)
@@ -106,7 +122,7 @@ namespace Azure.SignalRBench.Client
                                     stopWatch.Stop();
                                     Volatile.Write(ref slowDown, true);
                                     _logger.LogError(ex,
-                                        $"Failed to start {Volatile.Read(ref count)+1} client.,fail Time cost:{stopWatch.ElapsedMilliseconds}");
+                                        $"Failed to start {Volatile.Read(ref count)} client.,fail Time cost:{stopWatch.ElapsedMilliseconds}");
                                 }
                             }
                         }));
@@ -191,15 +207,19 @@ namespace Azure.SignalRBench.Client
 
         public void ScheduleReportedStatus(CancellationToken cancellationToken)
         {
-            Task.Run(async () =>
+            if (Interlocked.CompareExchange(ref startReport, 0, 1) == 1)
             {
-                while (true)
+                Task.Run(async () =>
                 {
-                    await Task.Delay(1000, cancellationToken);
-                   // _logger.LogInformation("reportClientStatus");
-                    await _messageClientHolder.Client.ReportClientStatusAsync(_context.ClientStatus());
-                }
-            });
+                    while (true)
+                    {
+                        await Task.Delay(1000, cancellationToken);
+                        // _logger.LogInformation("reportClientStatus");
+                        await _messageClientHolder.Client.ReportClientStatusAsync(_context.ClientStatus());
+                    }
+                });   
+            }
+          
         }
     }
 }

@@ -40,6 +40,8 @@ spec:
               value: redis-master
             - name: msiAppId
               value: MSI_PLACE_HOLDER
+            - name: storage
+              value: STORAGE_PLACE_HOLDER
       volumes:
         - name: volume
           azureFile:

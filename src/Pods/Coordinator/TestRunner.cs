@@ -107,34 +107,35 @@ namespace Azure.SignalRBench.Coordinator
             using var messageClient = await MessageClient.ConnectAsync(RedisConnectionString, Job.TestId, PodName);
             await messageClient.WithHandlers(MessageHandler.CreateCommandHandler(Roles.Coordinator,
                 Commands.Coordinator.ReportClientStatus, CollectClientStatus));
-            var scheduleCts=new CancellationTokenSource();
+            CancellationTokenSource? scheduleCts = null;
             try
             {
                 var asrsConnectionStrings = await asrsConnectionStringsTask;
                 await UpdateTestStatus("Creating pods");
                 await CreatePodsAsync(asrsConnectionStrings, clientAgentCount, clientPodCount, serverPodCount,
                     messageClient, cancellationToken);
-                await UpdateTestStatus("Starting client connections");
-               
+        //        await UpdateTestStatus("Starting client connections");
                 int i = 0;
                 foreach (var round in Job.ScenarioSetting.Rounds)
                 {
                     i++;
-                    await UpdateTestStatus($"Testing Round {i}");
-                    _=ScheduleStateUpdate(scheduleCts.Token);
+                    await UpdateTestStatus($"Round {i}: Connecting");
                     var totalConnectionThisRound = GetTotalConnectionCurrentRound(i);
+                    scheduleCts=new CancellationTokenSource();
+                    _=ScheduleStateUpdate(i,totalConnectionThisRound,scheduleCts.Token);
                     await SetClientRange(totalConnectionThisRound, clientPodCount, messageClient, cancellationToken);
-                    await StartClientConnectionsAsync(messageClient, cancellationToken);
+                    await StartClientConnectionsAsync(totalConnectionThisRound,messageClient, cancellationToken);
                     scheduleCts.Cancel();
                     await Task.Delay(2000);
                     _clientStatus.Clear();
                     await SetScenarioAsync(messageClient, round, cancellationToken);
+                    await UpdateTestStatus($"Round {i}: Testing");
                     await StartScenarioAsync(messageClient, cancellationToken);
                     await Task.Delay(TimeSpan.FromSeconds(round.DurationInSeconds), cancellationToken);
                     await StopScenarioAsync(messageClient, cancellationToken);
                     //wait for the last message to come back
                     await Task.Delay(5000);
-                    await UpdateTestReports(round);
+                    await UpdateTestReports(round,totalConnectionThisRound);
                 }
 
                 await UpdateTestStatus($"Stopping client connections");
@@ -147,7 +148,7 @@ namespace Azure.SignalRBench.Coordinator
             }
             finally
             {
-                if(!scheduleCts.IsCancellationRequested)
+                if(scheduleCts!=null&&!scheduleCts.IsCancellationRequested)
                   scheduleCts.Cancel();
                 _timer.Stop();
                 try
@@ -174,7 +175,7 @@ namespace Azure.SignalRBench.Coordinator
 
         public int GetTotalConnectionCurrentRound(int i)
         {
-           int min= Job.ScenarioSetting.Rounds[i].ClientSettings[0].Count;
+           int min= Job.ScenarioSetting.Rounds[i-1].ClientSettings[0].Count;
            double percent = 1;
            if (i < Job.ScenarioSetting.TotalConnectionRound)
            {
@@ -185,7 +186,7 @@ namespace Azure.SignalRBench.Coordinator
            return totalThisRound < min ? min : totalThisRound;
         }
         
-        public async Task ScheduleStateUpdate(CancellationToken ctx)
+        public async Task ScheduleStateUpdate(int i,int totalConnectionThisRound,CancellationToken ctx)
         {
             _logger.LogInformation("Start to record client connection status...");
             while (!ctx.IsCancellationRequested)
@@ -199,16 +200,20 @@ namespace Azure.SignalRBench.Coordinator
                 var totalReconnectedCount = _clientStatus.Select(p => p.Value.TotalReconnectCount).Sum();
                 _logger.LogInformation($"\n [Total] reported client count:[ {_clientStatus.Count} ], Reconnected:{totalReconnectedCount} , Reconnecting:{totalReconnectiong}, connected:{_totalConnected}");
                 _logger.LogInformation("Total connected:"+_totalConnected+"\n");
-                await UpdateTestStatus($"Connected:{_totalConnected}/{this.Job.ScenarioSetting.TotalConnectionCount}");
-                if (_totalConnected == Job.ScenarioSetting.TotalConnectionCount)
+                await UpdateTestStatus($"Round {i}: Connected:{_totalConnected}/{totalConnectionThisRound}");
+                if (_totalConnected == totalConnectionThisRound)
                 {
                     _logger.LogInformation("All connections established");
                     return;
                 }
+                else if(_totalConnected>totalConnectionThisRound)
+                {
+                    _logger.LogError($"{_totalConnected} is bigger than {totalConnectionThisRound}");
+                }
                 await Task.Delay(2000);
             }
         }
-        private async Task UpdateTestStatus(string currentStatus, bool healthy = true,Exception? e=default)
+        public async Task UpdateTestStatus(string currentStatus, bool healthy = true,Exception? e=default)
         {
             var sec=_timer.ElapsedMilliseconds / 1000;
             _testStatusEntity.Status = currentStatus+" ["+sec+"sec]";
@@ -227,7 +232,7 @@ namespace Azure.SignalRBench.Coordinator
             await _testStatusAccessor.UpdateAsync(_testStatusEntity);
         }
 
-        private async Task UpdateTestReports(RoundSetting round)
+        private async Task UpdateTestReports(RoundSetting round,int totalConnectionsThisRound)
         {
             var roundStatus = new RoundStatus()
             {
@@ -238,7 +243,8 @@ namespace Azure.SignalRBench.Coordinator
                 ReconnectingCount = 0,
                 TotalReconnectCount = 0,
                 //for now, there is only one clientsetting in one round
-                ActiveConnection = round.ClientSettings[0].Count
+                ActiveConnection = round.ClientSettings[0].Count,
+                RoundConnected = totalConnectionsThisRound
             };
             foreach (var v in _clientStatus.Values)
             {
@@ -368,22 +374,22 @@ namespace Azure.SignalRBench.Coordinator
         {
             int clientReadyCount = 0;
             var countPerPod = clientAgentCount / clientPodCount;
-            int count = 0;
-            foreach (var p in _clients)
+            var keys=new List<string>(_clients.Keys);
+            foreach (var k in keys)
             {
-                count++;
-                    if (count < clientPodCount)
+                clientReadyCount++;
+                    if (clientReadyCount < clientPodCount)
                     {
-                        _clients[p.Key] =
+                        _clients[k] =
                             new SetClientRangeParameters
                             {
                                 StartId = (clientReadyCount - 1) * countPerPod,
                                 Count = countPerPod,
                             };
                     }
-                    else if (count == clientPodCount)
+                    else if (clientReadyCount == clientPodCount)
                     {
-                        _clients[p.Key] =
+                        _clients[k] =
                             new SetClientRangeParameters
                             {
                                 StartId = (clientReadyCount - 1) * countPerPod,
@@ -435,7 +441,7 @@ namespace Azure.SignalRBench.Coordinator
            
         }
 
-        private async Task StartClientConnectionsAsync(
+        private async Task StartClientConnectionsAsync(int totalConnectionThisRound,
             MessageClient messageClient,
             CancellationToken cancellationToken)
         {
@@ -447,7 +453,7 @@ namespace Azure.SignalRBench.Coordinator
                 new StartClientConnectionsParameters
                 {
                     ClientLifetime = Job.ScenarioSetting.ClientLifetime,
-                    TotalCount = Job.ScenarioSetting.TotalConnectionCount,
+                    TotalCount = totalConnectionThisRound,
                     GroupDefinitions = Job.ScenarioSetting.GroupDefinitions,
                     IsAnonymous = Job.ScenarioSetting.IsAnonymous,
                     Protocol = Job.ScenarioSetting.Protocol,

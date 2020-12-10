@@ -113,6 +113,7 @@ export class TestStatus extends Component {
                 <thead>
                     <tr>
                         <th>Round</th>
+                        <th>Connected</th>
                         <th>Active</th>
                         <th>Send</th>
                         <th>Receive</th>
@@ -133,6 +134,7 @@ export class TestStatus extends Component {
                         report.map((v,i)=>{
                             return <tr key={i}> 
                             <td>{i+1}</td>
+                            <td>{v.ConnectedCount}/{v.RoundConnected}</td>
                             <th>{v.ActiveConnection}</th>
                             <td>{v.MessageSent}</td>
                             <td>{v.MessageRecieved}</td>

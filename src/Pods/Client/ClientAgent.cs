@@ -19,6 +19,8 @@ namespace Azure.SignalRBench.Client
 
         public string[] Groups { get; } = Array.Empty<string>();
 
+        
+        //todo: implement group and userName
         public ClientAgent(string url, SignalRProtocol protocol, string? userName, string[] groups,
             ClientAgentContext context)
         {
@@ -32,7 +34,7 @@ namespace Azure.SignalRBench.Client
                         o.DefaultTransferFormat = (TransferFormat) ((int) protocol >> 4);
                         if (userName != null)
                         {
-                            o.Headers.Add("user", userName);
+                           // o.Headers.Add("user", userName);
                         }
                     }
                 )

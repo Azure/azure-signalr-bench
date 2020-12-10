@@ -12,6 +12,8 @@ namespace Azure.SignalRBench.Coordinator.Entities
         public string? User { get; set; }
         public int ClientCons { get; set; } = 3000;
 
+        public int ConnectEstablishRoundNum { get; set; } = 1;
+
         public string? ConnectionString { get; set; } 
         public int SignalRUnitSize { get; set; }
 
@@ -44,6 +46,10 @@ namespace Azure.SignalRBench.Coordinator.Entities
             Start = Start > ClientCons ? ClientCons : Start;
             End = End > ClientCons ? ClientCons : End;
             End = End <Start ? Start : End;
+            if (ConnectEstablishRoundNum < 1)
+                ConnectEstablishRoundNum = 1;
+            if (ConnectEstablishRoundNum > RoundNum)
+                ConnectEstablishRoundNum = RoundNum;
             if (ClientNum <= 0)
             {
                 ClientNum = (int) Math.Ceiling((double) ClientCons / PerfConstants.Number.ConnectionsPerClient);
@@ -99,6 +105,7 @@ namespace Azure.SignalRBench.Coordinator.Entities
                 ScenarioSetting = new ScenarioSetting()
                 {
                     TotalConnectionCount = ClientCons,
+                    TotalConnectionRound = 3,
                     Rounds = roundsettings.ToArray(),
                     IsAnonymous = true,
                     Protocol =Enum.TryParse(Protocol,out  SignalRProtocol protocol)?protocol:throw new Exception($"Unknown Protocol {Protocol}"),

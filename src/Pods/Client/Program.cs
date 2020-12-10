@@ -25,7 +25,7 @@ namespace Azure.SignalRBench.Client
                     {
                         options.IncludeScopes = true;
                         options.DisableColors = false;
-                        options.TimestampFormat = "hh:mm:ss ";
+                        options.TimestampFormat = "hh:mm:ss yyyy/MM/dd";
                     });
                     logging.AddProvider(
                         new BlobLoggerProvider(

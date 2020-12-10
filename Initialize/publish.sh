@@ -107,7 +107,8 @@ fi
 if [[ $ALL || $COORDINATOR ]]; then
   publish Coordinator
   cd $DIR/yaml/coordinator
-  cat coordinator.yaml | replace KVURL_PLACE_HOLDER $KVURL | replace MSI_PLACE_HOLDER $AGENTPOOL_MSI_CLIENT_ID | kubectl apply -f -
+  access_key=$(az storage account show-connection-string -n $STORAGE_ACCOUNT --query connectionString  -o tsv)
+  cat coordinator.yaml | replace KVURL_PLACE_HOLDER $KVURL | replace MSI_PLACE_HOLDER $AGENTPOOL_MSI_CLIENT_ID | replace STORAGE_PLACE_HOLDER $access_key | kubectl apply -f -
 fi
 
 if [[ $ALL || $COMPILER ]]; then
@@ -129,8 +130,8 @@ if [[ $ALL || $REDIS ]]; then
   cd $DIR/yaml/redis
   PORTAL_IP=$(az network public-ip show -n $PORTAL_IP_NAME -g $RESOURCE_GROUP --query "ipAddress" -o tsv)
   kubectl apply -f redis-master-deployment.yaml
-  kubectl apply -f redis-master-service.yaml
-  # cat redis-master-test.yaml | replace RESOURCE_GROUP_PLACE_HOLDER $RESOURCE_GROUP  | kubectl apply -f -
+ # kubectl apply -f redis-master-service.yaml
+   cat redis-master-test.yaml | replace RESOURCE_GROUP_PLACE_HOLDER $RESOURCE_GROUP  | kubectl apply -f -
   echo "redis dns inside cluster: redis-master "
 fi
 
