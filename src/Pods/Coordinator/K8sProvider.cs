@@ -72,6 +72,10 @@ namespace Azure.SignalRBench.Coordinator
                     Labels = new Dictionary<string, string>()
                     {
                         [PerfConstants.ConfigurationKeys.TestIdKey] = testId
+                    },
+                    Annotations = new Dictionary<string, string>()
+                    {
+                        ["cluster-autoscaler.kubernetes.io/safe-to-evict"]="false"
                     }
                 },
                 Spec = new V1DeploymentSpec
@@ -171,6 +175,10 @@ namespace Azure.SignalRBench.Coordinator
                     Labels = new Dictionary<string, string>()
                     {
                         [PerfConstants.ConfigurationKeys.TestIdKey] = testId
+                    },
+                    Annotations = new Dictionary<string, string>()
+                    {
+                        ["cluster-autoscaler.kubernetes.io/safe-to-evict"]="false"
                     }
                 },
                 Spec = new V1DeploymentSpec()
