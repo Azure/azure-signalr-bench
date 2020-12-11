@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 
@@ -9,9 +10,54 @@ using Microsoft.Azure.Cosmos.Table;
 
 namespace Azure.SignalRBench.Storage
 {
-    public static class TableQueryExtensions
+    internal static class QueryParser
     {
-        public static TableQuery<T> Where<T>(this TableQuery<T> query, Expression<Func<T, bool>> predicate)
+        public static TableQuery<T> Parse<T>(IQueryable<T> query)
+            where T : ITableEntity, new()
+        {
+            return Visit(query.Expression, new TableQuery<T>());
+        }
+
+        private static TableQuery<T> Visit<T>(Expression expression, TableQuery<T> query) where T : ITableEntity, new()
+        {
+            switch (expression)
+            {
+                case MethodCallExpression mce:
+                    if (mce.Method.DeclaringType == typeof(Queryable))
+                    {
+                        return HandleQueryableMethods(query, mce);
+                    }
+                    throw new NotSupportedException($"{mce.Method} is not supported.");
+                case ConstantExpression ce:
+                    if (ce.Value is EnumerableQuery<T>)
+                    {
+                        return new TableQuery<T>();
+                    }
+                    break;
+                default:
+                    break;
+            }
+
+            throw new NotSupportedException($"{expression.NodeType} is not supported.");
+        }
+
+        private static TableQuery<T> HandleQueryableMethods<T>(TableQuery<T> query, MethodCallExpression mce) where T : ITableEntity, new()
+        {
+            switch (mce.Method.Name)
+            {
+                case nameof(Queryable.Where):
+                    return ParseWhere(Visit(mce.Arguments[0], query), (Expression<Func<T, bool>>)((UnaryExpression)mce.Arguments[1]).Operand);
+                case nameof(Queryable.Take):
+                    query = Visit(mce.Arguments[0], query);
+                    query.Take(GetValue<int>(mce.Arguments[1]));
+                    return query;
+                default:
+                    throw new NotSupportedException($"Method not supported.");
+            }
+        }
+
+        private static TableQuery<T> ParseWhere<T>(TableQuery<T> query, Expression<Func<T, bool>> predicate)
+            where T : ITableEntity, new()
         {
             if (!(predicate.Body is BinaryExpression bin))
             {
@@ -127,9 +173,9 @@ namespace Azure.SignalRBench.Storage
             {
                 case ExpressionType.Convert:
                     var unary = (UnaryExpression)expression;
-                    if (unary.Type == typeof(ColumnValue))
+                    if (unary.Type == typeof(ComparableString))
                     {
-                        var cv = Expression.Lambda<Func<ColumnValue>>(expression).Compile(true).Invoke();
+                        var cv = Expression.Lambda<Func<ComparableString>>(expression).Compile(true).Invoke();
                         return (T)cv.Value;
                     }
                     goto case ExpressionType.MemberAccess;
