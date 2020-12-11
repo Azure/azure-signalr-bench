@@ -74,7 +74,7 @@ namespace Azure.SignalRBench.Coordinator
             _runningTasks = runningTasks;
             await foreach (var message in queue.Consume(TimeSpan.FromMinutes(30), cancellationToken))
             {
-                _logger.LogInformation("Recieve test job: {testId}.", message.Value.TestId);
+                _logger.LogInformation("Receive test job: {testId}.", message.Value.TestId);
                 var index = Array.FindIndex(runningTasks, t => t.IsCompleted);
                 runningTasks[index] = RunOneAsync(queue, message, index, cancellationToken);
                 await Task.WhenAny(runningTasks);

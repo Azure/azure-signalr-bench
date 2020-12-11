@@ -122,8 +122,8 @@ export class TestConfig extends Component {
     async handleSubmit() {
         console.log(this.state.obj)
         const testName=this.state.obj["rowKey"]
-        if(!(testName.match("[a-z0-9]([-a-z0-9]*[a-z0-9])?"))){
-            alert("invalid testName. Should be of format [a-z0-9]([-a-z0-9]*[a-z0-9])")
+        if(!(testName.match("^[a-z0-9]([-a-z0-9]*[a-z0-9])?$"))){
+            alert("invalid testName. Should be of format [a-z0-9]([-a-z0-9]*[a-z0-9]?)")
             return
         }
         const response = await fetch('testconfig', {
