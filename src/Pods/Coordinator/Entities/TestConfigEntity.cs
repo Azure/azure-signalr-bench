@@ -28,6 +28,8 @@ namespace Azure.SignalRBench.Coordinator.Entities
         public int RoundNum { get; set; } = 5;
 
         public int End { get; set; } =-1;
+
+        public int GroupSize { get; set; } = 100;
         
         public string Scenario { get; set; } = ClientBehavior.Echo.ToString();
 
@@ -73,6 +75,9 @@ namespace Azure.SignalRBench.Coordinator.Entities
             int current = Start;
             int step =RoundNum>1?(int)Math.Ceiling((double)(End - Start)/(RoundNum-1)):0;
             int count = current;
+            var Behavior = Enum.TryParse(Scenario, out ClientBehavior behavior)
+                ? behavior
+                : throw new Exception($"Unknown Scenario {Scenario}");
             for (int i = 0; i < RoundNum; i++)
             {
                 count = current > End ? End : current;
@@ -81,11 +86,11 @@ namespace Azure.SignalRBench.Coordinator.Entities
                     DurationInSeconds = RoundDurations,
                     ClientSettings = new []{new  ClientSetting()
                         {
-                            Behavior=Enum.TryParse(Scenario,out ClientBehavior behavior)?behavior:throw new Exception($"Unknown Scenario {Scenario}"),
+                            Behavior=Behavior,
                             IntervalInMilliseconds=Interval,
                             Count=count,
                             MessageSize=MessageSize,
-                            GroupFamily=null,
+                            GroupFamily="default",
                         }
                     }
                 });
@@ -110,6 +115,12 @@ namespace Azure.SignalRBench.Coordinator.Entities
                     IsAnonymous = true,
                     Protocol =Enum.TryParse(Protocol,out  SignalRProtocol protocol)?protocol:throw new Exception($"Unknown Protocol {Protocol}"),
                     Rate = Rate,
+                    GroupDefinitions = (Behavior==ClientBehavior.GroupBroadcast) ? new []{new GroupDefinition()
+                    {
+                        GroupFamily = "default",
+                        GroupCount = 0,
+                        GroupSize = GroupSize
+                    } }: Array.Empty<GroupDefinition>(),
                 },
                 PodSetting=new PodSetting()
                 {

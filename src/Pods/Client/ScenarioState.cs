@@ -18,13 +18,15 @@ namespace Azure.SignalRBench.Client
         private readonly ILoggerFactory _loggerFactory;
         private ScenarioBaseState _state;
         private ScenarioBaseState _save = null;
+        private int totalConnected = 0;
+        private int[] indexMap = new int[0];
 
         public ClientAgentContainer? ClientAgentContainer { get; set; }
 
         public ScenarioState(ILoggerFactory loggerFactory)
         {
             _loggerFactory = loggerFactory;
-            _state = new InitState(this);
+            _state = new RoundInitState(this);
         }
 
         public void SetClientRange(SetClientRangeParameters setClientRangeParameters) =>
@@ -88,18 +90,39 @@ namespace Azure.SignalRBench.Client
                 throw new InvalidScenarioStateException();
         }
 
-        private sealed class InitState : ScenarioBaseState
+        private sealed class RoundInitState : ScenarioBaseState
         {
-            public InitState(ScenarioState scenarioState)
+            private ILogger<RoundInitState> _logger;
+            public RoundInitState(ScenarioState scenarioState)
                 : base(scenarioState)
             {
+                _logger= GetLogger<RoundInitState>();
                 Save();
             }
 
             public override void SetClientRange(SetClientRangeParameters setClientRangeParameters)
             {
-                SetState(new ClientRangeReadyState(ScenarioState, setClientRangeParameters.StartId,
-                    setClientRangeParameters.Count));
+                var indexMapDelta=GenerateIndexMap(setClientRangeParameters.TotalCountDelta, setClientRangeParameters.StartIdTruncated, setClientRangeParameters.LocalCountDelta);
+                var tmp = new int[ScenarioState.indexMap.Length + indexMapDelta.Length];
+                for (int i = 0; i < ScenarioState.indexMap.Length; i++)
+                {
+                    tmp[i] = ScenarioState.indexMap[i];
+                }
+
+                int postion = ScenarioState.indexMap.Length;
+                for (int i = 0; i < indexMapDelta.Length; i++)
+                {
+                    tmp[postion + i] = indexMapDelta[i] + ScenarioState.totalConnected;
+                }
+                ScenarioState.indexMap = tmp;
+                int oldTotalConnected = ScenarioState.totalConnected;
+                ScenarioState.totalConnected += setClientRangeParameters.TotalCountDelta;
+                _logger.LogInformation($"Indexmap generated. Total connected:{ScenarioState.totalConnected}, localConnected:{ScenarioState.indexMap.Length}");
+                for (int i = 0; i < ScenarioState.indexMap.Length; i++)
+                {
+                    _logger.LogInformation($"{i}:{ScenarioState.indexMap[i]}");
+                }
+                SetState(new ClientRangeReadyState(ScenarioState,oldTotalConnected+ setClientRangeParameters.StartIdTruncated,ScenarioState.indexMap.Length));
             }
 
             public override async Task StopClientConnections(
@@ -107,7 +130,15 @@ namespace Azure.SignalRBench.Client
             {
                 if (ScenarioState.ClientAgentContainer != null)
                     await ScenarioState.ClientAgentContainer.StopAsync(stopClientConnectionsParameters.Rate);
-                SetState(new InitState(ScenarioState));
+                SetState(new RoundInitState(ScenarioState));
+            }
+            
+            private static int[] GenerateIndexMap(int total, int startIndex, int count)
+            {
+                var rand = new Random(total);
+                return (from id in Enumerable.Range(0, total)
+                    orderby rand.Next()
+                    select id).Skip(startIndex).Take(count).ToArray();
             }
         }
 
@@ -131,40 +162,36 @@ namespace Azure.SignalRBench.Client
             public override async Task StartClientConnections(MessageClientHolder messageClientHolder,
                 StartClientConnectionsParameters p)
             {
-                var indexMap = GenerateIndexMap(p.TotalCount, StartId, LocalCount);
-                _logger.LogInformation("Indexmap generated.");
+               // var indexMap = GenerateIndexMap(p.TotalCount, StartId, LocalCount);
+               try
+               {
                 int continueIndex = 0;
+                _logger.LogInformation($"StartId:{StartId},LocalCount:{LocalCount}");
                 if (ScenarioState.ClientAgentContainer == null)
                 {
                     ScenarioState.ClientAgentContainer = new ClientAgentContainer(
                         messageClientHolder,
-                        StartId,
-                        LocalCount,
                         p.Protocol,
                         p.IsAnonymous,
                         p.Url,
                         p.ClientLifetime,
-                        GetGroupsFunc(p.TotalCount, indexMap, p.GroupDefinitions),
                         GetLogger<ClientAgentContainer>());
                 }
-                else
-                {
-                    continueIndex = ScenarioState.ClientAgentContainer.ExpandConnections(StartId, LocalCount);
-                }
+                //dirty logic , reset group count
+             
+                continueIndex = ScenarioState.ClientAgentContainer.ExpandConnections(StartId, LocalCount,GetGroupsFunc(ScenarioState.totalConnected,ScenarioState.indexMap,p.GroupDefinitions));
+                _logger.LogInformation($"continueIndex:{continueIndex}");
 
-                await ScenarioState.ClientAgentContainer.StartAsync(p.Rate, default, continueIndex);
+                await ScenarioState.ClientAgentContainer.StartAsync(continueIndex,p.Rate, default);
                 _logger.LogInformation("Connections started.");
-                SetState(new ClientsReadyState(ScenarioState, p.TotalCount, indexMap, p.GroupDefinitions,
+                SetState(new ClientsReadyState(ScenarioState, p.GroupDefinitions,
                     ScenarioState.ClientAgentContainer));
-                return;
-            }
-
-            private static int[] GenerateIndexMap(int total, int startIndex, int count)
-            {
-                var rand = new Random(total);
-                return (from id in Enumerable.Range(0, total)
-                    orderby rand.Next()
-                    select id).Skip(startIndex).Take(count).ToArray();
+               }
+               catch (Exception e)
+               {
+                   Console.WriteLine(e);
+                   throw;
+               }
             }
 
             private Func<int, string[]> GetGroupsFunc(int total, int[] indexMap, GroupDefinition[] groupDefinitions)
@@ -181,23 +208,23 @@ namespace Azure.SignalRBench.Client
                     var current = 0;
                     foreach (var gd in groupDefinitions)
                     {
-                        for (int gi = 0; gi < gd.GroupCount; gi++)
+                        for (int gi = 0; gi <gd.GroupCount; gi++)
                         {
-                            if (IsInGroup(mapId, current, gd.GroupSize, total))
+                            if (IsInGroup(mapId, current, gd.GroupSize))
                             {
                                 result.Add(gd.GroupFamily + "_" + gi.ToString());
                             }
 
                             current += gd.GroupSize;
-                            current %= total;
+                         //   current %= total;
                         }
                     }
-
+                    _logger.LogInformation($"mapId:{mapId} is in group {result[0]}");
                     return result.ToArray();
                 };
             }
 
-            private static bool IsInGroup(int index, int start, int size, int total)
+            private static bool IsInGroup(int index, int start, int size)
             {
                 int end = start + size;
                 if (index >= start && index < end)
@@ -205,10 +232,10 @@ namespace Azure.SignalRBench.Client
                     return true;
                 }
 
-                if (end >= total)
-                {
-                    return index + total < end;
-                }
+                // if (end >= total)
+                // {
+                //     return index + total < end;
+                // }
 
                 return false;
             }
@@ -216,20 +243,15 @@ namespace Azure.SignalRBench.Client
 
         private sealed class ClientsReadyState : ScenarioBaseState
         {
-            public int TotalConnectionCount { get; }
-
-            public int[] IndexMap { get; }
 
             public GroupDefinition[] GroupDefinitions { get; }
 
             public ClientAgentContainer ClientAgentContainer { get; }
 
-            public ClientsReadyState(ScenarioState scenarioState, int totalConnectionCount, int[] indexMap,
+            public ClientsReadyState(ScenarioState scenarioState, 
                 GroupDefinition[] groupDefinitions, ClientAgentContainer clientAgentContainer)
                 : base(scenarioState)
             {
-                TotalConnectionCount = totalConnectionCount;
-                IndexMap = indexMap;
                 GroupDefinitions = groupDefinitions;
                 ClientAgentContainer = clientAgentContainer;
             }
@@ -242,22 +264,20 @@ namespace Azure.SignalRBench.Client
                     .Concat(broadcastList.Select(x => x.Count))
                     .Concat(groupBroadcastList.Select(x => x.Count));
                 var max = counts.Max();
-                if (listen > TotalConnectionCount - max)
+                if (listen > ScenarioState.totalConnected - max)
                 {
-                    listen = TotalConnectionCount - max;
+                    listen = ScenarioState.totalConnected - max;
                 }
 
                 var sum = counts.Sum();
-                if (listen < TotalConnectionCount - sum)
+                if (listen < ScenarioState.totalConnected - sum)
                 {
-                    listen = TotalConnectionCount - sum;
+                    listen = ScenarioState.totalConnected - sum;
                 }
 
                 SetState(
                     new ScenarioReadyState(
                         ScenarioState,
-                        TotalConnectionCount,
-                        IndexMap,
                         ClientAgentContainer,
                         CreateSettings(listen, echoList, broadcastList, groupBroadcastList)));
             }
@@ -318,7 +338,7 @@ namespace Azure.SignalRBench.Client
                 List<GroupClientBehaviorDetailDefinition> groupBroadcastList)
             {
                 var result = new ClientAgentBehaviorSettings(listen);
-                int nonListen = TotalConnectionCount - listen;
+                int nonListen = ScenarioState.totalConnected - listen;
                 int current = 0;
                 current = AddBehavior(
                     echoList,
@@ -329,7 +349,7 @@ namespace Azure.SignalRBench.Client
                     broadcastList,
                     nonListen,
                     current,
-                    (s, e, item) => result.AddBroadcast(s, e, item.MessageSize, TotalConnectionCount, item.Interval));
+                    (s, e, item) => result.AddBroadcast(s, e, item.MessageSize, ScenarioState.totalConnected, item.Interval));
                 current = AddBehavior(
                     groupBroadcastList,
                     nonListen,
@@ -384,19 +404,14 @@ namespace Azure.SignalRBench.Client
 
         private sealed class ScenarioReadyState : ScenarioBaseState
         {
-            public ScenarioReadyState(ScenarioState scenarioState, int totalConnectionCount, int[] indexMap,
+            public ScenarioReadyState(ScenarioState scenarioState,
                 ClientAgentContainer clientAgentContainer, ClientAgentBehaviorSettings settings)
                 : base(scenarioState)
             {
-                TotalConnectionCount = totalConnectionCount;
-                IndexMap = indexMap;
                 ClientAgentContainer = clientAgentContainer;
                 Settings = settings;
             }
 
-            public int TotalConnectionCount { get; }
-
-            public int[] IndexMap { get; }
 
             public ClientAgentContainer ClientAgentContainer { get; }
 
@@ -406,8 +421,8 @@ namespace Azure.SignalRBench.Client
             {
                 var cts = new CancellationTokenSource();
                 ClientAgentContainer.StartScenario(
-                    index => Settings.GetClientAgentBehavior(IndexMap[index], GetLogger<ClientAgent>()), cts.Token);
-                SetState(new RunningState(ScenarioState, TotalConnectionCount, IndexMap, ClientAgentContainer, Settings,
+                    index => Settings.GetClientAgentBehavior(ScenarioState.indexMap[index], GetLogger<ClientAgent>()), cts.Token);
+                SetState(new RunningState(ScenarioState, ClientAgentContainer, Settings,
                     cts));
             }
         }
@@ -416,25 +431,17 @@ namespace Azure.SignalRBench.Client
         {
             public RunningState(
                 ScenarioState scenarioState,
-                int totalConnectionCount,
-                int[] indexMap,
                 ClientAgentContainer clientAgentContainer,
                 ClientAgentBehaviorSettings settings,
                 CancellationTokenSource cts)
                 : base(scenarioState)
             {
-                TotalConnectionCount = totalConnectionCount;
-                IndexMap = indexMap;
                 ClientAgentContainer = clientAgentContainer;
                 Settings = settings;
                 Cts = cts;
             }
 
-            public int TotalConnectionCount { get; }
-
             public ClientAgentContainer ClientAgentContainer { get; }
-
-            public int[] IndexMap { get; }
 
             public ClientAgentBehaviorSettings Settings { get; }
 

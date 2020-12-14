@@ -17,31 +17,27 @@ namespace Azure.SignalRBench.Client
     {
         private readonly ClientAgentContext _context = new ClientAgentContext();
         private readonly MessageClientHolder _messageClientHolder;
-        private  ClientAgent[] _clients;
+        private ClientAgent[] _clients = new ClientAgent[0];
         private readonly ILogger<ClientAgentContainer> _logger;
         private bool slowDown = false;
         private int startReport = 1;
 
         public ClientAgentContainer(
             MessageClientHolder messageClientHolder,
-            int startId,
-            int localCount,
             SignalRProtocol protocol,
             bool isAnonymous,
             string url,
             ClientLifetimeDefinition lifetimeDefinition,
-            Func<int, string[]> groupFunc,
             ILogger<ClientAgentContainer> logger)
         {
             _messageClientHolder = messageClientHolder;
-            StartId = startId;
             //try to resolve service url
             try
             {
-                var ips=Dns.GetHostAddresses(url);
+                var ips = Dns.GetHostAddresses(url);
                 Console.WriteLine(($"ip count:{ips.Length}"));
                 Console.WriteLine($"url is set to:{ips[0].ToString()}");
-                Url ="http://"+ ips[0].ToString()+"/";
+                Url = "http://" + ips[0].ToString() + "/";
             }
             catch (Exception e)
             {
@@ -49,12 +45,11 @@ namespace Azure.SignalRBench.Client
                 Console.WriteLine(e);
                 throw;
             }
+
             Protocol = protocol;
             IsAnonymous = isAnonymous;
             LifetimeDefinition = lifetimeDefinition;
-            GroupFunc = groupFunc;
             _logger = logger;
-            _clients = new ClientAgent[localCount];
         }
 
         public int StartId { get; set; }
@@ -69,87 +64,92 @@ namespace Azure.SignalRBench.Client
 
         public Func<int, string[]> GroupFunc { get; set; }
 
-        public int ExpandConnections(int startId, int localCount)
+        public int ExpandConnections(int startId, int localCount,Func<int,string[]> groupFunc)
         {
             StartId = startId;
-            var tmp=new ClientAgent[localCount];
+            var tmp = new ClientAgent[localCount];
             for (int i = 0; i < _clients.Length; i++)
             {
                 tmp[i] = _clients[i];
             }
-
             int continueIndex = _clients.Length;
             _clients = tmp;
+            GroupFunc = groupFunc;
             return continueIndex;
         }
-        
-        public async Task StartAsync(double rate, CancellationToken cancellationToken,int continueIndex=0)
+
+        public async Task StartAsync(int continueIndex, double rate, CancellationToken cancellationToken)
         {
             for (int i = continueIndex; i < _clients.Length; i++)
             {
                 _clients[i] = new ClientAgent(Url, Protocol, IsAnonymous ? null : $"user{StartId + i}", GroupFunc(i),
                     _context);
             }
+
             ScheduleReportedStatus(cancellationToken);
             using var cts = new CancellationTokenSource();
             using var linkSource = CancellationTokenSource.CreateLinkedTokenSource(cts.Token, cancellationToken);
-                using var semaphore = GetRateControlSemaphore(rate, linkSource.Token);
-                var count = continueIndex;
-                try
-                {
-                    await Task.WhenAll(
-                        _clients.Select(async (c,i) =>
+            using var semaphore = GetRateControlSemaphore(rate, linkSource.Token);
+            var index = continueIndex;
+            var count = continueIndex;
+            try
+            {
+                await Task.WhenAll(
+                    _clients.Select(async (c, i) =>
+                    {
+                        if (i < continueIndex)
+                            return;
+                        var current = Interlocked.Add(ref index, 1);
+                        await semaphore.WaitAsync(cancellationToken);
+                        while (!cancellationToken.IsCancellationRequested)
                         {
-                            if (i < continueIndex)
-                                return;
-                            var index= Interlocked.Add(ref count, 1);
-                            await semaphore.WaitAsync(cancellationToken);
-                            while (!cancellationToken.IsCancellationRequested)
+                            var stopWatch = new Stopwatch();
+                            stopWatch.Start();
+                            try
                             {
-                                var stopWatch = new Stopwatch();
-                                stopWatch.Start();
-                                try
-                                {
-                                    _logger.LogInformation($"{index} start to connect");
-                                    await c.StartAsync(cancellationToken);
-                                    stopWatch.Stop();
-                                    _logger.LogInformation($"{index} Connected. rate :{rate} Time cost:{stopWatch.ElapsedMilliseconds}");
-                                   
-                                    return;
-                                }
-                                catch (Exception ex)
-                                {
-                                    stopWatch.Stop();
-                                    Volatile.Write(ref slowDown, true);
-                                    _logger.LogError(ex,
-                                        $"Failed to start {Volatile.Read(ref count)} client.,fail Time cost:{stopWatch.ElapsedMilliseconds}");
-                                }
+                                _logger.LogInformation($"{current} start to connect");
+                                await c.StartAsync(cancellationToken);
+                                stopWatch.Stop();
+                                Interlocked.Add(ref count, 1);
+                                _logger.LogInformation(
+                                    $" Total {Volatile.Read(ref count)}, current {current} Connected. rate :{rate} Time cost:{stopWatch.ElapsedMilliseconds}");
+
+                                return;
                             }
-                        }));
-                }
-                catch (Exception e)
-                {
-                    _logger.LogError(e, "Start connections error");
-                }
-                finally
-                {
-                    cts.Cancel();
-                }
+                            catch (Exception ex)
+                            {
+                                stopWatch.Stop();
+                                Volatile.Write(ref slowDown, true);
+                                _logger.LogError(ex,
+                                    $"Failed to start {Volatile.Read(ref current)} client.,fail Time cost:{stopWatch.ElapsedMilliseconds}");
+                                return;
+                            }
+                        }
+                    }));
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "Start connections error");
+            }
+            finally
+            {
+                cts.Cancel();
+            }
         }
 
         public async Task StopAsync(double rate)
         {
             using var cts = new CancellationTokenSource();
-         //   using var semaphore = GetRateControlSemaphore(rate, cts.Token);
+            //   using var semaphore = GetRateControlSemaphore(rate, cts.Token);
             try
             {
                 _logger.LogInformation("Start stop connections");
                 await Task.WhenAll(
                     _clients.Select(async c =>
                     {
-                     //   await semaphore.WaitAsync();
+                        //   await semaphore.WaitAsync();
                         await c.StopAsync();
-                  //      _logger.LogInformation("Connection Stopped.");
+                        //      _logger.LogInformation("Connection Stopped.");
                     }));
                 _logger.LogInformation("All connections Stopped.");
             }
@@ -217,9 +217,8 @@ namespace Azure.SignalRBench.Client
                         // _logger.LogInformation("reportClientStatus");
                         await _messageClientHolder.Client.ReportClientStatusAsync(_context.ClientStatus());
                     }
-                });   
+                });
             }
-          
         }
     }
 }

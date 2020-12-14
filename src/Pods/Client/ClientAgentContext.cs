@@ -82,8 +82,13 @@ namespace Azure.SignalRBench.Client
         {
             if (hasGroups)
             {
+                Console.WriteLine($"has group {agent.Groups[0]} ");
                 _dict.AddOrUpdate(agent, ClientAgentStatus.Connected, (a, s) => ClientAgentStatus.JoiningGroups);
                 await agent.JoinGroupAsync();
+                Console.WriteLine($"joined group {agent.Groups[0]} ");
+                _dict.AddOrUpdate(agent, ClientAgentStatus.Connected, (a, s) => ClientAgentStatus.Connected);
+
+
             }
 
             _dict.AddOrUpdate(agent, ClientAgentStatus.Connected, (a, s) =>

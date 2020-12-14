@@ -25,6 +25,7 @@ namespace Azure.SignalRBench.Client
             ClientAgentContext context)
         {
             Context = context;
+            Groups = groups;
             _connection = new HubConnectionBuilder()
                 .WithUrl(
                     url + "signalrbench",
@@ -49,6 +50,12 @@ namespace Azure.SignalRBench.Client
         public async Task StartAsync(CancellationToken cancellationToken)
         {
             await _connection.StartAsync(cancellationToken);
+            Console.WriteLine($"group is  {Groups.Length>0}");
+            if (Groups.Length > 0)
+            {
+                Console.WriteLine($"group is  {Groups[0]}");
+  
+            }
             await Context.OnConnected(this, Groups.Length > 0);
         }
 
@@ -64,7 +71,7 @@ namespace Azure.SignalRBench.Client
             _connection.SendAsync("GroupBroadcast", group, DateTime.UtcNow.Ticks, payload);
 
         public Task JoinGroupAsync() =>
-            Task.WhenAll(_connection.SendAsync("JoinGroups", Groups));
+            Task.WhenAll(_connection.InvokeAsync("JoinGroups", Groups));
 
         private sealed class RetryPolicy : IRetryPolicy
         {

@@ -52,7 +52,8 @@ export class TestConfig extends Component {
             delete content["signalRUnitSize"]
         this.setState({
             showjson: true,
-            json: content
+            json: content,
+            group:false
         })
     }
     handleClose() {
@@ -72,6 +73,14 @@ export class TestConfig extends Component {
             }
             else
                 this.unitRef.current.disabled = false
+        }
+        if (e.target.name == "Scenario") {
+            if (e.target.value=="GroupBroadcast") {
+                this.setState({group:true})
+                console.log("group")
+            }else{
+                this.setState({group:false})
+            }
         }
         if (e.target.value == null || e.target.value == "") {
             delete this.state.obj[e.target.name]
@@ -238,8 +247,13 @@ export class TestConfig extends Component {
                                 <Form.Control name="Scenario" onChange={this.handleChange} as="select">
                                     <option>Echo</option>
                                     <option>Broadcast</option>
+                                    <option>GroupBroadcast</option>
                                 </Form.Control>
                             </Form.Group>
+                            {this.state.group && <Form.Group >
+                                <Form.Label>GroupSize</Form.Label>
+                                <Form.Control name="GroupSize" onChange={this.handleChangeNum} placeholder="set the test server number. (Default:100)" />
+                            </Form.Group>}
                             <Form.Group  >
                                 <Form.Label>Protocol</Form.Label>
                                 <Form.Control name="Protocol" onChange={this.handleChange} as="select">
