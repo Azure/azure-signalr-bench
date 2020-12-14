@@ -103,7 +103,8 @@ namespace Azure.SignalRBench.Coordinator
             _logger.LogInformation("Test job {testId}: Node count: {count}.", Job.TestId, nodeCount);
             var asrsConnectionStringsTask = PrepairAsrsInstancesAsync(cancellationToken);
             await UpdateTestStatus("Creating vms [SignalRs]");
-            await AksProvider.EnsureNodeCountAsync(NodePoolIndex, nodeCount, cancellationToken);
+            //leave this to autoscale. When ca is enabled, manual config won't work
+           // await AksProvider.EnsureNodeCountAsync(NodePoolIndex, nodeCount, cancellationToken);
             using var messageClient = await MessageClient.ConnectAsync(RedisConnectionString, Job.TestId, PodName);
             await messageClient.WithHandlers(MessageHandler.CreateCommandHandler(Roles.Coordinator,
                 Commands.Coordinator.ReportClientStatus, CollectClientStatus));
@@ -245,6 +246,7 @@ namespace Azure.SignalRBench.Coordinator
                 MessageSent = 0,
                 ReconnectingCount = 0,
                 TotalReconnectCount = 0,
+                ExpectedRecievedMessageCount = 0,
                 //for now, there is only one clientsetting in one round
                 ActiveConnection = round.ClientSettings[0].Count,
                 RoundConnected = totalConnectionsThisRound
@@ -256,6 +258,7 @@ namespace Azure.SignalRBench.Coordinator
                 roundStatus.MessageSent += v.MessageSent;
                 roundStatus.ReconnectingCount += v.ReconnectingCount;
                 roundStatus.TotalReconnectCount += v.TotalReconnectCount;
+                roundStatus.ExpectedRecievedMessageCount += v.ExpectedRecievedMessageCount;
                 foreach (var kv in v.Latency)
                 {
                     if (!roundStatus.Latency.ContainsKey(kv.Key))

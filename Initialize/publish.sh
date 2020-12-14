@@ -64,9 +64,12 @@ while [[ "$#" > 0 ]]; do
     ;;
    --autoscale)
     AUTOSCALE=true
-    NODEPOOL=$1
-    shift ;
     ;;
+  --updatepool)
+     UPDATEPOOL=true
+     NODEPOOL=$1
+     shift ;
+     ;;
   --all | -a)
     ALL=true
     ;;
@@ -112,7 +115,7 @@ fi
 if [[ $ALL || $COORDINATOR ]]; then
   publish Coordinator
   cd $DIR/yaml/coordinator
-  access_key=$(az storage account show-connection-string -n $STORAGE_ACCOUNT --query connectionString  -o tsv)
+  access_key=$(az storage account show-connection-string -n $STORAGE_ACCOUNT -g $RESOURCE_GROUP --query connectionString  -o tsv)
   cat coordinator.yaml | replace KVURL_PLACE_HOLDER $KVURL | replace MSI_PLACE_HOLDER $AGENTPOOL_MSI_CLIENT_ID | replace STORAGE_PLACE_HOLDER $access_key | kubectl apply -f -
 fi
 
@@ -140,23 +143,27 @@ if [[ $ALL || $REDIS ]]; then
   echo "redis dns inside cluster: redis-master "
 fi
 
+if [[ $ALL || $UPDATEPOOL ]]; then
+  az aks nodepool add \
+  --resource-group $RESOURCE_GROUP \
+ --cluster-name $KUBERNETES_SEVICES \
+ -n $NODEPOOL \
+ -c 0 || true
+
+  az aks nodepool update \
+  --resource-group $RESOURCE_GROUP \
+  --cluster-name $KUBERNETES_SEVICES \
+  -n $NODEPOOL \
+  --enable-cluster-autoscaler \
+  --min-count 0 \
+  --max-count 50
+fi
+ 
 if [[ $ALL || $AUTOSCALE ]]; then
-#   az aks nodepool add \
-#   --resource-group $RESOURCE_GROUP \
-#  --cluster-name $KUBERNETES_SEVICES \
-#  -n $NODEPOOL \
-#  -c 0 || true
-#  az aks nodepool update \
-#  --resource-group $RESOURCE_GROUP \
-#  --cluster-name $KUBERNETES_SEVICES \
-#  -n $NODEPOOL \
-#  --enable-cluster-autoscaler \
-#  --min-count 0 \
-#  --max-count 50
-  az aks  update \
+  az aks update \
   --resource-group $RESOURCE_GROUP \
   -n $KUBERNETES_SEVICES \
-   --cluster-autoscaler-profile  scale-down-delay-after-add=60m  scale-down-unneeded-time=60m scale-down-utilization-threshold=0.2
+  --cluster-autoscaler-profile  scale-down-delay-after-add=60m  scale-down-unneeded-time=60m scale-down-utilization-threshold=0.5 skip-nodes-with-system-pods=false new-pod-scale-up-delay=1s
 fi
 
 if [[ $ALL || $INGRESS ]]; then
