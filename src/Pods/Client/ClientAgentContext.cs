@@ -87,8 +87,6 @@ namespace Azure.SignalRBench.Client
                 await agent.JoinGroupAsync();
                 Console.WriteLine($"joined group {agent.Groups[0]} ");
                 _dict.AddOrUpdate(agent, ClientAgentStatus.Connected, (a, s) => ClientAgentStatus.Connected);
-
-
             }
 
             _dict.AddOrUpdate(agent, ClientAgentStatus.Connected, (a, s) =>
@@ -119,6 +117,7 @@ namespace Azure.SignalRBench.Client
                 ConnectedCount = ConnectedAgentCount,
                 ReconnectingCount = ReconnectingCount,
                 MessageRecieved = RecievedMessageCount,
+                ExpectedRecievedMessageCount = ExpectedRecievedMessageCount,
                 MessageSent = SentMessageCount,
                 Latency = GetLatency(),
             };

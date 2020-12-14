@@ -118,10 +118,6 @@ namespace Azure.SignalRBench.Client
                 int oldTotalConnected = ScenarioState.totalConnected;
                 ScenarioState.totalConnected += setClientRangeParameters.TotalCountDelta;
                 _logger.LogInformation($"Indexmap generated. Total connected:{ScenarioState.totalConnected}, localConnected:{ScenarioState.indexMap.Length}");
-                for (int i = 0; i < ScenarioState.indexMap.Length; i++)
-                {
-                    _logger.LogInformation($"{i}:{ScenarioState.indexMap[i]}");
-                }
                 SetState(new ClientRangeReadyState(ScenarioState,oldTotalConnected+ setClientRangeParameters.StartIdTruncated,ScenarioState.indexMap.Length));
             }
 
@@ -210,13 +206,13 @@ namespace Azure.SignalRBench.Client
                     {
                         for (int gi = 0; gi <gd.GroupCount; gi++)
                         {
-                            if (IsInGroup(mapId, current, gd.GroupSize))
+                            if (IsInGroup(total,mapId, current, gd.GroupSize))
                             {
                                 result.Add(gd.GroupFamily + "_" + gi.ToString());
                             }
 
                             current += gd.GroupSize;
-                         //   current %= total;
+                            current %= total;
                         }
                     }
                     _logger.LogInformation($"mapId:{mapId} is in group {result[0]}");
@@ -224,7 +220,7 @@ namespace Azure.SignalRBench.Client
                 };
             }
 
-            private static bool IsInGroup(int index, int start, int size)
+            private static bool IsInGroup(int total,int index, int start, int size)
             {
                 int end = start + size;
                 if (index >= start && index < end)
@@ -357,7 +353,7 @@ namespace Azure.SignalRBench.Client
                     (s, e, item) =>
                     {
                         var gd = GroupDefinitions.Single(g => g.GroupFamily == item.GroupFamily);
-                        result.AddGroup(
+                        result.AddGroup(ScenarioState.totalConnected,
                             s,
                             e,
                             item.MessageSize,

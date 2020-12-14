@@ -3,7 +3,6 @@
 
 using System;
 using System.Threading.Tasks;
-
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 
@@ -41,21 +40,19 @@ namespace Azure.SignalRBench.AppServer
             Clients.All.SendAsync("Measure", ticks, payload);
         }
 
-        public async Task JoinGroup(string group)
+        public async Task JoinGroups(string group)
         {
-          //  _logger.LogInformation("join groud {group}", group);
-            await Groups.AddToGroupAsync(Context.ConnectionId, group);
+                await Groups.AddToGroupAsync(Context.ConnectionId, group);
         }
 
-        public async Task LeaveGroup(string group)
+        public async Task LeaveGroups(string group)
         {
-         //   _logger.LogInformation("leave group {group}", group);
+            //   _logger.LogInformation("leave group {group}", group);
             await Groups.RemoveFromGroupAsync(Context.ConnectionId, group);
         }
 
         public void GroupBroadcast(string group, long ticks, string payload)
         {
-         //   _logger.LogInformation("group broadcast ,group {group} ,payload:{payload}",group, payload);
             Clients.Group(group).SendAsync("Measure", ticks, payload);
         }
     }

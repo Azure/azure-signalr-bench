@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Azure.SignalRBench.Common;
@@ -49,13 +50,8 @@ namespace Azure.SignalRBench.Client
 
         public async Task StartAsync(CancellationToken cancellationToken)
         {
-            await _connection.StartAsync(cancellationToken);
-            Console.WriteLine($"group is  {Groups.Length>0}");
-            if (Groups.Length > 0)
-            {
-                Console.WriteLine($"group is  {Groups[0]}");
-  
-            }
+            if(_connection.State == HubConnectionState.Disconnected)
+                  await _connection.StartAsync(cancellationToken);
             await Context.OnConnected(this, Groups.Length > 0);
         }
 
@@ -70,8 +66,7 @@ namespace Azure.SignalRBench.Client
         public Task GroupBroadcastAsync(string group, string payload) =>
             _connection.SendAsync("GroupBroadcast", group, DateTime.UtcNow.Ticks, payload);
 
-        public Task JoinGroupAsync() =>
-            Task.WhenAll(_connection.InvokeAsync("JoinGroups", Groups));
+        public Task JoinGroupAsync() => Task.WhenAll(Groups.Select(g => _connection.InvokeAsync("JoinGroups", g)));
 
         private sealed class RetryPolicy : IRetryPolicy
         {

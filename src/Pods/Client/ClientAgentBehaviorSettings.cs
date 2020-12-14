@@ -32,9 +32,9 @@ namespace Azure.SignalRBench.Client
             _settings.Add(new BroadcastSetting(start, end, size, totalConnectionCount, interval));
         }
 
-        public void AddGroup(int start, int end, int size, string groupFamily, int groupCount, int groupSize, TimeSpan interval)
+        public void AddGroup(int totalConnectionCount, int start, int end, int size, string groupFamily, int groupCount, int groupSize, TimeSpan interval)
         {
-            _settings.Add(new GroupSetting(start, end, size, groupFamily, groupCount, groupSize, interval));
+            _settings.Add(new GroupSetting( totalConnectionCount, start, end, size, groupFamily, groupCount, groupSize, interval));
         }
 
         public Action<ClientAgent, CancellationToken> GetClientAgentBehavior(int index, ILogger<ClientAgent> logger)
@@ -145,15 +145,17 @@ namespace Azure.SignalRBench.Client
 
         private sealed class GroupSetting : ClientBehaviorSetting
         {
-            public GroupSetting(int start, int end, int size, string groupFamily, int groupCount, int groupSize, TimeSpan interval)
+            public GroupSetting(int totalConnectionCount, int start, int end, int size, string groupFamily, int groupCount, int groupSize, TimeSpan interval)
               : base(start, end, size)
             {
+                TotalConnectionCount = totalConnectionCount;
                 GroupFamily = groupFamily;
                 GroupCount = groupCount;
                 GroupSize = groupSize;
                 Interval = interval;
             }
 
+            public int TotalConnectionCount;
             public string GroupFamily { get; }
 
             public int GroupCount { get; }
@@ -168,10 +170,16 @@ namespace Azure.SignalRBench.Client
                 while (!cancellationToken.IsCancellationRequested)
                 {
                     int groupIndex = StaticRandom.Next(GroupCount);
+                    var expectedMessageDelta = GroupSize;
+                    if (groupIndex == GroupCount - 1)
+                    {
+                        var tmp = TotalConnectionCount % GroupSize;
+                        expectedMessageDelta = tmp==0?GroupSize:tmp;
+                    }
                     try
                     {
                         await clientAgent.GroupBroadcastAsync(GroupFamily + "_" + groupIndex, Payload);
-                        clientAgent.Context.IncreaseMessageSent(GroupSize);
+                        clientAgent.Context.IncreaseMessageSent(expectedMessageDelta);
                     }
                     catch (Exception ex)
                     {
