@@ -18,7 +18,7 @@ export class Home extends Component {
     return (
       <div>
         <h1>SignalR Perf V2</h1>
-        <p>Welcome to use perf , Here are some useful links:</p>
+        <p>Welcome to use perf. Here are some useful links:</p>
         <ul>
           <li><a href='/k8s/' target="_blank">K8s Dashboard</a> to check client and server details</li>
         </ul>
