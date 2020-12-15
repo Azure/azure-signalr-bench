@@ -62,6 +62,9 @@ while [[ "$#" > 0 ]]; do
   --ingress)
     INGRESS=true
     ;;
+  --localdns)
+    LOCALDNS=true
+    ;;
    --autoscale)
     AUTOSCALE=true
     ;;
@@ -131,6 +134,11 @@ fi
 
 if [[ $ALL || $CLIENT ]]; then
   publish Client
+fi
+
+if [[ $ALL || $LOCALDNS ]]; then
+  cd $DIR/yaml/dns
+  kubectl apply -f  node-local-dns.yaml
 fi
 
 if [[ $ALL || $REDIS ]]; then
