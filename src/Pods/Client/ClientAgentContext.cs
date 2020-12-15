@@ -8,6 +8,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Azure.SignalRBench.Common;
+using Azure.SignalRBench.Messages;
 
 namespace Azure.SignalRBench.Client
 {
@@ -21,6 +22,12 @@ namespace Azure.SignalRBench.Client
         private int _expectedRecievedMessageCount;
         private int _sentMessageCount;
         private int _totalReconnectedCount;
+        private MessageClient _MessageClient;
+
+        public ClientAgentContext(MessageClient messageClient)
+        {
+            _MessageClient = messageClient;
+        }
 
         public int TotalReconnectedCount => Volatile.Read(ref _totalReconnectedCount);
 
@@ -34,6 +41,16 @@ namespace Azure.SignalRBench.Client
 
         public int ConnectedAgentCount => _dict.Count(p => p.Value == ClientAgentStatus.Connected);
 
+        public async Task<string> GetConnectionIDAsync(int index)
+        {
+           return await  _MessageClient.GetAsync(index.ToString());
+        }
+        
+        public async Task SetConnectionIDAsync(int index,string connectionId,TimeSpan expire)
+        {
+             await  _MessageClient.SetAsync(index.ToString(),connectionId,expire);
+        }
+        
         public void Measure(long ticks, string payload)
         {
             Interlocked.Increment(ref _recievedMessageCount);
@@ -82,13 +99,11 @@ namespace Azure.SignalRBench.Client
         {
             if (hasGroups)
             {
-                Console.WriteLine($"has group {agent.Groups[0]} ");
                 _dict.AddOrUpdate(agent, ClientAgentStatus.Connected, (a, s) => ClientAgentStatus.JoiningGroups);
                 await agent.JoinGroupAsync();
-                Console.WriteLine($"joined group {agent.Groups[0]} ");
                 _dict.AddOrUpdate(agent, ClientAgentStatus.Connected, (a, s) => ClientAgentStatus.Connected);
             }
-
+            await SetConnectionIDAsync(agent.GlobalIndex, agent.Connection.ConnectionId,TimeSpan.FromHours(1));
             _dict.AddOrUpdate(agent, ClientAgentStatus.Connected, (a, s) =>
             {
                 if (s == ClientAgentStatus.Reconnecting)

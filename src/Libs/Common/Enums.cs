@@ -42,6 +42,7 @@ namespace Azure.SignalRBench.Common
         Echo,
         Broadcast,
         GroupBroadcast,
+        P2P
     }
 
     [JsonConverter(typeof(StringEnumConverter))]

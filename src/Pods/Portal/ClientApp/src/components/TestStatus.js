@@ -100,7 +100,7 @@ export class TestStatus extends Component {
             if(scenario=="GroupBroadcast"){
                 label+=" [Size:"+groupSize+"]"
             }
-            + " }"
+            label+= " }"
         }
         return (
             <>

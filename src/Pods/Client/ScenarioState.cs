@@ -158,7 +158,6 @@ namespace Azure.SignalRBench.Client
             public override async Task StartClientConnections(MessageClientHolder messageClientHolder,
                 StartClientConnectionsParameters p)
             {
-               // var indexMap = GenerateIndexMap(p.TotalCount, StartId, LocalCount);
                try
                {
                 int continueIndex = 0;
@@ -173,9 +172,7 @@ namespace Azure.SignalRBench.Client
                         p.ClientLifetime,
                         GetLogger<ClientAgentContainer>());
                 }
-                //dirty logic , reset group count
-             
-                continueIndex = ScenarioState.ClientAgentContainer.ExpandConnections(StartId, LocalCount,GetGroupsFunc(ScenarioState.totalConnected,ScenarioState.indexMap,p.GroupDefinitions));
+                continueIndex = ScenarioState.ClientAgentContainer.ExpandConnections(StartId, LocalCount,ScenarioState.indexMap,GetGroupsFunc(ScenarioState.totalConnected,ScenarioState.indexMap,p.GroupDefinitions));
                 _logger.LogInformation($"continueIndex:{continueIndex}");
 
                 await ScenarioState.ClientAgentContainer.StartAsync(continueIndex,p.Rate, default);
@@ -254,9 +251,10 @@ namespace Azure.SignalRBench.Client
 
             public override void SetSenario(SetScenarioParameters setScenarioParameters)
             {
-                ParseParameters(setScenarioParameters, out var listen, out var echoList, out var broadcastList,
+                ParseParameters(setScenarioParameters, out var listen, out var echoList, out var p2pList,out var broadcastList,
                     out var groupBroadcastList);
                 var counts = echoList.Select(x => x.Count)
+                    .Concat(p2pList.Select(x => x.Count))
                     .Concat(broadcastList.Select(x => x.Count))
                     .Concat(groupBroadcastList.Select(x => x.Count));
                 var max = counts.Max();
@@ -275,7 +273,7 @@ namespace Azure.SignalRBench.Client
                     new ScenarioReadyState(
                         ScenarioState,
                         ClientAgentContainer,
-                        CreateSettings(listen, echoList, broadcastList, groupBroadcastList)));
+                        CreateSettings(listen, echoList, p2pList,broadcastList, groupBroadcastList)));
             }
 
 
@@ -283,11 +281,13 @@ namespace Azure.SignalRBench.Client
                 SetScenarioParameters setScenarioParameters,
                 out int listen,
                 out List<ClientBehaviorDetailDefinition> echoList,
+                out List<ClientBehaviorDetailDefinition> p2pList,
                 out List<ClientBehaviorDetailDefinition> broadcastList,
                 out List<GroupClientBehaviorDetailDefinition> groupBroadcastList)
             {
                 listen = 0;
                 echoList = new List<ClientBehaviorDetailDefinition>();
+                p2pList = new List<ClientBehaviorDetailDefinition>();
                 broadcastList = new List<ClientBehaviorDetailDefinition>();
                 groupBroadcastList = new List<GroupClientBehaviorDetailDefinition>();
                 foreach (var scenario in setScenarioParameters.Scenarios)
@@ -303,7 +303,13 @@ namespace Azure.SignalRBench.Client
                             {
                                 echoList.Add(echo);
                             }
-
+                            break;
+                        case ClientBehavior.P2P:
+                            var p2p = scenario.GetDetail<ClientBehaviorDetailDefinition>();
+                            if (p2p != null && p2p.Count > 0)
+                            {
+                                p2pList.Add(p2p);
+                            }
                             break;
                         case ClientBehavior.Broadcast:
                             var broadcast = scenario.GetDetail<ClientBehaviorDetailDefinition>();
@@ -330,12 +336,18 @@ namespace Azure.SignalRBench.Client
             private ClientAgentBehaviorSettings CreateSettings(
                 int listen,
                 List<ClientBehaviorDetailDefinition> echoList,
+                List<ClientBehaviorDetailDefinition> p2pList,
                 List<ClientBehaviorDetailDefinition> broadcastList,
                 List<GroupClientBehaviorDetailDefinition> groupBroadcastList)
             {
                 var result = new ClientAgentBehaviorSettings(listen);
                 int nonListen = ScenarioState.totalConnected - listen;
                 int current = 0;
+                current = AddBehavior(
+                    p2pList,
+                    nonListen,
+                    current,
+                    (s, e, item) => result.AddP2P(s, e, item.MessageSize, ScenarioState.totalConnected, item.Interval));
                 current = AddBehavior(
                     echoList,
                     nonListen,

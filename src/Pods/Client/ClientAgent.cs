@@ -6,6 +6,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Azure.SignalRBench.Common;
+using Azure.SignalRBench.Messages;
 using Microsoft.AspNetCore.Connections;
 using Microsoft.AspNetCore.Http.Connections;
 using Microsoft.AspNetCore.SignalR.Client;
@@ -14,20 +15,23 @@ namespace Azure.SignalRBench.Client
 {
     public class ClientAgent
     {
-        private readonly HubConnection _connection;
+        public HubConnection Connection { get;  }
 
         public ClientAgentContext Context { get; }
 
         public string[] Groups { get; } = Array.Empty<string>();
-
+        
+        public int GlobalIndex { get;}
+        
         
         //todo: implement group and userName
-        public ClientAgent(string url, SignalRProtocol protocol, string? userName, string[] groups,
+        public ClientAgent(string url, SignalRProtocol protocol, string? userName, string[] groups,int globalIndex,
             ClientAgentContext context)
         {
             Context = context;
             Groups = groups;
-            _connection = new HubConnectionBuilder()
+            GlobalIndex = globalIndex;
+            Connection = new HubConnectionBuilder()
                 .WithUrl(
                     url + "signalrbench",
                     o =>
@@ -42,31 +46,39 @@ namespace Azure.SignalRBench.Client
                 )
                 .WithAutomaticReconnect(RetryPolicy.Instance)
                 .Build();
-            _connection.On<long, string>(nameof(context.Measure), context.Measure);
-            _connection.Reconnecting += _ => context.OnReconnecting(this);
-            _connection.Reconnected += _ => context.OnConnected(this, Groups.Length > 0);
-            _connection.Closed += _ => context.OnClosed(this);
+            Connection.On<long, string>(nameof(context.Measure), context.Measure);
+            Connection.Reconnecting += _ => context.OnReconnecting(this);
+            Connection.Reconnected += _ => context.OnConnected(this, Groups.Length > 0);
+            Connection.Closed += _ => context.OnClosed(this);
         }
 
         public async Task StartAsync(CancellationToken cancellationToken)
         {
-            if(_connection.State == HubConnectionState.Disconnected)
-                  await _connection.StartAsync(cancellationToken);
+            if (Connection.State == HubConnectionState.Disconnected)
+            {
+                await Connection.StartAsync(cancellationToken);
+            }
             await Context.OnConnected(this, Groups.Length > 0);
         }
 
-        public Task StopAsync() => _connection.StopAsync();
+        public Task StopAsync() => Connection.StopAsync();
 
         public Task EchoAsync(string payload) =>
-            _connection.SendAsync("Echo", DateTime.UtcNow.Ticks, payload);
+            Connection.SendAsync("Echo", DateTime.UtcNow.Ticks, payload);
+        
+        public async Task SendToClientAsync(int index, string payload)
+        {
+            var connectionID =await Context.GetConnectionIDAsync(index);
+            await Connection.SendAsync("SendToConnection", connectionID,DateTime.UtcNow.Ticks, payload);
+        }
 
         public Task BroadcastAsync(string payload) =>
-            _connection.SendAsync("Broadcast", DateTime.UtcNow.Ticks, payload);
+            Connection.SendAsync("Broadcast", DateTime.UtcNow.Ticks, payload);
 
         public Task GroupBroadcastAsync(string group, string payload) =>
-            _connection.SendAsync("GroupBroadcast", group, DateTime.UtcNow.Ticks, payload);
+            Connection.SendAsync("GroupBroadcast", group, DateTime.UtcNow.Ticks, payload);
 
-        public Task JoinGroupAsync() => Task.WhenAll(Groups.Select(g => _connection.InvokeAsync("JoinGroups", g)));
+        public Task JoinGroupAsync() => Task.WhenAll(Groups.Select(g => Connection.InvokeAsync("JoinGroups", g)));
 
         private sealed class RetryPolicy : IRetryPolicy
         {

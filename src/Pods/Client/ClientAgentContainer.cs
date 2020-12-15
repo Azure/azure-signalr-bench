@@ -15,8 +15,8 @@ namespace Azure.SignalRBench.Client
 {
     public class ClientAgentContainer
     {
-        private readonly ClientAgentContext _context = new ClientAgentContext();
-        private readonly MessageClientHolder _messageClientHolder;
+        private readonly ClientAgentContext _context ;
+        public  MessageClientHolder _messageClientHolder {  get;  }
         private ClientAgent[] _clients = new ClientAgent[0];
         private readonly ILogger<ClientAgentContainer> _logger;
         private bool slowDown = false;
@@ -31,6 +31,7 @@ namespace Azure.SignalRBench.Client
             ILogger<ClientAgentContainer> logger)
         {
             _messageClientHolder = messageClientHolder;
+            _context =new ClientAgentContext( messageClientHolder.Client);
             //try to resolve service url
             try
             {
@@ -63,8 +64,10 @@ namespace Azure.SignalRBench.Client
         public ClientLifetimeDefinition LifetimeDefinition { get; }
 
         public Func<int, string[]> GroupFunc { get; set; }
+        
+        public int[] IndexMap { get; set; }
 
-        public int ExpandConnections(int startId, int localCount,Func<int,string[]> groupFunc)
+        public int ExpandConnections(int startId, int localCount,int[] indexMap,Func<int,string[]> groupFunc)
         {
             StartId = startId;
             var tmp = new ClientAgent[localCount];
@@ -75,14 +78,19 @@ namespace Azure.SignalRBench.Client
             int continueIndex = _clients.Length;
             _clients = tmp;
             GroupFunc = groupFunc;
+            IndexMap = indexMap;
             return continueIndex;
         }
 
+        public int GetGlobalIndex(int index) => IndexMap[index];
+        
         public async Task StartAsync(int continueIndex, double rate, CancellationToken cancellationToken)
         {
+            //Just in case socket in server hasn't opened
+            await Task.Delay(1000);
             for (int i = continueIndex; i < _clients.Length; i++)
             {
-                _clients[i] = new ClientAgent(Url, Protocol, IsAnonymous ? null : $"user{StartId + i}", GroupFunc(i),
+                _clients[i] = new ClientAgent(Url, Protocol, IsAnonymous ? null : $"user{StartId + i}", GroupFunc(i), GetGlobalIndex(i),
                     _context);
             }
 
@@ -122,7 +130,6 @@ namespace Azure.SignalRBench.Client
                                 Volatile.Write(ref slowDown, true);
                                 _logger.LogError(ex,
                                     $"Failed to start {Volatile.Read(ref current)} client.,fail Time cost:{stopWatch.ElapsedMilliseconds}");
-                                return;
                             }
                         }
                     }));

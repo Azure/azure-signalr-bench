@@ -248,6 +248,7 @@ export class TestConfig extends Component {
                                     <option>Echo</option>
                                     <option>Broadcast</option>
                                     <option>GroupBroadcast</option>
+                                    <option>P2P</option>
                                 </Form.Control>
                             </Form.Group>
                             {this.state.group && <Form.Group >
@@ -282,7 +283,7 @@ export class TestConfig extends Component {
                             </Form.Group>
                             <Form.Group >
                                 <Form.Label>Round End Index</Form.Label>
-                                <Form.Control name="End" onChange={this.handleChangeNum} placeholder="Number of connections sending requests at first round. (Start)" />
+                                <Form.Control name="End" onChange={this.handleChangeNum} placeholder="Number of connections sending requests at last round. (Start)" />
                             </Form.Group>
                             <Form.Group >
                                 <Form.Label>MessageSize </Form.Label>

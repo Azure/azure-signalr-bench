@@ -33,6 +33,12 @@ namespace Azure.SignalRBench.AppServer
          //   _logger.LogInformation("echo , payload:{payload}", payload);
             Clients.Client(Context.ConnectionId).SendAsync("Measure", ticks, payload);
         }
+        
+        public void SendToConnection(string connectionId,long ticks, string payload)
+        {
+           //    _logger.LogInformation("SendToConnection {connectionId}", connectionId);
+            Clients.Client(connectionId).SendAsync("Measure", ticks, payload);
+        }
 
         public void Broadcast(long ticks, string payload)
         {

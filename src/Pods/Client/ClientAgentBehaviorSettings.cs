@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using Azure.SignalRBench.Common;
+using Azure.SignalRBench.Messages;
 using Microsoft.Extensions.Logging;
 
 namespace Azure.SignalRBench.Client
@@ -25,6 +26,11 @@ namespace Azure.SignalRBench.Client
         public void AddEcho(int start, int end, int size, TimeSpan interval)
         {
             _settings.Add(new EchoSetting(start, end, size, interval));
+        }
+        
+        public void AddP2P(int start, int end, int size,int totalConnectionCount, TimeSpan interval)
+        {
+            _settings.Add(new P2PSetting(start, end, size, totalConnectionCount ,interval));
         }
 
         public void AddBroadcast(int start, int end, int size, int totalConnectionCount, TimeSpan interval)
@@ -82,6 +88,39 @@ namespace Azure.SignalRBench.Client
             }
         }
 
+        private sealed class P2PSetting : ClientBehaviorSetting
+        {
+            public P2PSetting(int start, int end, int size,int totalConnectionCount ,TimeSpan interval)
+                : base(start, end, size)
+            {
+                Interval = interval;
+                TotalConnectionCount = totalConnectionCount;
+            }
+
+            public TimeSpan Interval { get; }
+            
+            public int TotalConnectionCount { get; }
+            
+
+            public async override Task RunAsync(ClientAgent clientAgent, int clientId, ILogger<ClientAgent> logger, CancellationToken cancellationToken)
+            {
+                await Task.Delay(Interval * StaticRandom.NextDouble());
+                while (!cancellationToken.IsCancellationRequested)
+                {
+                    try
+                    {
+                        int index = StaticRandom.Next(TotalConnectionCount);
+                        await clientAgent.SendToClientAsync(index,Payload);
+                        clientAgent.Context.IncreaseMessageSent(1);
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogWarning(ex, "Failed to send P2P message: clientId={clientId}.", clientId);
+                    }
+                    await Task.Delay(Interval);
+                }
+            }
+        }
         private sealed class EchoSetting : ClientBehaviorSetting
         {
             public EchoSetting(int start, int end, int size, TimeSpan interval)

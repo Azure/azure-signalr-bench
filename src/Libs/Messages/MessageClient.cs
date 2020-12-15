@@ -16,14 +16,26 @@ namespace Azure.SignalRBench.Messages
         private readonly ISubscriber _subscriber;
         private readonly string _testId;
         private readonly string _sender;
+        private readonly IDatabase _database;
         private int _ackId;
 
-        private MessageClient(IConnectionMultiplexer connection, ISubscriber subscriber, string testId, string sender)
+        private MessageClient(IConnectionMultiplexer connection, ISubscriber subscriber,IDatabase database, string testId, string sender)
         {
             _connection = connection;
             _subscriber = subscriber;
+            _database = database;
             _testId = testId;
             _sender = sender;
+        }
+
+        public async Task<string> GetAsync(string key)
+        {
+              return await  _database.StringGetAsync(_testId+key);
+        }
+        
+        public async Task SetAsync(string key,string value,TimeSpan expire)
+        {
+            await  _database.StringSetAsync(_testId+key,value,expire);
         }
 
         public async static Task<MessageClient> ConnectAsync(string connectionString, string testId, string sender)
@@ -34,7 +46,8 @@ namespace Azure.SignalRBench.Messages
             }
             var connection = await ConnectionMultiplexer.ConnectAsync(connectionString ?? throw new ArgumentNullException(nameof(connectionString)));
             var subscriber = connection.GetSubscriber();
-            var result = new MessageClient(connection, subscriber, testId, sender);
+            var database = connection.GetDatabase();
+            var result = new MessageClient(connection, subscriber, database, testId, sender);
             return result;
         }
 

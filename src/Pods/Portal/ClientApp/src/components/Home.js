@@ -30,10 +30,11 @@ export class Home extends Component {
         </ul>
         <p>Done List</p>
         <ul>
-          <li><strong>On demand test</strong></li>
+          <li><strong>On demand test:</strong> Echo, Broadcast, Group Broadcast</li>
           <li><strong>Delete button</strong>. For example, delete <em>TestConfig</em> or <em>TestStatus</em></li>
           <li><strong>Search</strong> </li>
           <li><strong>Authentication</strong>  <code>ASRS</code> </li>
+          <li><strong>Auto scale, multi-pool</strong> </li>
         </ul>
       </div>
     );
