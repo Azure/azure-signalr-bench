@@ -66,6 +66,13 @@ namespace Azure.SignalRBench.Common
         Aspnet,
     }
 
+    [JsonConverter(typeof(StringEnumConverter))]
+    public enum ServiceName
+    {
+        SignalR,
+        RawWebsocket,
+    }
+    
     public enum SignalRServiceMode
     {
         Default,
