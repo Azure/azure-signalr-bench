@@ -90,7 +90,8 @@ namespace Azure.SignalRBench.Client
             await Task.Delay(1000);
             for (int i = continueIndex; i < _clients.Length; i++)
             {
-                _clients[i] = new ClientAgent(Url, Protocol, IsAnonymous ? null : $"user{StartId + i}", GroupFunc(i), GetGlobalIndex(i),
+                var globalIndex = GetGlobalIndex(i);
+                _clients[i] = new ClientAgent(Url, Protocol, IsAnonymous ? null : $"user{globalIndex}", GroupFunc(i),globalIndex,
                     _context);
             }
 

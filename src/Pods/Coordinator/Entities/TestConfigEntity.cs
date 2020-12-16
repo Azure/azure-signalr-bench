@@ -10,11 +10,13 @@ namespace Azure.SignalRBench.Coordinator.Entities
     public class TestConfigEntity :TableEntity
     {
         public string? User { get; set; }
+        
         public int ClientCons { get; set; } = 3000;
 
         public int ConnectEstablishRoundNum { get; set; } = 1;
 
         public string? ConnectionString { get; set; } 
+        
         public int SignalRUnitSize { get; set; }
 
         public int ServerNum { get; set; } = -1;
@@ -35,6 +37,7 @@ namespace Azure.SignalRBench.Coordinator.Entities
 
         //seconds
         public int RoundDurations { get; set; } = 60;
+        
         public int Interval { get; set; } = 1000;
 
         public int MessageSize { get; set; } = 2048;

@@ -108,7 +108,6 @@ namespace Azure.SignalRBench.Client
                 {
                     tmp[i] = ScenarioState.indexMap[i];
                 }
-
                 int postion = ScenarioState.indexMap.Length;
                 for (int i = 0; i < indexMapDelta.Length; i++)
                 {
@@ -145,7 +144,6 @@ namespace Azure.SignalRBench.Client
             public int LocalCount { get; }
 
             private ILogger<ClientRangeReadyState> _logger;
-
 
             public ClientRangeReadyState(ScenarioState scenarioState, int startId, int localCount)
                 : base(scenarioState)
@@ -207,7 +205,6 @@ namespace Azure.SignalRBench.Client
                             {
                                 result.Add(gd.GroupFamily + "_" + gi.ToString());
                             }
-
                             current += gd.GroupSize;
                             current %= total;
                         }
@@ -262,13 +259,11 @@ namespace Azure.SignalRBench.Client
                 {
                     listen = ScenarioState.totalConnected - max;
                 }
-
                 var sum = counts.Sum();
                 if (listen < ScenarioState.totalConnected - sum)
                 {
                     listen = ScenarioState.totalConnected - sum;
                 }
-
                 SetState(
                     new ScenarioReadyState(
                         ScenarioState,
@@ -317,7 +312,6 @@ namespace Azure.SignalRBench.Client
                             {
                                 broadcastList.Add(broadcast);
                             }
-
                             break;
                         case ClientBehavior.GroupBroadcast:
                             var groupBroadcast = scenario.GetDetail<GroupClientBehaviorDetailDefinition>();
@@ -325,7 +319,6 @@ namespace Azure.SignalRBench.Client
                             {
                                 groupBroadcastList.Add(groupBroadcast);
                             }
-
                             break;
                         default:
                             break;

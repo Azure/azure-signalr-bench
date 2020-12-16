@@ -8,7 +8,6 @@ namespace Azure.SignalRBench.Common
     public class ScenarioSetting
     {
         public int TotalConnectionCount { get; set; }
-        
         public int TotalConnectionRound { get; set; }
         public GroupDefinition[] GroupDefinitions { get; set; } = Array.Empty<GroupDefinition>();
         public RoundSetting[] Rounds { get; set; } = Array.Empty<RoundSetting>();

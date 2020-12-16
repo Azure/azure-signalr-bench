@@ -109,7 +109,6 @@ namespace Azure.SignalRBench.Client
                 if (s == ClientAgentStatus.Reconnecting)
                     Interlocked.Increment(ref _totalReconnectedCount);
                 return ClientAgentStatus.Connected;
-
             });
         }
 

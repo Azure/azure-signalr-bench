@@ -6,6 +6,5 @@ namespace Azure.SignalRBench.Coordinator.Entities
     {
         public int ActiveConnection { get; set; }
         public int RoundConnected { get; set; }
-        
     }
 }

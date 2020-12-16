@@ -15,45 +15,39 @@ namespace Azure.SignalRBench.AppServer
         {
             _logger = logger;
         }
-     
+
         public override Task OnConnectedAsync()
         {
-        //    _logger.LogInformation("connected: id:{id}", Context.ConnectionId);
             return Task.CompletedTask;
         }
-        
+
         public override Task OnDisconnectedAsync(Exception exception)
         {
-          //  _logger.LogInformation("disconnected: id:{id}", Context.ConnectionId);
             return Task.CompletedTask;
         }
 
         public void Echo(long ticks, string payload)
         {
-         //   _logger.LogInformation("echo , payload:{payload}", payload);
             Clients.Client(Context.ConnectionId).SendAsync("Measure", ticks, payload);
         }
-        
-        public void SendToConnection(string connectionId,long ticks, string payload)
+
+        public void SendToConnection(string connectionId, long ticks, string payload)
         {
-           //    _logger.LogInformation("SendToConnection {connectionId}", connectionId);
             Clients.Client(connectionId).SendAsync("Measure", ticks, payload);
         }
 
         public void Broadcast(long ticks, string payload)
         {
-           // _logger.LogInformation("broadcast , payload:{payload}", payload);
             Clients.All.SendAsync("Measure", ticks, payload);
         }
 
         public async Task JoinGroups(string group)
         {
-                await Groups.AddToGroupAsync(Context.ConnectionId, group);
+            await Groups.AddToGroupAsync(Context.ConnectionId, group);
         }
 
         public async Task LeaveGroups(string group)
         {
-            //   _logger.LogInformation("leave group {group}", group);
             await Groups.RemoveFromGroupAsync(Context.ConnectionId, group);
         }
 

@@ -100,7 +100,6 @@ namespace Azure.SignalRBench.Client
             public TimeSpan Interval { get; }
             
             public int TotalConnectionCount { get; }
-            
 
             public async override Task RunAsync(ClientAgent clientAgent, int clientId, ILogger<ClientAgent> logger, CancellationToken cancellationToken)
             {
@@ -121,6 +120,7 @@ namespace Azure.SignalRBench.Client
                 }
             }
         }
+        
         private sealed class EchoSetting : ClientBehaviorSetting
         {
             public EchoSetting(int start, int end, int size, TimeSpan interval)
