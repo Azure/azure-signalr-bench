@@ -197,7 +197,7 @@ namespace Azure.SignalRBench.Coordinator
             {
                 _totalConnected = _clientStatus.Select(p =>
                 {
-                    _logger.LogInformation($"{p.Key} connected:{p.Value.ConnectedCount} , reconnecting:{p.Value.ReconnectingCount} , totalReconnected:{p.Value.TotalReconnectCount}");
+                    _logger.LogInformation($"{p.Key} connected:{p.Value.ConnectedCount} , reconnecting:{p.Value.ReconnectingCount} , totalReconnected:{p.Value.TotalReconnectCount},time: {p.Value.Time}");
                     return p.Value.ConnectedCount;
                 }).Sum();
                 var totalReconnectiong = _clientStatus.Select(p => p.Value.ReconnectingCount).Sum();
@@ -210,7 +210,7 @@ namespace Azure.SignalRBench.Coordinator
                     _logger.LogInformation("All connections established");
                     return;
                 }
-                else if(_totalConnected>totalConnectionThisRound)
+                if(_totalConnected>totalConnectionThisRound)
                 {
                     _logger.LogError($"{_totalConnected} is bigger than {totalConnectionThisRound}");
                 }
