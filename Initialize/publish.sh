@@ -138,7 +138,10 @@ fi
 
 if [[ $ALL || $LOCALDNS ]]; then
   cd $DIR/yaml/dns
-  kubectl apply -f  node-local-dns.yaml
+  kubedns=$(kubectl get svc kube-dns -n kube-system -o jsonpath={.spec.clusterIP})
+  domain="cluster.local"
+  localdns="169.254.20.10"
+  cat  node-local-dns.yaml | replace __PILLAR__LOCAL__DNS__ $localdns | replace __PILLAR__DNS__DOMAIN__  $domain | replace __PILLAR__DNS__SERVER__ $kubedns | kubectl apply -f -
 fi
 
 if [[ $ALL || $REDIS ]]; then
