@@ -24,12 +24,13 @@ namespace Azure.SignalRBench.Coordinator
         private Kubernetes? _k8s;
         private PerfStorageProvider _perfStorageProvider;
         private string _redisConnectionString;
-        public Kubernetes K8s => _k8s ?? throw new InvalidOperationException();
+        private string _domain;
 
         public K8sProvider(PerfStorageProvider perfStorageProvider, IConfiguration configuration)
         {
             _perfStorageProvider = perfStorageProvider;
             _redisConnectionString = configuration[PerfConstants.ConfigurationKeys.RedisConnectionStringKey];
+            _domain = configuration[PerfConstants.ConfigurationKeys.DomainKey];
         }
         public void Initialize(string config)
         {
@@ -37,13 +38,12 @@ namespace Azure.SignalRBench.Coordinator
             _k8s = new Kubernetes(KubernetesClientConfiguration.BuildConfigFromConfigFile(stream));
         }
 
-        public async Task<string> CreateServerPodsAsync(string testId, int nodePoolIndex, string[] asrsConnectionStrings,int serverPodCount, CancellationToken cancellationToken)
+        public async Task<string> CreateServerPodsAsync(string testId, int nodePoolIndex, string[] asrsConnectionStrings,int serverPodCount,bool upstream, CancellationToken cancellationToken)
         {
             var name = _appserver + "-" + testId;
+            
             var service = new V1Service()
             {
-                ApiVersion = "v1",
-                Kind = "Service",
                 Metadata = new V1ObjectMeta()
                 {
                     Name = name
@@ -61,11 +61,44 @@ namespace Azure.SignalRBench.Coordinator
                 }
             };
             await _k8s.CreateNamespacedServiceAsync(service, _default, cancellationToken: cancellationToken);
-
+            if (upstream)
+            {
+                var ingress = new Networkingv1beta1Ingress()
+                {
+                    Metadata = new V1ObjectMeta()
+                    {
+                        Name = testId
+                    },
+                    Spec = new Networkingv1beta1IngressSpec()
+                    {
+                        Rules = new List<Networkingv1beta1IngressRule>()
+                        {
+                            new Networkingv1beta1IngressRule()
+                            {
+                                Host = _domain,
+                                Http = new Networkingv1beta1HTTPIngressRuleValue()
+                                {
+                                    Paths = new List<Networkingv1beta1HTTPIngressPath>()
+                                    {
+                                        new Networkingv1beta1HTTPIngressPath()
+                                        {
+                                            Path = $"/{testId}",
+                                            Backend = new Networkingv1beta1IngressBackend()
+                                            {
+                                                ServiceName = name,
+                                                ServicePort = 80
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                };
+            }
+            var server=upstream?"SignalRUpstream":"AppServer";
             V1Deployment deployment = new V1Deployment()
             {
-                ApiVersion = "apps/v1",
-                Kind = "Deployment",
                 Metadata = new V1ObjectMeta()
                 {
                     Name = name,
@@ -133,7 +166,7 @@ namespace Azure.SignalRBench.Coordinator
                                 },
                                 Args= new List<string>()
                                 {
-                                    "cp /mnt/perf/manifest/AppServer/AppServer.zip /home ; cd /home ; unzip AppServer.zip ;exec ./AppServer;"
+                                    $"cp /mnt/perf/manifest/{server}/{server}.zip /home ; cd /home ; unzip {server}.zip ;exec ./{server};"
                                 },
                                 Env= new List<V1EnvVar>()
                                 {
@@ -167,8 +200,6 @@ namespace Azure.SignalRBench.Coordinator
             var name = _client + '-' + testId;
             V1Deployment deployment = new V1Deployment()
             {
-                ApiVersion = "apps/v1",
-                Kind = "Deployment",
                 Metadata = new V1ObjectMeta()
                 {
                     Name = name,
@@ -267,11 +298,13 @@ namespace Azure.SignalRBench.Coordinator
             await _k8s.DeleteNamespacedDeploymentAsync(name, _default);
         }
 
-        public async Task DeleteServerPodsAsync(string testId, int nodePoolIndex)
+        public async Task DeleteServerPodsAsync(string testId, int nodePoolIndex,bool upstream)
         {
             string name = _appserver + '-' + testId;
             await _k8s.DeleteNamespacedServiceAsync(name, _default);
             await _k8s.DeleteNamespacedDeploymentAsync(name, _default);
+            if (upstream)
+                await _k8s.DeleteNamespacedIngressAsync(testId, _default);
         }
     }
 }
