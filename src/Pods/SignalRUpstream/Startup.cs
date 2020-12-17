@@ -28,9 +28,10 @@ namespace SignalRUpstream
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddSingleton(new MessagePublisher(Configuration[PerfConstants.ConfigurationKeys.ConnectionString],
+            services.AddSingleton(new MessagePublisher(Configuration[PerfConstants.ConfigurationKeys.ConnectionString],Configuration[PerfConstants.ConfigurationKeys.TestIdKey],
                 ServiceTransportType.Transient));
-            services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
+            services.AddControllers();
+            //   services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -46,7 +47,11 @@ namespace SignalRUpstream
                 app.UseHsts();
             }
 
-            app.UseMvc();
+            app.UseRouting();
+            app.UseEndpoints(endpoints =>
+            {
+                endpoints.MapControllers();
+            });
         }
     }
 }
