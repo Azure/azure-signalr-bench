@@ -1,53 +1,58 @@
 ﻿using System;
+using System.IO;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
+using SignalRUpstream.Entities;
 
 namespace SignalRUpstream.Controllers
 {
     [Route("upstream")]
     [ApiController]
-    public class UpStreamController: ControllerBase
+    public class UpStreamController : ControllerBase
     {
         private ILogger<UpStreamController> _logger;
         private MessagePublisher _messagePublisher;
-        public UpStreamController(ILogger<UpStreamController> logger,MessagePublisher messagePublisher)
+
+        public UpStreamController(ILogger<UpStreamController> logger, MessagePublisher messagePublisher)
         {
             _logger = logger;
             _messagePublisher = messagePublisher;
         }
-        
-        [HttpPost("{hub}/negotiate")]
+
+        [HttpPost("{hub}/api/connections/connected")]
         public async Task OnConnectedAsync()
         {
         }
-        
-        public  async Task OnDisconnectedAsync(Exception exception)
+
+        [HttpPost("{hub}/api/connections/disconnected")]
+        public async Task OnDisconnectedAsync(Exception exception)
         {
         }
 
-        public void Echo(long ticks, string payload)
+        [HttpPost("{hub}/api/messages/{method}")]
+        public async Task Echo(string method)
         {
-        }
-        
-        public void SendToConnection(string connectionId,long ticks, string payload)
-        {
-        }
-
-        public void Broadcast(long ticks, string payload)
-        {
-        }
-
-        public async Task JoinGroups(string group)
-        {
-        }
-
-        public async Task LeaveGroups(string group)
-        {
-        }
-
-        public void GroupBroadcast(string group, long ticks, string payload)
-        {
+            using (var sr = new StreamReader(Request.Body))
+            {
+                var body = await sr.ReadToEndAsync();
+                var user = Request.Headers["X-ASRS-User-Id"];
+                var upstreamBody = JsonConvert.DeserializeObject<UpstreamBody>(body);
+                switch (upstreamBody.Target)
+                {
+                    case "add":
+                    case "remove":
+                        await _messagePublisher.ManageUserGroupAsync(upstreamBody.Target, user,
+                            (string) upstreamBody.Arguments[0]);
+                        break;
+                    default:
+                        await _messagePublisher.SendMessagesAsync(upstreamBody.Target,
+                            (string) upstreamBody.Arguments[0], (long) upstreamBody.Arguments[1],
+                            (string) upstreamBody.Arguments[2]);
+                        break;
+                }
+            }
         }
     }
 }
