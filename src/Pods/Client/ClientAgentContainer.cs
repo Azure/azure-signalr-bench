@@ -15,8 +15,8 @@ namespace Azure.SignalRBench.Client
 {
     public class ClientAgentContainer
     {
-        private readonly ClientAgentContext _context ;
-        public  MessageClientHolder _messageClientHolder {  get;  }
+        private readonly ClientAgentContext _context;
+        public MessageClientHolder _messageClientHolder { get; }
         private ClientAgent[] _clients = new ClientAgent[0];
         private readonly ILogger<ClientAgentContainer> _logger;
         private bool slowDown = false;
@@ -31,22 +31,10 @@ namespace Azure.SignalRBench.Client
             ILogger<ClientAgentContainer> logger)
         {
             _messageClientHolder = messageClientHolder;
-            _context =new ClientAgentContext( messageClientHolder.Client);
+            _context = new ClientAgentContext(messageClientHolder.Client);
             //try to resolve service url
-            try
-            {
-                var ips = Dns.GetHostAddresses(url);
-                Console.WriteLine(($"ip count:{ips.Length}"));
-                Console.WriteLine($"url is set to:{ips[0].ToString()}");
-                Url = "http://" + ips[0].ToString() + "/";
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine($"resolve name {Url} failed");
-                Console.WriteLine(e);
-                throw;
-            }
-
+            var ips = Dns.GetHostAddresses(url);
+            Url = "http://" + ips[0]+ "/";
             Protocol = protocol;
             IsAnonymous = isAnonymous;
             LifetimeDefinition = lifetimeDefinition;
@@ -64,10 +52,10 @@ namespace Azure.SignalRBench.Client
         public ClientLifetimeDefinition LifetimeDefinition { get; }
 
         public Func<int, string[]> GroupFunc { get; set; }
-        
+
         public int[] IndexMap { get; set; }
 
-        public int ExpandConnections(int startId, int localCount,int[] indexMap,Func<int,string[]> groupFunc)
+        public int ExpandConnections(int startId, int localCount, int[] indexMap, Func<int, string[]> groupFunc)
         {
             StartId = startId;
             var tmp = new ClientAgent[localCount];
@@ -75,6 +63,7 @@ namespace Azure.SignalRBench.Client
             {
                 tmp[i] = _clients[i];
             }
+
             int continueIndex = _clients.Length;
             _clients = tmp;
             GroupFunc = groupFunc;
@@ -83,7 +72,7 @@ namespace Azure.SignalRBench.Client
         }
 
         public int GetGlobalIndex(int index) => IndexMap[index];
-        
+
         public async Task StartAsync(int continueIndex, double rate, CancellationToken cancellationToken)
         {
             //Just in case socket in server hasn't opened
@@ -91,7 +80,8 @@ namespace Azure.SignalRBench.Client
             for (int i = continueIndex; i < _clients.Length; i++)
             {
                 var globalIndex = GetGlobalIndex(i);
-                _clients[i] = new ClientAgent(Url, Protocol, IsAnonymous ? null : $"user{globalIndex}", GroupFunc(i),globalIndex,
+                _clients[i] = new ClientAgent(Url, Protocol, IsAnonymous ? null : $"user{globalIndex}", GroupFunc(i),
+                    globalIndex,
                     _context);
             }
 

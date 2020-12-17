@@ -11,7 +11,7 @@ export class TestConfig extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            show: false, loading: true, obj: { signalRUnitSize: 1 },
+            show: false, loading: true, obj: { signalRUnitSize: 1 ,mode:"Default"},
             showjson: false,
             json: {},
             testConfigs: [],
@@ -224,6 +224,13 @@ export class TestConfig extends Component {
                                     <option>20</option>
                                     <option>50</option>
                                     <option>100</option>
+                                </Form.Control>
+                            </Form.Group>
+                            <Form.Group  >
+                                <Form.Label>Service Mode</Form.Label>
+                                <Form.Control name="Mode" onChange={this.handleChange} as="select">
+                                    <option>Default</option>
+                                    <option>Serverless</option>
                                 </Form.Control>
                             </Form.Group>
                             <Form.Group >

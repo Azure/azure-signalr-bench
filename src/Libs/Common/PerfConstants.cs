@@ -27,6 +27,8 @@ namespace Azure.SignalRBench.Common
             public const string ConnectionNum = "connectionNum";
             public const string MsiAppId = "msiAppId";
             public const string PerfV2 = "perfv2";
+            public const string DomainKey = "domain";
+
         }
 
         public static class TableNames

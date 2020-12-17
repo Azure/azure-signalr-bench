@@ -15,15 +15,15 @@ namespace Azure.SignalRBench.Client
 {
     public class ClientAgent
     {
-        internal HubConnection Connection { get;  }
+        internal HubConnection Connection { get; }
 
         public ClientAgentContext Context { get; }
 
         public string[] Groups { get; } = Array.Empty<string>();
-        
-        public int GlobalIndex { get;}
-        
-        public ClientAgent(string url, SignalRProtocol protocol, string? userName, string[] groups,int globalIndex,
+
+        public int GlobalIndex { get; }
+
+        public ClientAgent(string url, SignalRProtocol protocol, string? userName, string[] groups, int globalIndex,
             ClientAgentContext context)
         {
             Context = context;
@@ -56,6 +56,7 @@ namespace Azure.SignalRBench.Client
             {
                 await Connection.StartAsync(cancellationToken);
             }
+
             await Context.OnConnected(this, Groups.Length > 0);
         }
 
@@ -63,11 +64,11 @@ namespace Azure.SignalRBench.Client
 
         public Task EchoAsync(string payload) =>
             Connection.SendAsync("Echo", DateTime.UtcNow.Ticks, payload);
-        
+
         public async Task SendToClientAsync(int index, string payload)
         {
-            var connectionID =await Context.GetConnectionIDAsync(index);
-            await Connection.SendAsync("SendToConnection", connectionID,DateTime.UtcNow.Ticks, payload);
+            var connectionID = await Context.GetConnectionIDAsync(index);
+            await Connection.SendAsync("SendToConnection", connectionID, DateTime.UtcNow.Ticks, payload);
         }
 
         public Task BroadcastAsync(string payload) =>
