@@ -62,6 +62,9 @@ while [[ "$#" > 0 ]]; do
   --ingress)
     INGRESS=true
     ;;
+  --upstream)
+    UPSTREAM=true
+    ;;
   --localdns)
     LOCALDNS=true
     ;;
@@ -134,6 +137,14 @@ fi
 
 if [[ $ALL || $CLIENT ]]; then
   publish Client
+fi
+
+if [[ $ALL || $UPSTREAM ]]; then
+  publish SignalRUpstream
+  cd $DIR/yaml/Upstream
+  kubectl apply -f upstream.yaml
+  kubectl apply -f upstream-service.yaml
+  kubectl apply -f upstream-ingress.yaml
 fi
 
 if [[ $ALL || $LOCALDNS ]]; then
