@@ -17,17 +17,18 @@ namespace Azure.SignalRBench.Client
     {
         private readonly ClientAgentContext _context;
         public MessageClientHolder _messageClientHolder { get; }
-        private ClientAgent[] _clients = new ClientAgent[0];
+        private IClientAgent[] _clients = new IClientAgent[0];
         private readonly ILogger<ClientAgentContainer> _logger;
         private bool slowDown = false;
         private int startReport = 1;
+        private IClientAgentFactory _agentFactory;
 
         public ClientAgentContainer(
             MessageClientHolder messageClientHolder,
-            SignalRProtocol protocol,
+            Protocol protocol,
             bool isAnonymous,
             string url,
-            ClientLifetimeDefinition lifetimeDefinition,
+            ClientLifetimeDefinition lifetimeDefinition,IClientAgentFactory agentFactory,
             ILogger<ClientAgentContainer> logger)
         {
             _messageClientHolder = messageClientHolder;
@@ -38,6 +39,7 @@ namespace Azure.SignalRBench.Client
             Protocol = protocol;
             IsAnonymous = isAnonymous;
             LifetimeDefinition = lifetimeDefinition;
+            _agentFactory = agentFactory;
             _logger = logger;
         }
 
@@ -45,7 +47,7 @@ namespace Azure.SignalRBench.Client
 
         public string Url { get; }
 
-        public SignalRProtocol Protocol { get; }
+        public Protocol Protocol { get; }
 
         public bool IsAnonymous { get; }
 
@@ -58,7 +60,7 @@ namespace Azure.SignalRBench.Client
         public int ExpandConnections(int startId, int localCount, int[] indexMap, Func<int, string[]> groupFunc)
         {
             StartId = startId;
-            var tmp = new ClientAgent[localCount];
+            var tmp = new IClientAgent[localCount];
             for (int i = 0; i < _clients.Length; i++)
             {
                 tmp[i] = _clients[i];
@@ -80,7 +82,7 @@ namespace Azure.SignalRBench.Client
             for (int i = continueIndex; i < _clients.Length; i++)
             {
                 var globalIndex = GetGlobalIndex(i);
-                _clients[i] = new ClientAgent(Url, Protocol, IsAnonymous ? null : $"user{globalIndex}", GroupFunc(i),
+                _clients[i] = _agentFactory.Create(Url,Protocol, GroupFunc(i),
                     globalIndex,
                     _context);
             }
@@ -157,7 +159,7 @@ namespace Azure.SignalRBench.Client
             }
         }
 
-        public void StartScenario(Func<int, Action<ClientAgent, CancellationToken>> func,
+        public void StartScenario(Func<int, Action<IClientAgent, CancellationToken>> func,
             CancellationToken cancellationToken)
         {
             _context.Reset();

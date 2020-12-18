@@ -11,7 +11,7 @@ namespace Azure.SignalRBench.Common
     /// Get TransferFormat by <code>(TransferFormat)((int)protocol >> 4)</code>
     /// </summary>
     [JsonConverter(typeof(StringEnumConverter))]
-    public enum SignalRProtocol
+    public enum Protocol
     {
         /// <summary>
         /// HttpTransportType.WebSockets = 1, TransferFormat.Binary = 1
@@ -33,6 +33,14 @@ namespace Azure.SignalRBench.Common
         /// HttpTransportType.LongPolling = 4, TransferFormat.Text = 2
         /// </summary>
         LongPollingWithJson = 4 | 0x20,
+        /// <summary>
+        /// RawWebsocket = 8, TransferFormat.Binary = 1
+        /// </summary>
+        RawWebSocketBinary=8 | 0x10,
+        /// <summary>
+        /// RawWebsocket = 8, TransferFormat.Binary = 2
+        /// </summary>
+        RawWebSocketText=8 | 0x20,
     }
 
     [JsonConverter(typeof(StringEnumConverter))]
@@ -61,9 +69,10 @@ namespace Azure.SignalRBench.Common
     [JsonConverter(typeof(StringEnumConverter))]
     public enum TestCategory
     {
-        AspnetCore,
-        AspnetCoreServerless,
-        Aspnet,
+        AspnetCoreSignalR,
+        AspnetCoreSignalRServerless,
+        AspnetSignalR,
+        RawWebsocket,
     }
 
     [JsonConverter(typeof(StringEnumConverter))]

@@ -13,7 +13,7 @@ namespace Azure.SignalRBench.Common
         public RoundSetting[] Rounds { get; set; } = Array.Empty<RoundSetting>();
         public ClientLifetimeDefinition ClientLifetime { get; set; } = new ClientLifetimeDefinition();
         public bool IsAnonymous { get; set; }
-        public SignalRProtocol Protocol { get; set; }
+        public Protocol Protocol { get; set; }
         public double Rate { get; set; }
     }
 }

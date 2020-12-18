@@ -46,7 +46,7 @@ namespace Azure.SignalRBench.Coordinator.Entities
 
         public int MessageSize { get; set; } = 2048;
         
-        public string Protocol { get; set; } = SignalRProtocol.WebSocketsWithJson.ToString();
+        public string Protocol { get; set; } = Common.Protocol.WebSocketsWithJson.ToString();
 
         public int Rate { get; set; } = 200;
 
@@ -86,9 +86,9 @@ namespace Azure.SignalRBench.Coordinator.Entities
                  throw new Exception($"Unknown Scenario {Scenario}");
             if(!Enum.TryParse(Mode, out SignalRServiceMode serviceMode))
                 throw new Exception($"Unknown Service mode {serviceMode}");
-            var testCategory =  TestCategory.AspnetCore;
+            var testCategory =  TestCategory.AspnetCoreSignalR;
             if (serviceMode == SignalRServiceMode.Serverless)
-                testCategory = TestCategory.AspnetCoreServerless;
+                testCategory = TestCategory.AspnetCoreSignalRServerless;
             for (int i = 0; i < RoundNum; i++)
             {
                 count = current > End ? End : current;
@@ -124,7 +124,7 @@ namespace Azure.SignalRBench.Coordinator.Entities
                     TotalConnectionRound = ConnectEstablishRoundNum,
                     Rounds = roundsettings.ToArray(),
                     IsAnonymous = true,
-                    Protocol =Enum.TryParse(Protocol,out  SignalRProtocol protocol)?protocol:throw new Exception($"Unknown Protocol {Protocol}"),
+                    Protocol =Enum.TryParse(Protocol,out  Protocol protocol)?protocol:throw new Exception($"Unknown Protocol {Protocol}"),
                     Rate = Rate,
                     GroupDefinitions = (behavior==ClientBehavior.GroupBroadcast) ? new []{new GroupDefinition()
                     {

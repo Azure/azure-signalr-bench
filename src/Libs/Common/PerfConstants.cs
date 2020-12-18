@@ -28,6 +28,7 @@ namespace Azure.SignalRBench.Common
             public const string MsiAppId = "msiAppId";
             public const string PerfV2 = "perfv2";
             public const string DomainKey = "domain";
+            public const string TestCategory = "testCategory";
 
         }
 

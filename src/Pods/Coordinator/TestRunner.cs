@@ -158,7 +158,7 @@ namespace Azure.SignalRBench.Coordinator
                     _logger.LogInformation("Test job {testId}: Removing client pods.", Job.TestId);
                     await K8sProvider.DeleteClientPodsAsync(Job.TestId, NodePoolIndex);
                     _logger.LogInformation("Test job {testId}: Removing server pods.", Job.TestId);
-                    await K8sProvider.DeleteServerPodsAsync(Job.TestId, NodePoolIndex,Job.TestMethod==TestCategory.AspnetCoreServerless);
+                    await K8sProvider.DeleteServerPodsAsync(Job.TestId, NodePoolIndex,Job.TestMethod==TestCategory.AspnetCoreSignalRServerless);
                     _logger.LogInformation("Test job {testId}: Removing service instances.", Job.TestId);
                     await Task.WhenAll(
                         from ss in Job.ServiceSetting
@@ -431,9 +431,9 @@ namespace Azure.SignalRBench.Coordinator
 
             _logger.LogInformation("Test job {testId}: Creating server pods.", Job.TestId);
             _url =  await K8sProvider.CreateServerPodsAsync(Job.TestId, NodePoolIndex, asrsConnectionStrings,
-                serverPodCount,Job.TestMethod==TestCategory.AspnetCoreServerless, cancellationToken) ;
+                serverPodCount,Job.TestMethod==TestCategory.AspnetCoreSignalRServerless, cancellationToken) ;
             _logger.LogInformation("Test job {testId}: Creating client pods.", Job.TestId);
-            await K8sProvider.CreateClientPodsAsync(Job.TestId, NodePoolIndex, clientPodCount, cancellationToken);
+            await K8sProvider.CreateClientPodsAsync(Job.TestId,Job.TestMethod, NodePoolIndex, clientPodCount, cancellationToken);
 
             await Task.WhenAll(
                 Task.Run(async () =>

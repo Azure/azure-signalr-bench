@@ -25,8 +25,10 @@ namespace SignalRUpstream.Controllers
         }
 
         [HttpPost("{hub}/negotiate")]
-        public ActionResult Index(string hub, string user)
+        public ActionResult Index(string hub)
         {
+            var user = Request.Headers["user"];
+            _logger.LogInformation($"user :{user} try to negotiate hub: {hub}");
             if (string.IsNullOrEmpty(user))
             {
                 return BadRequest("User ID is null or empty.");

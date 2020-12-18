@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System;
 using Azure.SignalRBench.Common;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -37,6 +38,22 @@ namespace Azure.SignalRBench.Client
                 {
                     services.AddSingleton<MessageClientHolder>();
                     services.AddSingleton<IScenarioState, ScenarioState>();
+                    switch (hostContext.Configuration[PerfConstants.ConfigurationKeys.TestCategory])
+                    {
+                        case nameof(TestCategory.AspnetCoreSignalR):
+                            services.AddSingleton<IClientAgentFactory, SignalRDefaultClientAgentFactory>();
+                            break;
+                        case nameof(TestCategory.AspnetCoreSignalRServerless):
+                            services.AddSingleton<IClientAgentFactory, SignalRServerlessClientAgentFactory>();
+                            break;
+                        case nameof(TestCategory.RawWebsocket):
+                            services.AddSingleton<IClientAgentFactory, WebsocketClientAgentFactory>();
+                            break;
+                        default:
+                            Console.WriteLine(
+                                $"Unknown testCategory:{hostContext.Configuration[PerfConstants.ConfigurationKeys.TestCategory]}");
+                            break;
+                    }
                     services.AddHostedService<ClientHostedService>();
                 });
         }

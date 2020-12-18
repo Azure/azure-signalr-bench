@@ -10,6 +10,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\..\Libs\Common\Common.csproj" />
+      <ProjectReference Include="..\AppServer\AppServer.csproj" />
     </ItemGroup>
 
 </Project>

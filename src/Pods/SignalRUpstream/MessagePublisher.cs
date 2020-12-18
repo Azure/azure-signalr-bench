@@ -18,7 +18,7 @@ namespace SignalRUpstream
         public MessagePublisher(string connectionString,string hubName, ServiceTransportType serviceTransportType)
         {
             _connectionString = connectionString;
-            _hubName = hubName;
+            _hubName = hubName.Replace("-","s");
             _serviceTransportType = serviceTransportType;
             InitAsync().Wait();
         }
@@ -30,7 +30,6 @@ namespace SignalRUpstream
                 option.ConnectionString = _connectionString;
                 option.ServiceTransportType = _serviceTransportType;
             }).Build();
-
             _hubContext = await serviceManager.CreateHubContextAsync(_hubName, new LoggerFactory());
         }
 

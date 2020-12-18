@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -11,7 +12,7 @@ namespace Azure.SignalRBench.Storage
 {
     public interface ITableAccessor<T> where T : class, ITableEntity, new()
     {
-        TableQuery<T> Rows { get; }
+        IQueryable<T> Rows { get; }
 
         Task<T> GetAsync(string partitionKey, string rowKey, CancellationToken cancellationToken = default);
 
@@ -27,8 +28,8 @@ namespace Azure.SignalRBench.Storage
 
         Task BatchDeleteAsync(IReadOnlyList<T> entities, CancellationToken cancellationToken = default);
 
-        Task<T?> GetFirstOrDefaultAsync(TableQuery<T> query, CancellationToken cancellationToken = default);
+        Task<T?> GetFirstOrDefaultAsync(IQueryable<T> query, CancellationToken cancellationToken = default);
 
-        IAsyncEnumerable<T> QueryAsync(TableQuery<T> query, CancellationToken cancellationToken = default);
+        IAsyncEnumerable<T> QueryAsync(IQueryable<T> query, CancellationToken cancellationToken = default);
     }
 }

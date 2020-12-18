@@ -122,7 +122,8 @@ if [[ $ALL || $COORDINATOR ]]; then
   publish Coordinator
   cd $DIR/yaml/coordinator
   access_key=$(az storage account show-connection-string -n $STORAGE_ACCOUNT -g $RESOURCE_GROUP --query connectionString  -o tsv)
-  cat coordinator.yaml | replace KVURL_PLACE_HOLDER $KVURL | replace MSI_PLACE_HOLDER $AGENTPOOL_MSI_CLIENT_ID | replace STORAGE_PLACE_HOLDER $access_key | kubectl apply -f -
+  domain=$(az network public-ip show -n $PORTAL_IP_NAME -g $RESOURCE_GROUP --query dnsSettings.fqdn -o tsv)
+  cat coordinator.yaml | replace KVURL_PLACE_HOLDER $KVURL | replace MSI_PLACE_HOLDER $AGENTPOOL_MSI_CLIENT_ID | replace STORAGE_PLACE_HOLDER $access_key | GREP DOMAIN_PLACE_HOLDER $domain kubectl apply -f -
 fi
 
 if [[ $ALL || $COMPILER ]]; then
@@ -141,10 +142,10 @@ fi
 
 if [[ $ALL || $UPSTREAM ]]; then
   publish SignalRUpstream
-  cd $DIR/yaml/Upstream
-  kubectl apply -f upstream.yaml
-  kubectl apply -f upstream-service.yaml
-  kubectl apply -f upstream-ingress.yaml
+#  cd $DIR/yaml/Upstream
+#  kubectl apply -f upstream.yaml
+#  kubectl apply -f upstream-service.yaml
+#  kubectl apply -f upstream-ingress.yaml
 fi
 
 if [[ $ALL || $LOCALDNS ]]; then

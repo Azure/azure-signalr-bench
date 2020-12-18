@@ -20,13 +20,14 @@ namespace Azure.SignalRBench.Client
         private ScenarioBaseState _save = null;
         private int totalConnected = 0;
         private int[] indexMap = new int[0];
-
+        private IClientAgentFactory _clientAgentFactory;
         public ClientAgentContainer? ClientAgentContainer { get; set; }
 
-        public ScenarioState(ILoggerFactory loggerFactory)
+        public ScenarioState(ILoggerFactory loggerFactory,IClientAgentFactory clientAgentFactory)
         {
             _loggerFactory = loggerFactory;
             _state = new RoundInitState(this);
+            _clientAgentFactory = clientAgentFactory;
         }
 
         public void SetClientRange(SetClientRangeParameters setClientRangeParameters) =>
@@ -167,7 +168,7 @@ namespace Azure.SignalRBench.Client
                         p.Protocol,
                         p.IsAnonymous,
                         p.Url,
-                        p.ClientLifetime,
+                        p.ClientLifetime,ScenarioState._clientAgentFactory,
                         GetLogger<ClientAgentContainer>());
                 }
                 continueIndex = ScenarioState.ClientAgentContainer.ExpandConnections(StartId, LocalCount,ScenarioState.indexMap,GetGroupsFunc(ScenarioState.totalConnected,ScenarioState.indexMap,p.GroupDefinitions));
@@ -422,7 +423,7 @@ namespace Azure.SignalRBench.Client
             {
                 var cts = new CancellationTokenSource();
                 ClientAgentContainer.StartScenario(
-                    index => Settings.GetClientAgentBehavior(ScenarioState.indexMap[index], GetLogger<ClientAgent>()), cts.Token);
+                    index => Settings.GetClientAgentBehavior(ScenarioState.indexMap[index], GetLogger<IClientAgent>()), cts.Token);
                 SetState(new RunningState(ScenarioState, ClientAgentContainer, Settings,
                     cts));
             }

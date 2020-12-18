@@ -129,14 +129,14 @@ namespace Azure.SignalRBench.Tests.StorageTest
             var list1 = await table.QueryAsync(
                 from row in table.Rows
                 where row.PartitionKey == pk
-                where row.RowKey > (ColumnValue)"000" && row.RowKey < (ColumnValue)"010"
+                where row.RowKey > (ComparableString)"000" && row.RowKey < (ComparableString)"010"
                 select row).ToListAsync();
             Assert.Equal(entities.Skip(1).Take(9), list1, TestEntityComparer.Instance);
 
             var list2 = await table.QueryAsync(
                 from row in table.Rows
                 where row.PartitionKey == pk
-                where row.RowKey < (ColumnValue)"003" || row.Code >= Count - 3
+                where row.RowKey < (ComparableString)"003" || row.Code >= Count - 3
                 select row).ToListAsync();
             Assert.Equal(entities.Take(3).Concat(entities.TakeLast(3)), list2, TestEntityComparer.Instance);
 

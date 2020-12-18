@@ -24,11 +24,13 @@ namespace SignalRUpstream.Controllers
         [HttpPost("{hub}/api/connections/connected")]
         public async Task OnConnectedAsync()
         {
+            _logger.LogInformation("Connected.");
         }
 
         [HttpPost("{hub}/api/connections/disconnected")]
         public async Task OnDisconnectedAsync(Exception exception)
         {
+            _logger.LogInformation("disConnected.");
         }
 
         [HttpPost("{hub}/api/messages/{method}")]
@@ -39,6 +41,7 @@ namespace SignalRUpstream.Controllers
                 var body = await sr.ReadToEndAsync();
                 var user = Request.Headers["X-ASRS-User-Id"];
                 var upstreamBody = JsonConvert.DeserializeObject<UpstreamBody>(body);
+                _logger.LogInformation($"method:{method}, body:{upstreamBody}");
                 switch (upstreamBody.Target)
                 {
                     case "add":

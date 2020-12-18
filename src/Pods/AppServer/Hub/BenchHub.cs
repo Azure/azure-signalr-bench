@@ -41,12 +41,12 @@ namespace Azure.SignalRBench.AppServer
             Clients.All.SendAsync("Measure", ticks, payload);
         }
 
-        public async Task JoinGroups(string group)
+        public async Task JoinGroup(string group)
         {
             await Groups.AddToGroupAsync(Context.ConnectionId, group);
         }
 
-        public async Task LeaveGroups(string group)
+        public async Task LeaveGroup(string group)
         {
             await Groups.RemoveFromGroupAsync(Context.ConnectionId, group);
         }

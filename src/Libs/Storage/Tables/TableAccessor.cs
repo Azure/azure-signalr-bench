@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
@@ -21,7 +22,8 @@ namespace Azure.SignalRBench.Storage
             _table = table;
         }
 
-        public TableQuery<T> Rows => new TableQuery<T>();
+        public IQueryable<T> Rows =>
+            Array.Empty<T>().AsQueryable();
 
         public async Task<T> GetAsync(string partitionKey, string rowKey, CancellationToken cancellationToken)
         {
@@ -88,18 +90,16 @@ namespace Azure.SignalRBench.Storage
             return _table.ExecuteBatchAsync(batch, cancellationToken: cancellationToken);
         }
 
-        public async Task<T?> GetFirstOrDefaultAsync(TableQuery<T> query, CancellationToken cancellationToken)
-        {
-            var entities = await _table.ExecuteQuerySegmentedAsync(query.Take(1), null, cancellationToken: cancellationToken);
-            return entities.FirstOrDefault();
-        }
+        public async Task<T?> GetFirstOrDefaultAsync(IQueryable<T> query, CancellationToken cancellationToken) =>
+            await QueryAsync(query.Take(1), cancellationToken).FirstOrDefaultAsync();
 
-        public async IAsyncEnumerable<T> QueryAsync(TableQuery<T> query, [EnumeratorCancellation] CancellationToken cancellationToken)
+        public async IAsyncEnumerable<T> QueryAsync(IQueryable<T> query, [EnumeratorCancellation] CancellationToken cancellationToken)
         {
+            var tq = QueryParser.Parse(query);
             TableContinuationToken? token = null;
             do
             {
-                var entities = await _table.ExecuteQuerySegmentedAsync(query, token, cancellationToken: cancellationToken);
+                var entities = await _table.ExecuteQuerySegmentedAsync(tq, token, cancellationToken: cancellationToken);
                 token = entities.ContinuationToken;
                 foreach (var item in entities)
                 {

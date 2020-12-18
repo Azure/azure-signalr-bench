@@ -82,7 +82,7 @@ namespace Azure.SignalRBench.Coordinator
                                     {
                                         new Networkingv1beta1HTTPIngressPath()
                                         {
-                                            Path = $"/{testId}",
+                                            Path = $"/{testId.Replace("-","s")}",
                                             Backend = new Networkingv1beta1IngressBackend()
                                             {
                                                 ServiceName = name,
@@ -95,6 +95,7 @@ namespace Azure.SignalRBench.Coordinator
                         }
                     }
                 };
+                await _k8s.CreateNamespacedIngress1Async(ingress ,_default,cancellationToken:cancellationToken);
             }
             var server=upstream?"SignalRUpstream":"AppServer";
             V1Deployment deployment = new V1Deployment()
@@ -195,7 +196,7 @@ namespace Azure.SignalRBench.Coordinator
             return name;
         }
 
-        public async Task CreateClientPodsAsync(string testId, int nodePoolIndex, int clientPodCount, CancellationToken cancellationToken)
+        public async Task CreateClientPodsAsync(string testId,TestCategory testCategory, int nodePoolIndex, int clientPodCount, CancellationToken cancellationToken)
         {
             var name = _client + '-' + testId;
             V1Deployment deployment = new V1Deployment()
@@ -275,6 +276,7 @@ namespace Azure.SignalRBench.Coordinator
                                     new V1EnvVar(PerfConstants.ConfigurationKeys.TestIdKey,testId),
                                     new V1EnvVar(PerfConstants.ConfigurationKeys.StorageConnectionStringKey,_perfStorageProvider.ConnectionString),
                                     new V1EnvVar(PerfConstants.ConfigurationKeys.RedisConnectionStringKey,_redisConnectionString),
+                                    new V1EnvVar(PerfConstants.ConfigurationKeys.TestCategory,testCategory.ToString())
                                 }
                             },
                             },
