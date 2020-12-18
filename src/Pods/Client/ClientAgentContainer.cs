@@ -17,7 +17,7 @@ namespace Azure.SignalRBench.Client
     {
         private readonly ClientAgentContext _context = new ClientAgentContext();
         private readonly MessageClientHolder _messageClientHolder;
-        private readonly ClientAgent[] _clients;
+        private readonly IClientAgent[] _clients;
         private readonly ILogger<ClientAgentContainer> _logger;
         private bool slowDown = false;
 
@@ -54,7 +54,7 @@ namespace Azure.SignalRBench.Client
             LifetimeDefinition = lifetimeDefinition;
             GroupFunc = groupFunc;
             _logger = logger;
-            _clients = new ClientAgent[localCount];
+            _clients = new IClientAgent[localCount];
         }
 
         public int StartId { get; }
@@ -75,8 +75,7 @@ namespace Azure.SignalRBench.Client
         {
             for (int i = 0; i < _clients.Length; i++)
             {
-                _clients[i] = new ClientAgent(Url, Protocol, IsAnonymous ? null : $"user{StartId + i}", GroupFunc(i),
-                    _context);
+                _clients[i] = new SignalRClientAgent(Url, Protocol, IsAnonymous ? null : $"user{StartId + i}", GroupFunc(i), _context);
             }
 
             using var cts = new CancellationTokenSource();
@@ -143,7 +142,7 @@ namespace Azure.SignalRBench.Client
             }
         }
 
-        public void StartScenario(Func<int, Action<ClientAgent, CancellationToken>> func,
+        public void StartScenario(Func<int, Action<IClientAgent, CancellationToken>> func,
             CancellationToken cancellationToken)
         {
             _context.Reset();
