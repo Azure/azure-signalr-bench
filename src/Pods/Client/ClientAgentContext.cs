@@ -13,8 +13,8 @@ namespace Azure.SignalRBench.Client
 {
     public class ClientAgentContext
     {
-        private readonly ConcurrentDictionary<ClientAgent, ClientAgentStatus> _dict =
-            new ConcurrentDictionary<ClientAgent, ClientAgentStatus>();
+        private readonly ConcurrentDictionary<IClientAgent, ClientAgentStatus> _dict =
+            new ConcurrentDictionary<IClientAgent, ClientAgentStatus>();
 
         private Latency _latency = new Latency();
         private int _recievedMessageCount;
@@ -79,7 +79,7 @@ namespace Azure.SignalRBench.Client
             Interlocked.Add(ref _expectedRecievedMessageCount, expectedRecieverCount);
         }
 
-        public async Task OnConnected(ClientAgent agent, bool hasGroups)
+        public async Task OnConnected(IClientAgent agent, bool hasGroups)
         {
             if (hasGroups)
             {
@@ -90,14 +90,14 @@ namespace Azure.SignalRBench.Client
             _dict.AddOrUpdate(agent, ClientAgentStatus.Connected, (a, s) => ClientAgentStatus.Connected);
         }
 
-        public Task OnReconnecting(ClientAgent agent)
+        public Task OnReconnecting(IClientAgent agent)
         {
             Interlocked.Increment(ref _reconnectingCount);
             _dict.AddOrUpdate(agent, ClientAgentStatus.Reconnecting, (a, s) => ClientAgentStatus.Reconnecting);
             return Task.CompletedTask;
         }
 
-        public Task OnClosed(ClientAgent agent)
+        public Task OnClosed(IClientAgent agent)
         {
             _dict.AddOrUpdate(agent, ClientAgentStatus.Reconnecting, (a, s) => ClientAgentStatus.Closed);
             return Task.CompletedTask;

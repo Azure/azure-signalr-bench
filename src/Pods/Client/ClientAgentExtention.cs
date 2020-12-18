@@ -11,7 +11,7 @@ namespace Azure.SignalRBench.Client
 {
     public static class ClientAgentExtention
     {
-        public static async Task ContinueSend(this ClientAgent client, string payload, TimeSpan interval, TimeSpan duration, Func<string, Task> func, CancellationToken cancellationToken)
+        public static async Task ContinueSend(this IClientAgent client, string payload, TimeSpan interval, TimeSpan duration, Func<string, Task> func, CancellationToken cancellationToken)
         {
             await Task.Delay(StaticRandom.Next((int)interval.TotalMilliseconds));
             var cts = new CancellationTokenSource(duration);
@@ -24,7 +24,7 @@ namespace Azure.SignalRBench.Client
             }
         }
 
-        public static async Task ContinueSend(this ClientAgent client, string group, string payload, TimeSpan interval, TimeSpan duration, Func<string, string, Task> func, CancellationToken cancellationToken)
+        public static async Task ContinueSend(this IClientAgent client, string group, string payload, TimeSpan interval, TimeSpan duration, Func<string, string, Task> func, CancellationToken cancellationToken)
         {
             await Task.Delay(StaticRandom.Next((int)interval.TotalMilliseconds));
             var cts = new CancellationTokenSource(duration);

@@ -365,7 +365,7 @@ namespace Azure.SignalRBench.Client
             public override void StartSenario(StartScenarioParameters startScenarioParameters)
             {
                 var cts = new CancellationTokenSource();
-                ClientAgentContainer.StartScenario(index => Settings.GetClientAgentBehavior(IndexMap[index], GetLogger<ClientAgent>()), cts.Token);
+                ClientAgentContainer.StartScenario(index => Settings.GetClientAgentBehavior(IndexMap[index], GetLogger<IClientAgent>()), cts.Token);
                 SetState(new RunningState(ScenarioState, TotalConnectionCount, IndexMap, ClientAgentContainer, Settings, cts));
             }
 

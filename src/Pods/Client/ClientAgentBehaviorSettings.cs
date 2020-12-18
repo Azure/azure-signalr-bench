@@ -37,9 +37,9 @@ namespace Azure.SignalRBench.Client
             _settings.Add(new GroupSetting(start, end, size, groupFamily, groupCount, groupSize, interval));
         }
 
-        public Action<ClientAgent, CancellationToken> GetClientAgentBehavior(int index, ILogger<ClientAgent> logger)
+        public Action<IClientAgent, CancellationToken> GetClientAgentBehavior(int index, ILogger<IClientAgent> logger)
         {
-            Action<ClientAgent, CancellationToken>? action = null;
+            Action<IClientAgent, CancellationToken>? action = null;
             foreach (var setting in _settings)
             {
                 if (setting.Match(index))
@@ -50,7 +50,7 @@ namespace Azure.SignalRBench.Client
             return action ?? EmptyAction;
         }
 
-        private Action<ClientAgent, CancellationToken> EmptyAction { get; } = (ca, ct) => { };
+        private Action<IClientAgent, CancellationToken> EmptyAction { get; } = (ca, ct) => { };
 
         private abstract class ClientBehaviorSetting
         {
@@ -72,7 +72,7 @@ namespace Azure.SignalRBench.Client
                 return index >= Start && index <= End;
             }
 
-            public abstract Task RunAsync(ClientAgent clientAgent, int clientId, ILogger<ClientAgent> logger, CancellationToken cancellationToken);
+            public abstract Task RunAsync(IClientAgent clientAgent, int clientId, ILogger<IClientAgent> logger, CancellationToken cancellationToken);
 
             private static string GenerateRandomData(int size)
             {
@@ -92,7 +92,7 @@ namespace Azure.SignalRBench.Client
 
             public TimeSpan Interval { get; }
 
-            public async override Task RunAsync(ClientAgent clientAgent, int clientId, ILogger<ClientAgent> logger, CancellationToken cancellationToken)
+            public async override Task RunAsync(IClientAgent clientAgent, int clientId, ILogger<IClientAgent> logger, CancellationToken cancellationToken)
             {
                 await Task.Delay(Interval * StaticRandom.NextDouble());
                 while (!cancellationToken.IsCancellationRequested)
@@ -124,7 +124,7 @@ namespace Azure.SignalRBench.Client
 
             public int TotalConnectionCount { get; }
 
-            public async override Task RunAsync(ClientAgent clientAgent, int clientId, ILogger<ClientAgent> logger, CancellationToken cancellationToken)
+            public async override Task RunAsync(IClientAgent clientAgent, int clientId, ILogger<IClientAgent> logger, CancellationToken cancellationToken)
             {
                 await Task.Delay(Interval * StaticRandom.NextDouble());
                 while (!cancellationToken.IsCancellationRequested)
@@ -162,7 +162,7 @@ namespace Azure.SignalRBench.Client
 
             public TimeSpan Interval { get; }
 
-            public async override Task RunAsync(ClientAgent clientAgent, int clientId, ILogger<ClientAgent> logger, CancellationToken cancellationToken)
+            public async override Task RunAsync(IClientAgent clientAgent, int clientId, ILogger<IClientAgent> logger, CancellationToken cancellationToken)
             {
                 await Task.Delay(Interval * StaticRandom.NextDouble());
                 while (!cancellationToken.IsCancellationRequested)
