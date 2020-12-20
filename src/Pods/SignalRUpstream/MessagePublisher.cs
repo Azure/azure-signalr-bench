@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Threading.Tasks;
+using Azure.SignalRBench.Common;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Azure.SignalR.Management;
 using Microsoft.Extensions.Logging;
@@ -15,10 +16,10 @@ namespace SignalRUpstream
         private readonly ServiceTransportType _serviceTransportType;
         private IServiceHubContext _hubContext;
 
-        public MessagePublisher(string connectionString,string hubName, ServiceTransportType serviceTransportType)
+        public MessagePublisher(string connectionString,string testId, ServiceTransportType serviceTransportType)
         {
             _connectionString = connectionString;
-            _hubName = hubName.Replace("-","s");
+            _hubName = TestId2HubNameConverter.GenerateHubName(testId);
             _serviceTransportType = serviceTransportType;
             InitAsync().Wait();
         }

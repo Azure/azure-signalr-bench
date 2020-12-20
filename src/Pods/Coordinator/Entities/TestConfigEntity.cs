@@ -13,6 +13,7 @@ namespace Azure.SignalRBench.Coordinator.Entities
     {
         public string? User { get; set; }
 
+        public string ServiceName { get; set; } = "SignalR";
         public string Mode { get; set; } = "Default";
       
         public int ClientCons { get; set; } = 3000;
@@ -87,7 +88,12 @@ namespace Azure.SignalRBench.Coordinator.Entities
             if(!Enum.TryParse(Mode, out SignalRServiceMode serviceMode))
                 throw new Exception($"Unknown Service mode {serviceMode}");
             var testCategory =  TestCategory.AspnetCoreSignalR;
-            if (serviceMode == SignalRServiceMode.Serverless)
+            if (ServiceName == "RawWebsocket")
+            {
+                testCategory = TestCategory.RawWebsocket;
+                ServerNum = 0;
+            }
+            if (ServiceName == "SignalR"&&serviceMode == SignalRServiceMode.Serverless)
                 testCategory = TestCategory.AspnetCoreSignalRServerless;
             for (int i = 0; i < RoundNum; i++)
             {

@@ -21,6 +21,7 @@ namespace Azure.SignalRBench.Coordinator
         private const string _default = "default";
         private const string _appserver = "appserver";
         private const string _client = "client";
+        private const string _upstream = "upstream";
         private Kubernetes? _k8s;
         private PerfStorageProvider _perfStorageProvider;
         private string _redisConnectionString;
@@ -67,7 +68,7 @@ namespace Azure.SignalRBench.Coordinator
                 {
                     Metadata = new V1ObjectMeta()
                     {
-                        Name = testId
+                        Name =_upstream+"-"+ testId
                     },
                     Spec = new Networkingv1beta1IngressSpec()
                     {
@@ -82,7 +83,7 @@ namespace Azure.SignalRBench.Coordinator
                                     {
                                         new Networkingv1beta1HTTPIngressPath()
                                         {
-                                            Path = $"/{testId.Replace("-","s")}",
+                                            Path = $"/upstream/{TestId2HubNameConverter.GenerateHubName(testId)}",
                                             Backend = new Networkingv1beta1IngressBackend()
                                             {
                                                 ServiceName = name,
@@ -306,7 +307,7 @@ namespace Azure.SignalRBench.Coordinator
             await _k8s.DeleteNamespacedServiceAsync(name, _default);
             await _k8s.DeleteNamespacedDeploymentAsync(name, _default);
             if (upstream)
-                await _k8s.DeleteNamespacedIngressAsync(testId, _default);
+                await _k8s.DeleteNamespacedIngressAsync( _upstream+"-"+testId, _default);
         }
     }
 }

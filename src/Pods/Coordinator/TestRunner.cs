@@ -332,7 +332,7 @@ namespace Azure.SignalRBench.Coordinator
             var clientPodsReadyTcs = new TaskCompletionSource<object?>();
             var serverPodsReadyTcs = new TaskCompletionSource<object?>();
             clientPodsReady = clientPodsReadyTcs.Task;
-            serverPodsReady = serverPodsReadyTcs.Task;
+            serverPodsReady =serverPodCount<=0?Task.CompletedTask: serverPodsReadyTcs.Task;
             return m =>
             {
                 var p = m.Parameters?.ToObject<ReportReadyParameters>();
