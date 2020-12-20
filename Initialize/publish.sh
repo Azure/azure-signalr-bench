@@ -123,7 +123,7 @@ if [[ $ALL || $COORDINATOR ]]; then
   cd $DIR/yaml/coordinator
   access_key=$(az storage account show-connection-string -n $STORAGE_ACCOUNT -g $RESOURCE_GROUP --query connectionString  -o tsv)
   domain=$(az network public-ip show -n $PORTAL_IP_NAME -g $RESOURCE_GROUP --query dnsSettings.fqdn -o tsv)
-  cat coordinator.yaml | replace KVURL_PLACE_HOLDER $KVURL | replace MSI_PLACE_HOLDER $AGENTPOOL_MSI_CLIENT_ID | replace STORAGE_PLACE_HOLDER $access_key | GREP DOMAIN_PLACE_HOLDER $domain kubectl apply -f -
+  cat coordinator.yaml | replace KVURL_PLACE_HOLDER $KVURL | replace MSI_PLACE_HOLDER $AGENTPOOL_MSI_CLIENT_ID | replace STORAGE_PLACE_HOLDER $access_key | replace DOMAIN_PLACE_HOLDER $domain | kubectl apply -f -
 fi
 
 if [[ $ALL || $COMPILER ]]; then
