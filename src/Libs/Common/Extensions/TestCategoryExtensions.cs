@@ -11,10 +11,10 @@ namespace Azure.SignalRBench.Common
         {
             switch (category)
             {
-                case TestCategory.AspnetCore:
-                case TestCategory.Aspnet:
+                case TestCategory.AspnetCoreSignalR:
+                case TestCategory.AspnetSignalR:
                     return SignalRServiceMode.Default;
-                case TestCategory.AspnetCoreServerless:
+                case TestCategory.AspnetCoreSignalRServerless:
                     return SignalRServiceMode.Serverless;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(category));

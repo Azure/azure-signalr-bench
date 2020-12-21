@@ -15,12 +15,12 @@ namespace Azure.SignalRBench.AppServer
     {
         internal const string HUB_NAME = "/signalrbench";
 
-      //  private readonly ILogger<Startup> _logger;
+        //  private readonly ILogger<Startup> _logger;
 
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
-         //   _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            //   _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         public IConfiguration Configuration { get; }

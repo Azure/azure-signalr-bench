@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using Azure.SignalRBench.Common;
+using Azure.SignalRBench.Messages;
 using Microsoft.Extensions.Logging;
 
 namespace Azure.SignalRBench.Client
@@ -26,15 +27,20 @@ namespace Azure.SignalRBench.Client
         {
             _settings.Add(new EchoSetting(start, end, size, interval));
         }
+        
+        public void AddP2P(int start, int end, int size,int totalConnectionCount, TimeSpan interval)
+        {
+            _settings.Add(new P2PSetting(start, end, size, totalConnectionCount ,interval));
+        }
 
         public void AddBroadcast(int start, int end, int size, int totalConnectionCount, TimeSpan interval)
         {
             _settings.Add(new BroadcastSetting(start, end, size, totalConnectionCount, interval));
         }
 
-        public void AddGroup(int start, int end, int size, string groupFamily, int groupCount, int groupSize, TimeSpan interval)
+        public void AddGroup(int totalConnectionCount, int start, int end, int size, string groupFamily, int groupCount, int groupSize, TimeSpan interval)
         {
-            _settings.Add(new GroupSetting(start, end, size, groupFamily, groupCount, groupSize, interval));
+            _settings.Add(new GroupSetting( totalConnectionCount, start, end, size, groupFamily, groupCount, groupSize, interval));
         }
 
         public Action<IClientAgent, CancellationToken> GetClientAgentBehavior(int index, ILogger<IClientAgent> logger)
@@ -69,10 +75,10 @@ namespace Azure.SignalRBench.Client
 
             public bool Match(int index)
             {
-                return index >= Start && index <= End;
+                return index >= Start && index <End;
             }
 
-            public abstract Task RunAsync(IClientAgent clientAgent, int clientId, ILogger<IClientAgent> logger, CancellationToken cancellationToken);
+            public abstract Task RunAsync(IClientAgent signalRDefualtClientAgent, int clientId, ILogger<IClientAgent> logger, CancellationToken cancellationToken);
 
             private static string GenerateRandomData(int size)
             {
@@ -82,6 +88,39 @@ namespace Azure.SignalRBench.Client
             }
         }
 
+        private sealed class P2PSetting : ClientBehaviorSetting
+        {
+            public P2PSetting(int start, int end, int size,int totalConnectionCount ,TimeSpan interval)
+                : base(start, end, size)
+            {
+                Interval = interval;
+                TotalConnectionCount = totalConnectionCount;
+            }
+
+            public TimeSpan Interval { get; }
+            
+            public int TotalConnectionCount { get; }
+
+            public async override Task RunAsync(IClientAgent clientAgent, int clientId, ILogger<IClientAgent> logger, CancellationToken cancellationToken)
+            {
+                await Task.Delay(Interval * StaticRandom.NextDouble());
+                while (!cancellationToken.IsCancellationRequested)
+                {
+                    try
+                    {
+                        int index = StaticRandom.Next(TotalConnectionCount);
+                        await clientAgent.SendToClientAsync(index,Payload);
+                        clientAgent.Context.IncreaseMessageSent(1);
+                    }
+                    catch (Exception ex)
+                    {
+                        logger.LogWarning(ex, "Failed to send P2P message: clientId={clientId}.", clientId);
+                    }
+                    await Task.Delay(Interval);
+                }
+            }
+        }
+        
         private sealed class EchoSetting : ClientBehaviorSetting
         {
             public EchoSetting(int start, int end, int size, TimeSpan interval)
@@ -145,15 +184,17 @@ namespace Azure.SignalRBench.Client
 
         private sealed class GroupSetting : ClientBehaviorSetting
         {
-            public GroupSetting(int start, int end, int size, string groupFamily, int groupCount, int groupSize, TimeSpan interval)
+            public GroupSetting(int totalConnectionCount, int start, int end, int size, string groupFamily, int groupCount, int groupSize, TimeSpan interval)
               : base(start, end, size)
             {
+                TotalConnectionCount = totalConnectionCount;
                 GroupFamily = groupFamily;
                 GroupCount = groupCount;
                 GroupSize = groupSize;
                 Interval = interval;
             }
 
+            public int TotalConnectionCount;
             public string GroupFamily { get; }
 
             public int GroupCount { get; }
@@ -168,10 +209,16 @@ namespace Azure.SignalRBench.Client
                 while (!cancellationToken.IsCancellationRequested)
                 {
                     int groupIndex = StaticRandom.Next(GroupCount);
+                    var expectedMessageDelta = GroupSize;
+                    if (groupIndex == GroupCount - 1)
+                    {
+                        var tmp = TotalConnectionCount % GroupSize;
+                        expectedMessageDelta = tmp==0?GroupSize:tmp;
+                    }
                     try
                     {
                         await clientAgent.GroupBroadcastAsync(GroupFamily + "_" + groupIndex, Payload);
-                        clientAgent.Context.IncreaseMessageSent(GroupSize);
+                        clientAgent.Context.IncreaseMessageSent(expectedMessageDelta);
                     }
                     catch (Exception ex)
                     {

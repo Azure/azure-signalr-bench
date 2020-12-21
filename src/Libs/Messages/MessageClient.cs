@@ -4,7 +4,6 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-
 using Newtonsoft.Json;
 using StackExchange.Redis;
 
@@ -14,16 +13,34 @@ namespace Azure.SignalRBench.Messages
     {
         private readonly IConnectionMultiplexer _connection;
         private readonly ISubscriber _subscriber;
-        private readonly string _testId;
+        public string TestId { get; set; }
         private readonly string _sender;
+        private readonly IDatabase _database;
         private int _ackId;
 
-        private MessageClient(IConnectionMultiplexer connection, ISubscriber subscriber, string testId, string sender)
+        private MessageClient(IConnectionMultiplexer connection, ISubscriber subscriber, IDatabase database,
+            string testId, string sender)
         {
             _connection = connection;
             _subscriber = subscriber;
-            _testId = testId;
+            _database = database;
+            TestId = testId;
             _sender = sender;
+        }
+
+        public async Task<string> GetAsync(string key)
+        {
+            return await _database.HashGetAsync(TestId, key);
+        }
+
+        public async Task SetAsync(string key, string value)
+        {
+            await _database.HashSetAsync(TestId, key, value);
+        }
+        
+        public async Task DeleteHashTableAsync()
+        {
+            await _database.KeyDeleteAsync(TestId);
         }
 
         public async static Task<MessageClient> ConnectAsync(string connectionString, string testId, string sender)
@@ -32,9 +49,13 @@ namespace Azure.SignalRBench.Messages
             {
                 throw new ArgumentException("Test id cannot be empty.", nameof(testId));
             }
-            var connection = await ConnectionMultiplexer.ConnectAsync(connectionString ?? throw new ArgumentNullException(nameof(connectionString)));
+
+            var connection =
+                await ConnectionMultiplexer.ConnectAsync(connectionString ??
+                                                         throw new ArgumentNullException(nameof(connectionString)));
             var subscriber = connection.GetSubscriber();
-            var result = new MessageClient(connection, subscriber, testId, sender);
+            var database = connection.GetDatabase();
+            var result = new MessageClient(connection, subscriber, database, testId, sender);
             return result;
         }
 
@@ -42,7 +63,8 @@ namespace Azure.SignalRBench.Messages
         {
             foreach (var handler in handlers ?? throw new ArgumentNullException(nameof(handlers)))
             {
-                var cmq = await _subscriber.SubscribeAsync($"{_testId}:{handler.Role ?? _sender}:{handler.Command}:{handler.Type}");
+                var cmq = await _subscriber.SubscribeAsync(
+                    $"{TestId}:{handler.Role ?? _sender}:{handler.Command}:{handler.Type}");
                 cmq.OnMessage(cm => handler.Handle(cm.Message));
             }
         }
@@ -52,13 +74,18 @@ namespace Azure.SignalRBench.Messages
             var ackId = Interlocked.Increment(ref _ackId);
             commandMessage.Sender = _sender;
             commandMessage.AckId = ackId;
-            await _subscriber.PublishAsync($"{_testId}:{target}:{commandMessage.Command}:{nameof(MessageType.Command)}", JsonConvert.SerializeObject(commandMessage));
+            await _subscriber.PublishAsync($"{TestId}:{target}:{commandMessage.Command}:{nameof(MessageType.Command)}",
+                JsonConvert.SerializeObject(commandMessage));
         }
 
-        public async Task AckAsync(CommandMessage commandMessage, AckStatus status, string? error = null, double? progress = null)
+        public async Task AckAsync(CommandMessage commandMessage, AckStatus status, string? error = null,
+            double? progress = null)
         {
-            var message = new AckMessage { Sender = _sender, AckId = commandMessage.AckId, Status = status, Error = error, Progress = progress };
-            await _subscriber.PublishAsync($"{_testId}:{commandMessage.Sender}:{commandMessage.Command}:{nameof(MessageType.Ack)}", JsonConvert.SerializeObject(message));
+            var message = new AckMessage
+                {Sender = _sender, AckId = commandMessage.AckId, Status = status, Error = error, Progress = progress};
+            await _subscriber.PublishAsync(
+                $"{TestId}:{commandMessage.Sender}:{commandMessage.Command}:{nameof(MessageType.Ack)}",
+                JsonConvert.SerializeObject(message));
         }
 
         public void Dispose()

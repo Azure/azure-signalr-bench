@@ -5,7 +5,8 @@ namespace Azure.SignalRBench.Common
 {
     public class SetClientRangeParameters
     {
-        public int StartId { get; set; }
-        public int Count { get; set; }
+        public int StartIdTruncated { get; set; }
+        public int LocalCountDelta { get; set; }
+        public int TotalCountDelta { get; set; }
     }
 }

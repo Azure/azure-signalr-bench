@@ -7,9 +7,8 @@ namespace Azure.SignalRBench.Common
 {
     public class StartClientConnectionsParameters
     {
-        public int TotalCount { get; set; }
         public double Rate { get; set; }
-        public SignalRProtocol Protocol { get; set; }
+        public Protocol Protocol { get; set; }
         public bool IsAnonymous { get; set; }
         public string Url { get; set; } = string.Empty;
         public ClientLifetimeDefinition ClientLifetime { get; set; } = new ClientLifetimeDefinition();

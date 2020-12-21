@@ -12,3 +12,20 @@ code {
   background-color: #1b6ec2;
   border-color: #1861ac;
 }
+
+.modalCss {
+  width: 90%;
+  background-Color: "DodgerBlue";
+  max-width: none!important;
+}
+.configCss {
+  font-size: large;
+  color: chocolate;
+}
+.login {
+  color: darkcyan;
+  position: relative;
+  right:-100px;
+  top:-15px;
+  font-size: small;
+}

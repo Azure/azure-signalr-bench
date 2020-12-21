@@ -1,0 +1,10 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: kubernetes-dashboard
+  namespace: default
+spec:
+  type: ExternalName
+  externalName: kubernetes-dashboard.kube-system.svc.cluster.local
+  ports:
+  - port: 443

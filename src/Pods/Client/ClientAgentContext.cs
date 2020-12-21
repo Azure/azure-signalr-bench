@@ -8,6 +8,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Azure.SignalRBench.Common;
+using Azure.SignalRBench.Messages;
 
 namespace Azure.SignalRBench.Client
 {
@@ -20,12 +21,19 @@ namespace Azure.SignalRBench.Client
         private int _recievedMessageCount;
         private int _expectedRecievedMessageCount;
         private int _sentMessageCount;
-        private int _reconnectingCount;
         private int _totalReconnectedCount;
+        public string TestId { get; set; }
+        private MessageClient _MessageClient;
+
+        public ClientAgentContext(MessageClient messageClient)
+        {
+            _MessageClient = messageClient;
+            TestId = _MessageClient.TestId;
+        }
 
         public int TotalReconnectedCount => Volatile.Read(ref _totalReconnectedCount);
 
-        public int ReconnectingCount => Volatile.Read(ref _reconnectingCount);
+        public int ReconnectingCount =>  _dict.Count(p => p.Value == ClientAgentStatus.Reconnecting);
 
         public int SentMessageCount => Volatile.Read(ref _sentMessageCount);
 
@@ -35,6 +43,16 @@ namespace Azure.SignalRBench.Client
 
         public int ConnectedAgentCount => _dict.Count(p => p.Value == ClientAgentStatus.Connected);
 
+        public async Task<string> GetConnectionIDAsync(int index)
+        {
+           return await  _MessageClient.GetAsync(index.ToString());
+        }
+        
+        public async Task SetConnectionIDAsync(int index,string connectionId)
+        {
+             await  _MessageClient.SetAsync(index.ToString(),connectionId);
+        }
+        
         public void Measure(long ticks, string payload)
         {
             Interlocked.Increment(ref _recievedMessageCount);
@@ -85,14 +103,18 @@ namespace Azure.SignalRBench.Client
             {
                 _dict.AddOrUpdate(agent, ClientAgentStatus.Connected, (a, s) => ClientAgentStatus.JoiningGroups);
                 await agent.JoinGroupAsync();
+                _dict.AddOrUpdate(agent, ClientAgentStatus.Connected, (a, s) => ClientAgentStatus.Connected);
             }
-
-            _dict.AddOrUpdate(agent, ClientAgentStatus.Connected, (a, s) => ClientAgentStatus.Connected);
+            _dict.AddOrUpdate(agent, ClientAgentStatus.Connected, (a, s) =>
+            {
+                if (s == ClientAgentStatus.Reconnecting)
+                    Interlocked.Increment(ref _totalReconnectedCount);
+                return ClientAgentStatus.Connected;
+            });
         }
 
         public Task OnReconnecting(IClientAgent agent)
         {
-            Interlocked.Increment(ref _reconnectingCount);
             _dict.AddOrUpdate(agent, ClientAgentStatus.Reconnecting, (a, s) => ClientAgentStatus.Reconnecting);
             return Task.CompletedTask;
         }
@@ -110,6 +132,7 @@ namespace Azure.SignalRBench.Client
                 ConnectedCount = ConnectedAgentCount,
                 ReconnectingCount = ReconnectingCount,
                 MessageRecieved = RecievedMessageCount,
+                ExpectedRecievedMessageCount = ExpectedRecievedMessageCount,
                 MessageSent = SentMessageCount,
                 Latency = GetLatency(),
             };
@@ -149,12 +172,11 @@ namespace Azure.SignalRBench.Client
 
         public void Reset()
         {
-            _dict.Clear();
+          //  _dict.Clear();
             _latency = new Latency();
             _recievedMessageCount = 0;
             _expectedRecievedMessageCount = 0;
             _sentMessageCount = 0;
-            _reconnectingCount = 0;
             _totalReconnectedCount = 0;
         }
     }

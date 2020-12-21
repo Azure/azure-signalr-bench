@@ -21,15 +21,17 @@ namespace Azure.SignalRBench.Coordinator
         private const string _default = "default";
         private const string _appserver = "appserver";
         private const string _client = "client";
+        private const string _upstream = "upstream";
         private Kubernetes? _k8s;
         private PerfStorageProvider _perfStorageProvider;
         private string _redisConnectionString;
-        public Kubernetes K8s => _k8s ?? throw new InvalidOperationException();
+        private string _domain;
 
         public K8sProvider(PerfStorageProvider perfStorageProvider, IConfiguration configuration)
         {
             _perfStorageProvider = perfStorageProvider;
             _redisConnectionString = configuration[PerfConstants.ConfigurationKeys.RedisConnectionStringKey];
+            _domain = configuration[PerfConstants.ConfigurationKeys.DomainKey];
         }
         public void Initialize(string config)
         {
@@ -37,13 +39,12 @@ namespace Azure.SignalRBench.Coordinator
             _k8s = new Kubernetes(KubernetesClientConfiguration.BuildConfigFromConfigFile(stream));
         }
 
-        public async Task<string> CreateServerPodsAsync(string testId, int nodePoolIndex, string[] asrsConnectionStrings,int serverPodCount, CancellationToken cancellationToken)
+        public async Task<string> CreateServerPodsAsync(string testId, int nodePoolIndex, string[] asrsConnectionStrings,int serverPodCount,bool upstream, CancellationToken cancellationToken)
         {
             var name = _appserver + "-" + testId;
+            
             var service = new V1Service()
             {
-                ApiVersion = "v1",
-                Kind = "Service",
                 Metadata = new V1ObjectMeta()
                 {
                     Name = name
@@ -61,17 +62,55 @@ namespace Azure.SignalRBench.Coordinator
                 }
             };
             await _k8s.CreateNamespacedServiceAsync(service, _default, cancellationToken: cancellationToken);
-
+            if (upstream)
+            {
+                var ingress = new Networkingv1beta1Ingress()
+                {
+                    Metadata = new V1ObjectMeta()
+                    {
+                        Name =_upstream+"-"+ testId
+                    },
+                    Spec = new Networkingv1beta1IngressSpec()
+                    {
+                        Rules = new List<Networkingv1beta1IngressRule>()
+                        {
+                            new Networkingv1beta1IngressRule()
+                            {
+                                Host = _domain,
+                                Http = new Networkingv1beta1HTTPIngressRuleValue()
+                                {
+                                    Paths = new List<Networkingv1beta1HTTPIngressPath>()
+                                    {
+                                        new Networkingv1beta1HTTPIngressPath()
+                                        {
+                                            Path = $"/upstream/{TestId2HubNameConverter.GenerateHubName(testId)}",
+                                            Backend = new Networkingv1beta1IngressBackend()
+                                            {
+                                                ServiceName = name,
+                                                ServicePort = 80
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                };
+                await _k8s.CreateNamespacedIngress1Async(ingress ,_default,cancellationToken:cancellationToken);
+            }
+            var server=upstream?"SignalRUpstream":"AppServer";
             V1Deployment deployment = new V1Deployment()
             {
-                ApiVersion = "apps/v1",
-                Kind = "Deployment",
                 Metadata = new V1ObjectMeta()
                 {
                     Name = name,
                     Labels = new Dictionary<string, string>()
                     {
                         [PerfConstants.ConfigurationKeys.TestIdKey] = testId
+                    },
+                    Annotations = new Dictionary<string, string>()
+                    {
+                        ["cluster-autoscaler.kubernetes.io/safe-to-evict"]="false"
                     }
                 },
                 Spec = new V1DeploymentSpec
@@ -129,7 +168,7 @@ namespace Azure.SignalRBench.Coordinator
                                 },
                                 Args= new List<string>()
                                 {
-                                    "cp /mnt/perf/manifest/AppServer/AppServer.zip /home ; cd /home ; unzip AppServer.zip ;exec ./AppServer;"
+                                    $"cp /mnt/perf/manifest/{server}/{server}.zip /home ; cd /home ; unzip {server}.zip ;exec ./{server};"
                                 },
                                 Env= new List<V1EnvVar>()
                                 {
@@ -158,19 +197,21 @@ namespace Azure.SignalRBench.Coordinator
             return name;
         }
 
-        public async Task CreateClientPodsAsync(string testId, int nodePoolIndex, int clientPodCount, CancellationToken cancellationToken)
+        public async Task CreateClientPodsAsync(string testId,TestCategory testCategory, int nodePoolIndex, int clientPodCount, CancellationToken cancellationToken)
         {
             var name = _client + '-' + testId;
             V1Deployment deployment = new V1Deployment()
             {
-                ApiVersion = "apps/v1",
-                Kind = "Deployment",
                 Metadata = new V1ObjectMeta()
                 {
                     Name = name,
                     Labels = new Dictionary<string, string>()
                     {
                         [PerfConstants.ConfigurationKeys.TestIdKey] = testId
+                    },
+                    Annotations = new Dictionary<string, string>()
+                    {
+                        ["cluster-autoscaler.kubernetes.io/safe-to-evict"]="false"
                     }
                 },
                 Spec = new V1DeploymentSpec()
@@ -236,6 +277,7 @@ namespace Azure.SignalRBench.Coordinator
                                     new V1EnvVar(PerfConstants.ConfigurationKeys.TestIdKey,testId),
                                     new V1EnvVar(PerfConstants.ConfigurationKeys.StorageConnectionStringKey,_perfStorageProvider.ConnectionString),
                                     new V1EnvVar(PerfConstants.ConfigurationKeys.RedisConnectionStringKey,_redisConnectionString),
+                                    new V1EnvVar(PerfConstants.ConfigurationKeys.TestCategory,testCategory.ToString())
                                 }
                             },
                             },
@@ -259,11 +301,13 @@ namespace Azure.SignalRBench.Coordinator
             await _k8s.DeleteNamespacedDeploymentAsync(name, _default);
         }
 
-        public async Task DeleteServerPodsAsync(string testId, int nodePoolIndex)
+        public async Task DeleteServerPodsAsync(string testId, int nodePoolIndex,bool upstream)
         {
             string name = _appserver + '-' + testId;
             await _k8s.DeleteNamespacedServiceAsync(name, _default);
             await _k8s.DeleteNamespacedDeploymentAsync(name, _default);
+            if (upstream)
+                await _k8s.DeleteNamespacedIngressAsync( _upstream+"-"+testId, _default);
         }
     }
 }

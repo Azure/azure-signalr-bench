@@ -2,17 +2,26 @@
 using System.Collections.Generic;
 using Azure.SignalRBench.Common;
 using Microsoft.Azure.Cosmos.Table;
+using Microsoft.Azure.Management.SignalR.Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
+using YamlDotNet.Core;
 
 namespace Azure.SignalRBench.Coordinator.Entities
 {
     public class TestConfigEntity :TableEntity
     {
         public string? User { get; set; }
+
+        public string Service { get; set; } = "SignalR";
+        public string Mode { get; set; } = "Default";
+      
         public int ClientCons { get; set; } = 3000;
 
+        public int ConnectEstablishRoundNum { get; set; } = 1;
+
         public string? ConnectionString { get; set; } 
+        
         public int SignalRUnitSize { get; set; }
 
         public int ServerNum { get; set; } = -1;
@@ -26,16 +35,19 @@ namespace Azure.SignalRBench.Coordinator.Entities
         public int RoundNum { get; set; } = 5;
 
         public int End { get; set; } =-1;
+
+        public int GroupSize { get; set; } = 100;
         
         public string Scenario { get; set; } = ClientBehavior.Echo.ToString();
 
         //seconds
         public int RoundDurations { get; set; } = 60;
+        
         public int Interval { get; set; } = 1000;
 
         public int MessageSize { get; set; } = 2048;
         
-        public string Protocol { get; set; } = SignalRProtocol.WebSocketsWithJson.ToString();
+        public string Protocol { get; set; } = Common.Protocol.WebSocketsWithJson.ToString();
 
         public int Rate { get; set; } = 200;
 
@@ -44,6 +56,10 @@ namespace Azure.SignalRBench.Coordinator.Entities
             Start = Start > ClientCons ? ClientCons : Start;
             End = End > ClientCons ? ClientCons : End;
             End = End <Start ? Start : End;
+            if (ConnectEstablishRoundNum < 1)
+                ConnectEstablishRoundNum = 1;
+            if (ConnectEstablishRoundNum > RoundNum)
+                ConnectEstablishRoundNum = RoundNum;
             if (ClientNum <= 0)
             {
                 ClientNum = (int) Math.Ceiling((double) ClientCons / PerfConstants.Number.ConnectionsPerClient);
@@ -65,30 +81,42 @@ namespace Azure.SignalRBench.Coordinator.Entities
             //creating round settings
             var roundsettings = new List<RoundSetting>();
             int current = Start;
-            int step =(int)Math.Ceiling((double)(End - Start)/ RoundNum);
+            int step =RoundNum>1?(int)Math.Ceiling((double)(End - Start)/(RoundNum-1)):0;
             int count = current;
+             if(!Enum.TryParse(Scenario, out ClientBehavior behavior))
+                 throw new Exception($"Unknown Scenario {Scenario}");
+            if(!Enum.TryParse(Mode, out SignalRServiceMode serviceMode))
+                throw new Exception($"Unknown Service mode {serviceMode}");
+            var testCategory =  TestCategory.AspnetCoreSignalR;
+            if (Service == "RawWebsocket")
+            {
+                testCategory = TestCategory.RawWebsocket;
+                ServerNum = 0;
+            }
+            if (Service == "SignalR"&&serviceMode == SignalRServiceMode.Serverless)
+                testCategory = TestCategory.AspnetCoreSignalRServerless;
             for (int i = 0; i < RoundNum; i++)
             {
-                current += step * i;
                 count = current > End ? End : current;
                 roundsettings.Add(new RoundSetting()
                 {
                     DurationInSeconds = RoundDurations,
                     ClientSettings = new []{new  ClientSetting()
                         {
-                            Behavior=Enum.TryParse(Scenario,out ClientBehavior behavior)?behavior:throw new Exception($"Unknown Scenario {Scenario}"),
+                            Behavior=behavior,
                             IntervalInMilliseconds=Interval,
                             Count=count,
                             MessageSize=MessageSize,
-                            GroupFamily=null,
+                            GroupFamily="default",
                         }
                     }
                 });
+                current += step ;
             }
             var testJob = new TestJob()
             {
                 TestId = PartitionKey + '-' + index,
-                TestMethod = TestCategory.AspnetCore,
+                TestMethod = testCategory,
                 ServiceSetting = new [] { new ServiceSetting()
                 {
                     AsrsConnectionString = ConnectionString?.Trim(),
@@ -99,10 +127,17 @@ namespace Azure.SignalRBench.Coordinator.Entities
                 ScenarioSetting = new ScenarioSetting()
                 {
                     TotalConnectionCount = ClientCons,
+                    TotalConnectionRound = ConnectEstablishRoundNum,
                     Rounds = roundsettings.ToArray(),
                     IsAnonymous = true,
-                    Protocol =Enum.TryParse(Protocol,out  SignalRProtocol protocol)?protocol:throw new Exception($"Unknown Protocol {Protocol}"),
+                    Protocol =Enum.TryParse(Protocol,out  Protocol protocol)?protocol:throw new Exception($"Unknown Protocol {Protocol}"),
                     Rate = Rate,
+                    GroupDefinitions = (behavior==ClientBehavior.GroupBroadcast) ? new []{new GroupDefinition()
+                    {
+                        GroupFamily = "default",
+                        GroupCount = 0,
+                        GroupSize = GroupSize
+                    } }: Array.Empty<GroupDefinition>(),
                 },
                 PodSetting=new PodSetting()
                 {

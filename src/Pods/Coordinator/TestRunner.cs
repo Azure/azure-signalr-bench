@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -14,12 +15,12 @@ using Azure.SignalRBench.Messages;
 using Azure.SignalRBench.Storage;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Azure.SignalRBench.Coordinator
 {
     public class TestRunner
     {
-        private const double MaxClientCountInPod = 5000;
 
         private readonly Dictionary<string, SetClientRangeParameters> _clients =
             new Dictionary<string, SetClientRangeParameters>();
@@ -27,8 +28,8 @@ namespace Azure.SignalRBench.Coordinator
         private readonly ConcurrentDictionary<string, ReportClientStatusParameters> _clientStatus =
             new ConcurrentDictionary<string, ReportClientStatusParameters>();
 
-        private readonly List<ReportClientStatusParameters>
-            _clientStatusList = new List<ReportClientStatusParameters>();
+        private readonly List<RoundStatus>
+            _roundStatusList = new List<RoundStatus>();
 
         private readonly List<string> _serverPods = new List<string>();
         private readonly ILogger<TestRunner> _logger;
@@ -36,6 +37,9 @@ namespace Azure.SignalRBench.Coordinator
 
         private string _url = "http://localhost:8080/";
         private TestStatusEntity _testStatusEntity;
+        private int _totalConnected = 0;
+        private int _roundTotalConnected = 0;
+        private Stopwatch _timer=new Stopwatch();
 
         public TestRunner(
             TestJob job,
@@ -86,12 +90,13 @@ namespace Azure.SignalRBench.Coordinator
                 _logger.LogWarning("Test job {testId}: No service configuration.", Job.TestId);
                 return;
             }
-
+            _timer.Start();
             _testStatusAccessor = await PerfStorage.GetTableAsync<TestStatusEntity>(PerfConstants.TableNames.TestStatus);
             int idx = Job.TestId.LastIndexOf('-');
+            await Task.Delay(2000);
             _testStatusEntity = await _testStatusAccessor.GetAsync(Job.TestId.Substring(0,idx), Job.TestId.Substring(idx+1));
             var clientAgentCount = Job.ScenarioSetting.TotalConnectionCount;
-            var clientPodCount = (int) Math.Ceiling(clientAgentCount / MaxClientCountInPod);
+            var clientPodCount = Job.PodSetting.ClientCount;
             _logger.LogInformation("Test job {testId}: Client pods count: {count}.", Job.TestId, clientPodCount);
             var serverPodCount = Job.PodSetting.ServerCount;
             _logger.LogInformation("Test job {testId}: Server pods count: {count}.", Job.TestId, serverPodCount);
@@ -99,29 +104,40 @@ namespace Azure.SignalRBench.Coordinator
             _logger.LogInformation("Test job {testId}: Node count: {count}.", Job.TestId, nodeCount);
             var asrsConnectionStringsTask = PrepairAsrsInstancesAsync(cancellationToken);
             await UpdateTestStatus("Creating vms [SignalRs]");
-            await AksProvider.EnsureNodeCountAsync(NodePoolIndex, nodeCount, cancellationToken);
+            //leave this to autoscale. When ca is enabled, manual config won't work
+           // await AksProvider.EnsureNodeCountAsync(NodePoolIndex, nodeCount, cancellationToken);
             using var messageClient = await MessageClient.ConnectAsync(RedisConnectionString, Job.TestId, PodName);
             await messageClient.WithHandlers(MessageHandler.CreateCommandHandler(Roles.Coordinator,
                 Commands.Coordinator.ReportClientStatus, CollectClientStatus));
+            CancellationTokenSource? scheduleCts = null;
             try
             {
                 var asrsConnectionStrings = await asrsConnectionStringsTask;
                 await UpdateTestStatus("Creating pods");
                 await CreatePodsAsync(asrsConnectionStrings, clientAgentCount, clientPodCount, serverPodCount,
                     messageClient, cancellationToken);
-                await UpdateTestStatus("Starting client connections");
-                await StartClientConnectionsAsync(messageClient, cancellationToken);
+        //        await UpdateTestStatus("Starting client connections");
                 int i = 0;
                 foreach (var round in Job.ScenarioSetting.Rounds)
                 {
                     i++;
-                    await UpdateTestStatus($"Testing Round {i}");
+                    await UpdateTestStatus($"Round {i}: Connecting");
+                    var totalConnectionDeltaThisRound = GetTotalConnectionDeltaCurrentRound(i);
+                    scheduleCts=new CancellationTokenSource();
+                    _=ScheduleStateUpdate(i,_roundTotalConnected,scheduleCts.Token);
+                    await SetClientRange(totalConnectionDeltaThisRound, clientPodCount, messageClient, cancellationToken);
+                    await StartClientConnectionsAsync(messageClient, cancellationToken);
+                    scheduleCts.Cancel();
+                    await Task.Delay(2000);
                     _clientStatus.Clear();
                     await SetScenarioAsync(messageClient, round, cancellationToken);
+                    await UpdateTestStatus($"Round {i}: Testing");
                     await StartScenarioAsync(messageClient, cancellationToken);
                     await Task.Delay(TimeSpan.FromSeconds(round.DurationInSeconds), cancellationToken);
                     await StopScenarioAsync(messageClient, cancellationToken);
-                    await UpdateTestReports();
+                    //wait for the last message to come back
+                    await Task.Delay(5000);
+                    await UpdateTestReports(round,_roundTotalConnected);
                 }
 
                 await UpdateTestStatus($"Stopping client connections");
@@ -134,12 +150,17 @@ namespace Azure.SignalRBench.Coordinator
             }
             finally
             {
+                if(scheduleCts!=null&&!scheduleCts.IsCancellationRequested)
+                  scheduleCts.Cancel();
+                _timer.Stop();
                 try
                 {
+                    _logger.LogInformation("Test job {testId}: Removing hashTable in redis.", Job.TestId);
+                    await messageClient.DeleteHashTableAsync();
                     _logger.LogInformation("Test job {testId}: Removing client pods.", Job.TestId);
                     await K8sProvider.DeleteClientPodsAsync(Job.TestId, NodePoolIndex);
                     _logger.LogInformation("Test job {testId}: Removing server pods.", Job.TestId);
-                    await K8sProvider.DeleteServerPodsAsync(Job.TestId, NodePoolIndex);
+                    await K8sProvider.DeleteServerPodsAsync(Job.TestId, NodePoolIndex,Job.TestMethod==TestCategory.AspnetCoreSignalRServerless);
                     _logger.LogInformation("Test job {testId}: Removing service instances.", Job.TestId);
                     await Task.WhenAll(
                         from ss in Job.ServiceSetting
@@ -156,9 +177,53 @@ namespace Azure.SignalRBench.Coordinator
             }
         }
 
-        private async Task UpdateTestStatus(string currentStatus, bool healthy = true,Exception? e=default)
+        public int GetTotalConnectionDeltaCurrentRound(int i)
         {
-            _testStatusEntity.Status = currentStatus;
+           int min= Job.ScenarioSetting.Rounds[i-1].ClientSettings[0].Count;
+           double percent = 1;
+           if (i < Job.ScenarioSetting.TotalConnectionRound)
+           {
+               percent = (double) i / Job.ScenarioSetting.TotalConnectionRound;
+           }
+
+           int totalThisRound = (int)Math.Ceiling(Job.ScenarioSetting.TotalConnectionCount * percent);
+           totalThisRound= totalThisRound < min ? min : totalThisRound;
+           int result = totalThisRound - _roundTotalConnected;
+           _roundTotalConnected = totalThisRound;
+           return result;
+        }
+        
+        public async Task ScheduleStateUpdate(int i,int totalConnectionThisRound,CancellationToken ctx)
+        {
+            _logger.LogInformation("Start to record client connection status...");
+            while (!ctx.IsCancellationRequested)
+            {
+                _totalConnected = _clientStatus.Select(p =>
+                {
+                    _logger.LogInformation($"{p.Key} connected:{p.Value.ConnectedCount} , reconnecting:{p.Value.ReconnectingCount} , totalReconnected:{p.Value.TotalReconnectCount},time: {p.Value.Time}");
+                    return p.Value.ConnectedCount;
+                }).Sum();
+                var totalReconnectiong = _clientStatus.Select(p => p.Value.ReconnectingCount).Sum();
+                var totalReconnectedCount = _clientStatus.Select(p => p.Value.TotalReconnectCount).Sum();
+                _logger.LogInformation($"\n [Total] reported client count:[ {_clientStatus.Count} ], Reconnected:{totalReconnectedCount} , Reconnecting:{totalReconnectiong}, connected:{_totalConnected}");
+                _logger.LogInformation("Total connected:"+_totalConnected+"\n");
+                await UpdateTestStatus($"Round {i}: Connected:{_totalConnected}/{totalConnectionThisRound}");
+                if (_totalConnected == totalConnectionThisRound)
+                {
+                    _logger.LogInformation("All connections established");
+                    return;
+                }
+                if(_totalConnected>totalConnectionThisRound)
+                {
+                    _logger.LogError($"{_totalConnected} is bigger than {totalConnectionThisRound}");
+                }
+                await Task.Delay(2000);
+            }
+        }
+        public async Task UpdateTestStatus(string currentStatus, bool healthy = true,Exception? e=default)
+        {
+            var sec=_timer.ElapsedMilliseconds / 1000;
+            _testStatusEntity.Status = currentStatus+" ["+sec+"sec]";
             _testStatusEntity.Healthy = healthy;
             if (healthy)
             {
@@ -170,37 +235,42 @@ namespace Azure.SignalRBench.Coordinator
                 if(e!=null)
                   _testStatusEntity.ErrorInfo+="   \n  \n     "+ e;
             }
+
             await _testStatusAccessor.UpdateAsync(_testStatusEntity);
         }
 
-        private async Task UpdateTestReports()
+        private async Task UpdateTestReports(RoundSetting round,int totalConnectionsThisRound)
         {
-            var combindClientStatus = new ReportClientStatusParameters()
+            var roundStatus = new RoundStatus()
             {
                 ConnectedCount = 0,
                 Latency = new Dictionary<LatencyClass, int>(),
                 MessageRecieved = 0,
                 MessageSent = 0,
                 ReconnectingCount = 0,
-                TotalReconnectCount = 0
+                TotalReconnectCount = 0,
+                ExpectedRecievedMessageCount = 0,
+                //for now, there is only one clientsetting in one round
+                ActiveConnection = round.ClientSettings[0].Count,
+                RoundConnected = totalConnectionsThisRound
             };
             foreach (var v in _clientStatus.Values)
             {
-                combindClientStatus.ConnectedCount += v.ConnectedCount;
-                combindClientStatus.MessageRecieved += v.MessageRecieved;
-                combindClientStatus.MessageSent += v.MessageSent;
-                combindClientStatus.ReconnectingCount += v.ReconnectingCount;
-                combindClientStatus.TotalReconnectCount += v.TotalReconnectCount;
+                roundStatus.ConnectedCount += v.ConnectedCount;
+                roundStatus.MessageRecieved += v.MessageRecieved;
+                roundStatus.MessageSent += v.MessageSent;
+                roundStatus.ReconnectingCount += v.ReconnectingCount;
+                roundStatus.TotalReconnectCount += v.TotalReconnectCount;
+                roundStatus.ExpectedRecievedMessageCount += v.ExpectedRecievedMessageCount;
                 foreach (var kv in v.Latency)
                 {
-                    if (!combindClientStatus.Latency.ContainsKey(kv.Key))
-                        combindClientStatus.Latency[kv.Key] = 0;
-                    combindClientStatus.Latency[kv.Key] = combindClientStatus.Latency[kv.Key] + kv.Value;
+                    if (!roundStatus.Latency.ContainsKey(kv.Key))
+                        roundStatus.Latency[kv.Key] = 0;
+                    roundStatus.Latency[kv.Key] = roundStatus.Latency[kv.Key] + kv.Value;
                 }
             }
-
-            _clientStatusList.Add(combindClientStatus);
-            _testStatusEntity.Report = JsonConvert.SerializeObject(_clientStatusList);
+            _roundStatusList.Add(roundStatus);
+            _testStatusEntity.Report = JsonConvert.SerializeObject(_roundStatusList);
             await _testStatusAccessor.UpdateAsync(_testStatusEntity);
         }
 
@@ -246,8 +316,8 @@ namespace Azure.SignalRBench.Coordinator
 
         private Task CollectClientStatus(CommandMessage msg)
         {
-            var p = msg.Parameters.ToObject<ReportClientStatusParameters>();
-            _clientStatus[msg.Sender] = p;
+            var status = msg.Parameters.ToObject<ReportClientStatusParameters>();
+            _clientStatus[msg.Sender] = status;
             return Task.CompletedTask;
         }
 
@@ -261,11 +331,10 @@ namespace Azure.SignalRBench.Coordinator
         {
             int clientReadyCount = 0;
             int serverReadyCount = 0;
-            var countPerPod = clientAgentCount / clientPodCount;
             var clientPodsReadyTcs = new TaskCompletionSource<object?>();
             var serverPodsReadyTcs = new TaskCompletionSource<object?>();
             clientPodsReady = clientPodsReadyTcs.Task;
-            serverPodsReady = serverPodsReadyTcs.Task;
+            serverPodsReady =serverPodCount<=0?Task.CompletedTask: serverPodsReadyTcs.Task;
             return m =>
             {
                 var p = m.Parameters?.ToObject<ReportReadyParameters>();
@@ -278,34 +347,15 @@ namespace Azure.SignalRBench.Coordinator
                 if (p.Role == Roles.Clients)
                 {
                     clientReadyCount++;
-                    if (clientReadyCount < clientPodCount)
+                    _clients[m.Sender] =
+                        new SetClientRangeParameters();
+                    if (clientReadyCount == clientPodCount)
                     {
-                        _clients[m.Sender] =
-                            new SetClientRangeParameters
-                            {
-                                StartId = (clientReadyCount - 1) * countPerPod,
-                                Count = countPerPod,
-                            };
-                    }
-                    else if (clientReadyCount == clientPodCount)
-                    {
-                        _clients[m.Sender] =
-                            new SetClientRangeParameters
-                            {
-                                StartId = (clientReadyCount - 1) * countPerPod,
-                                Count = clientAgentCount - (clientReadyCount - 1) * countPerPod,
-                            };
                         clientPodsReadyTcs.TrySetResult(null);
                     }
-                    else
+                    else if(clientReadyCount>clientPodCount) 
                     {
-                        // todo: log
-                        _clients[m.Sender] =
-                            new SetClientRangeParameters
-                            {
-                                StartId = 0,
-                                Count = 0,
-                            };
+                       _logger.LogError($"More client pods are created:{clientReadyCount}/{clientPodCount}");
                     }
                 }
                 else if (p.Role == Roles.AppServers)
@@ -314,17 +364,56 @@ namespace Azure.SignalRBench.Coordinator
                     if (serverReadyCount == serverPodCount)
                     {
                         serverPodsReadyTcs.TrySetResult(null);
+                    }  else if(serverReadyCount>serverPodCount)
+                    {
+                        _logger.LogError($"More server pods are created:{serverReadyCount}/{serverPodCount}");
                     }
-
-                    _serverPods.Add(m.Sender);
                 }
-                else
-                {
-                    // todo: log.
-                }
-
+              
                 return Task.CompletedTask;
             };
+        }
+        
+          private async Task SetClientRange(
+            int clientAgentCount,
+            int clientPodCount,
+            MessageClient messageClient,
+            CancellationToken cancellationToken
+           )
+        {
+            int clientReadyCount = 0;
+            var countPerPod = clientAgentCount / clientPodCount;
+            var keys=new List<string>(_clients.Keys);
+            foreach (var k in keys)
+            {
+                clientReadyCount++;
+                    if (clientReadyCount < clientPodCount)
+                    {
+                        _clients[k] =
+                            new SetClientRangeParameters
+                            {
+                                StartIdTruncated = (clientReadyCount - 1) * countPerPod,
+                                LocalCountDelta = countPerPod,
+                                TotalCountDelta = clientAgentCount
+                            };
+                    }
+                    else if (clientReadyCount == clientPodCount)
+                    {
+                        _clients[k] =
+                            new SetClientRangeParameters
+                            {
+                                StartIdTruncated = (clientReadyCount - 1) * countPerPod,
+                                LocalCountDelta = clientAgentCount - (clientReadyCount - 1) * countPerPod,
+                                TotalCountDelta = clientAgentCount
+                            };
+                    }
+                }
+            var clientCompleteTask = await messageClient.GetWhenAllAckAsync(
+                _clients.Keys,
+                Commands.Clients.SetClientRange,
+                cancellationToken);
+            await Task.WhenAll(_clients.Select(pair => messageClient.SetClientRangeAsync(pair.Key, pair.Value)));
+            await clientCompleteTask;
         }
 
         private async Task CreatePodsAsync(
@@ -344,9 +433,9 @@ namespace Azure.SignalRBench.Coordinator
 
             _logger.LogInformation("Test job {testId}: Creating server pods.", Job.TestId);
             _url =  await K8sProvider.CreateServerPodsAsync(Job.TestId, NodePoolIndex, asrsConnectionStrings,
-                serverPodCount, cancellationToken) ;
+                serverPodCount,Job.TestMethod==TestCategory.AspnetCoreSignalRServerless, cancellationToken) ;
             _logger.LogInformation("Test job {testId}: Creating client pods.", Job.TestId);
-            await K8sProvider.CreateClientPodsAsync(Job.TestId, NodePoolIndex, clientPodCount, cancellationToken);
+            await K8sProvider.CreateClientPodsAsync(Job.TestId,Job.TestMethod, NodePoolIndex, clientPodCount, cancellationToken);
 
             await Task.WhenAll(
                 Task.Run(async () =>
@@ -360,12 +449,7 @@ namespace Azure.SignalRBench.Coordinator
                     _logger.LogInformation("Test job {testId}: Server pods ready.", Job.TestId);
                 }));
 
-            var clientCompleteTask = await messageClient.GetWhenAllAckAsync(
-                _clients.Keys,
-                Commands.Clients.SetClientRange,
-                cancellationToken);
-            await Task.WhenAll(_clients.Select(pair => messageClient.SetClientRangeAsync(pair.Key, pair.Value)));
-            await clientCompleteTask;
+           
         }
 
         private async Task StartClientConnectionsAsync(
@@ -376,11 +460,17 @@ namespace Azure.SignalRBench.Coordinator
                 _clients.Keys,
                 Commands.Clients.StartClientConnections,
                 cancellationToken);
+            //dirty logic, reset group count, assume only one group
+            if (Job.ScenarioSetting.GroupDefinitions.Length > 0)
+            {
+                var groupSize = Job.ScenarioSetting.GroupDefinitions[0].GroupSize;
+                Job.ScenarioSetting.GroupDefinitions[0].GroupCount =
+                    _roundTotalConnected / groupSize + (_roundTotalConnected % groupSize == 0 ? 0 : 1);
+            }
             await messageClient.StartClientConnectionsAsync(
                 new StartClientConnectionsParameters
                 {
                     ClientLifetime = Job.ScenarioSetting.ClientLifetime,
-                    TotalCount = Job.ScenarioSetting.TotalConnectionCount,
                     GroupDefinitions = Job.ScenarioSetting.GroupDefinitions,
                     IsAnonymous = Job.ScenarioSetting.IsAnonymous,
                     Protocol = Job.ScenarioSetting.Protocol,

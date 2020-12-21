@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import { Collapse, Container, Navbar, NavbarBrand, NavbarToggler, NavItem, NavLink } from 'reactstrap';
 import { Link } from 'react-router-dom';
 import './NavMenu.css';
-
+import { Util } from './Util'
 export class NavMenu extends Component {
     static displayName = NavMenu.name;
 
@@ -11,8 +11,10 @@ export class NavMenu extends Component {
 
         this.toggleNavbar = this.toggleNavbar.bind(this);
         this.state = {
-            collapsed: true
+            collapsed: true,
+            user:""
         };
+        this.login=this.login.bind(this)
     }
 
     toggleNavbar() {
@@ -20,7 +22,9 @@ export class NavMenu extends Component {
             collapsed: !this.state.collapsed
         });
     }
-
+    componentDidMount() {
+        this.login()
+    }
     render() {
         return (
             <header>
@@ -41,9 +45,21 @@ export class NavMenu extends Component {
                                 </NavItem>
                             </ul>
                         </Collapse>
+                        <h4 class="login">
+                            {this.state.user}
+                        </h4>
                     </Container>
                 </Navbar>
             </header>
         );
+    }
+
+    async login(){
+        const response = await fetch('home/info', {
+            redirect: "manual"
+        });
+        await Util.CheckAuth(response)
+        const data = await response.json();
+        this.setState({user:data['user']})
     }
 }

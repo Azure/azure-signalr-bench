@@ -21,7 +21,12 @@ namespace Azure.SignalRBench.AppServer
               .ConfigureLogging((context, logging) =>
               {
                   logging.ClearProviders();
-                  logging.AddConsole();
+                  logging.AddConsole(options =>
+                  {
+                      options.IncludeScopes = true;
+                      options.DisableColors = false;
+                      options.TimestampFormat = "hh:mm:ss yyyy/MM/dd";
+                  });
                   logging.AddProvider(
                       new BlobLoggerProvider(
                           $"{context.Configuration[PerfConstants.ConfigurationKeys.TestIdKey]}/{Roles.AppServers}_{context.Configuration[PerfConstants.ConfigurationKeys.PodNameStringKey]}",

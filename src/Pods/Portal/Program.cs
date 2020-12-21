@@ -22,7 +22,12 @@ namespace Portal
                 .ConfigureLogging((ILoggingBuilder logging) =>
                 {
                     logging.ClearProviders();
-                    logging.AddConsole();
+                    logging.AddConsole(options =>
+                    {
+                        options.IncludeScopes = true;
+                        options.DisableColors = false;
+                        options.TimestampFormat = "hh:mm:ss yyyy/MM/dd";
+                    });
                 })
                 .ConfigureWebHostDefaults(webBuilder =>
                 {

@@ -3,15 +3,16 @@
 
 using System.Threading;
 using System.Threading.Tasks;
+using Azure.SignalRBench.Common;
 
 namespace Azure.SignalRBench.Coordinator
 {
     public interface IK8sProvider
     {
-        Task CreateClientPodsAsync(string testId, int nodePoolIndex,int clientPodCount, CancellationToken cancellationToken);
-        Task<string> CreateServerPodsAsync(string testId, int nodePoolIndex, string[] asrsConnectionStrings,int serverPodCount, CancellationToken cancellationToken);
+        Task CreateClientPodsAsync(string testId,TestCategory testCategory, int nodePoolIndex,int clientPodCount, CancellationToken cancellationToken);
+        Task<string> CreateServerPodsAsync(string testId, int nodePoolIndex, string[] asrsConnectionStrings,int serverPodCount,bool upstream, CancellationToken cancellationToken);
         Task DeleteClientPodsAsync(string testId, int nodePoolIndex);
-        Task DeleteServerPodsAsync(string testId, int nodePoolIndex);
+        Task DeleteServerPodsAsync(string testId, int nodePoolIndex,bool upstream);
         void Initialize(string config);
     }
 }

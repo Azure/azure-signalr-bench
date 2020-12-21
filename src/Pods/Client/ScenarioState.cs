@@ -7,7 +7,6 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
-
 using Azure.SignalRBench.Client.Exceptions;
 using Azure.SignalRBench.Common;
 using Microsoft.Extensions.Logging;
@@ -19,11 +18,16 @@ namespace Azure.SignalRBench.Client
         private readonly ILoggerFactory _loggerFactory;
         private ScenarioBaseState _state;
         private ScenarioBaseState _save = null;
-        
-        public ScenarioState( ILoggerFactory loggerFactory)
+        private int totalConnected = 0;
+        private int[] indexMap = new int[0];
+        private IClientAgentFactory _clientAgentFactory;
+        public ClientAgentContainer? ClientAgentContainer { get; set; }
+
+        public ScenarioState(ILoggerFactory loggerFactory,IClientAgentFactory clientAgentFactory)
         {
             _loggerFactory = loggerFactory;
-            _state = new InitState(this);
+            _state = new RoundInitState(this);
+            _clientAgentFactory = clientAgentFactory;
         }
 
         public void SetClientRange(SetClientRangeParameters setClientRangeParameters) =>
@@ -32,8 +36,9 @@ namespace Azure.SignalRBench.Client
         public void SetSenario(SetScenarioParameters setScenarioParameters) =>
             _state.SetSenario(setScenarioParameters);
 
-        public Task StartClientConnections(MessageClientHolder messageClientHolder,StartClientConnectionsParameters startClientConnectionsParameters) =>
-            _state.StartClientConnections(messageClientHolder,startClientConnectionsParameters);
+        public Task StartClientConnections(MessageClientHolder messageClientHolder,
+            StartClientConnectionsParameters startClientConnectionsParameters) =>
+            _state.StartClientConnections(messageClientHolder, startClientConnectionsParameters);
 
         public void StartSenario(StartScenarioParameters startScenarioParameters) =>
             _state.StartSenario(startScenarioParameters);
@@ -67,26 +72,69 @@ namespace Azure.SignalRBench.Client
 
             public virtual void SetClientRange(SetClientRangeParameters setClientRangeParameters) =>
                 throw new InvalidScenarioStateException();
-            public virtual Task StartClientConnections(MessageClientHolder messageClientHolder,StartClientConnectionsParameters startClientConnectionsParameters) =>
+
+            public virtual Task StartClientConnections(MessageClientHolder messageClientHolder,
+                StartClientConnectionsParameters startClientConnectionsParameters) =>
                 throw new InvalidScenarioStateException();
+
             public virtual void SetSenario(SetScenarioParameters setScenarioParameters) =>
                 throw new InvalidScenarioStateException();
+
             public virtual void StartSenario(StartScenarioParameters startScenarioParameters) =>
                 throw new InvalidScenarioStateException();
+
             public virtual void StopSenario(StopScenarioParameters stopScenario) =>
                 throw new InvalidScenarioStateException();
-            public virtual Task StopClientConnections(StopClientConnectionsParameters stopClientConnectionsParameters) =>
+
+            public virtual Task
+                StopClientConnections(StopClientConnectionsParameters stopClientConnectionsParameters) =>
                 throw new InvalidScenarioStateException();
         }
 
-        private sealed class InitState : ScenarioBaseState
+        private sealed class RoundInitState : ScenarioBaseState
         {
-            public InitState(ScenarioState scenarioState)
-                : base(scenarioState) { }
+            private ILogger<RoundInitState> _logger;
+            public RoundInitState(ScenarioState scenarioState)
+                : base(scenarioState)
+            {
+                _logger= GetLogger<RoundInitState>();
+                Save();
+            }
 
             public override void SetClientRange(SetClientRangeParameters setClientRangeParameters)
             {
-                SetState(new ClientRangeReadyState(ScenarioState, setClientRangeParameters.StartId, setClientRangeParameters.Count));
+                var indexMapDelta=GenerateIndexMap(setClientRangeParameters.TotalCountDelta, setClientRangeParameters.StartIdTruncated, setClientRangeParameters.LocalCountDelta);
+                var tmp = new int[ScenarioState.indexMap.Length + indexMapDelta.Length];
+                for (int i = 0; i < ScenarioState.indexMap.Length; i++)
+                {
+                    tmp[i] = ScenarioState.indexMap[i];
+                }
+                int postion = ScenarioState.indexMap.Length;
+                for (int i = 0; i < indexMapDelta.Length; i++)
+                {
+                    tmp[postion + i] = indexMapDelta[i] + ScenarioState.totalConnected;
+                }
+                ScenarioState.indexMap = tmp;
+                int oldTotalConnected = ScenarioState.totalConnected;
+                ScenarioState.totalConnected += setClientRangeParameters.TotalCountDelta;
+                _logger.LogInformation($"Indexmap generated. Total connected:{ScenarioState.totalConnected}, localConnected:{ScenarioState.indexMap.Length}");
+                SetState(new ClientRangeReadyState(ScenarioState,oldTotalConnected+ setClientRangeParameters.StartIdTruncated,ScenarioState.indexMap.Length));
+            }
+
+            public override async Task StopClientConnections(
+                StopClientConnectionsParameters stopClientConnectionsParameters)
+            {
+                if (ScenarioState.ClientAgentContainer != null)
+                    await ScenarioState.ClientAgentContainer.StopAsync(stopClientConnectionsParameters.Rate);
+                SetState(new RoundInitState(ScenarioState));
+            }
+            
+            private static int[] GenerateIndexMap(int total, int startIndex, int count)
+            {
+                var rand = new Random(total);
+                return (from id in Enumerable.Range(0, total)
+                    orderby rand.Next()
+                    select id).Skip(startIndex).Take(count).ToArray();
             }
         }
 
@@ -106,32 +154,36 @@ namespace Azure.SignalRBench.Client
                 _logger = GetLogger<ClientRangeReadyState>();
             }
 
-            public override async Task StartClientConnections(MessageClientHolder messageClientHolder,StartClientConnectionsParameters p)
+            public override async Task StartClientConnections(MessageClientHolder messageClientHolder,
+                StartClientConnectionsParameters p)
             {
-                var indexMap = GenerateIndexMap(p.TotalCount, StartId, LocalCount);
-                _logger.LogInformation("Indexmap generated.");
-                var clientAgentContainer = new ClientAgentContainer(
-                    messageClientHolder,
-                    StartId,
-                    LocalCount,
-                    p.Protocol,
-                    p.IsAnonymous,
-                    p.Url,
-                    p.ClientLifetime,
-                    GetGroupsFunc(p.TotalCount, indexMap, p.GroupDefinitions),
-                    GetLogger<ClientAgentContainer>());
-                await clientAgentContainer.StartAsync(p.Rate, default);
-                _logger.LogInformation("Connections started.");
-                SetState(new ClientsReadyState(ScenarioState, p.TotalCount, indexMap, p.GroupDefinitions, clientAgentContainer));
-                return;
-            }
+               try
+               {
+                int continueIndex = 0;
+                _logger.LogInformation($"StartId:{StartId},LocalCount:{LocalCount}");
+                if (ScenarioState.ClientAgentContainer == null)
+                {
+                    ScenarioState.ClientAgentContainer = new ClientAgentContainer(
+                        messageClientHolder,
+                        p.Protocol,
+                        p.IsAnonymous,
+                        p.Url,
+                        p.ClientLifetime,ScenarioState._clientAgentFactory,
+                        GetLogger<ClientAgentContainer>());
+                }
+                continueIndex = ScenarioState.ClientAgentContainer.ExpandConnections(StartId, LocalCount,ScenarioState.indexMap,GetGroupsFunc(ScenarioState.totalConnected,ScenarioState.indexMap,p.GroupDefinitions));
+                _logger.LogInformation($"continueIndex:{continueIndex}");
 
-            private static int[] GenerateIndexMap(int total, int startIndex, int count)
-            {
-                var rand = new Random(total);
-                return (from id in Enumerable.Range(0, total)
-                        orderby rand.Next()
-                        select id).Skip(startIndex).Take(count).ToArray();
+                await ScenarioState.ClientAgentContainer.StartAsync(continueIndex,p.Rate, default);
+                _logger.LogInformation("Connections started.");
+                SetState(new ClientsReadyState(ScenarioState, p.GroupDefinitions,
+                    ScenarioState.ClientAgentContainer));
+               }
+               catch (Exception e)
+               {
+                   Console.WriteLine(e);
+                   throw;
+               }
             }
 
             private Func<int, string[]> GetGroupsFunc(int total, int[] indexMap, GroupDefinition[] groupDefinitions)
@@ -148,9 +200,9 @@ namespace Azure.SignalRBench.Client
                     var current = 0;
                     foreach (var gd in groupDefinitions)
                     {
-                        for (int gi = 0; gi < gd.GroupCount; gi++)
+                        for (int gi = 0; gi <gd.GroupCount; gi++)
                         {
-                            if (IsInGroup(mapId, current, gd.GroupSize, total))
+                            if (IsInGroup(total,mapId, current, gd.GroupSize))
                             {
                                 result.Add(gd.GroupFamily + "_" + gi.ToString());
                             }
@@ -158,85 +210,80 @@ namespace Azure.SignalRBench.Client
                             current %= total;
                         }
                     }
+                    _logger.LogInformation($"mapId:{mapId} is in group {result[0]}");
                     return result.ToArray();
                 };
             }
 
-            private static bool IsInGroup(int index, int start, int size, int total)
+            private static bool IsInGroup(int total,int index, int start, int size)
             {
                 int end = start + size;
                 if (index >= start && index < end)
                 {
                     return true;
                 }
-                if (end >= total)
-                {
-                    return index + total < end;
-                }
+
+                // if (end >= total)
+                // {
+                //     return index + total < end;
+                // }
+
                 return false;
             }
         }
 
         private sealed class ClientsReadyState : ScenarioBaseState
         {
-            public int TotalConnectionCount { get; }
-
-            public int[] IndexMap { get; }
 
             public GroupDefinition[] GroupDefinitions { get; }
 
             public ClientAgentContainer ClientAgentContainer { get; }
 
-            public ClientsReadyState(ScenarioState scenarioState, int totalConnectionCount, int[] indexMap, GroupDefinition[] groupDefinitions, ClientAgentContainer clientAgentContainer)
+            public ClientsReadyState(ScenarioState scenarioState, 
+                GroupDefinition[] groupDefinitions, ClientAgentContainer clientAgentContainer)
                 : base(scenarioState)
             {
-                TotalConnectionCount = totalConnectionCount;
-                IndexMap = indexMap;
                 GroupDefinitions = groupDefinitions;
                 ClientAgentContainer = clientAgentContainer;
-                Save();
             }
 
             public override void SetSenario(SetScenarioParameters setScenarioParameters)
             {
-                ParseParameters(setScenarioParameters, out var listen, out var echoList, out var broadcastList, out var groupBroadcastList);
+                ParseParameters(setScenarioParameters, out var listen, out var echoList, out var p2pList,out var broadcastList,
+                    out var groupBroadcastList);
                 var counts = echoList.Select(x => x.Count)
+                    .Concat(p2pList.Select(x => x.Count))
                     .Concat(broadcastList.Select(x => x.Count))
                     .Concat(groupBroadcastList.Select(x => x.Count));
                 var max = counts.Max();
-                if (listen > TotalConnectionCount - max)
+                if (listen > ScenarioState.totalConnected - max)
                 {
-                    listen = TotalConnectionCount - max;
+                    listen = ScenarioState.totalConnected - max;
                 }
                 var sum = counts.Sum();
-                if (listen < TotalConnectionCount - sum)
+                if (listen < ScenarioState.totalConnected - sum)
                 {
-                    listen = TotalConnectionCount - sum;
+                    listen = ScenarioState.totalConnected - sum;
                 }
                 SetState(
                     new ScenarioReadyState(
                         ScenarioState,
-                        TotalConnectionCount,
-                        IndexMap,
                         ClientAgentContainer,
-                        CreateSettings(listen, echoList, broadcastList, groupBroadcastList)));
+                        CreateSettings(listen, echoList, p2pList,broadcastList, groupBroadcastList)));
             }
 
-            public override async Task StopClientConnections(StopClientConnectionsParameters stopClientConnectionsParameters)
-            {
-                await ClientAgentContainer.StopAsync(stopClientConnectionsParameters.Rate);
-                SetState(new InitState(ScenarioState));
-            }
-            
+
             private static void ParseParameters(
                 SetScenarioParameters setScenarioParameters,
                 out int listen,
                 out List<ClientBehaviorDetailDefinition> echoList,
+                out List<ClientBehaviorDetailDefinition> p2pList,
                 out List<ClientBehaviorDetailDefinition> broadcastList,
                 out List<GroupClientBehaviorDetailDefinition> groupBroadcastList)
             {
                 listen = 0;
                 echoList = new List<ClientBehaviorDetailDefinition>();
+                p2pList = new List<ClientBehaviorDetailDefinition>();
                 broadcastList = new List<ClientBehaviorDetailDefinition>();
                 groupBroadcastList = new List<GroupClientBehaviorDetailDefinition>();
                 foreach (var scenario in setScenarioParameters.Scenarios)
@@ -251,6 +298,13 @@ namespace Azure.SignalRBench.Client
                             if (echo != null && echo.Count > 0)
                             {
                                 echoList.Add(echo);
+                            }
+                            break;
+                        case ClientBehavior.P2P:
+                            var p2p = scenario.GetDetail<ClientBehaviorDetailDefinition>();
+                            if (p2p != null && p2p.Count > 0)
+                            {
+                                p2pList.Add(p2p);
                             }
                             break;
                         case ClientBehavior.Broadcast:
@@ -276,12 +330,18 @@ namespace Azure.SignalRBench.Client
             private ClientAgentBehaviorSettings CreateSettings(
                 int listen,
                 List<ClientBehaviorDetailDefinition> echoList,
+                List<ClientBehaviorDetailDefinition> p2pList,
                 List<ClientBehaviorDetailDefinition> broadcastList,
                 List<GroupClientBehaviorDetailDefinition> groupBroadcastList)
             {
                 var result = new ClientAgentBehaviorSettings(listen);
-                int nonListen = TotalConnectionCount - listen;
+                int nonListen = ScenarioState.totalConnected - listen;
                 int current = 0;
+                current = AddBehavior(
+                    p2pList,
+                    nonListen,
+                    current,
+                    (s, e, item) => result.AddP2P(s, e, item.MessageSize, ScenarioState.totalConnected, item.Interval));
                 current = AddBehavior(
                     echoList,
                     nonListen,
@@ -291,7 +351,7 @@ namespace Azure.SignalRBench.Client
                     broadcastList,
                     nonListen,
                     current,
-                    (s, e, item) => result.AddBroadcast(s, e, item.MessageSize, TotalConnectionCount, item.Interval));
+                    (s, e, item) => result.AddBroadcast(s, e, item.MessageSize, ScenarioState.totalConnected, item.Interval));
                 current = AddBehavior(
                     groupBroadcastList,
                     nonListen,
@@ -299,7 +359,7 @@ namespace Azure.SignalRBench.Client
                     (s, e, item) =>
                     {
                         var gd = GroupDefinitions.Single(g => g.GroupFamily == item.GroupFamily);
-                        result.AddGroup(
+                        result.AddGroup(ScenarioState.totalConnected,
                             s,
                             e,
                             item.MessageSize,
@@ -325,6 +385,7 @@ namespace Azure.SignalRBench.Client
                         add(0, nonListen, item);
                         continue;
                     }
+
                     var end = current + item.Count;
                     if (end > nonListen)
                     {
@@ -345,18 +406,14 @@ namespace Azure.SignalRBench.Client
 
         private sealed class ScenarioReadyState : ScenarioBaseState
         {
-            public ScenarioReadyState(ScenarioState scenarioState, int totalConnectionCount, int[] indexMap, ClientAgentContainer clientAgentContainer, ClientAgentBehaviorSettings settings)
+            public ScenarioReadyState(ScenarioState scenarioState,
+                ClientAgentContainer clientAgentContainer, ClientAgentBehaviorSettings settings)
                 : base(scenarioState)
             {
-                TotalConnectionCount = totalConnectionCount;
-                IndexMap = indexMap;
                 ClientAgentContainer = clientAgentContainer;
                 Settings = settings;
             }
 
-            public int TotalConnectionCount { get; }
-
-            public int[] IndexMap { get; }
 
             public ClientAgentContainer ClientAgentContainer { get; }
 
@@ -365,36 +422,28 @@ namespace Azure.SignalRBench.Client
             public override void StartSenario(StartScenarioParameters startScenarioParameters)
             {
                 var cts = new CancellationTokenSource();
-                ClientAgentContainer.StartScenario(index => Settings.GetClientAgentBehavior(IndexMap[index], GetLogger<IClientAgent>()), cts.Token);
-                SetState(new RunningState(ScenarioState, TotalConnectionCount, IndexMap, ClientAgentContainer, Settings, cts));
+                ClientAgentContainer.StartScenario(
+                    index => Settings.GetClientAgentBehavior(ScenarioState.indexMap[index], GetLogger<IClientAgent>()), cts.Token);
+                SetState(new RunningState(ScenarioState, ClientAgentContainer, Settings,
+                    cts));
             }
-
-           
         }
 
         private sealed class RunningState : ScenarioBaseState
         {
             public RunningState(
                 ScenarioState scenarioState,
-                int totalConnectionCount,
-                int[] indexMap,
                 ClientAgentContainer clientAgentContainer,
                 ClientAgentBehaviorSettings settings,
                 CancellationTokenSource cts)
                 : base(scenarioState)
             {
-                TotalConnectionCount = totalConnectionCount;
-                IndexMap = indexMap;
                 ClientAgentContainer = clientAgentContainer;
                 Settings = settings;
                 Cts = cts;
             }
 
-            public int TotalConnectionCount { get; }
-
             public ClientAgentContainer ClientAgentContainer { get; }
-
-            public int[] IndexMap { get; }
 
             public ClientAgentBehaviorSettings Settings { get; }
 
