@@ -286,9 +286,9 @@ export class TestConfig extends Component {
                                 <Form.Label>Protocol</Form.Label>
                                 <Form.Control name="Protocol" onChange={this.handleChange} as="select">
                                     <option>WebSocketsWithJson</option>
-                                    <option>WebSocketsWithMessagePack</option>
+                                  {this.state.obj.service=="SignalR"&&this.state.obj.Mode=="Default" && <option>WebSocketsWithMessagePack</option>}
                                     <option>ServerSideEventsWithJson</option>
-                                    <option>LongPollingWithMessagePack</option>
+                                    {this.state.obj.service=="SignalR"&&this.state.obj.Mode=="Default" && <option>LongPollingWithMessagePack</option>}
                                     <option>LongPollingWithJson</option>
                                 </Form.Control>
                             </Form.Group>
