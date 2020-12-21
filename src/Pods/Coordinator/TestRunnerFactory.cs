@@ -34,7 +34,7 @@ namespace Azure.SignalRBench.Coordinator
         public IAksProvider AksProvider { get; }
 
         public IK8sProvider K8sProvider { get; }
-        
+
         public IPerfStorage PerfStorage { get; }
 
         public ISignalRProvider SignalRProvider { get; }

@@ -16,7 +16,7 @@ namespace Azure.SignalRBench.Client
         public string[] Groups { get; } = Array.Empty<string>();
 
         private WebSocketHubConnection Connection { get; }
-        public WebSocketClientAgent(string url,Protocol protocol,string[] groups, int globalIndex, ClientAgentContext context)
+        public WebSocketClientAgent(string url, Protocol protocol, string[] groups, int globalIndex, ClientAgentContext context)
         {
             Connection = new WebSocketHubConnection(url);
             Connection.On(context.Measure);

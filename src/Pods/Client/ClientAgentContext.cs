@@ -33,7 +33,7 @@ namespace Azure.SignalRBench.Client
 
         public int TotalReconnectedCount => Volatile.Read(ref _totalReconnectedCount);
 
-        public int ReconnectingCount =>  _dict.Count(p => p.Value == ClientAgentStatus.Reconnecting);
+        public int ReconnectingCount => _dict.Count(p => p.Value == ClientAgentStatus.Reconnecting);
 
         public int SentMessageCount => Volatile.Read(ref _sentMessageCount);
 
@@ -45,14 +45,14 @@ namespace Azure.SignalRBench.Client
 
         public async Task<string> GetConnectionIDAsync(int index)
         {
-           return await  _MessageClient.GetAsync(index.ToString());
+            return await _MessageClient.GetAsync(index.ToString());
         }
-        
-        public async Task SetConnectionIDAsync(int index,string connectionId)
+
+        public async Task SetConnectionIDAsync(int index, string connectionId)
         {
-             await  _MessageClient.SetAsync(index.ToString(),connectionId);
+            await _MessageClient.SetAsync(index.ToString(), connectionId);
         }
-        
+
         public void Measure(long ticks, string payload)
         {
             Interlocked.Increment(ref _recievedMessageCount);
@@ -172,7 +172,7 @@ namespace Azure.SignalRBench.Client
 
         public void Reset()
         {
-          //  _dict.Clear();
+            //  _dict.Clear();
             _latency = new Latency();
             _recievedMessageCount = 0;
             _expectedRecievedMessageCount = 0;

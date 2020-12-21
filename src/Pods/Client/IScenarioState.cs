@@ -11,7 +11,7 @@ namespace Azure.SignalRBench.Client
     {
         public void SetClientRange(SetClientRangeParameters setClientRangeParameters);
 
-        public Task StartClientConnections(MessageClientHolder messageClientHolder,StartClientConnectionsParameters startClientConnectionsParameters);
+        public Task StartClientConnections(MessageClientHolder messageClientHolder, StartClientConnectionsParameters startClientConnectionsParameters);
 
         public void SetSenario(SetScenarioParameters setScenarioParameters);
 
