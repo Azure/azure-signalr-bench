@@ -14,7 +14,7 @@ namespace SignalRUpstream.Controllers
         private readonly IServiceManager _serviceManager;
         private ILogger<UpStreamController> _logger;
 
-        public NegotiateController(ILogger<UpStreamController> logger,IConfiguration configuration)
+        public NegotiateController(ILogger<UpStreamController> logger, IConfiguration configuration)
         {
             _logger = logger;
             var connectionString = configuration[PerfConstants.ConfigurationKeys.ConnectionString];

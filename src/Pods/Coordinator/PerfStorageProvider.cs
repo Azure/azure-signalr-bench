@@ -10,11 +10,11 @@ namespace Azure.SignalRBench.Coordinator
     public class PerfStorageProvider
     {
         private PerfStorage? _storage;
-        public string? ConnectionString{get;private set;}
+        public string? ConnectionString { get; private set; }
 
         public void Initialize(string connectionString)
         {
-            ConnectionString=connectionString;
+            ConnectionString = connectionString;
             _storage = new PerfStorage(connectionString);
         }
 

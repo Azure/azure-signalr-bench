@@ -21,20 +21,20 @@ namespace Azure.SignalRBench.Client
                         urlWithHub,
                         o =>
                         {
-                            o.Transports = (HttpTransportType) ((int) protocol & 0xF);
-                            o.DefaultTransferFormat = (TransferFormat) ((int) protocol >> 4);
+                            o.Transports = (HttpTransportType)((int)protocol & 0xF);
+                            o.DefaultTransferFormat = (TransferFormat)((int)protocol >> 4);
                             if (userName != null)
                             {
                                 o.Headers.Add("user", userName);
                             }
                         }
-                    ), (IRetryPolicy) RetryPolicy.Instance)
+                    ), (IRetryPolicy)RetryPolicy.Instance)
                 .Build();
             Connection.On<long, string>(nameof(context.Measure), context.Measure);
             Connection.Reconnecting += _ => context.OnReconnecting(this);
-            Connection.Reconnected += async  _ =>
+            Connection.Reconnected += async _ =>
             {
-                await  Context.SetConnectionIDAsync(GlobalIndex, Connection.ConnectionId);
+                await Context.SetConnectionIDAsync(GlobalIndex, Connection.ConnectionId);
                 await context.OnConnected(this, Groups.Length > 0);
             };
             Connection.Closed += _ => context.OnClosed(this);

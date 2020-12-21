@@ -44,7 +44,7 @@ namespace Azure.SignalRBench.Client
                 MessageHandler.CreateCommandHandler(Roles.Clients, Commands.Clients.SetScenario, SetScenario),
                 MessageHandler.CreateCommandHandler(Roles.Clients, Commands.Clients.StartScenario, StartScenario),
                 MessageHandler.CreateCommandHandler(Roles.Clients, Commands.Clients.StopScenario, StopScenario));
-            await _client.ReportReadyAsync(new ReportReadyParameters() {Role = Roles.Clients});
+            await _client.ReportReadyAsync(new ReportReadyParameters() { Role = Roles.Clients });
             _logger.LogInformation("Message client handlers inited.");
         }
 
@@ -131,7 +131,7 @@ namespace Azure.SignalRBench.Client
             }
             catch (Exception e)
             {
-                _logger.LogError(e,"Set scenario error");
+                _logger.LogError(e, "Set scenario error");
             }
         }
 

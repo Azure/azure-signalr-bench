@@ -47,12 +47,12 @@ namespace SignalRUpstream.Controllers
                     case "add":
                     case "remove":
                         await _messagePublisher.ManageUserGroupAsync(upstreamBody.Target, user,
-                            (string) upstreamBody.Arguments[0]);
+                            (string)upstreamBody.Arguments[0]);
                         break;
                     default:
                         await _messagePublisher.SendMessagesAsync(upstreamBody.Target,
-                            (string) upstreamBody.Arguments[0], (long) upstreamBody.Arguments[1],
-                            (string) upstreamBody.Arguments[2]);
+                            (string)upstreamBody.Arguments[0], (long)upstreamBody.Arguments[1],
+                            (string)upstreamBody.Arguments[2]);
                         break;
                 }
             }

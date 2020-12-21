@@ -28,14 +28,14 @@ namespace Azure.SignalRBench.Client
             Protocol protocol,
             bool isAnonymous,
             string url,
-            ClientLifetimeDefinition lifetimeDefinition,IClientAgentFactory agentFactory,
+            ClientLifetimeDefinition lifetimeDefinition, IClientAgentFactory agentFactory,
             ILogger<ClientAgentContainer> logger)
         {
             _messageClientHolder = messageClientHolder;
             _context = new ClientAgentContext(messageClientHolder.Client);
             //try to resolve service url
             var ips = Dns.GetHostAddresses(url);
-            Url = "http://" + ips[0]+ "/";
+            Url = "http://" + ips[0] + "/";
             Protocol = protocol;
             IsAnonymous = isAnonymous;
             LifetimeDefinition = lifetimeDefinition;
@@ -82,7 +82,7 @@ namespace Azure.SignalRBench.Client
             for (int i = continueIndex; i < _clients.Length; i++)
             {
                 var globalIndex = GetGlobalIndex(i);
-                _clients[i] = _agentFactory.Create(Url,Protocol, GroupFunc(i),
+                _clients[i] = _agentFactory.Create(Url, Protocol, GroupFunc(i),
                     globalIndex,
                     _context);
             }
@@ -171,7 +171,7 @@ namespace Azure.SignalRBench.Client
 
         private SemaphoreSlim GetRateControlSemaphore(double rate, CancellationToken cancellationToken)
         {
-            int maxCount = (int) Math.Ceiling(rate);
+            int maxCount = (int)Math.Ceiling(rate);
             var result = new SemaphoreSlim(0, maxCount);
             _ = ControlRate(result, rate, maxCount, cancellationToken);
             return result;
@@ -187,11 +187,11 @@ namespace Azure.SignalRBench.Client
                 await Task.Delay(1, cancellationToken);
                 var now = Stopwatch.GetTimestamp();
                 ;
-                current += (double) (now - stamp) / Stopwatch.Frequency * rate;
+                current += (double)(now - stamp) / Stopwatch.Frequency * rate;
                 var releaseCountRaw = Math.Floor(current);
                 current -= releaseCountRaw;
                 stamp = now;
-                var releaseCount = Math.Min((int) releaseCountRaw, maxCount - semaphore.CurrentCount);
+                var releaseCount = Math.Min((int)releaseCountRaw, maxCount - semaphore.CurrentCount);
                 if (releaseCount > 0)
                 {
                     if (Volatile.Read(ref slowDown))

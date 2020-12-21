@@ -16,7 +16,7 @@ namespace SignalRUpstream
         private readonly ServiceTransportType _serviceTransportType;
         private IServiceHubContext _hubContext;
 
-        public MessagePublisher(string connectionString,string testId, ServiceTransportType serviceTransportType)
+        public MessagePublisher(string connectionString, string testId, ServiceTransportType serviceTransportType)
         {
             _connectionString = connectionString;
             _hubName = TestId2HubNameConverter.GenerateHubName(testId);
@@ -50,23 +50,23 @@ namespace SignalRUpstream
             }
         }
 
-        public async Task SendMessagesAsync(string command, string receiver,long ticks, string payload)
+        public async Task SendMessagesAsync(string command, string receiver, long ticks, string payload)
         {
             switch (command)
             {
                 case "broadcast":
-                    await _hubContext.Clients.All.SendAsync(Target, ticks,payload);
+                    await _hubContext.Clients.All.SendAsync(Target, ticks, payload);
                     break;
                 case "user":
                     var userId = receiver;
-                    await _hubContext.Clients.User(userId).SendAsync(Target, ticks,payload);
+                    await _hubContext.Clients.User(userId).SendAsync(Target, ticks, payload);
                     break;
                 // case "users":
                 //     var userIds = receiver.Split(',');
                 //     return _hubContext.Clients.Users(userIds).SendAsync(Target, message);
                 case "group":
                     var groupName = receiver;
-                    await _hubContext.Clients.Group(groupName).SendAsync(Target, ticks,payload);
+                    await _hubContext.Clients.Group(groupName).SendAsync(Target, ticks, payload);
                     break;
                 // case "groups":
                 //     var groupNames = receiver.Split(',');
