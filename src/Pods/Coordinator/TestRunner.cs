@@ -155,6 +155,8 @@ namespace Azure.SignalRBench.Coordinator
                 _timer.Stop();
                 try
                 {
+                    _logger.LogInformation("Test job {testId}: Removing hashTable in redis.", Job.TestId);
+                    await messageClient.DeleteHashTableAsync();
                     _logger.LogInformation("Test job {testId}: Removing client pods.", Job.TestId);
                     await K8sProvider.DeleteClientPodsAsync(Job.TestId, NodePoolIndex);
                     _logger.LogInformation("Test job {testId}: Removing server pods.", Job.TestId);

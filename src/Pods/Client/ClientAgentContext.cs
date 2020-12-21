@@ -48,9 +48,9 @@ namespace Azure.SignalRBench.Client
            return await  _MessageClient.GetAsync(index.ToString());
         }
         
-        public async Task SetConnectionIDAsync(int index,string connectionId,TimeSpan expire)
+        public async Task SetConnectionIDAsync(int index,string connectionId)
         {
-             await  _MessageClient.SetAsync(index.ToString(),connectionId,expire);
+             await  _MessageClient.SetAsync(index.ToString(),connectionId);
         }
         
         public void Measure(long ticks, string payload)

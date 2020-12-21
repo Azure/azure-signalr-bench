@@ -34,7 +34,7 @@ namespace Azure.SignalRBench.Client
             Connection.Reconnecting += _ => context.OnReconnecting(this);
             Connection.Reconnected += async  _ =>
             {
-                await  Context.SetConnectionIDAsync(GlobalIndex, Connection.ConnectionId,TimeSpan.FromHours(1));
+                await  Context.SetConnectionIDAsync(GlobalIndex, Connection.ConnectionId);
                 await context.OnConnected(this, Groups.Length > 0);
             };
             Connection.Closed += _ => context.OnClosed(this);
@@ -51,7 +51,7 @@ namespace Azure.SignalRBench.Client
             {
                 await Connection.StartAsync(cancellationToken);
             }
-            await Context.SetConnectionIDAsync(GlobalIndex, Connection.ConnectionId,TimeSpan.FromHours(1));
+            await Context.SetConnectionIDAsync(GlobalIndex, Connection.ConnectionId);
             await Context.OnConnected(this, Groups.Length > 0);
         }
 

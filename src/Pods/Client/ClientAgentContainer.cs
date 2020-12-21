@@ -100,7 +100,7 @@ namespace Azure.SignalRBench.Client
                     {
                         if (i < continueIndex)
                             return;
-                        var current = Interlocked.Add(ref index, 1);
+                        var current = Interlocked.Increment(ref index);
                         await semaphore.WaitAsync(cancellationToken);
                         while (!cancellationToken.IsCancellationRequested)
                         {
