@@ -89,7 +89,7 @@ namespace Azure.SignalRBench.Coordinator
             // do the job
             var jobTask = RunJobAsync(message.Value, nodePoolIndex, link.Token);
             // and renew visiblitiy.
-           // await Renew(queue, message, jobTask, cts, cancellationToken);
+            // await Renew(queue, message, jobTask, cts, cancellationToken);
             await queue.DeleteAsync(message);
             try
             {

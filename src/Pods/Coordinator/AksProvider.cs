@@ -49,7 +49,7 @@ namespace Azure.SignalRBench.Coordinator
                     EnableNodePublicIP = true,
                     OsType = OSType.Parse(osType),
                     VmSize = ContainerServiceVMSizeTypes.Parse(vmSize),
-                  //  NodeTaints = new[] { $"pool:{nodePoolIndex}" },
+                    //  NodeTaints = new[] { $"pool:{nodePoolIndex}" },
                 },
                 cancellationToken);
         }

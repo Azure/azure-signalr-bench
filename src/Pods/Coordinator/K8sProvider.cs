@@ -39,10 +39,10 @@ namespace Azure.SignalRBench.Coordinator
             _k8s = new Kubernetes(KubernetesClientConfiguration.BuildConfigFromConfigFile(stream));
         }
 
-        public async Task<string> CreateServerPodsAsync(string testId, int nodePoolIndex, string[] asrsConnectionStrings,int serverPodCount,bool upstream, CancellationToken cancellationToken)
+        public async Task<string> CreateServerPodsAsync(string testId, int nodePoolIndex, string[] asrsConnectionStrings, int serverPodCount, bool upstream, CancellationToken cancellationToken)
         {
             var name = _appserver + "-" + testId;
-            
+
             var service = new V1Service()
             {
                 Metadata = new V1ObjectMeta()
@@ -51,7 +51,7 @@ namespace Azure.SignalRBench.Coordinator
                 },
                 Spec = new V1ServiceSpec()
                 {
-                    Ports =new List<V1ServicePort>()
+                    Ports = new List<V1ServicePort>()
                     {
                         new V1ServicePort(port: 80, targetPort: 8080)
                     },
@@ -68,7 +68,7 @@ namespace Azure.SignalRBench.Coordinator
                 {
                     Metadata = new V1ObjectMeta()
                     {
-                        Name =_upstream+"-"+ testId
+                        Name = _upstream + "-" + testId
                     },
                     Spec = new Networkingv1beta1IngressSpec()
                     {
@@ -96,9 +96,9 @@ namespace Azure.SignalRBench.Coordinator
                         }
                     }
                 };
-                await _k8s.CreateNamespacedIngress1Async(ingress ,_default,cancellationToken:cancellationToken);
+                await _k8s.CreateNamespacedIngress1Async(ingress, _default, cancellationToken: cancellationToken);
             }
-            var server=upstream?"SignalRUpstream":"AppServer";
+            var server = upstream ? "SignalRUpstream" : "AppServer";
             V1Deployment deployment = new V1Deployment()
             {
                 Metadata = new V1ObjectMeta()
@@ -110,7 +110,7 @@ namespace Azure.SignalRBench.Coordinator
                     },
                     Annotations = new Dictionary<string, string>()
                     {
-                        ["cluster-autoscaler.kubernetes.io/safe-to-evict"]="false"
+                        ["cluster-autoscaler.kubernetes.io/safe-to-evict"] = "false"
                     }
                 },
                 Spec = new V1DeploymentSpec
@@ -139,7 +139,7 @@ namespace Azure.SignalRBench.Coordinator
                             {
                                 ["agentpool"] = AksProvider.ToPoolName(nodePoolIndex)
                             },
-                            Containers =new List<V1Container>()
+                            Containers = new List<V1Container>()
                             {
                             new V1Container()
                             {
@@ -197,7 +197,7 @@ namespace Azure.SignalRBench.Coordinator
             return name;
         }
 
-        public async Task CreateClientPodsAsync(string testId,TestCategory testCategory, int nodePoolIndex, int clientPodCount, CancellationToken cancellationToken)
+        public async Task CreateClientPodsAsync(string testId, TestCategory testCategory, int nodePoolIndex, int clientPodCount, CancellationToken cancellationToken)
         {
             var name = _client + '-' + testId;
             V1Deployment deployment = new V1Deployment()
@@ -211,13 +211,13 @@ namespace Azure.SignalRBench.Coordinator
                     },
                     Annotations = new Dictionary<string, string>()
                     {
-                        ["cluster-autoscaler.kubernetes.io/safe-to-evict"]="false"
+                        ["cluster-autoscaler.kubernetes.io/safe-to-evict"] = "false"
                     }
                 },
                 Spec = new V1DeploymentSpec()
                 {
                     Replicas = clientPodCount,
-                    Selector =  new V1LabelSelector()
+                    Selector = new V1LabelSelector()
                     {
                         MatchLabels = new Dictionary<string, string>()
                         {
@@ -301,13 +301,13 @@ namespace Azure.SignalRBench.Coordinator
             await _k8s.DeleteNamespacedDeploymentAsync(name, _default);
         }
 
-        public async Task DeleteServerPodsAsync(string testId, int nodePoolIndex,bool upstream)
+        public async Task DeleteServerPodsAsync(string testId, int nodePoolIndex, bool upstream)
         {
             string name = _appserver + '-' + testId;
             await _k8s.DeleteNamespacedServiceAsync(name, _default);
             await _k8s.DeleteNamespacedDeploymentAsync(name, _default);
             if (upstream)
-                await _k8s.DeleteNamespacedIngressAsync( _upstream+"-"+testId, _default);
+                await _k8s.DeleteNamespacedIngressAsync(_upstream + "-" + testId, _default);
         }
     }
 }
