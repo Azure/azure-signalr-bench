@@ -39,7 +39,7 @@ namespace Azure.SignalRBench.Coordinator
             _k8s = new Kubernetes(KubernetesClientConfiguration.BuildConfigFromConfigFile(stream));
         }
 
-        public async Task<string> CreateServerPodsAsync(string testId, int nodePoolIndex, string[] asrsConnectionStrings, int serverPodCount, bool upstream, CancellationToken cancellationToken)
+        public async Task<string> CreateServerPodsAsync(string testId, int nodePoolIndex, string[] asrsConnectionStrings, int serverPodCount, TestCategory testCategory, CancellationToken cancellationToken)
         {
             var name = _appserver + "-" + testId;
 
@@ -62,7 +62,7 @@ namespace Azure.SignalRBench.Coordinator
                 }
             };
             await _k8s.CreateNamespacedServiceAsync(service, _default, cancellationToken: cancellationToken);
-            if (upstream)
+            if (testCategory==TestCategory.AspnetCoreSignalRServerless)
             {
                 var ingress = new Networkingv1beta1Ingress()
                 {
@@ -98,7 +98,7 @@ namespace Azure.SignalRBench.Coordinator
                 };
                 await _k8s.CreateNamespacedIngress1Async(ingress, _default, cancellationToken: cancellationToken);
             }
-            var server = upstream ? "SignalRUpstream" : "AppServer";
+            var server = (testCategory==TestCategory.AspnetCoreSignalRServerless ) ? "SignalRUpstream" : "AppServer";
             V1Deployment deployment = new V1Deployment()
             {
                 Metadata = new V1ObjectMeta()
@@ -194,6 +194,11 @@ namespace Azure.SignalRBench.Coordinator
                 }
             };
             await _k8s.CreateNamespacedDeploymentAsync(deployment, _default, cancellationToken: cancellationToken);
+            if (testCategory == TestCategory.RawWebsocket)
+            {
+                //Todo: There might be multible endpoints
+                return asrsConnectionStrings[0];
+            }
             return name;
         }
 
