@@ -53,6 +53,9 @@ while [[ "$#" > 0 ]]; do
   --server)
     APPSERVER=true
     ;;
+  --aspnet)
+    ASPNET=true
+    ;;
   --client)
     CLIENT=true
     ;;
@@ -68,14 +71,14 @@ while [[ "$#" > 0 ]]; do
   --localdns)
     LOCALDNS=true
     ;;
-   --autoscale)
+  --autoscale)
     AUTOSCALE=true
     ;;
   --updatepool)
-     UPDATEPOOL=true
-     NODEPOOL=$1
-     shift ;
-     ;;
+    UPDATEPOOL=true
+    NODEPOOL=$1
+    shift
+    ;;
   --all | -a)
     ALL=true
     ;;
@@ -121,7 +124,7 @@ fi
 if [[ $ALL || $COORDINATOR ]]; then
   publish Coordinator
   cd $DIR/yaml/coordinator
-  access_key=$(az storage account show-connection-string -n $STORAGE_ACCOUNT -g $RESOURCE_GROUP --query connectionString  -o tsv)
+  access_key=$(az storage account show-connection-string -n $STORAGE_ACCOUNT -g $RESOURCE_GROUP --query connectionString -o tsv)
   domain=$(az network public-ip show -n $PORTAL_IP_NAME -g $RESOURCE_GROUP --query dnsSettings.fqdn -o tsv)
   cat coordinator.yaml | replace KVURL_PLACE_HOLDER $KVURL | replace MSI_PLACE_HOLDER $AGENTPOOL_MSI_CLIENT_ID | replace STORAGE_PLACE_HOLDER $access_key | replace DOMAIN_PLACE_HOLDER $domain | kubectl apply -f -
 fi
@@ -134,6 +137,17 @@ fi
 
 if [[ $ALL || $APPSERVER ]]; then
   publish AppServer
+fi
+
+if [[ $ALL || $ASPNET ]]; then
+  Pod="AspNetAppServer"
+  cd $DIR/../src/Pods/$Pod
+  cd publish && zip -r ${Pod}.zip *
+  exit
+  echo "create dir:$Pod"
+  az storage directory create -n "manifest/$Pod" --account-name $STORAGE_ACCOUNT -s $SA_SHARE
+  az storage file upload --account-name $STORAGE_ACCOUNT -s $SA_SHARE --source $Pod.zip -p manifest/$Pod
+  echo "upload $Pod succeeded"
 fi
 
 if [[ $ALL || $CLIENT ]]; then
@@ -153,7 +167,7 @@ if [[ $ALL || $LOCALDNS ]]; then
   kubedns=$(kubectl get svc kube-dns -n kube-system -o jsonpath={.spec.clusterIP})
   domain="cluster.local"
   localdns="169.254.20.10"
-  cat  node-local-dns.yaml | replace __PILLAR__LOCAL__DNS__ $localdns | replace __PILLAR__DNS__DOMAIN__  $domain | replace __PILLAR__DNS__SERVER__ $kubedns | kubectl apply -f -
+  cat node-local-dns.yaml | replace __PILLAR__LOCAL__DNS__ $localdns | replace __PILLAR__DNS__DOMAIN__ $domain | replace __PILLAR__DNS__SERVER__ $kubedns | kubectl apply -f -
 fi
 
 if [[ $ALL || $REDIS ]]; then
@@ -161,32 +175,36 @@ if [[ $ALL || $REDIS ]]; then
   cd $DIR/yaml/redis
   PORTAL_IP=$(az network public-ip show -n $PORTAL_IP_NAME -g $RESOURCE_GROUP --query "ipAddress" -o tsv)
   kubectl apply -f redis-master-deployment.yaml
- # kubectl apply -f redis-master-service.yaml
-   cat redis-master-test.yaml | replace RESOURCE_GROUP_PLACE_HOLDER $RESOURCE_GROUP  | kubectl apply -f -
+  # kubectl apply -f redis-master-service.yaml
+  cat redis-master-test.yaml | replace RESOURCE_GROUP_PLACE_HOLDER $RESOURCE_GROUP | kubectl apply -f -
   echo "redis dns inside cluster: redis-master "
 fi
 
 if [[ $ALL || $UPDATEPOOL ]]; then
   az aks nodepool add \
-  --resource-group $RESOURCE_GROUP \
- --cluster-name $KUBERNETES_SEVICES \
- -n $NODEPOOL \
- -c 0 || true
+    --resource-group $RESOURCE_GROUP \
+    --cluster-name $KUBERNETES_SEVICES \
+    -n $NODEPOOL \
+    -s Standard_D4as_v4 \
+    -e \
+    --min-count 0 \
+    --max-count 50 \
+    -c 0 || true
 
-  az aks nodepool update \
-  --resource-group $RESOURCE_GROUP \
-  --cluster-name $KUBERNETES_SEVICES \
-  -n $NODEPOOL \
-  --enable-cluster-autoscaler \
-  --min-count 0 \
-  --max-count 50
+#  az aks nodepool update \
+#    --resource-group $RESOURCE_GROUP \
+#    --cluster-name $KUBERNETES_SEVICES \
+#    -n $NODEPOOL \
+#    --enable-cluster-autoscaler \
+#    --min-count 0 \
+#    --max-count 50
 fi
- 
+
 if [[ $ALL || $AUTOSCALE ]]; then
   az aks update \
-  --resource-group $RESOURCE_GROUP \
-  -n $KUBERNETES_SEVICES \
-  --cluster-autoscaler-profile  scale-down-delay-after-add=60m  scale-down-unneeded-time=60m scale-down-utilization-threshold=0.5 skip-nodes-with-system-pods=false new-pod-scale-up-delay=1s
+    --resource-group $RESOURCE_GROUP \
+    -n $KUBERNETES_SEVICES \
+    --cluster-autoscaler-profile scale-down-delay-after-add=60m scale-down-unneeded-time=60m scale-down-utilization-threshold=0.5 skip-nodes-with-system-pods=false new-pod-scale-up-delay=1s
 fi
 
 if [[ $ALL || $INGRESS ]]; then
@@ -194,7 +212,6 @@ if [[ $ALL || $INGRESS ]]; then
   kubectl apply -f service-account.yaml
   kubectl apply -f cluster-role.yaml
   kubectl apply -f role-binding-sa.yaml
-  exit
   domain=$(az network public-ip show -n $PORTAL_IP_NAME -g $RESOURCE_GROUP --query dnsSettings.fqdn -o tsv)
   echo $domain
   ip=$(az network public-ip show -n $PORTAL_IP_NAME -g $RESOURCE_GROUP --query ipAddress -o tsv)
@@ -214,7 +231,7 @@ if [[ $ALL || $INGRESS ]]; then
     --set controller.service.loadBalancerIP="$ip" \
     --set controller.deployment.spec.template.annotations."nginx\.ingress\.kubernetes\.io/proxy-buffer-size"=10m \
     --set controller.service.annotations."service\.beta\.kubernetes\.io/azure-dns-label-name"="$PORTAL_DNS" \
-    --set controller.service.annotations."service\.beta\.kubernetes\.io/azure-load-balancer-resource-group"="$RESOURCE_GROUP"  || true
+    --set controller.service.annotations."service\.beta\.kubernetes\.io/azure-load-balancer-resource-group"="$RESOURCE_GROUP" || true
   # Label the cert-manager namespace to disable resource validation
   kubectl label namespace ingress-basic cert-manager.io/disable-validation=true || true
   # Add the Jetstack Helm repository
@@ -229,6 +246,7 @@ if [[ $ALL || $INGRESS ]]; then
     --set installCRDs=true \
     --set nodeSelector."beta\.kubernetes\.io/os"=linux \
     jetstack/cert-manager || true
+  sleep 10
   kubectl apply -f cluster-issuer.yaml
   kubectl apply -f dashboard-ext.yaml
   cat portal-ingress.yaml | replace PORTAL_DOMAIN_PLACE_HOLDER $domain | kubectl apply -f -

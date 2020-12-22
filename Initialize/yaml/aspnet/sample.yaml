@@ -14,9 +14,18 @@ spec:
     spec:
       nodeSelector:
         "beta.kubernetes.io/os": windows
+      volumes:
+        - name: volume
+          azureFile:
+            secretName: azure-secret
+            shareName: perf
+            readOnly: false
       containers:
         - name: sample
           image: mcr.microsoft.com/dotnet/framework/samples:aspnetapp
+          volumeMounts:
+            - mountPath: "/mnt/perf"
+              name: volume
           resources:
             limits:
               cpu: 1
