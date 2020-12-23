@@ -109,10 +109,8 @@ if [[ -z $(az aks show --name $KUBERNETES_SEVICES -g $RESOURCE_GROUP 2>/dev/null
     work_space_resource_id=$(az monitor log-analytics workspace show -g $RESOURCE_GROUP -n $WORK_SPACE --query id -o tsv)
     az aks create -n $KUBERNETES_SEVICES --vm-set-type VirtualMachineScaleSets --kubernetes-version 1.18.10 --enable-managed-identity -s Standard_D4s_v3 --nodepool-name captain --generate-ssh-keys \
         --load-balancer-managed-outbound-ip-count 20 --load-balancer-outbound-ports 20000 --workspace-resource-id "$work_space_resource_id" --enable-addons monitoring --network-plugin azure
-    echo "create agentpool pool0,pool1 for appserver and client"
-    az aks nodepool add -n pool0 --cluster-name $KUBERNETES_SEVICES --kubernetes-version 1.18.10 -c 3  -s Standard_D4s_v3
     az aks enable-addons -n  $KUBERNETES_SEVICES -g $RESOURCE_GROUP  -a kube-dashboard
-    echo "start to create kubernetes services $KUBERNETES_SEVICES created."
+    echo "kubernetes services $KUBERNETES_SEVICES created."
     echo "start getting kube/config"
     rm ~/.kube/perf || true
     az aks get-credentials -a -n $KUBERNETES_SEVICES  --overwrite-existing -f  ~/.kube/perf

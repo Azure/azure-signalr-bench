@@ -76,8 +76,6 @@ while [[ "$#" > 0 ]]; do
     ;;
   --updatepool)
     UPDATEPOOL=true
-    NODEPOOL=$1
-    shift
     ;;
   --all | -a)
     ALL=true
@@ -142,8 +140,8 @@ fi
 if [[ $ALL || $ASPNET ]]; then
   Pod="AspNetAppServer"
   cd $DIR/../src/Pods/$Pod
+  echo "Need to run :   msbuild.exe /p:OutDir=publish /p:Configuration=Release in windows first"
   cd publish && zip -r ${Pod}.zip *
-  exit
   echo "create dir:$Pod"
   az storage directory create -n "manifest/$Pod" --account-name $STORAGE_ACCOUNT -s $SA_SHARE
   az storage file upload --account-name $STORAGE_ACCOUNT -s $SA_SHARE --source $Pod.zip -p manifest/$Pod
@@ -156,10 +154,6 @@ fi
 
 if [[ $ALL || $UPSTREAM ]]; then
   publish SignalRUpstream
-#  cd $DIR/yaml/Upstream
-#  kubectl apply -f upstream.yaml
-#  kubectl apply -f upstream-service.yaml
-#  kubectl apply -f upstream-ingress.yaml
 fi
 
 if [[ $ALL || $LOCALDNS ]]; then
@@ -184,20 +178,23 @@ if [[ $ALL || $UPDATEPOOL ]]; then
   az aks nodepool add \
     --resource-group $RESOURCE_GROUP \
     --cluster-name $KUBERNETES_SEVICES \
-    -n $NODEPOOL \
-    -s Standard_D4as_v4 \
+    -n linux0 \
+    -s Standard_D4s_v3 \
     -e \
     --min-count 0 \
-    --max-count 50 \
+    --max-count 40 \
+    --os-type Linux \
     -c 0 || true
-
-#  az aks nodepool update \
-#    --resource-group $RESOURCE_GROUP \
-#    --cluster-name $KUBERNETES_SEVICES \
-#    -n $NODEPOOL \
-#    --enable-cluster-autoscaler \
-#    --min-count 0 \
-#    --max-count 50
+  az aks nodepool add \
+    --resource-group $RESOURCE_GROUP \
+    --cluster-name $KUBERNETES_SEVICES \
+    -n win0 \
+    -s Standard_D4s_v3 \
+    -e \
+    --min-count 0 \
+    --max-count 15 \
+    --os-type Windows \
+    -c 0 || true
 fi
 
 if [[ $ALL || $AUTOSCALE ]]; then
