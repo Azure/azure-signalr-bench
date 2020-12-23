@@ -7,7 +7,6 @@ using System.IO;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-
 using Azure.SignalRBench.Common;
 using k8s;
 using k8s.Models;
@@ -33,13 +32,15 @@ namespace Azure.SignalRBench.Coordinator
             _redisConnectionString = configuration[PerfConstants.ConfigurationKeys.RedisConnectionStringKey];
             _domain = configuration[PerfConstants.ConfigurationKeys.DomainKey];
         }
+
         public void Initialize(string config)
         {
             using var stream = new MemoryStream(Encoding.UTF8.GetBytes(config));
             _k8s = new Kubernetes(KubernetesClientConfiguration.BuildConfigFromConfigFile(stream));
         }
 
-        public async Task<string> CreateServerPodsAsync(string testId, int nodePoolIndex, string[] asrsConnectionStrings, int serverPodCount, TestCategory testCategory, CancellationToken cancellationToken)
+        public async Task<string> CreateServerPodsAsync(string testId, string[] asrsConnectionStrings,
+            int serverPodCount, TestCategory testCategory, CancellationToken cancellationToken)
         {
             var name = _appserver + "-" + testId;
 
@@ -62,7 +63,7 @@ namespace Azure.SignalRBench.Coordinator
                 }
             };
             await _k8s.CreateNamespacedServiceAsync(service, _default, cancellationToken: cancellationToken);
-            if (testCategory==TestCategory.AspnetCoreSignalRServerless)
+            if (testCategory == TestCategory.AspnetCoreSignalRServerless)
             {
                 var ingress = new Networkingv1beta1Ingress()
                 {
@@ -98,7 +99,14 @@ namespace Azure.SignalRBench.Coordinator
                 };
                 await _k8s.CreateNamespacedIngress1Async(ingress, _default, cancellationToken: cancellationToken);
             }
-            var server = (testCategory==TestCategory.AspnetCoreSignalRServerless ) ? "SignalRUpstream" : "AppServer";
+
+            var server = testCategory switch
+            {
+                TestCategory.AspnetCoreSignalRServerless => "SignalRUpstream",
+                TestCategory.AspnetSignalR => "AspNetAppServer",
+                _ => "AppServer"
+            };
+
             V1Deployment deployment = new V1Deployment()
             {
                 Metadata = new V1ObjectMeta()
@@ -120,7 +128,7 @@ namespace Azure.SignalRBench.Coordinator
                     {
                         MatchLabels = new Dictionary<string, string>()
                         {
-                            { "app", name }
+                            {"app", name}
                         }
                     },
                     Template = new V1PodTemplateSpec()
@@ -137,74 +145,82 @@ namespace Azure.SignalRBench.Coordinator
                         {
                             NodeSelector = new Dictionary<string, string>()
                             {
-                                ["agentpool"] = AksProvider.ToPoolName(nodePoolIndex)
+                                [PerfConstants.Name.OsLabel] = testCategory == TestCategory.AspnetSignalR
+                                    ? PerfConstants.Name.Windows
+                                    : PerfConstants.Name.Linux
                             },
                             Containers = new List<V1Container>()
                             {
-                            new V1Container()
-                            {
-                                Name = name,
-                                Image = "signalrbenchmark/perf:1.3",
-                                Resources= new V1ResourceRequirements()
+                                new V1Container()
                                 {
-                                    Requests= new Dictionary<string, ResourceQuantity>()
+                                    Name = name,
+                                    Image = testCategory == TestCategory.AspnetSignalR? "mcr.microsoft.com/dotnet/framework/runtime:4.8" : "signalrbenchmark/perf:1.3",
+                                    Resources = new V1ResourceRequirements()
                                     {
-                                        ["cpu"]=new ResourceQuantity("3000m"),
-                                        ["memory"]=new ResourceQuantity("12000Mi")
+                                        Requests = new Dictionary<string, ResourceQuantity>()
+                                        {
+                                            ["cpu"] = new ResourceQuantity("3000m"),
+                                            ["memory"] = new ResourceQuantity("11000Mi")
+                                        },
+                                        Limits = new Dictionary<string, ResourceQuantity>()
+                                        {
+                                            ["cpu"] = new ResourceQuantity("3000m"),
+                                            ["memory"] = new ResourceQuantity("11000Mi")
+                                        }
                                     },
-                                    Limits= new Dictionary<string, ResourceQuantity>()
+                                    VolumeMounts = new List<V1VolumeMount>()
                                     {
-                                        ["cpu"]=new ResourceQuantity("3000m"),
-                                        ["memory"]=new ResourceQuantity("12000Mi")
+                                        new V1VolumeMount("/mnt/perf", "volume")
+                                    },
+                                    Command =testCategory ==TestCategory.AspnetSignalR?new List<string>()
+                                    {
+                                        "powershell"
+                                    }: new List<string>()
+                                    {
+                                        "/bin/sh", "-c"
+                                    },
+                                    Args =testCategory ==TestCategory.AspnetSignalR? new List<string>()
+                                    {
+                                        "cd  /mnt/perf/manifest; xcopy .\\AspNetAppServer\\AspNetAppServer.zip C:\\home\\ ; cd C:/home/ ; tar -xf AspNetAppServer.zip ; ./AspNetAppServer.exe"
+                                    }: new List<string>()
+                                    {
+                                        $"cp /mnt/perf/manifest/{server}/{server}.zip /home ; cd /home ; unzip {server}.zip ;exec ./{server};"
+                                    },
+                                    Env = new List<V1EnvVar>()
+                                    {
+                                        new V1EnvVar(PerfConstants.ConfigurationKeys.PodNameStringKey,
+                                            valueFrom: new V1EnvVarSource(
+                                                fieldRef: new V1ObjectFieldSelector("metadata.name"))),
+                                        new V1EnvVar(PerfConstants.ConfigurationKeys.TestIdKey, testId),
+                                        new V1EnvVar(PerfConstants.ConfigurationKeys.ConnectionString,
+                                            string.Join(",", asrsConnectionStrings)),
+                                        new V1EnvVar(PerfConstants.ConfigurationKeys.StorageConnectionStringKey,
+                                            _perfStorageProvider.ConnectionString),
+                                        new V1EnvVar(PerfConstants.ConfigurationKeys.RedisConnectionStringKey,
+                                            "redis-master"),
                                     }
                                 },
-                                VolumeMounts= new List<V1VolumeMount>()
-                                {
-                                    new V1VolumeMount("/mnt/perf","volume")
-                                },
-                                Command= new List<string>()
-                                {
-                                    "/bin/sh", "-c"
-                                },
-                                Args= new List<string>()
-                                {
-                                    $"cp /mnt/perf/manifest/{server}/{server}.zip /home ; cd /home ; unzip {server}.zip ;exec ./{server};"
-                                },
-                                Env= new List<V1EnvVar>()
-                                {
-                                    new V1EnvVar(PerfConstants.ConfigurationKeys.PodNameStringKey,valueFrom:new V1EnvVarSource(fieldRef:new V1ObjectFieldSelector("metadata.name") ) ),
-                                    new V1EnvVar(PerfConstants.ConfigurationKeys.TestIdKey,testId),
-                                    new V1EnvVar(PerfConstants.ConfigurationKeys.ConnectionString,string.Join(",",asrsConnectionStrings)),
-                                    new V1EnvVar(PerfConstants.ConfigurationKeys.StorageConnectionStringKey,_perfStorageProvider.ConnectionString),
-                                    new V1EnvVar(PerfConstants.ConfigurationKeys.RedisConnectionStringKey,_redisConnectionString),
-
-                                }
-                            },
                             },
                             Volumes = new List<V1Volume>()
                             {
                                 new V1Volume("volume")
                                 {
-                                    AzureFile=new V1AzureFileVolumeSource("azure-secret","perf",false)
+                                    AzureFile = new V1AzureFileVolumeSource("azure-secret", "perf", false)
                                 }
                             }
                         },
-
                     }
                 }
             };
             await _k8s.CreateNamespacedDeploymentAsync(deployment, _default, cancellationToken: cancellationToken);
-            if (testCategory == TestCategory.RawWebsocket)
-            {
-                //Todo: There might be multible endpoints
-                return asrsConnectionStrings[0];
-            }
-            return name;
+            return testCategory == TestCategory.RawWebsocket ? asrsConnectionStrings[0] : name;
         }
 
-        public async Task CreateClientPodsAsync(string testId, TestCategory testCategory, int nodePoolIndex, int clientPodCount, CancellationToken cancellationToken)
+        public async Task CreateClientPodsAsync(string testId, TestCategory testCategory, int clientPodCount,
+            CancellationToken cancellationToken)
         {
             var name = _client + '-' + testId;
+
             V1Deployment deployment = new V1Deployment()
             {
                 Metadata = new V1ObjectMeta()
@@ -226,7 +242,7 @@ namespace Azure.SignalRBench.Coordinator
                     {
                         MatchLabels = new Dictionary<string, string>()
                         {
-                            { "app", name }
+                            {"app", name}
                         }
                     },
                     Template = new V1PodTemplateSpec()
@@ -243,48 +259,53 @@ namespace Azure.SignalRBench.Coordinator
                         {
                             NodeSelector = new Dictionary<string, string>()
                             {
-                                ["agentpool"] = AksProvider.ToPoolName(nodePoolIndex)
+                                [PerfConstants.Name.OsLabel] = PerfConstants.Name.Linux
                             },
                             Containers = new List<V1Container>()
                             {
-                            new V1Container()
-                            {
-                                Name = name,
-                                Image = "signalrbenchmark/perf:1.3",
-                                Resources= new V1ResourceRequirements()
+                                new V1Container()
                                 {
-                                    Requests= new Dictionary<string, ResourceQuantity>()
+                                    Name = name,
+                                    Image = "signalrbenchmark/perf:1.3",
+                                    Resources = new V1ResourceRequirements()
                                     {
-                                        ["cpu"]=new ResourceQuantity("3000m"),
-                                        ["memory"]=new ResourceQuantity("12000Mi")
+                                        Requests = new Dictionary<string, ResourceQuantity>()
+                                        {
+                                            ["cpu"] = new ResourceQuantity("3000m"),
+                                            ["memory"] = new ResourceQuantity("12000Mi")
+                                        },
+                                        Limits = new Dictionary<string, ResourceQuantity>()
+                                        {
+                                            ["cpu"] = new ResourceQuantity("3000m"),
+                                            ["memory"] = new ResourceQuantity("12000Mi")
+                                        }
                                     },
-                                    Limits= new Dictionary<string, ResourceQuantity>()
+                                    VolumeMounts = new List<V1VolumeMount>()
                                     {
-                                        ["cpu"]=new ResourceQuantity("3000m"),
-                                        ["memory"]=new ResourceQuantity("12000Mi")
+                                        new V1VolumeMount("/mnt/perf", "volume")
+                                    },
+                                    Command = new List<string>()
+                                    {
+                                        "/bin/sh", "-c"
+                                    },
+                                    Args = new List<string>()
+                                    {
+                                        "cp /mnt/perf/manifest/Client/Client.zip /home ; cd /home ; unzip Client.zip ; exec ./Client"
+                                    },
+                                    Env = new List<V1EnvVar>()
+                                    {
+                                        new V1EnvVar(PerfConstants.ConfigurationKeys.PodNameStringKey,
+                                            valueFrom: new V1EnvVarSource(
+                                                fieldRef: new V1ObjectFieldSelector("metadata.name"))),
+                                        new V1EnvVar(PerfConstants.ConfigurationKeys.TestIdKey, testId),
+                                        new V1EnvVar(PerfConstants.ConfigurationKeys.StorageConnectionStringKey,
+                                            _perfStorageProvider.ConnectionString),
+                                        new V1EnvVar(PerfConstants.ConfigurationKeys.RedisConnectionStringKey,
+                                            _redisConnectionString),
+                                        new V1EnvVar(PerfConstants.ConfigurationKeys.TestCategory,
+                                            testCategory.ToString())
                                     }
                                 },
-                                VolumeMounts= new List<V1VolumeMount>()
-                                {
-                                    new V1VolumeMount("/mnt/perf","volume")
-                                },
-                                Command= new List<string>()
-                                {
-                                    "/bin/sh", "-c"
-                                },
-                                Args= new List<string>()
-                                {
-                                    "cp /mnt/perf/manifest/Client/Client.zip /home ; cd /home ; unzip Client.zip ; exec ./Client"
-                                },
-                                Env= new List<V1EnvVar>()
-                                {
-                                    new V1EnvVar(PerfConstants.ConfigurationKeys.PodNameStringKey,valueFrom:new V1EnvVarSource(fieldRef:new V1ObjectFieldSelector("metadata.name") ) ),
-                                    new V1EnvVar(PerfConstants.ConfigurationKeys.TestIdKey,testId),
-                                    new V1EnvVar(PerfConstants.ConfigurationKeys.StorageConnectionStringKey,_perfStorageProvider.ConnectionString),
-                                    new V1EnvVar(PerfConstants.ConfigurationKeys.RedisConnectionStringKey,_redisConnectionString),
-                                    new V1EnvVar(PerfConstants.ConfigurationKeys.TestCategory,testCategory.ToString())
-                                }
-                            },
                             },
                             Volumes = new List<V1Volume>()
                             {
@@ -300,13 +321,13 @@ namespace Azure.SignalRBench.Coordinator
             await _k8s.CreateNamespacedDeploymentAsync(deployment, _default, cancellationToken: cancellationToken);
         }
 
-        public async Task DeleteClientPodsAsync(string testId, int nodePoolIndex)
+        public async Task DeleteClientPodsAsync(string testId)
         {
             string name = _client + '-' + testId;
             await _k8s.DeleteNamespacedDeploymentAsync(name, _default);
         }
 
-        public async Task DeleteServerPodsAsync(string testId, int nodePoolIndex, bool upstream)
+        public async Task DeleteServerPodsAsync(string testId, bool upstream)
         {
             string name = _appserver + '-' + testId;
             await _k8s.DeleteNamespacedServiceAsync(name, _default);
