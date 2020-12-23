@@ -45,7 +45,6 @@ namespace Azure.SignalRBench.Coordinator
             TestJob job,
             string podName,
             string redisConnectionString,
-            int nodePoolIndex,
             IAksProvider aksProvider,
             IK8sProvider k8sProvider,
             ISignalRProvider signalRProvider,
@@ -56,7 +55,6 @@ namespace Azure.SignalRBench.Coordinator
             Job = job;
             PodName = podName;
             RedisConnectionString = redisConnectionString;
-            NodePoolIndex = nodePoolIndex;
             AksProvider = aksProvider;
             K8sProvider = k8sProvider;
             SignalRProvider = signalRProvider;
@@ -70,8 +68,6 @@ namespace Azure.SignalRBench.Coordinator
         public string PodName { get; set; }
 
         public string RedisConnectionString { get; set; }
-
-        public int NodePoolIndex { get; set; }
 
         public IAksProvider AksProvider { get; }
 
@@ -103,7 +99,7 @@ namespace Azure.SignalRBench.Coordinator
             var nodeCount = clientPodCount + serverPodCount;
             _logger.LogInformation("Test job {testId}: Node count: {count}.", Job.TestId, nodeCount);
             var asrsConnectionStringsTask = PrepairAsrsInstancesAsync(cancellationToken);
-            await UpdateTestStatus("Creating vms [SignalRs]");
+            await UpdateTestStatus("Preparing job");
             //leave this to autoscale. When ca is enabled, manual config won't work
             // await AksProvider.EnsureNodeCountAsync(NodePoolIndex, nodeCount, cancellationToken);
             using var messageClient = await MessageClient.ConnectAsync(RedisConnectionString, Job.TestId, PodName);
@@ -113,7 +109,7 @@ namespace Azure.SignalRBench.Coordinator
             try
             {
                 var asrsConnectionStrings = await asrsConnectionStringsTask;
-                await UpdateTestStatus("Creating pods");
+                await UpdateTestStatus("Creating pods, autoscaling nodes..");
                 await CreatePodsAsync(asrsConnectionStrings, clientAgentCount, clientPodCount, serverPodCount,
                     messageClient, cancellationToken);
                 //        await UpdateTestStatus("Starting client connections");
@@ -158,9 +154,9 @@ namespace Azure.SignalRBench.Coordinator
                     _logger.LogInformation("Test job {testId}: Removing hashTable in redis.", Job.TestId);
                     await messageClient.DeleteHashTableAsync();
                     _logger.LogInformation("Test job {testId}: Removing client pods.", Job.TestId);
-                    await K8sProvider.DeleteClientPodsAsync(Job.TestId, NodePoolIndex);
+                    await K8sProvider.DeleteClientPodsAsync(Job.TestId);
                     _logger.LogInformation("Test job {testId}: Removing server pods.", Job.TestId);
-                    await K8sProvider.DeleteServerPodsAsync(Job.TestId, NodePoolIndex, Job.TestMethod == TestCategory.AspnetCoreSignalRServerless);
+                    await K8sProvider.DeleteServerPodsAsync(Job.TestId, Job.TestMethod == TestCategory.AspnetCoreSignalRServerless);
                     _logger.LogInformation("Test job {testId}: Removing service instances.", Job.TestId);
                     await Task.WhenAll(
                         from ss in Job.ServiceSetting
@@ -433,10 +429,10 @@ namespace Azure.SignalRBench.Coordinator
                         out var serverPodReady)));
 
             _logger.LogInformation("Test job {testId}: Creating server pods.", Job.TestId);
-            _url = await K8sProvider.CreateServerPodsAsync(Job.TestId, NodePoolIndex, asrsConnectionStrings,
+            _url = await K8sProvider.CreateServerPodsAsync(Job.TestId, asrsConnectionStrings,
                 serverPodCount, Job.TestMethod, cancellationToken);
             _logger.LogInformation("Test job {testId}: Creating client pods.", Job.TestId);
-            await K8sProvider.CreateClientPodsAsync(Job.TestId, Job.TestMethod, NodePoolIndex, clientPodCount, cancellationToken);
+            await K8sProvider.CreateClientPodsAsync(Job.TestId, Job.TestMethod, clientPodCount, cancellationToken);
 
             await Task.WhenAll(
                 Task.Run(async () =>

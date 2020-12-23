@@ -41,13 +41,11 @@ namespace Azure.SignalRBench.Coordinator
 
         public TestRunner Create(
             TestJob job,
-            int nodePoolIndex,
             string defaultLocation) =>
             new TestRunner(
                 job,
                 _podName,
                 _redisConnectionString,
-                nodePoolIndex,
                 AksProvider,
                 K8sProvider,
                 SignalRProvider,

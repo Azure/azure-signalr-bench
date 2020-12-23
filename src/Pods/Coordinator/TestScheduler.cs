@@ -68,26 +68,27 @@ namespace Azure.SignalRBench.Coordinator
 
         private async Task RunAsync(IQueue<TestJob> queue, CancellationToken cancellationToken)
         {
-            int poolCount = await AksProvider.GetNodePoolCountAsync(cancellationToken);
-            var runningTasks = new Task[poolCount];
-            Array.Fill(runningTasks, Task.CompletedTask);
-            _runningTasks = runningTasks;
+          //  int poolCount = await AksProvider.GetNodePoolCountAsync(cancellationToken);
+         //   var runningTasks = new Task[poolCount];
+          //  Array.Fill(runningTasks, Task.CompletedTask);
+         //   _runningTasks = runningTasks;
             await foreach (var message in queue.Consume(TimeSpan.FromMinutes(30), cancellationToken))
             {
                 _logger.LogInformation("Receive test job: {testId}.", message.Value.TestId);
-                var index = Array.FindIndex(runningTasks, t => t.IsCompleted);
-                runningTasks[index] = RunOneAsync(queue, message, index, cancellationToken);
-                await Task.WhenAny(runningTasks);
+             //   var index = Array.FindIndex(runningTasks, t => t.IsCompleted);
+            //    runningTasks[index] = RunOneAsync(queue, message, index, cancellationToken);
+            _= RunOneAsync(queue, message, cancellationToken);
+             //   await Task.WhenAny(runningTasks);
             }
         }
 
-        private async Task RunOneAsync(IQueue<TestJob> queue, QueueMessage<TestJob> message, int nodePoolIndex, CancellationToken cancellationToken)
+        private async Task RunOneAsync(IQueue<TestJob> queue, QueueMessage<TestJob> message, CancellationToken cancellationToken)
         {
             // todo: create table record.
             using var cts = new CancellationTokenSource();
             using var link = CancellationTokenSource.CreateLinkedTokenSource(cts.Token, cancellationToken);
             // do the job
-            var jobTask = RunJobAsync(message.Value, nodePoolIndex, link.Token);
+            var jobTask = RunJobAsync(message.Value, link.Token);
             // and renew visiblitiy.
             // await Renew(queue, message, jobTask, cts, cancellationToken);
             await queue.DeleteAsync(message);
@@ -128,7 +129,7 @@ namespace Azure.SignalRBench.Coordinator
             }
         }
 
-        private Task RunJobAsync(TestJob job, int nodePoolIndex, CancellationToken cancellationToken) =>
-            TestRunnerFactory.Create(job, nodePoolIndex, DefaultLocation).RunAsync(cancellationToken);
+        private Task RunJobAsync(TestJob job, CancellationToken cancellationToken) =>
+            TestRunnerFactory.Create(job, DefaultLocation).RunAsync(cancellationToken);
     }
 }
