@@ -29,7 +29,6 @@ namespace Azure.SignalRBench.Common
             public const string PerfV2 = "perfv2";
             public const string DomainKey = "domain";
             public const string TestCategory = "testCategory";
-
         }
 
         public static class TableNames
@@ -37,8 +36,8 @@ namespace Azure.SignalRBench.Common
             public const string TestConfig = "testConfig";
             public const string TestStatus = "testStatus";
             public const string Counter = "testCount";
-
         }
+
         public static class QueueNames
         {
             public const string PortalJob = "portal-job";
@@ -54,6 +53,13 @@ namespace Azure.SignalRBench.Common
         {
             public const int ConnectionsPerClient = 5000;
         }
-        
+
+        public static class Name
+        {
+            public const string HubName = "signalrbench";
+            public const string OsLabel = "kubernetes.io/os";
+            public const string Windows = "windows";
+            public const string Linux = "linux";
+        }
     }
 }

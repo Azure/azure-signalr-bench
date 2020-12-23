@@ -43,6 +43,10 @@ namespace Azure.SignalRBench.Client
                         case nameof(TestCategory.AspnetCoreSignalR):
                             services.AddSingleton<IClientAgentFactory, SignalRDefaultClientAgentFactory>();
                             break;
+                        case nameof(TestCategory.AspnetSignalR):
+                            services.AddSingleton<IClientAgentFactory, AspNetSignalRClientAgentFactory>();
+                            Console.WriteLine("aspnet");
+                            break;
                         case nameof(TestCategory.AspnetCoreSignalRServerless):
                             services.AddSingleton<IClientAgentFactory, SignalRServerlessClientAgentFactory>();
                             break;
