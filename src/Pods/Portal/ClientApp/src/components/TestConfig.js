@@ -11,7 +11,7 @@ export class TestConfig extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            show: false, loading: true, obj: { signalRUnitSize: 1, mode: "Default", service: "SignalR", Scenario: "Echo", Framework:"Netcore" },
+            show: false, loading: true, obj: { signalRUnitSize: 1, mode: "Default", service: "SignalR", Scenario: "Echo", framework: "Netcore" },
             showjson: false,
             json: {},
             testConfigs: [],
@@ -129,7 +129,7 @@ export class TestConfig extends Component {
     async handleSubmit() {
         console.log(this.state.obj)
         const testName = this.state.obj["rowKey"]
-        if ((testName==undefined)||!(testName.match("^[a-z0-9]([-a-z0-9]*[a-z0-9])?$"))) {
+        if ((testName == undefined) || !(testName.match("^[a-z0-9]([-a-z0-9]*[a-z0-9])?$"))) {
             alert("invalid testName. Should be of format [a-z0-9]([-a-z0-9]*[a-z0-9]?)")
             return
         }
@@ -222,7 +222,7 @@ export class TestConfig extends Component {
                                     <option>Serverless</option>
                                 </Form.Control>
                             </Form.Group>}
-                            {this.state.obj.service == "SignalR" && this.state.obj.mode=="Default"&& <Form.Group  >
+                            {this.state.obj.service == "SignalR" && this.state.obj.mode == "Default" && <Form.Group  >
                                 <Form.Label>Framework</Form.Label>
                                 <Form.Control name="framework" type="select" onChange={this.handleChange} as="select">
                                     <option>Netcore</option>
@@ -284,9 +284,9 @@ export class TestConfig extends Component {
                                 <Form.Label>Protocol</Form.Label>
                                 <Form.Control name="Protocol" onChange={this.handleChange} as="select">
                                     <option>WebSocketsWithJson</option>
-                                    {this.state.obj.service == "SignalR" && this.state.obj.Mode == "Default" && <option>WebSocketsWithMessagePack</option>}
+                                    {this.state.obj.service == "SignalR" && this.state.obj.mode == "Default" && this.state.obj.framework == "Netcore" && <option>WebSocketsWithMessagePack</option>}
                                     <option>ServerSideEventsWithJson</option>
-                                    {this.state.obj.service == "SignalR" && this.state.obj.Mode == "Default" && <option>LongPollingWithMessagePack</option>}
+                                    {this.state.obj.service == "SignalR" && this.state.obj.mode == "Default" && this.state.obj.framework == "Netcore" && <option>LongPollingWithMessagePack</option>}
                                     <option>LongPollingWithJson</option>
                                 </Form.Control>
                             </Form.Group>

@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Azure.SignalRBench.Common;
 using Microsoft.AspNet.SignalR.Client;
+using Microsoft.AspNet.SignalR.Client.Transports;
 using Microsoft.AspNetCore.Connections;
 using Microsoft.AspNetCore.Http.Connections;
 using Microsoft.AspNetCore.SignalR.Client;
@@ -15,13 +16,14 @@ namespace Azure.SignalRBench.Client
     public class AspNetSignalRClientAgent : IClientAgent
     {
         //todo: ignore protocol and user name, implement them later
-        public AspNetSignalRClientAgent(string url,string hub, Protocol protocol, string? userName, string[] groups,
+        public AspNetSignalRClientAgent(string url, string hub, Protocol protocol, string? userName, string[] groups,
             int globalIndex,
             ClientAgentContext context)
         {
             Context = context;
             Groups = groups;
             GlobalIndex = globalIndex;
+            _protocol = protocol;
             Connection = new HubConnection(url);
             Console.WriteLine($"url:{url},hub:{hub}");
             HubProxy = Connection.CreateHubProxy(hub);
@@ -33,7 +35,6 @@ namespace Azure.SignalRBench.Client
                 await context.OnConnected(this, Groups.Length > 0);
             };
             Connection.Closed += () => context.OnClosed(this);
-            Connection.Error += (e) => Console.WriteLine(e);
         }
 
         private HubConnection Connection { get; }
@@ -42,15 +43,22 @@ namespace Azure.SignalRBench.Client
         public ClientAgentContext Context { get; }
         private string[] Groups { get; }
         public int GlobalIndex { get; }
+        private Protocol _protocol;
 
         public async Task StartAsync(CancellationToken cancellationToken)
         {
             if (Connection.State == ConnectionState.Disconnected)
             {
-                await Connection.Start();
+                IClientTransport clientTransport = _protocol switch
+                {
+                    Protocol.WebSocketsWithJson => new WebSocketTransport(),
+                    Protocol.ServerSideEventsWithJson => new ServerSentEventsTransport(),
+                    Protocol.LongPollingWithJson => new LongPollingTransport(),
+                    _ => throw new Exception($"Unsupported protocal {_protocol} for aspnet")
+                };
+                await Connection.Start(clientTransport);
                 Console.WriteLine("connected");
             }
-
             await Context.SetConnectionIDAsync(GlobalIndex, Connection.ConnectionId);
             await Context.OnConnected(this, Groups.Length > 0);
         }
@@ -87,4 +95,3 @@ namespace Azure.SignalRBench.Client
         }
     }
 }
-

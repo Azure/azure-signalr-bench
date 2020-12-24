@@ -197,7 +197,7 @@ namespace Azure.SignalRBench.Coordinator
                                         new V1EnvVar(PerfConstants.ConfigurationKeys.StorageConnectionStringKey,
                                             _perfStorageProvider.ConnectionString),
                                         new V1EnvVar(PerfConstants.ConfigurationKeys.RedisConnectionStringKey,
-                                            "redis-master"),
+                                            _redisConnectionString),
                                     }
                                 },
                             },
