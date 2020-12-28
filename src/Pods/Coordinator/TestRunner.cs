@@ -339,12 +339,13 @@ namespace Azure.SignalRBench.Coordinator
                     // todo: log.
                     return Task.CompletedTask;
                 }
-
+                var sec = _timer.ElapsedMilliseconds / 1000;
                 if (p.Role == Roles.Clients)
                 {
                     clientReadyCount++;
                     _clients[m.Sender] =
                         new SetClientRangeParameters();
+                    _logger.LogInformation($"client: {m.Sender} is ready. {clientReadyCount} is ready. sec:{sec}");
                     if (clientReadyCount == clientPodCount)
                     {
                         clientPodsReadyTcs.TrySetResult(null);
@@ -357,6 +358,7 @@ namespace Azure.SignalRBench.Coordinator
                 else if (p.Role == Roles.AppServers)
                 {
                     serverReadyCount++;
+                    _logger.LogInformation($"server: {m.Sender} is ready. {serverReadyCount} is ready. sec:{sec}");
                     if (serverReadyCount == serverPodCount)
                     {
                         serverPodsReadyTcs.TrySetResult(null);

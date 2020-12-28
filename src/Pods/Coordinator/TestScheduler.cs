@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -16,7 +17,7 @@ namespace Azure.SignalRBench.Coordinator
         private readonly CancellationTokenSource _cts = new CancellationTokenSource();
         private readonly ILogger<TestScheduler> _logger;
         private string? _defaultLocation;
-        private Task[] _runningTasks = Array.Empty<Task>();
+        private List<Task> _runningTasks = new List<Task>();
 
         public TestScheduler(
             PerfStorageProvider storageProvider,
@@ -77,8 +78,10 @@ namespace Azure.SignalRBench.Coordinator
                 _logger.LogInformation("Receive test job: {testId}.", message.Value.TestId);
              //   var index = Array.FindIndex(runningTasks, t => t.IsCompleted);
             //    runningTasks[index] = RunOneAsync(queue, message, index, cancellationToken);
-            _= RunOneAsync(queue, message, cancellationToken);
-             //   await Task.WhenAny(runningTasks);
+            _ = RunOneAsync(queue, message, cancellationToken);
+            //_runningTasks.Add(RunOneAsync(queue, message, cancellationToken));
+              //        _runningTasks.RemoveAll(t => t.IsCompleted);
+            //   await Task.WhenAny(runningTasks);
             }
         }
 
