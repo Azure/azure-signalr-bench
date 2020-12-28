@@ -160,12 +160,12 @@ namespace Azure.SignalRBench.Coordinator
                                         Requests = new Dictionary<string, ResourceQuantity>()
                                         {
                                             ["cpu"] = new ResourceQuantity("3000m"),
-                                            ["memory"] = new ResourceQuantity("11000Mi")
+                                            ["memory"] = new ResourceQuantity("10000Mi")
                                         },
                                         Limits = new Dictionary<string, ResourceQuantity>()
                                         {
                                             ["cpu"] = new ResourceQuantity("3000m"),
-                                            ["memory"] = new ResourceQuantity("11000Mi")
+                                            ["memory"] = new ResourceQuantity("10000Mi")
                                         }
                                     },
                                     VolumeMounts = new List<V1VolumeMount>()
@@ -272,12 +272,12 @@ namespace Azure.SignalRBench.Coordinator
                                         Requests = new Dictionary<string, ResourceQuantity>()
                                         {
                                             ["cpu"] = new ResourceQuantity("3000m"),
-                                            ["memory"] = new ResourceQuantity("12000Mi")
+                                            ["memory"] = new ResourceQuantity("10000Mi")
                                         },
                                         Limits = new Dictionary<string, ResourceQuantity>()
                                         {
                                             ["cpu"] = new ResourceQuantity("3000m"),
-                                            ["memory"] = new ResourceQuantity("12000Mi")
+                                            ["memory"] = new ResourceQuantity("10000Mi")
                                         }
                                     },
                                     VolumeMounts = new List<V1VolumeMount>()

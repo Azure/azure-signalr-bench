@@ -229,7 +229,7 @@ export class TestConfig extends Component {
                                     <option>Netframework</option>
                                 </Form.Control>
                             </Form.Group>}
-                            {(this.state.obj.service == "RawWebsocket" || (this.state.obj.service == "SignalR" && this.state.obj.Mode == "Serverless")) &&
+                            {(this.state.obj.service == "RawWebsocket" || (this.state.obj.service == "SignalR" && this.state.obj.mode == "Serverless")) &&
                                 <div>
                                     <strong>Add upstream settings: </strong>
                                     <code> https://{window.location.hostname}/upstream/{"{hub}"}/api/{"{category}"}/{"{event}"}</code>
