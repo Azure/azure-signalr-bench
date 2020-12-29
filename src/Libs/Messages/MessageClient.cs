@@ -52,15 +52,7 @@ namespace Azure.SignalRBench.Messages
             }
 
             var connection =
-                await ConnectionMultiplexer.ConnectAsync(connectionString ?? throw new ArgumentNullException(nameof(connectionString)),Console.Out);
-            _=Task.Run(async () =>
-            {
-                while (true)
-                {
-                    await Task.Delay(10000);
-                    Console.WriteLine($"$active {connection.TimeoutMilliseconds}");
-                }
-            });
+                await ConnectionMultiplexer.ConnectAsync(connectionString ?? throw new ArgumentNullException(nameof(connectionString)));
             var subscriber = connection.GetSubscriber();
             var database = connection.GetDatabase();
             var result = new MessageClient(connection, subscriber, database, testId, sender);
@@ -100,6 +92,11 @@ namespace Azure.SignalRBench.Messages
         {
             Console.WriteLine("Message client Disposed.");
             _connection.Dispose();
+        }
+
+        ~MessageClient()
+        {
+            Console.WriteLine("This should not happen");
         }
     }
 }

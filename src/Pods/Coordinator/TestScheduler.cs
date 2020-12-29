@@ -5,7 +5,6 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-
 using Azure.SignalRBench.Common;
 using Azure.SignalRBench.Storage;
 using Microsoft.Extensions.Logging;
@@ -69,23 +68,17 @@ namespace Azure.SignalRBench.Coordinator
 
         private async Task RunAsync(IQueue<TestJob> queue, CancellationToken cancellationToken)
         {
-          //  int poolCount = await AksProvider.GetNodePoolCountAsync(cancellationToken);
-         //   var runningTasks = new Task[poolCount];
-          //  Array.Fill(runningTasks, Task.CompletedTask);
-         //   _runningTasks = runningTasks;
             await foreach (var message in queue.Consume(TimeSpan.FromMinutes(30), cancellationToken))
             {
                 _logger.LogInformation("Receive test job: {testId}.", message.Value.TestId);
-             //   var index = Array.FindIndex(runningTasks, t => t.IsCompleted);
-            //    runningTasks[index] = RunOneAsync(queue, message, index, cancellationToken);
-            _ = RunOneAsync(queue, message, cancellationToken);
-            //_runningTasks.Add(RunOneAsync(queue, message, cancellationToken));
-              //        _runningTasks.RemoveAll(t => t.IsCompleted);
-            //   await Task.WhenAny(runningTasks);
+                //Keep reference of task. Or the async state machine will be GC because we use taskCompleteSource to track pod ready
+                _runningTasks.Add(RunOneAsync(queue, message, cancellationToken));
+                _runningTasks.RemoveAll(t => t.IsCompleted);
             }
         }
 
-        private async Task RunOneAsync(IQueue<TestJob> queue, QueueMessage<TestJob> message, CancellationToken cancellationToken)
+        private async Task RunOneAsync(IQueue<TestJob> queue, QueueMessage<TestJob> message,
+            CancellationToken cancellationToken)
         {
             // todo: create table record.
             using var cts = new CancellationTokenSource();
@@ -110,7 +103,8 @@ namespace Azure.SignalRBench.Coordinator
             }
         }
 
-        private async Task Renew(IQueue<TestJob> queue, QueueMessage<TestJob> message, Task jobTask, CancellationTokenSource cts, CancellationToken cancellationToken)
+        private async Task Renew(IQueue<TestJob> queue, QueueMessage<TestJob> message, Task jobTask,
+            CancellationTokenSource cts, CancellationToken cancellationToken)
         {
             while (true)
             {
@@ -119,10 +113,12 @@ namespace Azure.SignalRBench.Coordinator
                 {
                     break;
                 }
+
                 if (task.IsCanceled)
                 {
                     return;
                 }
+
                 // todo: check manual cancel
                 // {
                 //    cts.Cancel();

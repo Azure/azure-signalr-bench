@@ -34,12 +34,8 @@ namespace Azure.SignalRBench.AppServer
                 MessageHandler.CreateCommandHandler(Commands.General.Crash, Crash),
                 MessageHandler.CreateCommandHandler(Roles.AppServers, Commands.General.Crash, Crash));
             _logger.LogInformation("Message handlers inited.");
-            await Task.Delay(1000*360);
-            _logger.LogInformation("3000 delayed.");
             await _messageClient.ReportReadyAsync(new ReportReadyParameters() { Role = Roles.AppServers });
             _logger.LogInformation("Server ready acked.");
-            await Task.Delay(1000000000);
-
         }
 
         private Task Crash(CommandMessage command)
