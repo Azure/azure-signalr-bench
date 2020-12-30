@@ -143,7 +143,7 @@ namespace Azure.SignalRBench.Client
                     }
                     catch (Exception ex)
                     {
-                        logger.LogWarning(ex, "Failed to send echo message: clientId={clientId}.", clientId);
+                     //   logger.LogWarning(ex, "Failed to send echo message: clientId={clientId}.", clientId);
                     }
                     await Task.Delay(Interval);
                 }

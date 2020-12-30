@@ -122,9 +122,8 @@ namespace Azure.SignalRBench.Client
                                 await c.StartAsync(cancellationToken);
                                 stopWatch.Stop();
                                 Interlocked.Add(ref count, 1);
-                                _logger.LogInformation(
-                                    $" Total {Volatile.Read(ref count)}, current {current} Connected. rate :{rate} Time cost:{stopWatch.ElapsedMilliseconds}");
-
+                                // _logger.LogInformation(
+                                //     $" Total {Volatile.Read(ref count)}, current {current} Connected. rate :{rate} Time cost:{stopWatch.ElapsedMilliseconds}");
                                 return;
                             }
                             catch (Exception ex)
@@ -226,7 +225,6 @@ namespace Azure.SignalRBench.Client
                         try
                         {
                             await Task.Delay(1000, cancellationToken);
-                            _logger.LogInformation("reportClientStatus");
                             await _messageClientHolder.Client.ReportClientStatusAsync(_context.ClientStatus());
                         }
                         catch (Exception e)
