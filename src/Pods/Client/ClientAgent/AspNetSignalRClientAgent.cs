@@ -34,7 +34,12 @@ namespace Azure.SignalRBench.Client
                 await Context.SetConnectionIDAsync(GlobalIndex, Connection.ConnectionId);
                 await context.OnConnected(this, Groups.Length > 0);
             };
-            Connection.Closed += () => context.OnClosed(this);
+            Connection.Closed += async () =>
+            {
+                var ms = StaticRandom.Next(2000);
+                await Task.Delay(ms);;
+                await StartAsync(default);
+            };
         }
 
         private HubConnection Connection { get; }
