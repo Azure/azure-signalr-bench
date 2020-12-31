@@ -9,6 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Azure.SignalRBench.Common;
 using Azure.SignalRBench.Messages;
+using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.Logging;
 
 namespace Azure.SignalRBench.Client
@@ -33,6 +34,7 @@ namespace Azure.SignalRBench.Client
         {
             _messageClientHolder = messageClientHolder;
             _context = new ClientAgentContext(messageClientHolder.Client);
+            _context.RetryPolicy=new RetryPolicy(_context);
             //try to resolve service url
             //dirty logic, separate raw websocket
             if (url.Contains("Endpoint"))
@@ -236,6 +238,27 @@ namespace Azure.SignalRBench.Client
                     }
                 });
             }
+        }
+        
+        public sealed class RetryPolicy : IRetryPolicy
+        {
+            private long _reconnecting;
+            public RetryPolicy(ClientAgentContext context)
+            {
+                Task.Run(async () =>
+                {
+                    while (true)
+                    {
+                        await Task.Delay(1000);
+                        _reconnecting = context.ReconnectingCount;
+                    }
+                });
+            }
+            public TimeSpan? NextRetryDelay(RetryContext retryContext)
+            {
+                return  TimeSpan.FromSeconds(1) + TimeSpan.FromSeconds(1+_reconnecting/50) * StaticRandom.NextDouble();
+            }
+               
         }
     }
 }

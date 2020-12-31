@@ -9,6 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Azure.SignalRBench.Common;
 using Azure.SignalRBench.Messages;
+using Microsoft.AspNetCore.SignalR.Client;
 
 namespace Azure.SignalRBench.Client
 {
@@ -31,6 +32,8 @@ namespace Azure.SignalRBench.Client
             TestId = _MessageClient.TestId;
         }
 
+        public IRetryPolicy RetryPolicy { get; set; }
+        
         public int TotalReconnectedCount => Volatile.Read(ref _totalReconnectedCount);
 
         public int ReconnectingCount => _dict.Count(p => p.Value == ClientAgentStatus.Reconnecting);
