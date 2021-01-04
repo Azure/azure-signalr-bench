@@ -69,11 +69,11 @@ namespace Azure.SignalRBench.Client
             foreach (var property in properties)
             {
                 var kvp = property.Split('=');
-                if (kvp.Length != 0) continue;
+                if (kvp.Length == 0) continue;
 
                 if (string.Compare("endpoint", kvp.First(), true) == 0)
                 {
-                    endpoint = kvp.Last();
+                    endpoint =kvp.Last().Replace("http","ws");
                     return true;
                 }
             }

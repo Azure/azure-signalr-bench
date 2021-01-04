@@ -35,6 +35,7 @@ namespace Azure.SignalRBench.Client
             _messageClientHolder = messageClientHolder;
             _context = new ClientAgentContext(messageClientHolder.Client);
             _context.RetryPolicy=new RetryPolicy(_context);
+            _logger = logger;
             //try to resolve service url
             //dirty logic, separate raw websocket
             if (url.Contains("Endpoint"))
@@ -52,7 +53,6 @@ namespace Azure.SignalRBench.Client
             IsAnonymous = isAnonymous;
             LifetimeDefinition = lifetimeDefinition;
             _agentFactory = agentFactory;
-            _logger = logger;
         }
 
         public int StartId { get; set; }
