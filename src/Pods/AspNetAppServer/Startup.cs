@@ -16,10 +16,10 @@ namespace AspNetAppServer
         public void Configuration(IAppBuilder app)
         {
             app.UseCors(CorsOptions.AllowAll);
-            var p = GetType().FullName;
-            app.MapAzureSignalR(p, options =>
+            app.MapAzureSignalR(GetType().FullName, options =>
             {
-                options.ConnectionString = Environment.GetEnvironmentVariable(PerfConstants.ConfigurationKeys.ConnectionString);
+                options.ConnectionString =
+                    Environment.GetEnvironmentVariable(PerfConstants.ConfigurationKeys.ConnectionString);
                 options.ConnectionCount = 5;
             });
         }

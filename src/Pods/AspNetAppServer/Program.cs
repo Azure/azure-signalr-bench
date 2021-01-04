@@ -18,10 +18,7 @@ namespace AspNetAppServer
                     Environment.GetEnvironmentVariable(PerfConstants.ConfigurationKeys.RedisConnectionStringKey),
                     Environment.GetEnvironmentVariable(PerfConstants.ConfigurationKeys.PodNameStringKey));
                 //  Prevent process to exit
-                while (true)
-                {
-                    await Task.Delay(int.MaxValue);
-                }
+                await Task.Delay(-1);
             }
         }
     }
