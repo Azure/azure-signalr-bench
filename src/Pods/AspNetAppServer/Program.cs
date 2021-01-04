@@ -13,12 +13,15 @@ namespace AspNetAppServer
             using (WebApp.Start<Startup>(url))
             {
                 Console.WriteLine($"Server running at {url}");
-                 await new MessageClientHolder().InitializeAsync(
-                     Environment.GetEnvironmentVariable(PerfConstants.ConfigurationKeys.TestIdKey),
-                     Environment.GetEnvironmentVariable(PerfConstants.ConfigurationKeys.RedisConnectionStringKey),
-                     Environment.GetEnvironmentVariable(PerfConstants.ConfigurationKeys.PodNameStringKey));
-              //  Prevent process to exit
-                await Task.Delay(int.MaxValue);
+                await new MessageClientHolder().InitializeAsync(
+                    Environment.GetEnvironmentVariable(PerfConstants.ConfigurationKeys.TestIdKey),
+                    Environment.GetEnvironmentVariable(PerfConstants.ConfigurationKeys.RedisConnectionStringKey),
+                    Environment.GetEnvironmentVariable(PerfConstants.ConfigurationKeys.PodNameStringKey));
+                //  Prevent process to exit
+                while (true)
+                {
+                    await Task.Delay(int.MaxValue);
+                }
             }
         }
     }

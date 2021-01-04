@@ -61,7 +61,6 @@ namespace Azure.SignalRBench.Client
         public abstract Task BroadcastAsync(string payload);
         public abstract Task GroupBroadcastAsync(string group, string payload);
         public abstract Task JoinGroupAsync();
-
-      
+        
     }
 }

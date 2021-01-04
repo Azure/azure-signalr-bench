@@ -42,15 +42,15 @@ spec:
       app: aspnet
   
 
-#---
-#apiVersion: v1
-#kind: Service
-#metadata:
-#  name: aspnet
-#spec:
-#  type: LoadBalancer
-#  ports:
-#    - protocol: TCP
-#      port: 80
-#  selector:
-#    app: aspnet
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: aspnet
+spec:
+  type: LoadBalancer
+  ports:
+    - protocol: TCP
+      port: 80
+  selector:
+    app: aspnet

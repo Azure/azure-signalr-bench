@@ -36,8 +36,9 @@ namespace Azure.SignalRBench.Client
             };
             Connection.Closed += async () =>
             {
-                var ms = StaticRandom.Next(2000);
-                await Task.Delay(ms);;
+                var ms = 1000 + StaticRandom.Next(1000);
+                await Task.Delay(ms);
+                ;
                 await StartAsync(default);
             };
         }
@@ -64,6 +65,7 @@ namespace Azure.SignalRBench.Client
                 await Connection.Start(clientTransport);
                 Console.WriteLine("connected");
             }
+
             await Context.SetConnectionIDAsync(GlobalIndex, Connection.ConnectionId);
             await Context.OnConnected(this, Groups.Length > 0);
         }

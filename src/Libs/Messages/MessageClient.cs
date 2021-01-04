@@ -2,7 +2,6 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
-using System.Runtime.InteropServices.ComTypes;
 using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
@@ -38,7 +37,7 @@ namespace Azure.SignalRBench.Messages
         {
             await _database.HashSetAsync(TestId, key, value);
         }
-        
+
         public async Task DeleteHashTableAsync()
         {
             await _database.KeyDeleteAsync(TestId);
@@ -52,7 +51,8 @@ namespace Azure.SignalRBench.Messages
             }
 
             var connection =
-                await ConnectionMultiplexer.ConnectAsync(connectionString ?? throw new ArgumentNullException(nameof(connectionString)));
+                await ConnectionMultiplexer.ConnectAsync(connectionString ??
+                                                         throw new ArgumentNullException(nameof(connectionString)));
             var subscriber = connection.GetSubscriber();
             var database = connection.GetDatabase();
             var result = new MessageClient(connection, subscriber, database, testId, sender);
@@ -90,13 +90,7 @@ namespace Azure.SignalRBench.Messages
 
         public void Dispose()
         {
-            Console.WriteLine("Message client Disposed.");
             _connection.Dispose();
-        }
-
-        ~MessageClient()
-        {
-            Console.WriteLine("This should not happen");
         }
     }
 }
