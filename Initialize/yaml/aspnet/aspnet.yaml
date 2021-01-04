@@ -1,0 +1,56 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: aspnet
+  labels:
+    app: aspnet
+spec:
+  replicas: 1
+  template:
+    metadata:
+      name: aspnet
+      labels:
+        app: aspnet
+    spec:
+      nodeSelector:
+        "beta.kubernetes.io/os": windows
+      volumes:
+        - name: volume
+          azureFile:
+            secretName: azure-secret
+            shareName: perf
+            readOnly: false
+      containers:
+        - name: aspnet
+          image: mcr.microsoft.com/dotnet/framework/runtime:4.8
+          resources:
+            limits:
+              cpu: 1
+              memory: 800M
+            requests:
+              cpu: .1
+              memory: 300M
+          volumeMounts:
+            - mountPath: "/mnt/perf"
+              name: volume
+          ports:
+            - containerPort: 80
+          command: [ "powershell" ]
+          args: [ "cd  /mnt/perf/manifest; xcopy .\\AspNetAppServer\\AspNetAppServer.zip C:\\home\\ ; cd C:/home/ ; tar -xf AspNetAppServer.zip ; ./AspNetAppServer.exe" ]
+  selector:
+    matchLabels:
+      app: aspnet
+  
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: aspnet
+spec:
+  type: LoadBalancer
+  ports:
+    - protocol: TCP
+      port: 80
+  selector:
+    app: aspnet

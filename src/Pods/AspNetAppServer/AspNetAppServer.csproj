@@ -1,0 +1,28 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+    <PropertyGroup>
+        <TargetFramework>netframework4.8</TargetFramework>
+        <RootNamespace>Azure.SignalRBench.AspNetAppServer</RootNamespace>
+        <langversion>8</langversion>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.Azure.SignalR.AspNet" Version="1.5.1" />
+        <PackageReference Include="Microsoft.Owin" Version="4.1.1" />
+        <PackageReference Include="Microsoft.Owin.Hosting" Version="4.1.1" />
+        <PackageReference Include="Microsoft.Owin.Cors" Version="4.1.1" />
+        <PackageReference Include="Microsoft.Owin.Host.HttpListener" Version="4.1.1" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\..\Libs\Common\Common.csproj" />
+        <ProjectReference Include="..\..\Libs\Messages\Messages.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Properties" />
+    </ItemGroup>
+
+
+</Project>

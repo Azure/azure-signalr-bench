@@ -37,7 +37,7 @@ namespace Azure.SignalRBench.Messages
         {
             await _database.HashSetAsync(TestId, key, value);
         }
-        
+
         public async Task DeleteHashTableAsync()
         {
             await _database.KeyDeleteAsync(TestId);

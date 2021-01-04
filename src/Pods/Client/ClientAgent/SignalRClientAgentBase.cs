@@ -28,7 +28,7 @@ namespace Azure.SignalRBench.Client
                                 o.Headers.Add("user", userName);
                             }
                         }
-                    ), (IRetryPolicy)RetryPolicy.Instance)
+                    ), context.RetryPolicy)
                 .Build();
             Connection.On<long, string>(nameof(context.Measure), context.Measure);
             Connection.Reconnecting += _ => context.OnReconnecting(this);
@@ -61,13 +61,6 @@ namespace Azure.SignalRBench.Client
         public abstract Task BroadcastAsync(string payload);
         public abstract Task GroupBroadcastAsync(string group, string payload);
         public abstract Task JoinGroupAsync();
-
-        private sealed class RetryPolicy : IRetryPolicy
-        {
-            public static readonly RetryPolicy Instance = new RetryPolicy();
-
-            public TimeSpan? NextRetryDelay(RetryContext retryContext) =>
-                TimeSpan.FromSeconds(1) + TimeSpan.FromSeconds(1) * StaticRandom.NextDouble();
-        }
+        
     }
 }

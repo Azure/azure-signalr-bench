@@ -11,7 +11,7 @@ export class TestConfig extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            show: false, loading: true, obj: { signalRUnitSize: 1 ,mode:"Default",service:"SignalR",Scenario:"Echo"},
+            show: false, loading: true, obj: { signalRUnitSize: 1, mode: "Default", service: "SignalR", Scenario: "Echo", framework: "Netcore" },
             showjson: false,
             json: {},
             testConfigs: [],
@@ -68,32 +68,23 @@ export class TestConfig extends Component {
     handleChange(e) {
         if (e.target.name == "connectionString") {
             if (e.target.value) {
-              this.unitRef.current&&(this.unitRef.current.disabled = true)
+                this.unitRef.current && (this.unitRef.current.disabled = true)
             }
             else
-            this.unitRef.current&&(this.unitRef.current.disabled = false)
+                this.unitRef.current && (this.unitRef.current.disabled = false)
         }
-        if(e.target.getAttribute("type")=="select"){
+        if (e.target.getAttribute("type") == "select") {
             console.log("type is select")
-            var obj=this.state.obj;
-            obj[e.target.name]=e.target.value;
-            this.setState({obj:obj})
+            var obj = this.state.obj;
+            obj[e.target.name] = e.target.value;
+            this.setState({ obj: obj })
             return
         }
-        // if (e.target.name == "Scenario") {
-        //     if (e.target.value=="GroupBroadcast") {
-        //         console.log(e.target)
-        //         this.setState({group:true})
-        //         console.log("group")
-        //     }else{
-        //         this.setState({group:false})
-        //     }
-        // }
         if (e.target.value == null || e.target.value == "") {
             delete this.state.obj[e.target.name]
         }
-        else{
-            var value=e.target.value.replaceAll("\"","").trim();
+        else {
+            var value = e.target.value.replaceAll("\"", "").trim();
             this.state.obj[e.target.name] = value
         }
     }
@@ -109,7 +100,7 @@ export class TestConfig extends Component {
         e.persist()
         e.target.setAttribute("class", "ui teal loading mini button")
         var key = e.target.getAttribute("value")
-        const response = await fetch('testconfig/starttest/'+key, {
+        const response = await fetch('testconfig/starttest/' + key, {
             method: 'POST',
             headers: {
                 'Accept': 'application/json',
@@ -137,8 +128,8 @@ export class TestConfig extends Component {
     }
     async handleSubmit() {
         console.log(this.state.obj)
-        const testName=this.state.obj["rowKey"]
-        if(!(testName.match("^[a-z0-9]([-a-z0-9]*[a-z0-9])?$"))){
+        const testName = this.state.obj["rowKey"]
+        if ((testName == undefined) || !(testName.match("^[a-z0-9]([-a-z0-9]*[a-z0-9])?$"))) {
             alert("invalid testName. Should be of format [a-z0-9]([-a-z0-9]*[a-z0-9]?)")
             return
         }
@@ -224,24 +215,31 @@ export class TestConfig extends Component {
                                     <option>RawWebsocket</option>
                                 </Form.Control>
                             </Form.Group>
-                          {this.state.obj.service=="SignalR"&& <Form.Group  >
+                            {this.state.obj.service == "SignalR" && <Form.Group  >
                                 <Form.Label>Service Mode</Form.Label>
-                                <Form.Control name="Mode" type="select" onChange={this.handleChange} as="select">
+                                <Form.Control name="mode" type="select" onChange={this.handleChange} as="select">
                                     <option>Default</option>
                                     <option>Serverless</option>
                                 </Form.Control>
                             </Form.Group>}
-                            {(this.state.obj.service=="RawWebsocket"||(this.state.obj.service=="SignalR"&&this.state.obj.Mode=="Serverless"))&&
-                            <div>
-                               <strong>Add upstream settings: </strong>
-                              <code> https://{window.location.hostname}/upstream/{"{hub}"}/api/{"{category}"}/{"{event}"}</code>
+                            {this.state.obj.service == "SignalR" && this.state.obj.mode == "Default" && <Form.Group  >
+                                <Form.Label>Framework</Form.Label>
+                                <Form.Control name="framework" type="select" onChange={this.handleChange} as="select">
+                                    <option>Netcore</option>
+                                    <option>Netframework</option>
+                                </Form.Control>
+                            </Form.Group>}
+                            {(this.state.obj.service == "RawWebsocket" || (this.state.obj.service == "SignalR" && this.state.obj.mode == "Serverless")) &&
+                                <div>
+                                    <strong>Add upstream settings: </strong>
+                                    <code> https://{window.location.hostname}/upstream/{"{hub}"}/api/{"{category}"}/{"{event}"}</code>
                                 </div>
-                                }
+                            }
                             <Form.Group >
                                 <Form.Label >ConnectionString</Form.Label>
                                 <Form.Control name="connectionString" onChange={this.handleChange} placeholder="ASR Connection String. If set, the below one will be ignored." />
                             </Form.Group>
-                          {this.state.obj.service=="SignalR"&&this.state.obj.Mode=="Default"&&<Form.Group  >
+                            {this.state.obj.service == "SignalR" && this.state.obj.Mode == "Default" && <Form.Group  >
                                 <Form.Label>Signarl unit size</Form.Label>
                                 <Form.Control ref={this.unitRef} name="signalRUnitSize" onChange={this.handleChangeNum} as="select">
                                     <option>1</option>
@@ -278,7 +276,7 @@ export class TestConfig extends Component {
                                     <option>P2P</option>
                                 </Form.Control>
                             </Form.Group>
-                            {this.state.obj.Scenario=="GroupBroadcast" && <Form.Group >
+                            {this.state.obj.Scenario == "GroupBroadcast" && <Form.Group >
                                 <Form.Label>GroupSize</Form.Label>
                                 <Form.Control name="GroupSize" onChange={this.handleChangeNum} placeholder="set the test server number. (Default:100)" />
                             </Form.Group>}
@@ -286,9 +284,9 @@ export class TestConfig extends Component {
                                 <Form.Label>Protocol</Form.Label>
                                 <Form.Control name="Protocol" onChange={this.handleChange} as="select">
                                     <option>WebSocketsWithJson</option>
-                                    <option>WebSocketsWithMessagePack</option>
+                                    {this.state.obj.service == "SignalR" && this.state.obj.mode == "Default" && this.state.obj.framework == "Netcore" && <option>WebSocketsWithMessagePack</option>}
                                     <option>ServerSideEventsWithJson</option>
-                                    <option>LongPollingWithMessagePack</option>
+                                    {this.state.obj.service == "SignalR" && this.state.obj.mode == "Default" && this.state.obj.framework == "Netcore" && <option>LongPollingWithMessagePack</option>}
                                     <option>LongPollingWithJson</option>
                                 </Form.Control>
                             </Form.Group>

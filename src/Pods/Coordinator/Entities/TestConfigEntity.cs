@@ -16,6 +16,8 @@ namespace Azure.SignalRBench.Coordinator.Entities
         public string Service { get; set; } = "SignalR";
         public string Mode { get; set; } = "Default";
 
+        public string Framework { get; set; } = "Netcore";
+
         public int ClientCons { get; set; } = 3000;
 
         public int ConnectEstablishRoundNum { get; set; } = 1;
@@ -80,24 +82,30 @@ namespace Azure.SignalRBench.Coordinator.Entities
         {
             //creating round settings
             var roundsettings = new List<RoundSetting>();
-            int current = Start;
-            int step = RoundNum > 1 ? (int)Math.Ceiling((double)(End - Start) / (RoundNum - 1)) : 0;
-            int count = current;
+            var current = Start;
+            var step = RoundNum > 1 ? (int)Math.Ceiling((double)(End - Start) / (RoundNum - 1)) : 0;
             if (!Enum.TryParse(Scenario, out ClientBehavior behavior))
                 throw new Exception($"Unknown Scenario {Scenario}");
             if (!Enum.TryParse(Mode, out SignalRServiceMode serviceMode))
                 throw new Exception($"Unknown Service mode {serviceMode}");
             var testCategory = TestCategory.AspnetCoreSignalR;
-            if (Service == "RawWebsocket")
+            switch (Service)
             {
-                testCategory = TestCategory.RawWebsocket;
-                ServerNum = 0;
+                case "RawWebsocket":
+                    testCategory = TestCategory.RawWebsocket;
+                    ServerNum = 0;
+                    break;
+                case "SignalR" when serviceMode == SignalRServiceMode.Serverless:
+                    testCategory = TestCategory.AspnetCoreSignalRServerless;
+                    break;
+                case "SignalR":
+                    testCategory = Framework == "Netcore" ? TestCategory.AspnetCoreSignalR : TestCategory.AspnetSignalR;
+                    break;
             }
-            if (Service == "SignalR" && serviceMode == SignalRServiceMode.Serverless)
-                testCategory = TestCategory.AspnetCoreSignalRServerless;
-            for (int i = 0; i < RoundNum; i++)
+
+            for (var i = 0; i < RoundNum; i++)
             {
-                count = current > End ? End : current;
+                var count = current > End ? End : current;
                 roundsettings.Add(new RoundSetting()
                 {
                     DurationInSeconds = RoundDurations,
