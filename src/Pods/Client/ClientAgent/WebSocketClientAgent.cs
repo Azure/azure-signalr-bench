@@ -1,5 +1,5 @@
 ﻿using System;
-using System.CodeDom.Compiler;
+using System.Linq;
 using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
@@ -16,18 +16,19 @@ namespace Azure.SignalRBench.Client
         public string[] Groups { get; } = Array.Empty<string>();
 
         private WebSocketHubConnection Connection { get; }
-        public WebSocketClientAgent(string url, Protocol protocol, string[] groups, int globalIndex, ClientAgentContext context)
+
+        public WebSocketClientAgent(string connectionString, Protocol protocol, string[] groups, int globalIndex, ClientAgentContext context)
         {
-            Connection = new WebSocketHubConnection(url);
+            if (!TryParseEndpoint(connectionString, out var endpoint))
+            {
+                throw new ArgumentNullException("Connection string misses required property Endpoint");
+            }
+            Context = context;
+            Connection = new WebSocketHubConnection(endpoint);
             Connection.On(context.Measure);
             Context = context;
             Groups = groups;
             GlobalIndex = globalIndex;
-        }
-
-        public Task SendToClientAsync(int index, string payload)
-        {
-            throw new NotImplementedException();
         }
 
         public Task BroadcastAsync(string payload) => throw new NotImplementedException();
@@ -46,6 +47,11 @@ namespace Azure.SignalRBench.Client
 
         public Task JoinGroupAsync() => throw new NotImplementedException();
 
+        public Task SendToClientAsync(int index, string payload)
+        {
+            throw new NotImplementedException();
+        }
+
         public async Task StartAsync(CancellationToken cancellationToken)
         {
             await Connection.StartAsync(cancellationToken);
@@ -55,6 +61,24 @@ namespace Azure.SignalRBench.Client
         public async Task StopAsync()
         {
             await Connection.StopAsync();
+        }
+
+        private bool TryParseEndpoint(string connectionString, out string endpoint)
+        {
+            var properties = connectionString.Split(';', StringSplitOptions.RemoveEmptyEntries);
+            foreach (var property in properties)
+            {
+                var kvp = property.Split('=');
+                if (kvp.Length != 0) continue;
+
+                if (string.Compare("endpoint", kvp.First(), true) == 0)
+                {
+                    endpoint = kvp.Last();
+                    return true;
+                }
+            }
+            endpoint = "";
+            return false;
         }
 
         private sealed class Data
