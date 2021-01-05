@@ -26,7 +26,6 @@ namespace Azure.SignalRBench.Client
             Context = context;
             Connection = new WebSocketHubConnection(endpoint);
             Connection.On(context.Measure);
-            Context = context;
             Groups = groups;
             GlobalIndex = globalIndex;
         }
@@ -52,7 +51,7 @@ namespace Azure.SignalRBench.Client
             throw new NotImplementedException();
         }
 
-        public async Task StartAsync(CancellationToken cancellationToken)
+        public async Task StartAsync(CancellationToken cancellationToken = default)
         {
             await Connection.StartAsync(cancellationToken);
             await Context.OnConnected(this, false);
@@ -69,11 +68,12 @@ namespace Azure.SignalRBench.Client
             foreach (var property in properties)
             {
                 var kvp = property.Split('=');
-                if (kvp.Length == 0) continue;
+                if (kvp.Length != 2) continue;
 
                 if (string.Compare("endpoint", kvp.First(), true) == 0)
                 {
-                    endpoint =kvp.Last().Replace("http","ws");
+                    endpoint = kvp.Last();
+                    endpoint = endpoint.Replace("http", "ws");
                     return true;
                 }
             }
@@ -83,22 +83,23 @@ namespace Azure.SignalRBench.Client
 
         private sealed class Data
         {
-            public string Payload { get; set; }
+            public string Payload { get; set; } = "";
             public long Ticks { get; set; }
         }
 
         private sealed class WebSocketHubConnection
         {
             private readonly ClientWebSocket _socket;
-            private CancellationTokenSource _connectionStoppedCts = new CancellationTokenSource();
+            private readonly CancellationTokenSource _connectionStoppedCts = new CancellationTokenSource();
 
             private Action<long, string>? _handler;
-            public Uri Endpoint { get; }
+            public Uri ResourceUri { get; }
             private CancellationToken ConnectionStoppedToken => _connectionStoppedCts.Token;
-            public WebSocketHubConnection(string url)
+
+            public WebSocketHubConnection(string endpoint)
             {
                 _socket = new ClientWebSocket();
-                Endpoint = new Uri(url);
+                ResourceUri = new Uri(endpoint + "/ws/client");
             }
 
             public void On(Action<long, string> callback)
@@ -113,7 +114,7 @@ namespace Azure.SignalRBench.Client
 
             public async Task StartAsync(CancellationToken cancellationToken)
             {
-                await _socket.ConnectAsync(Endpoint, cancellationToken);
+                await _socket.ConnectAsync(ResourceUri, cancellationToken);
                 _ = ReceiveLoop();
             }
 
