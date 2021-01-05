@@ -143,17 +143,6 @@ namespace Azure.SignalRBench.Coordinator
                         },
                         Spec = new V1PodSpec
                         {
-                            DnsConfig = new V1PodDNSConfig()
-                            {
-                                Options = new List<V1PodDNSConfigOption>()
-                                {
-                                    new V1PodDNSConfigOption()
-                                    {
-                                        Name = "ndots",
-                                        Value = "2"
-                                    },
-                                }
-                            },
                             NodeSelector = new Dictionary<string, string>()
                             {
                                 [PerfConstants.Name.OsLabel] = testCategory == TestCategory.AspnetSignalR
