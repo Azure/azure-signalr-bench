@@ -126,7 +126,7 @@ namespace Azure.SignalRBench.Client
 
             private async Task ReceiveLoop()
             {
-                var buffer = new byte[1 << 10];
+                var buffer = new byte[1 << 22];
                 while (_socket.State == WebSocketState.Open)
                 {
                     try
@@ -136,7 +136,7 @@ namespace Azure.SignalRBench.Client
                         var data = JsonConvert.DeserializeObject<Data>(dataStr);
                         _handler?.Invoke(data.Ticks, data.Payload);
                     }
-                    catch (OperationCanceledException)
+                    catch (OperationCanceledException e)
                     {
                         continue;
                     }

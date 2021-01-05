@@ -154,7 +154,9 @@ namespace Azure.SignalRBench.Coordinator
                                 new V1Container()
                                 {
                                     Name = name,
-                                    Image = testCategory == TestCategory.AspnetSignalR? "mcr.microsoft.com/dotnet/framework/runtime:4.8" : "signalrbenchmark/perf:1.3",
+                                    Image = testCategory == TestCategory.AspnetSignalR
+                                        ? "mcr.microsoft.com/dotnet/framework/runtime:4.8"
+                                        : "signalrbenchmark/perf:1.3",
                                     Resources = new V1ResourceRequirements()
                                     {
                                         Requests = new Dictionary<string, ResourceQuantity>()
@@ -172,20 +174,24 @@ namespace Azure.SignalRBench.Coordinator
                                     {
                                         new V1VolumeMount("/mnt/perf", "volume")
                                     },
-                                    Command =testCategory ==TestCategory.AspnetSignalR?new List<string>()
-                                    {
-                                        "powershell"
-                                    }: new List<string>()
-                                    {
-                                        "/bin/sh", "-c"
-                                    },
-                                    Args =testCategory ==TestCategory.AspnetSignalR? new List<string>()
-                                    {
-                                        "cd  /mnt/perf/manifest; xcopy .\\AspNetAppServer\\AspNetAppServer.zip C:\\home\\ ; cd C:/home/ ; tar -xf AspNetAppServer.zip ; ./AspNetAppServer.exe"
-                                    }: new List<string>()
-                                    {
-                                        $"cp /mnt/perf/manifest/{server}/{server}.zip /home ; cd /home ; unzip {server}.zip ;exec ./{server};"
-                                    },
+                                    Command = testCategory == TestCategory.AspnetSignalR
+                                        ? new List<string>()
+                                        {
+                                            "powershell"
+                                        }
+                                        : new List<string>()
+                                        {
+                                            "/bin/sh", "-c"
+                                        },
+                                    Args = testCategory == TestCategory.AspnetSignalR
+                                        ? new List<string>()
+                                        {
+                                            "cd  /mnt/perf/manifest; xcopy .\\AspNetAppServer\\AspNetAppServer.zip C:\\home\\ ; cd C:/home/ ; tar -xf AspNetAppServer.zip ; ./AspNetAppServer.exe"
+                                        }
+                                        : new List<string>()
+                                        {
+                                            $"cp /mnt/perf/manifest/{server}/{server}.zip /home ; cd /home ; unzip {server}.zip ;exec ./{server};"
+                                        },
                                     Env = new List<V1EnvVar>()
                                     {
                                         new V1EnvVar(PerfConstants.ConfigurationKeys.PodNameStringKey,
@@ -257,6 +263,17 @@ namespace Azure.SignalRBench.Coordinator
                         },
                         Spec = new V1PodSpec()
                         {
+                            DnsConfig = new V1PodDNSConfig()
+                            {
+                                Options = new List<V1PodDNSConfigOption>()
+                                {
+                                    new V1PodDNSConfigOption()
+                                    {
+                                        Name = "ndots",
+                                        Value = "2"
+                                    },
+                                }
+                            },
                             NodeSelector = new Dictionary<string, string>()
                             {
                                 [PerfConstants.Name.OsLabel] = PerfConstants.Name.Linux

@@ -61,22 +61,11 @@ data:
         reload
         loop
         bind 169.254.20.10 10.0.0.10
-        forward . __PILLAR__CLUSTER__DNS__ {
+        forward . 10.0.0.10 {
                 force_tcp
         }
         prometheus :9253
         health 169.254.20.10:8080
-        }
-    in-addr.arpa:53 {
-        errors
-        cache 30
-        reload
-        loop
-        bind 169.254.20.10 10.0.0.10
-        forward . __PILLAR__CLUSTER__DNS__ {
-                force_tcp
-        }
-        prometheus :9253
         }
     ip6.arpa:53 {
         errors
@@ -84,7 +73,7 @@ data:
         reload
         loop
         bind 169.254.20.10 10.0.0.10
-        forward . __PILLAR__CLUSTER__DNS__ {
+        forward . 10.0.0.10 {
                 force_tcp
         }
         prometheus :9253
@@ -95,7 +84,7 @@ data:
         reload
         loop
         bind 169.254.20.10 10.0.0.10
-        forward . __PILLAR__UPSTREAM__SERVERS__ {
+        forward . 10.0.0.10 {
                 force_tcp
         }
         prometheus :9253
@@ -137,7 +126,7 @@ spec:
           operator: "Exists"
       containers:
         - name: node-cache
-          image: k8s.gcr.io/dns/k8s-dns-node-cache:1.15.14
+          image: k8s.gcr.io/dns/k8s-dns-node-cache:1.16.0
           resources:
             requests:
               cpu: 25m
@@ -201,3 +190,25 @@ spec:
                     operator: NotIn
                     values:
                       - virtual-node-aci-linux
+                        
+---
+# A headless service is a service with a service IP but instead of load-balancing it will return the IPs of our associated Pods.
+# We use this to expose metrics to Prometheus.
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    prometheus.io/port: "9253"
+    prometheus.io/scrape: "true"
+  labels:
+    k8s-app: node-local-dns
+  name: node-local-dns
+  namespace: kube-system
+spec:
+  clusterIP: None
+  ports:
+    - name: metrics
+      port: 9253
+      targetPort: 9253
+  selector:
+    k8s-app: node-local-dns
