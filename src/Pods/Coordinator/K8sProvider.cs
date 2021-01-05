@@ -145,14 +145,6 @@ namespace Azure.SignalRBench.Coordinator
                         {
                             DnsConfig = new V1PodDNSConfig()
                             {
-                                Nameservers = new List<string>()
-                                {
-                                    "10.0.0.10"
-                                },
-                                Searches = new List<string>()
-                                {
-                                    "default.svc.cluster.local", "svc.cluster.local cluster.local"
-                                },
                                 Options = new List<V1PodDNSConfigOption>()
                                 {
                                     new V1PodDNSConfigOption()
@@ -284,14 +276,6 @@ namespace Azure.SignalRBench.Coordinator
                         {
                             DnsConfig = new V1PodDNSConfig()
                             {
-                                Nameservers = new List<string>()
-                                {
-                                    "10.0.0.10"
-                                },
-                                Searches = new List<string>()
-                                {
-                                    "default.svc.cluster.local", "svc.cluster.local cluster.local"
-                                },
                                 Options = new List<V1PodDNSConfigOption>()
                                 {
                                     new V1PodDNSConfigOption()
