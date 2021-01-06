@@ -53,6 +53,8 @@ namespace Azure.SignalRBench.Coordinator.Entities
 
         public int Rate { get; set; } = 200;
 
+        public string Dir { get; set; } = "Default";
+
         public void Init()
         {
             Start = Start > ClientCons ? ClientCons : Start;
