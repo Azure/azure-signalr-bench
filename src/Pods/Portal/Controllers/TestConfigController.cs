@@ -159,22 +159,5 @@ namespace Portal.Controllers
             HttpContext.Response.StatusCode = 400;
             await  HttpContext.Response.Body.WriteAsync(Encoding.ASCII.GetBytes("unsupported"));
         }
-        
-         [HttpGet("fix")]
-        public async Task Fix()
-        {
-            var table = await _perfStorage.GetTableAsync<TestConfigEntity>(PerfConstants.TableNames.TestConfig);
-            var rows = await table.QueryAsync(table.Rows
-            ).ToListAsync();
-            var tasks = new List<Task>();
-            foreach (var testConfigEntity in rows)
-            {
-                if (testConfigEntity.Dir == "Default")
-                {
-                    tasks.Add(Task.Run(async()=>await table.UpdateAsync(testConfigEntity)));
-                }  
-            }
-            await Task.WhenAll(tasks);
-        }
     }
 }

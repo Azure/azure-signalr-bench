@@ -206,7 +206,6 @@ export class TestConfig extends Component {
                                 barColor='black'
                                 style={{ fontWeight: "bold", fontSize: "1em", marginBottom: 0 }}
                                 commands={{
-                                    'test': (a, b) => alert(a[1]),
                                     move:
                                         (args, print, runCommand) => {
                                             console.log(args)
