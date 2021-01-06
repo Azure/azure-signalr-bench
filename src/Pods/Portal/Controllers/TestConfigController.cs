@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Azure.Security.KeyVault.Secrets;
@@ -39,13 +40,6 @@ namespace Portal.Controllers
             var rows = await table.QueryAsync(table.Rows
             ).ToListAsync();
             rows.Sort((a, b) => b.Timestamp.CompareTo(a.Timestamp));
-            // rows = rows.Select(r =>
-            // {
-            //     r.ConnectionString = r.ConnectionString != null
-            //         ? Regex.Replace(r.ConnectionString, "AccessKey=.*;V", "AccessKey=***;V")
-            //         : null;
-            //     return r;
-            // }).ToList();
             return rows;
         }
 
@@ -110,6 +104,60 @@ namespace Portal.Controllers
                     .ToListAsync();
             if (statuses.Count > 0)
                 await statusTable.BatchDeleteAsync(statuses);
+        }
+        
+        [HttpPut("move/{type}/{source}/{target}")]
+        public async Task Move(string type,string source,string target)
+        {
+            if (type == "jobConfig")
+            {
+                var configTable = await _perfStorage.GetTableAsync<TestConfigEntity>(PerfConstants.TableNames.TestConfig);
+                var config =
+                    await configTable.GetFirstOrDefaultAsync(from row in configTable.Rows
+                        where row.PartitionKey == source
+                        select row);
+                if (config != null)
+                {
+                    config.Dir = target;
+                    await configTable.UpdateAsync(config);
+                }
+                else
+                {
+                    HttpContext.Response.StatusCode = 400;
+                  await  HttpContext.Response.Body.WriteAsync(Encoding.ASCII.GetBytes($"testName {source} doesn't exist"));
+                }
+
+                return;
+            }
+            if (type == "dir")
+            {
+                var configTable = await _perfStorage.GetTableAsync<TestConfigEntity>(PerfConstants.TableNames.TestConfig);
+                var configs =
+                    await configTable.QueryAsync(from row in configTable.Rows
+                        where row.Dir == source
+                        select row).ToListAsync();
+                if (configs.Count!= 0)
+                {
+                    var tasks = new List<Task>();
+                    foreach (var testConfigEntity in configs)
+                    {
+                        if (testConfigEntity.Dir == source)
+                        {
+                            testConfigEntity.Dir = target;
+                            tasks.Add(Task.Run(async()=>await configTable.UpdateAsync(testConfigEntity)));
+                        }  
+                    }
+                    await Task.WhenAll(tasks);
+                }else
+                {
+                    HttpContext.Response.StatusCode = 400;
+                    await  HttpContext.Response.Body.WriteAsync(Encoding.ASCII.GetBytes($"dir {source} doesn't exist"));
+                }
+
+                return;
+            }
+            HttpContext.Response.StatusCode = 400;
+            await  HttpContext.Response.Body.WriteAsync(Encoding.ASCII.GetBytes("unsupported"));
         }
     }
 }

@@ -4,7 +4,8 @@ import Form from 'react-bootstrap/Form'
 import ReactJson from 'react-json-view'
 import { Util } from './Util'
 
-import { Search, Grid, Header, Segment, Divider, Button, Icon } from 'semantic-ui-react'
+import { Search, Grid, Header, Segment, Divider, Button, Icon, Accordion, Dropdown } from 'semantic-ui-react'
+import Terminal from 'terminal-in-react';
 
 
 export class TestConfig extends Component {
@@ -15,7 +16,8 @@ export class TestConfig extends Component {
             showjson: false,
             json: {},
             testConfigs: [],
-            total: []
+            total: [],
+            activeIndex: { "Default": true }
         };
         this.handleClose = this.handleClose.bind(this);
         this.handleShow = this.handleShow.bind(this);
@@ -26,9 +28,20 @@ export class TestConfig extends Component {
         this.handleSubmit = this.handleSubmit.bind(this);
         this.handleSearchChange = this.handleSearchChange.bind(this);
         this.handleDelete = this.handleDelete.bind(this);
-
         this.unitRef = React.createRef();
     }
+
+    handleDirClick = (e, titleProps) => {
+        const { index } = titleProps
+        const activeIndex = this.state.activeIndex
+        if (activeIndex[index]) {
+            activeIndex[index] = false
+        } else {
+            activeIndex[index] = true
+        }
+        this.setState({ activeIndex: activeIndex })
+    }
+
     handleSearchChange(e, data) {
         if (data.value != undefined && data.value.trim()) {
             var testConfigs = this.state.total.filter(x => x.rowKey.includes(data.value.trim()))
@@ -152,37 +165,139 @@ export class TestConfig extends Component {
     }
 
     renderTestConfigsTable(testConfigs) {
+        var classify = {}, def = []
+        for (var i in testConfigs) {
+            if (testConfigs[i].dir == "Default") {
+                def.push(testConfigs[i])
+            } else {
+                var dic = testConfigs[i].dir
+                if (classify[dic] == undefined) {
+                    classify[dic] = []
+                }
+                classify[dic].push(testConfigs[i])
+            }
+        }
+        var list = []
+        for (var key in classify) {
+            list.push([key, classify[key]])
+        }
+        list.sort((a, b) => a[0] - b[0]);
+        list.unshift(["Default", def])
         return (
-            <table className='table table-striped' aria-labelledby="tabelLabel" >
-                <thead>
-                    <tr>
-                        <th>TestName</th>
-                        <th>timestamp</th>
-                        <th>ClientConnections</th>
-                        <th>Creater</th>
-                        <th>Config</th>
-                        <th>Start</th>
-                        <th>Remove</th>
+            <div>
 
-                    </tr>
-                </thead>
-                <tbody>
-                    {testConfigs.map(testConfig => {
-                        var json = JSON.stringify(testConfig)
-                        var link = "/test-status/" + testConfig.rowKey;
-                        return <tr key={testConfig.rowKey}>
-                            <td><a href={link}>{testConfig.rowKey}</a></td>
-                            <td>{testConfig.timestamp}</td>
-                            <td>{testConfig.clientCons}</td>
-                            <td>{testConfig.user}</td>
-                            <td><Icon size="large" name='file code outline' value={json} onClick={this.handleJsonShow} /></td>
-                            <td ><Button color="teal" size='mini' value={testConfig["partitionKey"]} onClick={this.handleStart}>Run</Button></td>
-                            <td ><Button color="orange" size='mini' value={testConfig["partitionKey"]} onClick={this.handleDelete}>Delete</Button></td>
-                        </tr>
-                    }
-                    )}
-                </tbody>
-            </table>
+                <Accordion exclusive={false}>
+                    <Accordion.Title
+                        active={this.state.activeIndex['Terminal']}
+                        index='Terminal'
+                        onClick={this.handleDirClick}
+                    >
+                        <Icon name='dropdown' />
+                            Terminal
+                     </Accordion.Title>
+                    <Accordion.Content active={this.state.activeIndex['Terminal']}>
+                        <div class="terminal"
+                        >
+                            <Terminal
+                                startState='maximised'
+                                hideTopBar="true"
+                                color='green'
+                                backgroundColor='black'
+                                barColor='black'
+                                style={{ fontWeight: "bold", fontSize: "1em", marginBottom: 0 }}
+                                commands={{
+                                    move:
+                                        (args, print, runCommand) => {
+                                            console.log(args)
+                                            if (args.length != 3) {
+                                                print("Usage: move {testName} to {dirName}")
+                                                return
+                                            }
+                                            fetch(`testconfig/move/jobConfig/${args[1]}/${args[2]}`, {
+                                                method: 'PUT',
+                                                redirect: 'manual'
+                                            }).then(response => {
+                                                if (response.status == 200) {
+                                                    alert("Succeed")
+                                                    this.populateTestConfigData()
+                                                } else {
+                                                    response.text().then(data => alert(data))
+                                                }
+                                            })
+                                        },
+                                    movedir:
+                                        (args, print, runCommand) => {
+                                            console.log(args)
+                                            if (args.length != 3) {
+                                                print("Usage: move {dirName} to {dirName}")
+                                                return
+                                            }
+                                            fetch(`testconfig/move/dir/${args[1]}/${args[2]}`, {
+                                                method: 'PUT',
+                                                redirect: 'manual'
+                                            }).then(response => {
+                                                if (response.status == 200) {
+                                                    alert("Succeed")
+                                                    this.populateTestConfigData()
+                                                } else {
+                                                    response.text().then(data => alert(data))
+                                                }
+                                            })
+                                        },
+                                }}
+                                descriptions={{
+                                    move: 'move {testName} {dirName}', movedir: 'movedir {dirName} {dirName}'
+                                }}
+                                msg='Type help to see all supported commands'
+                            />
+                        </div>
+                    </Accordion.Content>
+                    {list.map(pair => {
+                        return <div>
+                            <Accordion.Title
+                                active={this.state.activeIndex[pair[0]]}
+                                index={pair[0]}
+                                onClick={this.handleDirClick}
+                            >
+                                <Icon name='dropdown' />
+                                {pair[0]}
+                            </Accordion.Title>
+                            <Accordion.Content active={this.state.activeIndex[pair[0]]}>
+                                <table className='table table-striped' aria-labelledby="tabelLabel" >
+                                    <thead>
+                                        <tr>
+                                            <th>TestName</th>
+                                            <th>timestamp</th>
+                                            <th>ClientConnections</th>
+                                            <th>Creater</th>
+                                            <th>Config</th>
+                                            <th>Start</th>
+                                            <th>Remove</th>
+
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {pair[1].map(testConfig => {
+                                            var json = JSON.stringify(testConfig)
+                                            var link = "/test-status/" + testConfig.rowKey;
+                                            return <tr key={testConfig.rowKey}>
+                                                <td><a href={link}>{testConfig.rowKey}</a></td>
+                                                <td>{testConfig.timestamp}</td>
+                                                <td>{testConfig.clientCons}</td>
+                                                <td>{testConfig.user}</td>
+                                                <td><Icon size="large" name='file code outline' value={json} onClick={this.handleJsonShow} /></td>
+                                                <td ><Button color="teal" size='mini' value={testConfig["partitionKey"]} onClick={this.handleStart}>Run</Button></td>
+                                                <td ><Button color="orange" size='mini' value={testConfig["partitionKey"]} onClick={this.handleDelete}>Delete</Button></td>
+                                            </tr>
+                                        }
+                                        )}
+                                    </tbody>
+                                </table>
+                            </Accordion.Content>
+                        </div>
+                    })}
+                </Accordion>
+            </div>
         );
     }
 
@@ -190,6 +305,9 @@ export class TestConfig extends Component {
         let contents = this.state.loading
             ? <p><em>Loading...</em></p>
             : this.renderTestConfigsTable(this.state.testConfigs);
+        //remove the terminal blank. The autofocus is removed by https://github.com/nitin42/terminal-in-react/issues/59
+        var terminal = document.querySelector('.terminal')
+        terminal && terminal.children[0].classList.remove('gSZAyM')
         return (
             <>
                 <Modal show={this.state.showjson} dialogClassName="modalCss" onHide={this.handleJsonClose}>
@@ -239,7 +357,7 @@ export class TestConfig extends Component {
                                 <Form.Label >ConnectionString</Form.Label>
                                 <Form.Control name="connectionString" onChange={this.handleChange} placeholder="ASR Connection String. If set, the below one will be ignored." />
                             </Form.Group>
-                            {this.state.obj.service == "SignalR" && this.state.obj.Mode == "Default" && <Form.Group  >
+                            {this.state.obj.service == "SignalR" && this.state.obj.mode == "Default" && <Form.Group  >
                                 <Form.Label>Signarl unit size</Form.Label>
                                 <Form.Control ref={this.unitRef} name="signalRUnitSize" onChange={this.handleChangeNum} as="select">
                                     <option>1</option>
