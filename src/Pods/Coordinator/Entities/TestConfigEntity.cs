@@ -53,6 +53,10 @@ namespace Azure.SignalRBench.Coordinator.Entities
 
         public int Rate { get; set; } = 200;
 
+        public string Cron { get; set; }= "0";
+
+        public string LastCronTime { get; set; }= "0";
+
         public string Dir { get; set; } = "Default";
 
         public void Init()
@@ -80,7 +84,7 @@ namespace Azure.SignalRBench.Coordinator.Entities
             }
         }
 
-        public TestJob ToTestJob(int index)
+        public TestJob ToTestJob()
         {
             //creating round settings
             var roundsettings = new List<RoundSetting>();
@@ -125,7 +129,7 @@ namespace Azure.SignalRBench.Coordinator.Entities
             }
             var testJob = new TestJob()
             {
-                TestId = PartitionKey + '-' + index,
+                TestId = PartitionKey + '-' + InstanceIndex,
                 TestMethod = testCategory,
                 ServiceSetting = new[] { new ServiceSetting()
                 {

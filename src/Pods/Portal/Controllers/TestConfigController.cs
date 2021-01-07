@@ -14,6 +14,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Cosmos.Table;
 using Microsoft.Extensions.Logging;
+using NCrontab;
 using Newtonsoft.Json;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
@@ -60,8 +61,8 @@ namespace Portal.Controllers
         {
             var configTable = await _perfStorage.GetTableAsync<TestConfigEntity>(PerfConstants.TableNames.TestConfig);
             var latestTestConfig = await configTable.GetFirstOrDefaultAsync(from row in configTable.Rows
-                                                                            where row.PartitionKey == testConfigEntityKey
-                                                                            select row);
+                where row.PartitionKey == testConfigEntityKey
+                select row);
             latestTestConfig.InstanceIndex += 1;
             await configTable.UpdateAsync(latestTestConfig);
             var queue = await _perfStorage.GetQueueAsync<TestJob>(PerfConstants.QueueNames.PortalJob, true);
@@ -80,7 +81,7 @@ namespace Portal.Controllers
             try
             {
                 await statusTable.InsertAsync(testEntity);
-                await queue.SendAsync(latestTestConfig.ToTestJob(latestTestConfig.InstanceIndex));
+                await queue.SendAsync(latestTestConfig.ToTestJob());
             }
             catch (Exception e)
             {
@@ -95,8 +96,8 @@ namespace Portal.Controllers
             var configTable = await _perfStorage.GetTableAsync<TestConfigEntity>(PerfConstants.TableNames.TestConfig);
             var config =
                 await configTable.GetFirstOrDefaultAsync(from row in configTable.Rows
-                                                         where row.PartitionKey == key
-                                                         select row);
+                    where row.PartitionKey == key
+                    select row);
             await configTable.DeleteAsync(config);
             var statusTable = await _perfStorage.GetTableAsync<TestStatusEntity>(PerfConstants.TableNames.TestStatus);
             var statuses =
@@ -105,13 +106,14 @@ namespace Portal.Controllers
             if (statuses.Count > 0)
                 await statusTable.BatchDeleteAsync(statuses);
         }
-        
+
         [HttpPut("move/{type}/{source}/{target}")]
-        public async Task Move(string type,string source,string target)
+        public async Task Move(string type, string source, string target)
         {
             if (type == "jobConfig")
             {
-                var configTable = await _perfStorage.GetTableAsync<TestConfigEntity>(PerfConstants.TableNames.TestConfig);
+                var configTable =
+                    await _perfStorage.GetTableAsync<TestConfigEntity>(PerfConstants.TableNames.TestConfig);
                 var config =
                     await configTable.GetFirstOrDefaultAsync(from row in configTable.Rows
                         where row.PartitionKey == source
@@ -124,40 +126,81 @@ namespace Portal.Controllers
                 else
                 {
                     HttpContext.Response.StatusCode = 400;
-                  await  HttpContext.Response.Body.WriteAsync(Encoding.ASCII.GetBytes($"testName {source} doesn't exist"));
+                    await HttpContext.Response.Body.WriteAsync(
+                        Encoding.ASCII.GetBytes($"testName {source} doesn't exist"));
                 }
 
                 return;
             }
+
             if (type == "dir")
             {
-                var configTable = await _perfStorage.GetTableAsync<TestConfigEntity>(PerfConstants.TableNames.TestConfig);
+                var configTable =
+                    await _perfStorage.GetTableAsync<TestConfigEntity>(PerfConstants.TableNames.TestConfig);
                 var configs =
                     await configTable.QueryAsync(from row in configTable.Rows
                         where row.Dir == source
                         select row).ToListAsync();
-                if (configs.Count!= 0)
+                if (configs.Count != 0)
                 {
                     var tasks = new List<Task>();
                     foreach (var testConfigEntity in configs)
                     {
-                        if (testConfigEntity.Dir == source)
-                        {
-                            testConfigEntity.Dir = target;
-                            tasks.Add(Task.Run(async()=>await configTable.UpdateAsync(testConfigEntity)));
-                        }  
+                        testConfigEntity.Dir = target;
+                        tasks.Add(Task.Run(async () => await configTable.UpdateAsync(testConfigEntity)));
                     }
+
                     await Task.WhenAll(tasks);
-                }else
+                }
+                else
                 {
                     HttpContext.Response.StatusCode = 400;
-                    await  HttpContext.Response.Body.WriteAsync(Encoding.ASCII.GetBytes($"dir {source} doesn't exist"));
+                    await HttpContext.Response.Body.WriteAsync(Encoding.ASCII.GetBytes($"dir {source} doesn't exist"));
                 }
 
                 return;
             }
+
             HttpContext.Response.StatusCode = 400;
-            await  HttpContext.Response.Body.WriteAsync(Encoding.ASCII.GetBytes("unsupported"));
+            await HttpContext.Response.Body.WriteAsync(Encoding.ASCII.GetBytes("unsupported"));
+        }
+
+        [HttpPut("cron/{key}")]
+        public async Task Cron(string key, string cron)
+        {
+            //validate cron
+            if (cron != "0")
+            {
+                cron = cron.Replace("_", " ");
+                try
+                {
+                    CrontabSchedule.Parse(cron);
+                }
+                catch (Exception)
+                {
+                    HttpContext.Response.StatusCode = 400;
+                    await HttpContext.Response.Body.WriteAsync(
+                        Encoding.ASCII.GetBytes($"invalid cron expression: {cron} "));
+                    return;
+                }
+            }
+            var configTable =
+                await _perfStorage.GetTableAsync<TestConfigEntity>(PerfConstants.TableNames.TestConfig);
+            var config =
+                await configTable.GetFirstOrDefaultAsync(from row in configTable.Rows
+                    where row.PartitionKey == key
+                    select row);
+            if (config != null)
+            {
+                config.Cron = cron;
+                await configTable.UpdateAsync(config);
+            }
+            else
+            {
+                HttpContext.Response.StatusCode = 400;
+                await HttpContext.Response.Body.WriteAsync(
+                    Encoding.ASCII.GetBytes($"testName {key} doesn't exist"));
+            }
         }
     }
 }
