@@ -248,9 +248,28 @@ export class TestConfig extends Component {
                                                 }
                                             })
                                         },
+                                        cron:
+                                        (args, print, runCommand) => {
+                                            console.log(args)
+                                            if (args.length != 3) {
+                                                print("Usage: cron {testName} {0_12_*_*_*}")
+                                                return
+                                            }
+                                            fetch(`testconfig/cron/${args[1]}?cron=${args[2]}`, {
+                                                method: 'PUT',
+                                                redirect: 'manual'
+                                            }).then(response => {
+                                                if (response.status == 200) {
+                                                    alert("Succeed")
+                                                    this.populateTestConfigData()
+                                                } else {
+                                                    response.text().then(data => alert(data))
+                                                }
+                                            })
+                                        },
                                 }}
                                 descriptions={{
-                                    move: 'move {testName} {dirName}', movedir: 'movedir {dirName} {dirName}'
+                                    move: 'move {testName} {dirName}', movedir: 'movedir {dirName} {dirName}',cron:"run test periodically [Unix version crontab]. Usage: cron {testName} {0_12_*_*_*}"
                                 }}
                                 msg='Type help to see all supported commands'
                             />

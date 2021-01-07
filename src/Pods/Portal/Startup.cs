@@ -24,6 +24,7 @@ using Microsoft.Extensions.FileProviders;
 using Microsoft.Identity.Web.UI;
 using Microsoft.Identity.Web;
 using Newtonsoft.Json;
+using Portal.Cron;
 
 namespace Portal
 {
@@ -84,6 +85,7 @@ namespace Portal
                     return null;
                 }
             );
+            services.AddSingleton<ICronScheduler,CronScheduler>();
             services.AddControllersWithViews().AddJsonOptions(options =>
             {
                 options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
@@ -115,7 +117,7 @@ namespace Portal
             }
 
             //  app.UseHttpsRedirection();
-
+            app.ApplicationServices.GetRequiredService<ICronScheduler>().Start();
             app.UseRouting();
 
             app.UseSpaStaticFiles();
