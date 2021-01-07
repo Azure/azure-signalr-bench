@@ -44,11 +44,15 @@ export class TestConfig extends Component {
 
     handleSearchChange(e, data) {
         if (data.value != undefined && data.value.trim()) {
+            var acDir={}
             var testConfigs = this.state.total.filter(x => x.rowKey.includes(data.value.trim()))
-            this.setState({ testConfigs: testConfigs })
+            testConfigs.forEach(t=>acDir[t.dir]=true)
+            this.setState({ testConfigs: testConfigs,activeIndex:acDir })
         }
-        else
-            this.setState({ testConfig: this.state.total })
+        else{
+            var acDir={"Default":true}
+            this.setState({ testConfigs: this.state.total,activeIndex: acDir})
+        }
     }
     handleJsonClose() {
         this.setState({
