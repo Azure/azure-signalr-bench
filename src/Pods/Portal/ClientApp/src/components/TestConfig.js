@@ -252,7 +252,7 @@ export class TestConfig extends Component {
                                         (args, print, runCommand) => {
                                             console.log(args)
                                             if (args.length != 3) {
-                                                print("Usage: move {dirName} to {dirName}")
+                                                print("Usage: cron {testName} {0_12_*_*_*}")
                                                 return
                                             }
                                             fetch(`testconfig/cron/${args[1]}?cron=${args[2]}`, {
