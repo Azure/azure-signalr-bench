@@ -12,7 +12,7 @@ export class TestConfig extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            show: false, loading: true, obj: { signalRUnitSize: 1, mode: "Default", service: "SignalR", Scenario: "Echo", framework: "Netcore" },
+            show: false, loading: true, obj: { signalRUnitSize: 1, mode: "Default", service: "SignalR", Scenario: "Echo", framework: "Netcore",env:"AzureGlobal" },
             showjson: false,
             json: {},
             testConfigs: [],
@@ -356,6 +356,13 @@ export class TestConfig extends Component {
                                     <option>RawWebsocket</option>
                                 </Form.Control>
                             </Form.Group>
+                            {this.state.obj.service == "SignalR" && window.perfppe && <Form.Group  >
+                                <Form.Label>Environment</Form.Label>
+                                <Form.Control name="env" type="select" onChange={this.handleChange} as="select">
+                                    <option>AzureGlobal</option>
+                                    <option>PPE</option>
+                                </Form.Control>
+                            </Form.Group>}
                             {this.state.obj.service == "SignalR" && <Form.Group  >
                                 <Form.Label>Service Mode</Form.Label>
                                 <Form.Control name="mode" type="select" onChange={this.handleChange} as="select">

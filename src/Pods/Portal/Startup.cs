@@ -86,6 +86,7 @@ namespace Portal
                 }
             );
             services.AddSingleton<ICronScheduler,CronScheduler>();
+            services.AddSingleton<ClusterState>();
             services.AddControllersWithViews().AddJsonOptions(options =>
             {
                 options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
@@ -118,6 +119,7 @@ namespace Portal
 
             //  app.UseHttpsRedirection();
             app.ApplicationServices.GetRequiredService<ICronScheduler>().Start();
+            _=app.ApplicationServices.GetRequiredService<ClusterState>().Init();
             app.UseRouting();
 
             app.UseSpaStaticFiles();

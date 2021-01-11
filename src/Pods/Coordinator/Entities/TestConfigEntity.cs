@@ -58,7 +58,9 @@ namespace Azure.SignalRBench.Coordinator.Entities
         public string LastCronTime { get; set; }= "0";
 
         public string Dir { get; set; } = "Default";
-
+        
+        public string Env { get; set; } = PerfConstants.Cloud.AzureGlobal;
+        
         public void Init()
         {
             Start = Start > ClientCons ? ClientCons : Start;
@@ -137,6 +139,7 @@ namespace Azure.SignalRBench.Coordinator.Entities
                     Location = "eastus",
                     Tier = "standard",
                     Size = SignalRUnitSize,
+                    Env = Env
                 } },
                 ScenarioSetting = new ScenarioSetting()
                 {

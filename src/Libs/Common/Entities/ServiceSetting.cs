@@ -9,5 +9,6 @@ namespace Azure.SignalRBench.Common
         public string? Location { get; set; }
         public string? Tier { get; set; }
         public int? Size { get; set; }
+        public string Env { get; set; }
     }
 }

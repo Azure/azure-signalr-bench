@@ -45,7 +45,7 @@ namespace Azure.SignalRBench.Coordinator
             string redisConnectionString,
             IAksProvider aksProvider,
             IK8sProvider k8sProvider,
-            ISignalRProvider signalRProvider,
+            SignalRProviderHolder signalRProviderHolder,
             IPerfStorage perfStorage,
             string defaultLocation,
             ILogger<TestRunner> logger)
@@ -55,7 +55,7 @@ namespace Azure.SignalRBench.Coordinator
             RedisConnectionString = redisConnectionString;
             AksProvider = aksProvider;
             K8sProvider = k8sProvider;
-            SignalRProvider = signalRProvider;
+            SignalRProviderHolder = signalRProviderHolder;
             PerfStorage = perfStorage;
             DefaultLocation = defaultLocation;
             _logger = logger;
@@ -71,7 +71,7 @@ namespace Azure.SignalRBench.Coordinator
 
         public IK8sProvider K8sProvider { get; }
 
-        public ISignalRProvider SignalRProvider { get; }
+        public SignalRProviderHolder SignalRProviderHolder { get; }
 
         public IPerfStorage PerfStorage { get; }
 
@@ -100,7 +100,8 @@ namespace Azure.SignalRBench.Coordinator
             var nodeCount = clientPodCount + serverPodCount;
             _logger.LogInformation("Test job {testId}: Node count: {count}.", Job.TestId, nodeCount);
             var asrsConnectionStringsTask = PrepairAsrsInstancesAsync(cancellationToken);
-            await UpdateTestStatus("Preparing job");
+            if (!asrsConnectionStringsTask.IsCompleted)
+                await UpdateTestStatus("Creating SignalR instance..");
             //leave this to autoscale. When ca is enabled, manual config won't work
             // await AksProvider.EnsureNodeCountAsync(NodePoolIndex, nodeCount, cancellationToken);
             using var messageClient = await MessageClient.ConnectAsync(RedisConnectionString, Job.TestId, PodName);
@@ -164,9 +165,9 @@ namespace Azure.SignalRBench.Coordinator
                     await Task.WhenAll(
                         from ss in Job.ServiceSetting
                         where ss.AsrsConnectionString == null
-                        group ss by ss.Location ?? DefaultLocation
-                        into g
-                        select SignalRProvider.DeleteResourceGroupAsync(Job.TestId, g.Key));
+                        group ss by ss.Env
+                        into env
+                        select SignalRProviderHolder.GetSignalRProvider(env.Key).DeleteResourceGroupAsync(Job.TestId));
                 }
                 catch (Exception ignore)
                 {
@@ -185,8 +186,8 @@ namespace Azure.SignalRBench.Coordinator
 
             int totalThisRound = (int) Math.Ceiling(Job.ScenarioSetting.TotalConnectionCount * percent);
             //Format the active. Assume only one client setting.
-            int old = Job.ScenarioSetting.Rounds[i-1].ClientSettings[0].Count;
-            Job.ScenarioSetting.Rounds[i-1].ClientSettings[0].Count = old < totalThisRound ? old : totalThisRound;
+            int old = Job.ScenarioSetting.Rounds[i - 1].ClientSettings[0].Count;
+            Job.ScenarioSetting.Rounds[i - 1].ClientSettings[0].Count = old < totalThisRound ? old : totalThisRound;
             int result = totalThisRound - _roundTotalConnected;
             _roundTotalConnected = totalThisRound;
             return result;
@@ -304,8 +305,9 @@ namespace Azure.SignalRBench.Coordinator
         private async Task<string> CreateAsrsAsync(ServiceSetting ss, string name, CancellationToken cancellationToken)
         {
             _logger.LogInformation("Test job {testId}: Creating SignalR service instance.", Job.TestId);
-            await SignalRProvider.CreateResourceGroupAsync(Job.TestId, ss.Location ?? DefaultLocation);
-            await SignalRProvider.CreateInstanceAsync(
+            var signalRProvider = SignalRProviderHolder.GetSignalRProvider(ss.Env);
+            await signalRProvider.CreateResourceGroupAsync(Job.TestId, ss.Location ?? DefaultLocation);
+            await signalRProvider.CreateInstanceAsync(
                 Job.TestId,
                 name,
                 ss.Location ?? DefaultLocation,
@@ -316,7 +318,7 @@ namespace Azure.SignalRBench.Coordinator
             _logger.LogInformation("Test job {testId}: SignalR service instance created.", Job.TestId);
             _logger.LogInformation("Test job {testId}: Retrieving SignalR service connection string.", Job.TestId);
             var result =
-                await SignalRProvider.GetKeyAsync(Job.TestId, name, ss.Location ?? DefaultLocation, cancellationToken);
+                await signalRProvider.GetKeyAsync(Job.TestId, name, ss.Location ?? DefaultLocation, cancellationToken);
             _logger.LogInformation("Test job {testId}: SignalR service connection string retrieved.", Job.TestId);
             return result;
         }

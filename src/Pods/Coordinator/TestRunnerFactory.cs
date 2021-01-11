@@ -18,7 +18,7 @@ namespace Azure.SignalRBench.Coordinator
             IConfiguration configuration,
             IAksProvider aksProvider,
             IK8sProvider k8sProvider,
-            ISignalRProvider signalRProvider,
+            SignalRProviderHolder signalRProviderHolder,
             IPerfStorage perfStorage,
             ILogger<TestRunner> logger)
         {
@@ -26,7 +26,7 @@ namespace Azure.SignalRBench.Coordinator
             _redisConnectionString = configuration[PerfConstants.ConfigurationKeys.RedisConnectionStringKey];
             AksProvider = aksProvider;
             K8sProvider = k8sProvider;
-            SignalRProvider = signalRProvider;
+            SignalRProviderHolder = signalRProviderHolder;
             PerfStorage = perfStorage;
             _logger = logger;
         }
@@ -37,7 +37,7 @@ namespace Azure.SignalRBench.Coordinator
 
         public IPerfStorage PerfStorage { get; }
 
-        public ISignalRProvider SignalRProvider { get; }
+        public SignalRProviderHolder SignalRProviderHolder { get; }
 
         public TestRunner Create(
             TestJob job,
@@ -48,7 +48,7 @@ namespace Azure.SignalRBench.Coordinator
                 _redisConnectionString,
                 AksProvider,
                 K8sProvider,
-                SignalRProvider,
+                SignalRProviderHolder,
                 PerfStorage,
                 defaultLocation,
                 _logger);

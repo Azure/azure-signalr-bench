@@ -29,14 +29,14 @@ namespace Portal.Controllers
         private IPerfStorage _perfStorage;
         private SecretClient _secretClient;
         private ILogger<HomeController> _logger;
-        private static string? location;
-        private static string? k8sUrl;
+        private ClusterState _clusterState;
 
 
-        public HomeController(IPerfStorage perfStorage, SecretClient secretClient, ILogger<HomeController> logger)
+        public HomeController(IPerfStorage perfStorage, SecretClient secretClient, ILogger<HomeController> logger,ClusterState clusterState)
         {
             _perfStorage = perfStorage;
             _secretClient = secretClient;
+            _clusterState = clusterState;
             _logger = logger;
         }
 
@@ -45,7 +45,9 @@ namespace Portal.Controllers
         {
             var basicInfo = new BasicInfo()
             {
-                User = User.Identity.Name
+                User = User.Identity.Name,
+                Location = _clusterState.Location,
+                PPEEnabled = _clusterState.PPEEnabled
             };
             return basicInfo;
         }

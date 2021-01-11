@@ -10,9 +10,12 @@ namespace Azure.SignalRBench.Common
             public const string StorageConnectionStringKey = "sa-accessKey";
             public const string PrefixKey = "prefix";
             public const string SubscriptionKey = "subscription";
+            public const string PPESubscriptionKey = "ppe-subscription";
             public const string LocationKey = "location";
             public const string CloudKey = "cloud";
             public const string ServicePrincipalKey = "service-principal";
+            public const string PPEServicePrincipalKey = "ppe-service-principal";
+
             public const string KubeConfigKey = "kube-config";
         }
 
@@ -60,6 +63,12 @@ namespace Azure.SignalRBench.Common
             public const string OsLabel = "kubernetes.io/os";
             public const string Windows = "windows";
             public const string Linux = "linux";
+        }
+
+        public static class Cloud
+        {
+            public const string AzureGlobal = "AzureGlobal";
+            public const string PPE = "PPE";
         }
     }
 }

@@ -20,27 +20,16 @@ namespace Azure.SignalRBench.Coordinator
 
         public TestScheduler(
             PerfStorageProvider storageProvider,
-            IAksProvider aksProvider,
-            IK8sProvider k8sProvider,
-            ISignalRProvider signalRProvider,
             TestRunnerFactory testRunnerFactory,
             ILogger<TestScheduler> logger)
         {
             StorageProvider = storageProvider;
-            AksProvider = aksProvider;
-            K8sProvider = k8sProvider;
-            SignalRProvider = signalRProvider;
             TestRunnerFactory = testRunnerFactory;
             _logger = logger;
         }
 
         public PerfStorageProvider StorageProvider { get; }
 
-        public IAksProvider AksProvider { get; }
-
-        public IK8sProvider K8sProvider { get; }
-
-        public ISignalRProvider SignalRProvider { get; }
 
         public TestRunnerFactory TestRunnerFactory { get; }
 
@@ -100,31 +89,6 @@ namespace Azure.SignalRBench.Coordinator
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Test job {testId} stopped by unknown error.", message.Value.TestId);
-            }
-        }
-
-        private async Task Renew(IQueue<TestJob> queue, QueueMessage<TestJob> message, Task jobTask,
-            CancellationTokenSource cts, CancellationToken cancellationToken)
-        {
-            while (true)
-            {
-                var task = await Task.WhenAny(jobTask, Task.Delay(TimeSpan.FromMinutes(1), cancellationToken));
-                if (jobTask == task)
-                {
-                    break;
-                }
-
-                if (task.IsCanceled)
-                {
-                    return;
-                }
-
-                // todo: check manual cancel
-                // {
-                //    cts.Cancel();
-                //    return;
-                // }
-                await queue.UpdateAsync(message, TimeSpan.FromMinutes(30), cancellationToken);
             }
         }
 
