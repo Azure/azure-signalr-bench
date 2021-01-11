@@ -5,6 +5,7 @@ using Microsoft.Azure.Cosmos.Table;
 using Microsoft.Azure.Management.SignalR.Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
+using Portal;
 using YamlDotNet.Core;
 
 namespace Azure.SignalRBench.Coordinator.Entities
@@ -86,7 +87,7 @@ namespace Azure.SignalRBench.Coordinator.Entities
             }
         }
 
-        public TestJob ToTestJob()
+        public TestJob ToTestJob(ClusterState clusterState)
         {
             //creating round settings
             var roundsettings = new List<RoundSetting>();
@@ -136,7 +137,7 @@ namespace Azure.SignalRBench.Coordinator.Entities
                 ServiceSetting = new[] { new ServiceSetting()
                 {
                     AsrsConnectionString = ConnectionString?.Trim(),
-                    Location = "eastus",
+                    Location = Env.ToLower().Contains("ppe") ? clusterState.PPELocation: clusterState.Location,
                     Tier = "standard",
                     Size = SignalRUnitSize,
                     Env = Env

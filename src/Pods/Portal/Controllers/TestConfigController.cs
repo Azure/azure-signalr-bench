@@ -27,10 +27,12 @@ namespace Portal.Controllers
     {
         private IPerfStorage _perfStorage;
         private ILogger<TestConfigController> _logger;
+        private ClusterState _clusterState;
 
-        public TestConfigController(IPerfStorage perfStorage, ILogger<TestConfigController> logger)
+        public TestConfigController(IPerfStorage perfStorage,ClusterState clusterState, ILogger<TestConfigController> logger)
         {
             _perfStorage = perfStorage;
+            _clusterState = clusterState;
             _logger = logger;
         }
 
@@ -81,7 +83,7 @@ namespace Portal.Controllers
             try
             {
                 await statusTable.InsertAsync(testEntity);
-                await queue.SendAsync(latestTestConfig.ToTestJob());
+                await queue.SendAsync(latestTestConfig.ToTestJob(_clusterState));
             }
             catch (Exception e)
             {

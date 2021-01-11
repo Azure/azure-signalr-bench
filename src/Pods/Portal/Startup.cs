@@ -119,7 +119,7 @@ namespace Portal
 
             //  app.UseHttpsRedirection();
             app.ApplicationServices.GetRequiredService<ICronScheduler>().Start();
-            _=app.ApplicationServices.GetRequiredService<ClusterState>().Init();
+            app.ApplicationServices.GetRequiredService<ClusterState>().Init().Wait();
             app.UseRouting();
 
             app.UseSpaStaticFiles();

@@ -12,6 +12,7 @@ namespace Azure.SignalRBench.Common
             public const string SubscriptionKey = "subscription";
             public const string PPESubscriptionKey = "ppe-subscription";
             public const string LocationKey = "location";
+            public const string PPELocationKey = "ppe-location";
             public const string CloudKey = "cloud";
             public const string ServicePrincipalKey = "service-principal";
             public const string PPEServicePrincipalKey = "ppe-service-principal";
