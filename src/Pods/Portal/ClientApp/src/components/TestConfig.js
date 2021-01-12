@@ -12,7 +12,7 @@ export class TestConfig extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            show: false, loading: true, obj: { signalRUnitSize: 1, mode: "Default", service: "SignalR", Scenario: "Echo", framework: "Netcore",env:"AzureGlobal" },
+            show: false, loading: true, obj: { signalRUnitSize: 1, mode: "Default", service: "SignalR", Scenario: "Echo", framework: "Netcore", env: "AzureGlobal" },
             showjson: false,
             json: {},
             testConfigs: [],
@@ -44,14 +44,14 @@ export class TestConfig extends Component {
 
     handleSearchChange(e, data) {
         if (data.value != undefined && data.value.trim()) {
-            var acDir={}
+            var acDir = {}
             var testConfigs = this.state.total.filter(x => x.rowKey.includes(data.value.trim()))
-            testConfigs.forEach(t=>acDir[t.dir]=true)
-            this.setState({ testConfigs: testConfigs,activeIndex:acDir })
+            testConfigs.forEach(t => acDir[t.dir] = true)
+            this.setState({ testConfigs: testConfigs, activeIndex: acDir })
         }
-        else{
-            var acDir={"Default":true}
-            this.setState({ testConfigs: this.state.total,activeIndex: acDir})
+        else {
+            var acDir = { "Default": true }
+            this.setState({ testConfigs: this.state.total, activeIndex: acDir })
         }
     }
     handleJsonClose() {
@@ -159,6 +159,10 @@ export class TestConfig extends Component {
             body: JSON.stringify(this.state.obj),
             redirect: 'manual'
         });
+        if (response.status != 200) {
+            alert(await response.json())
+            return
+        }
         await Util.CheckAuth(response)
         this.state.show = false;
         await this.populateTestConfigData();
@@ -248,7 +252,7 @@ export class TestConfig extends Component {
                                                 }
                                             })
                                         },
-                                        cron:
+                                    cron:
                                         (args, print, runCommand) => {
                                             console.log(args)
                                             if (args.length != 3) {
@@ -269,7 +273,7 @@ export class TestConfig extends Component {
                                         },
                                 }}
                                 descriptions={{
-                                    move: 'move {testName} {dirName}', movedir: 'movedir {dirName} {dirName}',cron:"run test periodically [Unix version crontab]. Usage: cron {testName} {0_12_*_*_*}"
+                                    move: 'move {testName} {dirName}', movedir: 'movedir {dirName} {dirName}', cron: "run test periodically [Unix version crontab]. Usage: cron {testName} {0_12_*_*_*}"
                                 }}
                                 msg='Type help to see all supported commands'
                             />
@@ -398,6 +402,10 @@ export class TestConfig extends Component {
                                     <option>50</option>
                                     <option>100</option>
                                 </Form.Control>
+                            </Form.Group>}
+                            {this.state.obj.service == "SignalR" && <Form.Group >
+                                <Form.Label >Tags</Form.Label>
+                                <Form.Control name="tags" onChange={this.handleChange} placeholder="key1=value1;key2=value2" />
                             </Form.Group>}
                             <Form.Group >
                                 <Form.Label>Total client connections</Form.Label>

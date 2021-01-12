@@ -14,6 +14,7 @@ function init_common() {
     PORTAL_DNS="${PREFIX_PERF}"
     WORK_SPACE="${PREFIX_PERF}la"
     SERVICE_PRINCIPAL="${PREFIX_PERF}sp"
+    PPE_SERVICE_PRINCIPAL="${PREFIX_PERF}ppesp"
     KVURL="https://${KEYVAULT}.vault.azure.net/"
 
     if [[ ! -z $CLOUD ]]; then

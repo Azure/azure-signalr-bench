@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using Azure.SignalRBench.Common;
 using Microsoft.Azure.Cosmos.Table;
 using Newtonsoft.Json;
@@ -9,6 +10,9 @@ namespace Azure.SignalRBench.Coordinator.Entities
 {
     public class TestConfigEntity : TableEntity
     {
+        public static Regex TagsRegex =
+            new Regex("^(([a-zA-Z0-9]{1,}=[a-zA-Z0-9]{1,};){0,}([a-zA-Z0-9]{1,}=[a-zA-Z0-9]{1,}){0,1})$");
+
         public string? User { get; set; }
 
         public string Service { get; set; } = "SignalR";
@@ -58,6 +62,7 @@ namespace Azure.SignalRBench.Coordinator.Entities
         public string Dir { get; set; } = "Default";
 
         public string Env { get; set; } = PerfConstants.Cloud.AzureGlobal;
+        public string Tags { get; set; } = "";
 
         public void Init()
         {
@@ -74,6 +79,7 @@ namespace Azure.SignalRBench.Coordinator.Entities
             if (ServerNum <= 0) ServerNum = (int) Math.Ceiling((double) ClientNum / 2);
 
             if (RoundNum <= 0) RoundNum = 5;
+            if (!TagsRegex.IsMatch(Tags)) throw new Exception("Invalid tags pattern");
         }
 
         public TestJob ToTestJob(ClusterState clusterState)
@@ -134,7 +140,8 @@ namespace Azure.SignalRBench.Coordinator.Entities
                         Location = Env.ToLower().Contains("ppe") ? clusterState.PPELocation : clusterState.Location,
                         Tier = "standard",
                         Size = SignalRUnitSize,
-                        Env = Env
+                        Env = Env,
+                        Tags = Tags
                     }
                 },
                 ScenarioSetting = new ScenarioSetting
