@@ -16,31 +16,20 @@ namespace Azure.SignalRBench.Coordinator
         private readonly CancellationTokenSource _cts = new CancellationTokenSource();
         private readonly ILogger<TestScheduler> _logger;
         private string? _defaultLocation;
-        private List<Task> _runningTasks = new List<Task>();
+        private readonly List<Task> _runningTasks = new List<Task>();
 
         public TestScheduler(
             PerfStorageProvider storageProvider,
-            IAksProvider aksProvider,
-            IK8sProvider k8sProvider,
-            ISignalRProvider signalRProvider,
             TestRunnerFactory testRunnerFactory,
             ILogger<TestScheduler> logger)
         {
             StorageProvider = storageProvider;
-            AksProvider = aksProvider;
-            K8sProvider = k8sProvider;
-            SignalRProvider = signalRProvider;
             TestRunnerFactory = testRunnerFactory;
             _logger = logger;
         }
 
         public PerfStorageProvider StorageProvider { get; }
 
-        public IAksProvider AksProvider { get; }
-
-        public IK8sProvider K8sProvider { get; }
-
-        public ISignalRProvider SignalRProvider { get; }
 
         public TestRunnerFactory TestRunnerFactory { get; }
 
@@ -103,32 +92,9 @@ namespace Azure.SignalRBench.Coordinator
             }
         }
 
-        private async Task Renew(IQueue<TestJob> queue, QueueMessage<TestJob> message, Task jobTask,
-            CancellationTokenSource cts, CancellationToken cancellationToken)
+        private Task RunJobAsync(TestJob job, CancellationToken cancellationToken)
         {
-            while (true)
-            {
-                var task = await Task.WhenAny(jobTask, Task.Delay(TimeSpan.FromMinutes(1), cancellationToken));
-                if (jobTask == task)
-                {
-                    break;
-                }
-
-                if (task.IsCanceled)
-                {
-                    return;
-                }
-
-                // todo: check manual cancel
-                // {
-                //    cts.Cancel();
-                //    return;
-                // }
-                await queue.UpdateAsync(message, TimeSpan.FromMinutes(30), cancellationToken);
-            }
+            return TestRunnerFactory.Create(job, DefaultLocation).RunAsync(cancellationToken);
         }
-
-        private Task RunJobAsync(TestJob job, CancellationToken cancellationToken) =>
-            TestRunnerFactory.Create(job, DefaultLocation).RunAsync(cancellationToken);
     }
 }

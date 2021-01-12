@@ -1,8 +1,6 @@
 using System;
-using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using Azure.SignalRBench.Common;
 using Azure.SignalRBench.Coordinator.Entities;
@@ -15,12 +13,14 @@ namespace Portal.Cron
 {
     public class CronScheduler : ICronScheduler
     {
-        private IPerfStorage _perfStorage;
-        private ILogger<CronScheduler> _logger;
+        private readonly ClusterState _clusterState;
+        private readonly ILogger<CronScheduler> _logger;
+        private readonly IPerfStorage _perfStorage;
 
-        public CronScheduler(IPerfStorage perfStorage, ILogger<CronScheduler> logger)
+        public CronScheduler(IPerfStorage perfStorage, ClusterState clusterState, ILogger<CronScheduler> logger)
         {
             _perfStorage = perfStorage;
+            _clusterState = clusterState;
             _logger = logger;
         }
 
@@ -29,7 +29,6 @@ namespace Portal.Cron
             Task.Run(async () =>
             {
                 while (true)
-                {
                     try
                     {
                         await Task.Delay(40 * 1000);
@@ -54,11 +53,11 @@ namespace Portal.Cron
                                     testConfigEntity.InstanceIndex += 1;
                                     await configTable.UpdateAsync(testConfigEntity);
                                     var queue = await _perfStorage.GetQueueAsync<TestJob>(
-                                        PerfConstants.QueueNames.PortalJob, true);
+                                        PerfConstants.QueueNames.PortalJob);
                                     var statusTable =
                                         await _perfStorage.GetTableAsync<TestStatusEntity>(PerfConstants.TableNames
                                             .TestStatus);
-                                    var testEntity = new TestStatusEntity()
+                                    var testEntity = new TestStatusEntity
                                     {
                                         User = "cron",
                                         PartitionKey = testConfigEntity.PartitionKey,
@@ -71,7 +70,7 @@ namespace Portal.Cron
                                     };
                                     await configTable.UpdateAsync(testConfigEntity);
                                     await statusTable.InsertAsync(testEntity);
-                                    await queue.SendAsync(testConfigEntity.ToTestJob());
+                                    await queue.SendAsync(testConfigEntity.ToTestJob(_clusterState));
                                 }
                                 catch (Exception e)
                                 {
@@ -84,7 +83,6 @@ namespace Portal.Cron
                     {
                         _logger.LogError(e, "cron");
                     }
-                }
             });
         }
     }

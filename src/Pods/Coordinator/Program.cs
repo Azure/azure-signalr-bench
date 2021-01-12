@@ -6,7 +6,6 @@ using Azure.Identity;
 using Azure.Security.KeyVault.Secrets;
 using Azure.SignalRBench.Common;
 using Azure.SignalRBench.Storage;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -20,8 +19,9 @@ namespace Azure.SignalRBench.Coordinator
             CreateHostBuilder(args).Build().Run();
         }
 
-        public static IHostBuilder CreateHostBuilder(string[] args) =>
-            Host.CreateDefaultBuilder(args)
+        public static IHostBuilder CreateHostBuilder(string[] args)
+        {
+            return Host.CreateDefaultBuilder(args)
                 .ConfigureLogging((context, logging) =>
                 {
                     logging.ClearProviders();
@@ -43,7 +43,7 @@ namespace Azure.SignalRBench.Coordinator
                     services.AddSingleton(
                         sp => new SecretClient(
                             new Uri(hostContext.Configuration[PerfConstants.ConfigurationKeys.KeyVaultUrlKey]),
-                            new DefaultAzureCredential(new DefaultAzureCredentialOptions()
+                            new DefaultAzureCredential(new DefaultAzureCredentialOptions
                             {
                                 ManagedIdentityClientId =
                                     hostContext.Configuration[PerfConstants.ConfigurationKeys.MsiAppId]
@@ -60,10 +60,11 @@ namespace Azure.SignalRBench.Coordinator
                     services.AddSingleton<PerfStorageProvider>();
                     services.AddSingleton<IK8sProvider, K8sProvider>();
                     services.AddSingleton<IAksProvider, AksProvider>();
-                    services.AddSingleton<ISignalRProvider, SignalRProvider>();
+                    services.AddSingleton<SignalRProvider>();
                     services.AddSingleton<TestScheduler>();
                     services.AddSingleton<TestRunnerFactory>();
                     services.AddHostedService<CoordinatorHostedService>();
                 });
+        }
     }
 }

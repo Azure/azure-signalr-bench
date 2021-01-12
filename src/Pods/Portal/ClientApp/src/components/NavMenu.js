@@ -60,6 +60,9 @@ export class NavMenu extends Component {
         });
         await Util.CheckAuth(response)
         const data = await response.json();
+        console.log(data)
+        window.perflocation=data['location']
+        window.perfppe=data['ppeEnabled']
         this.setState({user:data['user']})
     }
 }

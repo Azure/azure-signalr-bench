@@ -10,15 +10,15 @@ namespace Azure.SignalRBench.Coordinator
 {
     public class TestRunnerFactory
     {
+        private readonly ILogger<TestRunner> _logger;
         private readonly string _podName;
         private readonly string _redisConnectionString;
-        private readonly ILogger<TestRunner> _logger;
 
         public TestRunnerFactory(
             IConfiguration configuration,
             IAksProvider aksProvider,
             IK8sProvider k8sProvider,
-            ISignalRProvider signalRProvider,
+            SignalRProvider signalRProvider,
             IPerfStorage perfStorage,
             ILogger<TestRunner> logger)
         {
@@ -37,12 +37,13 @@ namespace Azure.SignalRBench.Coordinator
 
         public IPerfStorage PerfStorage { get; }
 
-        public ISignalRProvider SignalRProvider { get; }
+        public SignalRProvider SignalRProvider { get; }
 
         public TestRunner Create(
             TestJob job,
-            string defaultLocation) =>
-            new TestRunner(
+            string defaultLocation)
+        {
+            return new TestRunner(
                 job,
                 _podName,
                 _redisConnectionString,
@@ -52,5 +53,6 @@ namespace Azure.SignalRBench.Coordinator
                 PerfStorage,
                 defaultLocation,
                 _logger);
+        }
     }
 }

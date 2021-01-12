@@ -1,29 +1,20 @@
+using System;
+using System.Text.Json.Serialization;
 using Azure.Identity;
 using Azure.Security.KeyVault.Secrets;
 using Azure.SignalRBench.Common;
-using Azure.SignalRBench.Coordinator;
 using Azure.SignalRBench.Storage;
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.SpaServices.ReactDevelopmentServer;
-using Microsoft.Azure.KeyVault.Models;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Portal.Controllers;
-using System;
-using System.IO;
-using System.Text.Json.Serialization;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authentication.OpenIdConnect;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.HttpOverrides;
-using Microsoft.AspNetCore.Mvc.Authorization;
-using Microsoft.Extensions.FileProviders;
-using Microsoft.Identity.Web.UI;
 using Microsoft.Identity.Web;
-using Newtonsoft.Json;
+using Microsoft.Identity.Web.UI;
 using Portal.Cron;
 
 namespace Portal
@@ -63,7 +54,7 @@ namespace Portal
             services.AddSingleton(
                 sp => new SecretClient(
                     new Uri(Configuration[PerfConstants.ConfigurationKeys.KeyVaultUrlKey]), new DefaultAzureCredential(
-                        new DefaultAzureCredentialOptions()
+                        new DefaultAzureCredentialOptions
                         {
                             ManagedIdentityClientId = Configuration[PerfConstants.ConfigurationKeys.MsiAppId]
                         })
@@ -85,7 +76,8 @@ namespace Portal
                     return null;
                 }
             );
-            services.AddSingleton<ICronScheduler,CronScheduler>();
+            services.AddSingleton<ICronScheduler, CronScheduler>();
+            services.AddSingleton<ClusterState>();
             services.AddControllersWithViews().AddJsonOptions(options =>
             {
                 options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
@@ -118,6 +110,7 @@ namespace Portal
 
             //  app.UseHttpsRedirection();
             app.ApplicationServices.GetRequiredService<ICronScheduler>().Start();
+            app.ApplicationServices.GetRequiredService<ClusterState>().Init().Wait();
             app.UseRouting();
 
             app.UseSpaStaticFiles();
@@ -136,10 +129,7 @@ namespace Portal
             {
                 spa.Options.SourcePath = "ClientApp";
 
-                if (env.IsDevelopment())
-                {
-                    spa.UseReactDevelopmentServer(npmScript: "start");
-                }
+                if (env.IsDevelopment()) spa.UseReactDevelopmentServer("start");
             });
         }
     }

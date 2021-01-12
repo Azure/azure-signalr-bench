@@ -1,13 +1,9 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.WebUtilities;
-using Microsoft.Extensions.Primitives;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
-using System.Text;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 
 namespace Portal
 {
@@ -15,11 +11,15 @@ namespace Portal
     {
         private static HttpClient _httpClient;
         private readonly RequestDelegate _nextMiddleware;
-        private string token;
+        private readonly string token;
+
         public ReverseProxyMiddleware(RequestDelegate nextMiddleware)
         {
             var httpClientHandler = new HttpClientHandler();
-            httpClientHandler.ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => { return true; };
+            httpClientHandler.ServerCertificateCustomValidationCallback = (message, cert, chain, errors) =>
+            {
+                return true;
+            };
             _httpClient = new HttpClient(httpClientHandler);
             _nextMiddleware = nextMiddleware;
             token = File.ReadAllText("/var/run/secrets/kubernetes.io/serviceaccount/token");
@@ -34,9 +34,10 @@ namespace Portal
                 var targetRequestMessage = CreateTargetMessage(context, targetUri);
                 targetRequestMessage.Headers.Add("Authorization", $"Bearer {token}");
 
-                using (var responseMessage = await _httpClient.SendAsync(targetRequestMessage, HttpCompletionOption.ResponseHeadersRead, context.RequestAborted))
+                using (var responseMessage = await _httpClient.SendAsync(targetRequestMessage,
+                    HttpCompletionOption.ResponseHeadersRead, context.RequestAborted))
                 {
-                    context.Response.StatusCode = (int)responseMessage.StatusCode;
+                    context.Response.StatusCode = (int) responseMessage.StatusCode;
 
                     CopyFromTargetResponseHeaders(context, responseMessage);
 
@@ -81,24 +82,19 @@ namespace Portal
             }
 
             foreach (var header in context.Request.Headers)
-            {
                 requestMessage.Content?.Headers.TryAddWithoutValidation(header.Key, header.Value.ToArray());
-            }
         }
 
         private void CopyFromTargetResponseHeaders(HttpContext context, HttpResponseMessage responseMessage)
         {
             foreach (var header in responseMessage.Headers)
-            {
                 context.Response.Headers[header.Key] = header.Value.ToArray();
-            }
 
             foreach (var header in responseMessage.Content.Headers)
-            {
                 context.Response.Headers[header.Key] = header.Value.ToArray();
-            }
             context.Response.Headers.Remove("transfer-encoding");
         }
+
         private static HttpMethod GetMethod(string method)
         {
             if (HttpMethods.IsDelete(method)) return HttpMethod.Delete;
@@ -116,10 +112,7 @@ namespace Portal
             Uri targetUri = null;
             PathString remainingPath;
             if (request.Path.StartsWithSegments("/k8s", out remainingPath))
-            {
                 targetUri = new Uri("https://kubernetes-dashboard" + remainingPath);
-
-            }
             return targetUri;
         }
     }
