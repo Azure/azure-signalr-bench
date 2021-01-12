@@ -32,10 +32,10 @@ namespace Azure.SignalRBench.Coordinator
             _roundStatusList = new List<RoundStatus>();
 
         private readonly List<string> _serverPods = new List<string>();
+        private readonly Stopwatch _timer = new Stopwatch();
         private int _roundTotalConnected;
         private ITableAccessor<TestStatusEntity> _testStatusAccessor;
         private TestStatusEntity _testStatusEntity;
-        private readonly Stopwatch _timer = new Stopwatch();
 
         private string _url = "http://localhost:8080/";
 
@@ -304,7 +304,7 @@ namespace Azure.SignalRBench.Coordinator
                 name,
                 ss.Location ?? DefaultLocation,
                 ss.Tier ?? "Standard",
-                ss.Size ?? 1,
+                ss.Size ?? 1, ss.Tags,
                 Job.TestMethod.GetServiceMode(),
                 cancellationToken);
             _logger.LogInformation("Test job {testId}: SignalR service instance created.", Job.TestId);

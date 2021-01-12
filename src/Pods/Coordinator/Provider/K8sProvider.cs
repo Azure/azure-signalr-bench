@@ -20,9 +20,9 @@ namespace Azure.SignalRBench.Coordinator
         private const string _client = "client";
         private const string _upstream = "upstream";
         private readonly string _domain;
-        private Kubernetes? _k8s;
         private readonly PerfStorageProvider _perfStorageProvider;
         private readonly string _redisConnectionString;
+        private Kubernetes? _k8s;
 
         public K8sProvider(PerfStorageProvider perfStorageProvider, IConfiguration configuration)
         {

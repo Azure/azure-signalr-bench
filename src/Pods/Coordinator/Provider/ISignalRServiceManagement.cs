@@ -10,7 +10,7 @@ namespace Azure.SignalRBench.Coordinator
 {
     public interface ISignalRServiceManagement
     {
-        Task CreateInstanceAsync(string resourceGroup, string name, string location, string tier, int size,
+        Task CreateInstanceAsync(string resourceGroup, string name, string location, string tier, int size, string tags,
             SignalRServiceMode mode, CancellationToken cancellationToken);
 
         Task CreateResourceGroupAsync(string resourceGroup, string location);

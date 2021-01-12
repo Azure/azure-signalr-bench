@@ -10,15 +10,9 @@ namespace Azure.SignalRBench.Coordinator
 
         public ISignalRServiceManagement GetSignalRProvider(string env)
         {
-            if (env == PerfConstants.Cloud.AzureGlobal)
-            {
-                return AzureGlobal;
-            }
+            if (env == PerfConstants.Cloud.AzureGlobal) return AzureGlobal;
 
-            if (env == PerfConstants.Cloud.PPE)
-            {
-                return PPE ?? throw new Exception("PPE not supported");
-            }
+            if (env == PerfConstants.Cloud.PPE) return PPE ?? throw new Exception("PPE not supported");
 
             throw new Exception("Not supported env");
         }

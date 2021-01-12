@@ -42,14 +42,23 @@ namespace Portal.Controllers
 
 
         [HttpPut]
-        public async Task CreateTestConfig(TestConfigEntity testConfigEntity)
+        public async Task<ActionResult> CreateTestConfig(TestConfigEntity testConfigEntity)
         {
             testConfigEntity.User = User.Identity.Name;
             testConfigEntity.PartitionKey = testConfigEntity.RowKey;
-            testConfigEntity.Init();
+            try
+            {
+                testConfigEntity.Init();
+            }
+            catch (Exception e)
+            {
+                return BadRequest(e.Message);
+            }
+
             var table = await _perfStorage.GetTableAsync<TestConfigEntity>(PerfConstants.TableNames.TestConfig);
             await table.InsertAsync(testConfigEntity);
             _logger.LogInformation($"Create Test config:{JsonConvert.SerializeObject(testConfigEntity)}");
+            return Ok();
         }
 
         [HttpPost("StartTest/{testConfigEntityKey}")]

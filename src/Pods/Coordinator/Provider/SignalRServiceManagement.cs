@@ -40,12 +40,20 @@ namespace Azure.SignalRBench.Coordinator
         }
 
         public async Task CreateInstanceAsync(string resourceGroup, string name, string location, string tier, int size,
+            string tags,
             SignalRServiceMode mode, CancellationToken cancellationToken)
         {
             var serviceMode = new SignalRFeature("ServiceMode", mode.ToString());
             var features = new List<SignalRFeature> {serviceMode};
             var sku = GetSku(tier, size);
-            var param = new SignalRResource(name: name, location: location, kind: "SignalR", sku: sku,
+            var tagsParam = new Dictionary<string, string>();
+            foreach (var str in tags.Split(";"))
+            {
+                var kv = str.Split("=");
+                if (kv.Length == 2) tagsParam[kv[0]] = kv[1];
+            }
+
+            var param = new SignalRResource(name: name, location: location, kind: "SignalR", sku: sku, tags: tagsParam,
                 features: features);
             await SignalROperations.CreateOrUpdateAsync(resourceGroup, name, param, cancellationToken);
         }

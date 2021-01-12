@@ -15,8 +15,8 @@ namespace Azure.SignalRBench.Coordinator
     {
         private readonly CancellationTokenSource _cts = new CancellationTokenSource();
         private readonly ILogger<TestScheduler> _logger;
-        private string? _defaultLocation;
         private readonly List<Task> _runningTasks = new List<Task>();
+        private string? _defaultLocation;
 
         public TestScheduler(
             PerfStorageProvider storageProvider,

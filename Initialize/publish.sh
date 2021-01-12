@@ -77,6 +77,11 @@ while [[ "$#" > 0 ]]; do
   --updatepool)
     UPDATEPOOL=true
     ;;
+   --ppe)
+    PPE=true
+    LOCATION="$1"
+    shift
+    ;;
   --all | -a)
     ALL=true
     ;;
@@ -202,6 +207,24 @@ if [[ $ALL || $AUTOSCALE ]]; then
     --resource-group $RESOURCE_GROUP \
     -n $KUBERNETES_SEVICES \
     --cluster-autoscaler-profile scale-down-delay-after-add=60m scale-down-unneeded-time=60m scale-down-utilization-threshold=0.5 skip-nodes-with-system-pods=false new-pod-scale-up-delay=1s
+fi
+
+if [[ $ALL || $PPE ]]; then
+  # internal test
+  az cloud register -n ppe \
+                  --endpoint-active-directory "https://login.windows-ppe.net" \
+                  --endpoint-active-directory-graph-resource-id "https://graph.ppe.windows.net/" \
+                  --endpoint-active-directory-resource-id "https://management.core.windows.net/" \
+                  --endpoint-gallery "https://gallery.azure.com/" \
+                  --endpoint-management "https://umapi-preview.core.windows-int.net/" \
+                  --endpoint-resource-manager "https://api-dogfood.resources.windows-int.net/" \
+                  --profile "latest" || true
+  az cloud set -n ppe
+  sp=$(az ad sp create-for-rbac -n $PPE_SERVICE_PRINCIPAL --role contributor  --scopes /subscriptions/c0e88e48-6490-40d0-a4c2-6c963c5a4d1e)
+  az cloud set -n "AzureCloud"
+  az keyvault secret set  --vault-name $KEYVAULT -n "ppe-service-principal" --value  "$sp"
+  az keyvault secret set  --vault-name $KEYVAULT -n "ppe-subscription" --value  "c0e88e48-6490-40d0-a4c2-6c963c5a4d1e"
+  az keyvault secret set  --vault-name $KEYVAULT -n "ppe-location" --value  $LOCATION
 fi
 
 if [[ $ALL || $INGRESS ]]; then
