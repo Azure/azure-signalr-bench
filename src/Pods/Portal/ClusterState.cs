@@ -1,27 +1,23 @@
 using System;
-using System.IO;
 using System.Threading.Tasks;
 using Azure.Security.KeyVault.Secrets;
 using Azure.SignalRBench.Common;
-using Microsoft.Azure.Management.ResourceManager.Fluent;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 
 namespace Portal
 {
     public class ClusterState
     {
-        private SecretClient _secretClient;
-
-        public string Location { get; private set; }
-        public bool PPEEnabled { get; private set; } = false;
-
-        public string PPELocation { get; private set; } = "";
+        private readonly SecretClient _secretClient;
 
         public ClusterState(SecretClient secretClient)
         {
             _secretClient = secretClient;
         }
+
+        public string Location { get; private set; }
+        public bool PPEEnabled { get; private set; }
+
+        public string PPELocation { get; private set; } = "";
 
         public async Task Init()
         {

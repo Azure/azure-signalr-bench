@@ -5,7 +5,6 @@ using System;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
-
 using Azure.Security.KeyVault.Secrets;
 using Azure.SignalRBench.Common;
 using Microsoft.Azure.Management.ResourceManager.Fluent;
@@ -17,26 +16,26 @@ namespace Azure.SignalRBench.Coordinator
 {
     public class CoordinatorHostedService : IHostedService
     {
-        private readonly SecretClient _secretClient;
-        private readonly IK8sProvider _k8sProvider;
         private readonly IAksProvider _aksProvider;
-        private readonly PerfStorageProvider _storageProvider;
+        private readonly IK8sProvider _k8sProvider;
         private readonly TestScheduler _scheduler;
-        private readonly SignalRProviderHolder _signalRProviderHolder;
+        private readonly SecretClient _secretClient;
+        private readonly SignalRProvider _signalRProvider;
+        private readonly PerfStorageProvider _storageProvider;
 
         public CoordinatorHostedService(
             SecretClient secretClient,
             PerfStorageProvider storageProvider,
             IK8sProvider k8sProvider,
             IAksProvider aksProvider,
-            SignalRProviderHolder signalRProviderHolder,
+            SignalRProvider signalRProvider,
             TestScheduler scheduler)
         {
             _secretClient = secretClient;
             _storageProvider = storageProvider;
             _k8sProvider = k8sProvider;
             _aksProvider = aksProvider;
-            _signalRProviderHolder = signalRProviderHolder;
+            _signalRProvider = signalRProvider;
             _scheduler = scheduler;
         }
 
@@ -49,7 +48,8 @@ namespace Azure.SignalRBench.Coordinator
             var ppeSubscriptionTask = _secretClient.GetSecretAsync(PerfConstants.KeyVaultKeys.PPESubscriptionKey);
             var locationTask = _secretClient.GetSecretAsync(PerfConstants.KeyVaultKeys.LocationKey);
             var servicePrincipalTask = _secretClient.GetSecretAsync(PerfConstants.KeyVaultKeys.ServicePrincipalKey);
-            var ppeServicePrincipalTask = _secretClient.GetSecretAsync(PerfConstants.KeyVaultKeys.PPEServicePrincipalKey);
+            var ppeServicePrincipalTask =
+                _secretClient.GetSecretAsync(PerfConstants.KeyVaultKeys.PPEServicePrincipalKey);
             var cloudTask = _secretClient.GetSecretAsync(PerfConstants.KeyVaultKeys.CloudKey);
             var k8sTask = _secretClient.GetSecretAsync(PerfConstants.KeyVaultKeys.KubeConfigKey);
             _storageProvider.Initialize((await storageTask).Value.Value);
@@ -58,17 +58,22 @@ namespace Azure.SignalRBench.Coordinator
             var subscription = (await subscriptionTask).Value.Value;
             var azureEnvironment = GetAzureEnvironment((await cloudTask).Value.Value);
             var obj = JsonConvert.DeserializeObject<JObject>((await servicePrincipalTask).Value.Value) ??
-                throw new InvalidDataException("Unexpected null for service principal.");
+                      throw new InvalidDataException("Unexpected null for service principal.");
             var servicePrincipal = SdkContext.AzureCredentialsFactory.FromServicePrincipal(
-                obj["appId"]?.Value<string>() ?? throw new InvalidDataException("Unexpected null for ServicePrincipal.AppId."),
-                obj["password"]?.Value<string>() ?? throw new InvalidDataException("Unexpected null for ServicePrincipal.Password."),
-                obj["tenant"]?.Value<string>() ?? throw new InvalidDataException("Unexpected null for ServicePrincipal.Tenant."),
+                obj["appId"]?.Value<string>() ??
+                throw new InvalidDataException("Unexpected null for ServicePrincipal.AppId."),
+                obj["password"]?.Value<string>() ??
+                throw new InvalidDataException("Unexpected null for ServicePrincipal.Password."),
+                obj["tenant"]?.Value<string>() ??
+                throw new InvalidDataException("Unexpected null for ServicePrincipal.Tenant."),
                 azureEnvironment);
 
-            _aksProvider.Initialize(servicePrincipal, subscription, prefix + PerfConstants.ConfigurationKeys.PerfV2 + "rg", prefix + PerfConstants.ConfigurationKeys.PerfV2 + "aks");
-            var azureGlobalSignalrProvider=new SignalRProvider();
+            _aksProvider.Initialize(servicePrincipal, subscription,
+                prefix + PerfConstants.ConfigurationKeys.PerfV2 + "rg",
+                prefix + PerfConstants.ConfigurationKeys.PerfV2 + "aks");
+            var azureGlobalSignalrProvider = new SignalRServiceManagement();
             azureGlobalSignalrProvider.Initialize(servicePrincipal, subscription);
-            _signalRProviderHolder.AzureGlobal = azureGlobalSignalrProvider;
+            _signalRProvider.AzureGlobal = azureGlobalSignalrProvider;
             //init ppe if available 
             try
             {
@@ -84,10 +89,10 @@ namespace Azure.SignalRBench.Coordinator
                         throw new InvalidDataException("Unexpected null for ServicePrincipal.Password."),
                         ppeObj["tenant"]?.Value<string>() ??
                         throw new InvalidDataException("Unexpected null for ServicePrincipal.Tenant.")
-                       , GetAzureEnvironment("PPE"));
-                    var ppeSignalrProvider = new SignalRProvider();
+                        , GetAzureEnvironment("PPE"));
+                    var ppeSignalrProvider = new SignalRServiceManagement();
                     ppeSignalrProvider.Initialize(ppeServicePrincipal, ppeSubscription);
-                    _signalRProviderHolder.PPE = ppeSignalrProvider;
+                    _signalRProvider.PPE = ppeSignalrProvider;
                 }
             }
             catch (Exception)
@@ -103,11 +108,12 @@ namespace Azure.SignalRBench.Coordinator
             await _scheduler.StopAsync();
         }
 
-        private static AzureEnvironment GetAzureEnvironment(string name) =>
-            name switch
+        private static AzureEnvironment GetAzureEnvironment(string name)
+        {
+            return name switch
             {
                 "AzureCloud" => AzureEnvironment.FromName("AzureGlobalCloud"),
-                "PPE" =>  new AzureEnvironment
+                "PPE" => new AzureEnvironment
                 {
                     GraphEndpoint = "https://graph.ppe.windows.net/",
                     AuthenticationEndpoint = "https://login.windows-ppe.net/",
@@ -117,7 +123,8 @@ namespace Azure.SignalRBench.Coordinator
                     StorageEndpointSuffix = "core.windows.net",
                     KeyVaultSuffix = "vault-int.azure-int.net"
                 },
-                _ => AzureEnvironment.FromName(name) ?? throw new InvalidDataException("Unknown azure cloud name."),
+                _ => AzureEnvironment.FromName(name) ?? throw new InvalidDataException("Unknown azure cloud name.")
             };
+        }
     }
 }

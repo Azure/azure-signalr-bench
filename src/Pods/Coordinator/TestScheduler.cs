@@ -16,7 +16,7 @@ namespace Azure.SignalRBench.Coordinator
         private readonly CancellationTokenSource _cts = new CancellationTokenSource();
         private readonly ILogger<TestScheduler> _logger;
         private string? _defaultLocation;
-        private List<Task> _runningTasks = new List<Task>();
+        private readonly List<Task> _runningTasks = new List<Task>();
 
         public TestScheduler(
             PerfStorageProvider storageProvider,
@@ -92,7 +92,9 @@ namespace Azure.SignalRBench.Coordinator
             }
         }
 
-        private Task RunJobAsync(TestJob job, CancellationToken cancellationToken) =>
-            TestRunnerFactory.Create(job, DefaultLocation).RunAsync(cancellationToken);
+        private Task RunJobAsync(TestJob job, CancellationToken cancellationToken)
+        {
+            return TestRunnerFactory.Create(job, DefaultLocation).RunAsync(cancellationToken);
+        }
     }
 }

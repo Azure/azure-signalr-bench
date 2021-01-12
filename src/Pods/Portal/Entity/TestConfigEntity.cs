@@ -2,11 +2,8 @@
 using System.Collections.Generic;
 using Azure.SignalRBench.Common;
 using Microsoft.Azure.Cosmos.Table;
-using Microsoft.Azure.Management.SignalR.Models;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
 using Portal;
-using YamlDotNet.Core;
 
 namespace Azure.SignalRBench.Coordinator.Entities
 {
@@ -54,14 +51,14 @@ namespace Azure.SignalRBench.Coordinator.Entities
 
         public int Rate { get; set; } = 200;
 
-        public string Cron { get; set; }= "0";
+        public string Cron { get; set; } = "0";
 
-        public string LastCronTime { get; set; }= "0";
+        public string LastCronTime { get; set; } = "0";
 
         public string Dir { get; set; } = "Default";
-        
+
         public string Env { get; set; } = PerfConstants.Cloud.AzureGlobal;
-        
+
         public void Init()
         {
             Start = Start > ClientCons ? ClientCons : Start;
@@ -72,19 +69,11 @@ namespace Azure.SignalRBench.Coordinator.Entities
             if (ConnectEstablishRoundNum > RoundNum)
                 ConnectEstablishRoundNum = RoundNum;
             if (ClientNum <= 0)
-            {
-                ClientNum = (int)Math.Ceiling((double)ClientCons / PerfConstants.Number.ConnectionsPerClient);
-            }
+                ClientNum = (int) Math.Ceiling((double) ClientCons / PerfConstants.Number.ConnectionsPerClient);
 
-            if (ServerNum <= 0)
-            {
-                ServerNum = (int)Math.Ceiling((double)ClientNum / 2);
-            }
+            if (ServerNum <= 0) ServerNum = (int) Math.Ceiling((double) ClientNum / 2);
 
-            if (RoundNum <= 0)
-            {
-                RoundNum = 5;
-            }
+            if (RoundNum <= 0) RoundNum = 5;
         }
 
         public TestJob ToTestJob(ClusterState clusterState)
@@ -92,7 +81,7 @@ namespace Azure.SignalRBench.Coordinator.Entities
             //creating round settings
             var roundsettings = new List<RoundSetting>();
             var current = Start;
-            var step = RoundNum > 1 ? (int)Math.Ceiling((double)(End - Start) / (RoundNum - 1)) : 0;
+            var step = RoundNum > 1 ? (int) Math.Ceiling((double) (End - Start) / (RoundNum - 1)) : 0;
             if (!Enum.TryParse(Scenario, out ClientBehavior behavior))
                 throw new Exception($"Unknown Scenario {Scenario}");
             if (!Enum.TryParse(Mode, out SignalRServiceMode serviceMode))
@@ -115,54 +104,66 @@ namespace Azure.SignalRBench.Coordinator.Entities
             for (var i = 0; i < RoundNum; i++)
             {
                 var count = current > End ? End : current;
-                roundsettings.Add(new RoundSetting()
+                roundsettings.Add(new RoundSetting
                 {
                     DurationInSeconds = RoundDurations,
-                    ClientSettings = new[]{new  ClientSetting()
+                    ClientSettings = new[]
+                    {
+                        new ClientSetting
                         {
-                            Behavior=behavior,
-                            IntervalInMilliseconds=Interval,
-                            Count=count,
-                            MessageSize=MessageSize,
-                            GroupFamily="default",
+                            Behavior = behavior,
+                            IntervalInMilliseconds = Interval,
+                            Count = count,
+                            MessageSize = MessageSize,
+                            GroupFamily = "default"
                         }
                     }
                 });
                 current += step;
             }
-            var testJob = new TestJob()
+
+            var testJob = new TestJob
             {
                 TestId = PartitionKey + '-' + InstanceIndex,
                 TestMethod = testCategory,
-                ServiceSetting = new[] { new ServiceSetting()
+                ServiceSetting = new[]
                 {
-                    AsrsConnectionString = ConnectionString?.Trim(),
-                    Location = Env.ToLower().Contains("ppe") ? clusterState.PPELocation: clusterState.Location,
-                    Tier = "standard",
-                    Size = SignalRUnitSize,
-                    Env = Env
-                } },
-                ScenarioSetting = new ScenarioSetting()
+                    new ServiceSetting
+                    {
+                        AsrsConnectionString = ConnectionString?.Trim(),
+                        Location = Env.ToLower().Contains("ppe") ? clusterState.PPELocation : clusterState.Location,
+                        Tier = "standard",
+                        Size = SignalRUnitSize,
+                        Env = Env
+                    }
+                },
+                ScenarioSetting = new ScenarioSetting
                 {
                     TotalConnectionCount = ClientCons,
                     TotalConnectionRound = ConnectEstablishRoundNum,
                     Rounds = roundsettings.ToArray(),
                     IsAnonymous = true,
-                    Protocol = Enum.TryParse(Protocol, out Protocol protocol) ? protocol : throw new Exception($"Unknown Protocol {Protocol}"),
+                    Protocol = Enum.TryParse(Protocol, out Protocol protocol)
+                        ? protocol
+                        : throw new Exception($"Unknown Protocol {Protocol}"),
                     Rate = Rate,
-                    GroupDefinitions = (behavior == ClientBehavior.GroupBroadcast) ? new[]{new GroupDefinition()
-                    {
-                        GroupFamily = "default",
-                        GroupCount = 0,
-                        GroupSize = GroupSize
-                    } } : Array.Empty<GroupDefinition>(),
+                    GroupDefinitions = behavior == ClientBehavior.GroupBroadcast
+                        ? new[]
+                        {
+                            new GroupDefinition
+                            {
+                                GroupFamily = "default",
+                                GroupCount = 0,
+                                GroupSize = GroupSize
+                            }
+                        }
+                        : Array.Empty<GroupDefinition>()
                 },
-                PodSetting = new PodSetting()
+                PodSetting = new PodSetting
                 {
                     ServerCount = ServerNum,
                     ClientCount = ClientNum
-                },
-
+                }
             };
             Console.WriteLine(JsonConvert.SerializeObject(testJob));
             return testJob;

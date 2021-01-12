@@ -1,18 +1,11 @@
 ﻿using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using Azure.Security.KeyVault.Secrets;
 using Azure.SignalRBench.Common;
 using Azure.SignalRBench.Coordinator.Entities;
 using Azure.SignalRBench.Storage;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Azure.Cosmos.Table;
 using Microsoft.Extensions.Logging;
 using NCrontab;
 using Newtonsoft.Json;
@@ -25,11 +18,12 @@ namespace Portal.Controllers
     [ApiController]
     public class TestConfigController : ControllerBase
     {
-        private IPerfStorage _perfStorage;
-        private ILogger<TestConfigController> _logger;
-        private ClusterState _clusterState;
+        private readonly ClusterState _clusterState;
+        private readonly ILogger<TestConfigController> _logger;
+        private readonly IPerfStorage _perfStorage;
 
-        public TestConfigController(IPerfStorage perfStorage,ClusterState clusterState, ILogger<TestConfigController> logger)
+        public TestConfigController(IPerfStorage perfStorage, ClusterState clusterState,
+            ILogger<TestConfigController> logger)
         {
             _perfStorage = perfStorage;
             _clusterState = clusterState;
@@ -59,7 +53,7 @@ namespace Portal.Controllers
         }
 
         [HttpPost("StartTest/{testConfigEntityKey}")]
-        public async Task StartTestAsync(String testConfigEntityKey)
+        public async Task StartTestAsync(string testConfigEntityKey)
         {
             var configTable = await _perfStorage.GetTableAsync<TestConfigEntity>(PerfConstants.TableNames.TestConfig);
             var latestTestConfig = await configTable.GetFirstOrDefaultAsync(from row in configTable.Rows
@@ -67,9 +61,9 @@ namespace Portal.Controllers
                 select row);
             latestTestConfig.InstanceIndex += 1;
             await configTable.UpdateAsync(latestTestConfig);
-            var queue = await _perfStorage.GetQueueAsync<TestJob>(PerfConstants.QueueNames.PortalJob, true);
+            var queue = await _perfStorage.GetQueueAsync<TestJob>(PerfConstants.QueueNames.PortalJob);
             var statusTable = await _perfStorage.GetTableAsync<TestStatusEntity>(PerfConstants.TableNames.TestStatus);
-            var testEntity = new TestStatusEntity()
+            var testEntity = new TestStatusEntity
             {
                 User = User.Identity.Name,
                 PartitionKey = latestTestConfig.PartitionKey,

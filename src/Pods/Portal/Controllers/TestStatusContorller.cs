@@ -5,7 +5,6 @@ using System.Threading.Tasks;
 using Azure.SignalRBench.Common;
 using Azure.SignalRBench.Coordinator.Entities;
 using Azure.SignalRBench.Storage;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
@@ -17,8 +16,8 @@ namespace Portal.Controllers
     [ApiController]
     public class TestStatusContorller : ControllerBase
     {
-        private IPerfStorage _perfStorage;
-        private ILogger<TestStatusContorller> _logger;
+        private readonly ILogger<TestStatusContorller> _logger;
+        private readonly IPerfStorage _perfStorage;
 
         public TestStatusContorller(IPerfStorage perfStorage, ILogger<TestStatusContorller> logger)
         {
