@@ -30,11 +30,19 @@ namespace Microsoft.Azure.SignalR.PerfTest.AppServer
         {
             if (_useLocalSignalR)
             {
-                services.AddSignalR(o => o.MaximumReceiveMessageSize = null).AddMessagePackProtocol();
+                services.AddSignalR(o =>
+                {
+                    o.MaximumReceiveMessageSize = null;
+                    o.EnableDetailedErrors = true;
+                }).AddMessagePackProtocol();
             }
             else
             {
-                services.AddSignalR(o => o.MaximumReceiveMessageSize = null)
+                services.AddSignalR(o => 
+                {
+                    o.MaximumReceiveMessageSize = null;
+                    o.EnableDetailedErrors = true;
+                })
                         .AddMessagePackProtocol()
                         .AddAzureSignalR(option =>
                 {

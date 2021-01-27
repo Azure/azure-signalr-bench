@@ -14,6 +14,6 @@ namespace Microsoft.Azure.SignalR.PerfTest.AppServer
 
         public string ConnectionString { get; set; }
 
-        public LogLevel MinLogLevel { get; set; } = LogLevel.Information;
+        public LogLevel MinLogLevel { get; set; } = LogLevel.Debug;
     }
 }
