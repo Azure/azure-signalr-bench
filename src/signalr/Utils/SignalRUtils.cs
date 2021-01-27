@@ -601,7 +601,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
                               {
                                   logger.ClearProviders();
                                   //logger.AddSerilog(dispose: true);
-                                  logger.SetMinimumLevel(LogLevel.Debug);
+                                  //logger.SetMinimumLevel(LogLevel.Information);
                               })
                               .WithUrl(negoEndPoint, httpConnectionOptions =>
                               {
@@ -693,7 +693,7 @@ namespace Plugin.Microsoft.Azure.SignalR.Benchmark
                               {
                                   logger.ClearProviders();
                                   logger.AddSerilog(dispose: true);
-                                  logger.SetMinimumLevel(LogLevel.Debug);
+                                  logger.SetMinimumLevel(LogLevel.Error);
                               })
                               .WithUrl(urlList[connectionIndex[i] % urlList.Count()], httpConnectionOptions =>
                               {
