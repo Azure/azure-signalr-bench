@@ -1,5 +1,8 @@
 ﻿using System;
 using System.Linq;
+using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
+using System.Text;
 using System.Threading.Tasks;
 using Azure.Security.KeyVault.Secrets;
 using Azure.SignalRBench.Common;
@@ -46,7 +49,9 @@ namespace Portal.Controllers
         [HttpPut("auth/{userName}")]
         public async Task<ActionResult> Auth(string userName, string role)
         {
-            var password = Guid.NewGuid().ToString(); 
+            var password = Guid.NewGuid().ToString();
+            var rsa = _clusterState.AuthCert.GetRSAPublicKey();
+            var signature=rsa.Encrypt(Encoding.UTF8.GetBytes(password+":"+role),RSAEncryptionPadding.OaepSHA256);
             var userIdentity=new UserIdentity()
             {
                 PartitionKey = userName,
