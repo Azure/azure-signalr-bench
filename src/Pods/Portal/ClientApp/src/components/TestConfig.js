@@ -271,9 +271,24 @@ export class TestConfig extends Component {
                                                 }
                                             })
                                         },
+                                    auth:
+                                        (args, print, runCommand) => {
+                                            console.log(args)
+                                            if (args.length != 3) {
+                                                print("Usage: auth {user} {role}")
+                                                return
+                                            }
+                                            fetch(`home/auth/${args[1]}?role=${args[2]}`, {
+                                                method: 'PUT',
+                                                redirect: 'manual'
+                                            }).then(response => {
+                                                    response.text().then(data => alert(data))
+                                            })
+                                        },
                                 }}
                                 descriptions={{
-                                    move: 'move {testName} {dirName}', movedir: 'movedir {dirName} {dirName}', cron: "run test periodically [Unix version crontab]. Usage: cron {testName} {0_12_*_*_*}"
+                                    move: 'move {testName} {dirName}', movedir: 'movedir {dirName} {dirName}', cron: "run test periodically [Unix version crontab]. Usage: cron {testName} {0_12_*_*_*}",
+                                    auth: 'auth {user} {role}. Generate a password for a user with that role'
                                 }}
                                 msg='Type help to see all supported commands'
                             />

@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Azure.SignalRBench.Common;
 using Azure.SignalRBench.Coordinator.Entities;
 using Azure.SignalRBench.Storage;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using NCrontab;
@@ -60,7 +61,8 @@ namespace Portal.Controllers
             _logger.LogInformation($"Create Test config:{JsonConvert.SerializeObject(testConfigEntity)}");
             return Ok();
         }
-
+        
+        [Authorize(Policy = PerfConstants.Policy.RoleLogin, Roles = PerfConstants.Roles.Contributor+","+PerfConstants.Roles.Pipeline)]
         [HttpPost("StartTest/{testConfigEntityKey}")]
         public async Task StartTestAsync(string testConfigEntityKey)
         {

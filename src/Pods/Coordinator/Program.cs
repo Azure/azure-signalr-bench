@@ -34,7 +34,7 @@ namespace Azure.SignalRBench.Coordinator
                     if (!context.HostingEnvironment.IsDevelopment())
                         logging.AddProvider(
                             new BlobLoggerProvider(
-                                $"{Roles.Coordinator}_{context.Configuration[PerfConstants.ConfigurationKeys.PodNameStringKey]}",
+                                $"{Roles.Coordinator}/{Roles.Coordinator}_{context.Configuration[PerfConstants.ConfigurationKeys.PodNameStringKey]}",
                                 ".log",
                                 context.Configuration[PerfConstants.ConfigurationKeys.StorageConnectionStringKey]));
                 })
