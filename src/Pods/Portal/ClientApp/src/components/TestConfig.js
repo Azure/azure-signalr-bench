@@ -12,7 +12,7 @@ export class TestConfig extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            show: false, loading: true, obj: { signalRUnitSize: 1, mode: "Default", service: "SignalR", Scenario: "Echo", framework: "Netcore", env: "AzureGlobal" },
+            show: false, loading: true, obj: { signalRUnitSize: 1, mode: "Default", service: "SignalR", Scenario: "Echo", framework: "Netcore", env: "AzureGlobal", createMode:"ConnectionString" },
             showjson: false,
             json: {},
             testConfigs: [],
@@ -282,7 +282,7 @@ export class TestConfig extends Component {
                                                 method: 'PUT',
                                                 redirect: 'manual'
                                             }).then(response => {
-                                                    response.text().then(data => alert(data))
+                                                response.text().then(data => alert(data))
                                             })
                                         },
                                 }}
@@ -402,11 +402,18 @@ export class TestConfig extends Component {
                                     <code> https://{window.location.hostname}/upstream/{"{hub}"}/api/{"{category}"}/{"{event}"}</code>
                                 </div>
                             }
-                            <Form.Group >
+                            {this.state.obj.service == "SignalR" && this.state.obj.mode == "Default" && <Form.Group  >
+                                <Form.Label>CreateMode</Form.Label>
+                                <Form.Control name="createMode" type="select" onChange={this.handleChange} as="select">
+                                    <option>ConnectionString</option>
+                                    <option>CreateByPerf</option>
+                                </Form.Control>
+                            </Form.Group>}
+                           {this.state.obj.createMode=="ConnectionString"&&<Form.Group >
                                 <Form.Label >ConnectionString</Form.Label>
                                 <Form.Control name="connectionString" onChange={this.handleChange} placeholder="ASR Connection String. If set, the below one will be ignored." />
-                            </Form.Group>
-                            {this.state.obj.service == "SignalR" && this.state.obj.mode == "Default" && <Form.Group  >
+                            </Form.Group>}
+                            {this.state.obj.service == "SignalR" && this.state.obj.mode == "Default" &&this.state.obj.createMode=="CreateByPerf"&& <Form.Group  >
                                 <Form.Label>Signarl unit size</Form.Label>
                                 <Form.Control ref={this.unitRef} name="signalRUnitSize" onChange={this.handleChangeNum} as="select">
                                     <option>1</option>
@@ -418,7 +425,7 @@ export class TestConfig extends Component {
                                     <option>100</option>
                                 </Form.Control>
                             </Form.Group>}
-                            {this.state.obj.service == "SignalR" && <Form.Group >
+                            {this.state.obj.service == "SignalR" && this.state.obj.mode == "Default" &&this.state.obj.createMode=="CreateByPerf" && <Form.Group >
                                 <Form.Label >Tags</Form.Label>
                                 <Form.Control name="tags" onChange={this.handleChange} placeholder="key1=value1;key2=value2" />
                             </Form.Group>}
