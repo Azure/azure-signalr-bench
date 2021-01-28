@@ -45,19 +45,20 @@ namespace Portal.Controllers
             };
             return basicInfo;
         }
-        
+
         [HttpPut("auth/{userName}")]
         public async Task<ActionResult> Auth(string userName, string role)
         {
             var password = Guid.NewGuid().ToString();
             var rsa = _clusterState.AuthCert.GetRSAPublicKey();
-            var signature=rsa.Encrypt(Encoding.UTF8.GetBytes(password+":"+role),RSAEncryptionPadding.OaepSHA256);
-            var userIdentity=new UserIdentity()
+            var key = UserService.GenerateKey(userName, password, role);
+            var signature = UserService.CalculateSignature(key, rsa);
+            var userIdentity = new UserIdentity()
             {
                 PartitionKey = userName,
                 RowKey = userName,
                 Role = role,
-                Password = password
+                Signature = signature
             };
             var table = await _perfStorage.GetTableAsync<UserIdentity>(PerfConstants.TableNames.UserIdentity);
             var user = await table.GetFirstOrDefaultAsync(from row in table.Rows
@@ -66,13 +67,14 @@ namespace Portal.Controllers
             if (user != null)
             {
                 user.Role = role;
-                user.Password = password;
+                user.Signature = signature;
                 await table.UpdateAsync(user);
             }
             else
             {
                 await table.InsertAsync(userIdentity);
             }
+
             _logger.LogInformation($"Auth user :{userName}");
             return Ok($"Password:  {password}");
         }
