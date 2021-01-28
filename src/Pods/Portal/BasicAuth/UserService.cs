@@ -11,7 +11,7 @@ namespace Portal
 {
     public class UserService : IUserService
     {
-        private IPerfStorage _perfStorage;
+        private readonly IPerfStorage _perfStorage;
         private readonly ClusterState _clusterState;
 
 

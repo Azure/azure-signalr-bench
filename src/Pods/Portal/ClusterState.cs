@@ -25,7 +25,7 @@ namespace Portal
         {
             var locationTask = _secretClient.GetSecretAsync(PerfConstants.KeyVaultKeys.LocationKey);
             var ppeTask = _secretClient.GetSecretAsync(PerfConstants.KeyVaultKeys.PPELocationKey);
-            var certTask = _secretClient.GetSecretAsync(PerfConstants.KeyVaultKeys.EntryptCert);
+            var certTask = _secretClient.GetSecretAsync(PerfConstants.KeyVaultKeys.EncryptCert);
             Location = (await locationTask).Value.Value;
             try
             {
