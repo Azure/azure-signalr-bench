@@ -121,14 +121,12 @@ namespace Azure.SignalRBench.Client
 
         public Task OnReconnecting(IClientAgent agent)
         {
-          //  _logger.LogInformation($"Connection reconnecting: {agent.GlobalIndex}");
             _dict.AddOrUpdate(agent, ClientAgentStatus.Reconnecting, (a, s) => ClientAgentStatus.Reconnecting);
             return Task.CompletedTask;
         }
 
         public Task OnClosed(IClientAgent agent)
         {
-           // _logger.LogInformation($"Connection closed: {agent.GlobalIndex}");
             _dict.AddOrUpdate(agent, ClientAgentStatus.Reconnecting, (a, s) => ClientAgentStatus.Closed);
             return Task.CompletedTask;
         }
