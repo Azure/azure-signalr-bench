@@ -137,7 +137,8 @@ namespace Azure.SignalRBench.Client
                                 stopWatch.Stop();
                                 Volatile.Write(ref slowDown, true);
                                 _logger.LogError(ex,
-                                    $"Failed to start {Volatile.Read(ref current)} client.,fail Time cost:{stopWatch.ElapsedMilliseconds}");
+                                    $"Failed to start { current} client.,fail Time cost:{stopWatch.ElapsedMilliseconds}");
+                                return;
                             }
                         }
                     }));
