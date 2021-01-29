@@ -1,9 +1,11 @@
 using System;
+using System.Linq;
 using System.Text.Json.Serialization;
 using Azure.Identity;
 using Azure.Security.KeyVault.Secrets;
 using Azure.SignalRBench.Common;
 using Azure.SignalRBench.Storage;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
@@ -37,16 +39,31 @@ namespace Portal
                     ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
             });
 
-            // AAD auth
+            services.AddSingleton<IUserService, UserService>();
 
+            // AAD auth
             services.AddAuthentication(OpenIdConnectDefaults.AuthenticationScheme)
                 .AddMicrosoftIdentityWebApp(Configuration.GetSection("AzureAd"));
+            // Basic auth
+            services.AddAuthentication(PerfConstants.AuthSchema.BasicAuth)
+                .AddScheme<AuthenticationSchemeOptions, BasicAuthenticationHandler>
+                    (PerfConstants.AuthSchema.BasicAuth, null);
+
             services.AddAuthorization(options =>
             {
+                options.AddPolicy(PerfConstants.Policy.RoleLogin, policy =>
+                {
+                    policy.AddAuthenticationSchemes(PerfConstants.AuthSchema.BasicAuth);
+                    policy.AddAuthenticationSchemes(OpenIdConnectDefaults.AuthenticationScheme);
+                    policy.RequireAssertion(context =>
+                        context.Requirements.Count() > 1 || context.User.IsInRole(PerfConstants.Roles.Contributor));
+                });
                 options.FallbackPolicy = new AuthorizationPolicyBuilder()
+                    .AddAuthenticationSchemes(OpenIdConnectDefaults.AuthenticationScheme)
                     .RequireRole(PerfConstants.Roles.Contributor)
                     .Build();
             });
+
             services
                 .AddRazorPages()
                 .AddMicrosoftIdentityUI();

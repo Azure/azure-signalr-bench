@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using Azure.SignalRBench.Common;
 using Azure.SignalRBench.Messages;
 using Microsoft.AspNetCore.SignalR.Client;
+using Microsoft.Extensions.Logging;
 
 namespace Azure.SignalRBench.Client
 {
@@ -25,11 +26,13 @@ namespace Azure.SignalRBench.Client
         private int _totalReconnectedCount;
         public string TestId { get; set; }
         private MessageClient _MessageClient;
+        private readonly ILogger<ClientAgentContext> _logger;
 
-        public ClientAgentContext(MessageClient messageClient)
+        public ClientAgentContext(MessageClient messageClient,ILogger<ClientAgentContext> logger)
         {
             _MessageClient = messageClient;
             TestId = _MessageClient.TestId;
+            _logger = logger;
         }
 
         public IRetryPolicy RetryPolicy { get; set; }

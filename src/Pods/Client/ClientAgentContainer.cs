@@ -20,6 +20,8 @@ namespace Azure.SignalRBench.Client
         public MessageClientHolder _messageClientHolder { get; }
         private IClientAgent[] _clients = new IClientAgent[0];
         private readonly ILogger<ClientAgentContainer> _logger;
+        private readonly ILoggerFactory _loggerFactory;
+
         private bool slowDown = false;
         private int startReport = 1;
         private IClientAgentFactory _agentFactory;
@@ -30,12 +32,13 @@ namespace Azure.SignalRBench.Client
             bool isAnonymous,
             string url,
             ClientLifetimeDefinition lifetimeDefinition, IClientAgentFactory agentFactory,
-            ILogger<ClientAgentContainer> logger)
+            ILoggerFactory loggerFactory)
         {
             _messageClientHolder = messageClientHolder;
-            _context = new ClientAgentContext(messageClientHolder.Client);
+            _loggerFactory = loggerFactory;
+            _context = new ClientAgentContext(messageClientHolder.Client,_loggerFactory.CreateLogger<ClientAgentContext>());
             _context.RetryPolicy=new RetryPolicy(_context);
-            _logger = logger;
+            _logger = _loggerFactory.CreateLogger<ClientAgentContainer>();
             //try to resolve service url
             //dirty logic, separate raw websocket
             if (url.Contains("Endpoint"))
@@ -134,7 +137,8 @@ namespace Azure.SignalRBench.Client
                                 stopWatch.Stop();
                                 Volatile.Write(ref slowDown, true);
                                 _logger.LogError(ex,
-                                    $"Failed to start {Volatile.Read(ref current)} client.,fail Time cost:{stopWatch.ElapsedMilliseconds}");
+                                    $"Failed to start { current} client.,fail Time cost:{stopWatch.ElapsedMilliseconds}");
+                                return;
                             }
                         }
                     }));

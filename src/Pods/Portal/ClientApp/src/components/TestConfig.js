@@ -12,7 +12,7 @@ export class TestConfig extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            show: false, loading: true, obj: { signalRUnitSize: 1, mode: "Default", service: "SignalR", Scenario: "Echo", framework: "Netcore", env: "AzureGlobal" },
+            show: false, loading: true, obj: { signalRUnitSize: 1, mode: "Default", service: "SignalR", Scenario: "Echo", framework: "Netcore", env: "AzureGlobal", createMode:"ConnectionString" },
             showjson: false,
             json: {},
             testConfigs: [],
@@ -271,9 +271,24 @@ export class TestConfig extends Component {
                                                 }
                                             })
                                         },
+                                    auth:
+                                        (args, print, runCommand) => {
+                                            console.log(args)
+                                            if (args.length != 3) {
+                                                print("Usage: auth {user} {role}")
+                                                return
+                                            }
+                                            fetch(`home/auth/${args[1]}?role=${args[2]}`, {
+                                                method: 'PUT',
+                                                redirect: 'manual'
+                                            }).then(response => {
+                                                response.text().then(data => alert(data))
+                                            })
+                                        },
                                 }}
                                 descriptions={{
-                                    move: 'move {testName} {dirName}', movedir: 'movedir {dirName} {dirName}', cron: "run test periodically [Unix version crontab]. Usage: cron {testName} {0_12_*_*_*}"
+                                    move: 'move {testName} {dirName}', movedir: 'movedir {dirName} {dirName}', cron: "run test periodically [Unix version crontab]. Usage: cron {testName} {0_12_*_*_*}",
+                                    auth: 'auth {user} {role}. Generate a password for a user with that role'
                                 }}
                                 msg='Type help to see all supported commands'
                             />
@@ -387,11 +402,18 @@ export class TestConfig extends Component {
                                     <code> https://{window.location.hostname}/upstream/{"{hub}"}/api/{"{category}"}/{"{event}"}</code>
                                 </div>
                             }
-                            <Form.Group >
+                            {this.state.obj.service == "SignalR" && this.state.obj.mode == "Default" && <Form.Group  >
+                                <Form.Label>CreateMode</Form.Label>
+                                <Form.Control name="createMode" type="select" onChange={this.handleChange} as="select">
+                                    <option>ConnectionString</option>
+                                    <option>CreateByPerf</option>
+                                </Form.Control>
+                            </Form.Group>}
+                           {this.state.obj.createMode=="ConnectionString"&&<Form.Group >
                                 <Form.Label >ConnectionString</Form.Label>
                                 <Form.Control name="connectionString" onChange={this.handleChange} placeholder="ASR Connection String. If set, the below one will be ignored." />
-                            </Form.Group>
-                            {this.state.obj.service == "SignalR" && this.state.obj.mode == "Default" && <Form.Group  >
+                            </Form.Group>}
+                            {this.state.obj.service == "SignalR" && this.state.obj.mode == "Default" &&this.state.obj.createMode=="CreateByPerf"&& <Form.Group  >
                                 <Form.Label>Signarl unit size</Form.Label>
                                 <Form.Control ref={this.unitRef} name="signalRUnitSize" onChange={this.handleChangeNum} as="select">
                                     <option>1</option>
@@ -403,7 +425,7 @@ export class TestConfig extends Component {
                                     <option>100</option>
                                 </Form.Control>
                             </Form.Group>}
-                            {this.state.obj.service == "SignalR" && <Form.Group >
+                            {this.state.obj.service == "SignalR" && this.state.obj.mode == "Default" &&this.state.obj.createMode=="CreateByPerf" && <Form.Group >
                                 <Form.Label >Tags</Form.Label>
                                 <Form.Control name="tags" onChange={this.handleChange} placeholder="key1=value1;key2=value2" />
                             </Form.Group>}

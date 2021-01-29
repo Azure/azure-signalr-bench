@@ -13,6 +13,7 @@ namespace Azure.SignalRBench.Common
             public const string PPESubscriptionKey = "ppe-subscription";
             public const string LocationKey = "location";
             public const string PPELocationKey = "ppe-location";
+            public const string EncryptCert = "authEncrypt";
             public const string CloudKey = "cloud";
             public const string ServicePrincipalKey = "service-principal";
             public const string PPEServicePrincipalKey = "ppe-service-principal";
@@ -39,7 +40,7 @@ namespace Azure.SignalRBench.Common
         {
             public const string TestConfig = "testConfig";
             public const string TestStatus = "testStatus";
-            public const string Counter = "testCount";
+            public const string UserIdentity = "userIdentity";
         }
 
         public static class QueueNames
@@ -49,8 +50,18 @@ namespace Azure.SignalRBench.Common
 
         public static class Roles
         {
-            public const string Admin = "Admin";
             public const string Contributor = "Contributor";
+            public const string Pipeline = "Pipeline";
+        }
+
+        public static class Policy
+        {
+            public const string RoleLogin = "RoleLogin";
+        }
+
+        public static class AuthSchema
+        {
+            public const string BasicAuth = "BasicAuthentication";
         }
 
         public static class Number

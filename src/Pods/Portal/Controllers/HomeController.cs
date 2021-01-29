@@ -1,5 +1,11 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Linq;
+using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
+using System.Text;
+using System.Threading.Tasks;
 using Azure.Security.KeyVault.Secrets;
+using Azure.SignalRBench.Common;
 using Azure.SignalRBench.Storage;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -38,6 +44,39 @@ namespace Portal.Controllers
                 PPEEnabled = _clusterState.PPEEnabled
             };
             return basicInfo;
+        }
+
+        [HttpPut("auth/{userName}")]
+        public async Task<ActionResult> Auth(string userName, string role)
+        {
+            var password = Guid.NewGuid().ToString();
+            var rsa = _clusterState.AuthCert.GetRSAPublicKey();
+            var key = UserService.GenerateKey(userName, password, role);
+            var signature = UserService.CalculateSignature(key, rsa);
+            var userIdentity = new UserIdentity()
+            {
+                PartitionKey = userName,
+                RowKey = userName,
+                Role = role,
+                Signature = signature
+            };
+            var table = await _perfStorage.GetTableAsync<UserIdentity>(PerfConstants.TableNames.UserIdentity);
+            var user = await table.GetFirstOrDefaultAsync(from row in table.Rows
+                where row.PartitionKey == userName
+                select row);
+            if (user != null)
+            {
+                user.Role = role;
+                user.Signature = signature;
+                await table.UpdateAsync(user);
+            }
+            else
+            {
+                await table.InsertAsync(userIdentity);
+            }
+
+            _logger.LogInformation($"Auth user :{userName}");
+            return Ok($"Password:  {password}");
         }
     }
 }
