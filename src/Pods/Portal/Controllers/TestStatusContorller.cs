@@ -45,5 +45,25 @@ namespace Portal.Controllers
                 throw;
             }
         }
+        
+        [HttpGet("dir/list/{dir?}")]
+        public async Task<IEnumerable<TestStatusEntity>> DirList(string dir,string index)
+        {
+            try
+            {
+                var table = await _perfStorage.GetTableAsync<TestStatusEntity>(PerfConstants.TableNames.TestStatus);
+                var rows = await table.QueryAsync(
+                    from row in table.Rows where (row.Dir == dir) && (row.RowKey==index) select row).ToListAsync();
+                rows.Sort((a, b) =>
+                    b.Timestamp.CompareTo(a.Timestamp)
+                );
+                return rows;
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "Get test status error");
+                throw;
+            }
+        }
     }
 }

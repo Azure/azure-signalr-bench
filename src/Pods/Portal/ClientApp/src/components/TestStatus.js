@@ -1,8 +1,5 @@
 ﻿import React, { Component, useEffect, useState } from 'react';
-//import { Modal, Button } from 'antd';
-//import Button from 'react-bootstrap/Button'
 import Modal from 'react-bootstrap/Modal'
-import { Search, Grid, Header, Segment, Divider, Button, Icon } from 'semantic-ui-react'
 import { Util } from './Util'
 export class TestStatus extends Component {
     constructor(props) {
@@ -94,13 +91,13 @@ export class TestStatus extends Component {
             config = JSON.parse(state['config'])
             var totalCon = config['ClientCons'];
             var protocal = config['Protocol'];
-            var scenario=config['Scenario'];
-            var groupSize=config['GroupSize'];
-            label = "{ Total connection:" + totalCon + ", Protocal: " + protocal +", Scenario:"+scenario;
-            if(scenario=="GroupBroadcast"){
-                label+=" [Size:"+groupSize+"]"
+            var scenario = config['Scenario'];
+            var groupSize = config['GroupSize'];
+            label = "{ Total connection:" + totalCon + ", Protocal: " + protocal + ", Scenario:" + scenario;
+            if (scenario == "GroupBroadcast") {
+                label += " [Size:" + groupSize + "]"
             }
-            label+= " }"
+            label += " }"
         }
         return (
             <>

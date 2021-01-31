@@ -12,7 +12,7 @@ export class TestConfig extends Component {
     constructor(props) {
         super(props);
         this.state = {
-            show: false, loading: true, obj: { signalRUnitSize: 1, mode: "Default", service: "SignalR", Scenario: "Echo", framework: "Netcore", env: "AzureGlobal", createMode:"ConnectionString" },
+            show: false, loading: true, obj: { signalRUnitSize: 1, mode: "Default", service: "SignalR", Scenario: "Echo", framework: "Netcore", env: "AzureGlobal", createMode: "ConnectionString" },
             showjson: false,
             json: {},
             testConfigs: [],
@@ -126,7 +126,7 @@ export class TestConfig extends Component {
             redirect: 'manual'
         })
         await Util.CheckAuth(response)
-        window.open("/test-status/" + key)
+        window.open("/test-status/testname/" + key)
         e.target.setAttribute("class", "ui teal mini button")
     }
     async handleDelete(e) {
@@ -160,7 +160,9 @@ export class TestConfig extends Component {
             redirect: 'manual'
         });
         if (response.status != 200) {
-            alert(await response.json())
+            var result = await response.text()
+            console.log(result)
+            alert("json:" + result)
             return
         }
         await Util.CheckAuth(response)
@@ -266,6 +268,7 @@ export class TestConfig extends Component {
                                                 if (response.status == 200) {
                                                     alert("Succeed")
                                                     this.populateTestConfigData()
+                                                 
                                                 } else {
                                                     response.text().then(data => alert(data))
                                                 }
@@ -285,10 +288,60 @@ export class TestConfig extends Component {
                                                 response.text().then(data => alert(data))
                                             })
                                         },
+                                    batch:
+                                        (args, print, runCommand) => {
+                                            console.log(args)
+                                            if (args.length != 4) {
+                                                print("Usage: batch {testName} {group} {units[ex:1,2,5,100]}")
+                                                return
+                                            }
+                                            fetch(`testconfig/batch/${args[1]}?dir=${args[2]}&units=${args[3]}`, {
+                                                method: 'PUT',
+                                                redirect: 'manual'
+                                            }).then(response => {
+                                                if (response.status == 200) {
+                                                    alert("Succeed")
+                                                    this.populateTestConfigData()
+                                                    var activeIndex=this.state.activeIndex
+                                                    activeIndex["Default"]=false
+                                                    activeIndex[args[2]]=true
+                                                    this.setState({activeIndex:activeIndex})
+                                                } else {
+                                                    response.text().then(data => alert(data))
+                                                }
+                                            })
+                                        },
+                                        startdir:
+                                        (args, print, runCommand) => {
+                                            console.log(args)
+                                            if (args.length != 3) {
+                                                print("Usage: start {dir} {index}")
+                                                return
+                                            }
+                                            fetch(`/batch/starttest/${args[1]}?dir=${args[2]}`, {
+                                                method: 'POST',
+                                                redirect: 'manual'
+                                            }).then(response => {
+                                                if (response.status == 200) {
+                                                    alert("Succeed")
+                                                    this.populateTestConfigData()
+                                                    var activeIndex=this.state.activeIndex
+                                                    activeIndex["Default"]=false
+                                                    activeIndex[args[2]]=true
+                                                    this.setState({activeIndex:activeIndex})
+                                                    window.open("/test-status/dir/" + args[1]+"/"+args[2])
+                                                } else {
+                                                    response.text().then(data => alert(data))
+                                                }
+                                            })
+                                        },
                                 }}
                                 descriptions={{
                                     move: 'move {testName} {dirName}', movedir: 'movedir {dirName} {dirName}', cron: "run test periodically [Unix version crontab]. Usage: cron {testName} {0_12_*_*_*}",
-                                    auth: 'auth {user} {role}. Generate a password for a user with that role'
+                                    auth: 'auth {user} {role}. Generate a password for a user with that role',
+                                    batch: 'batch {testName} {group} {units[ex:1,2,5,100]. Generate different config from a template for dif units',
+                                    startdir: 'Usage: start {dir} {index}. Start all tests in a dir with custom index.'
+
                                 }}
                                 msg='Type help to see all supported commands'
                             />
@@ -409,11 +462,11 @@ export class TestConfig extends Component {
                                     <option>CreateByPerf</option>
                                 </Form.Control>
                             </Form.Group>}
-                           {this.state.obj.createMode=="ConnectionString"&&<Form.Group >
+                            {this.state.obj.createMode == "ConnectionString" && <Form.Group >
                                 <Form.Label >ConnectionString</Form.Label>
                                 <Form.Control name="connectionString" onChange={this.handleChange} placeholder="ASR Connection String. If set, the below one will be ignored." />
                             </Form.Group>}
-                            {this.state.obj.service == "SignalR" && this.state.obj.mode == "Default" &&this.state.obj.createMode=="CreateByPerf"&& <Form.Group  >
+                            {this.state.obj.service == "SignalR" && this.state.obj.mode == "Default" && this.state.obj.createMode == "CreateByPerf" && <Form.Group  >
                                 <Form.Label>Signarl unit size</Form.Label>
                                 <Form.Control ref={this.unitRef} name="signalRUnitSize" onChange={this.handleChangeNum} as="select">
                                     <option>1</option>
@@ -425,26 +478,26 @@ export class TestConfig extends Component {
                                     <option>100</option>
                                 </Form.Control>
                             </Form.Group>}
-                            {this.state.obj.service == "SignalR" && this.state.obj.mode == "Default" &&this.state.obj.createMode=="CreateByPerf" && <Form.Group >
+                            {this.state.obj.service == "SignalR" && this.state.obj.mode == "Default" && this.state.obj.createMode == "CreateByPerf" && <Form.Group >
                                 <Form.Label >Tags</Form.Label>
                                 <Form.Control name="tags" onChange={this.handleChange} placeholder="key1=value1;key2=value2" />
                             </Form.Group>}
                             <Form.Group >
                                 <Form.Label>Total client connections</Form.Label>
-                                <Form.Control name="clientCons" onChange={this.handleChangeNum} placeholder="set the Total Client connections. (Default:3000)" />
+                                <Form.Control name="clientCons" onChange={this.handleChangeNum} placeholder="set the Total Client connections. (Default:1000)" />
                             </Form.Group>
                             <Form.Group >
                                 <Form.Label>Total client connections establish round num</Form.Label>
                                 <Form.Control name="ConnectEstablishRoundNum" onChange={this.handleChangeNum} placeholder="Establish all connections gradually. (Default:1)" />
                             </Form.Group>
-                            <Form.Group >
-                                <Form.Label>Client number</Form.Label>
-                                <Form.Control name="clientNum" onChange={this.handleChangeNum} placeholder="set the test client number. (Default:Total con/5000)" />
-                            </Form.Group>
-                            <Form.Group >
-                                <Form.Label>Server number</Form.Label>
-                                <Form.Control name="serverNum" onChange={this.handleChangeNum} placeholder="set the test server number. (Default:ClientNum/2)" />
-                            </Form.Group>
+                             {/* <Form.Group >
+                                     <Form.Label>Client number</Form.Label>
+                                 <Form.Control name="clientNum" onChange={this.handleChangeNum} placeholder="set the test client number. (Default:Total con/5000)" />
+                             </Form.Group>
+                             <Form.Group >
+                                     <Form.Label>Server number</Form.Label>
+                                 <Form.Control name="serverNum" onChange={this.handleChangeNum} placeholder="set the test server number. (Default:ClientNum/2)" />
+                             </Form.Group> */}
                             <Form.Group  >
                                 <Form.Label>Testing Scenario</Form.Label>
                                 <Form.Control name="Scenario" type="select" onChange={this.handleChange} as="select">

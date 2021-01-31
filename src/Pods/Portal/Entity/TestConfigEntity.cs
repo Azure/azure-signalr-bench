@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.RegularExpressions;
 using Azure.SignalRBench.Common;
 using Microsoft.Azure.Cosmos.Table;
@@ -20,7 +21,7 @@ namespace Azure.SignalRBench.Coordinator.Entities
 
         public string Framework { get; set; } = "Netcore";
 
-        public int ClientCons { get; set; } = 3000;
+        public int ClientCons { get; set; } = 1000;
 
         public int ConnectEstablishRoundNum { get; set; } = 1;
 
@@ -174,6 +175,87 @@ namespace Azure.SignalRBench.Coordinator.Entities
             };
             Console.WriteLine(JsonConvert.SerializeObject(testJob));
             return testJob;
+        }
+
+        public List<TestConfigEntity> GenerateTestConfigs(string dir, string units)
+        {
+            var configs = new List<TestConfigEntity>();
+            foreach (var u in units.Split(",").Select(int.Parse))
+            {
+                if (u != 1 && u != 2 && u != 5 && u != 10 && u != 20 && u != 50 && u != 100)
+                {
+                    throw new Exception($"Unit:{u} is not supported");
+                }
+
+                if (SignalRUnitSize != 1)
+                {
+                    throw new Exception("Template should be unit 1");
+                }
+                var config = Copy();
+                config.PartitionKey =  config.PartitionKey +"-u" + u;
+                config.RowKey = config.PartitionKey;
+                config.SignalRUnitSize = u;
+                config.ClientCons *= u;
+                config.Start *= u;
+                config.End *= u;
+                config.Rate = Unit2Rate(u);
+                config.Dir = dir;
+                config.ClientNum = 0;
+                config.ServerNum = 0;
+                config.Init();
+                configs.Add(config);
+            }
+            return configs;
+        }
+
+        private TestConfigEntity Copy()
+        {
+            return new TestConfigEntity()
+            {
+                PartitionKey = PartitionKey,
+                RowKey = RowKey,
+                User = User,
+                ClientCons = ClientCons,
+                ClientNum = ClientNum,
+                ConnectEstablishRoundNum = ConnectEstablishRoundNum,
+                ConnectionString = ConnectionString,
+                Cron = Cron,
+                Dir = Dir,
+                End = End,
+                Env = Env,
+                Service = Service,
+                Mode = Mode,
+                Framework = Framework,
+                SignalRUnitSize = SignalRUnitSize,
+                ServerNum = ServerNum,
+                InstanceIndex = InstanceIndex,
+                Start = Start,
+                RoundNum = RoundNum,
+                GroupSize = GroupSize,
+                Scenario = Scenario,
+                RoundDurations = RoundDurations,
+                Interval = Interval,
+                MessageSize = MessageSize,
+                Protocol = Protocol,
+                Rate = Rate,
+                LastCronTime = LastCronTime,
+                Tags = Tags
+            };
+        }
+
+        private static int Unit2Rate(int unit)
+        {
+            return unit switch
+            {
+                1 => 200,
+                2 => 250,
+                5 => 300,
+                10 => 400,
+                20 => 500,
+                50 => 800,
+                100 => 1600,
+                _ => 200
+            };
         }
     }
 }
