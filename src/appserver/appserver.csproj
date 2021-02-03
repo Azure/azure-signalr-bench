@@ -25,7 +25,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Microsoft.Azure.SignalR" Version="$(MicrosoftAzureSignalRVersion)" />
+    <!-- <PackageReference Include="Microsoft.Azure.SignalR" Version="$(MicrosoftAzureSignalRVersion)" /> -->
     <PackageReference Include="Microsoft.AspNetCore.StaticFiles" Version="$(MicrosoftAspNetCoreStaticFilesVersion)" />
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Protocols.MessagePack" Version="$(MicrosoftAspNetCoreSignalRProtocolMessagePackPackageVersion)" />
     <PackageReference Include="Serilog.Extensions.Logging.File" Version="$(SerilogExtensionsLoggingFileVersion)" />
