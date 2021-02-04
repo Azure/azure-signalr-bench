@@ -2,7 +2,7 @@
 
 clean_restore() {
   dotnet clean
-  dotnet add package Microsoft.Azure.SignalR --version 1.7.0-preview1-10724 --source https://www.myget.org/F/azure-signalr-dev/api/v3/index.json
+  dotnet add package Microsoft.Azure.SignalR --version 1.7.0-preview1-10725 --source https://www.myget.org/F/azure-signalr-dev/api/v3/index.json
   dotnet restore --no-cache
 }
 
