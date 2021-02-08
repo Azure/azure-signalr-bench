@@ -179,10 +179,19 @@ export class TestStatus extends Component {
     }
 
     async populateTestStatusData(testStatus) {
-        var key = testStatus.props.match.params.key;
-        if (key === undefined)
-            key = "";
-        const response = await fetch('teststatus/list/' + key, {
+        var dir = testStatus.props.match.params.dir;
+        var url;
+        if (dir === undefined) {
+            var key = testStatus.props.match.params.key;
+            if (key === undefined)
+                key = "";
+            url = 'teststatus/list/' + key;
+        } else {
+            var index = testStatus.props.match.params.index;
+            url = 'teststatus/dir/list/' + dir + "?index=" + index;
+        }
+        console.log(url)
+        const response = await fetch(url, {
             redirect: 'manual'
         });
         await Util.CheckAuth(response)
