@@ -94,6 +94,7 @@ namespace Azure.SignalRBench.Client
         {
             //Just in case socket in server hasn't opened
             await Task.Delay(1000);
+            _context.Reset();
             for (int i = continueIndex; i < _clients.Length; i++)
             {
                 var globalIndex = GetGlobalIndex(i);
@@ -178,7 +179,6 @@ namespace Azure.SignalRBench.Client
         public void StartScenario(Func<int, Action<IClientAgent, CancellationToken>> func,
             CancellationToken cancellationToken)
         {
-            _context.Reset();
             for (int i = 0; i < _clients.Length; i++)
             {
                 func(i)(_clients[i], cancellationToken);
