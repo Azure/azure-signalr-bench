@@ -9,6 +9,7 @@ using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Xml;
 using Azure.SignalRBench.Common;
 using Azure.SignalRBench.Coordinator.Entities;
 using Azure.SignalRBench.Messages;
@@ -38,6 +39,7 @@ namespace Azure.SignalRBench.Coordinator
         private TestStatusEntity _testStatusEntity;
 
         private string _url = "http://localhost:8080/";
+        private static int _scalelock = 0;
 
         public TestRunner(
             TestJob job,
@@ -417,6 +419,14 @@ namespace Azure.SignalRBench.Coordinator
             MessageClient messageClient,
             CancellationToken cancellationToken)
         {
+            while (Interlocked.CompareExchange(ref _scalelock, 1, 0)==1)
+            {
+                await UpdateTestStatus("Deployment queueing..");
+                _logger.LogInformation("Wait for deployment to be ready. Avoid race condition...");
+                await Task.Delay(5000);
+            }
+
+            await UpdateTestStatus("Creating deployment..");
             await messageClient.WithHandlers(
                 MessageHandler.CreateCommandHandler(
                     Roles.Coordinator,
@@ -441,6 +451,8 @@ namespace Azure.SignalRBench.Coordinator
                     await serverPodReady;
                     _logger.LogInformation("Test job {testId}: Server pods ready.", Job.TestId);
                 }));
+            _logger.LogInformation("Reset scale control to 0.");
+            Interlocked.CompareExchange(ref _scalelock, 0, 1);
         }
 
         private async Task StartClientConnectionsAsync(

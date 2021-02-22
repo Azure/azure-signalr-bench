@@ -37,7 +37,7 @@ export class TestStatus extends Component {
             <table className='table table-striped' aria-labelledby="tabelLabel">
                 <thead>
                     <tr>
-                        <th>TestId</th>
+                        <th>TestName</th>
                         <th>Index</th>
                         <th>Time</th>
                         <th>Creater</th>
