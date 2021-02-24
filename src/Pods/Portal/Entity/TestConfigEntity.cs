@@ -83,7 +83,7 @@ namespace Azure.SignalRBench.Coordinator.Entities
             if (!TagsRegex.IsMatch(Tags)) throw new Exception("Invalid tags pattern");
         }
 
-        public TestJob ToTestJob(ClusterState clusterState)
+        public TestJob ToTestJob(ClusterState clusterState,string index=null)
         {
             //creating round settings
             var roundsettings = new List<RoundSetting>();
@@ -131,7 +131,7 @@ namespace Azure.SignalRBench.Coordinator.Entities
 
             var testJob = new TestJob
             {
-                TestId = PartitionKey + '-' + InstanceIndex,
+                TestId = PartitionKey + "--" + (index ?? InstanceIndex.ToString()),
                 TestMethod = testCategory,
                 ServiceSetting = new[]
                 {

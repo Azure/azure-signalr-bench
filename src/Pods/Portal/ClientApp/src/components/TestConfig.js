@@ -150,6 +150,10 @@ export class TestConfig extends Component {
             alert("invalid testName. Should be of format [a-z0-9]([-a-z0-9]*[a-z0-9]?)")
             return
         }
+        if( testName.includes("--")){
+            alert("-- is reserved!")
+            return
+        }
         const response = await fetch('testconfig', {
             method: 'PUT',
             headers: {
@@ -318,7 +322,7 @@ export class TestConfig extends Component {
                                                 print("Usage: start {dir} {index}")
                                                 return
                                             }
-                                            fetch(`/batch/starttest/${args[1]}?dir=${args[2]}`, {
+                                            fetch(`testconfig/batch/starttest/${args[1]}?index=${args[2]}`, {
                                                 method: 'POST',
                                                 redirect: 'manual'
                                             }).then(response => {
@@ -374,7 +378,7 @@ export class TestConfig extends Component {
                                     <tbody>
                                         {pair[1].map(testConfig => {
                                             var json = JSON.stringify(testConfig)
-                                            var link = "/test-status/" + testConfig.rowKey;
+                                            var link = "/test-status/testname/" + testConfig.rowKey;
                                             return <tr key={testConfig.rowKey}>
                                                 <td><a href={link}>{testConfig.rowKey}</a></td>
                                                 <td>{testConfig.timestamp}</td>
