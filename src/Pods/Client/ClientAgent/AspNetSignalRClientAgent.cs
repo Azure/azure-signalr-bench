@@ -38,8 +38,16 @@ namespace Azure.SignalRBench.Client
             {
                 while (true)
                 {
-                    await Task.Delay(context.RetryPolicy.NextRetryDelay(null).Value.Milliseconds);
-                    await StartAsync(default);
+                    try
+                    {
+                        await Task.Delay(context.RetryPolicy.NextRetryDelay(null).Value.Milliseconds);
+                        await StartAsync(default);
+                        return;
+                    }
+                    catch (Exception ignore)
+                    {
+                        // ignored
+                    }
                 }
             };
         }
@@ -54,28 +62,21 @@ namespace Azure.SignalRBench.Client
 
         public async Task StartAsync(CancellationToken cancellationToken)
         {
-            try
+            if (Connection.State == ConnectionState.Disconnected)
             {
-                if (Connection.State == ConnectionState.Disconnected)
+                IClientTransport clientTransport = _protocol switch
                 {
-                    IClientTransport clientTransport = _protocol switch
-                    {
-                        Protocol.WebSocketsWithJson => new WebSocketTransport(),
-                        Protocol.ServerSideEventsWithJson => new ServerSentEventsTransport(),
-                        Protocol.LongPollingWithJson => new LongPollingTransport(),
-                        _ => throw new Exception($"Unsupported protocal {_protocol} for aspnet")
-                    };
-                    await Connection.Start(clientTransport);
-                    Console.WriteLine("connected");
-                }
+                    Protocol.WebSocketsWithJson => new WebSocketTransport(),
+                    Protocol.ServerSideEventsWithJson => new ServerSentEventsTransport(),
+                    Protocol.LongPollingWithJson => new LongPollingTransport(),
+                    _ => throw new Exception($"Unsupported protocal {_protocol} for aspnet")
+                };
+                await Connection.Start(clientTransport);
+                Console.WriteLine("connected");
+            }
 
-                await Context.SetConnectionIDAsync(GlobalIndex, Connection.ConnectionId);
-                await Context.OnConnected(this, Groups.Length > 0);
-            }
-            catch (Exception ignore)
-            {
-                
-            }
+            await Context.SetConnectionIDAsync(GlobalIndex, Connection.ConnectionId);
+            await Context.OnConnected(this, Groups.Length > 0);
         }
 
         public Task StopAsync()
