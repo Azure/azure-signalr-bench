@@ -432,13 +432,7 @@ export class TestConfig extends Component {
                                     <option>RawWebsocket</option>
                                 </Form.Control>
                             </Form.Group>
-                            {this.state.obj.service == "SignalR" && window.perfppe && <Form.Group  >
-                                <Form.Label>Environment</Form.Label>
-                                <Form.Control name="env" type="select" onChange={this.handleChange} as="select">
-                                    <option>AzureGlobal</option>
-                                    <option>PPE</option>
-                                </Form.Control>
-                            </Form.Group>}
+                          
                             {this.state.obj.service == "SignalR" && <Form.Group  >
                                 <Form.Label>Service Mode</Form.Label>
                                 <Form.Control name="mode" type="select" onChange={this.handleChange} as="select">
@@ -464,11 +458,19 @@ export class TestConfig extends Component {
                                 <Form.Control name="createMode" type="select" onChange={this.handleChange} as="select">
                                     <option>ConnectionString</option>
                                     <option>CreateByPerf</option>
+                                    <option>SelfHostedServer</option>
                                 </Form.Control>
                             </Form.Group>}
                             {this.state.obj.createMode == "ConnectionString" && <Form.Group >
                                 <Form.Label >ConnectionString</Form.Label>
-                                <Form.Control name="connectionString" onChange={this.handleChange} placeholder="ASR Connection String. If set, the below one will be ignored." />
+                                <Form.Control name="connectionString" onChange={this.handleChange} placeholder="ASR Connection String." />
+                            </Form.Group>}
+                            {this.state.obj.service == "SignalR" && window.perfppe &&this.state.obj.mode == "Default" && this.state.obj.createMode == "CreateByPerf"&& <Form.Group  >
+                                <Form.Label>Environment</Form.Label>
+                                <Form.Control name="env" type="select" onChange={this.handleChange} as="select">
+                                    <option>AzureGlobal</option>
+                                    <option>PPE</option>
+                                </Form.Control>
                             </Form.Group>}
                             {this.state.obj.service == "SignalR" && this.state.obj.mode == "Default" && this.state.obj.createMode == "CreateByPerf" && <Form.Group  >
                                 <Form.Label>Signarl unit size</Form.Label>
@@ -486,6 +488,10 @@ export class TestConfig extends Component {
                                 <Form.Label >Tags</Form.Label>
                                 <Form.Control name="tags" onChange={this.handleChange} placeholder="key1=value1;key2=value2" />
                             </Form.Group>}
+                            {this.state.obj.service == "SignalR" && this.state.obj.mode == "Default" && this.state.obj.createMode == "SelfHostedServer" && <Form.Group >
+                                <Form.Label >ServerlUrl</Form.Label>
+                                <Form.Control name="serverUrl" onChange={this.handleChange} placeholder="http(s)://host:port" />
+                            </Form.Group>}
                             <Form.Group >
                                 <Form.Label>Total client connections</Form.Label>
                                 <Form.Control name="clientCons" onChange={this.handleChangeNum} placeholder="set the Total Client connections. (Default:1000)" />
@@ -494,14 +500,14 @@ export class TestConfig extends Component {
                                 <Form.Label>Total client connections establish round num</Form.Label>
                                 <Form.Control name="ConnectEstablishRoundNum" onChange={this.handleChangeNum} placeholder="Establish all connections gradually. (Default:1)" />
                             </Form.Group>
-                             {/* <Form.Group >
+                             <Form.Group >
                                      <Form.Label>Client number</Form.Label>
                                  <Form.Control name="clientNum" onChange={this.handleChangeNum} placeholder="set the test client number. (Default:Total con/5000)" />
                              </Form.Group>
-                             <Form.Group >
+                            { this.state.obj.service == "SignalR" && this.state.obj.mode == "Default" && this.state.obj.createMode != "SelfHostedServer" && <Form.Group >
                                      <Form.Label>Server number</Form.Label>
                                  <Form.Control name="serverNum" onChange={this.handleChangeNum} placeholder="set the test server number. (Default:ClientNum/2)" />
-                             </Form.Group> */}
+                             </Form.Group>}
                             <Form.Group  >
                                 <Form.Label>Testing Scenario</Form.Label>
                                 <Form.Control name="Scenario" type="select" onChange={this.handleChange} as="select">

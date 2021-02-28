@@ -26,6 +26,8 @@ namespace Azure.SignalRBench.Coordinator.Entities
         public int ConnectEstablishRoundNum { get; set; } = 1;
 
         public string? ConnectionString { get; set; }
+        
+        public string? ServerUrl { get; set; }
 
         public int SignalRUnitSize { get; set; }
 
@@ -81,6 +83,10 @@ namespace Azure.SignalRBench.Coordinator.Entities
 
             if (RoundNum <= 0) RoundNum = 5;
             if (!TagsRegex.IsMatch(Tags)) throw new Exception("Invalid tags pattern");
+            if (ServerUrl != null)
+            {
+                ServerNum = 0;
+            }
         }
 
         public TestJob ToTestJob(ClusterState clusterState,string index=null)
@@ -137,7 +143,7 @@ namespace Azure.SignalRBench.Coordinator.Entities
                 {
                     new ServiceSetting
                     {
-                        AsrsConnectionString = ConnectionString?.Trim(),
+                        AsrsConnectionString =ServerUrl ?? ConnectionString?.Trim(),
                         Location = Env.ToLower().Contains("ppe") ? clusterState.PPELocation : clusterState.Location,
                         Tier = "standard",
                         Size = SignalRUnitSize,

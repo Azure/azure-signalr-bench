@@ -45,6 +45,9 @@ namespace Azure.SignalRBench.Client
             {
                 Url = url;
                 _logger.LogInformation($"RawWebsocket endpoint:{url}");
+            }else if (url.Contains("http"))
+            {
+                Url = url.Trim() + "/";
             }
             else
             {
