@@ -40,6 +40,8 @@ namespace Azure.SignalRBench.Coordinator
 
         private string _url = "http://localhost:8080/";
         private static int _scalelock = 0;
+        private static volatile int _unitTotal = 0;
+        private static object _unitLock=new object();
 
         public TestRunner(
             TestJob job,
@@ -157,13 +159,6 @@ namespace Azure.SignalRBench.Coordinator
                 _timer.Stop();
                 try
                 {
-                    _logger.LogInformation("Test job {testId}: Removing hashTable in redis.", Job.TestId);
-                    await messageClient.DeleteHashTableAsync();
-                    _logger.LogInformation("Test job {testId}: Removing client pods.", Job.TestId);
-                    await K8sProvider.DeleteClientPodsAsync(Job.TestId);
-                    _logger.LogInformation("Test job {testId}: Removing server pods.", Job.TestId);
-                    await K8sProvider.DeleteServerPodsAsync(Job.TestId,
-                        Job.TestMethod == TestCategory.AspnetCoreSignalRServerless);
                     _logger.LogInformation("Test job {testId}: Removing service instances.", Job.TestId);
                     await Task.WhenAll(
                         from ss in Job.ServiceSetting
@@ -171,6 +166,20 @@ namespace Azure.SignalRBench.Coordinator
                         group ss by ss.Env
                         into env
                         select SignalRProvider.GetSignalRProvider(env.Key).DeleteResourceGroupAsync(Job.TestId));
+                    _logger.LogInformation("Test job {testId}: Removing hashTable in redis.", Job.TestId);
+                    lock (_unitLock)
+                    {
+                        if (Job.ServiceSetting[0].AsrsConnectionString == null)
+                        {
+                            _unitTotal -= Job.ServiceSetting[0].Size.Value;
+                        }
+                    }
+                    await messageClient.DeleteHashTableAsync();
+                    _logger.LogInformation("Test job {testId}: Removing client pods.", Job.TestId);
+                    await K8sProvider.DeleteClientPodsAsync(Job.TestId);
+                    _logger.LogInformation("Test job {testId}: Removing server pods.", Job.TestId);
+                    await K8sProvider.DeleteServerPodsAsync(Job.TestId,
+                        Job.TestMethod == TestCategory.AspnetCoreSignalRServerless);
                 }
                 catch (Exception ignore)
                 {
@@ -299,9 +308,21 @@ namespace Azure.SignalRBench.Coordinator
 
         private async Task<string> CreateAsrsAsync(ServiceSetting ss, string name, CancellationToken cancellationToken)
         {
+            while (true)
+            {
+                await Task.Delay(StaticRandom.Next(5000));
+                lock (_unitLock)
+                {
+                    if (_unitTotal >= 300) continue;
+                    _unitTotal += ss.Size.Value;
+                    break;
+                }
+            }
+            await Task.Delay(StaticRandom.Next(5000+_unitTotal*100));
+
             _logger.LogInformation("Test job {testId}: Creating SignalR service instance.", Job.TestId);
             var signalRProvider = SignalRProvider.GetSignalRProvider(ss.Env);
-            await signalRProvider.CreateResourceGroupAsync(Job.TestId, ss.Location ?? DefaultLocation);
+            await signalRProvider.CreateResourceGroupAsync(Job.TestId);
             await signalRProvider.CreateInstanceAsync(
                 Job.TestId,
                 name,
@@ -313,7 +334,7 @@ namespace Azure.SignalRBench.Coordinator
             _logger.LogInformation("Test job {testId}: SignalR service instance created.", Job.TestId);
             _logger.LogInformation("Test job {testId}: Retrieving SignalR service connection string.", Job.TestId);
             var result =
-                await signalRProvider.GetKeyAsync(Job.TestId, name, ss.Location ?? DefaultLocation, cancellationToken);
+                await signalRProvider.GetKeyAsync(Job.TestId, name,  cancellationToken);
             _logger.LogInformation("Test job {testId}: SignalR service connection string retrieved.", Job.TestId);
             return result;
         }

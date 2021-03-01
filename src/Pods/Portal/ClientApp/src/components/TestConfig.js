@@ -11,8 +11,9 @@ import Terminal from 'terminal-in-react';
 export class TestConfig extends Component {
     constructor(props) {
         super(props);
+        this.defaultObj={ signalRUnitSize: 1, mode: "Default", service: "SignalR", Scenario: "Echo", framework: "Netcore", env: "AzureGlobal", createMode: "ConnectionString" };
         this.state = {
-            show: false, loading: true, obj: { signalRUnitSize: 1, mode: "Default", service: "SignalR", Scenario: "Echo", framework: "Netcore", env: "AzureGlobal", createMode: "ConnectionString" },
+            show: false, loading: true, obj:JSON.parse(JSON.stringify(this.defaultObj)),
             showjson: false,
             json: {},
             testConfigs: [],
@@ -78,8 +79,10 @@ export class TestConfig extends Component {
         })
     }
     handleShow() {
+        console.log(this.defaultObj)
         this.setState({
-            show: true
+            show: true,
+            obj:JSON.parse(JSON.stringify(this.defaultObj))
         })
     }
     handleChange(e) {
@@ -224,7 +227,7 @@ export class TestConfig extends Component {
                                         (args, print, runCommand) => {
                                             console.log(args)
                                             if (args.length != 3) {
-                                                print("Usage: move {testName} to {dirName}")
+                                                print("Usage: move {testName}  {dirName}")
                                                 return
                                             }
                                             fetch(`testconfig/move/jobConfig/${args[1]}/${args[2]}`, {
@@ -243,7 +246,7 @@ export class TestConfig extends Component {
                                         (args, print, runCommand) => {
                                             console.log(args)
                                             if (args.length != 3) {
-                                                print("Usage: move {dirName} to {dirName}")
+                                                print("Usage: move {dirName}  {dirName}")
                                                 return
                                             }
                                             fetch(`testconfig/move/dir/${args[1]}/${args[2]}`, {

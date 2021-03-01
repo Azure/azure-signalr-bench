@@ -186,6 +186,7 @@ namespace Azure.SignalRBench.Coordinator.Entities
         public List<TestConfigEntity> GenerateTestConfigs(string dir, string units)
         {
             var configs = new List<TestConfigEntity>();
+            Enum.TryParse(Scenario, out ClientBehavior behavior);
             foreach (var u in units.Split(",").Select(int.Parse))
             {
                 if (u != 1 && u != 2 && u != 5 && u != 10 && u != 20 && u != 50 && u != 100)
@@ -202,8 +203,8 @@ namespace Azure.SignalRBench.Coordinator.Entities
                 config.RowKey = config.PartitionKey;
                 config.SignalRUnitSize = u;
                 config.ClientCons *= u;
-                config.Start *= u;
-                config.End *= u;
+                config.Start *=behavior==ClientBehavior.Broadcast|| behavior==ClientBehavior.GroupBroadcast ?1: u;
+                config.End *= behavior==ClientBehavior.Broadcast|| behavior==ClientBehavior.GroupBroadcast ?1: u;
                 config.Rate = Unit2Rate(u);
                 config.Dir = dir;
                 config.ClientNum = 0;
