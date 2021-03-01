@@ -450,13 +450,13 @@ export class TestConfig extends Component {
                                     <option>Netframework</option>
                                 </Form.Control>
                             </Form.Group>}
-                            {(this.state.obj.service == "RawWebsocket" || (this.state.obj.service == "SignalR" && this.state.obj.mode == "Serverless")) &&
+                            {(this.state.obj.service == "RawWebsocket" || (this.state.obj.service == "SignalR" && this.state.obj.mode == "Serverless" && this.state.obj.createMode=="ConnectionString")) &&
                                 <div>
                                     <strong>Add upstream settings: </strong>
                                     <code> https://{window.location.hostname}/upstream/{"{hub}"}/api/{"{category}"}/{"{event}"}</code>
                                 </div>
                             }
-                            {this.state.obj.service == "SignalR" && this.state.obj.mode == "Default" && <Form.Group  >
+                            {this.state.obj.service == "SignalR" && <Form.Group  >
                                 <Form.Label>CreateMode</Form.Label>
                                 <Form.Control name="createMode" type="select" onChange={this.handleChange} as="select">
                                     <option>ConnectionString</option>
@@ -468,7 +468,7 @@ export class TestConfig extends Component {
                                 <Form.Label >ConnectionString</Form.Label>
                                 <Form.Control name="connectionString" onChange={this.handleChange} placeholder="ASR Connection String." />
                             </Form.Group>}
-                            {this.state.obj.service == "SignalR" && window.perfppe &&this.state.obj.mode == "Default" && this.state.obj.createMode == "CreateByPerf"&& <Form.Group  >
+                            {this.state.obj.service == "SignalR" && window.perfppe  && this.state.obj.createMode == "CreateByPerf"&& <Form.Group  >
                                 <Form.Label>Environment</Form.Label>
                                 <Form.Control name="env" type="select" onChange={this.handleChange} as="select">
                                     <option>AzureGlobal</option>
