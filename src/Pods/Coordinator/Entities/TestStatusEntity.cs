@@ -17,5 +17,7 @@ namespace Azure.SignalRBench.Coordinator.Entities
         public bool Healthy { get; set; }
         
         public string Dir { get; set; }
+        
+        public string? Check { get; set; }
     }
 }

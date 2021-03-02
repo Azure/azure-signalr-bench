@@ -143,7 +143,6 @@ namespace Azure.SignalRBench.Coordinator
                     await Task.Delay(5000);
                     await UpdateTestReports(round, _roundTotalConnected);
                 }
-
                 await UpdateTestStatus("Stopping client connections");
                 await StopClientConnectionsAsync(messageClient, cancellationToken);
                 await UpdateTestStatus("Test Finishes");
@@ -284,6 +283,10 @@ namespace Azure.SignalRBench.Coordinator
                 }
             }
 
+            if (!roundStatus.Check())
+            {
+                _testStatusEntity.Check = "Suspicious";
+            }
             _roundStatusList.Add(roundStatus);
             _testStatusEntity.Report = JsonConvert.SerializeObject(_roundStatusList);
             await _testStatusAccessor.UpdateAsync(_testStatusEntity);

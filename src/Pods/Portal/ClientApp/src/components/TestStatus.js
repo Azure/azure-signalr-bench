@@ -57,7 +57,10 @@ export class TestStatus extends Component {
                             data = testStatus.errorInfo
                             cb = this.errorInfo
                         } else if (testStatus.report) {
-                            clz = "ui teal mini button"
+                            if (testStatus.check ==undefined || testStatus.check== "pass")
+                                clz = "ui teal mini button"
+                            else
+                                clz = "ui yellow mini button"
                         }
                         return <tr key={trkey}>
                             <td>{testStatus.partitionKey}</td>

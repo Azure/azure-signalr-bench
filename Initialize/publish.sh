@@ -206,7 +206,7 @@ if [[ $ALL || $AUTOSCALE ]]; then
   az aks update \
     --resource-group $RESOURCE_GROUP \
     -n $KUBERNETES_SEVICES \
-    --cluster-autoscaler-profile scale-down-delay-after-add=60m scale-down-unneeded-time=60m scale-down-utilization-threshold=0.5 skip-nodes-with-system-pods=false new-pod-scale-up-delay=1s
+    --cluster-autoscaler-profile scale-down-delay-after-add=60m scale-down-unneeded-time=60m scale-down-utilization-threshold=0.5 skip-nodes-with-system-pods=false new-pod-scale-up-delay=1s ok-total-unready-count=0 
 fi
 
 if [[ $ALL || $PPE ]]; then
