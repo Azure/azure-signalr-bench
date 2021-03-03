@@ -246,7 +246,8 @@ namespace Azure.SignalRBench.Coordinator.Entities
                 Protocol = Protocol,
                 Rate = Rate,
                 LastCronTime = LastCronTime,
-                Tags = Tags
+                Tags = Tags,
+                ServerUrl = ServerUrl
             };
         }
 

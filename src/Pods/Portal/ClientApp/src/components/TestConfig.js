@@ -11,7 +11,7 @@ import Terminal from 'terminal-in-react';
 export class TestConfig extends Component {
     constructor(props) {
         super(props);
-        this.defaultObj={ signalRUnitSize: 1, mode: "Default", service: "SignalR", Scenario: "Echo", framework: "Netcore", env: "AzureGlobal", createMode: "ConnectionString" };
+        this.defaultObj={ signalRUnitSize: 1, mode: "Default", service: "SignalR", scenario: "Echo", framework: "Netcore", env: "AzureGlobal", createMode: "ConnectionString" };
         this.state = {
             show: false, loading: true, obj:JSON.parse(JSON.stringify(this.defaultObj)),
             showjson: false,
@@ -21,6 +21,7 @@ export class TestConfig extends Component {
             activeIndex: { "Default": true }
         };
         this.handleClose = this.handleClose.bind(this);
+        this.handleFork = this.handleFork.bind(this);
         this.handleShow = this.handleShow.bind(this);
         this.handleJsonClose = this.handleJsonClose.bind(this);
         this.handleJsonShow = this.handleJsonShow.bind(this);
@@ -76,6 +77,14 @@ export class TestConfig extends Component {
     handleClose() {
         this.setState({
             show: false
+        })
+    }
+    handleFork(e) {
+        var content = JSON.parse(e.target.getAttribute("value"))
+
+        this.setState({
+            show: true,
+            obj:content
         })
     }
     handleShow() {
@@ -149,6 +158,7 @@ export class TestConfig extends Component {
     async handleSubmit() {
         console.log(this.state.obj)
         const testName = this.state.obj["rowKey"]
+        this.state.obj.partitionKey=this.state.obj.rowKey
         if ((testName == undefined) || !(testName.match("^[a-z0-9]([-a-z0-9]*[a-z0-9])?$"))) {
             alert("invalid testName. Should be of format [a-z0-9]([-a-z0-9]*[a-z0-9]?)")
             return
@@ -169,7 +179,7 @@ export class TestConfig extends Component {
         if (response.status != 200) {
             var result = await response.text()
             console.log(result)
-            alert("json:" + result)
+            alert(result)
             return
         }
         await Util.CheckAuth(response)
@@ -373,6 +383,7 @@ export class TestConfig extends Component {
                                             <th>ClientConnections</th>
                                             <th>Creater</th>
                                             <th>Config</th>
+                                            <th>Fork</th>
                                             <th>Start</th>
                                             <th>Remove</th>
 
@@ -388,6 +399,7 @@ export class TestConfig extends Component {
                                                 <td>{testConfig.clientCons}</td>
                                                 <td>{testConfig.user}</td>
                                                 <td><Icon size="large" name='file code outline' value={json} onClick={this.handleJsonShow} /></td>
+                                                <td><Icon size="large" name='gay' value={json} onClick={this.handleFork} /></td>
                                                 <td ><Button color="teal" size='mini' value={testConfig["partitionKey"]} onClick={this.handleStart}>Run</Button></td>
                                                 <td ><Button color="orange" size='mini' value={testConfig["partitionKey"]} onClick={this.handleDelete}>Delete</Button></td>
                                             </tr>
@@ -410,6 +422,8 @@ export class TestConfig extends Component {
         //remove the terminal blank. The autofocus is removed by https://github.com/nitin42/terminal-in-react/issues/59
         var terminal = document.querySelector('.terminal')
         terminal && terminal.children[0].classList.remove('gSZAyM')
+        if(this.state.obj.createMode==null)
+           this.state.obj.createMode=this.state.obj.serverUrl!=null?"SelfHostedServer":this.state.obj.connectionString!=null?"ConnectionString":"CreateByPerf";
         return (
             <>
                 <Modal show={this.state.showjson} dialogClassName="modalCss" onHide={this.handleJsonClose}>
@@ -426,11 +440,11 @@ export class TestConfig extends Component {
                         <Form name="CreateConfigForm">
                             <Form.Group >
                                 <Form.Label >TestName</Form.Label>
-                                <Form.Control name="rowKey" onChange={this.handleChange} placeholder="give a unique name for this test" />
+                                <Form.Control name="rowKey" onChange={this.handleChange} placeholder="give a unique name for this test" defaultValue={this.state.obj.rowKey} />
                             </Form.Group>
                             <Form.Group  >
                                 <Form.Label>Service Name</Form.Label>
-                                <Form.Control name="service" type="select" onChange={this.handleChange} as="select">
+                                <Form.Control name="service" type="select" onChange={this.handleChange} as="select" defaultValue={this.state.obj.service}>
                                     <option>SignalR</option>
                                     <option>RawWebsocket</option>
                                 </Form.Control>
@@ -438,14 +452,14 @@ export class TestConfig extends Component {
                           
                             {this.state.obj.service == "SignalR" && <Form.Group  >
                                 <Form.Label>Service Mode</Form.Label>
-                                <Form.Control name="mode" type="select" onChange={this.handleChange} as="select">
+                                <Form.Control name="mode" type="select" onChange={this.handleChange} as="select" defaultValue={this.state.obj.mode}>
                                     <option>Default</option>
                                     <option>Serverless</option>
                                 </Form.Control>
                             </Form.Group>}
                             {this.state.obj.service == "SignalR" && this.state.obj.mode == "Default" && <Form.Group  >
                                 <Form.Label>Framework</Form.Label>
-                                <Form.Control name="framework" type="select" onChange={this.handleChange} as="select">
+                                <Form.Control name="framework" type="select" onChange={this.handleChange} as="select" defaultValue={this.state.obj.framework}>
                                     <option>Netcore</option>
                                     <option>Netframework</option>
                                 </Form.Control>
@@ -458,7 +472,7 @@ export class TestConfig extends Component {
                             }
                             {this.state.obj.service == "SignalR" && <Form.Group  >
                                 <Form.Label>CreateMode</Form.Label>
-                                <Form.Control name="createMode" type="select" onChange={this.handleChange} as="select">
+                                <Form.Control name="createMode" type="select" onChange={this.handleChange} as="select" defaultValue={this.state.obj.createMode}>
                                     <option>ConnectionString</option>
                                     <option>CreateByPerf</option>
                                     <option>SelfHostedServer</option>
@@ -466,18 +480,18 @@ export class TestConfig extends Component {
                             </Form.Group>}
                             {this.state.obj.createMode == "ConnectionString" && <Form.Group >
                                 <Form.Label >ConnectionString</Form.Label>
-                                <Form.Control name="connectionString" onChange={this.handleChange} placeholder="ASR Connection String." />
+                                <Form.Control name="connectionString" onChange={this.handleChange} placeholder="ASR Connection String." defaultValue={this.state.obj.connectionString} />
                             </Form.Group>}
                             {this.state.obj.service == "SignalR" && window.perfppe  && this.state.obj.createMode == "CreateByPerf"&& <Form.Group  >
                                 <Form.Label>Environment</Form.Label>
-                                <Form.Control name="env" type="select" onChange={this.handleChange} as="select">
+                                <Form.Control name="env" type="select" onChange={this.handleChange} as="select" defaultValue={this.state.obj.env}>
                                     <option>AzureGlobal</option>
                                     <option>PPE</option>
                                 </Form.Control>
                             </Form.Group>}
                             {this.state.obj.service == "SignalR" && this.state.obj.mode == "Default" && this.state.obj.createMode == "CreateByPerf" && <Form.Group  >
                                 <Form.Label>Signarl unit size</Form.Label>
-                                <Form.Control ref={this.unitRef} name="signalRUnitSize" onChange={this.handleChangeNum} as="select">
+                                <Form.Control ref={this.unitRef} name="signalRUnitSize" onChange={this.handleChangeNum} as="select" defaultValue={this.state.obj.signalRUnitSize}>
                                     <option>1</option>
                                     <option>2</option>
                                     <option>5</option>
@@ -489,19 +503,19 @@ export class TestConfig extends Component {
                             </Form.Group>}
                             {this.state.obj.service == "SignalR" && this.state.obj.mode == "Default" && this.state.obj.createMode == "CreateByPerf" && <Form.Group >
                                 <Form.Label >Tags</Form.Label>
-                                <Form.Control name="tags" onChange={this.handleChange} placeholder="key1=value1;key2=value2" />
+                                <Form.Control name="tags" onChange={this.handleChange} placeholder="key1=value1;key2=value2" defaultValue={this.state.obj.tags} />
                             </Form.Group>}
                             {this.state.obj.service == "SignalR" && this.state.obj.mode == "Default" && this.state.obj.createMode == "SelfHostedServer" && <Form.Group >
                                 <Form.Label >ServerlUrl</Form.Label>
-                                <Form.Control name="serverUrl" onChange={this.handleChange} placeholder="http(s)://host:port" />
+                                <Form.Control name="serverUrl" onChange={this.handleChange} placeholder="http(s)://host:port"  defaultValue={this.state.obj.serverUrl}/>
                             </Form.Group>}
                             <Form.Group >
                                 <Form.Label>Total client connections</Form.Label>
-                                <Form.Control name="clientCons" onChange={this.handleChangeNum} placeholder="set the Total Client connections. (Default:1000)" />
+                                <Form.Control name="clientCons" onChange={this.handleChangeNum} placeholder="set the Total Client connections. (Default:1000)" defaultValue={this.state.obj.clientCons} />
                             </Form.Group>
                             <Form.Group >
                                 <Form.Label>Total client connections establish round num</Form.Label>
-                                <Form.Control name="ConnectEstablishRoundNum" onChange={this.handleChangeNum} placeholder="Establish all connections gradually. (Default:1)" />
+                                <Form.Control name="connectEstablishRoundNum" onChange={this.handleChangeNum} placeholder="Establish all connections gradually. (Default:1)" defaultValue={this.state.obj.connectEstablishRoundNum}/>
                             </Form.Group>
                              <Form.Group >
                                      <Form.Label>Client number</Form.Label>
@@ -513,20 +527,20 @@ export class TestConfig extends Component {
                              </Form.Group>}
                             <Form.Group  >
                                 <Form.Label>Testing Scenario</Form.Label>
-                                <Form.Control name="Scenario" type="select" onChange={this.handleChange} as="select">
+                                <Form.Control name="scenario" type="select" onChange={this.handleChange} as="select" defaultValue={this.state.obj.scenario}>
                                     <option>Echo</option>
                                     <option>Broadcast</option>
                                     <option>GroupBroadcast</option>
                                     <option>P2P</option>
                                 </Form.Control>
                             </Form.Group>
-                            {this.state.obj.Scenario == "GroupBroadcast" && <Form.Group >
+                            {this.state.obj.scenario == "GroupBroadcast" && <Form.Group >
                                 <Form.Label>GroupSize</Form.Label>
-                                <Form.Control name="GroupSize" onChange={this.handleChangeNum} placeholder="set the test server number. (Default:100)" />
+                                <Form.Control name="groupSize" onChange={this.handleChangeNum} placeholder="set the test server number. (Default:100)" defaultValue={this.state.obj.groupSize}/>
                             </Form.Group>}
                             <Form.Group  >
                                 <Form.Label>Protocol</Form.Label>
-                                <Form.Control name="Protocol" onChange={this.handleChange} as="select">
+                                <Form.Control name="protocol" onChange={this.handleChange} as="select" defaultValue={this.state.obj.protocol}>
                                     <option>WebSocketsWithJson</option>
                                     {this.state.obj.service == "SignalR" && this.state.obj.mode == "Default" && this.state.obj.framework == "Netcore" && <option>WebSocketsWithMessagePack</option>}
                                     <option>ServerSideEventsWithJson</option>
@@ -536,31 +550,31 @@ export class TestConfig extends Component {
                             </Form.Group>
                             <Form.Group >
                                 <Form.Label>Connection Rate</Form.Label>
-                                <Form.Control name="Rate" onChange={this.handleChangeNum} placeholder="set the Connection Rate. (Default:200)" />
+                                <Form.Control name="rate" onChange={this.handleChangeNum} placeholder="set the Connection Rate. (Default:200)" defaultValue={this.state.obj.rate}/>
                             </Form.Group>
                             <Form.Group >
                                 <Form.Label>Round Durations</Form.Label>
-                                <Form.Control name="RoundDurations" onChange={this.handleChangeNum} placeholder="Time each round takes. (60)[Unit: s]" />
+                                <Form.Control name="roundDurations" onChange={this.handleChangeNum} placeholder="Time each round takes. (60)[Unit: s]" defaultValue={this.state.obj.roundDurations}/>
                             </Form.Group>
                             <Form.Group >
                                 <Form.Label>Round Nums </Form.Label>
-                                <Form.Control name="RoundNum" onChange={this.handleChangeNum} placeholder="how many rounds to test. (Default:5) " />
+                                <Form.Control name="roundNum" onChange={this.handleChangeNum} placeholder="how many rounds to test. (Default:5) " defaultValue={this.state.obj.roundNum}/>
                             </Form.Group>
                             <Form.Group >
                                 <Form.Label>Round Start Index</Form.Label>
-                                <Form.Control name="Start" onChange={this.handleChangeNum} placeholder="Number of connections sending requests at first round. (1)" />
+                                <Form.Control name="start" onChange={this.handleChangeNum} placeholder="Number of connections sending requests at first round. (1)" defaultValue={this.state.obj.start}/>
                             </Form.Group>
                             <Form.Group >
                                 <Form.Label>Round End Index</Form.Label>
-                                <Form.Control name="End" onChange={this.handleChangeNum} placeholder="Number of connections sending requests at last round. (Start)" />
+                                <Form.Control name="end" onChange={this.handleChangeNum} placeholder="Number of connections sending requests at last round. (Start)" defaultValue={this.state.obj.end}/>
                             </Form.Group>
                             <Form.Group >
                                 <Form.Label>MessageSize </Form.Label>
-                                <Form.Control name="MessageSize" onChange={this.handleChangeNum} placeholder="set the message size. (Default:2048) [unit KB]) " />
+                                <Form.Control name="messageSize" onChange={this.handleChangeNum} placeholder="set the message size. (Default:2048) [unit KB]) " defaultValue={this.state.obj.messageSize}/>
                             </Form.Group>
                             <Form.Group >
                                 <Form.Label>Sending Interval </Form.Label>
-                                <Form.Control name="Interval" onChange={this.handleChangeNum} placeholder="message sending interval  (Default:1000) [unit ms]) " />
+                                <Form.Control name="interval" onChange={this.handleChangeNum} placeholder="message sending interval  (Default:1000) [unit ms]) " defaultValue={this.state.obj.interval} />
                             </Form.Group>
                         </Form>
                     </Modal.Body>
