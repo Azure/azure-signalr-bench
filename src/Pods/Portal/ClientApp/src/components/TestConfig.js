@@ -331,11 +331,11 @@ export class TestConfig extends Component {
                                         startdir:
                                         (args, print, runCommand) => {
                                             console.log(args)
-                                            if (args.length != 3) {
-                                                print("Usage: start {dir} {index}")
+                                            if (args.length != 5) {
+                                                print("Usage: start {dir} {index} {unitLimit} {instanceLimit}")
                                                 return
                                             }
-                                            fetch(`testconfig/batch/starttest/${args[1]}?index=${args[2]}`, {
+                                            fetch(`testconfig/batch/starttest/${args[1]}?index=${args[2]}&unitLimit=${args[3]}&instanceLimit=${args[4]}`, {
                                                 method: 'POST',
                                                 redirect: 'manual'
                                             }).then(response => {
@@ -357,7 +357,7 @@ export class TestConfig extends Component {
                                     move: 'move {testName} {dirName}', movedir: 'movedir {dirName} {dirName}', cron: "run test periodically [Unix version crontab]. Usage: cron {testName} {0_12_*_*_*}",
                                     auth: 'auth {user} {role}. Generate a password for a user with that role',
                                     batch: 'batch {testName} {group} {units[ex:1,2,5,100]. Generate different config from a template for dif units',
-                                    startdir: 'Usage: start {dir} {index}. Start all tests in a dir with custom index.'
+                                    startdir: 'Usage: start {dir} {index} {unitLimit} {instanceLimit}. Start all tests in a dir with custom index.'
 
                                 }}
                                 msg='Type help to see all supported commands'

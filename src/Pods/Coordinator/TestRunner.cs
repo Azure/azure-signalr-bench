@@ -41,6 +41,8 @@ namespace Azure.SignalRBench.Coordinator
         private string _url = "http://localhost:8080/";
         private static int _scalelock = 0;
         private static volatile int _unitTotal = 0;
+        private static volatile int _instanceTotal = 0;
+        private static volatile string? currentBatch = null;
         private static object _unitLock=new object();
 
         public TestRunner(
@@ -171,6 +173,7 @@ namespace Azure.SignalRBench.Coordinator
                         if (Job.ServiceSetting[0].AsrsConnectionString == null)
                         {
                             _unitTotal -= Job.ServiceSetting[0].Size.Value;
+                            _instanceTotal--;
                         }
                     }
                     await messageClient.DeleteHashTableAsync();
@@ -316,8 +319,9 @@ namespace Azure.SignalRBench.Coordinator
                 await Task.Delay(StaticRandom.Next(5000));
                 lock (_unitLock)
                 {
-                    if (_unitTotal >= 300) continue;
+                    if (_unitTotal >= Job.ServiceSetting[0].UnitLimit||_instanceTotal>=Job.ServiceSetting[0].InstanceLimit) continue;
                     _unitTotal += ss.Size.Value;
+                    _instanceTotal++;
                     break;
                 }
             }

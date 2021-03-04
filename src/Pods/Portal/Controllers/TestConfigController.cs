@@ -242,7 +242,7 @@ namespace Portal.Controllers
         [Authorize(Policy = PerfConstants.Policy.RoleLogin,
             Roles = PerfConstants.Roles.Contributor + "," + PerfConstants.Roles.Pipeline)]
         [HttpPost("batch/StartTest/{dir}")]
-        public async Task<ActionResult> StartTestAsync(string dir, string index)
+        public async Task<ActionResult> StartTestAsync(string dir, string index,int unitLimit=300,int instanceLimit=10)
         {
             index = index.ToLower();
             var configTable = await _perfStorage.GetTableAsync<TestConfigEntity>(PerfConstants.TableNames.TestConfig);
@@ -283,7 +283,7 @@ namespace Portal.Controllers
                             await statusTable.DeleteAsync(exist);
                         }
                         await statusTable.InsertAsync(testEntity); 
-                         await queue.SendAsync(testConfigEntity.ToTestJob(_clusterState,index));
+                         await queue.SendAsync(testConfigEntity.ToTestJob(_clusterState,index,unitLimit,instanceLimit));
                     }
                     catch (Exception e)
                     {

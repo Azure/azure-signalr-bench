@@ -89,7 +89,7 @@ namespace Azure.SignalRBench.Coordinator.Entities
             }
         }
 
-        public TestJob ToTestJob(ClusterState clusterState,string index=null)
+        public TestJob ToTestJob(ClusterState clusterState,string index=null,int unitLimit=100,int instanceLimit=10)
         {
             //creating round settings
             var roundsettings = new List<RoundSetting>();
@@ -148,7 +148,9 @@ namespace Azure.SignalRBench.Coordinator.Entities
                         Tier = "standard",
                         Size = SignalRUnitSize,
                         Env = Env,
-                        Tags = Tags
+                        Tags = Tags,
+                        UnitLimit = unitLimit,
+                        InstanceLimit = instanceLimit
                     }
                 },
                 ScenarioSetting = new ScenarioSetting
