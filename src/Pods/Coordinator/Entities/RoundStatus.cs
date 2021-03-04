@@ -7,40 +7,43 @@ namespace Azure.SignalRBench.Coordinator.Entities
         public int ActiveConnection { get; set; }
         public int RoundConnected { get; set; }
 
+        private static double _pencent = 0.001;
+
         public bool Check()
         {
             //Test , impose a strict condition
-            if (ReconnectingCount > 0)
+            var threshold = RoundConnected*_pencent;
+            if (ReconnectingCount > threshold)
             {
                 return false;
             }
 
-            if (TotalReconnectCount > 0)
+            if (TotalReconnectCount > threshold)
             {
                 return false;
             }
 
-            if (MessageRecieved < ExpectedRecievedMessageCount)
+            if (MessageRecieved < ExpectedRecievedMessageCount*(1-_pencent))
             {
                 return false;
             }
 
-            if (ConnectedCount < RoundConnected)
+            if (ConnectedCount < RoundConnected*(1-_pencent))
             {
                 return false;
             }
 
-            if (Latency[LatencyClass.LessThan2s]>0)
+            if (Latency[LatencyClass.LessThan2s]>MessageRecieved*(1-_pencent))
             {
                 return false;
             }
             
-            if (Latency[LatencyClass.LessThan5s]>0)
+            if (Latency[LatencyClass.LessThan5s]>MessageRecieved*(1-_pencent))
             {
                 return false;
             }
             
-            if (Latency[LatencyClass.MoreThan5s]>0)
+            if (Latency[LatencyClass.MoreThan5s]>MessageRecieved*(1-_pencent))
             {
                 return false;
             }

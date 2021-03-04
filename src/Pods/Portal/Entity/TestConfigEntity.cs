@@ -89,7 +89,7 @@ namespace Azure.SignalRBench.Coordinator.Entities
             }
         }
 
-        public TestJob ToTestJob(ClusterState clusterState,string index=null,int unitLimit=100,int instanceLimit=10)
+        public TestJob ToTestJob(ClusterState clusterState,string index=null,int unitLimit=100,int instanceLimit=10,string dir=null,int total=1)
         {
             //creating round settings
             var roundsettings = new List<RoundSetting>();
@@ -179,7 +179,9 @@ namespace Azure.SignalRBench.Coordinator.Entities
                 {
                     ServerCount = ServerNum,
                     ClientCount = ClientNum
-                }
+                },
+                Dir = dir,
+                Total = total
             };
             Console.WriteLine(JsonConvert.SerializeObject(testJob));
             return testJob;

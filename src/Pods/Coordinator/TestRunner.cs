@@ -40,9 +40,10 @@ namespace Azure.SignalRBench.Coordinator
 
         private string _url = "http://localhost:8080/";
         private static int _scalelock = 0;
+        private static volatile string? _dir;
+        private static volatile int _finishedJob = 0;
         private static volatile int _unitTotal = 0;
         private static volatile int _instanceTotal = 0;
-        private static volatile string? currentBatch = null;
         private static object _unitLock=new object();
 
         public TestRunner(
@@ -91,12 +92,28 @@ namespace Azure.SignalRBench.Coordinator
                 return;
             }
 
+            while (true)
+            {
+                await Task.Delay(2000);
+                if (Job.Dir == null)
+                {
+                    break;
+                }
+
+                lock (_unitLock)
+                {
+                    if (_dir == null|| Job.Dir==_dir)
+                    {
+                        _dir = Job.Dir;
+                        break;
+                    }  
+                }
+            }
             _timer.Start();
             _testStatusAccessor =
                 await PerfStorage.GetTableAsync<TestStatusEntity>(PerfConstants.TableNames.TestStatus);
             var pairs = Job.TestId.Split("--");
             Job.TestId = Job.TestId.Replace("--", "-");
-            await Task.Delay(2000);
             _testStatusEntity =
                 await _testStatusAccessor.GetAsync(pairs[0], pairs[1]);
             var clientAgentCount = Job.ScenarioSetting.TotalConnectionCount;
@@ -107,8 +124,6 @@ namespace Azure.SignalRBench.Coordinator
             var nodeCount = clientPodCount + serverPodCount;
             _logger.LogInformation("Test job {testId}: Node count: {count}.", Job.TestId, nodeCount);
             var asrsConnectionStringsTask = PrepairAsrsInstancesAsync(cancellationToken);
-            if (!asrsConnectionStringsTask.IsCompleted)
-                await UpdateTestStatus("Creating SignalR instance..");
             //leave this to autoscale. When ca is enabled, manual config won't work
             // await AksProvider.EnsureNodeCountAsync(NodePoolIndex, nodeCount, cancellationToken);
             using var messageClient = await MessageClient.ConnectAsync(RedisConnectionString, Job.TestId, PodName);
@@ -168,14 +183,6 @@ namespace Azure.SignalRBench.Coordinator
                         into env
                         select SignalRProvider.GetSignalRProvider(env.Key).DeleteResourceGroupAsync(Job.TestId));
                     _logger.LogInformation("Test job {testId}: Removing hashTable in redis.", Job.TestId);
-                    lock (_unitLock)
-                    {
-                        if (Job.ServiceSetting[0].AsrsConnectionString == null)
-                        {
-                            _unitTotal -= Job.ServiceSetting[0].Size.Value;
-                            _instanceTotal--;
-                        }
-                    }
                     await messageClient.DeleteHashTableAsync();
                     _logger.LogInformation("Test job {testId}: Removing client pods.", Job.TestId);
                     await K8sProvider.DeleteClientPodsAsync(Job.TestId);
@@ -186,6 +193,24 @@ namespace Azure.SignalRBench.Coordinator
                 catch (Exception ignore)
                 {
                     await UpdateTestStatus("Clean up failed", false, ignore);
+                }
+                finally
+                {
+                    lock (_unitLock)
+                    {
+                        if (Job.Dir != null)
+                        {
+                            _unitTotal -= Job.ServiceSetting[0].Size.Value;
+                            _instanceTotal--;
+                            _finishedJob++;
+                            if (_finishedJob == Job.Total)
+                            {
+                                _finishedJob = 0;
+                                _instanceTotal = 0;
+                                _dir = null;
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -301,6 +326,19 @@ namespace Azure.SignalRBench.Coordinator
             for (var i = 0; i < Job.ServiceSetting.Length; i++)
             {
                 var ss = Job.ServiceSetting[i];
+                await UpdateTestStatus("task queueing..");
+                while (Job.Dir!=null)
+                {
+                    await Task.Delay(StaticRandom.Next(5000));
+                    lock (_unitLock)
+                    {
+                        if (_unitTotal >= Job.ServiceSetting[0].UnitLimit||_instanceTotal>=Job.ServiceSetting[0].InstanceLimit) continue;
+                        _unitTotal += ss.Size.Value;
+                        _instanceTotal++;
+                        break;
+                    }
+                }
+                await UpdateTestStatus("Creating SignalR instance..");
                 if (ss.AsrsConnectionString == null)
                     asrsConnectionStrings[i] =
                         await CreateAsrsAsync(ss, PerfConstants.ConfigurationKeys.PerfV2 + "-" + Job.TestId + '-' + i,
@@ -314,18 +352,6 @@ namespace Azure.SignalRBench.Coordinator
 
         private async Task<string> CreateAsrsAsync(ServiceSetting ss, string name, CancellationToken cancellationToken)
         {
-            while (true)
-            {
-                await Task.Delay(StaticRandom.Next(5000));
-                lock (_unitLock)
-                {
-                    if (_unitTotal >= Job.ServiceSetting[0].UnitLimit||_instanceTotal>=Job.ServiceSetting[0].InstanceLimit) continue;
-                    _unitTotal += ss.Size.Value;
-                    _instanceTotal++;
-                    break;
-                }
-            }
-            await Task.Delay(StaticRandom.Next(5000+_unitTotal*100));
 
             _logger.LogInformation("Test job {testId}: Creating SignalR service instance.", Job.TestId);
             var signalRProvider = SignalRProvider.GetSignalRProvider(ss.Env);
@@ -454,33 +480,39 @@ namespace Azure.SignalRBench.Coordinator
                 await Task.Delay(5000);
             }
 
-            await UpdateTestStatus("Creating deployment..");
-            await messageClient.WithHandlers(
-                MessageHandler.CreateCommandHandler(
-                    Roles.Coordinator,
-                    Commands.Coordinator.ReportReady,
-                    GetReportReady(clientAgentCount, clientPodCount, serverPodCount, out var clientPodReady,
-                        out var serverPodReady)));
+            try
+            {
+                await UpdateTestStatus("Creating deployment..");
+                await messageClient.WithHandlers(
+                    MessageHandler.CreateCommandHandler(
+                        Roles.Coordinator,
+                        Commands.Coordinator.ReportReady,
+                        GetReportReady(clientAgentCount, clientPodCount, serverPodCount, out var clientPodReady,
+                            out var serverPodReady)));
 
-            _logger.LogInformation("Test job {testId}: Creating server pods.", Job.TestId);
-            _url =await K8sProvider.CreateServerPodsAsync(Job.TestId, asrsConnectionStrings,
-                serverPodCount, Job.TestMethod, cancellationToken);
-            _logger.LogInformation("Test job {testId}: Creating client pods.", Job.TestId);
-            await K8sProvider.CreateClientPodsAsync(Job.TestId, Job.TestMethod, clientPodCount, cancellationToken);
+                _logger.LogInformation("Test job {testId}: Creating server pods.", Job.TestId);
+                _url = await K8sProvider.CreateServerPodsAsync(Job.TestId, asrsConnectionStrings,
+                    serverPodCount, Job.TestMethod, cancellationToken);
+                _logger.LogInformation("Test job {testId}: Creating client pods.", Job.TestId);
+                await K8sProvider.CreateClientPodsAsync(Job.TestId, Job.TestMethod, clientPodCount, cancellationToken);
 
-            await Task.WhenAll(
-                Task.Run(async () =>
-                {
-                    await clientPodReady;
-                    _logger.LogInformation("Test job {testId}: Client pods ready.", Job.TestId);
-                }),
-                Task.Run(async () =>
-                {
-                    await serverPodReady;
-                    _logger.LogInformation("Test job {testId}: Server pods ready.", Job.TestId);
-                }));
-            _logger.LogInformation("Reset scale control to 0.");
-            Interlocked.CompareExchange(ref _scalelock, 0, 1);
+                await Task.WhenAll(
+                    Task.Run(async () =>
+                    {
+                        await clientPodReady;
+                        _logger.LogInformation("Test job {testId}: Client pods ready.", Job.TestId);
+                    }),
+                    Task.Run(async () =>
+                    {
+                        await serverPodReady;
+                        _logger.LogInformation("Test job {testId}: Server pods ready.", Job.TestId);
+                    }));
+            }
+            finally
+            {
+                _logger.LogInformation("Reset scale control to 0.");
+                Interlocked.CompareExchange(ref _scalelock, 0, 1);
+            }
         }
 
         private async Task StartClientConnectionsAsync(

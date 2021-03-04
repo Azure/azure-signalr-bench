@@ -13,6 +13,5 @@ namespace Azure.SignalRBench.Common
         public string Tags { get; set; }
         public int UnitLimit { get; set; }
         public int InstanceLimit { get; set; }
-        public string? Dir { get; set; }
     }
 }

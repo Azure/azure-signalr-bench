@@ -249,7 +249,8 @@ namespace Portal.Controllers
             var configs = await configTable.QueryAsync(from row in configTable.Rows
                 where row.Dir == dir
                 select row).ToListAsync();
-            if (configs.Count == 0)
+            var total = configs.Count;
+            if ( total== 0)
             {
                 return BadRequest($"Dir {dir} doesn't exist");
             }
@@ -283,7 +284,7 @@ namespace Portal.Controllers
                             await statusTable.DeleteAsync(exist);
                         }
                         await statusTable.InsertAsync(testEntity); 
-                         await queue.SendAsync(testConfigEntity.ToTestJob(_clusterState,index,unitLimit,instanceLimit));
+                         await queue.SendAsync(testConfigEntity.ToTestJob(_clusterState,index,unitLimit,instanceLimit,dir,total));
                     }
                     catch (Exception e)
                     {

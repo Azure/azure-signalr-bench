@@ -7,7 +7,7 @@ namespace Azure.SignalRBench.Client
         public IClientAgent Create(string url, Protocol protocol, string[] groups, int globalIndex,
             ClientAgentContext context)
         {
-            return new SignalRServerlessClientAgent(url + TestId2HubNameConverter.GenerateHubName(context.TestId), protocol, $"user{globalIndex}", groups,
+            return new SignalRServerlessClientAgent(url + NameConverter.GenerateHubName(context.TestId), protocol, $"user{globalIndex}", groups,
                 globalIndex,
                 context);
         }
