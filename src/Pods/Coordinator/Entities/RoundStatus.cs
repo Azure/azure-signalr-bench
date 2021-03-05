@@ -33,17 +33,17 @@ namespace Azure.SignalRBench.Coordinator.Entities
                 return false;
             }
 
-            if (Latency[LatencyClass.LessThan2s]>MessageRecieved*(1-_pencent))
+            if (Latency[LatencyClass.LessThan2s]>MessageRecieved*_pencent)
             {
                 return false;
             }
             
-            if (Latency[LatencyClass.LessThan5s]>MessageRecieved*(1-_pencent))
+            if (Latency[LatencyClass.LessThan5s]>MessageRecieved*_pencent)
             {
                 return false;
             }
             
-            if (Latency[LatencyClass.MoreThan5s]>MessageRecieved*(1-_pencent))
+            if (Latency[LatencyClass.MoreThan5s]>MessageRecieved*_pencent)
             {
                 return false;
             }
