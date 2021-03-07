@@ -1,6 +1,9 @@
 ﻿import React, { Component, useEffect, useState } from 'react';
 import Modal from 'react-bootstrap/Modal'
+import ReactJson from 'react-json-view'
 import { Util } from './Util'
+import { Search, Grid, Header, Segment, Divider, Button, Icon, Accordion, Dropdown } from 'semantic-ui-react'
+
 export class TestStatus extends Component {
     constructor(props) {
         super(props);
@@ -8,6 +11,7 @@ export class TestStatus extends Component {
             loading: true,
             show: false,
             // report:[],
+            showjson:false,
             errorShow: false,
             error: "",
             currentTestStatus: {}
@@ -32,8 +36,35 @@ export class TestStatus extends Component {
         this.setState({ errorShow: true, error: error })
     }
 
+    handleJsonShow=(e)=> {
+        var content = JSON.parse(e.target.getAttribute("value"))
+        console.log(content)
+        delete content["ETag"]
+        content["TestName"] = content["RowKey"]
+        delete content["RowKey"]
+        delete content["PartitionKey"]
+        if (content["ConnectionString"])
+            delete content["SignalRUnitSize"]
+        console.log(content)
+        this.setState({
+            showjson: true,
+            json: content,
+        })
+    }
+    handleJsonClose=()=> {
+        this.setState({
+            showjson: false
+        })
+    }
     renderTestStatusTable(testStatuses) {
         return (
+            <div>
+                 <Modal show={this.state.showjson} dialogClassName="modalCss" onHide={this.handleJsonClose}>
+                    <Modal.Header closeButton>
+                        <Modal.Title>Config details</Modal.Title>
+                    </Modal.Header>
+                    <ReactJson src={this.state.json} displayDataTypes={false} sortKeys={true} name={false} />
+                </Modal>
             <table className='table table-striped' aria-labelledby="tabelLabel">
                 <thead>
                     <tr>
@@ -41,6 +72,7 @@ export class TestStatus extends Component {
                         <th>Index</th>
                         <th>Time</th>
                         <th>Creater</th>
+                        <th>Config</th>
                         <th>Status</th>
                         <th>Report</th>
                     </tr>
@@ -67,6 +99,7 @@ export class TestStatus extends Component {
                             <td>{testStatus.rowKey}</td>
                             <td>{testStatus.timestamp}</td>
                             <td>{testStatus.user}</td>
+                            <td><Icon size="large" name='file code outline' value={testStatus.config} onClick={this.handleJsonShow} /></td>
                             <td ><font color={colorstyle}>{testStatus.status}</font></td>
                             <td ><button className={clz} value={data} onClick={cb}>Report</button></td>
                         </tr>
@@ -75,6 +108,7 @@ export class TestStatus extends Component {
                     )}
                 </tbody>
             </table >
+            </div>
         );
     }
     render() {
@@ -82,8 +116,6 @@ export class TestStatus extends Component {
             ? <p><em>Loading...</em></p>
             : this.renderTestStatusTable(this.state.testStatuses);
         const state = this.state.currentTestStatus;
-        console.log("state is:")
-        console.log(state)
         var report = [];
         var config = {};
         var label = "";
