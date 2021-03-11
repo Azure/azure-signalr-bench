@@ -81,7 +81,8 @@ export class TestConfig extends Component {
     }
     handleFork(e) {
         var content = JSON.parse(e.target.getAttribute("value"))
-
+        delete content["clientNum"]
+        delete content["serverNum"]
         this.setState({
             show: true,
             obj:content
