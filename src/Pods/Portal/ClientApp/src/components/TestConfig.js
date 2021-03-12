@@ -18,7 +18,8 @@ export class TestConfig extends Component {
             json: {},
             testConfigs: [],
             total: [],
-            activeIndex: { "Default": true }
+            activeIndex: { "Default": true },
+            search:""
         };
         this.handleClose = this.handleClose.bind(this);
         this.handleFork = this.handleFork.bind(this);
@@ -45,6 +46,7 @@ export class TestConfig extends Component {
     }
 
     handleSearchChange(e, data) {
+        this.state.search=data
         if (data.value != undefined && data.value.trim()) {
             var acDir = {}
             var testConfigs = this.state.total.filter(x => x.rowKey.includes(data.value.trim()))
@@ -189,7 +191,7 @@ export class TestConfig extends Component {
     }
 
     componentDidMount() {
-        this.populateTestConfigData();
+        this.populateTestConfigData(); 
     }
 
     renderTestConfigsTable(testConfigs) {
@@ -625,6 +627,7 @@ export class TestConfig extends Component {
         await Util.CheckAuth(response)
         const data = await response.json();
         this.setState({ testConfigs: data, loading: false, total: data });
+        this.handleSearchChange(null,this.state.search)
     }
 
 
