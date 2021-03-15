@@ -103,6 +103,7 @@ function publish() {
   rm -rf publish
   echo "start to publish $Pod"
   dotnet publish -r linux-x64 -c release -o publish /p:useapphost=true
+  dotnet restore
   cd publish && zip -r ${Pod}.zip *
   echo "create dir:$Pod"
   az storage directory create -n "manifest/$Pod" --account-name $STORAGE_ACCOUNT -s $SA_SHARE
