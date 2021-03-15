@@ -45,6 +45,9 @@ namespace Azure.SignalRBench.Client
             {
                 Url = url;
                 _logger.LogInformation($"RawWebsocket endpoint:{url}");
+            }else if (url.Contains("http"))
+            {
+                Url = url.Trim() + "/";
             }
             else
             {
@@ -94,6 +97,7 @@ namespace Azure.SignalRBench.Client
         {
             //Just in case socket in server hasn't opened
             await Task.Delay(1000);
+            _context.Reset();
             for (int i = continueIndex; i < _clients.Length; i++)
             {
                 var globalIndex = GetGlobalIndex(i);
@@ -124,7 +128,10 @@ namespace Azure.SignalRBench.Client
                             try
                             {
                                 _logger.LogInformation($"{current} start to connect");
-                                await c.StartAsync(cancellationToken);
+                                using var delayCts = new CancellationTokenSource();
+                                using var lts = CancellationTokenSource.CreateLinkedTokenSource(delayCts.Token, cancellationToken);
+                                lts.CancelAfter(5000);                              
+                                await c.StartAsync(lts.Token);
                                 stopWatch.Stop();
                                 Interlocked.Add(ref count, 1);
                                 _logger.LogInformation(
@@ -178,7 +185,6 @@ namespace Azure.SignalRBench.Client
         public void StartScenario(Func<int, Action<IClientAgent, CancellationToken>> func,
             CancellationToken cancellationToken)
         {
-            _context.Reset();
             for (int i = 0; i < _clients.Length; i++)
             {
                 func(i)(_clients[i], cancellationToken);

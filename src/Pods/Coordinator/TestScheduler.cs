@@ -19,16 +19,16 @@ namespace Azure.SignalRBench.Coordinator
         private string? _defaultLocation;
 
         public TestScheduler(
-            PerfStorageProvider storageProvider,
+            IPerfStorage perfStorage,
             TestRunnerFactory testRunnerFactory,
             ILogger<TestScheduler> logger)
         {
-            StorageProvider = storageProvider;
+            PerfStorage = perfStorage;
             TestRunnerFactory = testRunnerFactory;
             _logger = logger;
         }
 
-        public PerfStorageProvider StorageProvider { get; }
+        public IPerfStorage PerfStorage { get; }
 
 
         public TestRunnerFactory TestRunnerFactory { get; }
@@ -38,7 +38,7 @@ namespace Azure.SignalRBench.Coordinator
         public async Task StartAsync(string defaultLocation)
         {
             _defaultLocation = defaultLocation;
-            var queue = await StorageProvider.Storage.GetQueueAsync<TestJob>(PerfConstants.QueueNames.PortalJob, true);
+            var queue = await PerfStorage.GetQueueAsync<TestJob>(PerfConstants.QueueNames.PortalJob, true);
             // create table.
             _ = RunAsync(queue, _cts.Token);
         }

@@ -19,7 +19,7 @@ namespace SignalRUpstream
         public MessagePublisher(string connectionString,string testId, ServiceTransportType serviceTransportType)
         {
             _connectionString = connectionString;
-            _hubName = TestId2HubNameConverter.GenerateHubName(testId);
+            _hubName = NameConverter.GenerateHubName(testId);
             _serviceTransportType = serviceTransportType;
             InitAsync().Wait();
         }

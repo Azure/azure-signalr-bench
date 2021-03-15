@@ -11,5 +11,7 @@ namespace Azure.SignalRBench.Common
         public int? Size { get; set; }
         public string Env { get; set; }
         public string Tags { get; set; }
+        public int UnitLimit { get; set; }
+        public int InstanceLimit { get; set; }
     }
 }

@@ -71,8 +71,9 @@ namespace Azure.SignalRBench.Coordinator
             _aksProvider.Initialize(servicePrincipal, subscription,
                 prefix + PerfConstants.ConfigurationKeys.PerfV2 + "rg",
                 prefix + PerfConstants.ConfigurationKeys.PerfV2 + "aks");
+            var location = (await locationTask).Value.Value;
             var azureGlobalSignalrProvider = new SignalRServiceManagement();
-            azureGlobalSignalrProvider.Initialize(servicePrincipal, subscription);
+            azureGlobalSignalrProvider.Initialize(servicePrincipal, subscription,location,prefix);
             _signalRProvider.AzureGlobal = azureGlobalSignalrProvider;
             //init ppe if available 
             try
@@ -91,7 +92,7 @@ namespace Azure.SignalRBench.Coordinator
                         throw new InvalidDataException("Unexpected null for ServicePrincipal.Tenant.")
                         , GetAzureEnvironment("PPE"));
                     var ppeSignalrProvider = new SignalRServiceManagement();
-                    ppeSignalrProvider.Initialize(ppeServicePrincipal, ppeSubscription);
+                    ppeSignalrProvider.Initialize(ppeServicePrincipal, ppeSubscription,location,prefix);
                     _signalRProvider.PPE = ppeSignalrProvider;
                 }
             }
@@ -100,7 +101,7 @@ namespace Azure.SignalRBench.Coordinator
                 // ignored
             }
 
-            await _scheduler.StartAsync((await locationTask).Value.Value);
+            await _scheduler.StartAsync(location);
         }
 
         public async Task StopAsync(CancellationToken cancellationToken)

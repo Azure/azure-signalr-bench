@@ -13,12 +13,12 @@ namespace Azure.SignalRBench.Coordinator
         Task CreateInstanceAsync(string resourceGroup, string name, string location, string tier, int size, string tags,
             SignalRServiceMode mode, CancellationToken cancellationToken);
 
-        Task CreateResourceGroupAsync(string resourceGroup, string location);
+        Task CreateResourceGroupAsync(string resourceGroup);
         Task DeleteResourceGroupAsync(string resourceGroup);
 
-        Task<string> GetKeyAsync(string resourceGroup, string name, string location,
+        Task<string> GetKeyAsync(string resourceGroup, string name, 
             CancellationToken cancellationToken);
 
-        void Initialize(AzureCredentials credentials, string subscription);
+        void Initialize(AzureCredentials credentials, string subscription,string location,string prefix);
     }
 }

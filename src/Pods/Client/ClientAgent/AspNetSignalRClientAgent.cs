@@ -36,10 +36,19 @@ namespace Azure.SignalRBench.Client
             };
             Connection.Closed += async () =>
             {
-                var ms = 1000 + StaticRandom.Next(1000);
-                await Task.Delay(ms);
-                ;
-                await StartAsync(default);
+                while (true)
+                {
+                    try
+                    {
+                        await Task.Delay(context.RetryPolicy.NextRetryDelay(null).Value.Milliseconds);
+                        await StartAsync(default);
+                        return;
+                    }
+                    catch (Exception ignore)
+                    {
+                        // ignored
+                    }
+                }
             };
         }
 

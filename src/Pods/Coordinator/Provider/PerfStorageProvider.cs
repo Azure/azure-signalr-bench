@@ -16,7 +16,7 @@ namespace Azure.SignalRBench.Coordinator
         public void Initialize(string connectionString)
         {
             ConnectionString = connectionString;
-            _storage = new PerfStorage(connectionString);
+            // _storage = new PerfStorage(connectionString);
         }
     }
 }

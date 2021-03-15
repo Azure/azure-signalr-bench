@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.RegularExpressions;
 using Azure.SignalRBench.Common;
 using Microsoft.Azure.Cosmos.Table;
@@ -20,11 +21,13 @@ namespace Azure.SignalRBench.Coordinator.Entities
 
         public string Framework { get; set; } = "Netcore";
 
-        public int ClientCons { get; set; } = 3000;
+        public int ClientCons { get; set; } = 1000;
 
         public int ConnectEstablishRoundNum { get; set; } = 1;
 
         public string? ConnectionString { get; set; }
+        
+        public string? ServerUrl { get; set; }
 
         public int SignalRUnitSize { get; set; }
 
@@ -80,9 +83,13 @@ namespace Azure.SignalRBench.Coordinator.Entities
 
             if (RoundNum <= 0) RoundNum = 5;
             if (!TagsRegex.IsMatch(Tags)) throw new Exception("Invalid tags pattern");
+            if (ServerUrl != null)
+            {
+                ServerNum = 0;
+            }
         }
 
-        public TestJob ToTestJob(ClusterState clusterState)
+        public TestJob ToTestJob(ClusterState clusterState,string index=null,int unitLimit=100,int instanceLimit=10,string dir=null,int total=1)
         {
             //creating round settings
             var roundsettings = new List<RoundSetting>();
@@ -130,18 +137,20 @@ namespace Azure.SignalRBench.Coordinator.Entities
 
             var testJob = new TestJob
             {
-                TestId = PartitionKey + '-' + InstanceIndex,
+                TestId = PartitionKey + "--" + (index ?? InstanceIndex.ToString()),
                 TestMethod = testCategory,
                 ServiceSetting = new[]
                 {
                     new ServiceSetting
                     {
-                        AsrsConnectionString = ConnectionString?.Trim(),
+                        AsrsConnectionString =ServerUrl ?? ConnectionString?.Trim(),
                         Location = Env.ToLower().Contains("ppe") ? clusterState.PPELocation : clusterState.Location,
                         Tier = "standard",
                         Size = SignalRUnitSize,
                         Env = Env,
-                        Tags = Tags
+                        Tags = Tags,
+                        UnitLimit = unitLimit,
+                        InstanceLimit = instanceLimit
                     }
                 },
                 ScenarioSetting = new ScenarioSetting
@@ -170,10 +179,95 @@ namespace Azure.SignalRBench.Coordinator.Entities
                 {
                     ServerCount = ServerNum,
                     ClientCount = ClientNum
-                }
+                },
+                Dir = dir,
+                Total = total
             };
             Console.WriteLine(JsonConvert.SerializeObject(testJob));
             return testJob;
+        }
+
+        public List<TestConfigEntity> GenerateTestConfigs(string dir, string units)
+        {
+            var configs = new List<TestConfigEntity>();
+            Enum.TryParse(Scenario, out ClientBehavior behavior);
+            foreach (var u in units.Split(",").Select(int.Parse))
+            {
+                if (u != 1 && u != 2 && u != 5 && u != 10 && u != 20 && u != 50 && u != 100)
+                {
+                    throw new Exception($"Unit:{u} is not supported");
+                }
+
+                if (SignalRUnitSize != 1)
+                {
+                    throw new Exception("Template should be unit 1");
+                }
+                var config = Copy();
+                config.PartitionKey =  config.PartitionKey +"-u" + u;
+                config.RowKey = config.PartitionKey;
+                config.SignalRUnitSize = u;
+                config.ClientCons *= u;
+                config.Start *=behavior==ClientBehavior.Broadcast|| behavior==ClientBehavior.GroupBroadcast ?1: u;
+                config.End *= behavior==ClientBehavior.Broadcast|| behavior==ClientBehavior.GroupBroadcast ?1: u;
+                config.Rate = Unit2Rate(u);
+                config.Dir = dir;
+                config.ClientNum = 0;
+                config.ServerNum = 0;
+                config.Init();
+                configs.Add(config);
+            }
+            return configs;
+        }
+
+        private TestConfigEntity Copy()
+        {
+            return new TestConfigEntity()
+            {
+                PartitionKey = PartitionKey,
+                RowKey = RowKey,
+                User = User,
+                ClientCons = ClientCons,
+                ClientNum = ClientNum,
+                ConnectEstablishRoundNum = ConnectEstablishRoundNum,
+                ConnectionString = ConnectionString,
+                Cron = Cron,
+                Dir = Dir,
+                End = End,
+                Env = Env,
+                Service = Service,
+                Mode = Mode,
+                Framework = Framework,
+                SignalRUnitSize = SignalRUnitSize,
+                ServerNum = ServerNum,
+                InstanceIndex = InstanceIndex,
+                Start = Start,
+                RoundNum = RoundNum,
+                GroupSize = GroupSize,
+                Scenario = Scenario,
+                RoundDurations = RoundDurations,
+                Interval = Interval,
+                MessageSize = MessageSize,
+                Protocol = Protocol,
+                Rate = Rate,
+                LastCronTime = LastCronTime,
+                Tags = Tags,
+                ServerUrl = ServerUrl
+            };
+        }
+
+        private static int Unit2Rate(int unit)
+        {
+            return unit switch
+            {
+                1 => 200,
+                2 => 250,
+                5 => 300,
+                10 => 400,
+                20 => 500,
+                50 => 800,
+                100 => 1600,
+                _ => 200
+            };
         }
     }
 }

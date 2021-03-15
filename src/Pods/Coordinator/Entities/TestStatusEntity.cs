@@ -8,7 +8,6 @@ namespace Azure.SignalRBench.Coordinator.Entities
 
         public string Status { get; set; }
 
-        //     public string Time { get; set; }
         public string Report { get; set; }
 
         public string Config { get; set; }
@@ -16,5 +15,9 @@ namespace Azure.SignalRBench.Coordinator.Entities
         public string? ErrorInfo { get; set; }
 
         public bool Healthy { get; set; }
+        
+        public string Dir { get; set; }
+        
+        public string? Check { get; set; }
     }
 }

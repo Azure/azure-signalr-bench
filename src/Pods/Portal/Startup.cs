@@ -81,9 +81,11 @@ namespace Portal
                     var secretClient = sp.GetService<SecretClient>();
                     try
                     {
-                        var connectionString = secretClient.GetSecretAsync("sa-accessKey").GetAwaiter().GetResult()
+                        var saConnectionString = secretClient.GetSecretAsync("sa-accessKey").GetAwaiter().GetResult()
                             .Value.Value;
-                        return new PerfStorage(connectionString);
+                        var cdbConnectionString = secretClient.GetSecretAsync("cdb-accessKey").GetAwaiter().GetResult()
+                            .Value.Value;
+                        return new PerfStorage(saConnectionString,cdbConnectionString);
                     }
                     catch (Exception e)
                     {

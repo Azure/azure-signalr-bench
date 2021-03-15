@@ -29,7 +29,7 @@ namespace Azure.SignalRBench.Storage
         {
             var op = TableOperation.Retrieve<T>(partitionKey, rowKey);
             var result = await _table.ExecuteAsync(op, cancellationToken: cancellationToken);
-            return (T)result.Result;
+            return (T) result.Result;
         }
 
         public async Task InsertAsync(T entity, CancellationToken cancellationToken)
@@ -59,6 +59,7 @@ namespace Azure.SignalRBench.Storage
             {
                 batch.Insert(entity);
             }
+
             var results = await _table.ExecuteBatchAsync(batch, cancellationToken: cancellationToken);
             for (int i = 0; i < entities.Count; i++)
             {
@@ -73,6 +74,7 @@ namespace Azure.SignalRBench.Storage
             {
                 batch.Replace(entity);
             }
+
             var results = await _table.ExecuteBatchAsync(batch, cancellationToken: cancellationToken);
             for (int i = 0; i < entities.Count; i++)
             {
@@ -87,13 +89,15 @@ namespace Azure.SignalRBench.Storage
             {
                 batch.Delete(entity);
             }
+
             return _table.ExecuteBatchAsync(batch, cancellationToken: cancellationToken);
         }
 
         public async Task<T?> GetFirstOrDefaultAsync(IQueryable<T> query, CancellationToken cancellationToken) =>
             await QueryAsync(query.Take(1), cancellationToken).FirstOrDefaultAsync();
 
-        public async IAsyncEnumerable<T> QueryAsync(IQueryable<T> query, [EnumeratorCancellation] CancellationToken cancellationToken)
+        public async IAsyncEnumerable<T> QueryAsync(IQueryable<T> query,
+            [EnumeratorCancellation] CancellationToken cancellationToken)
         {
             var tq = QueryParser.Parse(query);
             TableContinuationToken? token = null;
@@ -106,6 +110,24 @@ namespace Azure.SignalRBench.Storage
                     yield return item;
                 }
             } while (token != null);
+        }
+
+        public async IAsyncEnumerable<T> QueryAsync(TableQuery<T> tq,int n,
+            [EnumeratorCancellation] CancellationToken cancellationToken)
+        {
+            TableContinuationToken? token = null;
+            tq.TakeCount = n;
+            var count = 0;
+            do
+            {
+                var entities = await _table.ExecuteQuerySegmentedAsync(tq, token, cancellationToken: cancellationToken);
+                token = entities.ContinuationToken;
+                foreach (var item in entities)
+                {
+                    yield return item;
+                    count++;
+                }
+            } while (token != null&&count<n);
         }
     }
 }

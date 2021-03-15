@@ -41,7 +41,7 @@ namespace Azure.SignalRBench.Coordinator
             int serverPodCount, TestCategory testCategory, CancellationToken cancellationToken)
         {
             var name = _appserver + "-" + testId;
-
+            name = NameConverter.Truncate(name);
             var service = new V1Service
             {
                 Metadata = new V1ObjectMeta
@@ -67,7 +67,7 @@ namespace Azure.SignalRBench.Coordinator
                 {
                     Metadata = new V1ObjectMeta
                     {
-                        Name = _upstream + "-" + testId
+                        Name =NameConverter.Truncate(_upstream + "-" + testId)
                     },
                     Spec = new Networkingv1beta1IngressSpec
                     {
@@ -82,7 +82,7 @@ namespace Azure.SignalRBench.Coordinator
                                     {
                                         new Networkingv1beta1HTTPIngressPath
                                         {
-                                            Path = $"/upstream/{TestId2HubNameConverter.GenerateHubName(testId)}",
+                                            Path = $"/upstream/{NameConverter.GenerateHubName(testId)}",
                                             Backend = new Networkingv1beta1IngressBackend
                                             {
                                                 ServiceName = name,
@@ -112,11 +112,13 @@ namespace Azure.SignalRBench.Coordinator
                     Name = name,
                     Labels = new Dictionary<string, string>
                     {
-                        [PerfConstants.ConfigurationKeys.TestIdKey] = testId
+                        //[PerfConstants.ConfigurationKeys.TestIdKey] = testId
+                        ["type"]=_appserver
                     },
                     Annotations = new Dictionary<string, string>
                     {
-                        ["cluster-autoscaler.kubernetes.io/safe-to-evict"] = "false"
+                        ["cluster-autoscaler.kubernetes.io/safe-to-evict"] = "false",
+                        [PerfConstants.ConfigurationKeys.TestIdKey] = testId
                     }
                 },
                 Spec = new V1DeploymentSpec
@@ -217,14 +219,14 @@ namespace Azure.SignalRBench.Coordinator
                 }
             };
             await _k8s.CreateNamespacedDeploymentAsync(deployment, _default, cancellationToken: cancellationToken);
-            return testCategory == TestCategory.RawWebsocket ? asrsConnectionStrings[0] : name;
+            return serverPodCount==0 ? asrsConnectionStrings[0] : name;
         }
 
         public async Task CreateClientPodsAsync(string testId, TestCategory testCategory, int clientPodCount,
             CancellationToken cancellationToken)
         {
             var name = _client + '-' + testId;
-
+            name = NameConverter.Truncate(name);
             V1Deployment deployment = new V1Deployment
             {
                 Metadata = new V1ObjectMeta
@@ -232,11 +234,13 @@ namespace Azure.SignalRBench.Coordinator
                     Name = name,
                     Labels = new Dictionary<string, string>
                     {
-                        [PerfConstants.ConfigurationKeys.TestIdKey] = testId
+                       // [PerfConstants.ConfigurationKeys.TestIdKey] = testId
+                       ["type"]=_client
                     },
                     Annotations = new Dictionary<string, string>
                     {
-                        ["cluster-autoscaler.kubernetes.io/safe-to-evict"] = "false"
+                        ["cluster-autoscaler.kubernetes.io/safe-to-evict"] = "false",
+                        [PerfConstants.ConfigurationKeys.TestIdKey] = testId
                     }
                 },
                 Spec = new V1DeploymentSpec
@@ -339,16 +343,20 @@ namespace Azure.SignalRBench.Coordinator
         public async Task DeleteClientPodsAsync(string testId)
         {
             string name = _client + '-' + testId;
+            name = NameConverter.Truncate(name);
             await _k8s.DeleteNamespacedDeploymentAsync(name, _default);
         }
 
         public async Task DeleteServerPodsAsync(string testId, bool upstream)
         {
             string name = _appserver + '-' + testId;
+            name = NameConverter.Truncate(name);
             await _k8s.DeleteNamespacedServiceAsync(name, _default);
             await _k8s.DeleteNamespacedDeploymentAsync(name, _default);
             if (upstream)
-                await _k8s.DeleteNamespacedIngressAsync(_upstream + "-" + testId, _default);
+                await _k8s.DeleteNamespacedIngressAsync(NameConverter.Truncate(_upstream + "-" + testId), _default);
         }
+
+       
     }
 }
