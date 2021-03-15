@@ -65,20 +65,6 @@ fi
 
 az configure --defaults group=$RESOURCE_GROUP
 
-access_key=$(az cosmosdb keys list -n $COSMOSDB_ACCOUNT |  jq .connectionStrings[0].connectionString -r)
-   az keyvault secret set --vault-name $KEYVAULT -n $KV_CA_ACCESS_KEY --value "$access_key"
-   
-if [  $(az cosmosdb  check-name-exists -n $COSMOSDB_ACCOUNT) == "false" ]; then
-   echo "start to create cosmosdb account $COSMOSDB_ACCOUNT"
-   az cosmosdb create -n $COSMOSDB_ACCOUNT --tags default_Experience="Azure Table" --capabilities EnableTable
-   access_key=$(az cosmosdb keys list -n $COSMOSDB_ACCOUNT |  jq .connectionStrings[0].connectionString -r)
-   az keyvault secret set --vault-name $KEYVAULT -n $KV_CA_ACCESS_KEY --value "$access_key"
-   echo "cosmosdb $COSMOSDB_ACCOUNT created"
-else
-   echo "cosmosdb $COSMOSDB_ACCOUNT already exists. SKip creating.."
-fi
-exit 0
-
 if [[ -z $(az keyvault show -n $KEYVAULT 2>/dev/null) ]]; then
     echo "start to create keyvault $KEYVAULT"
     az keyvault create -n $KEYVAULT -g $RESOURCE_GROUP
@@ -118,10 +104,14 @@ else
     echo "storage account $STORAGE_ACCOUNT already exists. Skip creating.."
 fi
 
-if [[  $(az cosmosdb  check-name-exists -n signalrdevperfv2cdb)=="true" ]]; then
-   echo "true"
+if [  $(az cosmosdb  check-name-exists -n $COSMOSDB_ACCOUNT) == "false" ]; then
+   echo "start to create cosmosdb account $COSMOSDB_ACCOUNT"
+   az cosmosdb create -n $COSMOSDB_ACCOUNT --tags default_Experience="Azure Table" --capabilities EnableTable
+   access_key=$(az cosmosdb keys list -n $COSMOSDB_ACCOUNT --type connection-strings |  jq .connectionStrings[4].connectionString -r)
+   az keyvault secret set --vault-name $KEYVAULT -n $KV_CA_ACCESS_KEY --value "$access_key"
+   echo "cosmosdb $COSMOSDB_ACCOUNT created"
 else
-   echo "false"
+   echo "cosmosdb $COSMOSDB_ACCOUNT already exists. SKip creating.."
 fi
 
 if [[ -z $(az aks show --name $KUBERNETES_SEVICES -g $RESOURCE_GROUP 2>/dev/null) ]]; then
