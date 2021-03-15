@@ -160,8 +160,8 @@ namespace Azure.SignalRBench.Coordinator
                     await Task.Delay(5000);
                     await UpdateTestReports(round, _roundTotalConnected);
                 }
-                await UpdateTestStatus("Stopping client connections");
-                await StopClientConnectionsAsync(messageClient, cancellationToken);
+                // await UpdateTestStatus("Stopping client connections");
+                // await StopClientConnectionsAsync(messageClient, cancellationToken);
                 await UpdateTestStatus("Test Finishes");
             }
             catch (Exception e)

@@ -6,6 +6,7 @@ using Azure.SignalRBench.Common;
 using Azure.SignalRBench.Coordinator.Entities;
 using Azure.SignalRBench.Storage;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Azure.Cosmos.Table;
 using Microsoft.Extensions.Logging;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
@@ -31,9 +32,14 @@ namespace Portal.Controllers
             try
             {
                 var table = await _perfStorage.GetTableAsync<TestStatusEntity>(PerfConstants.TableNames.TestStatus);
-                var rows = await table.QueryAsync(string.IsNullOrEmpty(key)
-                    ? table.Rows
-                    : from row in table.Rows where row.PartitionKey == key select row).ToListAsync();
+                TableQuery<TestStatusEntity> tableQuery=new TableQuery<TestStatusEntity>();
+                tableQuery.OrderByDesc("Timestamp");
+                if (string.IsNullOrEmpty(key))
+                {
+                    return await table.QueryAsync(tableQuery,30).ToListAsync();
+                }
+                var rows = await table.QueryAsync(
+                    from row in table.Rows where row.PartitionKey == key select row).ToListAsync();
                 rows.Sort((a, b) =>
                     b.Timestamp.CompareTo(a.Timestamp)
                 );

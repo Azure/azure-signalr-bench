@@ -51,10 +51,11 @@ namespace Azure.SignalRBench.Coordinator
                     services.AddSingleton<IPerfStorage>(sp =>
                         {
                             var secretClient = sp.GetService<SecretClient>();
-                            var connectionString = secretClient
-                                .GetSecretAsync(PerfConstants.KeyVaultKeys.StorageConnectionStringKey).GetAwaiter()
-                                .GetResult().Value.Value;
-                            return new PerfStorage(connectionString);
+                            var saConnectionString = secretClient.GetSecretAsync("sa-accessKey").GetAwaiter().GetResult()
+                                .Value.Value;
+                            var cdbConnectionString = secretClient.GetSecretAsync("cdb-accessKey").GetAwaiter().GetResult()
+                                .Value.Value;
+                            return new PerfStorage(saConnectionString,cdbConnectionString);
                         }
                     );
                     services.AddSingleton<PerfStorageProvider>();
