@@ -54,8 +54,8 @@ export class TestConfig extends Component {
             this.setState({ testConfigs: testConfigs, activeIndex: acDir })
         }
         else {
-            var acDir = { "Default": true }
-            this.setState({ testConfigs: this.state.total, activeIndex: acDir })
+           // var acDir = { "Default": true }
+            this.setState({ testConfigs: this.state.total })
         }
     }
     handleJsonClose() {
