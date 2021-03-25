@@ -7,7 +7,7 @@ namespace Azure.SignalRBench.Coordinator.Entities
         public int ActiveConnection { get; set; }
         public int RoundConnected { get; set; }
 
-        private static double _pencent = 0.001;
+        private static double _pencent = 0.05;
 
         public bool Check()
         {
@@ -18,10 +18,10 @@ namespace Azure.SignalRBench.Coordinator.Entities
                 return false;
             }
 
-            if (TotalReconnectCount > threshold)
-            {
-                return false;
-            }
+            // if (TotalReconnectCount > threshold)
+            // {
+            //     return false;
+            // }
 
             if (MessageRecieved < ExpectedRecievedMessageCount*(1-_pencent))
             {
@@ -33,17 +33,7 @@ namespace Azure.SignalRBench.Coordinator.Entities
                 return false;
             }
 
-            if (Latency[LatencyClass.LessThan2s]>MessageRecieved*_pencent)
-            {
-                return false;
-            }
-            
-            if (Latency[LatencyClass.LessThan5s]>MessageRecieved*_pencent)
-            {
-                return false;
-            }
-            
-            if (Latency[LatencyClass.MoreThan5s]>MessageRecieved*_pencent)
+            if (Latency[LatencyClass.LessThan2s]+Latency[LatencyClass.LessThan5s]+Latency[LatencyClass.MoreThan5s]>MessageRecieved*_pencent)
             {
                 return false;
             }
