@@ -1,3 +1,4 @@
+using System;
 using Azure.SignalRBench.Common;
 
 namespace Azure.SignalRBench.Coordinator.Entities
@@ -11,10 +12,12 @@ namespace Azure.SignalRBench.Coordinator.Entities
 
         public bool Check()
         {
+            Console.WriteLine("New check method");
             //Test , impose a strict condition
             var threshold = RoundConnected*_pencent;
             if (ReconnectingCount > threshold)
             {
+                Console.WriteLine("Reconnect check fail");
                 return false;
             }
 
@@ -25,16 +28,19 @@ namespace Azure.SignalRBench.Coordinator.Entities
 
             if (MessageRecieved < ExpectedRecievedMessageCount*(1-_pencent))
             {
+                Console.WriteLine("MessageRecieved check fail");
                 return false;
             }
 
-            if (ConnectedCount < RoundConnected*(1-_pencent))
+            if (ConnectedCount < RoundConnected*0.75)
             {
+                Console.WriteLine("ConnectedCount check fail");
                 return false;
             }
 
             if (Latency[LatencyClass.LessThan2s]+Latency[LatencyClass.LessThan5s]+Latency[LatencyClass.MoreThan5s]>MessageRecieved*_pencent)
             {
+                Console.WriteLine("Latency check fail");
                 return false;
             }
             
