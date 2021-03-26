@@ -44,7 +44,7 @@ namespace Azure.SignalRBench.Coordinator
         private static volatile int _finishedJob = 0;
         private static volatile int _unitTotal = 0;
         private static volatile int _instanceTotal = 0;
-        private static object _unitLock=new object();
+        private static object _unitLock = new object();
 
         public TestRunner(
             TestJob job,
@@ -102,13 +102,14 @@ namespace Azure.SignalRBench.Coordinator
 
                 lock (_unitLock)
                 {
-                    if (_dir == null|| Job.Dir==_dir)
+                    if (_dir == null || Job.Dir == _dir)
                     {
                         _dir = Job.Dir;
                         break;
-                    }  
+                    }
                 }
             }
+
             _timer.Start();
             _testStatusAccessor =
                 await PerfStorage.GetTableAsync<TestStatusEntity>(PerfConstants.TableNames.TestStatus);
@@ -138,6 +139,7 @@ namespace Azure.SignalRBench.Coordinator
                     messageClient, cancellationToken);
                 //        await UpdateTestStatus("Starting client connections");
                 var i = 0;
+                var suspiciousCount = 0;
                 foreach (var round in Job.ScenarioSetting.Rounds)
                 {
                     i++;
@@ -158,8 +160,9 @@ namespace Azure.SignalRBench.Coordinator
                     await StopScenarioAsync(messageClient, cancellationToken);
                     //wait for the last message to come back
                     await Task.Delay(5000);
-                    await UpdateTestReports(round, _roundTotalConnected);
+                    suspiciousCount= await UpdateTestReports(round, _roundTotalConnected,suspiciousCount);
                 }
+
                 // await UpdateTestStatus("Stopping client connections");
                 // await StopClientConnectionsAsync(messageClient, cancellationToken);
                 await UpdateTestStatus("Test Finishes");
@@ -280,7 +283,7 @@ namespace Azure.SignalRBench.Coordinator
             await _testStatusAccessor.UpdateAsync(_testStatusEntity);
         }
 
-        private async Task UpdateTestReports(RoundSetting round, int totalConnectionsThisRound)
+        private async Task<int> UpdateTestReports(RoundSetting round, int totalConnectionsThisRound, int suspiciousCount)
         {
             var roundStatus = new RoundStatus
             {
@@ -311,13 +314,24 @@ namespace Azure.SignalRBench.Coordinator
                 }
             }
 
+            //ugly code. Just to avoid to much suspicious result
             if (!roundStatus.Check())
             {
                 _testStatusEntity.Check = "Suspicious";
+                suspiciousCount++;
             }
+            else
+            {
+                if (suspiciousCount > 0)
+                    suspiciousCount--;
+                if (suspiciousCount == 0)
+                    _testStatusEntity.Check = "Suspicious";
+            }
+    
             _roundStatusList.Add(roundStatus);
             _testStatusEntity.Report = JsonConvert.SerializeObject(_roundStatusList);
             await _testStatusAccessor.UpdateAsync(_testStatusEntity);
+            return suspiciousCount;
         }
 
         private async Task<string[]> PrepairAsrsInstancesAsync(CancellationToken cancellationToken)
@@ -327,17 +341,19 @@ namespace Azure.SignalRBench.Coordinator
             {
                 var ss = Job.ServiceSetting[i];
                 await UpdateTestStatus("task queueing..");
-                while (Job.Dir!=null)
+                while (Job.Dir != null)
                 {
                     await Task.Delay(StaticRandom.Next(5000));
                     lock (_unitLock)
                     {
-                        if (_unitTotal >= Job.ServiceSetting[0].UnitLimit||_instanceTotal>=Job.ServiceSetting[0].InstanceLimit) continue;
+                        if (_unitTotal >= Job.ServiceSetting[0].UnitLimit ||
+                            _instanceTotal >= Job.ServiceSetting[0].InstanceLimit) continue;
                         _unitTotal += ss.Size.Value;
                         _instanceTotal++;
                         break;
                     }
                 }
+
                 await UpdateTestStatus("Creating SignalR instance..");
                 if (ss.AsrsConnectionString == null)
                     asrsConnectionStrings[i] =
@@ -352,7 +368,6 @@ namespace Azure.SignalRBench.Coordinator
 
         private async Task<string> CreateAsrsAsync(ServiceSetting ss, string name, CancellationToken cancellationToken)
         {
-
             _logger.LogInformation("Test job {testId}: Creating SignalR service instance.", Job.TestId);
             var signalRProvider = SignalRProvider.GetSignalRProvider(ss.Env);
             await signalRProvider.CreateResourceGroupAsync(Job.TestId);
@@ -367,7 +382,7 @@ namespace Azure.SignalRBench.Coordinator
             _logger.LogInformation("Test job {testId}: SignalR service instance created.", Job.TestId);
             _logger.LogInformation("Test job {testId}: Retrieving SignalR service connection string.", Job.TestId);
             var result =
-                await signalRProvider.GetKeyAsync(Job.TestId, name,  cancellationToken);
+                await signalRProvider.GetKeyAsync(Job.TestId, name, cancellationToken);
             _logger.LogInformation("Test job {testId}: SignalR service connection string retrieved.", Job.TestId);
             return result;
         }
@@ -473,7 +488,7 @@ namespace Azure.SignalRBench.Coordinator
             MessageClient messageClient,
             CancellationToken cancellationToken)
         {
-            while (Interlocked.CompareExchange(ref _scalelock, 1, 0)==1)
+            while (Interlocked.CompareExchange(ref _scalelock, 1, 0) == 1)
             {
                 await UpdateTestStatus("Deployment queueing..");
                 _logger.LogInformation("Wait for deployment to be ready. Avoid race condition...");
