@@ -5,5 +5,6 @@ namespace Azure.SignalRBench.Common
 {
     public class StartScenarioParameters
     {
+        public long CoordinatorTime { get; set; }
     }
 }

@@ -86,19 +86,19 @@ namespace Azure.SignalRBench.Client
         }
 
         public Task EchoAsync(string payload) =>
-            HubProxy.Invoke("Echo", DateTime.UtcNow.Ticks, payload);
+            HubProxy.Invoke("Echo", ClientAgentContext.CoordinatedUtcNow(), payload);
 
         public async Task SendToClientAsync(int index, string payload)
         {
             var connectionID = await Context.GetConnectionIDAsync(index);
-            await HubProxy.Invoke("SendToConnection", connectionID, DateTime.UtcNow.Ticks, payload);
+            await HubProxy.Invoke("SendToConnection", connectionID, ClientAgentContext.CoordinatedUtcNow(), payload);
         }
 
         public Task BroadcastAsync(string payload) =>
-            HubProxy.Invoke("Broadcast", DateTime.UtcNow.Ticks, payload);
+            HubProxy.Invoke("Broadcast", ClientAgentContext.CoordinatedUtcNow(), payload);
 
         public Task GroupBroadcastAsync(string group, string payload) =>
-            HubProxy.Invoke("GroupBroadcast", group, DateTime.UtcNow.Ticks, payload);
+            HubProxy.Invoke("GroupBroadcast", group,ClientAgentContext.CoordinatedUtcNow(), payload);
 
         public Task JoinGroupAsync() => Task.WhenAll(Groups.Select(g => HubProxy.Invoke("JoinGroup", g)));
 

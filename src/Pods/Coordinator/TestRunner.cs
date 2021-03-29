@@ -325,7 +325,7 @@ namespace Azure.SignalRBench.Coordinator
                 if (suspiciousCount > 0)
                     suspiciousCount--;
                 if (suspiciousCount == 0)
-                    _testStatusEntity.Check = "Suspicious";
+                    _testStatusEntity.Check = null;
             }
     
             _roundStatusList.Add(roundStatus);
@@ -612,7 +612,10 @@ namespace Azure.SignalRBench.Coordinator
                 Commands.Clients.StartScenario,
                 cancellationToken);
             await messageClient.StartScenarioAsync(
-                new StartScenarioParameters());
+                new StartScenarioParameters()
+                {
+                    CoordinatorTime = DateTime.UtcNow.Ticks
+                });
             await task;
             _logger.LogInformation(" Start scenario acked.");
         }

@@ -23,19 +23,19 @@ namespace Azure.SignalRBench.Client
 
         public async override Task EchoAsync(string payload)
         {
-            await Connection.SendAsync("user", $"user{GlobalIndex}", DateTime.UtcNow.Ticks, payload);
+            await Connection.SendAsync("user", $"user{GlobalIndex}", ClientAgentContext.CoordinatedUtcNow(), payload);
         }
 
         public override async Task SendToClientAsync(int globalIndex, string payload)
         {
-            await Connection.SendAsync("user", $"user{globalIndex}", DateTime.UtcNow.Ticks, payload);
+            await Connection.SendAsync("user", $"user{globalIndex}", ClientAgentContext.CoordinatedUtcNow(), payload);
         }
 
         public override Task BroadcastAsync(string payload) =>
-            Connection.SendAsync("broadcast", "place_holder", DateTime.UtcNow.Ticks, payload);
+            Connection.SendAsync("broadcast", "place_holder", ClientAgentContext.CoordinatedUtcNow(), payload);
 
         public override Task GroupBroadcastAsync(string group, string payload) =>
-            Connection.SendAsync("group", group, DateTime.UtcNow.Ticks, payload);
+            Connection.SendAsync("group", group, ClientAgentContext.CoordinatedUtcNow(), payload);
 
         public override Task JoinGroupAsync() => Task.WhenAll(Groups.Select(g => Connection.InvokeAsync("add", g)));
     }
