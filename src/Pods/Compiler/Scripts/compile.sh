@@ -6,8 +6,27 @@ COMPILE_DIR="/tmp"
 GIT_REPO="https://github.com/Azure/azure-signalr-bench.git"
 PROJECT_NAME="azure-signalr-bench"
 
+while [[ "$#" > 0 ]]; do
+    key="$1"
+    shift
+    case $key in
+    --version | -v)
+        VERSION="$1"
+        shift
+        ;;
+    --Pod | -p)
+        Pod="$1"
+        shift
+        ;;
+    *)
+        echo "ERROR: Unknow argument '$key'" 1>&2
+        print_usage
+        exit -1
+        ;;
+    esac
+done
+
 function publish() {
-  Pod=$1
   cd $COMPILE_DIR/$PROJECT_NAME/src/Pods/$Pod
   sudo rm -rf publish || true
   echo "start to publish $Pod"
@@ -31,10 +50,15 @@ else
   echo "cloning project"
  # git clone $GIT_REPO
   cd $COMPILE_DIR/$PROJECT_NAME
-  git checkout v2
-  publish Client
-  
+  git checkout v2  
 fi
+
+cd $COMPILE_DIR/$PROJECT_NAME/src/Pods/$Pod
+case $Pod in 
+  "Client")
+    echo "build Client"
+    KEY=$(cat $Pod.csproj | grep "Microsoft.AspNet.SignalR.Client" | awk '{print $2 " " $3'
+  
 
 
 
