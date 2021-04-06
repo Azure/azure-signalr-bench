@@ -31,7 +31,7 @@ namespace Azure.SignalRBench.AppServer
             services.AddSignalR().AddMessagePackProtocol()
                  .AddAzureSignalR(option =>
                  {
-                     option.ConnectionCount = Configuration[PerfConstants.ConfigurationKeys.ConnectionNum] != null ? Configuration.GetValue<int>(PerfConstants.ConfigurationKeys.ConnectionNum) : 5;
+                     option.ConnectionCount = Configuration[PerfConstants.ConfigurationKeys.ConnectionNum] != null ? Configuration.GetValue<int>(PerfConstants.ConfigurationKeys.ConnectionNum) : 50;
                      option.ConnectionString = Configuration[PerfConstants.ConfigurationKeys.ConnectionString];
                  });
             services.AddSingleton<MessageClientHolder>();

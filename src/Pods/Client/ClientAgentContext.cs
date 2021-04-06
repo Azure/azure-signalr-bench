@@ -19,6 +19,7 @@ namespace Azure.SignalRBench.Client
         private readonly ConcurrentDictionary<IClientAgent, ClientAgentStatus> _dict =
             new ConcurrentDictionary<IClientAgent, ClientAgentStatus>();
 
+        private static volatile int TimeBias;
         private Latency _latency = new Latency();
         private int _recievedMessageCount;
         private int _expectedRecievedMessageCount;
@@ -28,7 +29,7 @@ namespace Azure.SignalRBench.Client
         private MessageClient _MessageClient;
         private readonly ILogger<ClientAgentContext> _logger;
 
-        public ClientAgentContext(MessageClient messageClient,ILogger<ClientAgentContext> logger)
+        public ClientAgentContext(MessageClient messageClient, ILogger<ClientAgentContext> logger)
         {
             _MessageClient = messageClient;
             TestId = _MessageClient.TestId;
@@ -36,7 +37,7 @@ namespace Azure.SignalRBench.Client
         }
 
         public IRetryPolicy RetryPolicy { get; set; }
-        
+
         public int TotalReconnectedCount => Volatile.Read(ref _totalReconnectedCount);
 
         public int ReconnectingCount => _dict.Count(p => p.Value == ClientAgentStatus.Reconnecting);
@@ -49,6 +50,15 @@ namespace Azure.SignalRBench.Client
 
         public int ConnectedAgentCount => _dict.Count(p => p.Value == ClientAgentStatus.Connected);
 
+        public static long CoordinatedUtcNow()
+        {
+            return DateTime.UtcNow.Ticks + TimeBias;
+        }
+
+        public static void CoordinatorTime(long ticks)
+        {
+            TimeBias=(int)(ticks - DateTime.UtcNow.Ticks);
+        }
         public async Task<string> GetConnectionIDAsync(int index)
         {
             return await _MessageClient.GetAsync(index.ToString());
@@ -62,7 +72,7 @@ namespace Azure.SignalRBench.Client
         public void Measure(long ticks, string payload)
         {
             Interlocked.Increment(ref _recievedMessageCount);
-            long latency = DateTime.UtcNow.Ticks - ticks;
+            long latency = CoordinatedUtcNow() - ticks;
             if (latency < TimeSpan.TicksPerMillisecond * 50)
             {
                 Interlocked.Increment(ref _latency.LessThan50ms);
@@ -111,6 +121,7 @@ namespace Azure.SignalRBench.Client
                 await agent.JoinGroupAsync();
                 _dict.AddOrUpdate(agent, ClientAgentStatus.Connected, (a, s) => ClientAgentStatus.Connected);
             }
+
             _dict.AddOrUpdate(agent, ClientAgentStatus.Connected, (a, s) =>
             {
                 if (s == ClientAgentStatus.Reconnecting)

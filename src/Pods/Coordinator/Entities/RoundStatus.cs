@@ -1,3 +1,4 @@
+using System;
 using Azure.SignalRBench.Common;
 
 namespace Azure.SignalRBench.Coordinator.Entities
@@ -7,44 +8,39 @@ namespace Azure.SignalRBench.Coordinator.Entities
         public int ActiveConnection { get; set; }
         public int RoundConnected { get; set; }
 
-        private static double _pencent = 0.001;
+        private static double _pencent = 0.05;
 
         public bool Check()
         {
+            Console.WriteLine("New check method");
             //Test , impose a strict condition
             var threshold = RoundConnected*_pencent;
             if (ReconnectingCount > threshold)
             {
+                Console.WriteLine("Reconnect check fail");
                 return false;
             }
 
-            if (TotalReconnectCount > threshold)
-            {
-                return false;
-            }
+            // if (TotalReconnectCount > threshold)
+            // {
+            //     return false;
+            // }
 
             if (MessageRecieved < ExpectedRecievedMessageCount*(1-_pencent))
             {
+                Console.WriteLine("MessageRecieved check fail");
                 return false;
             }
 
-            if (ConnectedCount < RoundConnected*(1-_pencent))
+            if (ConnectedCount < RoundConnected*0.75)
             {
+                Console.WriteLine("ConnectedCount check fail");
                 return false;
             }
 
-            if (Latency[LatencyClass.LessThan2s]>MessageRecieved*_pencent)
+            if (Latency[LatencyClass.LessThan2s]+Latency[LatencyClass.LessThan5s]+Latency[LatencyClass.MoreThan5s]>MessageRecieved*_pencent)
             {
-                return false;
-            }
-            
-            if (Latency[LatencyClass.LessThan5s]>MessageRecieved*_pencent)
-            {
-                return false;
-            }
-            
-            if (Latency[LatencyClass.MoreThan5s]>MessageRecieved*_pencent)
-            {
+                Console.WriteLine("Latency check fail");
                 return false;
             }
             

@@ -5,4 +5,8 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Caching.Redis" Version="3.0.38" />
+  </ItemGroup>
+
 </Project>

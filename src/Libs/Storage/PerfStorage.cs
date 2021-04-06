@@ -12,11 +12,19 @@ namespace Azure.SignalRBench.Storage
     {
         private readonly string _saConnectionString;
         private readonly string _cdbConnectionString;
+        private CloudTableClient client;
 
         public PerfStorage(string saConnectionString,string cdbConnectionString=null)
         {
             _saConnectionString = saConnectionString;
             _cdbConnectionString = cdbConnectionString;
+            var storageAccount = CloudStorageAccount.Parse(_cdbConnectionString);
+            var tableClientConfiguration = new TableClientConfiguration
+            {
+                CosmosExecutorConfiguration = new CosmosExecutorConfiguration {UseConnectionModeDirect = false}
+            };
+            Console.WriteLine("Perfstorage 3...");
+             client = storageAccount.CreateCloudTableClient(tableClientConfiguration);
         }
 
         public async ValueTask<IBlob> GetBlobAsync(string container, bool ensureCreated)
@@ -48,8 +56,6 @@ namespace Azure.SignalRBench.Storage
         public async ValueTask<ITableAccessor<T>> GetTableAsync<T>(string name)
             where T : class, ITableEntity, new()
         {
-            var storageAccount = CloudStorageAccount.Parse(_cdbConnectionString);
-            var client = storageAccount.CreateCloudTableClient();
             var cloudTable = client.GetTableReference(name);
             await cloudTable.CreateIfNotExistsAsync();
             return new TableAccessor<T>(cloudTable);

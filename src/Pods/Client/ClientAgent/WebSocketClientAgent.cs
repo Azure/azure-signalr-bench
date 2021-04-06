@@ -36,7 +36,7 @@ namespace Azure.SignalRBench.Client
         {
             var data = new Data()
             {
-                Ticks = DateTime.Now.Ticks,
+                Ticks = ClientAgentContext.CoordinatedUtcNow(),
                 Payload = payload
             };
             return Connection.SendAsync(JsonConvert.SerializeObject(data));
