@@ -1,0 +1,6 @@
+FROM mcr.microsoft.com/dotnet/sdk:5.0
+
+RUN apt update && dotnet tool install --global dotnet-dump \
+ && apt install -y procps dnsutils  nodejs npm zip unzip
+
+EXPOSE  8080 80

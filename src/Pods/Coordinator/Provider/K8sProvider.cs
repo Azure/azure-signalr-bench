@@ -156,7 +156,7 @@ namespace Azure.SignalRBench.Coordinator
                                     Name = name,
                                     Image = testCategory == TestCategory.AspnetSignalR
                                         ? "mcr.microsoft.com/dotnet/framework/runtime:4.8"
-                                        : "signalrbenchmark/perf:1.3",
+                                        : "signalrbenchmark/perf:1.4.4",
                                     Resources = new V1ResourceRequirements
                                     {
                                         Requests = new Dictionary<string, ResourceQuantity>
@@ -285,7 +285,7 @@ namespace Azure.SignalRBench.Coordinator
                                 new V1Container
                                 {
                                     Name = name,
-                                    Image = "signalrbenchmark/perf:1.3",
+                                    Image = "signalrbenchmark/perf:1.4.4",
                                     Resources = new V1ResourceRequirements
                                     {
                                         Requests = new Dictionary<string, ResourceQuantity>
