@@ -61,13 +61,13 @@ namespace Azure.SignalRBench.Coordinator
                 }
             };
             await _k8s.CreateNamespacedServiceAsync(service, _default, cancellationToken: cancellationToken);
-            if (testCategory == TestCategory.AspnetCoreSignalRServerless)
+            if (testCategory == TestCategory.AspnetCoreSignalRServerless||testCategory == TestCategory.RawWebsocket)
             {
                 var ingress = new Networkingv1beta1Ingress
                 {
                     Metadata = new V1ObjectMeta
                     {
-                        Name =NameConverter.Truncate(_upstream + "-" + testId)
+                        Name =NameConverter.Truncate(_upstream + "-" + testId),
                     },
                     Spec = new Networkingv1beta1IngressSpec
                     {
@@ -80,6 +80,15 @@ namespace Azure.SignalRBench.Coordinator
                                 {
                                     Paths = new List<Networkingv1beta1HTTPIngressPath>
                                     {
+                                        new Networkingv1beta1HTTPIngressPath
+                                        {
+                                            Path = $"/upstream/validate",
+                                            Backend = new Networkingv1beta1IngressBackend
+                                            {
+                                                ServiceName = name,
+                                                ServicePort = 80
+                                            }
+                                        },
                                         new Networkingv1beta1HTTPIngressPath
                                         {
                                             Path = $"/upstream/{NameConverter.GenerateHubName(testId)}",
@@ -102,6 +111,7 @@ namespace Azure.SignalRBench.Coordinator
             {
                 TestCategory.AspnetCoreSignalRServerless => "SignalRUpstream",
                 TestCategory.AspnetSignalR => "AspNetAppServer",
+                TestCategory.RawWebsocket => "WpsUpstream",
                 _ => "AppServer"
             };
 
@@ -219,7 +229,7 @@ namespace Azure.SignalRBench.Coordinator
                 }
             };
             await _k8s.CreateNamespacedDeploymentAsync(deployment, _default, cancellationToken: cancellationToken);
-            return serverPodCount==0 ? asrsConnectionStrings[0] : name;
+            return serverPodCount==0 || testCategory == TestCategory.RawWebsocket ? asrsConnectionStrings[0] : name;
         }
 
         public async Task CreateClientPodsAsync(string testId, TestCategory testCategory, int clientPodCount,

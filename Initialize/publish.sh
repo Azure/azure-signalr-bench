@@ -68,6 +68,9 @@ while [[ "$#" > 0 ]]; do
   --upstream)
     UPSTREAM=true
     ;;
+  --wpsupstream)
+    WPSUPSTREAM=true
+    ;;
   --localdns)
     LOCALDNS=true
     ;;
@@ -160,6 +163,10 @@ fi
 
 if [[ $ALL || $UPSTREAM ]]; then
   publish SignalRUpstream
+fi
+
+if [[ $ALL || $WPSUPSTREAM ]]; then
+  publish WpsUpstream
 fi
 
 if [[ $ALL || $LOCALDNS ]]; then

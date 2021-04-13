@@ -8,7 +8,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
-namespace SignalRUpstream
+namespace WpsUpstreamServer
 {
     public class Program
     {
@@ -31,7 +31,7 @@ namespace SignalRUpstream
                     });
                     logging.AddProvider(
                         new BlobLoggerProvider(
-                            $"{context.Configuration[PerfConstants.ConfigurationKeys.TestIdKey]}/{Roles.ServerlessServer}_{context.Configuration[PerfConstants.ConfigurationKeys.PodNameStringKey]}",
+                            $"{context.Configuration[PerfConstants.ConfigurationKeys.TestIdKey]}/{Roles.WpsServerlessServer}_{context.Configuration[PerfConstants.ConfigurationKeys.PodNameStringKey]}",
                             ".log",
                             context.Configuration[PerfConstants.ConfigurationKeys.StorageConnectionStringKey]));
                 })

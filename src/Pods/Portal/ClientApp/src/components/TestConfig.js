@@ -467,10 +467,16 @@ export class TestConfig extends Component {
                                     <option>Netframework</option>
                                 </Form.Control>
                             </Form.Group>}
-                            {(this.state.obj.service == "RawWebsocket" || (this.state.obj.service == "SignalR" && this.state.obj.mode == "Serverless" && this.state.obj.createMode=="ConnectionString")) &&
+                            { (this.state.obj.service == "SignalR" && this.state.obj.mode == "Serverless" && this.state.obj.createMode=="ConnectionString") &&
                                 <div>
                                     <strong>Add upstream settings: </strong>
                                     <code> https://{window.location.hostname}/upstream/{"{hub}"}/api/{"{category}"}/{"{event}"}</code>
+                                </div>
+                            }
+                             {(this.state.obj.service == "RawWebsocket" ) &&
+                                <div>
+                                    <strong>Add upstream settings: </strong>
+                                    <code> https://{window.location.hostname}/upstream/{"{event}"}</code>
                                 </div>
                             }
                             {this.state.obj.service == "SignalR" && <Form.Group  >
@@ -524,7 +530,7 @@ export class TestConfig extends Component {
                                      <Form.Label>Client number</Form.Label>
                                  <Form.Control name="clientNum" onChange={this.handleChangeNum} placeholder="set the test client number. (Default:Total con/5000)" />
                              </Form.Group>
-                            { this.state.obj.service == "SignalR" && this.state.obj.mode == "Default" && this.state.obj.createMode != "SelfHostedServer" && <Form.Group >
+                            { this.state.obj.createMode != "SelfHostedServer" && <Form.Group >
                                      <Form.Label>Server number</Form.Label>
                                  <Form.Control name="serverNum" onChange={this.handleChangeNum} placeholder="set the test server number. (Default:ClientNum/2)" />
                              </Form.Group>}

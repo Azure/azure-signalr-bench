@@ -117,12 +117,6 @@ namespace Portal.Controllers
                     where row.PartitionKey == key
                     select row);
             await configTable.DeleteAsync(config);
-            var statusTable = await _perfStorage.GetTableAsync<TestStatusEntity>(PerfConstants.TableNames.TestStatus);
-            var statuses =
-                await statusTable.QueryAsync(from row in statusTable.Rows where row.PartitionKey == key select row)
-                    .ToListAsync();
-            if (statuses.Count > 0)
-                await statusTable.BatchDeleteAsync(statuses);
         }
 
         [HttpPut("move/{type}/{source}/{target}")]

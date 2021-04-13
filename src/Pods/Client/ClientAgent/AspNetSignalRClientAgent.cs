@@ -72,7 +72,6 @@ namespace Azure.SignalRBench.Client
                     _ => throw new Exception($"Unsupported protocal {_protocol} for aspnet")
                 };
                 await Connection.Start(clientTransport);
-                Console.WriteLine("connected");
             }
 
             await Context.SetConnectionIDAsync(GlobalIndex, Connection.ConnectionId);

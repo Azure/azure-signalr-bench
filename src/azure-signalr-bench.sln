@@ -46,6 +46,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SignalRUpstream", "Pods\Sig
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AspNetAppServer", "Pods\AspNetAppServer\AspNetAppServer.csproj", "{C24C4A22-1DF1-415E-8FFB-38654504BF0F}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WpsUpstream", "Pods\WpsUpstream\WpsUpstream.csproj", "{01B4A98C-18F4-4762-8A86-0BCE30CDFA2B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -108,6 +110,10 @@ Global
 		{C24C4A22-1DF1-415E-8FFB-38654504BF0F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C24C4A22-1DF1-415E-8FFB-38654504BF0F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C24C4A22-1DF1-415E-8FFB-38654504BF0F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{01B4A98C-18F4-4762-8A86-0BCE30CDFA2B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{01B4A98C-18F4-4762-8A86-0BCE30CDFA2B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{01B4A98C-18F4-4762-8A86-0BCE30CDFA2B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{01B4A98C-18F4-4762-8A86-0BCE30CDFA2B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -127,6 +133,7 @@ Global
 		{08BE184F-4316-4C1F-A351-AED37411E7D2} = {ADAB79C6-C6CF-4D1C-BAB6-8F2476317C46}
 		{E862FB04-DFAF-494B-8BF5-01F8D12B3BA7} = {ADAB79C6-C6CF-4D1C-BAB6-8F2476317C46}
 		{C24C4A22-1DF1-415E-8FFB-38654504BF0F} = {ADAB79C6-C6CF-4D1C-BAB6-8F2476317C46}
+		{01B4A98C-18F4-4762-8A86-0BCE30CDFA2B} = {ADAB79C6-C6CF-4D1C-BAB6-8F2476317C46}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {74A95D59-392F-476C-8DE7-7FECE6F9E7BE}

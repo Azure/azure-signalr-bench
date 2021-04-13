@@ -23,7 +23,6 @@ namespace Azure.SignalRBench.Storage
             {
                 CosmosExecutorConfiguration = new CosmosExecutorConfiguration {UseConnectionModeDirect = false}
             };
-            Console.WriteLine("Perfstorage 3...");
              client = storageAccount.CreateCloudTableClient(tableClientConfiguration);
         }
 

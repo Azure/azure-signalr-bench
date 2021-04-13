@@ -1,11 +1,16 @@
 ﻿using System;
+using System.IO;
 using System.Linq;
 using System.Net.WebSockets;
+using System.Runtime.InteropServices;
+using System.Security.Claims;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Azure.Messaging.WebPubSub;
 using Azure.SignalRBench.Common;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 
 namespace Azure.SignalRBench.Client
 {
@@ -17,44 +22,77 @@ namespace Azure.SignalRBench.Client
 
         private WebSocketHubConnection Connection { get; }
 
-        public WebSocketClientAgent(string connectionString, Protocol protocol, string[] groups, int globalIndex, ClientAgentContext context)
+
+        public WebSocketClientAgent(string url, Protocol protocol, string[] groups, int globalIndex,
+            ClientAgentContext context)
         {
-            if (!TryParseEndpoint(connectionString, out var endpoint))
-            {
-                throw new ArgumentNullException("Connection string misses required property Endpoint");
-            }
             Context = context;
-            Connection = new WebSocketHubConnection(endpoint);
+            Connection = new WebSocketHubConnection(url);
             Connection.On(context.Measure);
             Groups = groups;
             GlobalIndex = globalIndex;
         }
 
-        public Task BroadcastAsync(string payload) => throw new NotImplementedException();
+        public Task BroadcastAsync(string payload)
+        {
+            var data = new RawWebsocketData()
+            {
+                Type = "broadcast",
+                Ticks = ClientAgentContext.CoordinatedUtcNow(),
+                Payload = payload
+            };
+            var broadcastEvent = new UserEvent(NameConverter.GenerateHubName(Context.TestId),
+                JsonConvert.SerializeObject(data));
+            return Connection.SendAsync(broadcastEvent.Serilize());
+        }
 
         public Task EchoAsync(string payload)
         {
-            var data = new Data()
+            var data = new RawWebsocketData()
+            {
+                Type = "echo",
+                Ticks = ClientAgentContext.CoordinatedUtcNow(),
+                Payload = payload
+            };
+            var echoEvent = new UserEvent(NameConverter.GenerateHubName(Context.TestId),
+                JsonConvert.SerializeObject(data));
+            return Connection.SendAsync(echoEvent.Serilize());
+        }
+
+        public Task GroupBroadcastAsync(string group, string payload)
+        {
+            var data = new RawWebsocketData()
             {
                 Ticks = ClientAgentContext.CoordinatedUtcNow(),
                 Payload = payload
             };
-            return Connection.SendAsync(JsonConvert.SerializeObject(data));
+            var sendToGroup = new SendToGroup(group, JsonConvert.SerializeObject(data));
+            return Connection.SendAsync(sendToGroup.Serilize());
         }
 
-        public Task GroupBroadcastAsync(string group, string payload) => throw new NotImplementedException();
-
-        public Task JoinGroupAsync() => throw new NotImplementedException();
+        public async Task JoinGroupAsync()
+        {
+            await Connection.SendAsync(new JoinGroup(Groups[0]).Serilize());
+        }
 
         public Task SendToClientAsync(int index, string payload)
         {
-            throw new NotImplementedException();
+            var data = new RawWebsocketData()
+            {
+                Type = "p2p",
+                Ticks = ClientAgentContext.CoordinatedUtcNow(),
+                Payload = payload,
+                Target = $"user{index}"
+            };
+            var p2PEvent = new UserEvent(NameConverter.GenerateHubName(Context.TestId),
+                JsonConvert.SerializeObject(data));
+            return Connection.SendAsync(p2PEvent.Serilize());
         }
 
         public async Task StartAsync(CancellationToken cancellationToken = default)
         {
             await Connection.StartAsync(cancellationToken);
-            await Context.OnConnected(this, false);
+            await Context.OnConnected(this, Groups.Length > 0);
         }
 
         public async Task StopAsync()
@@ -62,30 +100,6 @@ namespace Azure.SignalRBench.Client
             await Connection.StopAsync();
         }
 
-        private bool TryParseEndpoint(string connectionString, out string endpoint)
-        {
-            var properties = connectionString.Split(';', StringSplitOptions.RemoveEmptyEntries);
-            foreach (var property in properties)
-            {
-                var kvp = property.Split('=');
-                if (kvp.Length != 2) continue;
-
-                if (string.Compare("endpoint", kvp.First(), true) == 0)
-                {
-                    endpoint = kvp.Last();
-                    endpoint = endpoint.Replace("http", "ws");
-                    return true;
-                }
-            }
-            endpoint = "";
-            return false;
-        }
-
-        private sealed class Data
-        {
-            public string Payload { get; set; } = "";
-            public long Ticks { get; set; }
-        }
 
         private sealed class WebSocketHubConnection
         {
@@ -96,10 +110,11 @@ namespace Azure.SignalRBench.Client
             public Uri ResourceUri { get; }
             private CancellationToken ConnectionStoppedToken => _connectionStoppedCts.Token;
 
-            public WebSocketHubConnection(string endpoint)
+            public WebSocketHubConnection(string url)
             {
                 _socket = new ClientWebSocket();
-                ResourceUri = new Uri(endpoint + "/ws/client");
+                _socket.Options.AddSubProtocol("json.webpubsub.azure.v1");
+                ResourceUri = new Uri(url);
             }
 
             public void On(Action<long, string> callback)
@@ -126,22 +141,111 @@ namespace Azure.SignalRBench.Client
 
             private async Task ReceiveLoop()
             {
-                var buffer = new byte[1 << 22];
                 while (_socket.State == WebSocketState.Open)
                 {
-                    try
+                    var ms = new MemoryStream();
+                    Memory<byte> buffer = new byte[1 << 22];
+                    // receive loop
+                    while (true)
                     {
-                        var response = await _socket.ReceiveAsync(buffer, ConnectionStoppedToken);
-                        var dataStr = Encoding.UTF8.GetString(buffer, 0, response.Count);
-                        var data = JsonConvert.DeserializeObject<Data>(dataStr);
-                        _handler?.Invoke(data.Ticks, data.Payload);
-                    }
-                    catch (OperationCanceledException e)
-                    {
-                        continue;
+                        var receiveResult = await _socket.ReceiveAsync(buffer, default);
+                        // Need to check again for NetCoreApp2.2 because a close can happen between a 0-byte read and the actual read
+                        if (receiveResult.MessageType == WebSocketMessageType.Close)
+                        {
+                            try
+                            {
+                                Console.WriteLine($"The connection closed");
+
+                                await _socket.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, default);
+                            }
+                            catch (Exception e)
+                            {
+                                // It is possible that the remote is already closed
+                                Console.WriteLine($"The connection close:{e}");
+                            }
+
+                            break;
+                        }
+
+                        await ms.WriteAsync(buffer.Slice(0, receiveResult.Count));
+                        if (receiveResult.EndOfMessage)
+                        {
+                            var str = Encoding.UTF8.GetString(ms.ToArray());
+                            // Console.WriteLine($"The connection data in {str}");
+
+                            var response = JsonConvert.DeserializeObject<MessageResponse>(str);
+                            var data = JsonConvert.DeserializeObject<RawWebsocketData>(response.data);
+                            _handler?.Invoke(data.Ticks, data.Payload);
+                            ms.SetLength(0);
+                        }
                     }
                 }
             }
+        }
+
+        //
+        private sealed class JoinGroup
+        {
+            public string type = "joinGroup";
+            public string group;
+
+            public JoinGroup(string group)
+            {
+                this.group = group;
+            }
+
+            public string Serilize()
+            {
+                return JsonConvert.SerializeObject(this);
+            }
+        }
+
+        private sealed class SendToGroup
+        {
+            public string type = "sendToGroup";
+            public string group;
+            public string dataType = "text";
+            public string data;
+
+            public SendToGroup(string group, string data)
+            {
+                this.group = group;
+                this.data = data;
+            }
+
+            public string Serilize()
+            {
+                return JsonConvert.SerializeObject(this);
+            }
+        }
+
+        private sealed class UserEvent
+        {
+            public string type = "event";
+            public string Event = "echo";
+            public string dataType = "text";
+            public string data;
+
+            public UserEvent(string userEvent, string data)
+            {
+                this.Event = userEvent;
+                this.data = data;
+            }
+
+            public string Serilize()
+            {
+                return JsonConvert.SerializeObject(this, new JsonSerializerSettings
+                {
+                    ContractResolver = new CamelCasePropertyNamesContractResolver()
+                });
+            }
+        }
+
+        private sealed class MessageResponse
+        {
+            public string type;
+            public string from;
+            public string data;
         }
     }
 }

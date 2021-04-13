@@ -191,7 +191,7 @@ namespace Azure.SignalRBench.Coordinator
                     await K8sProvider.DeleteClientPodsAsync(Job.TestId);
                     _logger.LogInformation("Test job {testId}: Removing server pods.", Job.TestId);
                     await K8sProvider.DeleteServerPodsAsync(Job.TestId,
-                        Job.TestMethod == TestCategory.AspnetCoreSignalRServerless);
+                        Job.TestMethod == TestCategory.AspnetCoreSignalRServerless||Job.TestMethod == TestCategory.RawWebsocket);
                 }
                 catch (Exception ignore)
                 {
