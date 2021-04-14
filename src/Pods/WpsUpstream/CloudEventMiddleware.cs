@@ -35,8 +35,8 @@ namespace WpsUpstreamServer
                     {
                         case "echo":
                             response.StatusCode = 200;
-                            await context.Response.WriteAsync(body);
-                            await context.Response.CompleteAsync();
+                             await context.Response.WriteAsync(body);
+                             await context.Response.CompleteAsync();
                             break;
                         case "p2p":
                             response.StatusCode = 204;
@@ -48,7 +48,8 @@ namespace WpsUpstreamServer
                             response.StatusCode = 204;
                             response.ContentLength = 0;
                             await context.Response.CompleteAsync();
-                          var res=  await _client.SendToAllAsync(body);
+                            //async methods have bugs
+                            _client.SendToAll(body);
                             break;
                     }
                 }
