@@ -29,11 +29,6 @@ namespace WpsUpstreamServer
                         options.DisableColors = false;
                         options.TimestampFormat = "hh:mm:ss yyyy/MM/dd";
                     });
-                    logging.AddProvider(
-                        new BlobLoggerProvider(
-                            $"{context.Configuration[PerfConstants.ConfigurationKeys.TestIdKey]}/{Roles.WpsServerlessServer}_{context.Configuration[PerfConstants.ConfigurationKeys.PodNameStringKey]}",
-                            ".log",
-                            context.Configuration[PerfConstants.ConfigurationKeys.StorageConnectionStringKey]));
                 })
                 .ConfigureWebHostDefaults(webBuilder =>
                 {

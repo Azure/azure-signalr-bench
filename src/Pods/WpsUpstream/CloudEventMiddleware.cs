@@ -1,7 +1,6 @@
 using System;
 using System.IO;
 using System.Threading.Tasks;
-using Azure.Messaging.WebPubSub;
 using Azure.SignalRBench.Common;
 using Microsoft.AspNetCore.Http;
 using Newtonsoft.Json;
@@ -11,11 +10,9 @@ namespace WpsUpstreamServer
     public class CloudEventMiddleware
     {
         private readonly RequestDelegate _nextMiddleware;
-        private readonly WebPubSubServiceClient _client;
 
-        public CloudEventMiddleware(RequestDelegate nextMiddleware, ServiceClientHolder serviceClientHolder)
+        public CloudEventMiddleware(RequestDelegate nextMiddleware)
         {
-            _client = serviceClientHolder.WebPubSubServiceClient;
             _nextMiddleware = nextMiddleware;
         }
 
@@ -36,20 +33,20 @@ namespace WpsUpstreamServer
                         case "echo":
                             response.StatusCode = 200;
                              await context.Response.WriteAsync(body);
+                         //    await Task.Delay(800);
                              await context.Response.CompleteAsync();
                             break;
                         case "p2p":
                             response.StatusCode = 204;
+                           // await Task.Delay(800);
                             response.ContentLength = 0;
                             await context.Response.CompleteAsync();
-                            await _client.SendToUserAsync(data.Target,body);
                             break;
                         case "broadcast":
                             response.StatusCode = 204;
                             response.ContentLength = 0;
                             await context.Response.CompleteAsync();
                             //async methods have bugs
-                            _client.SendToAll(body);
                             break;
                     }
                 }
