@@ -33,7 +33,7 @@ namespace WpsUpstreamServer
                         case "echo":
                             response.StatusCode = 200;
                              await context.Response.WriteAsync(body);
-                         //    await Task.Delay(800);
+                             await Task.Delay(20000);
                              await context.Response.CompleteAsync();
                             break;
                         case "p2p":
