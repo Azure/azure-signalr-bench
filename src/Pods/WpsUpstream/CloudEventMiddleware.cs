@@ -42,7 +42,7 @@ namespace WpsUpstreamServer
                             response.StatusCode = 204;
                             response.ContentLength = 0;
                             await context.Response.CompleteAsync();
-                            await _client.SendToUserAsync(data.Target,body);
+                            _= _client.SendToUserAsync(data.Target,body);
                             break;
                         case "broadcast":
                             response.StatusCode = 204;

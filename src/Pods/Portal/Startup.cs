@@ -127,6 +127,7 @@ namespace Portal
                 app.UseHsts();
             }
 
+            app.UseMiddleware<ValidationMiddleware>();
             //  app.UseHttpsRedirection();
             app.ApplicationServices.GetRequiredService<ICronScheduler>().Start();
             app.ApplicationServices.GetRequiredService<ClusterState>().Init().Wait();

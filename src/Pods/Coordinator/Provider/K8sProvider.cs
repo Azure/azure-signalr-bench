@@ -82,15 +82,6 @@ namespace Azure.SignalRBench.Coordinator
                                     {
                                         new Networkingv1beta1HTTPIngressPath
                                         {
-                                            Path = $"/upstream/validate",
-                                            Backend = new Networkingv1beta1IngressBackend
-                                            {
-                                                ServiceName = name,
-                                                ServicePort = 80
-                                            }
-                                        },
-                                        new Networkingv1beta1HTTPIngressPath
-                                        {
                                             Path = $"/upstream/{NameConverter.GenerateHubName(testId)}",
                                             Backend = new Networkingv1beta1IngressBackend
                                             {

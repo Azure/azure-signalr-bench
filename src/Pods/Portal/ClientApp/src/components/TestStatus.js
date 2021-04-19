@@ -215,14 +215,18 @@ export class TestStatus extends Component {
 
     async populateTestStatusData(testStatus) {
         var dir = testStatus.props.match.params.dir;
+        var index = testStatus.props.match.params.index;
         var url;
         if (dir === undefined) {
             var key = testStatus.props.match.params.key;
-            if (key === undefined)
-                key = "";
-            url = 'teststatus/list/' + key;
+            url='teststatus/list/'
+            if (key !== undefined){
+                url +=key;
+                if(index !==undefined){
+                    url+= '/'+ index;
+                }
+            }
         } else {
-            var index = testStatus.props.match.params.index;
             url = 'teststatus/dir/list/' + dir + "?index=" + index;
         }
         console.log(url)

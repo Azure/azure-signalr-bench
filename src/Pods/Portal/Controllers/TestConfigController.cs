@@ -98,6 +98,13 @@ namespace Portal.Controllers
             };
             try
             {
+                var exist = await statusTable.GetFirstOrDefaultAsync(from row in statusTable.Rows
+                    where row.PartitionKey == testEntity.PartitionKey && row.RowKey == testEntity.RowKey
+                    select row);
+                if (exist != null)
+                {
+                    await statusTable.DeleteAsync(exist);
+                }
                 await statusTable.InsertAsync(testEntity);
                 await queue.SendAsync(latestTestConfig.ToTestJob(_clusterState));
             }
@@ -159,6 +166,42 @@ namespace Portal.Controllers
                 default:
                     return BadRequest("unsupported");
             }
+        }
+
+        [HttpPut("rename/{source}/{target}")]
+        public async Task<ActionResult> Rename(string source, string target)
+        {
+            var configTable =
+                await _perfStorage.GetTableAsync<TestConfigEntity>(PerfConstants.TableNames.TestConfig);
+            var oldOne =
+                await configTable.GetFirstOrDefaultAsync(from row in configTable.Rows
+                    where row.PartitionKey == source
+                    select row);
+            if (oldOne == null) return BadRequest($"testName {source} doesn't exist");
+            var newOne = await configTable.GetFirstOrDefaultAsync(from row in configTable.Rows
+                where row.PartitionKey == target
+                select row);
+            if (newOne != null) return BadRequest($"testName {target} already exist");
+            var statusTable = await _perfStorage.GetTableAsync<TestStatusEntity>(PerfConstants.TableNames.TestStatus);
+            var newTestStatusEntities = await statusTable.QueryAsync(
+                from row in statusTable.Rows where row.PartitionKey == target select row).ToListAsync();
+            if (newTestStatusEntities.Count != 0) return BadRequest($"teststatus for {target} already exist");
+            //create new config
+            oldOne.PartitionKey = target;
+            oldOne.RowKey = target;
+            await configTable.InsertAsync(oldOne);
+            var oldTestStatusEntities = await statusTable.QueryAsync(
+                from row in statusTable.Rows where row.PartitionKey == source select row).ToListAsync();
+            //create new teststatus
+            foreach (var status in oldTestStatusEntities)
+            {
+                status.PartitionKey = target;
+                await statusTable.InsertAsync(status);
+            }
+
+            //delete testconfig
+            await Delete(source);
+            return Ok();
         }
 
         [HttpPut("cron/{key}")]
@@ -236,7 +279,8 @@ namespace Portal.Controllers
         [Authorize(Policy = PerfConstants.Policy.RoleLogin,
             Roles = PerfConstants.Roles.Contributor + "," + PerfConstants.Roles.Pipeline)]
         [HttpPost("batch/StartTest/{dir}")]
-        public async Task<ActionResult> StartTestAsync(string dir, string index,int unitLimit=300,int instanceLimit=10)
+        public async Task<ActionResult> StartTestAsync(string dir, string index, int unitLimit = 300,
+            int instanceLimit = 10)
         {
             index = index.ToLower();
             var configTable = await _perfStorage.GetTableAsync<TestConfigEntity>(PerfConstants.TableNames.TestConfig);
@@ -244,7 +288,7 @@ namespace Portal.Controllers
                 where row.Dir == dir
                 select row).ToListAsync();
             var total = configs.Count;
-            if ( total== 0)
+            if (total == 0)
             {
                 return BadRequest($"Dir {dir} doesn't exist");
             }
@@ -277,8 +321,10 @@ namespace Portal.Controllers
                         {
                             await statusTable.DeleteAsync(exist);
                         }
-                        await statusTable.InsertAsync(testEntity); 
-                         await queue.SendAsync(testConfigEntity.ToTestJob(_clusterState,index,unitLimit,instanceLimit,dir,total));
+
+                        await statusTable.InsertAsync(testEntity);
+                        await queue.SendAsync(testConfigEntity.ToTestJob(_clusterState, index, unitLimit, instanceLimit,
+                            dir, total));
                     }
                     catch (Exception e)
                     {

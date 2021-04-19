@@ -9,14 +9,18 @@ metadata:
     nginx.ingress.kubernetes.io/use-regex: "true"
 spec:
   tls:
-  - hosts:
-    - PORTAL_DOMAIN_PLACE_HOLDER
-    secretName: tls-secret-portal
+    - hosts:
+        - PORTAL_DOMAIN_PLACE_HOLDER
+      secretName: tls-secret-portal
   rules:
-  - host: PORTAL_DOMAIN_PLACE_HOLDER
-    http:
-      paths:
-      - backend:
-          serviceName: portal
-          servicePort: 80
-        path: /
+    - host: PORTAL_DOMAIN_PLACE_HOLDER
+      http:
+        paths:
+          - backend:
+              serviceName: portal
+              servicePort: 80
+            path: /upstream/validate
+          - backend:
+              serviceName: portal
+              servicePort: 80
+            path: /
