@@ -128,7 +128,7 @@ namespace Azure.SignalRBench.Client
             public volatile bool active = false;
             public Task SendAsync(string payload)
             {
-                if (active&&_socket.State == WebSocketState.Closed)
+                if (active&&_socket.State != WebSocketState.Open)
                 {
                     _context.OnClosed(_agent);
                     active = false;
