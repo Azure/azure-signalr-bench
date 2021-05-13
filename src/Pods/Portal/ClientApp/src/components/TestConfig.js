@@ -255,6 +255,25 @@ export class TestConfig extends Component {
                                                 }
                                             })
                                         },
+                                    rename:
+                                        (args, print, runCommand) => {
+                                            console.log(args)
+                                            if (args.length != 3) {
+                                                print("Usage: rename {testName}  {newTestName}")
+                                                return
+                                            }
+                                            fetch(`testconfig/rename/${args[1]}/${args[2]}`, {
+                                                method: 'PUT',
+                                                redirect: 'manual'
+                                            }).then(response => {
+                                                if (response.status == 200) {
+                                                    alert("Succeed")
+                                                    this.populateTestConfigData()
+                                                } else {
+                                                    response.text().then(data => alert(data))
+                                                }
+                                            })
+                                        },
                                     movedir:
                                         (args, print, runCommand) => {
                                             console.log(args)
@@ -358,6 +377,7 @@ export class TestConfig extends Component {
                                 }}
                                 descriptions={{
                                     move: 'move {testName} {dirName}', movedir: 'movedir {dirName} {dirName}', cron: "run test periodically [Unix version crontab]. Usage: cron {testName} {0_12_*_*_*}",
+                                    rename: 'rename {testName} {newTestName}',
                                     auth: 'auth {user} {role}. Generate a password for a user with that role',
                                     batch: 'batch {testName} {group} {units[ex:1,2,5,100]. Generate different config from a template for dif units',
                                     startdir: 'Usage: startdir {dir} {index} {unitLimit} {instanceLimit}. Start all tests in a dir with custom index.'
@@ -467,10 +487,16 @@ export class TestConfig extends Component {
                                     <option>Netframework</option>
                                 </Form.Control>
                             </Form.Group>}
-                            {(this.state.obj.service == "RawWebsocket" || (this.state.obj.service == "SignalR" && this.state.obj.mode == "Serverless" && this.state.obj.createMode=="ConnectionString")) &&
+                            { (this.state.obj.service == "SignalR" && this.state.obj.mode == "Serverless" && this.state.obj.createMode=="ConnectionString") &&
                                 <div>
                                     <strong>Add upstream settings: </strong>
                                     <code> https://{window.location.hostname}/upstream/{"{hub}"}/api/{"{category}"}/{"{event}"}</code>
+                                </div>
+                            }
+                             {(this.state.obj.service == "RawWebsocket" ) &&
+                                <div>
+                                    <strong>Add upstream settings: </strong>
+                                    <code> https://{window.location.hostname}/upstream/{"{event}"}</code>
                                 </div>
                             }
                             {this.state.obj.service == "SignalR" && <Form.Group  >
@@ -524,7 +550,7 @@ export class TestConfig extends Component {
                                      <Form.Label>Client number</Form.Label>
                                  <Form.Control name="clientNum" onChange={this.handleChangeNum} placeholder="set the test client number. (Default:Total con/5000)" />
                              </Form.Group>
-                            { this.state.obj.service == "SignalR" && this.state.obj.mode == "Default" && this.state.obj.createMode != "SelfHostedServer" && <Form.Group >
+                            { this.state.obj.createMode != "SelfHostedServer" && <Form.Group >
                                      <Form.Label>Server number</Form.Label>
                                  <Form.Control name="serverNum" onChange={this.handleChangeNum} placeholder="set the test server number. (Default:ClientNum/2)" />
                              </Form.Group>}

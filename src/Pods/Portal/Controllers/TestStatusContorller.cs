@@ -26,20 +26,27 @@ namespace Portal.Controllers
             _logger = logger;
         }
 
-        [HttpGet("list/{key?}")]
-        public async Task<IEnumerable<TestStatusEntity>> Get(string key)
+        [HttpGet("list/{key?}/{index?}")]
+        public async Task<IEnumerable<TestStatusEntity>> Get(string key, string index)
         {
             try
             {
                 var table = await _perfStorage.GetTableAsync<TestStatusEntity>(PerfConstants.TableNames.TestStatus);
-                TableQuery<TestStatusEntity> tableQuery=new TableQuery<TestStatusEntity>();
+                TableQuery<TestStatusEntity> tableQuery = new TableQuery<TestStatusEntity>();
                 tableQuery.OrderByDesc("Timestamp");
                 if (string.IsNullOrEmpty(key))
                 {
-                    return await table.QueryAsync(tableQuery,30).ToListAsync();
+                    return await table.QueryAsync(tableQuery, 30).ToListAsync();
                 }
-                var rows = await table.QueryAsync(
-                    from row in table.Rows where row.PartitionKey == key select row).ToListAsync();
+
+                List<TestStatusEntity> rows = null;
+                if (string.IsNullOrEmpty(index))
+                    rows = await table.QueryAsync(
+                        from row in table.Rows where row.PartitionKey == key select row).ToListAsync();
+                else
+                    rows = await table.QueryAsync(
+                            from row in table.Rows where row.PartitionKey == key && row.RowKey == index select row)
+                        .ToListAsync();
                 rows.Sort((a, b) =>
                     b.Timestamp.CompareTo(a.Timestamp)
                 );
@@ -51,15 +58,15 @@ namespace Portal.Controllers
                 throw;
             }
         }
-        
+
         [HttpGet("dir/list/{dir?}")]
-        public async Task<IEnumerable<TestStatusEntity>> DirList(string dir,string index)
+        public async Task<IEnumerable<TestStatusEntity>> DirList(string dir, string index)
         {
             try
             {
                 var table = await _perfStorage.GetTableAsync<TestStatusEntity>(PerfConstants.TableNames.TestStatus);
                 var rows = await table.QueryAsync(
-                    from row in table.Rows where (row.Dir == dir) && (row.RowKey==index) select row).ToListAsync();
+                    from row in table.Rows where (row.Dir == dir) && (row.RowKey == index) select row).ToListAsync();
                 rows.Sort((a, b) =>
                     b.Timestamp.CompareTo(a.Timestamp)
                 );

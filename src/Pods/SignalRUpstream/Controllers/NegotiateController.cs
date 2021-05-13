@@ -18,7 +18,6 @@ namespace SignalRUpstream.Controllers
         {
             _logger = logger;
             var connectionString = configuration[PerfConstants.ConfigurationKeys.ConnectionString];
-            Console.WriteLine($"connecionString:{configuration[PerfConstants.ConfigurationKeys.ConnectionString]}");
             _serviceManager = new ServiceManagerBuilder()
                 .WithOptions(o => o.ConnectionString = connectionString)
                 .Build();

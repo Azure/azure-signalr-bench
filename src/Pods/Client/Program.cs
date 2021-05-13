@@ -2,6 +2,10 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using System.Net.WebSockets;
+using System.Security.Claims;
+using System.Threading.Tasks;
+using Azure.Messaging.WebPubSub;
 using Azure.SignalRBench.Common;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -58,6 +62,7 @@ namespace Azure.SignalRBench.Client
                                 $"Unknown testCategory:{hostContext.Configuration[PerfConstants.ConfigurationKeys.TestCategory]}");
                             break;
                     }
+
                     services.AddHostedService<ClientHostedService>();
                 });
         }

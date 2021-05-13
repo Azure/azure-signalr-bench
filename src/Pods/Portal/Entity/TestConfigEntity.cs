@@ -104,7 +104,6 @@ namespace Azure.SignalRBench.Coordinator.Entities
             {
                 case "RawWebsocket":
                     testCategory = TestCategory.RawWebsocket;
-                    ServerNum = 0;
                     break;
                 case "SignalR" when serviceMode == SignalRServiceMode.Serverless:
                     testCategory = TestCategory.AspnetCoreSignalRServerless;

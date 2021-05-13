@@ -61,13 +61,13 @@ namespace Azure.SignalRBench.Coordinator
                 }
             };
             await _k8s.CreateNamespacedServiceAsync(service, _default, cancellationToken: cancellationToken);
-            if (testCategory == TestCategory.AspnetCoreSignalRServerless)
+            if (testCategory == TestCategory.AspnetCoreSignalRServerless||testCategory == TestCategory.RawWebsocket)
             {
                 var ingress = new Networkingv1beta1Ingress
                 {
                     Metadata = new V1ObjectMeta
                     {
-                        Name =NameConverter.Truncate(_upstream + "-" + testId)
+                        Name =NameConverter.Truncate(_upstream + "-" + testId),
                     },
                     Spec = new Networkingv1beta1IngressSpec
                     {
@@ -102,6 +102,7 @@ namespace Azure.SignalRBench.Coordinator
             {
                 TestCategory.AspnetCoreSignalRServerless => "SignalRUpstream",
                 TestCategory.AspnetSignalR => "AspNetAppServer",
+                TestCategory.RawWebsocket => "WpsUpstream",
                 _ => "AppServer"
             };
 
@@ -143,6 +144,17 @@ namespace Azure.SignalRBench.Coordinator
                         },
                         Spec = new V1PodSpec
                         {
+                            DnsConfig = new V1PodDNSConfig
+                            {
+                                Options = new List<V1PodDNSConfigOption>
+                                {
+                                    new V1PodDNSConfigOption
+                                    {
+                                        Name = "ndots",
+                                        Value = "2"
+                                    }
+                                }
+                            },
                             NodeSelector = new Dictionary<string, string>
                             {
                                 [PerfConstants.Name.OsLabel] = testCategory == TestCategory.AspnetSignalR
@@ -156,7 +168,7 @@ namespace Azure.SignalRBench.Coordinator
                                     Name = name,
                                     Image = testCategory == TestCategory.AspnetSignalR
                                         ? "mcr.microsoft.com/dotnet/framework/runtime:4.8"
-                                        : "signalrbenchmark/perf:1.3",
+                                        : "signalrbenchmark/perf:1.4.4",
                                     Resources = new V1ResourceRequirements
                                     {
                                         Requests = new Dictionary<string, ResourceQuantity>
@@ -219,7 +231,7 @@ namespace Azure.SignalRBench.Coordinator
                 }
             };
             await _k8s.CreateNamespacedDeploymentAsync(deployment, _default, cancellationToken: cancellationToken);
-            return serverPodCount==0 ? asrsConnectionStrings[0] : name;
+            return serverPodCount==0 || testCategory == TestCategory.RawWebsocket ? asrsConnectionStrings[0] : name;
         }
 
         public async Task CreateClientPodsAsync(string testId, TestCategory testCategory, int clientPodCount,
@@ -285,7 +297,7 @@ namespace Azure.SignalRBench.Coordinator
                                 new V1Container
                                 {
                                     Name = name,
-                                    Image = "signalrbenchmark/perf:1.3",
+                                    Image = "signalrbenchmark/perf:1.4.4",
                                     Resources = new V1ResourceRequirements
                                     {
                                         Requests = new Dictionary<string, ResourceQuantity>

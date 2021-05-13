@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <TargetFramework>net5.0</TargetFramework>
     <RootNamespace>Azure.SignalRBench.AppServer</RootNamespace>
     <langversion>8</langversion>
     <Nullable>enable</Nullable>
@@ -9,7 +9,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Protocols.MessagePack" Version="3.1.8" />
-    <PackageReference Include="Microsoft.Azure.SignalR" Version="1.7.0" />
+    <PackageReference Include="Microsoft.Azure.SignalR" Version="1.8.1" />
   </ItemGroup>
 
   <ItemGroup>

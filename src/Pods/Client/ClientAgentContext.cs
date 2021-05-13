@@ -57,7 +57,7 @@ namespace Azure.SignalRBench.Client
 
         public static void CoordinatorTime(long ticks)
         {
-            TimeBias=(int)(ticks - DateTime.UtcNow.Ticks);
+            TimeBias = (int) (ticks - DateTime.UtcNow.Ticks);
         }
         public async Task<string> GetConnectionIDAsync(int index)
         {

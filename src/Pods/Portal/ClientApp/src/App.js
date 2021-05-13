@@ -15,7 +15,7 @@ export default class App extends Component {
             <Layout>
                 <Route path='/test-config' component={TestConfig} />
                 <Route exact path='/test-status' component={TestStatus} />
-                <Route path='/test-status/testname/:key?' component={TestStatus} />
+                <Route path='/test-status/testname/:key?/:index?' component={TestStatus} />
                 <Route path='/test-status/dir/:dir/:index' component={TestStatus} />
                 <Route exact path='/' component={Home} />
             </Layout>
