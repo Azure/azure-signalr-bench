@@ -599,7 +599,7 @@ export class TestConfig extends Component {
                             </Form.Group>
                             <Form.Group >
                                 <Form.Label>MessageSize </Form.Label>
-                                <Form.Control name="messageSize" onChange={this.handleChangeNum} placeholder="set the message size. (Default:2048) [unit KB]) " defaultValue={this.state.obj.messageSize}/>
+                                <Form.Control name="messageSize" onChange={this.handleChangeNum} placeholder="set the message size. (Default:2048) [unit B]) " defaultValue={this.state.obj.messageSize}/>
                             </Form.Group>
                             <Form.Group >
                                 <Form.Label>Sending Interval </Form.Label>
