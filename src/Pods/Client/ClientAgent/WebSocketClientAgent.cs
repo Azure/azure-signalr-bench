@@ -1,6 +1,8 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
+using System.Net;
+using System.Net.Http;
 using System.Net.WebSockets;
 using System.Runtime.InteropServices;
 using System.Security.Claims;
@@ -22,17 +24,24 @@ namespace Azure.SignalRBench.Client
 
         private WebSocketHubConnection Connection { get; }
 
+        private string _appserverUrl;
 
-        public WebSocketClientAgent(string url, Protocol protocol, string[] groups, int globalIndex,
+        private static HttpClient _httpClient = new HttpClient();
+
+
+        public WebSocketClientAgent(string url,string appserverUrl, Protocol protocol, string[] groups, int globalIndex,
             ClientAgentContext context)
         {
             Context = context;
+            _appserverUrl ="http://"+ appserverUrl;
             Connection = new WebSocketHubConnection(url,this,context);
             Connection.On(context.Measure);
             Groups = groups;
             GlobalIndex = globalIndex;
+            
         }
 
+        //This method should be sent directly to appserver to lower pressure on wps runtime 
         public Task BroadcastAsync(string payload)
         {
             var data = new RawWebsocketData()
@@ -41,9 +50,7 @@ namespace Azure.SignalRBench.Client
                 Ticks = ClientAgentContext.CoordinatedUtcNow(),
                 Payload = payload
             };
-            var broadcastEvent = new UserEvent(NameConverter.GenerateHubName(Context.TestId),
-                JsonConvert.SerializeObject(data));
-            return Connection.SendAsync(broadcastEvent.Serilize());
+            return SendToAppServer(data);
         }
 
         public Task EchoAsync(string payload)
@@ -75,6 +82,7 @@ namespace Azure.SignalRBench.Client
             await Connection.SendAsync(new JoinGroup(Groups[0]).Serilize());
         }
 
+        //This method should be sent directly to appserver to lower pressure on wps runtime 
         public Task SendToClientAsync(int index, string payload)
         {
             var data = new RawWebsocketData()
@@ -84,9 +92,7 @@ namespace Azure.SignalRBench.Client
                 Payload = payload,
                 Target = $"user{index}"
             };
-            var p2PEvent = new UserEvent(NameConverter.GenerateHubName(Context.TestId),
-                JsonConvert.SerializeObject(data));
-            return Connection.SendAsync(p2PEvent.Serilize());
+            return SendToAppServer(data);
         }
 
         public async Task StartAsync(CancellationToken cancellationToken = default)
@@ -200,6 +206,15 @@ namespace Azure.SignalRBench.Client
             }
         }
 
+        private async Task SendToAppServer(RawWebsocketData data)
+        {
+            var request = new HttpRequestMessage(HttpMethod.Post, _appserverUrl)
+            {
+                Version = HttpVersion.Version20,
+            };
+            request.Content = new StringContent(data.Serilize(), Encoding.UTF8, "application/json");
+            await _httpClient.SendAsync(request);
+        }
         //
         private sealed class JoinGroup
         {

@@ -11,14 +11,16 @@ namespace Azure.SignalRBench.Client
         public IClientAgent Create(string connectionString, Protocol protocol, string[] groups, int globalIndex,
             ClientAgentContext context)
         {
-            if (!TryParseEndpoint(connectionString, out var endpoint, out var key))
+            //the app serverl url is hacked into this url using "," appended
+            var urls = connectionString.Split(",");
+            if (!TryParseEndpoint(urls[0], out var endpoint, out var key))
             {
                 throw new Exception($"Fail to parse wps connection string:{connectionString}");
             }
 
             var token = Token(endpoint, key, globalIndex);
             return new WebSocketClientAgent(
-                endpoint.Replace("http", "ws") + "/client/hubs/" + PerfConstants.Name.HubName + "?access_token=" + token, protocol,
+                endpoint.Replace("http", "ws") + "/client/hubs/" + PerfConstants.Name.HubName + "?access_token=" + token, urls[1], protocol,
                 groups,
                 globalIndex,
                 context);
