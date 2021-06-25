@@ -70,6 +70,34 @@ namespace Portal.Controllers
             _logger.LogInformation($"Create Test config:{JsonConvert.SerializeObject(testConfigEntity)}");
             return Ok();
         }
+        
+        [HttpPatch]
+        public async Task<ActionResult> PatchTestConfig(TestConfigEntity testConfigEntity)
+        {
+            var table = await _perfStorage.GetTableAsync<TestConfigEntity>(PerfConstants.TableNames.TestConfig);
+            var exist = await table.GetFirstOrDefaultAsync(from row in table.Rows
+                where row.PartitionKey == testConfigEntity.PartitionKey
+                select row);
+            if (exist == null)
+            {
+                return BadRequest($"Test name :{testConfigEntity.PartitionKey} don't exist!");
+            }
+
+            testConfigEntity.User = User.Identity.Name;
+            testConfigEntity.PartitionKey = testConfigEntity.RowKey;
+            try
+            {
+                testConfigEntity.Init();
+            }
+            catch (Exception e)
+            {
+                return BadRequest(e.Message);
+            }
+
+            await table.UpdateAsync(testConfigEntity);
+            _logger.LogInformation($"Update Test config:{JsonConvert.SerializeObject(testConfigEntity)}");
+            return Ok();
+        }
 
         [Authorize(Policy = PerfConstants.Policy.RoleLogin,
             Roles = PerfConstants.Roles.Contributor + "," + PerfConstants.Roles.Pipeline)]

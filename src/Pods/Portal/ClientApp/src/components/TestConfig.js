@@ -19,9 +19,11 @@ export class TestConfig extends Component {
             testConfigs: [],
             total: [],
             activeIndex: { "Default": true },
-            search:""
+            search:"",
+            edit:false
         };
         this.handleClose = this.handleClose.bind(this);
+        this.handleEdit = this.handleEdit.bind(this);
         this.handleFork = this.handleFork.bind(this);
         this.handleShow = this.handleShow.bind(this);
         this.handleJsonClose = this.handleJsonClose.bind(this);
@@ -87,13 +89,25 @@ export class TestConfig extends Component {
         delete content["serverNum"]
         this.setState({
             show: true,
-            obj:content
+            obj:content,
+            edit:false,
         })
     }
+
+    handleEdit(e) {
+        var content = JSON.parse(e.target.getAttribute("value"))
+        this.setState({
+            show: true,
+            obj:content,
+            edit:true
+        })
+    }
+    
     handleShow() {
         console.log(this.defaultObj)
         this.setState({
             show: true,
+            edit:false,
             obj:JSON.parse(JSON.stringify(this.defaultObj))
         })
     }
@@ -170,8 +184,9 @@ export class TestConfig extends Component {
             alert("-- is reserved!")
             return
         }
+        const method=this.state.edit?"PATCH":"PUT"
         const response = await fetch('testconfig', {
-            method: 'PUT',
+            method: method,
             headers: {
                 'Accept': 'application/json',
                 'Content-Type': 'application/json',
@@ -406,6 +421,7 @@ export class TestConfig extends Component {
                                             <th>ClientConnections</th>
                                             <th>Creater</th>
                                             <th>Config</th>
+                                            <th>Edit</th>
                                             <th>Fork</th>
                                             <th>Start</th>
                                             <th>Remove</th>
@@ -422,6 +438,7 @@ export class TestConfig extends Component {
                                                 <td>{testConfig.clientCons}</td>
                                                 <td>{testConfig.user}</td>
                                                 <td><Icon size="large" name='file code outline' value={json} onClick={this.handleJsonShow} /></td>
+                                                <td><Icon size="large" name='pencil alternate' value={json} onClick={this.handleEdit} /></td>
                                                 <td><Icon size="large" name='gay' value={json} onClick={this.handleFork} /></td>
                                                 <td ><Button color="teal" size='mini' value={testConfig["partitionKey"]} onClick={this.handleStart}>Run</Button></td>
                                                 <td ><Button color="orange" size='mini' value={testConfig["partitionKey"]} onClick={this.handleDelete}>Delete</Button></td>
@@ -463,7 +480,7 @@ export class TestConfig extends Component {
                         <Form name="CreateConfigForm">
                             <Form.Group >
                                 <Form.Label >TestName</Form.Label>
-                                <Form.Control name="rowKey" onChange={this.handleChange} placeholder="give a unique name for this test" defaultValue={this.state.obj.rowKey} />
+                                <Form.Control disabled={this.state.edit} name="rowKey" onChange={this.handleChange} placeholder="give a unique name for this test" defaultValue={this.state.obj.rowKey} />
                             </Form.Group>
                             <Form.Group  >
                                 <Form.Label>Service Name</Form.Label>
@@ -548,11 +565,11 @@ export class TestConfig extends Component {
                             </Form.Group>
                              <Form.Group >
                                      <Form.Label>Client number</Form.Label>
-                                 <Form.Control name="clientNum" onChange={this.handleChangeNum} placeholder="set the test client number. (Default:Total con/5000)" />
+                                 <Form.Control name="clientNum" onChange={this.handleChangeNum} placeholder="set the test client number. (Default:Total con/5000)" defaultValue={this.state.edit?this.state.obj.clientNum:""}/>
                              </Form.Group>
                             { this.state.obj.createMode != "SelfHostedServer" && <Form.Group >
                                      <Form.Label>Server number</Form.Label>
-                                 <Form.Control name="serverNum" onChange={this.handleChangeNum} placeholder="set the test server number. (Default:ClientNum/2)" />
+                                 <Form.Control name="serverNum" onChange={this.handleChangeNum} placeholder="set the test server number. (Default:ClientNum/2)" defaultValue={this.state.edit?this.state.obj.serverNum:""}/>
                              </Form.Group>}
                             <Form.Group  >
                                 <Form.Label>Testing Scenario</Form.Label>
