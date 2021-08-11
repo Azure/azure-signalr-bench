@@ -71,9 +71,6 @@ while [[ "$#" > 0 ]]; do
   --wpsupstream)
     WPSUPSTREAM=true
     ;;
-  --localdns)
-    LOCALDNS=true
-    ;;
   --autoscale)
     AUTOSCALE=true
     ;;
@@ -169,25 +166,19 @@ if [[ $ALL || $WPSUPSTREAM ]]; then
   publish WpsUpstream
 fi
 
-if [[ $ALL || $LOCALDNS ]]; then
-  cd $DIR/yaml/dns
-  kubedns=$(kubectl get svc kube-dns -n kube-system -o jsonpath={.spec.clusterIP})
-  domain="cluster.local"
-  localdns="169.254.20.10"
-  cat node-local-dns.yaml | replace __PILLAR__LOCAL__DNS__ $localdns | replace __PILLAR__DNS__DOMAIN__ $domain | replace __PILLAR__DNS__SERVER__ $kubedns | kubectl apply -f -
-fi
 
 if [[ $ALL || $REDIS ]]; then
   ##This redis has only one instance. Change this to cluster mode later
   cd $DIR/yaml/redis
   PORTAL_IP=$(az network public-ip show -n $PORTAL_IP_NAME -g $RESOURCE_GROUP --query "ipAddress" -o tsv)
   kubectl apply -f redis-master-deployment.yaml
-  # kubectl apply -f redis-master-service.yaml
-  cat redis-master-test.yaml | replace RESOURCE_GROUP_PLACE_HOLDER $RESOURCE_GROUP | kubectl apply -f -
+  kubectl apply -f redis-master-service.yaml
+ # cat redis-master-test.yaml | replace RESOURCE_GROUP_PLACE_HOLDER $RESOURCE_GROUP | kubectl apply -f -
   echo "redis dns inside cluster: redis-master "
 fi
 
 if [[ $ALL || $UPDATEPOOL ]]; then
+  ## The pool size would impact the unit size that could be tested
   az aks nodepool add \
     --resource-group $RESOURCE_GROUP \
     --cluster-name $KUBERNETES_SEVICES \
@@ -218,21 +209,22 @@ if [[ $ALL || $AUTOSCALE ]]; then
 fi
 
 if [[ $ALL || $PPE ]]; then
-  # internal test
-  az cloud register -n ppe \
-                  --endpoint-active-directory "https://login.windows-ppe.net" \
-                  --endpoint-active-directory-graph-resource-id "https://graph.ppe.windows.net/" \
-                  --endpoint-active-directory-resource-id "https://management.core.windows.net/" \
-                  --endpoint-gallery "https://gallery.azure.com/" \
-                  --endpoint-management "https://umapi-preview.core.windows-int.net/" \
-                  --endpoint-resource-manager "https://api-dogfood.resources.windows-int.net/" \
-                  --profile "latest" || true
-  az cloud set -n ppe
-  sp=$(az ad sp create-for-rbac -n $PPE_SERVICE_PRINCIPAL --role contributor  --scopes /subscriptions/c0e88e48-6490-40d0-a4c2-6c963c5a4d1e)
-  az cloud set -n "AzureCloud"
-  az keyvault secret set  --vault-name $KEYVAULT -n "ppe-service-principal" --value  "$sp"
-  az keyvault secret set  --vault-name $KEYVAULT -n "ppe-subscription" --value  "c0e88e48-6490-40d0-a4c2-6c963c5a4d1e"
-  az keyvault secret set  --vault-name $KEYVAULT -n "ppe-location" --value  $LOCATION
+  return
+  # internal test only
+#  az cloud register -n ppe \
+#                  --endpoint-active-directory "https://login.windows-ppe.net" \
+#                  --endpoint-active-directory-graph-resource-id "https://graph.ppe.windows.net/" \
+#                  --endpoint-active-directory-resource-id "https://management.core.windows.net/" \
+#                  --endpoint-gallery "https://gallery.azure.com/" \
+#                  --endpoint-management "https://umapi-preview.core.windows-int.net/" \
+#                  --endpoint-resource-manager "https://api-dogfood.resources.windows-int.net/" \
+#                  --profile "latest" || true
+#  az cloud set -n ppe
+#  sp=$(az ad sp create-for-rbac -n $PPE_SERVICE_PRINCIPAL --role contributor  --scopes /subscriptions/c0e88e48-6490-40d0-a4c2-6c963c5a4d1e)
+#  az cloud set -n "AzureCloud"
+#  az keyvault secret set  --vault-name $KEYVAULT -n "ppe-service-principal" --value  "$sp"
+#  az keyvault secret set  --vault-name $KEYVAULT -n "ppe-subscription" --value  "c0e88e48-6490-40d0-a4c2-6c963c5a4d1e"
+#  az keyvault secret set  --vault-name $KEYVAULT -n "ppe-location" --value  $LOCATION
 fi
 
 if [[ $ALL || $INGRESS ]]; then
