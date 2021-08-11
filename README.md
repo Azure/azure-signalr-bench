@@ -1,3 +1,18 @@
+# Setup
+
+SignalR performance tool uses AKS to run the tests. To setup the initial  environment, you could
+```bash
+cd Initialize
+./init.sh -p [prefix] -l location 
+```
+After that, the resource group [prefix]rg will be created. The keyvault, service principal and etc.. will also be inited.
+Then, create a different 
+After that, you need to init the deployments inside the aks
+```bash
+./publish -p [prefix] -a
+```
+After that, you could find the portal domain in the output.
+
 
 # Contributing
 
