@@ -5,14 +5,24 @@ SignalR performance tool uses AKS to run the tests. To setup the initial  enviro
 cd Initialize
 ./init.sh -p [prefix] -l location 
 ```
-After that, the resource group [prefix]rg will be created. The keyvault, service principal and etc.. will also be inited.
-Then, create a different 
+Enable AAD authentication
+
+1. create an application in AAD
+2. Add the redirect url in the final output of the init script to the application's Web redirect URIs
+3. Add a "Contributor Role"  and assign this role to allowed users
+4.  change the Azure AD config (clientID and TenantID) in src/Pods/Portal/appsettings.json accordingly. 
+
 After that, you need to init the deployments inside the aks
+
 ```bash
 ./publish -p [prefix] -a
 ```
-After that, you could find the portal domain in the output.
+<span style="color:yellow"> Note </span>
+    You need to change the  <span style="color:yellowgreen"> VM size </span> according to the quota in your subscription.                                   |
+    Also if the <span style="color:yellowgreen"> NSG </span> in the created AKS resource group blocks outbound traffic, the SSL certificate verification would fail. 
 
+
+Now everything is ready, you could go to the printed url to create performance tests!
 
 # Contributing
 

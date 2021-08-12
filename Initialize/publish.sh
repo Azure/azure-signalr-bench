@@ -119,6 +119,7 @@ init_aks_group
 if [[ $ALL || $PORTAL ]]; then
   publish Portal
   cd $DIR/yaml/portal
+  kubectl delete deployment portal || true
   cat portal.yaml | replace KVURL_PLACE_HOLDER $KVURL | replace MSI_PLACE_HOLDER $AGENTPOOL_MSI_CLIENT_ID | kubectl apply -f -
   kubectl apply -f portal-service.yaml
   domain=$(az network public-ip show -n $PORTAL_IP_NAME -g $RESOURCE_GROUP --query dnsSettings.fqdn -o tsv)
@@ -128,15 +129,18 @@ fi
 if [[ $ALL || $COORDINATOR ]]; then
   publish Coordinator
   cd $DIR/yaml/coordinator
+  kubectl delete deployment coordinator || true
   access_key=$(az storage account show-connection-string -n $STORAGE_ACCOUNT -g $RESOURCE_GROUP --query connectionString -o tsv)
   domain=$(az network public-ip show -n $PORTAL_IP_NAME -g $RESOURCE_GROUP --query dnsSettings.fqdn -o tsv)
   cat coordinator.yaml | replace KVURL_PLACE_HOLDER $KVURL | replace MSI_PLACE_HOLDER $AGENTPOOL_MSI_CLIENT_ID | replace STORAGE_PLACE_HOLDER $access_key | replace DOMAIN_PLACE_HOLDER $domain | kubectl apply -f -
 fi
 
 if [[ $ALL || $COMPILER ]]; then
-  publish Compiler
-  cd $DIR/yaml/compiler
-  kubectl apply -f compiler.yaml
+  #no implemention
+  return
+  #publish Compiler
+  # cd $DIR/yaml/compiler
+  # kubectl apply -f compiler.yaml
 fi
 
 if [[ $ALL || $APPSERVER ]]; then
@@ -144,14 +148,16 @@ if [[ $ALL || $APPSERVER ]]; then
 fi
 
 if [[ $ALL || $ASPNET ]]; then
-  Pod="AspNetAppServer"
-  cd $DIR/../src/Pods/$Pod
-  echo "Need to run :   msbuild.exe /p:OutDir=publish /p:Configuration=Release in windows first"
-  cd publish && zip -r ${Pod}.zip *
-  echo "create dir:$Pod"
-  az storage directory create -n "manifest/$Pod" --account-name $STORAGE_ACCOUNT -s $SA_SHARE
-  az storage file upload --account-name $STORAGE_ACCOUNT -s $SA_SHARE --source $Pod.zip -p manifest/$Pod
-  echo "upload $Pod succeeded"
+  echo "skip this part for simplicity. Or Uncomment below to add aspnet code"
+  return
+  #Pod="AspNetAppServer"
+  #cd $DIR/../src/Pods/$Pod
+  #echo "Need to run :   msbuild.exe /p:OutDir=publish /p:Configuration=Release in windows first"
+  #cd publish && zip -r ${Pod}.zip *
+  #echo "create dir:$Pod"
+  #az storage directory create -n "manifest/$Pod" --account-name $STORAGE_ACCOUNT -s $SA_SHARE
+  #az storage file upload --account-name $STORAGE_ACCOUNT -s $SA_SHARE --source $Pod.zip -p manifest/$Pod
+  #echo "upload $Pod succeeded"
 fi
 
 if [[ $ALL || $CLIENT ]]; then
@@ -173,7 +179,7 @@ if [[ $ALL || $REDIS ]]; then
   PORTAL_IP=$(az network public-ip show -n $PORTAL_IP_NAME -g $RESOURCE_GROUP --query "ipAddress" -o tsv)
   kubectl apply -f redis-master-deployment.yaml
   kubectl apply -f redis-master-service.yaml
- # cat redis-master-test.yaml | replace RESOURCE_GROUP_PLACE_HOLDER $RESOURCE_GROUP | kubectl apply -f -
+  # cat redis-master-test.yaml | replace RESOURCE_GROUP_PLACE_HOLDER $RESOURCE_GROUP | kubectl apply -f -
   echo "redis dns inside cluster: redis-master "
 fi
 
@@ -267,7 +273,11 @@ if [[ $ALL || $INGRESS ]]; then
     --set nodeSelector."beta\.kubernetes\.io/os"=linux \
     jetstack/cert-manager || true
   sleep 10
+  echo "NSG may break the outbound traffic and fail this step"
   kubectl apply -f cluster-issuer.yaml
   kubectl apply -f dashboard-ext.yaml
   cat portal-ingress.yaml | replace PORTAL_DOMAIN_PLACE_HOLDER $domain | kubectl apply -f -
 fi
+
+domain=$(az network public-ip show -n $PORTAL_IP_NAME -g $RESOURCE_GROUP --query dnsSettings.fqdn -o tsv)
+echo "portal url: https://$domain "
