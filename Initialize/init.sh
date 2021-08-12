@@ -117,20 +117,21 @@ fi
 if [[ -z $(az aks show --name $KUBERNETES_SEVICES -g $RESOURCE_GROUP 2>/dev/null) ]]; then
     echo "start to create kubernetes services $KUBERNETES_SEVICES. May cost several minutes, waiting..."
     work_space_resource_id=$(az monitor log-analytics workspace show -g $RESOURCE_GROUP -n $WORK_SPACE --query id -o tsv)
-    az aks create -n $KUBERNETES_SEVICES --vm-set-type VirtualMachineScaleSets --kubernetes-version 1.18.10 --enable-managed-identity -s Standard_D4s_v3 --nodepool-name captain --generate-ssh-keys \
-        --load-balancer-managed-outbound-ip-count 20 --load-balancer-outbound-ports 20000 --workspace-resource-id "$work_space_resource_id" --enable-addons monitoring --network-plugin azure
-    az aks enable-addons -n  $KUBERNETES_SEVICES -g $RESOURCE_GROUP  -a kube-dashboard
+    az aks create -n $KUBERNETES_SEVICES --vm-set-type VirtualMachineScaleSets --kubernetes-version 1.20.5 --enable-managed-identity -s Standard_D4as_v4 --nodepool-name captain --generate-ssh-keys \
+      --load-balancer-managed-outbound-ip-count 20 --load-balancer-outbound-ports 20000 --workspace-resource-id "$work_space_resource_id" --enable-addons monitoring --network-plugin azure
+    az aks enable-addons -n $KUBERNETES_SEVICES -g $RESOURCE_GROUP -a kube-dashboard
     echo "kubernetes services $KUBERNETES_SEVICES created."
     echo "start getting kube/config"
     rm ~/.kube/perf || true
-    az aks get-credentials -a -n $KUBERNETES_SEVICES  --overwrite-existing -f  ~/.kube/perf
+    az aks get-credentials -a -n $KUBERNETES_SEVICES --overwrite-existing -f ~/.kube/perf
+    kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.3.1/aio/deploy/recommended.yaml --kubeconfig ~/.kube/perf
     echo "upload kube/config to $KEYVAULT"
     az keyvault secret set --vault-name $KEYVAULT -n $KV_KUBE_CONFIG -f ~/.kube/perf >/dev/null
     agentpool_msi_object_id=$(az aks show -n $KUBERNETES_SEVICES --query identityProfile.kubeletidentity.objectId -o tsv)
     echo "grant aks-agent-pool-msi keyvault permission"
     az keyvault set-policy --name $KEYVAULT --object-id $agentpool_msi_object_id --secret-permissions delete get list set >/dev/null
     STORAGE_KEY=$(az storage account keys list --resource-group $RESOURCE_GROUP --account-name $STORAGE_ACCOUNT --query "[0].value" -o tsv)
-    kubectl create secret generic azure-secret --from-literal=azurestorageaccountname=$STORAGE_ACCOUNT --from-literal=azurestorageaccountkey=$STORAGE_KEY --kubeconfig   ~/.kube/perf
+    kubectl create secret generic azure-secret --from-literal=azurestorageaccountname=$STORAGE_ACCOUNT --from-literal=azurestorageaccountkey=$STORAGE_KEY --kubeconfig ~/.kube/perf
     aks_principal_id=$(az aks show -n $KUBERNETES_SEVICES --query identity.principalId -o tsv)
     echo "grant aks_principal_id=$aks_principal_id permission to  $RESOURCE_GROUP to auth service IP binding"
     az role assignment create --role owner -g $RESOURCE_GROUP --assignee-object-id $aks_principal_id --assignee-principal-type ServicePrincipal
@@ -138,19 +139,22 @@ else
     echo "$KUBERNETES_SEVICES already exists. Skip creating.."
 fi
 
-if [[ -z $(az ad sp show  --id http://$SERVICE_PRINCIPAL 2>/dev/null) ]]; then
-  echo "start to create service principal $SERVICE_PRINCIPAL"
-  sp=$(az ad sp create-for-rbac -n $SERVICE_PRINCIPAL --role contributor  --scopes /subscriptions/$SUBSCTIPTION)
-  echo "add $SERVICE_PRINCIPAL to keyvault"
-  az keyvault secret set  --vault-name $KEYVAULT -n "service-principal" --value  "$sp"
+if [[ -z $(az ad sp show --id http://$SERVICE_PRINCIPAL 2>/dev/null) ]]; then
+    echo "start to create service principal $SERVICE_PRINCIPAL"
+    sp=$(az ad sp create-for-rbac -n $SERVICE_PRINCIPAL --role contributor --scopes /subscriptions/$SUBSCTIPTION)
+    echo "add $SERVICE_PRINCIPAL to keyvault"
+    az keyvault secret set --vault-name $KEYVAULT -n "service-principal" --value "$sp"
 else
     echo "$SERVICE_PRINCIPAL already exists. Skip creating.."
 fi
 
 echo "set keyvault constants"
-az keyvault secret set  --vault-name $KEYVAULT -n "prefix" --value  $PREFIX
-az keyvault secret set  --vault-name $KEYVAULT -n "subscription" --value $SUBSCTIPTION
+az keyvault secret set --vault-name $KEYVAULT -n "prefix" --value $PREFIX
+az keyvault secret set --vault-name $KEYVAULT -n "subscription" --value $SUBSCTIPTION
 cloud_name=$(az cloud show --query name -o tsv)
-az keyvault secret set  --vault-name $KEYVAULT -n "cloud" --value $cloud_name
-az keyvault secret set  --vault-name $KEYVAULT -n "location" --value $LOCATION
+az keyvault secret set --vault-name $KEYVAULT -n "cloud" --value $cloud_name
+az keyvault secret set --vault-name $KEYVAULT -n "location" --value $LOCATION
 echo "init has completed."
+
+domain=$(az network public-ip show -n $PORTAL_IP_NAME -g $RESOURCE_GROUP --query dnsSettings.fqdn -o tsv)
+echo "redirectUrl: https://$domain/signin-oidc "
