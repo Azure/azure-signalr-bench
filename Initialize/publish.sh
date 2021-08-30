@@ -137,7 +137,7 @@ fi
 
 if [[ $ALL || $COMPILER ]]; then
   #no implemention
-  return
+  echo "skip compiler"
   #publish Compiler
   # cd $DIR/yaml/compiler
   # kubectl apply -f compiler.yaml
@@ -149,7 +149,6 @@ fi
 
 if [[ $ALL || $ASPNET ]]; then
   echo "skip this part for simplicity. Or Uncomment below to add aspnet code"
-  return
   #Pod="AspNetAppServer"
   #cd $DIR/../src/Pods/$Pod
   #echo "Need to run :   msbuild.exe /p:OutDir=publish /p:Configuration=Release in windows first"
@@ -215,7 +214,7 @@ if [[ $ALL || $AUTOSCALE ]]; then
 fi
 
 if [[ $ALL || $PPE ]]; then
-  return
+  echo "skip ppe"
   # internal test only
 #  az cloud register -n ppe \
 #                  --endpoint-active-directory "https://login.windows-ppe.net" \
