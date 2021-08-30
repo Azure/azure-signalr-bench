@@ -1,5 +1,12 @@
 # Setup
 
+### Dependency
+1. WSL or Linux 
+2. az cli [Version >=2.26]
+3. .NET 5 sdk
+4. A subscription which you have owner permission
+
+
 SignalR performance tool uses AKS to run the tests. To setup the initial  environment, you could
 ```bash
 cd Initialize
@@ -17,9 +24,10 @@ After that, you need to init the deployments inside the aks
 ```bash
 ./publish -p [prefix] -a
 ```
-<span style="color:yellow"> Note </span>
-    You need to change the  <span style="color:yellowgreen"> VM size </span> according to the quota in your subscription.                                   |
-    Also if the <span style="color:yellowgreen"> NSG </span> in the created AKS resource group blocks outbound traffic, the SSL certificate verification would fail. 
+### Note 
+
+1. You need to change the VM size according to the quota in your subscription.
+2. If the NSG in the created AKS resource group blocks outbound traffic, the SSL certificate verification would fail. 
 
 
 Now everything is ready, you could go to the printed url to create performance tests!
