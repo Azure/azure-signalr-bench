@@ -6,7 +6,7 @@
 3. .NET 5 sdk
 4. A subscription which you have owner permission
 
-
+### Steps
 SignalR performance tool uses AKS to run the tests. To setup the initial  environment, you could
 ```bash
 cd Initialize
