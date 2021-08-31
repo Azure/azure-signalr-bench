@@ -7,6 +7,7 @@ using System.Linq;
 using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
+using Azure.SignalRBench.Client.ClientAgent;
 using Azure.SignalRBench.Common;
 using Azure.SignalRBench.Messages;
 using Microsoft.AspNetCore.SignalR.Client;
@@ -17,14 +18,13 @@ namespace Azure.SignalRBench.Client
     public class ClientAgentContainer
     {
         private readonly ClientAgentContext _context;
-        public MessageClientHolder _messageClientHolder { get; }
+        public MessageClientHolder MessageClientHolder { get; }
         private IClientAgent[] _clients = new IClientAgent[0];
         private readonly ILogger<ClientAgentContainer> _logger;
-        private readonly ILoggerFactory _loggerFactory;
 
-        private bool slowDown = false;
-        private int startReport = 1;
-        private IClientAgentFactory _agentFactory;
+        private bool _slowDown = false;
+        private int _startReport = 1;
+        private readonly IClientAgentFactory _agentFactory;
 
         public ClientAgentContainer(
             MessageClientHolder messageClientHolder,
@@ -34,11 +34,10 @@ namespace Azure.SignalRBench.Client
             ClientLifetimeDefinition lifetimeDefinition, IClientAgentFactory agentFactory,
             ILoggerFactory loggerFactory)
         {
-            _messageClientHolder = messageClientHolder;
-            _loggerFactory = loggerFactory;
-            _context = new ClientAgentContext(messageClientHolder.Client,_loggerFactory.CreateLogger<ClientAgentContext>());
+            MessageClientHolder = messageClientHolder;
+            _context = new ClientAgentContext(messageClientHolder.Client,loggerFactory.CreateLogger<ClientAgentContext>());
             _context.RetryPolicy=new RetryPolicy(_context);
-            _logger = _loggerFactory.CreateLogger<ClientAgentContainer>();
+            _logger = loggerFactory.CreateLogger<ClientAgentContainer>();
             //try to resolve service url
             //dirty logic, separate raw websocket
             if (url.Contains("Endpoint"))
@@ -79,12 +78,12 @@ namespace Azure.SignalRBench.Client
         {
             StartId = startId;
             var tmp = new IClientAgent[localCount];
-            for (int i = 0; i < _clients.Length; i++)
+            for (var i = 0; i < _clients.Length; i++)
             {
                 tmp[i] = _clients[i];
             }
 
-            int continueIndex = _clients.Length;
+            var continueIndex = _clients.Length;
             _clients = tmp;
             GroupFunc = groupFunc;
             IndexMap = indexMap;
@@ -98,7 +97,7 @@ namespace Azure.SignalRBench.Client
             //Just in case socket in server hasn't opened
             await Task.Delay(1000);
             _context.Reset();
-            for (int i = continueIndex; i < _clients.Length; i++)
+            for (var i = continueIndex; i < _clients.Length; i++)
             {
                 var globalIndex = GetGlobalIndex(i);
                 _clients[i] = _agentFactory.Create(Url, Protocol, GroupFunc(i),
@@ -142,7 +141,7 @@ namespace Azure.SignalRBench.Client
                             catch (Exception ex)
                             {
                                 stopWatch.Stop();
-                                Volatile.Write(ref slowDown, true);
+                                Volatile.Write(ref _slowDown, true);
                                 _logger.LogError(ex,
                                     $"Failed to start { current} client.,fail Time cost:{stopWatch.ElapsedMilliseconds}");
                                 return;
@@ -216,10 +215,10 @@ namespace Azure.SignalRBench.Client
                 var releaseCount = Math.Min((int) releaseCountRaw, maxCount - semaphore.CurrentCount);
                 if (releaseCount > 0)
                 {
-                    if (Volatile.Read(ref slowDown))
+                    if (Volatile.Read(ref _slowDown))
                     {
                         await Task.Delay(20, cancellationToken);
-                        Volatile.Write(ref slowDown, false);
+                        Volatile.Write(ref _slowDown, false);
                     }
 
                     semaphore.Release(releaseCount);
@@ -229,7 +228,7 @@ namespace Azure.SignalRBench.Client
 
         public void ScheduleReportedStatus(CancellationToken cancellationToken)
         {
-            if (Interlocked.CompareExchange(ref startReport, 0, 1) == 1)
+            if (Interlocked.CompareExchange(ref _startReport, 0, 1) == 1)
             {
                 Task.Run(async () =>
                 {
@@ -239,7 +238,7 @@ namespace Azure.SignalRBench.Client
                         {
                             await Task.Delay(1000, cancellationToken);
                             _logger.LogInformation("reportClientStatus");
-                            await _messageClientHolder.Client.ReportClientStatusAsync(_context.ClientStatus());
+                            await MessageClientHolder.Client.ReportClientStatusAsync(_context.ClientStatus());
                         }
                         catch (Exception e)
                         {

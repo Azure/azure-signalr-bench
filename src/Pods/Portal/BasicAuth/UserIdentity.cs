@@ -1,6 +1,6 @@
 using Microsoft.Azure.Cosmos.Table;
 
-namespace Portal
+namespace Portal.BasicAuth
 {
     public class UserIdentity : TableEntity
     {

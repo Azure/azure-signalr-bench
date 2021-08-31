@@ -1,17 +1,14 @@
 using System;
 using System.Linq;
-using System.Reflection.Metadata.Ecma335;
 using System.Threading;
 using System.Threading.Tasks;
 using Azure.SignalRBench.Common;
 using Microsoft.AspNet.SignalR.Client;
 using Microsoft.AspNet.SignalR.Client.Transports;
-using Microsoft.AspNetCore.Connections;
-using Microsoft.AspNetCore.Http.Connections;
 using Microsoft.AspNetCore.SignalR.Client;
 using HubConnection = Microsoft.AspNet.SignalR.Client.HubConnection;
 
-namespace Azure.SignalRBench.Client
+namespace Azure.SignalRBench.Client.ClientAgent
 {
     public class AspNetSignalRClientAgent : IClientAgent
     {
@@ -31,7 +28,7 @@ namespace Azure.SignalRBench.Client
             Connection.Reconnecting += () => context.OnReconnecting(this);
             Connection.Reconnected += async () =>
             {
-                await Context.SetConnectionIDAsync(GlobalIndex, Connection.ConnectionId);
+                await Context.SetConnectionIdAsync(GlobalIndex, Connection.ConnectionId);
                 await context.OnConnected(this, Groups.Length > 0);
             };
             Connection.Closed += async () =>
@@ -40,7 +37,7 @@ namespace Azure.SignalRBench.Client
                 {
                     try
                     {
-                        await Task.Delay(context.RetryPolicy.NextRetryDelay(null).Value.Milliseconds);
+                        await Task.Delay(context.RetryPolicy.NextRetryDelay(null)?.Milliseconds ?? 1000);
                         await StartAsync(default);
                         return;
                     }
@@ -58,7 +55,7 @@ namespace Azure.SignalRBench.Client
         public ClientAgentContext Context { get; }
         private string[] Groups { get; }
         public int GlobalIndex { get; }
-        private Protocol _protocol;
+        private readonly Protocol _protocol;
 
         public async Task StartAsync(CancellationToken cancellationToken)
         {
@@ -69,12 +66,12 @@ namespace Azure.SignalRBench.Client
                     Protocol.WebSocketsWithJson => new WebSocketTransport(),
                     Protocol.ServerSideEventsWithJson => new ServerSentEventsTransport(),
                     Protocol.LongPollingWithJson => new LongPollingTransport(),
-                    _ => throw new Exception($"Unsupported protocal {_protocol} for aspnet")
+                    _ => throw new Exception($"Unsupported protocol {_protocol} for aspnet")
                 };
                 await Connection.Start(clientTransport);
             }
 
-            await Context.SetConnectionIDAsync(GlobalIndex, Connection.ConnectionId);
+            await Context.SetConnectionIdAsync(GlobalIndex, Connection.ConnectionId);
             await Context.OnConnected(this, Groups.Length > 0);
         }
 
@@ -89,15 +86,15 @@ namespace Azure.SignalRBench.Client
 
         public async Task SendToClientAsync(int index, string payload)
         {
-            var connectionID = await Context.GetConnectionIDAsync(index);
-            await HubProxy.Invoke("SendToConnection", connectionID, ClientAgentContext.CoordinatedUtcNow(), payload);
+            var connectionId = await Context.GetConnectionIdAsync(index);
+            await HubProxy.Invoke("SendToConnection", connectionId, ClientAgentContext.CoordinatedUtcNow(), payload);
         }
 
         public Task BroadcastAsync(string payload) =>
             HubProxy.Invoke("Broadcast", ClientAgentContext.CoordinatedUtcNow(), payload);
 
         public Task GroupBroadcastAsync(string group, string payload) =>
-            HubProxy.Invoke("GroupBroadcast", group,ClientAgentContext.CoordinatedUtcNow(), payload);
+            HubProxy.Invoke("GroupBroadcast", group, ClientAgentContext.CoordinatedUtcNow(), payload);
 
         public Task JoinGroupAsync() => Task.WhenAll(Groups.Select(g => HubProxy.Invoke("JoinGroup", g)));
 

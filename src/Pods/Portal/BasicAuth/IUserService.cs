@@ -1,6 +1,6 @@
 using System.Threading.Tasks;
 
-namespace Portal
+namespace Portal.BasicAuth
 {
     public interface IUserService
     {

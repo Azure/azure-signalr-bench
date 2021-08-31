@@ -1,17 +1,12 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using System;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using Azure.SignalRBench.Common;
-using Azure.SignalRBench.Messages;
-using Microsoft.AspNetCore.Connections;
-using Microsoft.AspNetCore.Http.Connections;
 using Microsoft.AspNetCore.SignalR.Client;
 
-namespace Azure.SignalRBench.Client
+namespace Azure.SignalRBench.Client.ClientAgent
 {
     public class SignalRServerlessClientAgent : SignalRClientAgentBase
     {
@@ -21,7 +16,7 @@ namespace Azure.SignalRBench.Client
         {
         }
 
-        public async override Task EchoAsync(string payload)
+        public override async Task EchoAsync(string payload)
         {
             await Connection.SendAsync("user", $"user{GlobalIndex}", ClientAgentContext.CoordinatedUtcNow(), payload);
         }

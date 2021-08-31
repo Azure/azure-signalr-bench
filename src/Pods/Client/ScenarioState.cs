@@ -7,6 +7,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
+using Azure.SignalRBench.Client.ClientAgent;
 using Azure.SignalRBench.Client.Exceptions;
 using Azure.SignalRBench.Common;
 using Microsoft.Extensions.Logging;

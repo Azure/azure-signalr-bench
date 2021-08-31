@@ -5,7 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
-
+using Azure.SignalRBench.Client.ClientAgent;
 using Azure.SignalRBench.Common;
 using Azure.SignalRBench.Messages;
 using Microsoft.Extensions.Logging;

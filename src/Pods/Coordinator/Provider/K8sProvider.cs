@@ -11,20 +11,20 @@ using k8s;
 using k8s.Models;
 using Microsoft.Extensions.Configuration;
 
-namespace Azure.SignalRBench.Coordinator
+namespace Azure.SignalRBench.Coordinator.Provider
 {
-    public class K8sProvider : IK8sProvider
+    public class K8SProvider : IK8sProvider
     {
-        private const string _default = "default";
-        private const string _appserver = "appserver";
-        private const string _client = "client";
-        private const string _upstream = "upstream";
+        private const string Default = "default";
+        private const string Appserver = "appserver";
+        private const string Client = "client";
+        private const string Upstream = "upstream";
         private readonly string _domain;
         private readonly PerfStorageProvider _perfStorageProvider;
         private readonly string _redisConnectionString;
-        private Kubernetes? _k8s;
+        private Kubernetes? _k8S;
 
-        public K8sProvider(PerfStorageProvider perfStorageProvider, IConfiguration configuration)
+        public K8SProvider(PerfStorageProvider perfStorageProvider, IConfiguration configuration)
         {
             _perfStorageProvider = perfStorageProvider;
             _redisConnectionString = configuration[PerfConstants.ConfigurationKeys.RedisConnectionStringKey];
@@ -34,13 +34,13 @@ namespace Azure.SignalRBench.Coordinator
         public void Initialize(string config)
         {
             using var stream = new MemoryStream(Encoding.UTF8.GetBytes(config));
-            _k8s = new Kubernetes(KubernetesClientConfiguration.BuildConfigFromConfigFile(stream));
+            _k8S = new Kubernetes(KubernetesClientConfiguration.BuildConfigFromConfigFile(stream));
         }
 
         public async Task<string> CreateServerPodsAsync(string testId, string[] asrsConnectionStrings,
             int serverPodCount, TestCategory testCategory, CancellationToken cancellationToken)
         {
-            var name = _appserver + "-" + testId;
+            var name = Appserver + "-" + testId;
             name = NameConverter.Truncate(name);
             var service = new V1Service
             {
@@ -60,14 +60,14 @@ namespace Azure.SignalRBench.Coordinator
                     }
                 }
             };
-            await _k8s.CreateNamespacedServiceAsync(service, _default, cancellationToken: cancellationToken);
+            await _k8S.CreateNamespacedServiceAsync(service, Default, cancellationToken: cancellationToken);
             if (testCategory == TestCategory.AspnetCoreSignalRServerless||testCategory == TestCategory.RawWebsocket)
             {
                 var ingress = new Networkingv1beta1Ingress
                 {
                     Metadata = new V1ObjectMeta
                     {
-                        Name =NameConverter.Truncate(_upstream + "-" + testId),
+                        Name =NameConverter.Truncate(Upstream + "-" + testId),
                     },
                     Spec = new Networkingv1beta1IngressSpec
                     {
@@ -95,7 +95,7 @@ namespace Azure.SignalRBench.Coordinator
                         }
                     }
                 };
-                await _k8s.CreateNamespacedIngress1Async(ingress, _default, cancellationToken: cancellationToken);
+                await _k8S.CreateNamespacedIngress1Async(ingress, Default, cancellationToken: cancellationToken);
             }
 
             var server = testCategory switch
@@ -114,7 +114,7 @@ namespace Azure.SignalRBench.Coordinator
                     Labels = new Dictionary<string, string>
                     {
                         //[PerfConstants.ConfigurationKeys.TestIdKey] = testId
-                        ["type"]=_appserver
+                        ["type"]=Appserver
                     },
                     Annotations = new Dictionary<string, string>
                     {
@@ -230,7 +230,7 @@ namespace Azure.SignalRBench.Coordinator
                     }
                 }
             };
-            await _k8s.CreateNamespacedDeploymentAsync(deployment, _default, cancellationToken: cancellationToken);
+            await _k8S.CreateNamespacedDeploymentAsync(deployment, Default, cancellationToken: cancellationToken);
             
             if (serverPodCount == 0)
             {
@@ -249,7 +249,7 @@ namespace Azure.SignalRBench.Coordinator
         public async Task CreateClientPodsAsync(string testId, TestCategory testCategory, int clientPodCount,
             CancellationToken cancellationToken)
         {
-            var name = _client + '-' + testId;
+            var name = Client + '-' + testId;
             name = NameConverter.Truncate(name);
             V1Deployment deployment = new V1Deployment
             {
@@ -259,7 +259,7 @@ namespace Azure.SignalRBench.Coordinator
                     Labels = new Dictionary<string, string>
                     {
                        // [PerfConstants.ConfigurationKeys.TestIdKey] = testId
-                       ["type"]=_client
+                       ["type"]=Client
                     },
                     Annotations = new Dictionary<string, string>
                     {
@@ -361,24 +361,24 @@ namespace Azure.SignalRBench.Coordinator
                     }
                 }
             };
-            await _k8s.CreateNamespacedDeploymentAsync(deployment, _default, cancellationToken: cancellationToken);
+            await _k8S.CreateNamespacedDeploymentAsync(deployment, Default, cancellationToken: cancellationToken);
         }
 
         public async Task DeleteClientPodsAsync(string testId)
         {
-            string name = _client + '-' + testId;
+            string name = Client + '-' + testId;
             name = NameConverter.Truncate(name);
-            await _k8s.DeleteNamespacedDeploymentAsync(name, _default);
+            await _k8S.DeleteNamespacedDeploymentAsync(name, Default);
         }
 
         public async Task DeleteServerPodsAsync(string testId, bool upstream)
         {
-            string name = _appserver + '-' + testId;
+            string name = Appserver + '-' + testId;
             name = NameConverter.Truncate(name);
-            await _k8s.DeleteNamespacedServiceAsync(name, _default);
-            await _k8s.DeleteNamespacedDeploymentAsync(name, _default);
+            await _k8S.DeleteNamespacedServiceAsync(name, Default);
+            await _k8S.DeleteNamespacedDeploymentAsync(name, Default);
             if (upstream)
-                await _k8s.DeleteNamespacedIngressAsync(NameConverter.Truncate(_upstream + "-" + testId), _default);
+                await _k8S.DeleteNamespacedIngressAsync(NameConverter.Truncate(Upstream + "-" + testId), Default);
         }
 
        

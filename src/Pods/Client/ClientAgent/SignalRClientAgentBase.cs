@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Connections;
 using Microsoft.AspNetCore.Http.Connections;
 using Microsoft.AspNetCore.SignalR.Client;
 
-namespace Azure.SignalRBench.Client
+namespace Azure.SignalRBench.Client.ClientAgent
 {
     public abstract class SignalRClientAgentBase : IClientAgent
     {
@@ -16,25 +16,25 @@ namespace Azure.SignalRBench.Client
             Context = context;
             Groups = groups;
             GlobalIndex = globalIndex;
-            Connection = HubConnectionBuilderExtensions.WithAutomaticReconnect(new HubConnectionBuilder()
-                    .WithUrl(
-                        urlWithHub,
-                        o =>
+            Connection = new HubConnectionBuilder()
+                .WithUrl(
+                    urlWithHub,
+                    o =>
+                    {
+                        o.Transports = (HttpTransportType)((int)protocol & 0xF);
+                        o.DefaultTransferFormat = (TransferFormat)((int)protocol >> 4);
+                        if (userName != null)
                         {
-                            o.Transports = (HttpTransportType)((int)protocol & 0xF);
-                            o.DefaultTransferFormat = (TransferFormat)((int)protocol >> 4);
-                            if (userName != null)
-                            {
-                                o.Headers.Add("user", userName);
-                            }
+                            o.Headers.Add("user", userName);
                         }
-                    ), context.RetryPolicy)
+                    }
+                ).WithAutomaticReconnect(context.RetryPolicy)
                 .Build();
             Connection.On<long, string>(nameof(context.Measure), context.Measure);
             Connection.Reconnecting += _ => context.OnReconnecting(this);
             Connection.Reconnected += async _ =>
             {
-                await Context.SetConnectionIDAsync(GlobalIndex, Connection.ConnectionId);
+                await Context.SetConnectionIdAsync(GlobalIndex, Connection.ConnectionId);
                 await context.OnConnected(this, Groups.Length > 0);
             };
             Connection.Closed += _ => context.OnClosed(this);
@@ -42,7 +42,7 @@ namespace Azure.SignalRBench.Client
 
         public HubConnection Connection { get; }
         public ClientAgentContext Context { get; }
-        public string[] Groups { get; } = Array.Empty<string>();
+        public string[] Groups { get; }
         public int GlobalIndex { get; }
 
         public async Task StartAsync(CancellationToken cancellationToken)
@@ -51,7 +51,7 @@ namespace Azure.SignalRBench.Client
             {
                 await Connection.StartAsync(cancellationToken);
             }
-            await Context.SetConnectionIDAsync(GlobalIndex, Connection.ConnectionId);
+            await Context.SetConnectionIdAsync(GlobalIndex, Connection.ConnectionId);
             await Context.OnConnected(this, Groups.Length > 0);
         }
 

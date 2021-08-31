@@ -1,3 +1,4 @@
+using Azure.SignalRBench.Client.ClientAgent;
 using Azure.SignalRBench.Common;
 
 namespace Azure.SignalRBench.Client

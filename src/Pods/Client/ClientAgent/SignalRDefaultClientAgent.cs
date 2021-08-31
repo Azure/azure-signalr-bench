@@ -1,17 +1,12 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using System;
 using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 using Azure.SignalRBench.Common;
-using Azure.SignalRBench.Messages;
-using Microsoft.AspNetCore.Connections;
-using Microsoft.AspNetCore.Http.Connections;
 using Microsoft.AspNetCore.SignalR.Client;
 
-namespace Azure.SignalRBench.Client
+namespace Azure.SignalRBench.Client.ClientAgent
 {
     public class SignalRDefaultClientAgent : SignalRClientAgentBase
     {
@@ -25,8 +20,8 @@ namespace Azure.SignalRBench.Client
 
         public override async Task SendToClientAsync(int index, string payload)
         {
-            var connectionID = await Context.GetConnectionIDAsync(index);
-            await Connection.SendAsync("SendToConnection", connectionID, ClientAgentContext.CoordinatedUtcNow(), payload);
+            var connectionId = await Context.GetConnectionIdAsync(index);
+            await Connection.SendAsync("SendToConnection", connectionId, ClientAgentContext.CoordinatedUtcNow(), payload);
         }
 
         public override Task BroadcastAsync(string payload) =>

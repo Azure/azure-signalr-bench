@@ -1,10 +1,9 @@
 using System;
-using System.Linq;
-using System.Security.Claims;
 using Azure.Messaging.WebPubSub;
+using Azure.SignalRBench.Client.ClientAgent;
 using Azure.SignalRBench.Common;
 
-namespace Azure.SignalRBench.Client
+namespace Azure.SignalRBench.Client.ClientAgentFactory
 {
     public class WebsocketClientAgentFactory : IClientAgentFactory
     {

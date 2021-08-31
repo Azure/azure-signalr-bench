@@ -11,7 +11,7 @@ namespace SignalRUpstream
     public class MessagePublisher
     {
         private const string Target = "Measure";
-        private string _hubName;
+        private readonly string _hubName;
         private readonly string _connectionString;
         private readonly ServiceTransportType _serviceTransportType;
         private IServiceHubContext _hubContext;

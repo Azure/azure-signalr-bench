@@ -6,6 +6,7 @@ using System.Net.WebSockets;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Azure.Messaging.WebPubSub;
+using Azure.SignalRBench.Client.ClientAgentFactory;
 using Azure.SignalRBench.Common;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;

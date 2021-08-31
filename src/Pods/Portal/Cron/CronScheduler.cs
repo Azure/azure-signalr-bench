@@ -8,6 +8,7 @@ using Azure.SignalRBench.Storage;
 using Microsoft.Extensions.Logging;
 using NCrontab;
 using Newtonsoft.Json;
+using Portal.Entity;
 
 namespace Portal.Cron
 {

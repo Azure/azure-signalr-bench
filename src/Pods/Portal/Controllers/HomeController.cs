@@ -9,6 +9,7 @@ using Azure.SignalRBench.Common;
 using Azure.SignalRBench.Storage;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using Portal.BasicAuth;
 using Portal.Entity;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860

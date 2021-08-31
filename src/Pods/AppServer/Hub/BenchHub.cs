@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 
-namespace Azure.SignalRBench.AppServer
+namespace Azure.SignalRBench.AppServer.Hub
 {
-    public class BenchHub : Hub
+    public class BenchHub : Microsoft.AspNetCore.SignalR.Hub
     {
         private ILogger<BenchHub> _logger;
         public BenchHub(ILogger<BenchHub> logger)

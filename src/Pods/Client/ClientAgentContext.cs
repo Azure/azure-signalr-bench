@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using Azure.SignalRBench.Client.ClientAgent;
 using Azure.SignalRBench.Common;
 using Azure.SignalRBench.Messages;
 using Microsoft.AspNetCore.SignalR.Client;
@@ -59,12 +60,12 @@ namespace Azure.SignalRBench.Client
         {
             TimeBias = (int) (ticks - DateTime.UtcNow.Ticks);
         }
-        public async Task<string> GetConnectionIDAsync(int index)
+        public async Task<string> GetConnectionIdAsync(int index)
         {
             return await _MessageClient.GetAsync(index.ToString());
         }
 
-        public async Task SetConnectionIDAsync(int index, string connectionId)
+        public async Task SetConnectionIdAsync(int index, string connectionId)
         {
             await _MessageClient.SetAsync(index.ToString(), connectionId);
         }

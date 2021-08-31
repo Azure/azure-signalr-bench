@@ -5,9 +5,8 @@ using System.Text.RegularExpressions;
 using Azure.SignalRBench.Common;
 using Microsoft.Azure.Cosmos.Table;
 using Newtonsoft.Json;
-using Portal;
 
-namespace Azure.SignalRBench.Coordinator.Entities
+namespace Portal.Entity
 {
     public class TestConfigEntity : TableEntity
     {
@@ -54,7 +53,7 @@ namespace Azure.SignalRBench.Coordinator.Entities
 
         public int MessageSize { get; set; } = 2048;
 
-        public string Protocol { get; set; } = Common.Protocol.WebSocketsWithJson.ToString();
+        public string Protocol { get; set; } = Azure.SignalRBench.Common.Protocol.WebSocketsWithJson.ToString();
 
         public int Rate { get; set; } = 200;
 

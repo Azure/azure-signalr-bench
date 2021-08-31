@@ -1,44 +1,40 @@
 ﻿using System;
 using System.IO;
-using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.WebSockets;
-using System.Runtime.InteropServices;
-using System.Security.Claims;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Azure.Messaging.WebPubSub;
 using Azure.SignalRBench.Common;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 
-namespace Azure.SignalRBench.Client
+namespace Azure.SignalRBench.Client.ClientAgent
 {
     class WebSocketClientAgent : IClientAgent
     {
         public ClientAgentContext Context { get; }
         public int GlobalIndex { get; }
-        public string[] Groups { get; } = Array.Empty<string>();
+        public string[] Groups { get; }
 
         private WebSocketHubConnection Connection { get; }
 
-        private string _appserverUrl;
+        private readonly string _appserverUrl;
 
-        private static HttpClient _httpClient = new HttpClient();
+        private static readonly HttpClient HttpClient = new HttpClient();
 
 
-        public WebSocketClientAgent(string url,string appserverUrl, Protocol protocol, string[] groups, int globalIndex,
+        public WebSocketClientAgent(string url, string appserverUrl, Protocol protocol, string[] groups,
+            int globalIndex,
             ClientAgentContext context)
         {
             Context = context;
-            _appserverUrl ="http://"+ appserverUrl;
-            Connection = new WebSocketHubConnection(url,this,context);
+            _appserverUrl = "http://" + appserverUrl;
+            Connection = new WebSocketHubConnection(url, this, context);
             Connection.On(context.Measure);
             Groups = groups;
             GlobalIndex = globalIndex;
-            
         }
 
         //This method should be sent directly to appserver to lower pressure on wps runtime 
@@ -63,7 +59,7 @@ namespace Azure.SignalRBench.Client
             };
             var echoEvent = new UserEvent(NameConverter.GenerateHubName(Context.TestId),
                 JsonConvert.SerializeObject(data));
-            return Connection.SendAsync(echoEvent.Serilize());
+            return Connection.SendAsync(echoEvent.Serialize());
         }
 
         public Task GroupBroadcastAsync(string group, string payload)
@@ -117,7 +113,7 @@ namespace Azure.SignalRBench.Client
             public Uri ResourceUri { get; }
             private CancellationToken ConnectionStoppedToken => _connectionStoppedCts.Token;
 
-            public WebSocketHubConnection(string url,WebSocketClientAgent agent,ClientAgentContext context)
+            public WebSocketHubConnection(string url, WebSocketClientAgent agent, ClientAgentContext context)
             {
                 _socket = new ClientWebSocket();
                 _socket.Options.AddSubProtocol("json.webpubsub.azure.v1");
@@ -132,13 +128,15 @@ namespace Azure.SignalRBench.Client
             }
 
             public volatile bool active = false;
+
             public Task SendAsync(string payload)
             {
-                if (active&&_socket.State != WebSocketState.Open)
+                if (active && _socket.State != WebSocketState.Open)
                 {
                     _context.OnClosed(_agent);
                     active = false;
                 }
+
                 return _socket.SendAsync(Encoding.UTF8.GetBytes(payload), WebSocketMessageType.Text, true, default);
             }
 
@@ -187,7 +185,7 @@ namespace Azure.SignalRBench.Client
                         if (receiveResult.EndOfMessage)
                         {
                             var str = Encoding.UTF8.GetString(ms.ToArray());
-                            
+
                             var response = JsonConvert.DeserializeObject<MessageResponse>(str);
                             try
                             {
@@ -196,7 +194,6 @@ namespace Azure.SignalRBench.Client
                             }
                             catch
                             {
-                                
                             }
 
                             ms.SetLength(0);
@@ -213,8 +210,9 @@ namespace Azure.SignalRBench.Client
                 Version = HttpVersion.Version20,
             };
             request.Content = new StringContent(data.Serilize(), Encoding.UTF8, "application/json");
-            await _httpClient.SendAsync(request);
+            await HttpClient.SendAsync(request);
         }
+
         //
         private sealed class JoinGroup
         {
@@ -264,7 +262,7 @@ namespace Azure.SignalRBench.Client
                 this.data = data;
             }
 
-            public string Serilize()
+            public string Serialize()
             {
                 return JsonConvert.SerializeObject(this, new JsonSerializerSettings
                 {

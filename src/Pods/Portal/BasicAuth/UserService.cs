@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using Azure.SignalRBench.Common;
 using Azure.SignalRBench.Storage;
 
-namespace Portal
+namespace Portal.BasicAuth
 {
     public class UserService : IUserService
     {

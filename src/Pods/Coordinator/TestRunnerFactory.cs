@@ -17,7 +17,7 @@ namespace Azure.SignalRBench.Coordinator
         public TestRunnerFactory(
             IConfiguration configuration,
             IAksProvider aksProvider,
-            IK8sProvider k8sProvider,
+            IK8sProvider k8SProvider,
             SignalRProvider signalRProvider,
             IPerfStorage perfStorage,
             ILogger<TestRunner> logger)
@@ -25,7 +25,7 @@ namespace Azure.SignalRBench.Coordinator
             _podName = configuration[PerfConstants.ConfigurationKeys.PodNameStringKey];
             _redisConnectionString = configuration[PerfConstants.ConfigurationKeys.RedisConnectionStringKey];
             AksProvider = aksProvider;
-            K8sProvider = k8sProvider;
+            K8sProvider = k8SProvider;
             SignalRProvider = signalRProvider;
             PerfStorage = perfStorage;
             _logger = logger;

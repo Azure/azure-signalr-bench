@@ -5,6 +5,7 @@ using System;
 using Azure.Identity;
 using Azure.Security.KeyVault.Secrets;
 using Azure.SignalRBench.Common;
+using Azure.SignalRBench.Coordinator.Provider;
 using Azure.SignalRBench.Storage;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -59,7 +60,7 @@ namespace Azure.SignalRBench.Coordinator
                         }
                     );
                     services.AddSingleton<PerfStorageProvider>();
-                    services.AddSingleton<IK8sProvider, K8sProvider>();
+                    services.AddSingleton<IK8sProvider, K8SProvider>();
                     services.AddSingleton<IAksProvider, AksProvider>();
                     services.AddSingleton<SignalRProvider>();
                     services.AddSingleton<TestScheduler>();

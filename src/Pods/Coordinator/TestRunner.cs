@@ -39,19 +39,19 @@ namespace Azure.SignalRBench.Coordinator
         private TestStatusEntity _testStatusEntity;
 
         private string _url = "http://localhost:8080/";
-        private static int _scalelock = 0;
+        private static int _scaleLock = 0;
         private static volatile string? _dir;
         private static volatile int _finishedJob = 0;
         private static volatile int _unitTotal = 0;
         private static volatile int _instanceTotal = 0;
-        private static object _unitLock = new object();
+        private static readonly object UnitLock = new object();
 
         public TestRunner(
             TestJob job,
             string podName,
             string redisConnectionString,
             IAksProvider aksProvider,
-            IK8sProvider k8sProvider,
+            IK8sProvider k8SProvider,
             SignalRProvider signalRProvider,
             IPerfStorage perfStorage,
             string defaultLocation,
@@ -61,7 +61,7 @@ namespace Azure.SignalRBench.Coordinator
             PodName = podName;
             RedisConnectionString = redisConnectionString;
             AksProvider = aksProvider;
-            K8sProvider = k8sProvider;
+            K8SProvider = k8SProvider;
             SignalRProvider = signalRProvider;
             PerfStorage = perfStorage;
             DefaultLocation = defaultLocation;
@@ -76,7 +76,7 @@ namespace Azure.SignalRBench.Coordinator
 
         public IAksProvider AksProvider { get; }
 
-        public IK8sProvider K8sProvider { get; }
+        public IK8sProvider K8SProvider { get; }
 
         public SignalRProvider SignalRProvider { get; }
 
@@ -100,7 +100,7 @@ namespace Azure.SignalRBench.Coordinator
                     break;
                 }
 
-                lock (_unitLock)
+                lock (UnitLock)
                 {
                     if (_dir == null || Job.Dir == _dir)
                     {
@@ -188,9 +188,9 @@ namespace Azure.SignalRBench.Coordinator
                     _logger.LogInformation("Test job {testId}: Removing hashTable in redis.", Job.TestId);
                     await messageClient.DeleteHashTableAsync();
                     _logger.LogInformation("Test job {testId}: Removing client pods.", Job.TestId);
-                    await K8sProvider.DeleteClientPodsAsync(Job.TestId);
+                    await K8SProvider.DeleteClientPodsAsync(Job.TestId);
                     _logger.LogInformation("Test job {testId}: Removing server pods.", Job.TestId);
-                    await K8sProvider.DeleteServerPodsAsync(Job.TestId,
+                    await K8SProvider.DeleteServerPodsAsync(Job.TestId,
                         Job.TestMethod == TestCategory.AspnetCoreSignalRServerless||Job.TestMethod == TestCategory.RawWebsocket);
                 }
                 catch (Exception ignore)
@@ -199,7 +199,7 @@ namespace Azure.SignalRBench.Coordinator
                 }
                 finally
                 {
-                    lock (_unitLock)
+                    lock (UnitLock)
                     {
                         if (Job.Dir != null)
                         {
@@ -344,7 +344,7 @@ namespace Azure.SignalRBench.Coordinator
                 while (Job.Dir != null)
                 {
                     await Task.Delay(StaticRandom.Next(5000));
-                    lock (_unitLock)
+                    lock (UnitLock)
                     {
                         if (_unitTotal >= Job.ServiceSetting[0].UnitLimit ||
                             _instanceTotal >= Job.ServiceSetting[0].InstanceLimit) continue;
@@ -488,7 +488,7 @@ namespace Azure.SignalRBench.Coordinator
             MessageClient messageClient,
             CancellationToken cancellationToken)
         {
-            while (Interlocked.CompareExchange(ref _scalelock, 1, 0) == 1)
+            while (Interlocked.CompareExchange(ref _scaleLock, 1, 0) == 1)
             {
                 await UpdateTestStatus("Deployment queueing..");
                 _logger.LogInformation("Wait for deployment to be ready. Avoid race condition...");
@@ -506,10 +506,10 @@ namespace Azure.SignalRBench.Coordinator
                             out var serverPodReady)));
 
                 _logger.LogInformation("Test job {testId}: Creating server pods.", Job.TestId);
-                _url = await K8sProvider.CreateServerPodsAsync(Job.TestId, asrsConnectionStrings,
+                _url = await K8SProvider.CreateServerPodsAsync(Job.TestId, asrsConnectionStrings,
                     serverPodCount, Job.TestMethod, cancellationToken);
                 _logger.LogInformation("Test job {testId}: Creating client pods.", Job.TestId);
-                await K8sProvider.CreateClientPodsAsync(Job.TestId, Job.TestMethod, clientPodCount, cancellationToken);
+                await K8SProvider.CreateClientPodsAsync(Job.TestId, Job.TestMethod, clientPodCount, cancellationToken);
 
                 await Task.WhenAll(
                     Task.Run(async () =>
@@ -526,7 +526,7 @@ namespace Azure.SignalRBench.Coordinator
             finally
             {
                 _logger.LogInformation("Reset scale control to 0.");
-                Interlocked.CompareExchange(ref _scalelock, 0, 1);
+                Interlocked.CompareExchange(ref _scaleLock, 0, 1);
             }
         }
 
