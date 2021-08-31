@@ -11,16 +11,16 @@ namespace Azure.SignalRBench.Client
         public IClientAgent Create(string connectionString, Protocol protocol, string[] groups, int globalIndex,
             ClientAgentContext context)
         {
-            //the app serverl url is hacked into this url using "," appended
+            //the app server url is hacked into this url using "," appended
             var urls = connectionString.Split(",");
             if (!TryParseEndpoint(urls[0], out var endpoint, out var key))
             {
                 throw new Exception($"Fail to parse wps connection string:{connectionString}");
             }
 
-            var token = Token(endpoint, key, globalIndex);
+            var uri = Uri(endpoint.Replace("http", "ws"), key, globalIndex);
             return new WebSocketClientAgent(
-                endpoint.Replace("http", "ws") + "/client/hubs/" + PerfConstants.Name.HubName + "?access_token=" + token, urls[1], protocol,
+                uri.AbsoluteUri, urls[1], protocol,
                 groups,
                 globalIndex,
                 context);
@@ -44,14 +44,11 @@ namespace Azure.SignalRBench.Client
             return endpoint != null && key != null;
         }
 
-        private static string Token(string endpoint, string key, int userId)
+        private static Uri Uri(string endpoint, string key, int userId)
         {
-            var serviceClient = new WebPubSubServiceClient(new Uri(endpoint), PerfConstants.Name.HubName, new Azure.AzureKeyCredential(key));
-            var sendToGroupRole = new Claim("role", "webpubsub.sendToGroup");
-            var joinLeaveGroupRole = new Claim("role", "webpubsub.joinLeaveGroup");
-            var sub = new Claim("sub", "user"+userId.ToString());
-            var token = serviceClient.GetClientAccessToken(TimeSpan.FromHours(10),
-                new[] {sendToGroupRole, joinLeaveGroupRole,sub});
+            var serviceClient = new WebPubSubServiceClient(new Uri(endpoint), PerfConstants.Name.HubName, new AzureKeyCredential(key));
+            var token = serviceClient.GenerateClientAccessUri(TimeSpan.FromHours(10),userId.ToString(),
+                new[] {"webpubsub.sendToGroup", "webpubsub.joinLeaveGroup"});
             return token;
         }
     }

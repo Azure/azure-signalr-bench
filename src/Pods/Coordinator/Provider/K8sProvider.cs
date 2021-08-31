@@ -231,7 +231,19 @@ namespace Azure.SignalRBench.Coordinator
                 }
             };
             await _k8s.CreateNamespacedDeploymentAsync(deployment, _default, cancellationToken: cancellationToken);
-            return serverPodCount==0 || testCategory == TestCategory.RawWebsocket ? asrsConnectionStrings[0]+","+name : name;
+            
+            if (serverPodCount == 0)
+            {
+                return asrsConnectionStrings[0];
+            }
+            else if (testCategory == TestCategory.RawWebsocket)
+            {
+                return asrsConnectionStrings[0] + "," + name;
+            }
+            else
+            {
+                return name;
+            }
         }
 
         public async Task CreateClientPodsAsync(string testId, TestCategory testCategory, int clientPodCount,
