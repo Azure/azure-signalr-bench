@@ -136,6 +136,7 @@ namespace Azure.SignalRBench.Client
                                 _logger.LogInformation(
                                     $" Total {Volatile.Read(ref count)}, current {current} Connected. rate :{rate} Time cost:{stopWatch.ElapsedMilliseconds}");
 
+                                ManageConnectionLifeTime(c, cancellationToken);
                                 return;
                             }
                             catch (Exception ex)
@@ -159,6 +160,22 @@ namespace Azure.SignalRBench.Client
             }
         }
 
+        public void ManageConnectionLifeTime(IClientAgent c,CancellationToken cancellationToken )
+        {
+            var ms =(int) LifetimeDefinition.AvgLifetimeInSeconds.TotalMilliseconds;
+            if (ms <= 0) return;
+            async Task? Function()
+            {
+                var rd = StaticRandom.Next(2 * ms);
+                while (true)
+                {
+                    await Task.Delay(rd, cancellationToken);
+                    await c.StopAsync();
+                    await c.StartAsync(cancellationToken);
+                }
+            }
+            _=Task.Run(function: Function, cancellationToken);
+        }
         public async Task StopAsync(double rate)
         {
             using var cts = new CancellationTokenSource();

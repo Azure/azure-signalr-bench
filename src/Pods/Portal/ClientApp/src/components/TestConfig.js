@@ -622,6 +622,10 @@ export class TestConfig extends Component {
                                 <Form.Label>Sending Interval </Form.Label>
                                 <Form.Control name="interval" onChange={this.handleChangeNum} placeholder="message sending interval  (Default:1000) [unit ms]) " defaultValue={this.state.obj.interval} />
                             </Form.Group>
+                            <Form.Group >
+                                <Form.Label>Connection LifeTime </Form.Label>
+                                <Form.Control name="avgLifeTimeInMinutes" onChange={this.handleChangeNum} placeholder="Connection Lifetime (Default:0 forever) [unit minutes]) " defaultValue={this.state.obj.avgLifeTimeInMinutes} />
+                            </Form.Group>
                         </Form>
                     </Modal.Body>
                     <Modal.Footer>

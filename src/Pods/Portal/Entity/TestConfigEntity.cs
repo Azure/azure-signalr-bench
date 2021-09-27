@@ -65,6 +65,7 @@ namespace Portal.Entity
 
         public string Env { get; set; } = PerfConstants.Cloud.AzureGlobal;
         public string Tags { get; set; } = "";
+        public int AvgLifeTimeInMinutes { get; set; } = 0;
 
         public void Init()
         {
@@ -161,6 +162,10 @@ namespace Portal.Entity
                         ? protocol
                         : throw new Exception($"Unknown Protocol {Protocol}"),
                     Rate = Rate,
+                    ClientLifetime = new ClientLifetimeDefinition()
+                    {
+                        AvgLifetimeInSeconds = TimeSpan.FromMinutes(AvgLifeTimeInMinutes)
+                    },
                     GroupDefinitions = behavior == ClientBehavior.GroupBroadcast
                         ? new[]
                         {
@@ -249,7 +254,8 @@ namespace Portal.Entity
                 Rate = Rate,
                 LastCronTime = LastCronTime,
                 Tags = Tags,
-                ServerUrl = ServerUrl
+                ServerUrl = ServerUrl,
+                AvgLifeTimeInMinutes = AvgLifeTimeInMinutes
             };
         }
 
