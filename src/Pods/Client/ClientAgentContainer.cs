@@ -162,13 +162,13 @@ namespace Azure.SignalRBench.Client
 
         public void ManageConnectionLifeTime(IClientAgent c,CancellationToken cancellationToken )
         {
-            var ms =(int) LifetimeDefinition.AvgLifetimeInSeconds.TotalMilliseconds;
+            var ms = LifetimeDefinition.AvgLifetimeInSeconds;
             if (ms <= 0) return;
             async Task? Function()
             {
-                var rd = StaticRandom.Next(2 * ms);
                 while (true)
                 {
+                    var rd = StaticRandom.Next(2 * ms*1000);
                     await Task.Delay(rd, cancellationToken);
                     await c.StopAsync();
                     await c.StartAsync(cancellationToken);
@@ -254,7 +254,7 @@ namespace Azure.SignalRBench.Client
                         try
                         {
                             await Task.Delay(1000, cancellationToken);
-                            _logger.LogInformation("reportClientStatus");
+                         //   _logger.LogInformation("reportClientStatus");
                             await MessageClientHolder.Client.ReportClientStatusAsync(_context.ClientStatus());
                         }
                         catch (Exception e)

@@ -7,6 +7,6 @@ namespace Azure.SignalRBench.Common
 {
     public class ClientLifetimeDefinition
     {
-        public TimeSpan AvgLifetimeInSeconds { get; set; }
+        public int AvgLifetimeInSeconds { get; set; }
     }
 }

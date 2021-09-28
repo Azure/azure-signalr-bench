@@ -66,6 +66,7 @@ namespace Portal.Entity
         public string Env { get; set; } = PerfConstants.Cloud.AzureGlobal;
         public string Tags { get; set; } = "";
         public int AvgLifeTimeInMinutes { get; set; } = 0;
+        public string Comments { get; set; } = "";
 
         public void Init()
         {
@@ -164,7 +165,7 @@ namespace Portal.Entity
                     Rate = Rate,
                     ClientLifetime = new ClientLifetimeDefinition()
                     {
-                        AvgLifetimeInSeconds = TimeSpan.FromMinutes(AvgLifeTimeInMinutes)
+                        AvgLifetimeInSeconds = AvgLifeTimeInMinutes*60
                     },
                     GroupDefinitions = behavior == ClientBehavior.GroupBroadcast
                         ? new[]
@@ -255,7 +256,8 @@ namespace Portal.Entity
                 LastCronTime = LastCronTime,
                 Tags = Tags,
                 ServerUrl = ServerUrl,
-                AvgLifeTimeInMinutes = AvgLifeTimeInMinutes
+                AvgLifeTimeInMinutes = AvgLifeTimeInMinutes,
+                Comments = Comments
             };
         }
 

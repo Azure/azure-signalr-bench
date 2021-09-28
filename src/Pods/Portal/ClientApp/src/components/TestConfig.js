@@ -626,6 +626,10 @@ export class TestConfig extends Component {
                                 <Form.Label>Connection LifeTime </Form.Label>
                                 <Form.Control name="avgLifeTimeInMinutes" onChange={this.handleChangeNum} placeholder="Connection Lifetime (Default:0 forever) [unit minutes]) " defaultValue={this.state.obj.avgLifeTimeInMinutes} />
                             </Form.Group>
+                            <Form.Group >
+                                <Form.Label>Comments </Form.Label>
+                                <Form.Control name="comments" onChange={this.handleChange} placeholder="Leave some comments to mark " defaultValue={this.state.obj.comments} />
+                            </Form.Group>
                         </Form>
                     </Modal.Body>
                     <Modal.Footer>
