@@ -129,7 +129,7 @@ namespace Azure.SignalRBench.Client
                                 _logger.LogInformation($"{current} start to connect");
                                 using var delayCts = new CancellationTokenSource();
                                 using var lts = CancellationTokenSource.CreateLinkedTokenSource(delayCts.Token, cancellationToken);
-                                lts.CancelAfter(5000);                              
+                                lts.CancelAfter(15000);                              
                                 await c.StartAsync(lts.Token);
                                 stopWatch.Stop();
                                 Interlocked.Add(ref count, 1);
