@@ -68,11 +68,19 @@ namespace Azure.SignalRBench.Client.ClientAgent
                     Protocol.LongPollingWithJson => new LongPollingTransport(),
                     _ => throw new Exception($"Unsupported protocol {_protocol} for aspnet")
                 };
-                await Connection.Start(clientTransport);
+                var task= Connection.Start(clientTransport);
+                var tcs = new TaskCompletionSource();
+                if (!cancellationToken.IsCancellationRequested)
+                {
+                    cancellationToken.Register(() => tcs.TrySetCanceled());
+                    var runned=await Task.WhenAny(task, tcs.Task);
+                    if (runned == task)
+                    {
+                        await Context.SetConnectionIdAsync(GlobalIndex, Connection.ConnectionId);
+                        await Context.OnConnected(this, Groups.Length > 0);   
+                    }
+                }
             }
-
-            await Context.SetConnectionIdAsync(GlobalIndex, Connection.ConnectionId);
-            await Context.OnConnected(this, Groups.Length > 0);
         }
 
         public Task StopAsync()

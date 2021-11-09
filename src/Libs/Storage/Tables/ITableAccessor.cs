@@ -32,6 +32,6 @@ namespace Azure.SignalRBench.Storage
 
         IAsyncEnumerable<T> QueryAsync(IQueryable<T> query, CancellationToken cancellationToken = default);
         
-        IAsyncEnumerable<T> QueryAsync(TableQuery<T> query, int n=int.MaxValue, CancellationToken cancellationToken = default);
+        List<T> QueryAsync(TableQuery<T> query, int n=int.MaxValue, CancellationToken cancellationToken = default);
     }
 }

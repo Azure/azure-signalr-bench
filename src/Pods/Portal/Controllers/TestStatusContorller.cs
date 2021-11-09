@@ -36,7 +36,8 @@ namespace Portal.Controllers
                 tableQuery.OrderByDesc("Timestamp");
                 if (string.IsNullOrEmpty(key))
                 {
-                    return await table.QueryAsync(tableQuery, 30).ToListAsync();
+                    var result=  table.QueryAsync(tableQuery, 30);
+                    return result;
                 }
 
                 List<TestStatusEntity> rows = null;

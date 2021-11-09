@@ -35,7 +35,7 @@ namespace Portal.BasicAuth
             }
             catch
             {
-                return AuthenticateResult.Fail("Error Occured.Authorization failed.");
+                return AuthenticateResult.NoResult();
             }
  
             if (userIdentity == null)

@@ -18,6 +18,7 @@ namespace Portal.Entity
         public string Service { get; set; } = "SignalR";
         public string Mode { get; set; } = "Default";
 
+        public string CreateMode { get; set; } = "ConnectionString";
         public string Framework { get; set; } = "Netcore";
 
         public int ClientCons { get; set; } = 1000;
@@ -234,6 +235,7 @@ namespace Portal.Entity
                 ClientNum = ClientNum,
                 ConnectEstablishRoundNum = ConnectEstablishRoundNum,
                 ConnectionString = ConnectionString,
+                CreateMode = CreateMode,
                 Cron = Cron,
                 Dir = Dir,
                 End = End,
