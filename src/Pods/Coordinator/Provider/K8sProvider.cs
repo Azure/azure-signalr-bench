@@ -38,7 +38,7 @@ namespace Azure.SignalRBench.Coordinator.Provider
         }
 
         public async Task<string> CreateServerPodsAsync(string testId, string[] asrsConnectionStrings,
-            int serverPodCount, TestCategory testCategory, CancellationToken cancellationToken)
+            int serverPodCount, TestCategory testCategory,string formatProtocol, CancellationToken cancellationToken)
         {
             var name = Appserver + "-" + testId;
             name = NameConverter.Truncate(name);
@@ -178,8 +178,8 @@ namespace Azure.SignalRBench.Coordinator.Provider
                                         },
                                         Limits = new Dictionary<string, ResourceQuantity>
                                         {
-                                            ["cpu"] = new ResourceQuantity("3000m"),
-                                            ["memory"] = new ResourceQuantity("10000Mi")
+                                            ["cpu"] = new ResourceQuantity("4000m"),
+                                            ["memory"] = new ResourceQuantity("14000Mi")
                                         }
                                     },
                                     VolumeMounts = new List<V1VolumeMount>
@@ -215,7 +215,9 @@ namespace Azure.SignalRBench.Coordinator.Provider
                                         new V1EnvVar(PerfConstants.ConfigurationKeys.StorageConnectionStringKey,
                                             _perfStorageProvider.ConnectionString),
                                         new V1EnvVar(PerfConstants.ConfigurationKeys.RedisConnectionStringKey,
-                                            _redisConnectionString)
+                                            _redisConnectionString),
+                                        new V1EnvVar(PerfConstants.ConfigurationKeys.Protocol,
+                                            formatProtocol)
                                     }
                                 }
                             },
@@ -319,8 +321,8 @@ namespace Azure.SignalRBench.Coordinator.Provider
                                         },
                                         Limits = new Dictionary<string, ResourceQuantity>
                                         {
-                                            ["cpu"] = new ResourceQuantity("3000m"),
-                                            ["memory"] = new ResourceQuantity("10000Mi")
+                                            ["cpu"] = new ResourceQuantity("4000m"),
+                                            ["memory"] = new ResourceQuantity("14000Mi")
                                         }
                                     },
                                     VolumeMounts = new List<V1VolumeMount>

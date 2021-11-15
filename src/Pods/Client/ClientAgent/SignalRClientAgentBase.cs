@@ -5,6 +5,7 @@ using Azure.SignalRBench.Common;
 using Microsoft.AspNetCore.Connections;
 using Microsoft.AspNetCore.Http.Connections;
 using Microsoft.AspNetCore.SignalR.Client;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Azure.SignalRBench.Client.ClientAgent
 {
@@ -16,20 +17,30 @@ namespace Azure.SignalRBench.Client.ClientAgent
             Context = context;
             Groups = groups;
             GlobalIndex = globalIndex;
-            Connection = new HubConnectionBuilder()
+            var  transferFormat=(TransferFormat)((int)protocol >> 4);
+            var builder=
+             new HubConnectionBuilder()
                 .WithUrl(
                     urlWithHub,
                     o =>
                     {
-                        o.Transports = (HttpTransportType)((int)protocol & 0xF);
-                        o.DefaultTransferFormat = (TransferFormat)((int)protocol >> 4);
+                        o.Transports = (HttpTransportType) ((int) protocol & 0xF);
+                        o.DefaultTransferFormat = transferFormat;
                         if (userName != null)
                         {
                             o.Headers.Add("user", userName);
                         }
                     }
-                ).WithAutomaticReconnect(context.RetryPolicy)
-                .Build();
+                ).WithAutomaticReconnect(context.RetryPolicy);
+            if (transferFormat == TransferFormat.Binary)
+            {
+                builder.AddMessagePackProtocol();
+            }
+            else
+            {
+                builder.AddJsonProtocol();
+            }
+            Connection=builder.Build();
             Connection.On<long, string>(nameof(context.Measure), context.Measure);
             Connection.Reconnecting += _ => context.OnReconnecting(this);
             Connection.Reconnected += async _ =>

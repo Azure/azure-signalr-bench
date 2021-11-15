@@ -2,10 +2,12 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using System.Collections.Generic;
 using Azure.SignalRBench.AppServer.Hub;
 using Azure.SignalRBench.Common;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -29,12 +31,29 @@ namespace Azure.SignalRBench.AppServer
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddSignalR().AddMessagePackProtocol()
-                 .AddAzureSignalR(option =>
-                 {
-                     option.ConnectionCount = Configuration[PerfConstants.ConfigurationKeys.ConnectionNum] != null ? Configuration.GetValue<int>(PerfConstants.ConfigurationKeys.ConnectionNum) : 50;
-                     option.ConnectionString = Configuration[PerfConstants.ConfigurationKeys.ConnectionString];
-                 });
+            var fp = Configuration[PerfConstants.ConfigurationKeys.Protocol];
+
+            ISignalRServerBuilder builder = null;
+            if (!fp.ToLower().Contains("json"))
+            {
+                builder = services.AddSignalR(options =>
+                {
+                    var supportedProtocol = new List<string> {"messagepack"};
+                     options.SupportedProtocols = supportedProtocol;
+                }).AddMessagePackProtocol();
+            }
+            else
+            {
+                builder = services.AddSignalR();
+            }
+
+            builder.AddAzureSignalR(option =>
+            {
+                option.ConnectionCount = Configuration[PerfConstants.ConfigurationKeys.ConnectionNum] != null
+                    ? Configuration.GetValue<int>(PerfConstants.ConfigurationKeys.ConnectionNum)
+                    : 50;
+                option.ConnectionString = Configuration[PerfConstants.ConfigurationKeys.ConnectionString];
+            });
             services.AddSingleton<MessageClientHolder>();
             services.AddHostedService<ServerHostedService>();
         }
@@ -44,10 +63,7 @@ namespace Azure.SignalRBench.AppServer
         {
             app.UseRouting();
 
-            app.UseAzureSignalR(routes =>
-            {
-                routes.MapHub<BenchHub>(HUB_NAME);
-            });
+            app.UseAzureSignalR(routes => { routes.MapHub<BenchHub>(HUB_NAME); });
         }
     }
 }

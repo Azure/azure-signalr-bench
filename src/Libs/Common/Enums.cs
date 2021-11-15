@@ -43,6 +43,14 @@ namespace Azure.SignalRBench.Common
         RawWebSocketText=8 | 0x20,
     }
 
+    public static class ProtocolExtentions
+    {
+        public static string GetFormatProtocol(this Protocol protocol)
+        {
+            var fp=((int)protocol >> 4);
+            return fp == 2 ? "json" : "messagepack";
+        }
+    }
     [JsonConverter(typeof(StringEnumConverter))]
     public enum ClientBehavior
     {
