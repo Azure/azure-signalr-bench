@@ -168,14 +168,14 @@ namespace Azure.SignalRBench.Client.ClientAgent
                         {
                             try
                             {
-                                Console.WriteLine($"The connection closed");
+                                Console.WriteLine($"The connection closed, status code:{_socket.CloseStatus},description: {_socket.CloseStatusDescription}");
 
                                 await _socket.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, default);
                             }
                             catch (Exception e)
                             {
                                 // It is possible that the remote is already closed
-                                Console.WriteLine($"The connection close:{e}");
+                                Console.WriteLine($"The connection closed, status code:{_socket.CloseStatus},description: {_socket.CloseStatusDescription}, e:{e}");
                             }
 
                             break;

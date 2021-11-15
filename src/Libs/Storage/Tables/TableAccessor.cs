@@ -111,26 +111,5 @@ namespace Azure.SignalRBench.Storage
                 }
             } while (token != null);
         }
-
-        public List<T> QueryAsync(TableQuery<T> tq, int n,
-            [EnumeratorCancellation] CancellationToken cancellationToken)
-        {
-            // TableContinuationToken? token = null;
-            // tq.TakeCount = n;
-            return _table.ExecuteQuery(tq).Take(n).ToList();
-            //The sdk has a bug: The ExecuteQuerySegmentedAsync will keep fetching all entities
-
-            //var count = 0;
-            // do
-            // {
-            //     var entities = await _table.ExecuteQuerySegmentedAsync( tq, token, cancellationToken: cancellationToken);
-            //     token = entities.ContinuationToken;
-            //     foreach (var item in entities)
-            //     {
-            //         yield return item;
-            //         count++;
-            //     }
-            // } while (token != null&&count<n);
-        }
     }
 }

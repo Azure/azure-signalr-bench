@@ -32,11 +32,12 @@ namespace Portal.Controllers
             try
             {
                 var table = await _perfStorage.GetTableAsync<TestStatusEntity>(PerfConstants.TableNames.TestStatus);
-                TableQuery<TestStatusEntity> tableQuery = new TableQuery<TestStatusEntity>();
-                tableQuery.OrderByDesc("Timestamp");
+                var onedayAgo = new DateTimeOffset(DateTime.Now.AddDays(-1));
                 if (string.IsNullOrEmpty(key))
                 {
-                    var result=  table.QueryAsync(tableQuery, 30);
+                    var result= await table.QueryAsync( from row in table.Rows where row.Timestamp>onedayAgo select row).ToListAsync();
+                    result.Sort((a, b) =>
+                        b.Timestamp.CompareTo(a.Timestamp));
                     return result;
                 }
 
