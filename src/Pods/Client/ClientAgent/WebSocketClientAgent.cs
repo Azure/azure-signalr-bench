@@ -108,6 +108,7 @@ namespace Azure.SignalRBench.Client.ClientAgent
             private readonly ClientWebSocket _socket;
             private readonly CancellationTokenSource _connectionStoppedCts = new CancellationTokenSource();
             private readonly WebSocketClientAgent _agent;
+            private readonly SequenceId _sequenceId = new SequenceId();
             private ClientAgentContext _context;
             private Action<long, string>? _handler;
             public Uri ResourceUri { get; }
@@ -144,6 +145,23 @@ namespace Azure.SignalRBench.Client.ClientAgent
             {
                 await _socket.ConnectAsync(ResourceUri, cancellationToken);
                 active = true;
+                _ = Task.Run(async () =>
+                {
+                    while (_socket.State == WebSocketState.Open)
+                    {
+                        try
+                        {
+                            if (_sequenceId.TryGetSequenceId(out var sequenceId))
+                            {
+                                _ = SendAsync(new SequenceAck(sequenceId).Serialize());
+                            }
+                        }
+                        finally
+                        {
+                            await Task.Delay(1000);
+                        }
+                    }
+                });
                 _ = ReceiveLoop();
             }
 
@@ -189,11 +207,16 @@ namespace Azure.SignalRBench.Client.ClientAgent
                             var response = JsonConvert.DeserializeObject<MessageResponse>(str);
                             try
                             {
+                                if (response.sequenceId != null)
+                                {
+                                    _sequenceId.UpdateSequenceId(response.sequenceId.Value);
+                                }
                                 var data = JsonConvert.DeserializeObject<RawWebsocketData>(response.data);
                                 _handler?.Invoke(data.Ticks, data.Payload);
                             }
-                            catch
+                            catch(Exception e)
                             {
+                                Console.WriteLine(e.ToString());
                             }
 
                             ms.SetLength(0);
@@ -271,11 +294,65 @@ namespace Azure.SignalRBench.Client.ClientAgent
             }
         }
 
+        private sealed class SequenceId
+        {
+            private readonly object _lock = new object();
+
+            private ulong _sequenceId;
+
+            private volatile bool _updated;
+
+            public void UpdateSequenceId(ulong sequenceId)
+            {
+                lock(_lock)
+                {
+                    _sequenceId = sequenceId;
+                    _updated = true;
+                }
+            }
+
+            public bool TryGetSequenceId(out ulong sequenceId)
+            {
+                lock(_lock)
+                {
+                    if (_updated)
+                    {
+                        sequenceId = _sequenceId;
+                        _updated = false;
+                        return true;
+                    }
+                    sequenceId = 0;
+                    return false;
+                }
+            }
+        }
+
+        private sealed class SequenceAck
+        {
+            public string type = "ack";
+            public ulong sequenceId;
+
+            public SequenceAck(ulong sequenceId)
+            {
+                this.sequenceId = sequenceId;
+            }
+
+            public string Serialize()
+            {
+                return JsonConvert.SerializeObject(this, new JsonSerializerSettings
+                {
+                    ContractResolver = new CamelCasePropertyNamesContractResolver()
+                });
+            }
+        }
+
+
         private sealed class MessageResponse
         {
             public string type;
             public string from;
             public string data;
+            public ulong? sequenceId;
         }
     }
 }
