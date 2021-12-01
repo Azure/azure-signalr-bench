@@ -1,4 +1,7 @@
-﻿using Microsoft.Azure.Cosmos.Table;
+﻿using System;
+using System.Runtime.InteropServices.ComTypes;
+using Azure.SignalRBench.Common;
+using Microsoft.Azure.Cosmos.Table;
 
 namespace Azure.SignalRBench.Coordinator.Entities
 {
@@ -19,5 +22,8 @@ namespace Azure.SignalRBench.Coordinator.Entities
         public string Dir { get; set; }
         
         public string? Check { get; set; }
+        
+        //Used for ev2 track only
+        public string JobState { get; set; } = TestState.InProgress.ToString();
     }
 }

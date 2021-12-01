@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Azure.SignalRBench.Common;
 using Azure.SignalRBench.Coordinator.Entities;
 using Azure.SignalRBench.Storage;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Azure.Cosmos.Table;
 using Microsoft.Extensions.Logging;
@@ -73,6 +74,40 @@ namespace Portal.Controllers
                     b.Timestamp.CompareTo(a.Timestamp)
                 );
                 return rows;
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "Get test status error");
+                throw;
+            }
+        }
+        
+        [Authorize(Policy = PerfConstants.Policy.RoleLogin,
+            Roles = PerfConstants.Roles.Contributor + "," + PerfConstants.Roles.Pipeline)]
+        [HttpGet("dir/check/{dir?}")]
+        public async Task<string> DirCheck(string dir, string index)
+        {
+            try
+            {
+                var table = await _perfStorage.GetTableAsync<TestStatusEntity>(PerfConstants.TableNames.TestStatus);
+                var rows = await table.QueryAsync(
+                    from row in table.Rows where (row.Dir == dir) && (row.RowKey == index) select row).ToListAsync();
+                foreach (var row in rows)
+                {
+                    var state = Enum.Parse<TestState>(row.JobState);
+                    if (state == TestState.InProgress)
+                    {
+                        return "wait";
+                    }else if (state == TestState.Failed)
+                    {
+                        return "fail";
+                    }else if (!row.Healthy)
+                    {
+                        return "fail";
+                    }
+                }
+
+                return "succeed";
             }
             catch (Exception e)
             {

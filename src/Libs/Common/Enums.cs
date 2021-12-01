@@ -83,6 +83,13 @@ namespace Azure.SignalRBench.Common
         RawWebsocket,
     }
 
+    public enum TestState
+    {
+        InProgress,
+        Failed,
+        Finished
+    }
+    
     [JsonConverter(typeof(StringEnumConverter))]
     public enum ServiceName
     {

@@ -140,7 +140,6 @@ namespace Portal
             app.UseAuthorization();
             if (env.IsProduction())
                 app.UseMiddleware<ReverseProxyMiddleware>();
-
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();

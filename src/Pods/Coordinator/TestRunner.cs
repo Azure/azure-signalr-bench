@@ -160,16 +160,16 @@ namespace Azure.SignalRBench.Coordinator
                     await StopScenarioAsync(messageClient, cancellationToken);
                     //wait for the last message to come back
                     await Task.Delay(5000);
-                    suspiciousCount= await UpdateTestReports(round, _roundTotalConnected,suspiciousCount);
+                    suspiciousCount = await UpdateTestReports(round, _roundTotalConnected, suspiciousCount);
                 }
 
                 // await UpdateTestStatus("Stopping client connections");
                 // await StopClientConnectionsAsync(messageClient, cancellationToken);
-                await UpdateTestStatus("Test Finishes");
+                await UpdateTestStatus("Test Finishes", testState: TestState.Finished);
             }
             catch (Exception e)
             {
-                await UpdateTestStatus("Testing Round failed ", false, e);
+                await UpdateTestStatus("Testing Round failed ", false, e, TestState.Failed);
             }
             finally
             {
@@ -191,11 +191,12 @@ namespace Azure.SignalRBench.Coordinator
                     await K8SProvider.DeleteClientPodsAsync(Job.TestId);
                     _logger.LogInformation("Test job {testId}: Removing server pods.", Job.TestId);
                     await K8SProvider.DeleteServerPodsAsync(Job.TestId,
-                        Job.TestMethod == TestCategory.AspnetCoreSignalRServerless||Job.TestMethod == TestCategory.RawWebsocket);
+                        Job.TestMethod == TestCategory.AspnetCoreSignalRServerless ||
+                        Job.TestMethod == TestCategory.RawWebsocket);
                 }
                 catch (Exception ignore)
                 {
-                    await UpdateTestStatus("Clean up failed", false, ignore);
+                    await UpdateTestStatus("Clean up failed", false, ignore, TestState.Failed);
                 }
                 finally
                 {
@@ -264,11 +265,13 @@ namespace Azure.SignalRBench.Coordinator
             }
         }
 
-        public async Task UpdateTestStatus(string currentStatus, bool healthy = true, Exception? e = default)
+        public async Task UpdateTestStatus(string currentStatus, bool healthy = true, Exception? e = default,
+            TestState testState = TestState.InProgress)
         {
             var sec = _timer.ElapsedMilliseconds / 1000;
             _testStatusEntity.Status = currentStatus + " [" + sec + "sec]";
             _testStatusEntity.Healthy = healthy;
+            _testStatusEntity.JobState = testState.ToString();
             if (healthy)
             {
                 _logger.LogInformation(currentStatus);
@@ -283,7 +286,8 @@ namespace Azure.SignalRBench.Coordinator
             await _testStatusAccessor.UpdateAsync(_testStatusEntity);
         }
 
-        private async Task<int> UpdateTestReports(RoundSetting round, int totalConnectionsThisRound, int suspiciousCount)
+        private async Task<int> UpdateTestReports(RoundSetting round, int totalConnectionsThisRound,
+            int suspiciousCount)
         {
             var roundStatus = new RoundStatus
             {
@@ -327,7 +331,7 @@ namespace Azure.SignalRBench.Coordinator
                 if (suspiciousCount == 0)
                     _testStatusEntity.Check = null;
             }
-    
+
             _roundStatusList.Add(roundStatus);
             _testStatusEntity.Report = JsonConvert.SerializeObject(_roundStatusList);
             await _testStatusAccessor.UpdateAsync(_testStatusEntity);
@@ -507,7 +511,8 @@ namespace Azure.SignalRBench.Coordinator
 
                 _logger.LogInformation("Test job {testId}: Creating server pods.", Job.TestId);
                 _url = await K8SProvider.CreateServerPodsAsync(Job.TestId, asrsConnectionStrings,
-                    serverPodCount, Job.TestMethod,Job.ScenarioSetting.Protocol.GetFormatProtocol(), cancellationToken);
+                    serverPodCount, Job.TestMethod, Job.ScenarioSetting.Protocol.GetFormatProtocol(),
+                    cancellationToken);
                 _logger.LogInformation("Test job {testId}: Creating client pods.", Job.TestId);
                 await K8SProvider.CreateClientPodsAsync(Job.TestId, Job.TestMethod, clientPodCount, cancellationToken);
 
