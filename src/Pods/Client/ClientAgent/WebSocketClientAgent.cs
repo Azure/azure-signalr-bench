@@ -211,8 +211,13 @@ namespace Azure.SignalRBench.Client.ClientAgent
                                 {
                                     _sequenceId.UpdateSequenceId(response.sequenceId.Value);
                                 }
-                                var data = JsonConvert.DeserializeObject<RawWebsocketData>(response.data);
-                                _handler?.Invoke(data.Ticks, data.Payload);
+
+                                if (response.data != null)
+                                {
+                                    var data = JsonConvert.DeserializeObject<RawWebsocketData>(response.data);
+                                    _handler?.Invoke(data.Ticks, data.Payload); 
+                                }
+                             
                             }
                             catch(Exception e)
                             {
@@ -353,6 +358,13 @@ namespace Azure.SignalRBench.Client.ClientAgent
             public string from;
             public string data;
             public ulong? sequenceId;
+            public string Serialize()
+            {
+                return JsonConvert.SerializeObject(this, new JsonSerializerSettings
+                {
+                    ContractResolver = new CamelCasePropertyNamesContractResolver()
+                });
+            }
         }
     }
 }
