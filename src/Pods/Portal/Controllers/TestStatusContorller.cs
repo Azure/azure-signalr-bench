@@ -36,7 +36,8 @@ namespace Portal.Controllers
                 var onedayAgo = new DateTimeOffset(DateTime.Now.AddDays(-1));
                 if (string.IsNullOrEmpty(key))
                 {
-                    var result= await table.QueryAsync( from row in table.Rows where row.Timestamp>onedayAgo select row).ToListAsync();
+                    var result = await table
+                        .QueryAsync(from row in table.Rows where row.Timestamp > onedayAgo select row).ToListAsync();
                     result.Sort((a, b) =>
                         b.Timestamp.CompareTo(a.Timestamp));
                     return result;
@@ -81,7 +82,7 @@ namespace Portal.Controllers
                 throw;
             }
         }
-        
+
         [Authorize(Policy = PerfConstants.Policy.RoleLogin,
             Roles = PerfConstants.Roles.Contributor + "," + PerfConstants.Roles.Pipeline)]
         [HttpGet("dir/check/{dir?}")]
@@ -98,10 +99,13 @@ namespace Portal.Controllers
                     if (state == TestState.InProgress)
                     {
                         return "wait";
-                    }else if (state == TestState.Failed)
+                    }
+                    else if (state == TestState.Failed)
                     {
                         return "fail";
-                    }else if (!row.Healthy)
+                    }
+                    else if (!(row.Healthy && string.IsNullOrWhiteSpace(row.Check) &&
+                               string.IsNullOrWhiteSpace(row.ErrorInfo)))
                     {
                         return "fail";
                     }
