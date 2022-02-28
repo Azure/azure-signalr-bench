@@ -173,60 +173,68 @@ namespace Azure.SignalRBench.Client.ClientAgent
 
             private async Task ReceiveLoop()
             {
-                while (_socket.State == WebSocketState.Open)
+                try
                 {
-                    var ms = new MemoryStream();
-                    Memory<byte> buffer = new byte[1 << 10];
-                    // receive loop
-                    while (true)
+                    while (_socket.State == WebSocketState.Open)
                     {
-                        var receiveResult = await _socket.ReceiveAsync(buffer, default);
-                        // Need to check again for NetCoreApp2.2 because a close can happen between a 0-byte read and the actual read
-                        if (receiveResult.MessageType == WebSocketMessageType.Close)
+                        var ms = new MemoryStream();
+                        Memory<byte> buffer = new byte[1 << 10];
+                        // receive loop
+                        while (true)
                         {
-                            try
+                            var receiveResult = await _socket.ReceiveAsync(buffer, default);
+                            // Need to check again for NetCoreApp2.2 because a close can happen between a 0-byte read and the actual read
+                            if (receiveResult.MessageType == WebSocketMessageType.Close)
                             {
-                                Console.WriteLine($"The connection closed, status code:{_socket.CloseStatus},description: {_socket.CloseStatusDescription}");
-
-                                await _socket.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, default);
-                            }
-                            catch (Exception e)
-                            {
-                                // It is possible that the remote is already closed
-                                Console.WriteLine($"The connection closed, status code:{_socket.CloseStatus},description: {_socket.CloseStatusDescription}, e:{e}");
-                            }
-
-                            break;
-                        }
-
-                        await ms.WriteAsync(buffer.Slice(0, receiveResult.Count));
-                        if (receiveResult.EndOfMessage)
-                        {
-                            var str = Encoding.UTF8.GetString(ms.ToArray());
-
-                            var response = JsonConvert.DeserializeObject<MessageResponse>(str);
-                            try
-                            {
-                                if (response.sequenceId != null)
+                                try
                                 {
-                                    _sequenceId.UpdateSequenceId(response.sequenceId.Value);
+                                    Console.WriteLine(
+                                        $"The connection closed, status code:{_socket.CloseStatus},description: {_socket.CloseStatusDescription}");
+
+                                    await _socket.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, default);
+                                }
+                                catch (Exception e)
+                                {
+                                    // It is possible that the remote is already closed
+                                    Console.WriteLine(
+                                        $"The connection closed, status code:{_socket.CloseStatus},description: {_socket.CloseStatusDescription}, e:{e}");
                                 }
 
-                                if (response.data != null)
-                                {
-                                    var data = JsonConvert.DeserializeObject<RawWebsocketData>(response.data);
-                                    _handler?.Invoke(data.Ticks, data.Payload); 
-                                }
-                             
-                            }
-                            catch(Exception e)
-                            {
-                                Console.WriteLine(e.ToString());
+                                break;
                             }
 
-                            ms.SetLength(0);
+                            await ms.WriteAsync(buffer.Slice(0, receiveResult.Count));
+                            if (receiveResult.EndOfMessage)
+                            {
+                                var str = Encoding.UTF8.GetString(ms.ToArray());
+
+                                var response = JsonConvert.DeserializeObject<MessageResponse>(str);
+                                try
+                                {
+                                    if (response.sequenceId != null)
+                                    {
+                                        _sequenceId.UpdateSequenceId(response.sequenceId.Value);
+                                    }
+
+                                    if (response.data != null)
+                                    {
+                                        var data = JsonConvert.DeserializeObject<RawWebsocketData>(response.data);
+                                        _handler?.Invoke(data.Ticks, data.Payload);
+                                    }
+                                }
+                                catch (Exception e)
+                                {
+                                    Console.WriteLine(e.ToString());
+                                }
+
+                                ms.SetLength(0);
+                            }
                         }
                     }
+                }
+                finally
+                {
+                    await _context.OnClosed(_agent);
                 }
             }
         }
@@ -309,7 +317,7 @@ namespace Azure.SignalRBench.Client.ClientAgent
 
             public void UpdateSequenceId(ulong sequenceId)
             {
-                lock(_lock)
+                lock (_lock)
                 {
                     _sequenceId = sequenceId;
                     _updated = true;
@@ -318,7 +326,7 @@ namespace Azure.SignalRBench.Client.ClientAgent
 
             public bool TryGetSequenceId(out ulong sequenceId)
             {
-                lock(_lock)
+                lock (_lock)
                 {
                     if (_updated)
                     {
@@ -326,6 +334,7 @@ namespace Azure.SignalRBench.Client.ClientAgent
                         _updated = false;
                         return true;
                     }
+
                     sequenceId = 0;
                     return false;
                 }
@@ -358,6 +367,7 @@ namespace Azure.SignalRBench.Client.ClientAgent
             public string from;
             public string data;
             public ulong? sequenceId;
+
             public string Serialize()
             {
                 return JsonConvert.SerializeObject(this, new JsonSerializerSettings
