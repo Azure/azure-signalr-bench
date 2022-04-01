@@ -85,8 +85,8 @@ namespace Portal.Controllers
 
         [Authorize(Policy = PerfConstants.Policy.RoleLogin,
             Roles = PerfConstants.Roles.Contributor + "," + PerfConstants.Roles.Pipeline)]
-        [HttpGet("dir/check/{dir?}")]
-        public async Task<string> DirCheck(string dir, string index)
+        [HttpGet("dir/check/{dir}/{index}")]
+        public async Task<TestResult> DirCheck(string dir, string index)
         {
             try
             {
@@ -98,20 +98,32 @@ namespace Portal.Controllers
                     var state = Enum.Parse<TestState>(row.JobState);
                     if (state == TestState.InProgress)
                     {
-                        return "wait";
+                        return new TestResult()
+                        {
+                            Status = "wait"
+                        };
                     }
                     else if (state == TestState.Failed)
                     {
-                        return "fail";
+                        return new TestResult()
+                        {
+                            Status = "fail"
+                        };
                     }
                     else if (!(row.Healthy && string.IsNullOrWhiteSpace(row.Check) &&
                                string.IsNullOrWhiteSpace(row.ErrorInfo)))
                     {
-                        return "fail";
+                        return new TestResult()
+                        {
+                            Status = "fail"
+                        };
                     }
                 }
 
-                return "succeed";
+                return new TestResult()
+                {
+                    Status = "succeed"
+                };
             }
             catch (Exception e)
             {
@@ -119,5 +131,10 @@ namespace Portal.Controllers
                 throw;
             }
         }
+    }
+
+    public class TestResult
+    {
+        public string Status { get; set; }
     }
 }
