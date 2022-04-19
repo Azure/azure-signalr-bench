@@ -68,6 +68,7 @@ namespace Portal.Controllers
         {
             try
             {
+                index = index.ToLower();
                 var table = await _perfStorage.GetTableAsync<TestStatusEntity>(PerfConstants.TableNames.TestStatus);
                 var rows = await table.QueryAsync(
                     from row in table.Rows where (row.Dir == dir) && (row.RowKey == index) select row).ToListAsync();
@@ -85,11 +86,12 @@ namespace Portal.Controllers
 
         [Authorize(Policy = PerfConstants.Policy.RoleLogin,
             Roles = PerfConstants.Roles.Contributor + "," + PerfConstants.Roles.Pipeline)]
-        [HttpGet("dir/check/{dir}/{index}")]
+        [HttpGet("dir/check/{dir}")]
         public async Task<TestResult> DirCheck(string dir, string index)
         {
             try
             {
+                index = index.ToLower();
                 var table = await _perfStorage.GetTableAsync<TestStatusEntity>(PerfConstants.TableNames.TestStatus);
                 var rows = await table.QueryAsync(
                     from row in table.Rows where (row.Dir == dir) && (row.RowKey == index) select row).ToListAsync();
