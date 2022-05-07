@@ -11,7 +11,7 @@ spec:
   tls:
     - hosts:
         - PORTAL_DOMAIN_PLACE_HOLDER
-      secretName: tls-secret-portal
+      secretName: perf-cert
   rules:
     - host: PORTAL_DOMAIN_PLACE_HOLDER
       http:
