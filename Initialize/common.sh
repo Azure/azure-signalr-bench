@@ -1,5 +1,6 @@
 #!/bin/bash
 
+
 function init_common() {
     echo "init naming conventions and configs"
     PREFIX_PERF="${PREFIX}perfv2"

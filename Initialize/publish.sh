@@ -7,6 +7,7 @@ source $DIR/common.sh
 
 PREFIX=""
 
+
 function print_usage() {
   cat <<EOF
 Command 

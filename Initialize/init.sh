@@ -69,7 +69,8 @@ if [[ -z $(az keyvault show -n $KEYVAULT 2>/dev/null) ]]; then
     echo "start to create keyvault $KEYVAULT"
     az keyvault create -n $KEYVAULT -g $RESOURCE_GROUP
     echo "keyvault $KEYVAULT created. Grant current user permission"
-    az keyvault set-policy --name $KEYVAULT --upn $(az account show --query user.name -o tsv) --secret-permissions delete get list set >/dev/null
+    #no longer necessary. Permission Will be added automatically for current user
+    #az keyvault set-policy --name $KEYVAULT --upn $(az account show --query user.name -o tsv) --secret-permissions delete get list set >/dev/null
 else
     echo "keyvault $KEYVAULT already exists. Skip creating.."
 fi
@@ -117,8 +118,8 @@ fi
 if [[ -z $(az aks show --name $KUBERNETES_SEVICES -g $RESOURCE_GROUP 2>/dev/null) ]]; then
     echo "start to create kubernetes services $KUBERNETES_SEVICES. May cost several minutes, waiting..."
     work_space_resource_id=$(az monitor log-analytics workspace show -g $RESOURCE_GROUP -n $WORK_SPACE --query id -o tsv)
-    az aks create -n $KUBERNETES_SEVICES --vm-set-type VirtualMachineScaleSets --kubernetes-version 1.20.5 --enable-managed-identity -s Standard_D4as_v4 --nodepool-name captain --generate-ssh-keys \
-      --load-balancer-managed-outbound-ip-count 20 --load-balancer-outbound-ports 20000 --workspace-resource-id "$work_space_resource_id" --enable-addons monitoring --network-plugin azure
+    az aks create -n $KUBERNETES_SEVICES --vm-set-type VirtualMachineScaleSets --enable-managed-identity -s Standard_D4as_v4 --nodepool-name captain --generate-ssh-keys \
+      --load-balancer-managed-outbound-ip-count 5 --load-balancer-outbound-ports 20000 --workspace-resource-id "$work_space_resource_id" --enable-addons monitoring --network-plugin azure
     echo "kubernetes services $KUBERNETES_SEVICES created."
     echo "start getting kube/config"
     rm ~/.kube/perf || true

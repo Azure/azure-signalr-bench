@@ -1,13 +1,14 @@
 # Setup
 
 ### Dependency
-1. WSL or Linux 
-2. az cli [Version >=2.26]
-3. .NET 5 sdk
-4. A subscription which you have owner permission
+1. [WSL](https://docs.microsoft.com/en-us/windows/wsl/install) or Linux 
+2. [az cli](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli-linux?pivots=apt) [Version >=2.26]
+3. [.NET 5 sdk](https://dotnet.microsoft.com/en-us/download/dotnet/5.0)
+4. A subscription which you have [owner](https://docs.microsoft.com/en-us/azure/role-based-access-control/role-assignments-portal-subscription-admin) permission
+5. [jq](https://stedolan.github.io/jq/)
 
 ### Steps
-SignalR performance tool uses AKS to run the tests. To setup the initial  environment, you could
+SignalR performance tool uses AKS to run the tests. To setup the initial environment, you could
 ```bash
 cd Initialize
 ./init.sh -p [prefix] -l location 
@@ -17,7 +18,7 @@ Enable AAD authentication
 1. create an application in AAD
 2. Add the redirect url in the final output of the init script to the application's Web redirect URIs
 3. Add a "Contributor Role"  and assign this role to allowed users
-4.  change the Azure AD config (clientID and TenantID) in src/Pods/Portal/appsettings.json accordingly. 
+4. Modify the Azure AAD config (clientID and TenantID) in src/Pods/Portal/appsettings.json accordingly. 
 
 After that, you need to init the deployments inside the aks
 
