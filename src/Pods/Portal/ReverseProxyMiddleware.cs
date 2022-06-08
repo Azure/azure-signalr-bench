@@ -112,7 +112,7 @@ namespace Portal
             Uri targetUri = null;
             PathString remainingPath;
             if (request.Path.StartsWithSegments("/k8s", out remainingPath))
-                targetUri = new Uri("https://kubernetes-dashboard" + remainingPath);
+                targetUri = new Uri("https://kubernetes-dashboard.kubernetes-dashboard.svc.cluster.local" + remainingPath);
             return targetUri;
         }
     }

@@ -120,7 +120,7 @@ init_aks_group
 if [[ $ALL || $PORTAL ]]; then
   publish Portal
   cd $DIR/yaml/portal
-  kubectl delete deployment portal || true
+  kubectl delete deployment portal  > /dev/null 2>&1 || true
   cat portal.yaml | replace KVURL_PLACE_HOLDER $KVURL | replace MSI_PLACE_HOLDER $AGENTPOOL_MSI_CLIENT_ID | kubectl apply -f -
   kubectl apply -f portal-service.yaml
   domain=$(az network public-ip show -n $PORTAL_IP_NAME -g $RESOURCE_GROUP --query dnsSettings.fqdn -o tsv)
@@ -130,7 +130,7 @@ fi
 if [[ $ALL || $COORDINATOR ]]; then
   publish Coordinator
   cd $DIR/yaml/coordinator
-  kubectl delete deployment coordinator || true
+  kubectl delete deployment coordinator  > /dev/null 2>&1 || true
   access_key=$(az storage account show-connection-string -n $STORAGE_ACCOUNT -g $RESOURCE_GROUP --query connectionString -o tsv)
   domain=$(az network public-ip show -n $PORTAL_IP_NAME -g $RESOURCE_GROUP --query dnsSettings.fqdn -o tsv)
   cat coordinator.yaml | replace KVURL_PLACE_HOLDER $KVURL | replace MSI_PLACE_HOLDER $AGENTPOOL_MSI_CLIENT_ID | replace STORAGE_PLACE_HOLDER $access_key | replace DOMAIN_PLACE_HOLDER $domain | kubectl apply -f -
@@ -191,20 +191,21 @@ if [[ $ALL || $UPDATEPOOL ]]; then
     -n linux0 \
     -s Standard_D4s_v3 \
     -e \
-    --min-count 0 \
-    --max-count 40 \
+    --min-count 1 \
+    --max-count 35 \
     --os-type Linux \
-    -c 0 || true
-  az aks nodepool add \
-    --resource-group $RESOURCE_GROUP \
-    --cluster-name $KUBERNETES_SEVICES \
-    -n win0 \
-    -s Standard_D4s_v3 \
-    -e \
-    --min-count 0 \
-    --max-count 15 \
-    --os-type Windows \
-    -c 0 || true
+    -c 1 || true
+  ## Uncomment below to enable windows pool to support aspnet test cases
+  # az aks nodepool add \
+  #   --resource-group $RESOURCE_GROUP \
+  #   --cluster-name $KUBERNETES_SEVICES \
+  #   -n win0 \
+  #   -s Standard_D4s_v3 \
+  #   -e \
+  #   --min-count 1 \
+  #   --max-count 15 \
+  #   --os-type Windows \
+  #   -c 1 || true
 fi
 
 if [[ $ALL || $AUTOSCALE ]]; then
@@ -268,9 +269,8 @@ if [[ $ALL || $INGRESS ]]; then
   helm install \
     cert-manager \
     --namespace ingress-basic \
-    --version v0.16.1 \
     --set installCRDs=true \
-    --set nodeSelector."beta\.kubernetes\.io/os"=linux \
+    --set nodeSelector."kubernetes\.io/os"=linux \
     jetstack/cert-manager || true
   sleep 10
   echo "NSG may break the outbound traffic and fail this step"
@@ -281,3 +281,4 @@ fi
 
 domain=$(az network public-ip show -n $PORTAL_IP_NAME -g $RESOURCE_GROUP --query dnsSettings.fqdn -o tsv)
 echo "portal url: https://$domain "
+echo "redirectUrl: https://$domain/signin-oidc "

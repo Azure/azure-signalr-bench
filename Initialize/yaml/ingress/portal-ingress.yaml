@@ -1,4 +1,4 @@
-apiVersion: networking.k8s.io/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: portal-ingress
@@ -17,10 +17,16 @@ spec:
       http:
         paths:
           - backend:
-              serviceName: portal
-              servicePort: 80
+              service:  
+                name: portal
+                port: 
+                  number: 80
             path: /upstream/validate
+            pathType: Prefix
           - backend:
-              serviceName: portal
-              servicePort: 80
+              service: 
+                name: portal
+                port: 
+                  number: 80
             path: /
+            pathType: Prefix

@@ -1,13 +1,13 @@
 # Setup
 
-### Dependency
+## Dependency
 1. [WSL](https://docs.microsoft.com/en-us/windows/wsl/install) or Linux 
 2. [az cli](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli-linux?pivots=apt) [Version >=2.26]
 3. [.NET 5 sdk](https://dotnet.microsoft.com/en-us/download/dotnet/5.0)
 4. A subscription which you have [owner](https://docs.microsoft.com/en-us/azure/role-based-access-control/role-assignments-portal-subscription-admin) permission
-5. [jq](https://stedolan.github.io/jq/)
+5. [jq](https://stedolan.github.io/jq/) , [nodejs](https://nodejs.org/en/) , [npm](https://www.npmjs.com/package/npm)
 
-### Steps
+## Steps
 SignalR performance tool uses AKS to run the tests. To setup the initial environment, you could
 ```bash
 cd Initialize
@@ -15,20 +15,27 @@ cd Initialize
 ```
 Enable AAD authentication
 
-1. create an application in AAD
-2. Add the redirect url in the final output of the init script to the application's Web redirect URIs
-3. Add a "Contributor Role"  and assign this role to allowed users
-4. Modify the Azure AAD config (clientID and TenantID) in src/Pods/Portal/appsettings.json accordingly. 
+1. [create an application in AAD and add redirect web url in the final output of the init script](https://docs.microsoft.com/en-us/azure/active-directory/develop/howto-create-service-principal-portal#register-an-application-with-azure-ad-and-create-a-service-principal), then [enable ID tokens](./media/aad.png)
+2. [Add a "Contributor" Role.](https://docs.microsoft.com/en-us/azure/active-directory/develop/howto-add-app-roles-in-azure-ad-apps#app-roles-ui) and wait for afew minutes for AAD toy sync up, [assign this role to allowed users](https://docs.microsoft.com/en-us/azure/active-directory/develop/howto-add-app-roles-in-azure-ad-apps#assign-users-and-groups-to-roles)
+3. Modify the Azure AAD config (clientID and TenantID) in src/Pods/Portal/appsettings.json accordingly(Use the clientID and tenantID of the Application you just created). 
 
 After that, you need to init the deployments inside the aks
 
 ```bash
 ./publish -p [prefix] -a
 ```
-### Note 
+### FAQs
+1. Failured trying to add nodepool 
+> VM quota issues: You need to change the VM size according to the quota in your subscription or [request VM quota](https://docs.microsoft.com/en-us/azure/azure-portal/supportability/per-vm-quota-requests)
 
-1. You need to change the VM size according to the quota in your subscription.
-2. If the NSG in the created AKS resource group blocks outbound traffic, the SSL certificate verification would fail. 
+> Outbound IP port issue: You need to [add more ips](https://docs.microsoft.com/en-us/azure/aks/load-balancer-standard#scale-the-number-of-managed-outbound-public-ips) to your load balancer if you trying to add a large node pool 
+
+2. SSL cert not safe
+> NSG issue: If the NSG in the created AKS resource group blocks outbound traffic, the SSL certificate verification would fail. 
+
+3. What's the portal domain or redirect url? Run below command to get the urls
+>  ./publish -p [prefix] 
+
 
 
 Now everything is ready, you could go to the printed url to create performance tests!
