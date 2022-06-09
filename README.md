@@ -24,6 +24,9 @@ After that, you need to init the deployments inside the aks
 ```bash
 ./publish -p [prefix] -a
 ```
+
+**Now everything is ready, you could go to the printed url to create performance tests!**
+
 ### FAQs
 1. Failured trying to add nodepool 
 > VM quota issues: You need to change the VM size according to the quota in your subscription or [request VM quota](https://docs.microsoft.com/en-us/azure/azure-portal/supportability/per-vm-quota-requests)
@@ -38,7 +41,6 @@ After that, you need to init the deployments inside the aks
 
 
 
-Now everything is ready, you could go to the printed url to create performance tests!
 
 # Contributing
 
