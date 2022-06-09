@@ -6,6 +6,7 @@
     <RootNamespace>Azure.SignalRBench.Coordinator</RootNamespace>
     <langversion>8</langversion>
     <Nullable>enable</Nullable>
+    <ErrorOnDuplicatePublishOutputFiles>false</ErrorOnDuplicatePublishOutputFiles>
   </PropertyGroup>
   <ItemGroup>
     <None Remove="appsettings.json" />
