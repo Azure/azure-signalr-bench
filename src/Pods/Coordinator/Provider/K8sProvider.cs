@@ -63,30 +63,37 @@ namespace Azure.SignalRBench.Coordinator.Provider
             await _k8S.CreateNamespacedServiceAsync(service, Default, cancellationToken: cancellationToken);
             if (testCategory == TestCategory.AspnetCoreSignalRServerless||testCategory == TestCategory.RawWebsocket)
             {
-                var ingress = new Networkingv1beta1Ingress
+                var ingress = new V1Ingress
                 {
                     Metadata = new V1ObjectMeta
                     {
                         Name =NameConverter.Truncate(Upstream + "-" + testId),
                     },
-                    Spec = new Networkingv1beta1IngressSpec
+                    Spec = new V1IngressSpec()
                     {
-                        Rules = new List<Networkingv1beta1IngressRule>
+                        Rules = new List<V1IngressRule>
                         {
-                            new Networkingv1beta1IngressRule
+                            new V1IngressRule
                             {
                                 Host = _domain,
-                                Http = new Networkingv1beta1HTTPIngressRuleValue
+                                Http = new V1HTTPIngressRuleValue()
                                 {
-                                    Paths = new List<Networkingv1beta1HTTPIngressPath>
+                                    Paths = new List<V1HTTPIngressPath>
                                     {
-                                        new Networkingv1beta1HTTPIngressPath
+                                        new V1HTTPIngressPath
                                         {
+                                            PathType = "Prefix",
                                             Path = $"/upstream/{NameConverter.GenerateHubName(testId)}",
-                                            Backend = new Networkingv1beta1IngressBackend
+                                            Backend = new V1IngressBackend()
                                             {
-                                                ServiceName = name,
-                                                ServicePort = 80
+                                                Service = new V1IngressServiceBackend()
+                                                {
+                                                    Name = name,
+                                                    Port = new V1ServiceBackendPort()
+                                                    {
+                                                        Number = 80
+                                                    }
+                                                },
                                             }
                                         }
                                     }

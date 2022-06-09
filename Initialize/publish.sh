@@ -185,6 +185,7 @@ fi
 
 if [[ $ALL || $UPDATEPOOL ]]; then
   ## The pool size would impact the unit size that could be tested
+  echo "add another agent pool in aks "
   az aks nodepool add \
     --resource-group $RESOURCE_GROUP \
     --cluster-name $KUBERNETES_SEVICES \
@@ -209,6 +210,7 @@ if [[ $ALL || $UPDATEPOOL ]]; then
 fi
 
 if [[ $ALL || $AUTOSCALE ]]; then
+  echo "enable autoscaling in aks"
   az aks update \
     --resource-group $RESOURCE_GROUP \
     -n $KUBERNETES_SEVICES \
@@ -244,7 +246,8 @@ if [[ $ALL || $INGRESS ]]; then
   ip=$(az network public-ip show -n $PORTAL_IP_NAME -g $RESOURCE_GROUP --query ipAddress -o tsv)
 
   kubectl create namespace ingress-basic || true
-  sudo apt-get install helm
+  #make this as dependency
+  #sudo apt-get install helm
 
   # Add the ingress-nginx repository
   helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
@@ -253,8 +256,10 @@ if [[ $ALL || $INGRESS ]]; then
   helm install nginx-ingress ingress-nginx/ingress-nginx \
     --namespace ingress-basic \
     --set controller.replicaCount=2 \
-    --set controller.nodeSelector."beta\.kubernetes\.io/os"=linux \
-    --set defaultBackend.nodeSelector."beta\.kubernetes\.io/os"=linux \
+    --set resources.limits.cpu=2048m \
+    --set resources.limits.memory=2048Mi  \
+    --set controller.nodeSelector."kubernetes\.io/os"=linux \
+    --set defaultBackend.nodeSelector."kubernetes\.io/os"=linux \
     --set controller.service.loadBalancerIP="$ip" \
     --set controller.deployment.spec.template.annotations."nginx\.ingress\.kubernetes\.io/proxy-buffer-size"=10m \
     --set controller.service.annotations."service\.beta\.kubernetes\.io/azure-dns-label-name"="$PORTAL_DNS" \
@@ -266,6 +271,7 @@ if [[ $ALL || $INGRESS ]]; then
   # Update your local Helm chart repository cache
   helm repo update
   # Install the cert-manager Helm chart
+  echo "installing cert manager"
   helm install \
     cert-manager \
     --namespace ingress-basic \
