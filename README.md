@@ -10,7 +10,7 @@
 >To avoid dealing with those dependencies (except 4), you could use **Azure Cloud Shell** to run all the scripts. The dependencies have been installed in the Azure Cloud Shell env already.
 
 In the Azure Cloud shell: Bash (**Recommended** :grinning:)
-> git clone --single-branch --branch v2 https://github.com/Azure/azure-signalr-bench.git
+> git clone --single-branch --branch  v2   https://github.com/Azure/azure-signalr-bench.git
 
 ![Use Azure Cloud Shell to init the resouces](./media/azure-cloudshell.png)
 
@@ -22,7 +22,7 @@ SignalR performance tool uses AKS to run the tests. To setup the initial environ
 cd Initialize && chmod -x ./*.sh
 ./init.sh -p [prefix] -l location  ## This will take about 20 minutes
 ```
-Grant AAD app permission to users/groups
+Grant permission to users/groups
 
 1. [Assign the Contributor role to allowed users](https://docs.microsoft.com/en-us/azure/active-directory/develop/howto-add-app-roles-in-azure-ad-apps#assign-users-and-groups-to-roles)
    First find your service principle in your AAD Enterprise applications. Use your [prefix] to search the service principle
