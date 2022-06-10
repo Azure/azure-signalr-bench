@@ -140,10 +140,11 @@ else
 fi
 
 if [[ -z $(az ad sp show --id http://$SERVICE_PRINCIPAL 2>/dev/null) ]]; then
-    echo "start to create service principal $SERVICE_PRINCIPAL"
-    sp=$(az ad sp create-for-rbac -n $SERVICE_PRINCIPAL --role contributor --scopes /subscriptions/$SUBSCTIPTION)
-    echo "add $SERVICE_PRINCIPAL to keyvault"
-    az keyvault secret set --vault-name $KEYVAULT -n "service-principal" --value "$sp"
+    echo "skip ppe"
+#    echo "start to create service principal $SERVICE_PRINCIPAL"
+#    sp=$(az ad sp create-for-rbac -n $SERVICE_PRINCIPAL --role contributor --scopes /subscriptions/$SUBSCTIPTION)
+#    echo "add $SERVICE_PRINCIPAL to keyvault"
+#    az keyvault secret set --vault-name $KEYVAULT -n "service-principal" --value "$sp"
 else
     echo "$SERVICE_PRINCIPAL already exists. Skip creating.."
 fi

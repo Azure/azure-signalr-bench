@@ -68,6 +68,10 @@ namespace Azure.SignalRBench.Coordinator.Provider
                     Metadata = new V1ObjectMeta
                     {
                         Name =NameConverter.Truncate(Upstream + "-" + testId),
+                        Annotations = new Dictionary<string, string>
+                        {
+                            ["kubernetes.io/ingress.class"]="nginx",
+                        }
                     },
                     Spec = new V1IngressSpec()
                     {
@@ -387,7 +391,7 @@ namespace Azure.SignalRBench.Coordinator.Provider
             await _k8S.DeleteNamespacedServiceAsync(name, Default);
             await _k8S.DeleteNamespacedDeploymentAsync(name, Default);
             if (upstream)
-                await _k8S.DeleteNamespacedIngressAsync(NameConverter.Truncate(Upstream + "-" + testId), Default);
+                await _k8S.DeleteNamespacedIngress1Async(NameConverter.Truncate(Upstream + "-" + testId), Default);
         }
 
        
