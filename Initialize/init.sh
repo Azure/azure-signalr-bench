@@ -84,14 +84,6 @@ else
     echo "IP $PORTAL_IP_NAME already exists. Skip creating.."
 fi
 
-if [[ -z $(az monitor log-analytics workspace show -n $WORK_SPACE -g $RESOURCE_GROUP 2>/dev/null) ]]; then
-    echo "start to init workspace $WORK_SPACE"
-    az monitor log-analytics workspace create -n $WORK_SPACE -g $RESOURCE_GROUP
-    echo "work space:$WORK_SPACE init"
-else
-    echo "work space:$WORK_SPACE already exists. Skip creating.."
-fi
-
 if [[ -z $(az storage account show -n $STORAGE_ACCOUNT -g $RESOURCE_GROUP 2>/dev/null) ]]; then
     echo "start to create storage account $STORAGE_ACCOUNT"
     az storage account create -n $STORAGE_ACCOUNT >/dev/null
@@ -117,9 +109,8 @@ fi
 
 if [[ -z $(az aks show --name $KUBERNETES_SEVICES -g $RESOURCE_GROUP 2>/dev/null) ]]; then
     echo "start to create kubernetes services $KUBERNETES_SEVICES. May cost several minutes, waiting..."
-    work_space_resource_id=$(az monitor log-analytics workspace show -g $RESOURCE_GROUP -n $WORK_SPACE --query id -o tsv)
-    az aks create -n $KUBERNETES_SEVICES --vm-set-type VirtualMachineScaleSets --enable-managed-identity -s Standard_D4as_v4 --nodepool-name captain --generate-ssh-keys \
-      --load-balancer-managed-outbound-ip-count 8 --load-balancer-outbound-ports 10000 --workspace-resource-id "$work_space_resource_id" --enable-addons monitoring --network-plugin azure
+    az aks create -n $KUBERNETES_SEVICES --vm-set-type VirtualMachineScaleSets --enable-managed-identity -s Standard_D4s_v3 --nodepool-name captain --generate-ssh-keys \
+      --load-balancer-managed-outbound-ip-count 8 --load-balancer-outbound-ports 10000  --enable-addons monitoring --network-plugin azure
     echo "kubernetes services $KUBERNETES_SEVICES created."
     echo "start getting kube/config"
     rm ~/.kube/perf || true
@@ -140,7 +131,7 @@ else
 fi
 
 if [[ -z $(az ad sp show --id http://$SERVICE_PRINCIPAL 2>/dev/null) ]]; then
-    echo "skip ppe"
+    echo "skip creating sp"
 #    echo "start to create service principal $SERVICE_PRINCIPAL"
 #    sp=$(az ad sp create-for-rbac -n $SERVICE_PRINCIPAL --role contributor --scopes /subscriptions/$SUBSCTIPTION)
 #    echo "add $SERVICE_PRINCIPAL to keyvault"
@@ -155,7 +146,17 @@ az keyvault secret set --vault-name $KEYVAULT -n "subscription" --value $SUBSCTI
 cloud_name=$(az cloud show --query name -o tsv)
 az keyvault secret set --vault-name $KEYVAULT -n "cloud" --value $cloud_name
 az keyvault secret set --vault-name $KEYVAULT -n "location" --value $LOCATION
-echo "init has completed."
 
 domain=$(az network public-ip show -n $PORTAL_IP_NAME -g $RESOURCE_GROUP --query dnsSettings.fqdn -o tsv)
-echo "redirectUrl: https://$domain/signin-oidc "
+redirectUrl="https://$domain/signin-oidc"
+echo "redirectUrl:  $redirectUrl "
+sp=$(az ad sp create-for-rbac -n $SERVICE_PRINCIPAL)
+appId=$(echo $sp | jq .appId -r)
+echo "app is $appId"
+tenant=$(echo $sp | jq .tenant -r)
+echo "tenant is $tenant"
+az ad app update --id $appId --web-redirect-uris  $redirectUrl --enable-id-token-issuance 
+az ad app update --id $appId --app-roles "[{\"allowedMemberTypes\":[\"User\"],\"description\":\"Contributor\",\"displayName\":\"Contributor\",\"isEnabled\":\"true\",\"value\":\"Contributor\"}]" &2>1 >/dev/null || true
+echo "init has completed."
+echo "grant user/group permission in aad for service principle ${SERVICE_PRINCIPAL} "
+

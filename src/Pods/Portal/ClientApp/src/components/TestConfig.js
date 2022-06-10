@@ -502,7 +502,8 @@ export class TestConfig extends Component {
                                 <Form.Label>Framework</Form.Label>
                                 <Form.Control name="framework" type="select" onChange={this.handleChange} as="select" defaultValue={this.state.obj.framework}>
                                     <option>Netcore</option>
-                                    <option>Netframework</option>
+                                    {/*Disable below by default as custom didn't enable the windows VM pool. Todo: Detect the state*/}
+                                    {/*<option>Netframework</option>*/}
                                 </Form.Control>
                             </Form.Group>}
                             { (this.state.obj.service == "SignalR" && this.state.obj.mode == "Serverless" && this.state.obj.createMode=="ConnectionString") &&
@@ -521,7 +522,8 @@ export class TestConfig extends Component {
                                 <Form.Label>CreateMode</Form.Label>
                                 <Form.Control name="createMode" type="select" onChange={this.handleChange} as="select" defaultValue={this.state.obj.createMode}>
                                     <option>ConnectionString</option>
-                                    <option>CreateByPerf</option>
+                                    {/*Disable below by default as customers didn't create the required service principle. Todo: Detect the config*/}
+                                    {/*<option>CreateByPerf</option>*/}
                                     <option>SelfHostedServer</option>
                                 </Form.Control>
                             </Form.Group>}
