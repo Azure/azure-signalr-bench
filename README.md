@@ -10,8 +10,9 @@
 >To avoid dealing with those dependencies (except 4), you could use **Azure Cloud Shell** to run all the scripts. The dependencies have been installed in the Azure Cloud Shell env already.
 
 In the Azure Cloud shell: Bash (**Recommended** :grinning:)
-> git clone --single-branch --branch  v2   https://github.com/Azure/azure-signalr-bench.git
-
+```bash
+git clone --single-branch --branch v2 https://github.com/Azure/azure-signalr-bench.git
+```
 ![Use Azure Cloud Shell to init the resouces](./media/azure-cloudshell.png)
 
 ## Steps
@@ -46,7 +47,7 @@ After that, you need to init the deployments inside the aks
 **Now everything is ready, you could go to the printed url to create performance tests! :blush:**
 
 ### FAQs
-1. Failed trying to add nodePool or setup aks 
+1. Failed trying to add nodePool or setup aks. Failed to scale up VMs after starting a test. 
 > VM quota issues: You need to change the VM size according to the quota in your subscription or [request VM quota](https://docs.microsoft.com/en-us/azure/azure-portal/supportability/per-vm-quota-requests)
 
 > Outbound IP port issue: You need to [add more ips](https://docs.microsoft.com/en-us/azure/aks/load-balancer-standard#scale-the-number-of-managed-outbound-public-ips) to your load balancer if you trying to add a large node pool 
