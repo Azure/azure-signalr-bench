@@ -264,8 +264,10 @@ if [[ $ALL || $INGRESS ]]; then
   helm install nginx-ingress ingress-nginx/ingress-nginx \
     --namespace ingress-basic \
     --set controller.replicaCount=2 \
-    --set resources.limits.cpu=2048m \
-    --set resources.limits.memory=2048Mi  \
+    --set controller.resources.requests.cpu=2048m \
+    --set controller.resources.requests.memory=2048Mi  \
+    --set controller.resources.limits.cpu=2048m \
+    --set controller.resources.limits.memory=2048Mi  \
     --set controller.nodeSelector."kubernetes\.io/os"=linux \
     --set defaultBackend.nodeSelector."kubernetes\.io/os"=linux \
     --set controller.service.loadBalancerIP="$ip" \
