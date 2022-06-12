@@ -150,13 +150,13 @@ az keyvault secret set --vault-name $KEYVAULT -n "location" --value $LOCATION
 domain=$(az network public-ip show -n $PORTAL_IP_NAME -g $RESOURCE_GROUP --query dnsSettings.fqdn -o tsv)
 redirectUrl="https://$domain/signin-oidc"
 echo "redirectUrl:  $redirectUrl "
-sp=$(az ad sp create-for-rbac -n $SERVICE_PRINCIPAL)
+sp=$(az ad sp create-for-rbac -n $SERVICE_PRINCIPAL --only-show-errors)
 appId=$(echo $sp | jq .appId -r)
 echo "app is $appId"
 tenant=$(echo $sp | jq .tenant -r)
 echo "tenant is $tenant"
-az ad app update --id $appId --web-redirect-uris  $redirectUrl --enable-id-token-issuance 
-az ad app update --id $appId --app-roles "[{\"allowedMemberTypes\":[\"User\"],\"description\":\"Contributor\",\"displayName\":\"Contributor\",\"isEnabled\":\"true\",\"value\":\"Contributor\"}]" &2>1 >/dev/null || true
+az ad app update --id $appId --web-redirect-uris  $redirectUrl --enable-id-token-issuance  --only-show-errors
+az ad app update --id $appId --app-roles "[{\"allowedMemberTypes\":[\"User\"],\"description\":\"Contributor\",\"displayName\":\"Contributor\",\"isEnabled\":\"true\",\"value\":\"Contributor\"}]" 2>&1 >/dev/null  || true
 echo "init has completed."
 echo "grant user/group permission in aad for service principle ${SERVICE_PRINCIPAL} "
 
