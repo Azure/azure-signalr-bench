@@ -10,8 +10,9 @@
 >To avoid dealing with those dependencies (except 4), you could use **Azure Cloud Shell** to run all the scripts. The dependencies have been installed in the Azure Cloud Shell env already.
 
 In the Azure Cloud shell: Bash (**Recommended** :grinning:)
-> git clone --single-branch --branch  v2   https://github.com/Azure/azure-signalr-bench.git
-
+```bash
+git clone --single-branch --branch v2 https://github.com/Azure/azure-signalr-bench.git
+```
 ![Use Azure Cloud Shell to init the resouces](./media/azure-cloudshell.png)
 
 ## Steps
