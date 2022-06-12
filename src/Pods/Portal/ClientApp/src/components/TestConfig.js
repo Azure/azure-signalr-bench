@@ -33,6 +33,7 @@ export class TestConfig extends Component {
         this.handleSubmit = this.handleSubmit.bind(this);
         this.handleSearchChange = this.handleSearchChange.bind(this);
         this.handleDelete = this.handleDelete.bind(this);
+        this.handleStart = this.handleStart.bind(this);
         this.unitRef = React.createRef();
     }
 
