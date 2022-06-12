@@ -56,25 +56,28 @@ namespace Azure.SignalRBench.Coordinator
             _k8sProvider.Initialize((await k8sTask).Value.Value);
             var prefix = (await prefixTask).Value.Value;
             var subscription = (await subscriptionTask).Value.Value;
-            var azureEnvironment = GetAzureEnvironment((await cloudTask).Value.Value);
-            var obj = JsonConvert.DeserializeObject<JObject>((await servicePrincipalTask).Value.Value) ??
-                      throw new InvalidDataException("Unexpected null for service principal.");
-            var servicePrincipal = SdkContext.AzureCredentialsFactory.FromServicePrincipal(
-                obj["appId"]?.Value<string>() ??
-                throw new InvalidDataException("Unexpected null for ServicePrincipal.AppId."),
-                obj["password"]?.Value<string>() ??
-                throw new InvalidDataException("Unexpected null for ServicePrincipal.Password."),
-                obj["tenant"]?.Value<string>() ??
-                throw new InvalidDataException("Unexpected null for ServicePrincipal.Tenant."),
-                azureEnvironment);
-
-            _aksProvider.Initialize(servicePrincipal, subscription,
-                prefix + PerfConstants.ConfigurationKeys.PerfV2 + "rg",
-                prefix + PerfConstants.ConfigurationKeys.PerfV2 + "aks");
             var location = (await locationTask).Value.Value;
-            var azureGlobalSignalrProvider = new SignalRServiceManagement();
-            azureGlobalSignalrProvider.Initialize(servicePrincipal, subscription,location,prefix);
-            _signalRProvider.AzureGlobal = azureGlobalSignalrProvider;
+            var azureEnvironment = GetAzureEnvironment((await cloudTask).Value.Value);
+            string servicePrincipalStr  = (await servicePrincipalTask).Value.Value;
+            if (!string.IsNullOrEmpty(servicePrincipalStr))
+            {
+                var obj = JsonConvert.DeserializeObject<JObject>(servicePrincipalStr);
+                var servicePrincipal = SdkContext.AzureCredentialsFactory.FromServicePrincipal(
+                    obj["appId"]?.Value<string>() ??
+                    throw new InvalidDataException("Unexpected null for ServicePrincipal.AppId."),
+                    obj["password"]?.Value<string>() ??
+                    throw new InvalidDataException("Unexpected null for ServicePrincipal.Password."),
+                    obj["tenant"]?.Value<string>() ??
+                    throw new InvalidDataException("Unexpected null for ServicePrincipal.Tenant."),
+                    azureEnvironment);
+                _aksProvider.Initialize(servicePrincipal, subscription,
+                    prefix + PerfConstants.ConfigurationKeys.PerfV2 + "rg",
+                    prefix + PerfConstants.ConfigurationKeys.PerfV2 + "aks");
+                var azureGlobalSignalrProvider = new SignalRServiceManagement();
+                azureGlobalSignalrProvider.Initialize(servicePrincipal, subscription,location,prefix);
+                _signalRProvider.AzureGlobal = azureGlobalSignalrProvider;
+            }
+          
             //init ppe if available 
             try
             {

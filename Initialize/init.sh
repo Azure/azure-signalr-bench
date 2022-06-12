@@ -131,7 +131,9 @@ else
 fi
 
 if [[ -z $(az ad sp show --id http://$SERVICE_PRINCIPAL 2>/dev/null) ]]; then
-    echo "skip creating sp"
+    echo "skip creating sp, add empty place holder"
+    az keyvault secret set --vault-name $KEYVAULT -n "service-principal" --value ""
+
 #    echo "start to create service principal $SERVICE_PRINCIPAL"
 #    sp=$(az ad sp create-for-rbac -n $SERVICE_PRINCIPAL --role contributor --scopes /subscriptions/$SUBSCTIPTION)
 #    echo "add $SERVICE_PRINCIPAL to keyvault"
