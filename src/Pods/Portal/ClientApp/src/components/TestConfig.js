@@ -155,9 +155,9 @@ export class TestConfig extends Component {
             redirect: 'manual'
         })
         await Util.CheckAuth(response)
-        await this.populateTestConfigData()
         window.open("/test-status/testname/" + key)
         e.target.setAttribute("class", "ui teal mini button")
+        await this.populateTestConfigData()
     }
     async handleDelete(e) {
         e.persist()
