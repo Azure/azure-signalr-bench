@@ -222,7 +222,7 @@ if [[ $ALL || $AUTOSCALE ]]; then
   az aks update \
     --resource-group $RESOURCE_GROUP \
     -n $KUBERNETES_SEVICES \
-    --cluster-autoscaler-profile scale-down-delay-after-add=60m scale-down-unneeded-time=60m scale-down-utilization-threshold=0.5 skip-nodes-with-system-pods=false new-pod-scale-up-delay=1s ok-total-unready-count=0 
+    --cluster-autoscaler-profile scale-down-delay-after-add=60m scale-down-unneeded-time=60m scale-down-utilization-threshold=0.5 skip-nodes-with-system-pods=false new-pod-scale-up-delay=1s ok-total-unready-count=100  max-total-unready-percentage=90%
 fi
 
 if [[ $ALL || $PPE ]]; then
@@ -269,6 +269,7 @@ if [[ $ALL || $INGRESS ]]; then
     --set controller.resources.limits.cpu=2048m \
     --set controller.resources.limits.memory=2048Mi  \
     --set controller.nodeSelector."kubernetes\.io/os"=linux \
+    --set controller.nodeSelector."agentpool"=captain \
     --set defaultBackend.nodeSelector."kubernetes\.io/os"=linux \
     --set controller.service.loadBalancerIP="$ip" \
     --set controller.deployment.spec.template.annotations."nginx\.ingress\.kubernetes\.io/proxy-buffer-size"=10m \
