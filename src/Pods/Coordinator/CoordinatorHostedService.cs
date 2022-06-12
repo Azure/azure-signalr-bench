@@ -58,7 +58,15 @@ namespace Azure.SignalRBench.Coordinator
             var subscription = (await subscriptionTask).Value.Value;
             var location = (await locationTask).Value.Value;
             var azureEnvironment = GetAzureEnvironment((await cloudTask).Value.Value);
-            string servicePrincipalStr  = (await servicePrincipalTask).Value.Value;
+            string servicePrincipalStr = string.Empty;
+            try
+            {
+                servicePrincipalStr = (await servicePrincipalTask).Value.Value;
+            }
+            catch (Exception ignore)
+            {
+               //ignore 
+            }
             if (!string.IsNullOrEmpty(servicePrincipalStr))
             {
                 var obj = JsonConvert.DeserializeObject<JObject>(servicePrincipalStr);
