@@ -15,12 +15,12 @@ In the Azure Cloud shell: Bash (**Recommended** :grinning:)
 ![Use Azure Cloud Shell to init the resouces](./media/azure-cloudshell.png)
 
 ## Steps
-SignalR performance tool uses AKS to run the tests. To setup the initial environment, you could run below script. :smiley: Make the [prefix] unique。
+SignalR performance tool uses AKS to run the tests. To setup the initial environment, you could run below script. :smiley: Make the [prefix] unique. [location] is the region you put your resouces in like eastus.
 
 > :warning: **Below init script will create resources and generate cost !**
 ```bash
-cd Initialize && chmod -x ./*.sh
-./init.sh -p [prefix] -l location  ## This will take about 20 minutes
+cd Initialize && chmod +x ./*.sh
+./init.sh -p [prefix] -l [location]  ## This will take about 20 minutes
 ```
 Grant permission to users/groups
 
