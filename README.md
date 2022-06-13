@@ -13,7 +13,7 @@ In the Azure Cloud shell: Bash (**Recommended** :grinning:)
 ```bash
 git clone --single-branch --branch v2 https://github.com/Azure/azure-signalr-bench.git
 ```
-![Use Azure Cloud Shell to init the resouces](./media/azure-cloudshell.png)
+<kbd>![Use Azure Cloud Shell to init the resouces](./media/azure-cloudshell.png)</kbd>
 
 ## Steps
 SignalR performance tool uses AKS to run the tests. To setup the initial environment, you could run below script. :smiley: Make the [prefix] unique. [location] is the region you put your resouces in like eastus.
@@ -28,13 +28,13 @@ Grant permission to users/groups
 1. [Assign the Contributor role to allowed users](https://docs.microsoft.com/en-us/azure/active-directory/develop/howto-add-app-roles-in-azure-ad-apps#assign-users-and-groups-to-roles)
    First find your service principle in your AAD Enterprise applications. Use your [prefix] to search the service principle
   
-   ![find-service-principle](./media/find_service_principal.png)
+  <kbd> ![find-service-principle](./media/find_service_principal.png)</kbd>
    
     Select the service principle and add user/group. This will determine who can access the test tool portal. 
     
     You can come back and add more people later. Add yourself now.
    
-   ![Grant permission to user or group](./media/add_user_or_group.png)
+  <kbd> ![Grant permission to user or group](./media/add_user_or_group.png) </kbd>
 2. <s>  Modify the Azure AAD config (clientID and TenantID) in src/Pods/Portal/appsettings.json accordingly(Use the clientID and tenantID of the Application you just created). </s>
 
 
@@ -48,7 +48,9 @@ After that, you need to init the deployments inside the aks
 
 ### FAQs
 1. Failed trying to add nodePool or setup aks. Failed to scale up VMs after starting a test. 
-> VM quota issues: You need to change the VM size according to the quota in your subscription or [request VM quota](https://docs.microsoft.com/en-us/azure/azure-portal/supportability/per-vm-quota-requests)
+> VM quota issues: You need to change the VM size according to the quota in your subscription or [request VM quota](https://docs.microsoft.com/en-us/azure/azure-portal/supportability/per-vm-quota-requests). The current used VM SKU is **Standard_D4s_v3**. You could also use other VM types. But make sure the VM type has at least **4 cores**. The node pool could be added in the **AKS node pool configration**.
+> 
+><kbd>![image](https://user-images.githubusercontent.com/16233725/173274345-8657b685-42e6-448f-ba1f-3ef2490b39c3.png)</kbd>
 
 > Outbound IP port issue: You need to [add more ips](https://docs.microsoft.com/en-us/azure/aks/load-balancer-standard#scale-the-number-of-managed-outbound-public-ips) to your load balancer if you trying to add a large node pool 
 
