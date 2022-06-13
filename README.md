@@ -35,6 +35,7 @@ Grant permission to users/groups
     You can come back and add more people later. Add yourself now.
    
   <kbd> ![Grant permission to user or group](./media/add_user_or_group.png) </kbd>
+  
 2. <s>  Modify the Azure AAD config (clientID and TenantID) in src/Pods/Portal/appsettings.json accordingly(Use the clientID and tenantID of the Application you just created). </s>
 
 
