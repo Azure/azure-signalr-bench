@@ -119,13 +119,11 @@ init_aks_group
 
 if [[ $ALL || $PORTAL ]]; then
   echo "replace the clientId and tenantId in src/Pods/Portal/appsettings.json"
-  sp=$(az ad sp create-for-rbac -n $SERVICE_PRINCIPAL --only-show-errors)  
-  appId=$(echo $sp | jq .appId -r)
-  echo "app is $appId"
-  tenant=$(echo $sp | jq .tenant -r)
+  appId = $( az keyvault show --vault-name $KEYVAULT -n "appid" | jq ".value" -r )
+  tenant = $( az keyvault show --vault-name $KEYVAULT -n "tenant" | jq ".value" -r )
   echo "tenant is $tenant"
   cd $DIR/../src/Pods/Portal
-  cat appsettings.json | replace CLIENTID_PLACE_HOLDER $appId | replace TENANTID_PLACE_HOLDER $tenant > tmp && mv tmp appsettings.json
+  cat appsettings.template.json | replace CLIENTID_PLACE_HOLDER $appId | replace TENANTID_PLACE_HOLDER $tenant > appsettings.json
   publish Portal
   cd $DIR/yaml/portal
   kubectl delete deployment portal  > /dev/null 2>&1 || true
@@ -133,6 +131,8 @@ if [[ $ALL || $PORTAL ]]; then
   kubectl apply -f portal-service.yaml
   domain=$(az network public-ip show -n $PORTAL_IP_NAME -g $RESOURCE_GROUP --query dnsSettings.fqdn -o tsv)
   echo " portal domain: $domain "
+  cd $DIR/../src/Pods/Portal
+  rm appsettings.json
 fi
 
 if [[ $ALL || $COORDINATOR ]]; then
