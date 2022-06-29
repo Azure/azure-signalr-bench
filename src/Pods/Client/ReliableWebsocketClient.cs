@@ -277,7 +277,7 @@ namespace Azure.SignalRBench.Client
 
         private sealed class SequenceAck
         {
-            public string type = "ack";
+            public string type = "sequenceAck";
             public ulong sequenceId;
 
             public SequenceAck(ulong sequenceId)
