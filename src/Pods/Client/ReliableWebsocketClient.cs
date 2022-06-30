@@ -62,7 +62,7 @@ namespace Azure.SignalRBench.Client
                     }
                     finally
                     {
-                        await Task.Delay(1000);
+                        await Task.Delay(60000);
                     }
                 }
             });
@@ -216,7 +216,7 @@ namespace Azure.SignalRBench.Client
         {
             if (!string.IsNullOrEmpty(_connectionId) && !string.IsNullOrEmpty(_reconnectionToken))
             {
-                Console.WriteLine($"{_connectionId} is in recover");
+                Console.WriteLine($"{_connectionId} is trying recovery");
                 var url = QueryHelpers.AddQueryString(_baseUrl, new Dictionary<string, string> { [WebPubSubConnectionIdKey] = _connectionId, [ReconnectionTokenKey] = _reconnectionToken });
                 var cts = new CancellationTokenSource(30 * 1000); //30s
                 while (!cts.IsCancellationRequested)
@@ -224,7 +224,7 @@ namespace Azure.SignalRBench.Client
                     try
                     {
                         await ConnectAsyncCore(new Uri(url), default);
-                        Console.WriteLine($"{_connectionId} is in recovered");
+                        Console.WriteLine($"{_connectionId} is recovered");
                         return;
                     }
                     catch(Exception e)
