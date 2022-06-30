@@ -145,47 +145,7 @@ namespace Azure.SignalRBench.Client
                         if (receiveResult.EndOfMessage)
                         {
                             var str = Encoding.UTF8.GetString(ms.ToArray());
-
-                            try
-                            {
-                                var obj = JObject.Parse(str);
-                                if (obj.TryGetValue("type", out var type) &&
-                                    string.Equals(type.Value<string>(), "system", StringComparison.OrdinalIgnoreCase) &&
-                                    obj.TryGetValue("event", out var @event) &&
-                                    string.Equals(@event.Value<string>(), "connected", StringComparison.OrdinalIgnoreCase))
-                                 {
-                                    // handle connected event
-                                    var connected = obj.ToObject<ConnectedMessage>();
-                                    if (!string.IsNullOrEmpty(connected?.connectionId))
-                                    {
-                                        _connectionId = connected.connectionId;
-                                    }
-                                    if (!string.IsNullOrEmpty(connected?.reconnectionToken))
-                                    {
-                                        _reconnectionToken = connected.reconnectionToken;
-                                    }
-                                }
-                                else
-                                {
-                                    var response = JsonConvert.DeserializeObject<MessageResponse>(str);
-                                   
-                                    if (response.sequenceId != null)
-                                    {
-                                        _sequenceId.UpdateSequenceId(response.sequenceId.Value);
-                                    }
-
-                                    if (response.data != null)
-                                    {
-                                        var data = JsonConvert.DeserializeObject<RawWebsocketData>(response.data);
-                                        OnMessage?.Invoke(data.Ticks, data.Payload);
-                                    }
-                                }
-                            }
-                            catch (Exception e)
-                            {
-                                Console.WriteLine(e.ToString());
-                            }
-
+                            HandleMessage(str);
                             ms.SetLength(0);
                         }
                     }
@@ -195,19 +155,68 @@ namespace Azure.SignalRBench.Client
             {
                 if (!disableReconnection)
                 {
-                    _ = Task.Run(() => TryReconnect());
+                    _ = Task.Run(() => TryRecover());
                 }
                 else
                 {
                     OnClosed();
                 }
             }
+
+            void HandleMessage(string str)
+            {
+                try
+                {
+                    var obj = JObject.Parse(str);
+                    if (obj.TryGetValue("type", out var type) &&
+                        string.Equals(type.Value<string>(), "system", StringComparison.OrdinalIgnoreCase) &&
+                        obj.TryGetValue("event", out var @event) &&
+                        string.Equals(@event.Value<string>(), "connected", StringComparison.OrdinalIgnoreCase))
+                    {
+                        // handle connected event
+                        var connected = obj.ToObject<ConnectedMessage>();
+                        if (!string.IsNullOrEmpty(connected?.connectionId))
+                        {
+                            _connectionId = connected.connectionId;
+                        }
+                        if (!string.IsNullOrEmpty(connected?.reconnectionToken))
+                        {
+                            _reconnectionToken = connected.reconnectionToken;
+                        }
+                    }
+                    else
+                    {
+                        var response = JsonConvert.DeserializeObject<MessageResponse>(str);
+
+                        if (response.sequenceId != null)
+                        {
+                            if (!_sequenceId.UpdateSequenceId(response.sequenceId.Value))
+                            {
+                                // duplicated message
+                                return;
+                            }
+                        }
+
+                        if (response.data != null)
+                        {
+                            var data = JsonConvert.DeserializeObject<RawWebsocketData>(response.data);
+                            OnMessage?.Invoke(data.Ticks, data.Payload);
+                        }
+                    }
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e.ToString());
+                }
+
+            }
         }
 
-        private async Task TryReconnect()
+        private async Task TryRecover()
         {
             if (!string.IsNullOrEmpty(_connectionId) && !string.IsNullOrEmpty(_reconnectionToken))
             {
+                Console.WriteLine($"{_connectionId} is in recover");
                 var url = QueryHelpers.AddQueryString(_baseUrl, new Dictionary<string, string> { [WebPubSubConnectionIdKey] = _connectionId, [ReconnectionTokenKey] = _reconnectionToken });
                 var cts = new CancellationTokenSource(30 * 1000); //30s
                 while (!cts.IsCancellationRequested)
@@ -215,6 +224,7 @@ namespace Azure.SignalRBench.Client
                     try
                     {
                         await ConnectAsyncCore(new Uri(url), default);
+                        Console.WriteLine($"{_connectionId} is in recovered");
                         return;
                     }
                     catch(Exception e)
@@ -224,7 +234,7 @@ namespace Azure.SignalRBench.Client
                     }
                 }
 
-                Console.WriteLine("Reconnect exceed timeout");
+                Console.WriteLine("Recovery exceed timeout");
             }
 
             OnClosed();
@@ -246,15 +256,19 @@ namespace Azure.SignalRBench.Client
 
             public ulong CurrentSequenceId => _sequenceId;
 
-            public void UpdateSequenceId(ulong sequenceId)
+            public bool UpdateSequenceId(ulong sequenceId)
             {
                 lock (_lock)
                 {
+                    _updated = true;
+
                     if (sequenceId > _sequenceId)
                     {
                         _sequenceId = sequenceId;
+                        return true;
                     }
-                    _updated = true;
+
+                    return false;
                 }
             }
 
