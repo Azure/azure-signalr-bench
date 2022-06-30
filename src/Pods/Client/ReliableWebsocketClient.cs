@@ -62,7 +62,7 @@ namespace Azure.SignalRBench.Client
                     }
                     finally
                     {
-                        await Task.Delay(60000);
+                        await Task.Delay(1000);
                     }
                 }
             });
