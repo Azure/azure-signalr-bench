@@ -60,6 +60,10 @@ namespace Azure.SignalRBench.Client
                             _ = SendAsync(new SequenceAck(sequenceId).Serialize());
                         }
                     }
+                    catch(Exception ex)
+                    {
+                        Console.WriteLine(ex);
+                    }
                     finally
                     {
                         await Task.Delay(1000);
