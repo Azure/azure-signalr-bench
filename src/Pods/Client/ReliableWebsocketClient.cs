@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Azure.SignalRBench.Common;
 using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json.Serialization;
@@ -22,6 +23,8 @@ namespace Azure.SignalRBench.Client
         private const string ReconnectionTokenKey = "awps_reconnection_token";
         private const string WebPubSubConnectionIdKey = "awps_connection_id";
 
+        private readonly ILogger _logger;
+
         private readonly SequenceId _sequenceId = new SequenceId();
         private readonly Uri _originalUri;
         private string _baseUrl;
@@ -32,8 +35,9 @@ namespace Azure.SignalRBench.Client
 
         public State ConnectionState = State.NotStart;
 
-        public ReliableWebsocketClient(Uri uri)
+        public ReliableWebsocketClient(Uri uri, ILogger logger)
         {
+            _logger = logger;
             _originalUri = uri;
             _baseUrl = UrlHelper.ParseBaseUrlForWebPubSub(uri);
         }
@@ -62,7 +66,7 @@ namespace Azure.SignalRBench.Client
                     }
                     catch(Exception ex)
                     {
-                        Console.WriteLine(ex);
+                        _logger.LogError(ex, "Sending sequenceAck failed.");
                     }
                     finally
                     {
@@ -129,16 +133,14 @@ namespace Azure.SignalRBench.Client
 
                             try
                             {
-                                Console.WriteLine(
-                                    $"The connection closed, status code:{_socket.CloseStatus},description: {_socket.CloseStatusDescription}");
+                                _logger.LogInformation($"The connection dropped, connectionId:{_connectionId}, status code:{_socket.CloseStatus},description: {_socket.CloseStatusDescription}");
 
                                 await _socket.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, default);
                             }
                             catch (Exception e)
                             {
                                 // It is possible that the remote is already closed
-                                Console.WriteLine(
-                                    $"The connection closed, status code:{_socket.CloseStatus},description: {_socket.CloseStatusDescription}, e:{e}");
+                                _logger.LogError(e, $"The connection dropped, connectionId:{_connectionId}, status code:{_socket.CloseStatus}, description: {_socket.CloseStatusDescription}");
                             }
 
                             break;
@@ -210,7 +212,7 @@ namespace Azure.SignalRBench.Client
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine(e.ToString());
+                    _logger.LogError(e, "Handle message failed.");
                 }
 
             }
@@ -220,7 +222,7 @@ namespace Azure.SignalRBench.Client
         {
             if (!string.IsNullOrEmpty(_connectionId) && !string.IsNullOrEmpty(_reconnectionToken))
             {
-                Console.WriteLine($"{_connectionId} is trying recovery");
+                _logger.LogInformation($"{_connectionId} is trying recovery");
                 var url = QueryHelpers.AddQueryString(_baseUrl, new Dictionary<string, string> { [WebPubSubConnectionIdKey] = _connectionId, [ReconnectionTokenKey] = _reconnectionToken });
                 var cts = new CancellationTokenSource(30 * 1000); //30s
                 while (!cts.IsCancellationRequested)
@@ -228,17 +230,17 @@ namespace Azure.SignalRBench.Client
                     try
                     {
                         await ConnectAsyncCore(new Uri(url), default);
-                        Console.WriteLine($"{_connectionId} is recovered");
+                        _logger.LogInformation($"{_connectionId} is recovered");
                         return;
                     }
                     catch(Exception e)
                     {
-                        Console.WriteLine(e.ToString());
+                        _logger.LogWarning(e, $"{_connectionId} recovery failed");
                         await Task.Delay(1000);
                     }
                 }
 
-                Console.WriteLine("Recovery exceed timeout");
+                _logger.LogError($"{_connectionId} Recovery exceed timeout");
             }
 
             OnClosed();
@@ -246,6 +248,7 @@ namespace Azure.SignalRBench.Client
 
         private void OnClosed()
         {
+            _logger.LogWarning($"{_connectionId} Closed");
             ConnectionState = State.Closed;
             OnClose?.Invoke();
         }

@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Azure.SignalRBench.Common;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 
@@ -21,20 +22,22 @@ namespace Azure.SignalRBench.Client.ClientAgent
         private WebSocketHubConnection Connection { get; }
 
         private readonly string _appserverUrl;
+        private readonly ILogger<WebSocketClientAgent> _logger;
 
         private static readonly HttpClient HttpClient = new HttpClient();
 
-
         public WebSocketClientAgent(string url, string appserverUrl, Protocol protocol, string[] groups,
             int globalIndex,
-            ClientAgentContext context)
+            ClientAgentContext context,
+            ILogger<WebSocketClientAgent> logger)
         {
             Context = context;
             _appserverUrl = "http://" + appserverUrl;
-            Connection = new WebSocketHubConnection(url, this, context);
+            Connection = new WebSocketHubConnection(url, this, context, logger);
             Connection.On(context.Measure);
             Groups = groups;
             GlobalIndex = globalIndex;
+            _logger = logger;
         }
 
         //This method should be sent directly to appserver to lower pressure on wps runtime 
@@ -109,16 +112,19 @@ namespace Azure.SignalRBench.Client.ClientAgent
             private readonly CancellationTokenSource _connectionStoppedCts = new CancellationTokenSource();
             private readonly WebSocketClientAgent _agent;
             private readonly SequenceId _sequenceId = new SequenceId();
+            private readonly ILogger _logger;
+
             private ClientAgentContext _context;
             public Uri ResourceUri { get; }
             private CancellationToken ConnectionStoppedToken => _connectionStoppedCts.Token;
 
-            public WebSocketHubConnection(string url, WebSocketClientAgent agent, ClientAgentContext context)
+            public WebSocketHubConnection(string url, WebSocketClientAgent agent, ClientAgentContext context, ILogger logger)
             {
                 ResourceUri = new Uri(url);
-                _socket = new ReliableWebsocketClient(ResourceUri);
+                _socket = new ReliableWebsocketClient(ResourceUri, logger);
                 _agent = agent;
                 _context = context;
+                _logger = logger;
 
                 _socket.OnClose = () => _context.OnClosed(_agent);
             }

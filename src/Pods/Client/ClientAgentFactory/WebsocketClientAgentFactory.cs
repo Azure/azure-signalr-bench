@@ -2,11 +2,21 @@ using System;
 using Azure.Messaging.WebPubSub;
 using Azure.SignalRBench.Client.ClientAgent;
 using Azure.SignalRBench.Common;
+using Microsoft.Extensions.Logging;
 
 namespace Azure.SignalRBench.Client.ClientAgentFactory
 {
     public class WebsocketClientAgentFactory : IClientAgentFactory
     {
+        private readonly ILoggerFactory _loggerFactory;
+        private readonly ILogger<WebsocketClientAgentFactory> _logger;
+
+        public WebsocketClientAgentFactory(ILoggerFactory loggerFactory)
+        {
+            _loggerFactory = loggerFactory;
+            _logger = loggerFactory.CreateLogger<WebsocketClientAgentFactory>();
+        }
+
         public IClientAgent Create(string connectionString, Protocol protocol, string[] groups, int globalIndex,
             ClientAgentContext context)
         {
@@ -22,7 +32,8 @@ namespace Azure.SignalRBench.Client.ClientAgentFactory
                 uri.AbsoluteUri, urls[1], protocol,
                 groups,
                 globalIndex,
-                context);
+                context,
+                _loggerFactory.CreateLogger<WebSocketClientAgent>());
         }
 
         private bool TryParseEndpoint(string connectionString, out string endpoint, out string key)
