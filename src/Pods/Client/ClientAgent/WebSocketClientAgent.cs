@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Azure.SignalRBench.Common;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
 
@@ -21,20 +22,22 @@ namespace Azure.SignalRBench.Client.ClientAgent
         private WebSocketHubConnection Connection { get; }
 
         private readonly string _appserverUrl;
+        private readonly ILogger<WebSocketClientAgent> _logger;
 
         private static readonly HttpClient HttpClient = new HttpClient();
 
-
         public WebSocketClientAgent(string url, string appserverUrl, Protocol protocol, string[] groups,
             int globalIndex,
-            ClientAgentContext context)
+            ClientAgentContext context,
+            ILogger<WebSocketClientAgent> logger)
         {
             Context = context;
             _appserverUrl = "http://" + appserverUrl;
-            Connection = new WebSocketHubConnection(url, this, context);
+            Connection = new WebSocketHubConnection(url, this, context, logger);
             Connection.On(context.Measure);
             Groups = groups;
             GlobalIndex = globalIndex;
+            _logger = logger;
         }
 
         //This method should be sent directly to appserver to lower pressure on wps runtime 
@@ -105,34 +108,37 @@ namespace Azure.SignalRBench.Client.ClientAgent
 
         private sealed class WebSocketHubConnection
         {
-            private readonly ClientWebSocket _socket;
+            private readonly ReliableWebsocketClient _socket;
             private readonly CancellationTokenSource _connectionStoppedCts = new CancellationTokenSource();
             private readonly WebSocketClientAgent _agent;
             private readonly SequenceId _sequenceId = new SequenceId();
+            private readonly ILogger _logger;
+
             private ClientAgentContext _context;
-            private Action<long, string>? _handler;
             public Uri ResourceUri { get; }
             private CancellationToken ConnectionStoppedToken => _connectionStoppedCts.Token;
 
-            public WebSocketHubConnection(string url, WebSocketClientAgent agent, ClientAgentContext context)
+            public WebSocketHubConnection(string url, WebSocketClientAgent agent, ClientAgentContext context, ILogger logger)
             {
-                _socket = new ClientWebSocket();
-                _socket.Options.AddSubProtocol("json.webpubsub.azure.v1");
                 ResourceUri = new Uri(url);
+                _socket = new ReliableWebsocketClient(ResourceUri, logger);
                 _agent = agent;
                 _context = context;
+                _logger = logger;
+
+                _socket.OnClose = () => _context.OnClosed(_agent);
             }
 
             public void On(Action<long, string> callback)
             {
-                _handler = callback;
+                _socket.OnMessage = callback;
             }
 
             public volatile bool active = false;
 
             public Task SendAsync(string payload)
             {
-                if (active && _socket.State != WebSocketState.Open)
+                if (active && _socket.ConnectionState == ReliableWebsocketClient.State.Closed)
                 {
                     _context.OnClosed(_agent);
                     active = false;
@@ -143,99 +149,14 @@ namespace Azure.SignalRBench.Client.ClientAgent
 
             public async Task StartAsync(CancellationToken cancellationToken)
             {
-                await _socket.ConnectAsync(ResourceUri, cancellationToken);
+                await _socket.ConnectAsync(cancellationToken);
                 active = true;
-                _ = Task.Run(async () =>
-                {
-                    while (_socket.State == WebSocketState.Open)
-                    {
-                        try
-                        {
-                            if (_sequenceId.TryGetSequenceId(out var sequenceId))
-                            {
-                                _ = SendAsync(new SequenceAck(sequenceId).Serialize());
-                            }
-                        }
-                        finally
-                        {
-                            await Task.Delay(1000);
-                        }
-                    }
-                });
-                _ = ReceiveLoop();
             }
 
             public async Task StopAsync()
             {
                 await _socket.CloseAsync(WebSocketCloseStatus.NormalClosure, "closed", default);
                 _connectionStoppedCts.Cancel();
-            }
-
-            private async Task ReceiveLoop()
-            {
-                try
-                {
-                    while (_socket.State == WebSocketState.Open)
-                    {
-                        var ms = new MemoryStream();
-                        Memory<byte> buffer = new byte[1 << 10];
-                        // receive loop
-                        while (true)
-                        {
-                            var receiveResult = await _socket.ReceiveAsync(buffer, default);
-                            // Need to check again for NetCoreApp2.2 because a close can happen between a 0-byte read and the actual read
-                            if (receiveResult.MessageType == WebSocketMessageType.Close)
-                            {
-                                try
-                                {
-                                    Console.WriteLine(
-                                        $"The connection closed, status code:{_socket.CloseStatus},description: {_socket.CloseStatusDescription}");
-
-                                    await _socket.CloseAsync(WebSocketCloseStatus.NormalClosure, string.Empty, default);
-                                }
-                                catch (Exception e)
-                                {
-                                    // It is possible that the remote is already closed
-                                    Console.WriteLine(
-                                        $"The connection closed, status code:{_socket.CloseStatus},description: {_socket.CloseStatusDescription}, e:{e}");
-                                }
-
-                                break;
-                            }
-
-                            await ms.WriteAsync(buffer.Slice(0, receiveResult.Count));
-                            if (receiveResult.EndOfMessage)
-                            {
-                                var str = Encoding.UTF8.GetString(ms.ToArray());
-
-                                var response = JsonConvert.DeserializeObject<MessageResponse>(str);
-                                try
-                                {
-                                    if (response.sequenceId != null)
-                                    {
-                                        _sequenceId.UpdateSequenceId(response.sequenceId.Value);
-                                    }
-
-                                    if (response.data != null)
-                                    {
-                                        var data = JsonConvert.DeserializeObject<RawWebsocketData>(response.data);
-                                        _handler?.Invoke(data.Ticks, data.Payload);
-                                    }
-                                }
-                                catch (Exception e)
-                                {
-                                    Console.WriteLine(e.ToString());
-                                }
-
-                                ms.SetLength(0);
-                            }
-                        }
-                    }
-                }
-                finally
-                {
-                    await _context.OnClosed(_agent);
-                }
             }
         }
 
@@ -350,23 +271,6 @@ namespace Azure.SignalRBench.Client.ClientAgent
             {
                 this.sequenceId = sequenceId;
             }
-
-            public string Serialize()
-            {
-                return JsonConvert.SerializeObject(this, new JsonSerializerSettings
-                {
-                    ContractResolver = new CamelCasePropertyNamesContractResolver()
-                });
-            }
-        }
-
-
-        private sealed class MessageResponse
-        {
-            public string type;
-            public string from;
-            public string data;
-            public ulong? sequenceId;
 
             public string Serialize()
             {
