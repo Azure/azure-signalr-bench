@@ -18,7 +18,8 @@ namespace Azure.SignalRBench.Client
 {
     public class ReliableWebsocketClient
     {
-        public const string SubProtocol = "json.reliable.webpubsub.azure.v1";
+        public const string ReliableSubProtocol = "json.reliable.webpubsub.azure.v1";
+        public const string SubProtocol = "json.webpubsub.azure.v1";
 
         private const string ReconnectionTokenKey = "awps_reconnection_token";
         private const string WebPubSubConnectionIdKey = "awps_connection_id";
@@ -32,13 +33,14 @@ namespace Azure.SignalRBench.Client
         private volatile string? _connectionId;
         private volatile string? _reconnectionToken;
         private ClientWebSocket? _socket;
-
+        private Protocol? _protocol;
         public State ConnectionState = State.NotStart;
 
-        public ReliableWebsocketClient(Uri uri, ILogger logger)
+        public ReliableWebsocketClient(Uri uri, Protocol protocol, ILogger logger)
         {
             _logger = logger;
             _originalUri = uri;
+            _protocol = protocol;
             _baseUrl = UrlHelper.ParseBaseUrlForWebPubSub(uri);
         }
 
@@ -106,7 +108,16 @@ namespace Azure.SignalRBench.Client
         private ClientWebSocket NewClientWebSocket()
         {
             var socket = new ClientWebSocket();
-            socket.Options.AddSubProtocol(SubProtocol);
+            switch (_protocol)
+            {
+                case Protocol.RawWebSocketReliableJson:
+                    socket.Options.AddSubProtocol(ReliableSubProtocol);
+                    break;
+                case Protocol.RawWebSocketJson:
+                    socket.Options.AddSubProtocol(SubProtocol);
+                    break;
+                    throw new Exception($"Unsupported protocol {_protocol}");
+            }
             return socket;
         }
 

@@ -591,11 +591,13 @@ export class TestConfig extends Component {
                             <Form.Group  >
                                 <Form.Label>Protocol</Form.Label>
                                 <Form.Control name="protocol" onChange={this.handleChange} as="select" defaultValue={this.state.obj.protocol}>
-                                    <option>WebSocketsWithJson</option>
+                                    {this.state.obj.service == "SignalR" && <option>WebSocketsWithJson</option> }
                                     {this.state.obj.service == "SignalR" && this.state.obj.mode == "Default" && this.state.obj.framework == "Netcore" && <option>WebSocketsWithMessagePack</option>}
                                     <option>ServerSideEventsWithJson</option>
                                     {this.state.obj.service == "SignalR" && this.state.obj.mode == "Default" && this.state.obj.framework == "Netcore" && <option>LongPollingWithMessagePack</option>}
-                                    <option>LongPollingWithJson</option>
+                                    {this.state.obj.service == "SignalR" && <option>LongPollingWithJson</option> }
+                                    {this.state.obj.service == "RawWebsocket" && <option>RawWebSocketJson</option> }
+                                    {this.state.obj.service == "RawWebsocket" && <option>RawWebSocketReliableJson</option> }
                                 </Form.Control>
                             </Form.Group>
                             <Form.Group >
