@@ -104,7 +104,6 @@ function publish() {
   rm -rf publish
   echo "start to publish $Pod"
   dotnet publish -r linux-x64 -c release -o publish /p:useapphost=true
-  dotnet restore
   cd publish && zip -r ${Pod}.zip *
   echo "create dir:$Pod"
   az storage directory create -n "manifest/$Pod" --account-name $STORAGE_ACCOUNT -s $SA_SHARE
@@ -119,8 +118,8 @@ init_aks_group
 
 if [[ $ALL || $PORTAL ]]; then
   echo "replace the clientId and tenantId in src/Pods/Portal/appsettings.json"
-  appId = $( az keyvault show --vault-name $KEYVAULT -n "appid" | jq ".value" -r )
-  tenant = $( az keyvault show --vault-name $KEYVAULT -n "tenant" | jq ".value" -r )
+  appId=$( az keyvault secret show --vault-name $KEYVAULT -n "appid" | jq ".value" -r )
+  tenant=$( az keyvault secret show --vault-name $KEYVAULT -n "tenant" | jq ".value" -r )
   echo "tenant is $tenant"
   cd $DIR/../src/Pods/Portal
   cat appsettings.template.json | replace CLIENTID_PLACE_HOLDER $appId | replace TENANTID_PLACE_HOLDER $tenant > appsettings.json

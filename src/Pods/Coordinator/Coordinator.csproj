@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net5.0</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
     <RootNamespace>Azure.SignalRBench.Coordinator</RootNamespace>
     <langversion>8</langversion>
     <Nullable>enable</Nullable>
