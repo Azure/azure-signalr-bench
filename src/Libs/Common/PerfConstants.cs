@@ -35,6 +35,7 @@ namespace Azure.SignalRBench.Common
             public const string DomainKey = "domain";
             public const string TestCategory = "testCategory";
             public const string Protocol = "protocol";
+            public const string Image = "Image";
 
         }
 

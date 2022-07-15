@@ -22,6 +22,7 @@ namespace Azure.SignalRBench.Coordinator.Provider
         private readonly string _domain;
         private readonly PerfStorageProvider _perfStorageProvider;
         private readonly string _redisConnectionString;
+        private readonly string _image;
         private Kubernetes? _k8S;
 
         public K8SProvider(PerfStorageProvider perfStorageProvider, IConfiguration configuration)
@@ -29,6 +30,7 @@ namespace Azure.SignalRBench.Coordinator.Provider
             _perfStorageProvider = perfStorageProvider;
             _redisConnectionString = configuration[PerfConstants.ConfigurationKeys.RedisConnectionStringKey];
             _domain = configuration[PerfConstants.ConfigurationKeys.DomainKey];
+            _image = configuration[PerfConstants.ConfigurationKeys.Image];
         }
 
         public void Initialize(string config)
@@ -179,7 +181,7 @@ namespace Azure.SignalRBench.Coordinator.Provider
                                     Name = name,
                                     Image = testCategory == TestCategory.AspnetSignalR
                                         ? "mcr.microsoft.com/dotnet/framework/runtime:4.8"
-                                        : "signalrbenchmark/perf:1.4.4",
+                                        : _image,
                                     Resources = new V1ResourceRequirements
                                     {
                                         Requests = new Dictionary<string, ResourceQuantity>
@@ -322,7 +324,7 @@ namespace Azure.SignalRBench.Coordinator.Provider
                                 new V1Container
                                 {
                                     Name = name,
-                                    Image = "signalrbenchmark/perf:1.4.4",
+                                    Image =_image,
                                     Resources = new V1ResourceRequirements
                                     {
                                         Requests = new Dictionary<string, ResourceQuantity>

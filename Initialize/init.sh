@@ -157,6 +157,8 @@ tenant=$(echo $sp | jq .tenant -r)
 echo "tenant is $tenant"
 az keyvault secret set --vault-name $KEYVAULT -n "tenant" --value $tenant
 az keyvault secret set --vault-name $KEYVAULT -n "appid" --value $appId
+az keyvault secret set --vault-name $KEYVAULT -n "image" --value "mcr.microsoft.com/signalrbenchmark/base:1.0.0"
+
 
 az ad app update --id $appId --web-redirect-uris  $redirectUrl --enable-id-token-issuance  --only-show-errors
 az ad app update --id $appId --app-roles "[{\"allowedMemberTypes\":[\"User\"],\"description\":\"Contributor\",\"displayName\":\"Contributor\",\"isEnabled\":\"true\",\"value\":\"Contributor\"}]" 2>&1 >/dev/null  || true
