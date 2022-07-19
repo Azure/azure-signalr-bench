@@ -13,44 +13,24 @@ namespace Azure.SignalRBench.Common
     [JsonConverter(typeof(StringEnumConverter))]
     public enum Protocol
     {
-        /// <summary>
-        /// HttpTransportType.WebSockets = 1, TransferFormat.Binary = 1
-        /// </summary>
-        WebSocketsWithMessagePack = 1 | 0x10,
-        /// <summary>
-        /// HttpTransportType.WebSockets = 1, TransferFormat.Text = 2
-        /// </summary>
-        WebSocketsWithJson = 1 | 0x20,
-        /// <summary>
-        /// HttpTransportType.ServerSentEvents = 2, TransferFormat.Text = 2
-        /// </summary>
-        ServerSideEventsWithJson = 2 | 0x20,
-        /// <summary>
-        /// HttpTransportType.LongPolling = 4, TransferFormat.Binary = 1
-        /// </summary>
-        LongPollingWithMessagePack = 4 | 0x10,
-        /// <summary>
-        /// HttpTransportType.LongPolling = 4, TransferFormat.Text = 2
-        /// </summary>
-        LongPollingWithJson = 4 | 0x20,
-        /// <summary>
-        /// RawWebsocket = 8, TransferFormat.Binary = 1
-        /// </summary>
-        RawWebSocketBinary=8 | 0x10,
-        /// <summary>
-        /// RawWebsocket = 8, TransferFormat.Binary = 2
-        /// </summary>
-        RawWebSocketText=8 | 0x20,
+        WebSocketsWithMessagePack,
+        WebSocketsWithJson,
+        ServerSideEventsWithJson,
+        LongPollingWithMessagePack,
+        LongPollingWithJson,
+        RawWebSocketJson,
+        RawWebSocketReliableJson
     }
 
     public static class ProtocolExtentions
     {
         public static string GetFormatProtocol(this Protocol protocol)
         {
-            var fp=((int)protocol >> 4);
+            var fp = ((int) protocol >> 4);
             return fp == 2 ? "json" : "messagepack";
         }
     }
+
     [JsonConverter(typeof(StringEnumConverter))]
     public enum ClientBehavior
     {
@@ -89,14 +69,14 @@ namespace Azure.SignalRBench.Common
         Failed,
         Finished
     }
-    
+
     [JsonConverter(typeof(StringEnumConverter))]
     public enum ServiceName
     {
         SignalR,
         RawWebsocket,
     }
-    
+
     public enum SignalRServiceMode
     {
         Default,

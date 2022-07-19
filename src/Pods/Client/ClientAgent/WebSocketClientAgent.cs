@@ -33,7 +33,7 @@ namespace Azure.SignalRBench.Client.ClientAgent
         {
             Context = context;
             _appserverUrl = "http://" + appserverUrl;
-            Connection = new WebSocketHubConnection(url, this, context, logger);
+            Connection = new WebSocketHubConnection(url, this, protocol, context, logger);
             Connection.On(context.Measure);
             Groups = groups;
             GlobalIndex = globalIndex;
@@ -118,10 +118,11 @@ namespace Azure.SignalRBench.Client.ClientAgent
             public Uri ResourceUri { get; }
             private CancellationToken ConnectionStoppedToken => _connectionStoppedCts.Token;
 
-            public WebSocketHubConnection(string url, WebSocketClientAgent agent, ClientAgentContext context, ILogger logger)
+            public WebSocketHubConnection(string url, WebSocketClientAgent agent, Protocol protocol,
+                ClientAgentContext context, ILogger logger)
             {
                 ResourceUri = new Uri(url);
-                _socket = new ReliableWebsocketClient(ResourceUri, logger);
+                _socket = new ReliableWebsocketClient(ResourceUri, protocol, logger);
                 _agent = agent;
                 _context = context;
                 _logger = logger;
