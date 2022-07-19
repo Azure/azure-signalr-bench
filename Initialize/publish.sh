@@ -104,7 +104,6 @@ function publish() {
   rm -rf publish
   echo "start to publish $Pod"
   dotnet publish -r linux-x64 -c release -o publish /p:useapphost=true
-  dotnet restore
   cd publish && zip -r ${Pod}.zip *
   echo "create dir:$Pod"
   az storage directory create -n "manifest/$Pod" --account-name $STORAGE_ACCOUNT -s $SA_SHARE
@@ -117,17 +116,19 @@ throw_if_empty "prefix" $PREFIX
 init_common
 init_aks_group
 
+image=$( az keyvault secret show --vault-name $KEYVAULT -n "image" | jq ".value" -r )
+
 if [[ $ALL || $PORTAL ]]; then
   echo "replace the clientId and tenantId in src/Pods/Portal/appsettings.json"
-  appId = $( az keyvault show --vault-name $KEYVAULT -n "appid" | jq ".value" -r )
-  tenant = $( az keyvault show --vault-name $KEYVAULT -n "tenant" | jq ".value" -r )
+  appId=$( az keyvault secret show --vault-name $KEYVAULT -n "appid" | jq ".value" -r )
+  tenant=$( az keyvault secret show --vault-name $KEYVAULT -n "tenant" | jq ".value" -r )
   echo "tenant is $tenant"
   cd $DIR/../src/Pods/Portal
   cat appsettings.template.json | replace CLIENTID_PLACE_HOLDER $appId | replace TENANTID_PLACE_HOLDER $tenant > appsettings.json
   publish Portal
   cd $DIR/yaml/portal
   kubectl delete deployment portal  > /dev/null 2>&1 || true
-  cat portal.yaml | replace KVURL_PLACE_HOLDER $KVURL | replace MSI_PLACE_HOLDER $AGENTPOOL_MSI_CLIENT_ID | kubectl apply -f -
+  cat portal.yaml | replace KVURL_PLACE_HOLDER $KVURL | replace MSI_PLACE_HOLDER $AGENTPOOL_MSI_CLIENT_ID | replace IMAGE_PLACE_HOLDER $image | kubectl apply -f -
   kubectl apply -f portal-service.yaml
   domain=$(az network public-ip show -n $PORTAL_IP_NAME -g $RESOURCE_GROUP --query dnsSettings.fqdn -o tsv)
   echo " portal domain: $domain "
@@ -141,7 +142,7 @@ if [[ $ALL || $COORDINATOR ]]; then
   kubectl delete deployment coordinator  > /dev/null 2>&1 || true
   access_key=$(az storage account show-connection-string -n $STORAGE_ACCOUNT -g $RESOURCE_GROUP --query connectionString -o tsv)
   domain=$(az network public-ip show -n $PORTAL_IP_NAME -g $RESOURCE_GROUP --query dnsSettings.fqdn -o tsv)
-  cat coordinator.yaml | replace KVURL_PLACE_HOLDER $KVURL | replace MSI_PLACE_HOLDER $AGENTPOOL_MSI_CLIENT_ID | replace STORAGE_PLACE_HOLDER $access_key | replace DOMAIN_PLACE_HOLDER $domain | kubectl apply -f -
+  cat coordinator.yaml | replace KVURL_PLACE_HOLDER $KVURL | replace MSI_PLACE_HOLDER $AGENTPOOL_MSI_CLIENT_ID | replace STORAGE_PLACE_HOLDER $access_key | replace DOMAIN_PLACE_HOLDER $domain | replace IMAGE_PLACE_HOLDER $image | kubectl apply -f -
 fi
 
 if [[ $ALL || $COMPILER ]]; then

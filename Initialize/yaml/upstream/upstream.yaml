@@ -16,7 +16,7 @@ spec:
         agentpool: captain
       containers:
         - name: upstream
-          image: signalrbenchmark/perf:1.4.4
+          image: IMAGE_PLACE_HOLDER
           resources:
             requests:
               cpu: 100m

@@ -3,7 +3,7 @@
 ## Dependency
 1. [WSL](https://docs.microsoft.com/en-us/windows/wsl/install) or Linux 
 2. [az cli](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli-linux?pivots=apt) [Version >=2.37]
-3. [.NET 5 sdk](https://dotnet.microsoft.com/en-us/download/dotnet/5.0)
+3. [.NET 6 sdk](https://dotnet.microsoft.com/en-us/download/dotnet/6.0)
 4. A tenant you are allowed to [register AAD applications](https://docs.microsoft.com/en-us/azure/active-directory/develop/howto-create-service-principal-portal#permissions-required-for-registering-an-app) 
 5. [jq](https://stedolan.github.io/jq/) , [nodejs](https://nodejs.org/en/) , [npm](https://www.npmjs.com/package/npm), [helm](https://helm.sh/docs/intro/install/#from-pkg-freebsd)
 

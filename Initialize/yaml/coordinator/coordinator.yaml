@@ -16,7 +16,7 @@ spec:
         agentpool: captain
       containers:
         - name: coordinator
-          image: signalrbenchmark/perf:1.4.4
+          image: IMAGE_PLACE_HOLDER
           resources:
             requests:
               cpu: 1000m
@@ -44,6 +44,8 @@ spec:
               value: STORAGE_PLACE_HOLDER
             - name: domain
               value: DOMAIN_PLACE_HOLDER
+            - name: image
+              value: IMAGE_PLACE_HOLDER
       volumes:
         - name: volume
           azureFile:

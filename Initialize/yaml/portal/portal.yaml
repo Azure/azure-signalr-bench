@@ -17,7 +17,7 @@ spec:
         agentpool: captain
       containers:
         - name: portal
-          image: signalrbenchmark/perf:1.4.4
+          image: IMAGE_PLACE_HOLDER
           resources:
             requests:
               cpu: 1000m
