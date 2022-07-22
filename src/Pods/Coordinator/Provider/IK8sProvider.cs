@@ -13,7 +13,7 @@ namespace Azure.SignalRBench.Coordinator
             CancellationToken cancellationToken);
 
         Task<string> CreateServerPodsAsync(string testId, string[] asrsConnectionStrings, int serverPodCount,
-            TestCategory testCategory,string formatProtocol, CancellationToken cancellationToken);
+            TestCategory testCategory,string formatProtocol,int perPodConnection, CancellationToken cancellationToken);
 
         Task DeleteClientPodsAsync(string testId);
         Task DeleteServerPodsAsync(string testId, bool upstream);

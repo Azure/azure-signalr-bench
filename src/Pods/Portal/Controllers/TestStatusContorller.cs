@@ -33,7 +33,7 @@ namespace Portal.Controllers
             try
             {
                 var table = await _perfStorage.GetTableAsync<TestStatusEntity>(PerfConstants.TableNames.TestStatus);
-                var onedayAgo = new DateTimeOffset(DateTime.Now.AddDays(-1));
+                var onedayAgo = new DateTimeOffset(DateTime.UtcNow.AddDays(-1));
                 if (string.IsNullOrEmpty(key))
                 {
                     var result = await table

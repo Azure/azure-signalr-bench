@@ -42,10 +42,10 @@ namespace Portal.Cron
                         if (configs.Count == 0) continue;
                         var tasks = (from testConfigEntity in configs
                             let schedule = CrontabSchedule.Parse(testConfigEntity.Cron)
-                            let nexTime = schedule.GetNextOccurrence(DateTime.Now)
+                            let nexTime = schedule.GetNextOccurrence(DateTime.UtcNow)
                             let nexTimeStr = nexTime
                                 .ToString(CultureInfo.InvariantCulture)
-                            where DateTime.Now.AddSeconds(60) > nexTime && nexTimeStr != testConfigEntity.LastCronTime
+                            where DateTime.UtcNow.AddSeconds(60) > nexTime && nexTimeStr != testConfigEntity.LastCronTime
                             select Task.Run(async () =>
                             {
                                 try

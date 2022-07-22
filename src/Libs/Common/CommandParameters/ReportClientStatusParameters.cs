@@ -15,7 +15,7 @@ namespace Azure.SignalRBench.Common
         public int MessageRecieved { get; set; }
         public int ExpectedRecievedMessageCount { get; set; }
         
-        public DateTime Time { get; set; }=DateTime.Now;
+        public DateTime Time { get; set; }=DateTime.UtcNow;
 
         public Dictionary<LatencyClass, int> Latency { get; set; } = new Dictionary<LatencyClass, int>();
     }

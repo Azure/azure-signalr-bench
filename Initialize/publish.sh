@@ -117,6 +117,7 @@ init_common
 init_aks_group
 
 image=$( az keyvault secret show --vault-name $KEYVAULT -n "image" | jq ".value" -r )
+internal=$( az keyvault secret show --vault-name $KEYVAULT -n "internal" | jq ".value"  )
 
 if [[ $ALL || $PORTAL ]]; then
   echo "replace the clientId and tenantId in src/Pods/Portal/appsettings.json"
@@ -142,7 +143,7 @@ if [[ $ALL || $COORDINATOR ]]; then
   kubectl delete deployment coordinator  > /dev/null 2>&1 || true
   access_key=$(az storage account show-connection-string -n $STORAGE_ACCOUNT -g $RESOURCE_GROUP --query connectionString -o tsv)
   domain=$(az network public-ip show -n $PORTAL_IP_NAME -g $RESOURCE_GROUP --query dnsSettings.fqdn -o tsv)
-  cat coordinator.yaml | replace KVURL_PLACE_HOLDER $KVURL | replace MSI_PLACE_HOLDER $AGENTPOOL_MSI_CLIENT_ID | replace STORAGE_PLACE_HOLDER $access_key | replace DOMAIN_PLACE_HOLDER $domain | replace IMAGE_PLACE_HOLDER $image | kubectl apply -f -
+  cat coordinator.yaml | replace KVURL_PLACE_HOLDER $KVURL | replace MSI_PLACE_HOLDER $AGENTPOOL_MSI_CLIENT_ID | replace STORAGE_PLACE_HOLDER $access_key | replace DOMAIN_PLACE_HOLDER $domain | replace IMAGE_PLACE_HOLDER $image | replace INTERNAL_PLACE_HOLDER $internal | kubectl apply -f -
 fi
 
 if [[ $ALL || $COMPILER ]]; then

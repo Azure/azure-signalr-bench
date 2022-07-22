@@ -46,6 +46,8 @@ spec:
               value: DOMAIN_PLACE_HOLDER
             - name: image
               value: IMAGE_PLACE_HOLDER
+            - name: internal
+              value: INTERNAL_PLACE_HOLDER
       volumes:
         - name: volume
           azureFile:

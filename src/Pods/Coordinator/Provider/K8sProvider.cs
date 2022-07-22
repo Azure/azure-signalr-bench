@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
@@ -24,6 +25,7 @@ namespace Azure.SignalRBench.Coordinator.Provider
         private readonly string _redisConnectionString;
         private readonly string _image;
         private Kubernetes? _k8S;
+        private readonly bool _internal;
 
         public K8SProvider(PerfStorageProvider perfStorageProvider, IConfiguration configuration)
         {
@@ -31,6 +33,7 @@ namespace Azure.SignalRBench.Coordinator.Provider
             _redisConnectionString = configuration[PerfConstants.ConfigurationKeys.RedisConnectionStringKey];
             _domain = configuration[PerfConstants.ConfigurationKeys.DomainKey];
             _image = configuration[PerfConstants.ConfigurationKeys.Image];
+            _internal = bool.Parse(configuration[PerfConstants.ConfigurationKeys.Internal]);
         }
 
         public void Initialize(string config)
@@ -40,7 +43,7 @@ namespace Azure.SignalRBench.Coordinator.Provider
         }
 
         public async Task<string> CreateServerPodsAsync(string testId, string[] asrsConnectionStrings,
-            int serverPodCount, TestCategory testCategory,string formatProtocol, CancellationToken cancellationToken)
+            int serverPodCount, TestCategory testCategory,string formatProtocol, int perPodConnection, CancellationToken cancellationToken)
         {
             var name = Appserver + "-" + testId;
             name = NameConverter.Truncate(name);
@@ -186,7 +189,7 @@ namespace Azure.SignalRBench.Coordinator.Provider
                                     {
                                         Requests = new Dictionary<string, ResourceQuantity>
                                         {
-                                            ["cpu"] = new ResourceQuantity("3000m"),
+                                            ["cpu"] = new ResourceQuantity("2500m"),
                                             ["memory"] = new ResourceQuantity("10000Mi")
                                         },
                                         Limits = new Dictionary<string, ResourceQuantity>
@@ -230,6 +233,8 @@ namespace Azure.SignalRBench.Coordinator.Provider
                                         new V1EnvVar(PerfConstants.ConfigurationKeys.RedisConnectionStringKey,
                                             _redisConnectionString),
                                         new V1EnvVar(PerfConstants.ConfigurationKeys.Protocol,
+                                            formatProtocol),
+                                        new V1EnvVar(PerfConstants.ConfigurationKeys.Protocol,
                                             formatProtocol)
                                     }
                                 }
@@ -245,6 +250,43 @@ namespace Azure.SignalRBench.Coordinator.Provider
                     }
                 }
             };
+            if (_internal&&(testCategory==TestCategory.AspnetCoreSignalRServerless || testCategory==TestCategory.RawWebsocket))
+            {
+                deployment.Spec.Template.Spec.Containers.Add( new V1Container
+                                {
+                                    Name = "proxy",
+                                    Image = 
+                                         _image,
+                                    Resources = new V1ResourceRequirements
+                                    {
+                                        Requests = new Dictionary<string, ResourceQuantity>
+                                        {
+                                            ["cpu"] = new ResourceQuantity("500m"),
+                                            ["memory"] = new ResourceQuantity("1000Mi")
+                                        },
+                                        Limits = new Dictionary<string, ResourceQuantity>
+                                        {
+                                            ["cpu"] = new ResourceQuantity("500m"),
+                                            ["memory"] = new ResourceQuantity("1000Mi")
+                                        }
+                                    },
+                                    Command = 
+                                         new List<string>
+                                        {
+                                            "/bin/sh", "-c"
+                                        },
+                                    Args =
+                                         new List<string>
+                                        {
+                                            "cd /home; ./start_proxy_client.sh"
+                                        },
+                                    Env = new List<V1EnvVar>
+                                    {
+                                        new V1EnvVar("connectCount",(perPodConnection==0?10:2*perPodConnection).ToString()
+                                            ),
+                                    }
+                                });
+            }
             await _k8S.CreateNamespacedDeploymentAsync(deployment, Default, cancellationToken: cancellationToken);
             
             if (serverPodCount == 0)
