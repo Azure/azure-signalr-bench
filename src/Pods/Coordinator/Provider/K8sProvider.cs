@@ -43,7 +43,7 @@ namespace Azure.SignalRBench.Coordinator.Provider
         }
 
         public async Task<string> CreateServerPodsAsync(string testId, string[] asrsConnectionStrings,
-            int serverPodCount, TestCategory testCategory,string formatProtocol, int perPodConnection, CancellationToken cancellationToken)
+            int serverPodCount, TestCategory testCategory,string formatProtocol, int perPodConnection, ClientBehavior behavior, CancellationToken cancellationToken)
         {
             var name = Appserver + "-" + testId;
             name = NameConverter.Truncate(name);
@@ -66,7 +66,7 @@ namespace Azure.SignalRBench.Coordinator.Provider
                 }
             };
             await _k8S.CreateNamespacedServiceAsync(service, Default, cancellationToken: cancellationToken);
-            if (testCategory == TestCategory.AspnetCoreSignalRServerless||testCategory == TestCategory.RawWebsocket)
+            if (testCategory == TestCategory.AspnetCoreSignalRServerless||(testCategory == TestCategory.RawWebsocket&&behavior==ClientBehavior.Echo))
             {
                 var ingress = new V1Ingress
                 {
@@ -250,7 +250,7 @@ namespace Azure.SignalRBench.Coordinator.Provider
                     }
                 }
             };
-            if (_internal&&(testCategory==TestCategory.AspnetCoreSignalRServerless || testCategory==TestCategory.RawWebsocket))
+            if (_internal&&(testCategory==TestCategory.AspnetCoreSignalRServerless || testCategory==TestCategory.RawWebsocket &&behavior==ClientBehavior.P2P))
             {
                 deployment.Spec.Template.Spec.Containers.Add( new V1Container
                                 {

@@ -511,7 +511,7 @@ namespace Azure.SignalRBench.Coordinator
 
                 _logger.LogInformation("Test job {testId}: Creating server pods.", Job.TestId);
                 _url = await K8SProvider.CreateServerPodsAsync(Job.TestId, asrsConnectionStrings,
-                    serverPodCount, Job.TestMethod, Job.ScenarioSetting.Protocol.GetFormatProtocol(),Job.ScenarioSetting.TotalConnectionCount/Job.PodSetting.ClientCount,
+                    serverPodCount, Job.TestMethod, Job.ScenarioSetting.Protocol.GetFormatProtocol(),Job.ScenarioSetting.TotalConnectionCount/Job.PodSetting.ClientCount,Job.ScenarioSetting.Rounds[0].ClientSettings[0].Behavior,
                     cancellationToken);
                 _logger.LogInformation("Test job {testId}: Creating client pods.", Job.TestId);
                 await K8SProvider.CreateClientPodsAsync(Job.TestId, Job.TestMethod, clientPodCount, cancellationToken);
