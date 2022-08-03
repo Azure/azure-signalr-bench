@@ -284,6 +284,8 @@ namespace Azure.SignalRBench.Coordinator.Provider
                                     {
                                         new V1EnvVar("connectCount",(perPodConnection==0?10:2*perPodConnection).ToString()
                                             ),
+                                        new V1EnvVar("proxyPort",testCategory==TestCategory.AspnetCoreSignalRServerless?"8100":"8101"
+                                        ),
                                     }
                                 });
             }
