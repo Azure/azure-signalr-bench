@@ -66,7 +66,7 @@ namespace Azure.SignalRBench.Coordinator.Provider
                 }
             };
             await _k8S.CreateNamespacedServiceAsync(service, Default, cancellationToken: cancellationToken);
-            if (testCategory == TestCategory.AspnetCoreSignalRServerless||(testCategory == TestCategory.RawWebsocket&&behavior==ClientBehavior.Echo))
+            if (testCategory == TestCategory.AspnetCoreSignalRServerless||(testCategory == TestCategory.RawWebsocket))
             {
                 var ingress = new V1Ingress
                 {
@@ -250,7 +250,7 @@ namespace Azure.SignalRBench.Coordinator.Provider
                     }
                 }
             };
-            if (_internal&&(testCategory==TestCategory.AspnetCoreSignalRServerless || testCategory==TestCategory.RawWebsocket &&behavior==ClientBehavior.P2P))
+            if (_internal&&(testCategory==TestCategory.AspnetCoreSignalRServerless || testCategory==TestCategory.RawWebsocket &&behavior==ClientBehavior.Echo))
             {
                 deployment.Spec.Template.Spec.Containers.Add( new V1Container
                                 {

@@ -39,6 +39,23 @@ namespace Azure.SignalRBench.Client.ClientAgent
             GlobalIndex = globalIndex;
             _logger = logger;
         }
+        
+        public async Task StartAsync(CancellationToken cancellationToken = default)
+        {
+            await Connection.StartAsync(cancellationToken);
+            await Context.OnConnected(this, Groups.Length > 0);
+        }
+        
+        public async Task JoinGroupAsync()
+        {
+            await Connection.SendAsync(Serialize( new JoinGroup(Groups[0])));
+        }
+
+
+        public async Task StopAsync()
+        {
+            await Connection.StopAsync();
+        }
 
         //This method should be sent directly to appserver to lower pressure on wps runtime 
         public Task BroadcastAsync(string payload)
@@ -62,7 +79,7 @@ namespace Azure.SignalRBench.Client.ClientAgent
             };
             var echoEvent = new UserEvent(NameConverter.GenerateHubName(Context.TestId),
                 JsonConvert.SerializeObject(data));
-            return Connection.SendAsync(echoEvent.Serialize());
+            return Connection.SendAsync(Serialize(echoEvent));
         }
 
         public Task GroupBroadcastAsync(string group, string payload)
@@ -73,15 +90,10 @@ namespace Azure.SignalRBench.Client.ClientAgent
                 Payload = payload
             };
             var sendToGroup = new SendToGroup(group, JsonConvert.SerializeObject(data));
-            return Connection.SendAsync(sendToGroup.Serilize());
+            return Connection.SendAsync(Serialize(sendToGroup));
         }
-
-        public async Task JoinGroupAsync()
-        {
-            await Connection.SendAsync(new JoinGroup(Groups[0]).Serilize());
-        }
-
-        //This method should be sent directly to appserver to lower pressure on wps runtime 
+        
+        //This method is sent directly to appserver to lower pressure on wps runtime 
         public Task SendToClientAsync(int index, string payload)
         {
             var data = new RawWebsocketData()
@@ -94,29 +106,16 @@ namespace Azure.SignalRBench.Client.ClientAgent
             return SendToAppServer(data);
         }
 
-        public async Task StartAsync(CancellationToken cancellationToken = default)
-        {
-            await Connection.StartAsync(cancellationToken);
-            await Context.OnConnected(this, Groups.Length > 0);
-        }
-
-        public async Task StopAsync()
-        {
-            await Connection.StopAsync();
-        }
-
 
         private sealed class WebSocketHubConnection
         {
             private readonly ReliableWebsocketClient _socket;
             private readonly CancellationTokenSource _connectionStoppedCts = new CancellationTokenSource();
             private readonly WebSocketClientAgent _agent;
-            private readonly SequenceId _sequenceId = new SequenceId();
             private readonly ILogger _logger;
 
             private ClientAgentContext _context;
             public Uri ResourceUri { get; }
-            private CancellationToken ConnectionStoppedToken => _connectionStoppedCts.Token;
 
             public WebSocketHubConnection(string url, WebSocketClientAgent agent, Protocol protocol,
                 ClientAgentContext context, ILogger logger)
@@ -181,11 +180,6 @@ namespace Azure.SignalRBench.Client.ClientAgent
             {
                 this.group = group;
             }
-
-            public string Serilize()
-            {
-                return JsonConvert.SerializeObject(this);
-            }
         }
 
         private sealed class SendToGroup
@@ -200,17 +194,12 @@ namespace Azure.SignalRBench.Client.ClientAgent
                 this.group = group;
                 this.data = data;
             }
-
-            public string Serilize()
-            {
-                return JsonConvert.SerializeObject(this);
-            }
         }
 
         private sealed class UserEvent
         {
             public string type = "event";
-            public string Event = "echo";
+            public string Event;
             public string dataType = "text";
             public string data;
 
@@ -219,67 +208,15 @@ namespace Azure.SignalRBench.Client.ClientAgent
                 this.Event = userEvent;
                 this.data = data;
             }
-
-            public string Serialize()
-            {
-                return JsonConvert.SerializeObject(this, new JsonSerializerSettings
-                {
-                    ContractResolver = new CamelCasePropertyNamesContractResolver()
-                });
-            }
         }
 
-        private sealed class SequenceId
+        private static string Serialize(object obj)
         {
-            private readonly object _lock = new object();
-
-            private ulong _sequenceId;
-
-            private volatile bool _updated;
-
-            public void UpdateSequenceId(ulong sequenceId)
+            return JsonConvert.SerializeObject(obj, new JsonSerializerSettings
             {
-                lock (_lock)
-                {
-                    _sequenceId = sequenceId;
-                    _updated = true;
-                }
-            }
-
-            public bool TryGetSequenceId(out ulong sequenceId)
-            {
-                lock (_lock)
-                {
-                    if (_updated)
-                    {
-                        sequenceId = _sequenceId;
-                        _updated = false;
-                        return true;
-                    }
-
-                    sequenceId = 0;
-                    return false;
-                }
-            }
-        }
-
-        private sealed class SequenceAck
-        {
-            public string type = "ack";
-            public ulong sequenceId;
-
-            public SequenceAck(ulong sequenceId)
-            {
-                this.sequenceId = sequenceId;
-            }
-
-            public string Serialize()
-            {
-                return JsonConvert.SerializeObject(this, new JsonSerializerSettings
-                {
-                    ContractResolver = new CamelCasePropertyNamesContractResolver()
-                });
-            }
+                ContractResolver = new CamelCasePropertyNamesContractResolver()
+            });
         }
     }
+    
 }
