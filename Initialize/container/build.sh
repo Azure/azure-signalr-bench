@@ -1,4 +1,6 @@
 #/bin/bash
-
-#docker build - < ./base_image.docker -t signalrbenchmark/perf:1.4.4
-docker build - < ./base_image.docker -t signalrservice.azurecr.io/public/signalrbenchmark/base:1.0.0
+#REPO="signalrbenchmark/perf"
+#repo="mcr.microsoft.com/signalrbenchmark/base"
+REPO="signalrservice.azurecr.io/public/signalrbenchmark/base"
+TAG="1.2.0"
+docker build - < ./base_image.docker --platform linux/amd64 -t $REPO:$TAG
