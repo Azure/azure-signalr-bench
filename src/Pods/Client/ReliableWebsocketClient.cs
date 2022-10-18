@@ -116,6 +116,7 @@ namespace Azure.SignalRBench.Client
                 case Protocol.RawWebSocketJson:
                     socket.Options.AddSubProtocol(SubProtocol);
                     break;
+                default:
                     throw new Exception($"Unsupported protocol {_protocol}");
             }
             return socket;

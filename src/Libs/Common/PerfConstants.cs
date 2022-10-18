@@ -36,7 +36,7 @@ namespace Azure.SignalRBench.Common
             public const string TestCategory = "testCategory";
             public const string Protocol = "protocol";
             public const string Image = "Image";
-
+            public const string Internal = "internal";
         }
 
         public static class TableNames

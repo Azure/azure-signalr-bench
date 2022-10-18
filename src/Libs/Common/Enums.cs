@@ -26,8 +26,7 @@ namespace Azure.SignalRBench.Common
     {
         public static string GetFormatProtocol(this Protocol protocol)
         {
-            var fp = ((int) protocol >> 4);
-            return fp == 2 ? "json" : "messagepack";
+            return protocol.ToString().ToLower().Contains("json") ? "json" : "messagepack";
         }
     }
 

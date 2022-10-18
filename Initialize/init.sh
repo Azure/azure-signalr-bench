@@ -157,7 +157,9 @@ tenant=$(echo $sp | jq .tenant -r)
 echo "tenant is $tenant"
 az keyvault secret set --vault-name $KEYVAULT -n "tenant" --value $tenant
 az keyvault secret set --vault-name $KEYVAULT -n "appid" --value $appId
-az keyvault secret set --vault-name $KEYVAULT -n "image" --value "mcr.microsoft.com/signalrbenchmark/base:1.0.0"
+az keyvault secret set --vault-name $KEYVAULT -n "image" --value "mcr.microsoft.com/signalrbenchmark/base:1.1.0"
+az keyvault secret set --vault-name $KEYVAULT -n "internal" --value "false"
+
 
 
 az ad app update --id $appId --web-redirect-uris  $redirectUrl --enable-id-token-issuance  --only-show-errors
