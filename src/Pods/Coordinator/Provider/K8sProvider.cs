@@ -234,8 +234,6 @@ namespace Azure.SignalRBench.Coordinator.Provider
                                             _redisConnectionString),
                                         new V1EnvVar(PerfConstants.ConfigurationKeys.Protocol,
                                             formatProtocol),
-                                        new V1EnvVar(PerfConstants.ConfigurationKeys.Protocol,
-                                            formatProtocol)
                                     }
                                 }
                             },
