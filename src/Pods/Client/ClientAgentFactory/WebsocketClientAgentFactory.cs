@@ -33,7 +33,7 @@ namespace Azure.SignalRBench.Client.ClientAgentFactory
                 groups,
                 globalIndex,
                 context,
-                _loggerFactory.CreateLogger<WebSocketClientAgent>());
+                _loggerFactory);
         }
 
         private bool TryParseEndpoint(string connectionString, out string endpoint, out string key)
