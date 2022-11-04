@@ -35,7 +35,7 @@
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="3.1.6" />
     <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="3.1.8" />
     <PackageReference Include="System.Net.NameResolution" Version="4.3.0" />
-	<PackageReference Include="Azure.Messaging.WebPubSub.Client" Version="1.0.0-alpha.20221103.1" />
+	<PackageReference Include="Azure.Messaging.WebPubSub.Client" Version="1.0.0-alpha.20221104.1" />
   </ItemGroup>
 
   <ItemGroup>
