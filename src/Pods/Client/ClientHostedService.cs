@@ -5,8 +5,10 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using Azure.SignalRBench.Common;
+using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 namespace Azure.SignalRBench.Client
 {
@@ -14,11 +16,14 @@ namespace Azure.SignalRBench.Client
     {
         private readonly IConfiguration _configuration;
         private readonly MessageClientHolder _messageClientHolder;
+        private readonly AzureEventSourceLogForwarder _forwarder;
 
-        public ClientHostedService(IConfiguration configuration, MessageClientHolder messageClientHolder)
+        public ClientHostedService(IConfiguration configuration, MessageClientHolder messageClientHolder, ILoggerFactory loggerFactory)
         {
             _configuration = configuration;
             _messageClientHolder = messageClientHolder;
+            _forwarder = new AzureEventSourceLogForwarder(loggerFactory);
+            _forwarder.Start();
         }
 
         public async Task StartAsync(CancellationToken cancellationToken)

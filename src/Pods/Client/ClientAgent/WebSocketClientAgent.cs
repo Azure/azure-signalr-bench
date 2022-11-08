@@ -25,7 +25,6 @@ namespace Azure.SignalRBench.Client.ClientAgent
 
         private readonly string _appserverUrl;
         private readonly ILogger<WebSocketClientAgent> _logger;
-        private readonly AzureEventSourceLogForwarder _forwarder;
 
         private static readonly HttpClient HttpClient = new HttpClient();
 
@@ -34,8 +33,6 @@ namespace Azure.SignalRBench.Client.ClientAgent
             ClientAgentContext context,
             ILoggerFactory loggerFactory)
         {
-            _forwarder = new AzureEventSourceLogForwarder(loggerFactory);
-            _forwarder.Start();
             _logger = loggerFactory.CreateLogger<WebSocketClientAgent>();
             Context = context;
             _appserverUrl = "http://" + appserverUrl;
