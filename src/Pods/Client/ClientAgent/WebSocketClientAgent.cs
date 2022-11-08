@@ -6,7 +6,9 @@ using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Azure.Messaging.WebPubSub.Clients;
 using Azure.SignalRBench.Common;
+using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Serialization;
@@ -29,15 +31,15 @@ namespace Azure.SignalRBench.Client.ClientAgent
         public WebSocketClientAgent(string url, string appserverUrl, Protocol protocol, string[] groups,
             int globalIndex,
             ClientAgentContext context,
-            ILogger<WebSocketClientAgent> logger)
+            ILoggerFactory loggerFactory)
         {
+            _logger = loggerFactory.CreateLogger<WebSocketClientAgent>();
             Context = context;
             _appserverUrl = "http://" + appserverUrl;
-            Connection = new WebSocketHubConnection(url, this, protocol, context, logger);
+            Connection = new WebSocketHubConnection(url, this, protocol, context, _logger);
             Connection.On(context.Measure);
             Groups = groups;
             GlobalIndex = globalIndex;
-            _logger = logger;
         }
         
         public async Task StartAsync(CancellationToken cancellationToken = default)
@@ -48,7 +50,7 @@ namespace Azure.SignalRBench.Client.ClientAgent
         
         public async Task JoinGroupAsync()
         {
-            await Connection.SendAsync(Serialize( new JoinGroup(Groups[0])));
+            await Connection.JoinGroup(Groups[0]);
         }
 
 
@@ -77,9 +79,7 @@ namespace Azure.SignalRBench.Client.ClientAgent
                 Ticks = ClientAgentContext.CoordinatedUtcNow(),
                 Payload = payload
             };
-            var echoEvent = new UserEvent(NameConverter.GenerateHubName(Context.TestId),
-                JsonConvert.SerializeObject(data));
-            return Connection.SendAsync(Serialize(echoEvent));
+            return Connection.SendEventAsync(NameConverter.GenerateHubName(Context.TestId), data);
         }
 
         public Task GroupBroadcastAsync(string group, string payload)
@@ -89,8 +89,7 @@ namespace Azure.SignalRBench.Client.ClientAgent
                 Ticks = ClientAgentContext.CoordinatedUtcNow(),
                 Payload = payload
             };
-            var sendToGroup = new SendToGroup(group, JsonConvert.SerializeObject(data));
-            return Connection.SendAsync(Serialize(sendToGroup));
+            return Connection.SendToGroup(group, data);
         }
         
         //This method is sent directly to appserver to lower pressure on wps runtime 
@@ -109,11 +108,12 @@ namespace Azure.SignalRBench.Client.ClientAgent
 
         private sealed class WebSocketHubConnection
         {
-            private readonly ReliableWebsocketClient _socket;
+            private readonly WebPubSubClient _socket;
             private readonly CancellationTokenSource _connectionStoppedCts = new CancellationTokenSource();
             private readonly WebSocketClientAgent _agent;
             private readonly ILogger _logger;
 
+            private volatile bool _closed;
             private ClientAgentContext _context;
             public Uri ResourceUri { get; }
 
@@ -121,41 +121,86 @@ namespace Azure.SignalRBench.Client.ClientAgent
                 ClientAgentContext context, ILogger logger)
             {
                 ResourceUri = new Uri(url);
-                _socket = new ReliableWebsocketClient(ResourceUri, protocol, logger);
+                switch (protocol)
+                {
+                    case Protocol.RawWebSocketReliableJson:
+                        _socket = new WebPubSubClient(ResourceUri);
+                        break;
+                    case Protocol.RawWebSocketJson:
+                        var options = new WebPubSubClientOptions();
+                        options.Protocol = new WebPubSubJsonProtocol();
+                        _socket = new WebPubSubClient(ResourceUri, options);
+                        break;
+                    default:
+                        throw new Exception($"Unsupported protocol {protocol}");
+                }
                 _agent = agent;
                 _context = context;
                 _logger = logger;
 
-                _socket.OnClose = () => _context.OnClosed(_agent);
+                _socket.Disconnected += _ => { _closed = true; return _context.OnClosed(_agent); };
             }
 
             public void On(Action<long, string> callback)
             {
-                _socket.OnMessage = callback;
+                _socket.ServerMessageReceived += e =>
+                {
+                    var data = e.Message.Data.ToObjectFromJson<RawWebsocketData>();
+                    callback(data.Ticks, data.Payload);
+                    return Task.CompletedTask;
+                };
+                _socket.GroupMessageReceived += e =>
+                {
+                    var data = e.Message.Data.ToObjectFromJson<RawWebsocketData>();
+                    callback(data.Ticks, data.Payload);
+                    return Task.CompletedTask;
+                };
             }
 
             public volatile bool active = false;
 
-            public Task SendAsync(string payload)
+            public Task JoinGroup(string group)
             {
-                if (active && _socket.ConnectionState == ReliableWebsocketClient.State.Closed)
+                if (active && _closed)
                 {
                     _context.OnClosed(_agent);
                     active = false;
                 }
 
-                return _socket.SendAsync(Encoding.UTF8.GetBytes(payload), WebSocketMessageType.Text, true, default);
+                return _socket.JoinGroupAsync(group);
+            }
+
+            public Task SendToGroup(string group, RawWebsocketData value)
+            {
+                if (active && _closed)
+                {
+                    _context.OnClosed(_agent);
+                    active = false;
+                }
+
+                return _socket.SendToGroupAsync(group, BinaryData.FromObjectAsJson(value), WebPubSubDataType.Json, fireAndForget: true);
+            }
+
+            public Task SendEventAsync(string eventName, RawWebsocketData payload)
+            {
+                if (active && _closed)
+                {
+                    _context.OnClosed(_agent);
+                    active = false;
+                }
+
+                return _socket.SendEventAsync(eventName, BinaryData.FromObjectAsJson(payload), WebPubSubDataType.Json, fireAndForget: true);
             }
 
             public async Task StartAsync(CancellationToken cancellationToken)
             {
-                await _socket.ConnectAsync(cancellationToken);
+                await _socket.StartAsync(cancellationToken);
                 active = true;
             }
 
             public async Task StopAsync()
             {
-                await _socket.CloseAsync(WebSocketCloseStatus.NormalClosure, "closed", default);
+                await _socket.StopAsync();
                 _connectionStoppedCts.Cancel();
             }
         }
