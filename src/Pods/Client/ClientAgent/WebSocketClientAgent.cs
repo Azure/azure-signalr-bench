@@ -211,7 +211,8 @@ namespace Azure.SignalRBench.Client.ClientAgent
             {
                 Version = HttpVersion.Version20,
             };
-            request.Content = new StringContent(data.Serilize(), Encoding.UTF8, "application/json");
+            var binaryData=BinaryData.FromObjectAsJson(data);
+            request.Content = new StringContent(binaryData.ToString(), Encoding.UTF8, "application/json");
             await HttpClient.SendAsync(request);
         }
 
