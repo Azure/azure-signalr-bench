@@ -597,7 +597,8 @@ export class TestConfig extends Component {
                                     {this.state.obj.service == "SignalR" && this.state.obj.mode == "Default" && this.state.obj.framework == "Netcore" && <option>LongPollingWithMessagePack</option>}
                                     {this.state.obj.service == "SignalR" && <option>LongPollingWithJson</option> }
                                     {this.state.obj.service == "RawWebsocket" && <option>RawWebSocketJson</option> }
-                                    {this.state.obj.service == "RawWebsocket" && <option>RawWebSocketReliableJson</option> }
+                                    {this.state.obj.service == "RawWebsocket" && <option>RawWebSocketReliableJson</option>}
+                                    {this.state.obj.service == "RawWebsocket" && <option>RawWebSocketReliableProtobuf</option>}
                                 </Form.Control>
                             </Form.Group>
                             <Form.Group >
