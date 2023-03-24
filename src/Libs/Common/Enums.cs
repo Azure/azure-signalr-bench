@@ -19,7 +19,8 @@ namespace Azure.SignalRBench.Common
         LongPollingWithMessagePack,
         LongPollingWithJson,
         RawWebSocketJson,
-        RawWebSocketReliableJson
+        RawWebSocketReliableJson,
+        RawWebSocketReliableProtobuf
     }
 
     public static class ProtocolExtentions

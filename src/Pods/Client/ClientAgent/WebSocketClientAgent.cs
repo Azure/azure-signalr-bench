@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Azure.Messaging.WebPubSub.Clients;
+using Azure.SignalRBench.Client.Protobuf;
 using Azure.SignalRBench.Common;
 using Microsoft.Extensions.Azure;
 using Microsoft.Extensions.Logging;
@@ -129,6 +130,11 @@ namespace Azure.SignalRBench.Client.ClientAgent
                     case Protocol.RawWebSocketJson:
                         var options = new WebPubSubClientOptions();
                         options.Protocol = new WebPubSubJsonProtocol();
+                        _socket = new WebPubSubClient(ResourceUri, options);
+                        break;
+                    case Protocol.RawWebSocketReliableProtobuf:
+                        options = new WebPubSubClientOptions();
+                        options.Protocol = new ProtobufSubprotocol();
                         _socket = new WebPubSubClient(ResourceUri, options);
                         break;
                     default:
