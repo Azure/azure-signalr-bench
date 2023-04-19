@@ -275,6 +275,7 @@ if [[ $ALL || $INGRESS ]]; then
     --set defaultBackend.nodeSelector."kubernetes\.io/os"=linux \
     --set controller.service.loadBalancerIP="$ip" \
     --set controller.deployment.spec.template.annotations."nginx\.ingress\.kubernetes\.io/proxy-buffer-size"=10m \
+    --set controller.service.annotations."service\.beta\.kubernetes\.io/azure-load-balancer-health-probe-request-path"=/healthz \
     --set controller.service.annotations."service\.beta\.kubernetes\.io/azure-dns-label-name"="$PORTAL_DNS" \
     --set controller.service.annotations."service\.beta\.kubernetes\.io/azure-load-balancer-resource-group"="$RESOURCE_GROUP" || true
   # Label the cert-manager namespace to disable resource validation
