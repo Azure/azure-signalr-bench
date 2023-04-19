@@ -56,7 +56,7 @@ After that, you need to init the deployments inside the aks
 > Outbound IP port issue: You need to [add more ips](https://docs.microsoft.com/en-us/azure/aks/load-balancer-standard#scale-the-number-of-managed-outbound-public-ips) to your load balancer if you trying to add a large node pool 
 
 2. SSL cert not safe
-> NSG issue: If the NSG in the created AKS resource group blocks outbound traffic, the SSL certificate verification would fail. 
+> NSG issue: If the NSG in the created AKS resource group blocks inbound traffic, the SSL certificate verification would fail. 
 
 3. What's the portal domain? Run below command to get the urls
 >  ./publish -p [prefix] 
