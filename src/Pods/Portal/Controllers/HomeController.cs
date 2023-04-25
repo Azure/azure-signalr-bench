@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Azure.Security.KeyVault.Secrets;
 using Azure.SignalRBench.Common;
 using Azure.SignalRBench.Storage;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Portal.BasicAuth;
@@ -47,6 +48,8 @@ namespace Portal.Controllers
             return basicInfo;
         }
 
+        [Authorize(Policy = PerfConstants.Policy.RoleLogin,
+            Roles = PerfConstants.Roles.Contributor)]
         [HttpPut("auth/{userName}")]
         public async Task<ActionResult> Auth(string userName, string role)
         {

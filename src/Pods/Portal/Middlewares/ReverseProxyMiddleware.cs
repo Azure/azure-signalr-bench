@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
+using Portal.Auth;
 
 namespace Portal
 {
@@ -22,7 +23,7 @@ namespace Portal
             };
             _httpClient = new HttpClient(httpClientHandler);
             _nextMiddleware = nextMiddleware;
-            token = File.ReadAllText("/var/run/secrets/kubernetes.io/serviceaccount/token");
+           // token = File.ReadAllText("/var/run/secrets/kubernetes.io/serviceaccount/token");
         }
 
         public async Task Invoke(HttpContext context)
@@ -31,6 +32,12 @@ namespace Portal
 
             if (targetUri != null)
             {
+                var user = context.User;
+                if (!AuthUtil.CanAccessCluster(user))
+                {
+                    context.Response.StatusCode = 403;
+                    return;
+                }
                 var targetRequestMessage = CreateTargetMessage(context, targetUri);
                 targetRequestMessage.Headers.Add("Authorization", $"Bearer {token}");
 

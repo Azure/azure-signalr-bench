@@ -16,12 +16,12 @@ namespace Portal.Controllers
 {
     [Route("teststatus")]
     [ApiController]
-    public class TestStatusContorller : ControllerBase
+    public class TestStatusController : ControllerBase
     {
-        private readonly ILogger<TestStatusContorller> _logger;
+        private readonly ILogger<TestStatusController> _logger;
         private readonly IPerfStorage _perfStorage;
 
-        public TestStatusContorller(IPerfStorage perfStorage, ILogger<TestStatusContorller> logger)
+        public TestStatusController(IPerfStorage perfStorage, ILogger<TestStatusController> logger)
         {
             _perfStorage = perfStorage;
             _logger = logger;

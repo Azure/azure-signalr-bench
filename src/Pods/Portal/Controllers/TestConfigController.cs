@@ -43,7 +43,8 @@ namespace Portal.Controllers
             return rows;
         }
 
-
+        [Authorize(Policy = PerfConstants.Policy.RoleLogin,
+            Roles = PerfConstants.Roles.Contributor)]
         [HttpPut]
         public async Task<ActionResult> CreateTestConfig(TestConfigEntity testConfigEntity)
         {
@@ -72,6 +73,8 @@ namespace Portal.Controllers
             return Ok();
         }
         
+        [Authorize(Policy = PerfConstants.Policy.RoleLogin,
+            Roles = PerfConstants.Roles.Contributor)]
         [HttpPatch]
         public async Task<ActionResult> PatchTestConfig(TestConfigEntity testConfigEntity)
         {
@@ -144,6 +147,8 @@ namespace Portal.Controllers
             }
         }
 
+        [Authorize(Policy = PerfConstants.Policy.RoleLogin,
+            Roles = PerfConstants.Roles.Contributor)]
         [HttpDelete("{key}")]
         public async Task Delete(string key)
         {
@@ -155,6 +160,8 @@ namespace Portal.Controllers
             await configTable.DeleteAsync(config);
         }
 
+        [Authorize(Policy = PerfConstants.Policy.RoleLogin,
+            Roles = PerfConstants.Roles.Contributor)]
         [HttpPut("move/{type}/{source}/{target}")]
         public async Task<ActionResult> Move(string type, string source, string target)
         {
@@ -197,6 +204,8 @@ namespace Portal.Controllers
             }
         }
 
+        [Authorize(Policy = PerfConstants.Policy.RoleLogin,
+            Roles = PerfConstants.Roles.Contributor)]
         [HttpPut("rename/{source}/{target}")]
         public async Task<ActionResult> Rename(string source, string target)
         {
@@ -233,6 +242,8 @@ namespace Portal.Controllers
             return Ok();
         }
 
+        [Authorize(Policy = PerfConstants.Policy.RoleLogin,
+            Roles = PerfConstants.Roles.Contributor)]
         [HttpPut("cron/{key}")]
         public async Task<ActionResult> Cron(string key, string cron)
         {
@@ -262,6 +273,8 @@ namespace Portal.Controllers
             return Ok();
         }
 
+        [Authorize(Policy = PerfConstants.Policy.RoleLogin,
+            Roles = PerfConstants.Roles.Contributor)]
         [HttpPut("batch/{testName}")]
         public async Task<ActionResult> Batch(string testName, string dir, string units)
         {

@@ -57,11 +57,14 @@ namespace Portal
                     policy.AddAuthenticationSchemes(PerfConstants.AuthSchema.BasicAuth);
                     policy.AddAuthenticationSchemes(OpenIdConnectDefaults.AuthenticationScheme);
                     policy.RequireAssertion(context =>
-                        context.Requirements.Count() > 1 || context.User.IsInRole(PerfConstants.Roles.Contributor));
+                    {
+                        return context.Requirements.Count() > 1 ||
+                            context.User.IsInRole(PerfConstants.Roles.Contributor);
+                    });
                 });
                 options.FallbackPolicy = new AuthorizationPolicyBuilder()
                     .AddAuthenticationSchemes(OpenIdConnectDefaults.AuthenticationScheme)
-                    .RequireRole(PerfConstants.Roles.Contributor)
+                    .RequireRole(PerfConstants.Roles.Contributor, PerfConstants.Roles.Reader)
                     .Build();
             });
 
@@ -86,7 +89,7 @@ namespace Portal
                             .Value.Value;
                         var cdbConnectionString = secretClient.GetSecretAsync("cdb-accessKey").GetAwaiter().GetResult()
                             .Value.Value;
-                        return new PerfStorage(saConnectionString,cdbConnectionString);
+                        return new PerfStorage(saConnectionString, cdbConnectionString);
                     }
                     catch (Exception e)
                     {
@@ -138,8 +141,11 @@ namespace Portal
             app.UseStaticFiles();
             app.UseAuthentication();
             app.UseAuthorization();
+            app.UseMiddleware<SecretMaskingMiddleware>();
             if (env.IsProduction())
+            {
                 app.UseMiddleware<ReverseProxyMiddleware>();
+            }
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();

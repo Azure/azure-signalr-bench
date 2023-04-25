@@ -155,6 +155,11 @@ export class TestConfig extends Component {
             body: { key: key },
             redirect: 'manual'
         })
+        if (response.type === 'opaqueredirect') {
+            alert("No permission")
+            e.target.setAttribute("class", "ui teal mini button")
+            return
+        }
         await Util.CheckAuth(response)
         window.open("/test-status/testname/" + key)
         e.target.setAttribute("class", "ui teal mini button")
@@ -171,6 +176,13 @@ export class TestConfig extends Component {
             },
             redirect: 'manual'
         })
+
+        if (response.type === 'opaqueredirect') {
+            alert("No permission")
+            e.target.setAttribute("class", "ui orange mini button")
+            return
+        }
+        
         await Util.CheckAuth(response)
         await this.populateTestConfigData()
     }
@@ -196,6 +208,11 @@ export class TestConfig extends Component {
             body: JSON.stringify(this.state.obj),
             redirect: 'manual'
         });
+        if (response.type === 'opaqueredirect') {
+            alert("No permission")
+            return
+        }
+
         if (response.status != 200) {
             var result = await response.text()
             console.log(result)

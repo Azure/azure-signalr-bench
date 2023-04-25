@@ -54,6 +54,7 @@ namespace Azure.SignalRBench.Common
         public static class Roles
         {
             public const string Contributor = "Contributor";
+            public const string Reader = "Reader";
             public const string Pipeline = "Pipeline";
         }
 
