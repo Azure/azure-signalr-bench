@@ -23,7 +23,7 @@ namespace Portal
             };
             _httpClient = new HttpClient(httpClientHandler);
             _nextMiddleware = nextMiddleware;
-           // token = File.ReadAllText("/var/run/secrets/kubernetes.io/serviceaccount/token");
+            token = File.ReadAllText("/var/run/secrets/kubernetes.io/serviceaccount/token");
         }
 
         public async Task Invoke(HttpContext context)
