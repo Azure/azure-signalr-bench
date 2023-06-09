@@ -38,6 +38,12 @@ namespace Azure.SignalRBench.Client.ClientAgentFactory
 
         private bool TryParseEndpoint(string connectionString, out string endpoint, out string key)
         {
+            var eps= connectionString.Split(" ");
+            if (eps.Length > 1)
+            {
+                // multiple endpoint. Use for replica only for now
+                connectionString = eps[StaticRandom.Next(eps.Length)];
+            }
             var properties = connectionString.Split(';', StringSplitOptions.RemoveEmptyEntries);
             endpoint = null;
             key = null;

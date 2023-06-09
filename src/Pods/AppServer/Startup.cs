@@ -3,11 +3,14 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Azure.SignalRBench.AppServer.Hub;
+using Azure.SignalRBench.AppServer.Router;
 using Azure.SignalRBench.Common;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Azure.SignalR;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -32,27 +35,39 @@ namespace Azure.SignalRBench.AppServer
         public void ConfigureServices(IServiceCollection services)
         {
             var fp = Configuration[PerfConstants.ConfigurationKeys.Protocol];
-
             ISignalRServerBuilder builder = null;
             if (!fp.ToLower().Contains("json"))
             {
                 builder = services.AddSignalR(options =>
                 {
                     var supportedProtocol = new List<string> {"messagepack"};
-                     options.SupportedProtocols = supportedProtocol;
+                    options.SupportedProtocols = supportedProtocol;
+                    options.MaximumReceiveMessageSize = 1024 * 1024 * 100;
                 }).AddMessagePackProtocol();
             }
             else
             {
-                builder = services.AddSignalR();
+                builder = services.AddSignalR(options => options.MaximumReceiveMessageSize = 1024 * 1024 * 100
+                );
             }
 
+            services.AddSingleton(typeof(IEndpointRouter), typeof(ReplicaRouter));
             builder.AddAzureSignalR(option =>
             {
                 option.ConnectionCount = Configuration[PerfConstants.ConfigurationKeys.ConnectionNum] != null
                     ? Configuration.GetValue<int>(PerfConstants.ConfigurationKeys.ConnectionNum)
                     : 50;
-                option.ConnectionString = Configuration[PerfConstants.ConfigurationKeys.ConnectionString];
+                var connectString = Configuration[PerfConstants.ConfigurationKeys.ConnectionString];
+                // multiple endpoint
+                var endpoints = connectString.Split(" ");
+                if (endpoints.Length <= 1)
+                {
+                    option.ConnectionString = Configuration[PerfConstants.ConfigurationKeys.ConnectionString];
+                }
+                else
+                {
+                    option.Endpoints = endpoints.Select(e => new ServiceEndpoint(e)).ToArray();
+                }
             });
             services.AddSingleton<MessageClientHolder>();
             services.AddHostedService<ServerHostedService>();
