@@ -51,7 +51,7 @@ namespace Azure.SignalRBench.Client
 
         public int ExpectedRecievedMessageCount => Volatile.Read(ref _expectedRecievedMessageCount);
 
-        public int ConnectedAgentCount => _dict.Count(p => p.Value == ClientAgentStatus.Connected);
+        public int ConnectedAgentCount => _dict.Count(p => p.Value == ClientAgentStatus.Connected || p.Value == ClientAgentStatus.JoiningGroups);
 
         public static long CoordinatedUtcNow()
         {
@@ -130,7 +130,7 @@ namespace Azure.SignalRBench.Client
         {
             if (hasGroups)
             {
-                _dict.AddOrUpdate(agent, ClientAgentStatus.Connected, (a, s) => ClientAgentStatus.JoiningGroups);
+                _dict.AddOrUpdate(agent, ClientAgentStatus.JoiningGroups, (a, s) => ClientAgentStatus.JoiningGroups);
                 await agent.JoinGroupAsync();
                 _dict.AddOrUpdate(agent, ClientAgentStatus.Connected, (a, s) => ClientAgentStatus.Connected);
             }
@@ -151,7 +151,7 @@ namespace Azure.SignalRBench.Client
 
         public Task OnClosed(IClientAgent agent)
         {
-            _dict.AddOrUpdate(agent, ClientAgentStatus.Reconnecting, (a, s) => ClientAgentStatus.Closed);
+            _dict.AddOrUpdate(agent, ClientAgentStatus.Closed, (a, s) => ClientAgentStatus.Closed);
             return Task.CompletedTask;
         }
 

@@ -35,7 +35,7 @@ namespace Azure.SignalRBench.Client.ClientAgent
                 Path = $"/clients/socketio/hubs/{PerfConstants.Name.HubName}"
             });
 
-            Client.OnDisconnected += async (sender, args) => { await Context.OnClosed(this); };
+            Client.OnDisconnected += (sender, args) => { Context.OnClosed(this); };
             Client.OnReconnectAttempt += (sender, args) => { Context.OnReconnecting(this); };
             Client.OnReconnected += async (sender, args) =>
             {
