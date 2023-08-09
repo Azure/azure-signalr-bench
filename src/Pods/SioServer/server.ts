@@ -34,7 +34,7 @@ async function main() {
         });
 
         socket.on("Echo", (time, payload, cb) => {
-            io.to(socket.id).emit(EventMeasure, time, payload);
+            socket.emit(EventMeasure, time, payload);
             cb?.(AckMessage);
             console.log("Echo")
         });
@@ -63,13 +63,14 @@ async function main() {
 
         socket.on("SendToSocket", (id, time, payload, cb) => {
             io.to(id).emit(EventMeasure, time, payload);
+            socket.to(id).emit(EventMeasure, time, payload);
             cb?.(AckMessage);
             console.log(`SendToSocket ${id}`)
         });
 
 
         socket.on("EchoWithAck", async (time, payload, cb) => {
-            io.timeout(AckTimeout).to(socket.id).emit(EventMeasureWithAck, time, payload, (err, response) => {
+            socket.timeout(AckTimeout).emit(EventMeasureWithAck, time, payload, (err, response) => {
                 if (err) {
                     console.log(err);
                 } else {
