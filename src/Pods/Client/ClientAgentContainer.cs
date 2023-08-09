@@ -32,6 +32,7 @@ namespace Azure.SignalRBench.Client
             bool isAnonymous,
             string url,
             ClientLifetimeDefinition lifetimeDefinition, IClientAgentFactory agentFactory,
+            bool clientExpectServerAck, bool serverExpectClientAck,
             ILoggerFactory loggerFactory)
         {
             MessageClientHolder = messageClientHolder;
@@ -57,6 +58,8 @@ namespace Azure.SignalRBench.Client
             Protocol = protocol;
             IsAnonymous = isAnonymous;
             LifetimeDefinition = lifetimeDefinition;
+            ClientExpectServerAck = clientExpectServerAck;
+            ServerExpectClientAck = serverExpectClientAck;
             _agentFactory = agentFactory;
         }
 
@@ -65,6 +68,10 @@ namespace Azure.SignalRBench.Client
         public string Url { get; }
 
         public Protocol Protocol { get; }
+        
+        public bool ClientExpectServerAck { get; set; }
+        
+        public bool ServerExpectClientAck { get; set; }
 
         public bool IsAnonymous { get; }
 
@@ -100,9 +107,16 @@ namespace Azure.SignalRBench.Client
             for (var i = continueIndex; i < _clients.Length; i++)
             {
                 var globalIndex = GetGlobalIndex(i);
-                _clients[i] = _agentFactory.Create(Url, Protocol, GroupFunc(i),
-                    globalIndex,
-                    _context);
+                var clientAgentConfig = new ClientAgentConfig()
+                {
+                    Url = Url,
+                    Protocol = Protocol,
+                    GlobalIndex = globalIndex,
+                    Groups = GroupFunc(i),
+                    ClientExpectServerAck = ClientExpectServerAck,
+                    ServerExpectClientAck = ServerExpectClientAck,
+                };
+                _clients[i] = _agentFactory.Create(clientAgentConfig, _context);
             }
 
             ScheduleReportedStatus(cancellationToken);

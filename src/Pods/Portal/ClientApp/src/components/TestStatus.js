@@ -174,7 +174,8 @@ export class TestStatus extends Component {
                                             <td>{i + 1}</td>
                                             <td>{v.ConnectedCount}/{v.RoundConnected}</td>
                                             <th>{v.ActiveConnection}</th>
-                                            <td>{v.MessageSent}</td>
+                                            {v.ClientReceivedServerAckCount>0 &&<td>{v.ClientReceivedServerAckCount}/{v.MessageSent}</td>}
+                                            {v.ClientReceivedServerAckCount <=0 &&<td>{v.MessageSent}</td>}
                                             <td>{v.MessageRecieved}/{v.ExpectedRecievedMessageCount}</td>
                                             <td>{v.TotalReconnectCount}</td>
                                             <td>{v.ReconnectingCount}</td>

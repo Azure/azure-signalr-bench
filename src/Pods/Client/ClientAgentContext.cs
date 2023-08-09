@@ -22,8 +22,10 @@ namespace Azure.SignalRBench.Client
 
         private static volatile int TimeBias;
         private Latency _latency = new Latency();
+        private int _receivedServerAckCount;
         private int _recievedMessageCount;
         private int _expectedRecievedMessageCount;
+        private int _receivedClientAckCount;
         private int _sentMessageCount;
         private int _totalReconnectedCount;
         public string TestId { get; set; }
@@ -107,6 +109,16 @@ namespace Azure.SignalRBench.Client
                 Interlocked.Increment(ref _latency.MoreThan5s);
             }
         }
+        
+        public void IncreaseReceivedClientAckCount()
+        {
+            Interlocked.Increment(ref _receivedClientAckCount);
+        }
+        
+        public void IncreaseReceivedServerAckCount()
+        {
+            Interlocked.Increment(ref _receivedServerAckCount);
+        }
 
         public void IncreaseMessageSent(int expectedRecieverCount = 1)
         {
@@ -152,6 +164,8 @@ namespace Azure.SignalRBench.Client
                 MessageRecieved = RecievedMessageCount,
                 ExpectedRecievedMessageCount = ExpectedRecievedMessageCount,
                 MessageSent = SentMessageCount,
+                ClientReceivedServerAckCount = _receivedServerAckCount,
+                ServerReceivedClientAckCount = _receivedClientAckCount,
                 Latency = GetLatency(),
             };
 
@@ -196,6 +210,8 @@ namespace Azure.SignalRBench.Client
             _expectedRecievedMessageCount = 0;
             _sentMessageCount = 0;
             _totalReconnectedCount = 0;
+            _receivedServerAckCount = 0;
+            _receivedClientAckCount = 0;
         }
     }
 }

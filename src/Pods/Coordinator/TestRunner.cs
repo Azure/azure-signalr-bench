@@ -310,6 +310,7 @@ namespace Azure.SignalRBench.Coordinator
                 roundStatus.ReconnectingCount += v.ReconnectingCount;
                 roundStatus.TotalReconnectCount += v.TotalReconnectCount;
                 roundStatus.ExpectedRecievedMessageCount += v.ExpectedRecievedMessageCount;
+                roundStatus.ClientReceivedServerAckCount += v.ClientReceivedServerAckCount;
                 foreach (var kv in v.Latency)
                 {
                     if (!roundStatus.Latency.ContainsKey(kv.Key))
@@ -403,6 +404,7 @@ namespace Azure.SignalRBench.Coordinator
             int clientAgentCount,
             int clientPodCount,
             int serverPodCount,
+            CancellationToken cancellationToken,
             out Task clientPodsReady,
             out Task serverPodsReady)
         {
@@ -410,6 +412,20 @@ namespace Azure.SignalRBench.Coordinator
             var serverReadyCount = 0;
             var clientPodsReadyTcs = new TaskCompletionSource<object?>();
             var serverPodsReadyTcs = new TaskCompletionSource<object?>();
+            
+            if (cancellationToken.IsCancellationRequested)
+            {
+                clientPodsReadyTcs.TrySetCanceled();
+                serverPodsReadyTcs.TrySetCanceled();
+
+            }
+            else
+            {
+                cancellationToken.Register(() => clientPodsReadyTcs.TrySetCanceled(cancellationToken));
+                cancellationToken.Register(() => serverPodsReadyTcs.TrySetCanceled(cancellationToken));
+
+            }
+            
             clientPodsReady = clientPodsReadyTcs.Task;
             serverPodsReady = serverPodCount <= 0 ? Task.CompletedTask : serverPodsReadyTcs.Task;
             return m =>
@@ -506,7 +522,7 @@ namespace Azure.SignalRBench.Coordinator
                     MessageHandler.CreateCommandHandler(
                         Roles.Coordinator,
                         Commands.Coordinator.ReportReady,
-                        GetReportReady(clientAgentCount, clientPodCount, serverPodCount, out var clientPodReady,
+                        GetReportReady(clientAgentCount, clientPodCount, serverPodCount,cancellationToken, out var clientPodReady,
                             out var serverPodReady)));
 
                 _logger.LogInformation("Test job {testId}: Creating server pods.", Job.TestId);
@@ -515,7 +531,6 @@ namespace Azure.SignalRBench.Coordinator
                     cancellationToken);
                 _logger.LogInformation("Test job {testId}: Creating client pods.", Job.TestId);
                 await K8SProvider.CreateClientPodsAsync(Job.TestId, Job.TestMethod, clientPodCount, cancellationToken);
-
                 await Task.WhenAll(
                     Task.Run(async () =>
                     {
@@ -559,7 +574,9 @@ namespace Azure.SignalRBench.Coordinator
                     IsAnonymous = Job.ScenarioSetting.IsAnonymous,
                     Protocol = Job.ScenarioSetting.Protocol,
                     Rate = Job.ScenarioSetting.Rate / _clients.Count,
-                    Url = _url
+                    Url = _url,
+                    ClientExpectServerAck = Job.ScenarioSetting.ClientExpectServerAck,
+                    ServerExpectClientAck = Job.ScenarioSetting.ServerExpectClientAck
                 });
             await task;
             _logger.LogInformation(" start  client connections acked.");

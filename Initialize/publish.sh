@@ -16,12 +16,13 @@ Arguments
    --prefix|-p                          [Requied] Used to distingush your perf resources with others'
    --subscription|-s                    [Optional] The subscriton used to create resources
    --cloud|-c                           [Optional] The cloud used to create resources
-   --all|-a                             [Optional] publish portal,coordinator and compiler
+   --all|-a                             [Optional] publish all components
    --portal                             [Optional] publish portal
    --coordinator                        [Optional] publish coordinator
    --compiler                           [Optional] publish compiler
-   --server                             [Optional] publish compiler
-   --client                             [Optional] publish compiler
+   --server                             [Optional] publish server
+   --client                             [Optional] publish client
+   --sioserver                          [Optional] publish socket.io server
    --help|-h                            Print help
 EOF
 }
@@ -72,6 +73,9 @@ while [[ "$#" > 0 ]]; do
   --wpsupstream)
     WPSUPSTREAM=true
     ;;
+  --sioserver)
+    SIOSERVER=true
+    ;;
   --autoscale)
     AUTOSCALE=true
     ;;
@@ -105,6 +109,11 @@ function publish() {
   echo "start to publish $Pod"
   dotnet publish -r linux-x64 -c release -o publish /p:useapphost=true
   cd publish && zip -r ${Pod}.zip *
+  upload $Pod
+}
+
+function upload(){
+  Pod=$1
   echo "create dir:$Pod"
   az storage directory create -n "manifest/$Pod" --account-name $STORAGE_ACCOUNT -s $SA_SHARE
   az storage file upload --account-name $STORAGE_ACCOUNT -s $SA_SHARE --source $Pod.zip -p manifest/$Pod
@@ -156,6 +165,17 @@ fi
 
 if [[ $ALL || $APPSERVER ]]; then
   publish AppServer
+fi
+
+if [[ $ALL || $SIOSERVER ]]; then
+  Pod=SioServer
+  cd $DIR/../src/Pods/$Pod
+  echo "start to install $Pod"
+  npm install
+  echo "start to build $Pod"
+  npm run build
+  zip -r ${Pod}.zip *
+  upload $Pod
 fi
 
 if [[ $ALL || $ASPNET ]]; then

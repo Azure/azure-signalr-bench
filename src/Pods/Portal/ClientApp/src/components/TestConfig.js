@@ -124,6 +124,17 @@ export class TestConfig extends Component {
             console.log("type is select")
             var obj = this.state.obj;
             obj[e.target.name] = e.target.value;
+            if (e.target.name == "service") {
+                if (e.target.value == "SignalR") {
+                    obj["protocol"]="WebSocketsWithJson"
+                } else if(e.target.value == "SocketIO"){
+                    obj["protocol"]= "SocketIO";
+                    obj["serverExpectClientAck"] = "False";
+                    obj["clientExpectServerAck"] = "False";
+                } else{
+                    obj["protocol"]="RawWebSocketJson"
+                }
+            }
             this.setState({ obj: obj })
             return
         }
@@ -506,6 +517,7 @@ export class TestConfig extends Component {
                                 <Form.Control name="service" type="select" onChange={this.handleChange} as="select" defaultValue={this.state.obj.service}>
                                     <option>SignalR</option>
                                     <option>RawWebsocket</option>
+                                    <option>SocketIO</option>
                                 </Form.Control>
                             </Form.Group>
                           
@@ -547,7 +559,7 @@ export class TestConfig extends Component {
                             </Form.Group>}
                             {this.state.obj.createMode == "ConnectionString" && <Form.Group >
                                 <Form.Label >ConnectionString</Form.Label>
-                                <Form.Control name="connectionString" onChange={this.handleChange} placeholder="ASR Connection String." defaultValue={this.state.obj.connectionString} />
+                                <Form.Control name="connectionString" onChange={this.handleChange} placeholder="Connection String." defaultValue={this.state.obj.connectionString} />
                             </Form.Group>}
                             {this.state.obj.service == "SignalR" && window.perfppe  && this.state.obj.createMode == "CreateByPerf"&& <Form.Group  >
                                 <Form.Label>Environment</Form.Label>
@@ -584,14 +596,6 @@ export class TestConfig extends Component {
                                 <Form.Label>Total client connections establish round num</Form.Label>
                                 <Form.Control name="connectEstablishRoundNum" onChange={this.handleChangeNum} placeholder="Establish all connections gradually. (Default:1)" defaultValue={this.state.obj.connectEstablishRoundNum}/>
                             </Form.Group>
-                             <Form.Group >
-                                     <Form.Label>Client number</Form.Label>
-                                 <Form.Control name="clientNum" onChange={this.handleChangeNum} placeholder="set the test client number. (Default:Total con/5000)" defaultValue={this.state.edit?this.state.obj.clientNum:""}/>
-                             </Form.Group>
-                            { this.state.obj.createMode != "SelfHostedServer" && <Form.Group >
-                                     <Form.Label>Server number</Form.Label>
-                                 <Form.Control name="serverNum" onChange={this.handleChangeNum} placeholder="set the test server number. (Default:ClientNum/2)" defaultValue={this.state.edit?this.state.obj.serverNum:""}/>
-                             </Form.Group>}
                             <Form.Group  >
                                 <Form.Label>Testing Scenario</Form.Label>
                                 <Form.Control name="scenario" type="select" onChange={this.handleChange} as="select" defaultValue={this.state.obj.scenario}>
@@ -605,7 +609,7 @@ export class TestConfig extends Component {
                                 <Form.Label>GroupSize</Form.Label>
                                 <Form.Control name="groupSize" onChange={this.handleChangeNum} placeholder="set the test server number. (Default:100)" defaultValue={this.state.obj.groupSize}/>
                             </Form.Group>}
-                            <Form.Group  >
+                            {this.state.obj.service !="SocketIO" &&<Form.Group  >
                                 <Form.Label>Protocol</Form.Label>
                                 <Form.Control name="protocol" onChange={this.handleChange} as="select" defaultValue={this.state.obj.protocol}>
                                     {this.state.obj.service == "SignalR" && <option>WebSocketsWithJson</option> }
@@ -617,7 +621,21 @@ export class TestConfig extends Component {
                                     {this.state.obj.service == "RawWebsocket" && <option>RawWebSocketReliableJson</option>}
                                     {this.state.obj.service == "RawWebsocket" && <option>RawWebSocketReliableProtobuf</option>}
                                 </Form.Control>
-                            </Form.Group>
+                            </Form.Group>}
+                            {this.state.obj.service =="SocketIO" &&<Form.Group  >
+                                <Form.Label>ClientExpectServerAck</Form.Label>
+                                <Form.Control name="clientExpectServerAck" onChange={this.handleChange} as="select" defaultValue={this.state.obj.clientExpectServerAck}>
+                                    <option>False</option>
+                                    <option>True</option>
+                                </Form.Control>
+                            </Form.Group>}
+                            {this.state.obj.service =="SocketIO" &&<Form.Group  >
+                                <Form.Label>ServerExpectClientAck</Form.Label>
+                                <Form.Control name="serverExpectClientAck" onChange={this.handleChange} as="select" defaultValue={this.state.obj.serverExpectClientAck}>
+                                    <option>False</option>
+                                    <option>True</option>
+                                </Form.Control>
+                            </Form.Group>}
                             <Form.Group >
                                 <Form.Label>Connection Rate</Form.Label>
                                 <Form.Control name="rate" onChange={this.handleChangeNum} placeholder="set the Connection Rate. (Default:200)" defaultValue={this.state.obj.rate}/>
@@ -650,6 +668,14 @@ export class TestConfig extends Component {
                                 <Form.Label>Connection LifeTime </Form.Label>
                                 <Form.Control name="avgLifeTimeInMinutes" onChange={this.handleChangeNum} placeholder="Connection Lifetime (Default:0 forever) [unit minutes]) " defaultValue={this.state.obj.avgLifeTimeInMinutes} />
                             </Form.Group>
+                            <Form.Group >
+                                <Form.Label>Client number</Form.Label>
+                                <Form.Control name="clientNum" onChange={this.handleChangeNum} placeholder="set the test client number. (Default:Total con/5000)" defaultValue={this.state.edit?this.state.obj.clientNum:""}/>
+                            </Form.Group>
+                            { this.state.obj.createMode != "SelfHostedServer" && <Form.Group >
+                                <Form.Label>Server number</Form.Label>
+                                <Form.Control name="serverNum" onChange={this.handleChangeNum} placeholder="set the test server number. (Default:ClientNum/2)" defaultValue={this.state.edit?this.state.obj.serverNum:""}/>
+                            </Form.Group>}
                             <Form.Group >
                                 <Form.Label>Comments </Form.Label>
                                 <Form.Control name="comments" onChange={this.handleChange} placeholder="Leave some comments to mark " defaultValue={this.state.obj.comments} />

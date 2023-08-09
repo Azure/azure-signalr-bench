@@ -129,9 +129,9 @@ namespace Portal
                 app.UseForwardedHeaders();
                 // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();
+                app.UseMiddleware<ValidationMiddleware>();
             }
 
-            app.UseMiddleware<ValidationMiddleware>();
             //  app.UseHttpsRedirection();
             app.ApplicationServices.GetRequiredService<ICronScheduler>().Start();
             app.ApplicationServices.GetRequiredService<ClusterState>().Init().Wait();
@@ -141,9 +141,9 @@ namespace Portal
             app.UseStaticFiles();
             app.UseAuthentication();
             app.UseAuthorization();
-            app.UseMiddleware<SecretMaskingMiddleware>();
             if (env.IsProduction())
             {
+                app.UseMiddleware<SecretMaskingMiddleware>();
                 app.UseMiddleware<ReverseProxyMiddleware>();
             }
             app.UseEndpoints(endpoints =>

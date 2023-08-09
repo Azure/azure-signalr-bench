@@ -14,6 +14,8 @@ namespace Azure.SignalRBench.Common
         public int MessageSent { get; set; }
         public int MessageRecieved { get; set; }
         public int ExpectedRecievedMessageCount { get; set; }
+        public int ClientReceivedServerAckCount { get; set; }
+        public int ServerReceivedClientAckCount { get; set; }
         
         public DateTime Time { get; set; }=DateTime.UtcNow;
 

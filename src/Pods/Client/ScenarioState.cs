@@ -170,6 +170,7 @@ namespace Azure.SignalRBench.Client
                             p.IsAnonymous,
                             p.Url,
                             p.ClientLifetime, ScenarioState._clientAgentFactory,
+                            p.ClientExpectServerAck,p.ServerExpectClientAck,
                             ScenarioState._loggerFactory);
                     }
                     continueIndex = ScenarioState.ClientAgentContainer.ExpandConnections(StartId, LocalCount, ScenarioState.indexMap, GetGroupsFunc(ScenarioState.totalConnected, ScenarioState.indexMap, p.GroupDefinitions));

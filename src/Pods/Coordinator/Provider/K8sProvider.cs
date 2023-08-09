@@ -43,7 +43,8 @@ namespace Azure.SignalRBench.Coordinator.Provider
         }
 
         public async Task<string> CreateServerPodsAsync(string testId, string[] asrsConnectionStrings,
-            int serverPodCount, TestCategory testCategory,string formatProtocol, int perPodConnection, ClientBehavior behavior, CancellationToken cancellationToken)
+            int serverPodCount, TestCategory testCategory, string formatProtocol, int perPodConnection,
+            ClientBehavior behavior, CancellationToken cancellationToken)
         {
             var name = Appserver + "-" + testId;
             name = NameConverter.Truncate(name);
@@ -66,16 +67,16 @@ namespace Azure.SignalRBench.Coordinator.Provider
                 }
             };
             await _k8S.CreateNamespacedServiceAsync(service, Default, cancellationToken: cancellationToken);
-            if (testCategory == TestCategory.AspnetCoreSignalRServerless||(testCategory == TestCategory.RawWebsocket))
+            if (testCategory == TestCategory.AspnetCoreSignalRServerless || (testCategory == TestCategory.RawWebsocket))
             {
                 var ingress = new V1Ingress
                 {
                     Metadata = new V1ObjectMeta
                     {
-                        Name =NameConverter.Truncate(Upstream + "-" + testId),
+                        Name = NameConverter.Truncate(Upstream + "-" + testId),
                         Annotations = new Dictionary<string, string>
                         {
-                            ["kubernetes.io/ingress.class"]="nginx",
+                            ["kubernetes.io/ingress.class"] = "nginx",
                         }
                     },
                     Spec = new V1IngressSpec()
@@ -119,6 +120,7 @@ namespace Azure.SignalRBench.Coordinator.Provider
                 TestCategory.AspnetCoreSignalRServerless => "SignalRUpstream",
                 TestCategory.AspnetSignalR => "AspNetAppServer",
                 TestCategory.RawWebsocket => "WpsUpstream",
+                TestCategory.SocketIO => "SioServer",
                 _ => "AppServer"
             };
 
@@ -130,7 +132,7 @@ namespace Azure.SignalRBench.Coordinator.Provider
                     Labels = new Dictionary<string, string>
                     {
                         //[PerfConstants.ConfigurationKeys.TestIdKey] = testId
-                        ["type"]=Appserver
+                        ["type"] = Appserver
                     },
                     Annotations = new Dictionary<string, string>
                     {
@@ -145,7 +147,7 @@ namespace Azure.SignalRBench.Coordinator.Provider
                     {
                         MatchLabels = new Dictionary<string, string>
                         {
-                            {"app", name}
+                            { "app", name }
                         }
                     },
                     Template = new V1PodTemplateSpec
@@ -211,15 +213,7 @@ namespace Azure.SignalRBench.Coordinator.Provider
                                         {
                                             "/bin/sh", "-c"
                                         },
-                                    Args = testCategory == TestCategory.AspnetSignalR
-                                        ? new List<string>
-                                        {
-                                            "cd  /mnt/perf/manifest; xcopy .\\AspNetAppServer\\AspNetAppServer.zip C:\\home\\ ; cd C:/home/ ; tar -xf AspNetAppServer.zip ; ./AspNetAppServer.exe"
-                                        }
-                                        : new List<string>
-                                        {
-                                            $"cp /mnt/perf/manifest/{server}/{server}.zip /home ; cd /home ; unzip {server}.zip ;exec ./{server};"
-                                        },
+                                    Args = GetStartArg(testCategory, server),
                                     Env = new List<V1EnvVar>
                                     {
                                         new V1EnvVar(PerfConstants.ConfigurationKeys.PodNameStringKey,
@@ -248,52 +242,54 @@ namespace Azure.SignalRBench.Coordinator.Provider
                     }
                 }
             };
-            if (_internal&&(testCategory==TestCategory.AspnetCoreSignalRServerless || testCategory==TestCategory.RawWebsocket &&behavior==ClientBehavior.Echo))
+            if (_internal && (testCategory == TestCategory.AspnetCoreSignalRServerless ||
+                    testCategory == TestCategory.RawWebsocket && behavior == ClientBehavior.Echo))
             {
-                deployment.Spec.Template.Spec.Containers.Add( new V1Container
-                                {
-                                    Name = "proxy",
-                                    Image = 
-                                         _image,
-                                    Resources = new V1ResourceRequirements
-                                    {
-                                        Requests = new Dictionary<string, ResourceQuantity>
-                                        {
-                                            ["cpu"] = new ResourceQuantity("500m"),
-                                            ["memory"] = new ResourceQuantity("1000Mi")
-                                        },
-                                        Limits = new Dictionary<string, ResourceQuantity>
-                                        {
-                                            ["cpu"] = new ResourceQuantity("500m"),
-                                            ["memory"] = new ResourceQuantity("1000Mi")
-                                        }
-                                    },
-                                    Command = 
-                                         new List<string>
-                                        {
-                                            "/bin/sh", "-c"
-                                        },
-                                    Args =
-                                         new List<string>
-                                        {
-                                            "cd /home; ./start_proxy_client.sh"
-                                        },
-                                    Env = new List<V1EnvVar>
-                                    {
-                                        new V1EnvVar("connectCount",(perPodConnection==0?10:2*perPodConnection).ToString()
-                                            ),
-                                        new V1EnvVar("proxyPort",testCategory==TestCategory.AspnetCoreSignalRServerless?"8100":"8101"
-                                        ),
-                                    }
-                                });
+                deployment.Spec.Template.Spec.Containers.Add(new V1Container
+                {
+                    Name = "proxy",
+                    Image =
+                        _image,
+                    Resources = new V1ResourceRequirements
+                    {
+                        Requests = new Dictionary<string, ResourceQuantity>
+                        {
+                            ["cpu"] = new ResourceQuantity("500m"),
+                            ["memory"] = new ResourceQuantity("1000Mi")
+                        },
+                        Limits = new Dictionary<string, ResourceQuantity>
+                        {
+                            ["cpu"] = new ResourceQuantity("500m"),
+                            ["memory"] = new ResourceQuantity("1000Mi")
+                        }
+                    },
+                    Command =
+                        new List<string>
+                        {
+                            "/bin/sh", "-c"
+                        },
+                    Args =
+                        new List<string>
+                        {
+                            "cd /home; ./start_proxy_client.sh"
+                        },
+                    Env = new List<V1EnvVar>
+                    {
+                        new V1EnvVar("connectCount", (perPodConnection == 0 ? 10 : 2 * perPodConnection).ToString()
+                        ),
+                        new V1EnvVar("proxyPort",
+                            testCategory == TestCategory.AspnetCoreSignalRServerless ? "8100" : "8101"
+                        ),
+                    }
+                });
             }
             await _k8S.CreateNamespacedDeploymentAsync(deployment, Default, cancellationToken: cancellationToken);
-            
-            if (serverPodCount == 0)
+
+            if (serverPodCount == 0 || testCategory == TestCategory.SocketIO)
             {
                 return asrsConnectionStrings[0];
             }
-            else if (testCategory == TestCategory.RawWebsocket)
+            else if (testCategory == TestCategory.RawWebsocket )
             {
                 return asrsConnectionStrings[0] + "," + name;
             }
@@ -315,8 +311,8 @@ namespace Azure.SignalRBench.Coordinator.Provider
                     Name = name,
                     Labels = new Dictionary<string, string>
                     {
-                       // [PerfConstants.ConfigurationKeys.TestIdKey] = testId
-                       ["type"]=Client
+                        // [PerfConstants.ConfigurationKeys.TestIdKey] = testId
+                        ["type"] = Client
                     },
                     Annotations = new Dictionary<string, string>
                     {
@@ -331,7 +327,7 @@ namespace Azure.SignalRBench.Coordinator.Provider
                     {
                         MatchLabels = new Dictionary<string, string>
                         {
-                            {"app", name}
+                            { "app", name }
                         }
                     },
                     Template = new V1PodTemplateSpec
@@ -366,7 +362,7 @@ namespace Azure.SignalRBench.Coordinator.Provider
                                 new V1Container
                                 {
                                     Name = name,
-                                    Image =_image,
+                                    Image = _image,
                                     Resources = new V1ResourceRequirements
                                     {
                                         Requests = new Dictionary<string, ResourceQuantity>
@@ -436,7 +432,7 @@ namespace Azure.SignalRBench.Coordinator.Provider
             if (upstream)
             {
                 await _k8S.DeleteNamespacedIngress1Async(NameConverter.Truncate(Upstream + "-" + testId), Default);
-               // TODO: Improve
+                // TODO: Improve
                 var deployment = await _k8S.ReadNamespacedDeploymentAsync(name, Default);
                 deployment.Spec.Replicas = 0;
                 await _k8S.ReplaceNamespacedDeploymentAsync(deployment, name, Default);
@@ -450,9 +446,33 @@ namespace Azure.SignalRBench.Coordinator.Provider
                     await Task.Delay(500);
                 }
                 // Give some time for runtime upstream
-                await Task.Delay(60*1000);
+                await Task.Delay(60 * 1000);
             }
             await _k8S.DeleteNamespacedDeploymentAsync(name, Default);
+        }
+
+        private static IList<string> GetStartArg(TestCategory testCategory, string server)
+        {
+            switch (testCategory)
+            {
+                case TestCategory.AspnetSignalR:
+                    return
+                        new List<string>
+                        {
+                            "cd  /mnt/perf/manifest; xcopy .\\AspNetAppServer\\AspNetAppServer.zip C:\\home\\ ; cd C:/home/ ; tar -xf AspNetAppServer.zip ; ./AspNetAppServer.exe"
+                        };
+                case TestCategory.SocketIO:
+                    return new List<string>
+                    {
+                        $"cp /mnt/perf/manifest/{server}/{server}.zip /home ; cd /home ; unzip {server}.zip ; NODE_ENV=production node server.js;"
+                    };
+                default:
+                    return
+                        new List<string>
+                        {
+                            $"cp /mnt/perf/manifest/{server}/{server}.zip /home ; cd /home ; unzip {server}.zip ;exec ./{server};"
+                        };
+            }
         }
     }
 }
