@@ -11,11 +11,20 @@ const ServerNotifyAckReceived = "ServerNotifyAckReceived";
 const testId = process.env.testId;
 const redisConnectionString = process.env.redis;
 const podName = process.env.Podname;
-const connectionString = process.env.connectionString;
+const connectionStrings = process.env.connectionString;
 
 
 async function main() {
-    const io = new Server(8080)
+    const connectionStringArr = connectionStrings.split(" ");
+    for (let i = 0; i < connectionStringArr.length; i++) {
+        const connectionString = connectionStringArr[i];
+        await startServer(8080 + i, connectionString);
+    }
+    await reportReady();
+}
+
+async function startServer(port: number, connectionString: string) {
+    const io = new Server(port)
 
     const wpsOptions = {
         hub: "signalrbench",
@@ -63,7 +72,6 @@ async function main() {
 
         socket.on("SendToSocket", (id, time, payload, cb) => {
             io.to(id).emit(EventMeasure, time, payload);
-            socket.to(id).emit(EventMeasure, time, payload);
             cb?.(AckMessage);
             console.log(`SendToSocket ${id}`)
         });
@@ -112,8 +120,6 @@ async function main() {
             });
         });
     });
-
-    await reportReady();
 }
 
 async function reportReady() {
