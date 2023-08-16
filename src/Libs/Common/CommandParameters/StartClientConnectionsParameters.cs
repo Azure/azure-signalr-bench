@@ -13,5 +13,7 @@ namespace Azure.SignalRBench.Common
         public string Url { get; set; } = string.Empty;
         public ClientLifetimeDefinition ClientLifetime { get; set; } = new ClientLifetimeDefinition();
         public GroupDefinition[] GroupDefinitions { get; set; } = Array.Empty<GroupDefinition>();
+        public bool ClientExpectServerAck { get; set; }
+        public bool ServerExpectClientAck { get; set; }
     }
 }

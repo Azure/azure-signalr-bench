@@ -58,6 +58,9 @@ namespace Azure.SignalRBench.Client
                         case nameof(TestCategory.RawWebsocket):
                             services.AddSingleton<IClientAgentFactory, WebsocketClientAgentFactory>();
                             break;
+                        case nameof(TestCategory.SocketIO):
+                            services.AddSingleton<IClientAgentFactory, SioClientAgentFactory>();
+                            break;
                         default:
                             Console.WriteLine(
                                 $"Unknown testCategory:{hostContext.Configuration[PerfConstants.ConfigurationKeys.TestCategory]}");

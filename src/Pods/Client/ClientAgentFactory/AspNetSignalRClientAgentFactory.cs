@@ -5,11 +5,11 @@ namespace Azure.SignalRBench.Client.ClientAgentFactory
 {
     public class AspNetSignalRClientAgentFactory : IClientAgentFactory
     {
-        public IClientAgent Create(string url, Protocol protocol, string[] groups, int globalIndex,
+        public IClientAgent Create(ClientAgentConfig config,
             ClientAgentContext context)
         {
-            return new AspNetSignalRClientAgent(url ,PerfConstants.Name.HubName, protocol, $"user{globalIndex}", groups,
-                globalIndex,
+            return new AspNetSignalRClientAgent(config.Url ,PerfConstants.Name.HubName, config.Protocol, $"user{config.GlobalIndex}", config.Groups,
+                config.GlobalIndex,
                 context);
         }
     }

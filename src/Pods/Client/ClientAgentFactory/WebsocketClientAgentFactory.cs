@@ -8,35 +8,35 @@ namespace Azure.SignalRBench.Client.ClientAgentFactory
 {
     public class WebsocketClientAgentFactory : IClientAgentFactory
     {
-        private readonly ILoggerFactory _loggerFactory;
+        protected readonly ILoggerFactory LoggerFactory;
         private readonly ILogger<WebsocketClientAgentFactory> _logger;
 
         public WebsocketClientAgentFactory(ILoggerFactory loggerFactory)
         {
-            _loggerFactory = loggerFactory;
+            LoggerFactory = loggerFactory;
             _logger = loggerFactory.CreateLogger<WebsocketClientAgentFactory>();
         }
 
-        public IClientAgent Create(string connectionString, Protocol protocol, string[] groups, int globalIndex,
+        public virtual IClientAgent Create(ClientAgentConfig config,
             ClientAgentContext context)
         {
             //the app server url is hacked into this url using "," appended
-            var urls = connectionString.Split(",");
+            var urls = config.Url.Split(",");
             if (!TryParseEndpoint(urls[0], out var endpoint, out var key))
             {
-                throw new Exception($"Fail to parse wps connection string:{connectionString}");
+                throw new Exception($"Fail to parse wps connection string:{config.Url}");
             }
 
-            var uri = Uri(endpoint.Replace("http", "ws"), key, globalIndex);
+            var uri = Uri(endpoint.Replace("http", "ws"), key, config.GlobalIndex);
             return new WebSocketClientAgent(
-                uri.AbsoluteUri, urls[1], protocol,
-                groups,
-                globalIndex,
+                uri.AbsoluteUri, urls[1], config.Protocol,
+                config.Groups,
+                config.GlobalIndex,
                 context,
-                _loggerFactory);
+                LoggerFactory);
         }
 
-        private bool TryParseEndpoint(string connectionString, out string endpoint, out string key)
+        protected static bool TryParseEndpoint(string connectionString, out string endpoint, out string key)
         {
             var eps= connectionString.Split(" ");
             if (eps.Length > 1)

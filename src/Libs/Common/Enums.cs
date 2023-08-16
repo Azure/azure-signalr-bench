@@ -20,7 +20,8 @@ namespace Azure.SignalRBench.Common
         LongPollingWithJson,
         RawWebSocketJson,
         RawWebSocketReliableJson,
-        RawWebSocketReliableProtobuf
+        RawWebSocketReliableProtobuf,
+        SocketIO
     }
 
     public static class ProtocolExtentions
@@ -61,6 +62,7 @@ namespace Azure.SignalRBench.Common
         AspnetCoreSignalRServerless,
         AspnetSignalR,
         RawWebsocket,
+        SocketIO,
     }
 
     public enum TestState

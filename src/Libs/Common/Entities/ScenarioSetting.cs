@@ -14,6 +14,8 @@ namespace Azure.SignalRBench.Common
         public ClientLifetimeDefinition ClientLifetime { get; set; } = new ClientLifetimeDefinition();
         public bool IsAnonymous { get; set; }
         public Protocol Protocol { get; set; }
+        public bool ClientExpectServerAck { get; set; }
+        public bool ServerExpectClientAck { get; set; }
         public double Rate { get; set; }
     }
 }

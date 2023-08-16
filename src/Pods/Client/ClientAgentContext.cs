@@ -22,8 +22,10 @@ namespace Azure.SignalRBench.Client
 
         private static volatile int TimeBias;
         private Latency _latency = new Latency();
+        private int _receivedServerAckCount;
         private int _recievedMessageCount;
         private int _expectedRecievedMessageCount;
+        private int _receivedClientAckCount;
         private int _sentMessageCount;
         private int _totalReconnectedCount;
         public string TestId { get; set; }
@@ -49,7 +51,7 @@ namespace Azure.SignalRBench.Client
 
         public int ExpectedRecievedMessageCount => Volatile.Read(ref _expectedRecievedMessageCount);
 
-        public int ConnectedAgentCount => _dict.Count(p => p.Value == ClientAgentStatus.Connected);
+        public int ConnectedAgentCount => _dict.Count(p => p.Value == ClientAgentStatus.Connected || p.Value == ClientAgentStatus.JoiningGroups);
 
         public static long CoordinatedUtcNow()
         {
@@ -107,6 +109,16 @@ namespace Azure.SignalRBench.Client
                 Interlocked.Increment(ref _latency.MoreThan5s);
             }
         }
+        
+        public void IncreaseReceivedClientAckCount()
+        {
+            Interlocked.Increment(ref _receivedClientAckCount);
+        }
+        
+        public void IncreaseReceivedServerAckCount()
+        {
+            Interlocked.Increment(ref _receivedServerAckCount);
+        }
 
         public void IncreaseMessageSent(int expectedRecieverCount = 1)
         {
@@ -118,7 +130,7 @@ namespace Azure.SignalRBench.Client
         {
             if (hasGroups)
             {
-                _dict.AddOrUpdate(agent, ClientAgentStatus.Connected, (a, s) => ClientAgentStatus.JoiningGroups);
+                _dict.AddOrUpdate(agent, ClientAgentStatus.JoiningGroups, (a, s) => ClientAgentStatus.JoiningGroups);
                 await agent.JoinGroupAsync();
                 _dict.AddOrUpdate(agent, ClientAgentStatus.Connected, (a, s) => ClientAgentStatus.Connected);
             }
@@ -139,7 +151,7 @@ namespace Azure.SignalRBench.Client
 
         public Task OnClosed(IClientAgent agent)
         {
-            _dict.AddOrUpdate(agent, ClientAgentStatus.Reconnecting, (a, s) => ClientAgentStatus.Closed);
+            _dict.AddOrUpdate(agent, ClientAgentStatus.Closed, (a, s) => ClientAgentStatus.Closed);
             return Task.CompletedTask;
         }
 
@@ -152,6 +164,8 @@ namespace Azure.SignalRBench.Client
                 MessageRecieved = RecievedMessageCount,
                 ExpectedRecievedMessageCount = ExpectedRecievedMessageCount,
                 MessageSent = SentMessageCount,
+                ClientReceivedServerAckCount = _receivedServerAckCount,
+                ServerReceivedClientAckCount = _receivedClientAckCount,
                 Latency = GetLatency(),
             };
 
@@ -196,6 +210,8 @@ namespace Azure.SignalRBench.Client
             _expectedRecievedMessageCount = 0;
             _sentMessageCount = 0;
             _totalReconnectedCount = 0;
+            _receivedServerAckCount = 0;
+            _receivedClientAckCount = 0;
         }
     }
 }

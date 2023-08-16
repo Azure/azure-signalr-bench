@@ -55,6 +55,10 @@ namespace Portal.Entity
         public int MessageSize { get; set; } = 2048;
 
         public string Protocol { get; set; } = Azure.SignalRBench.Common.Protocol.WebSocketsWithJson.ToString();
+        
+        public string ServerExpectClientAck { get; set; } 
+        
+        public string ClientExpectServerAck { get; set; } 
 
         public int Rate { get; set; } = 200;
 
@@ -113,6 +117,9 @@ namespace Portal.Entity
                 case "SignalR":
                     testCategory = Framework == "Netcore" ? TestCategory.AspnetCoreSignalR : TestCategory.AspnetSignalR;
                     break;
+                case "SocketIO":
+                    testCategory = TestCategory.SocketIO;
+                    break;
             }
 
             for (var i = 0; i < RoundNum; i++)
@@ -160,9 +167,11 @@ namespace Portal.Entity
                     TotalConnectionRound = ConnectEstablishRoundNum,
                     Rounds = roundsettings.ToArray(),
                     IsAnonymous = true,
-                    Protocol = Enum.TryParse(Protocol, out Protocol protocol)
+                    Protocol =  Enum.TryParse(Protocol, out Protocol protocol)
                         ? protocol
                         : throw new Exception($"Unknown Protocol {Protocol}"),
+                    ClientExpectServerAck = bool.Parse(ClientExpectServerAck),
+                    ServerExpectClientAck = bool.Parse(ServerExpectClientAck),
                     Rate = Rate,
                     ClientLifetime = new ClientLifetimeDefinition()
                     {
