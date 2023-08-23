@@ -3,6 +3,7 @@ using System.Threading.Tasks;
 using Azure.SignalRBench.Common;
 using Microsoft.Extensions.Logging;
 using SocketIOClient;
+using SocketIOClient.Transport;
 
 namespace Azure.SignalRBench.Client.ClientAgent
 {
@@ -32,7 +33,8 @@ namespace Azure.SignalRBench.Client.ClientAgent
 
             Client = new SocketIO(url, new SocketIOOptions()
             {
-                Path = $"/clients/socketio/hubs/{PerfConstants.Name.HubName}"
+                Path = $"/clients/socketio/hubs/{PerfConstants.Name.HubName}",
+                Transport = TransportProtocol.WebSocket,
             });
 
             Client.OnDisconnected += (sender, args) => { Context.OnClosed(this); };

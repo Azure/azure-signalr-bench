@@ -55,10 +55,10 @@ namespace Portal.Entity
         public int MessageSize { get; set; } = 2048;
 
         public string Protocol { get; set; } = Azure.SignalRBench.Common.Protocol.WebSocketsWithJson.ToString();
-        
-        public string ServerExpectClientAck { get; set; } 
-        
-        public string ClientExpectServerAck { get; set; } 
+
+        public string ServerExpectClientAck { get; set; } = "False";
+
+        public string ClientExpectServerAck { get; set; } = "False";
 
         public int Rate { get; set; } = 200;
 
