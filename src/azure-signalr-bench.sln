@@ -50,6 +50,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WpsUpstream", "Pods\WpsUpst
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SioClient", "Pods\SioClient\SioClient.csproj", "{26DEC06D-9E33-461D-9407-33D4C5A89465}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LocalBench", "Pods\LocalBench\LocalBench.csproj", "{83E434D6-066C-42C2-92B8-423E2ECC7363}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -120,6 +122,10 @@ Global
 		{26DEC06D-9E33-461D-9407-33D4C5A89465}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{26DEC06D-9E33-461D-9407-33D4C5A89465}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{26DEC06D-9E33-461D-9407-33D4C5A89465}.Release|Any CPU.Build.0 = Release|Any CPU
+		{83E434D6-066C-42C2-92B8-423E2ECC7363}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{83E434D6-066C-42C2-92B8-423E2ECC7363}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{83E434D6-066C-42C2-92B8-423E2ECC7363}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{83E434D6-066C-42C2-92B8-423E2ECC7363}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -140,6 +146,7 @@ Global
 		{E862FB04-DFAF-494B-8BF5-01F8D12B3BA7} = {ADAB79C6-C6CF-4D1C-BAB6-8F2476317C46}
 		{C24C4A22-1DF1-415E-8FFB-38654504BF0F} = {ADAB79C6-C6CF-4D1C-BAB6-8F2476317C46}
 		{01B4A98C-18F4-4762-8A86-0BCE30CDFA2B} = {ADAB79C6-C6CF-4D1C-BAB6-8F2476317C46}
+		{83E434D6-066C-42C2-92B8-423E2ECC7363} = {ADAB79C6-C6CF-4D1C-BAB6-8F2476317C46}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {74A95D59-392F-476C-8DE7-7FECE6F9E7BE}
