@@ -24,7 +24,7 @@ namespace Azure.SignalRBench.AppServer
                   logging.AddConsole(options =>
                   {
                       options.IncludeScopes = true;
-                      options.DisableColors = false;
+                      options.DisableColors = true;
                       options.TimestampFormat = "hh:mm:ss yyyy/MM/dd";
                   });
                   logging.AddProvider(
