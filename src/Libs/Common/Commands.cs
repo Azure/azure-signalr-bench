@@ -22,7 +22,7 @@ namespace Azure.SignalRBench.Common
 
         public static class AppServer
         {
-            public static readonly string GracefulShutdownThenRestart = "GracefulShutdownThenRestart";
+            public static readonly string GracefulShutdown = "GracefulShutdown";
         }
 
         public static class Coordinator

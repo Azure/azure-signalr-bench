@@ -432,21 +432,6 @@ namespace Azure.SignalRBench.Coordinator.Provider
             if (upstream)
             {
                 await _k8S.DeleteNamespacedIngress1Async(NameConverter.Truncate(Upstream + "-" + testId), Default);
-                // TODO: Improve
-                var deployment = await _k8S.ReadNamespacedDeploymentAsync(name, Default);
-                deployment.Spec.Replicas = 0;
-                await _k8S.ReplaceNamespacedDeploymentAsync(deployment, name, Default);
-                while (true)
-                {
-                    deployment = await _k8S.ReadNamespacedDeploymentAsync(name, Default);
-                    if (deployment.Status.Replicas == null || deployment.Status.Replicas == 0)
-                    {
-                        break;
-                    }
-                    await Task.Delay(500);
-                }
-                // Give some time for runtime upstream
-                await Task.Delay(60 * 1000);
             }
             await _k8S.DeleteNamespacedDeploymentAsync(name, Default);
         }

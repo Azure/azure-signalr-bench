@@ -74,6 +74,13 @@ namespace Azure.SignalRBench.Messages
             await client.SendCommandAsync(clientInstance, message);
             return message;
         }
+        
+        public static async Task<CommandMessage> StopTestAsync(this IMessageClient client)
+        {
+            var message = new CommandMessage { Command = Commands.AppServer.GracefulShutdown };
+            await client.SendCommandAsync(Roles.AppServers, message);
+            return message;
+        }
 
         #endregion
 
@@ -81,7 +88,7 @@ namespace Azure.SignalRBench.Messages
 
         public static async Task<CommandMessage> AppServerGracefulShutdownThenRestartAsync(this IMessageClient client, string serverId)
         {
-            var message = new CommandMessage { Command = Commands.AppServer.GracefulShutdownThenRestart };
+            var message = new CommandMessage { Command = Commands.AppServer.GracefulShutdown };
             await client.SendCommandAsync(serverId, message);
             return message;
         }

@@ -162,7 +162,8 @@ namespace Azure.SignalRBench.Coordinator
                     await Task.Delay(5000);
                     suspiciousCount = await UpdateTestReports(round, _roundTotalConnected, suspiciousCount);
                 }
-
+                
+                await StopTestAsync(messageClient, cancellationToken);
                 // await UpdateTestStatus("Stopping client connections");
                 // await StopClientConnectionsAsync(messageClient, cancellationToken);
                 await UpdateTestStatus("Test Finishes", testState: TestState.Finished);
@@ -527,7 +528,7 @@ namespace Azure.SignalRBench.Coordinator
 
                 _logger.LogInformation("Test job {testId}: Creating server pods.", Job.TestId);
                 _url = await K8SProvider.CreateServerPodsAsync(Job.TestId, asrsConnectionStrings,
-                    serverPodCount, Job.TestMethod, Job.ScenarioSetting.Protocol.GetFormatProtocol(),Job.ScenarioSetting.TotalConnectionCount/Job.PodSetting.ClientCount,Job.ScenarioSetting.Rounds[0].ClientSettings[0].Behavior,
+                    serverPodCount, Job.TestMethod, Job.ScenarioSetting.Protocol.GetFormatProtocol(),Job.ScenarioSetting.TotalConnectionCount/Job.PodSetting.ServerCount,Job.ScenarioSetting.Rounds[0].ClientSettings[0].Behavior,
                     cancellationToken);
                 _logger.LogInformation("Test job {testId}: Creating client pods.", Job.TestId);
                 await K8SProvider.CreateClientPodsAsync(Job.TestId, Job.TestMethod, clientPodCount, cancellationToken);
@@ -654,6 +655,14 @@ namespace Azure.SignalRBench.Coordinator
                 new StopScenarioParameters());
             await task;
             _logger.LogInformation(" Stop scenario acked.");
+        }
+        
+        private async Task StopTestAsync(   
+            MessageClient messageClient,
+            CancellationToken cancellationToken)
+        {
+            await messageClient.StopTestAsync();
+            _logger.LogInformation(" Stop scenario.");
         }
 
         private async Task StopClientConnectionsAsync(
