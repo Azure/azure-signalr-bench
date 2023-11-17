@@ -33,7 +33,7 @@ namespace Azure.SignalRBench.AppServer
             _messageClient = await MessageClient.ConnectAsync(connectionString, testId, podName);
             await _messageClient.WithHandlers(
                 MessageHandler.CreateCommandHandler(Commands.General.Crash, Crash),
-                MessageHandler.CreateCommandHandler(Commands.AppServer.GracefulShutdown, Stop),
+                MessageHandler.CreateCommandHandler(Roles.AppServers, Commands.AppServer.GracefulShutdown, Stop),
                 MessageHandler.CreateCommandHandler(Roles.AppServers, Commands.General.Crash, Crash));
             _logger.LogInformation("Message handlers inited.");
             await _messageClient.ReportReadyAsync(new ReportReadyParameters() { Role = Roles.AppServers });
