@@ -607,7 +607,7 @@ export class TestConfig extends Component {
                             </Form.Group>
                             {this.state.obj.scenario == "GroupBroadcast" && <Form.Group >
                                 <Form.Label>GroupSize</Form.Label>
-                                <Form.Control name="groupSize" onChange={this.handleChangeNum} placeholder="set the test server number. (Default:100)" defaultValue={this.state.obj.groupSize}/>
+                                <Form.Control name="groupSize" onChange={this.handleChangeNum} placeholder="set connection count inside a group. (Default:100)" defaultValue={this.state.obj.groupSize}/>
                             </Form.Group>}
                             {this.state.obj.service !="SocketIO" &&<Form.Group  >
                                 <Form.Label>Protocol</Form.Label>

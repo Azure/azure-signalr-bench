@@ -40,10 +40,7 @@ namespace Azure.SignalRBench.Coordinator
 
         private string _url = "http://localhost:8080/";
         private static int _scaleLock = 0;
-        private static volatile string? _dir;
-        private static volatile int _finishedJob = 0;
-        private static volatile int _unitTotal = 0;
-        private static volatile int _instanceTotal = 0;
+        private static Dictionary<string,directory> _dirs= new Dictionary<string,directory >();
         private static readonly object UnitLock = new object();
 
         public TestRunner(
@@ -91,24 +88,14 @@ namespace Azure.SignalRBench.Coordinator
                 _logger.LogWarning("Test job {testId}: No service configuration.", Job.TestId);
                 return;
             }
-
-            while (true)
+        
+            if (Job.Dir != null)
             {
-                await Task.Delay(2000);
-                if (Job.Dir == null)
-                {
-                    break;
-                }
-
                 lock (UnitLock)
                 {
-                    if (_dir == null || Job.Dir == _dir)
-                    {
-                        _dir = Job.Dir;
-                        break;
-                    }
+                    _dirs.TryAdd(Job.Dir, new directory());
                 }
-            }
+            }  
 
             _timer.Start();
             _testStatusAccessor =
@@ -205,14 +192,13 @@ namespace Azure.SignalRBench.Coordinator
                     {
                         if (Job.Dir != null)
                         {
-                            _unitTotal -= Job.ServiceSetting[0].Size.Value;
-                            _instanceTotal--;
-                            _finishedJob++;
-                            if (_finishedJob == Job.Total)
+                            var dirConfig=_dirs[Job.Dir];
+                            dirConfig._unitTotal -= Job.ServiceSetting[0].Size.Value;
+                            dirConfig._instanceTotal--;
+                            dirConfig._finishedJob++;
+                            if (dirConfig._finishedJob == Job.Total)
                             {
-                                _finishedJob = 0;
-                                _instanceTotal = 0;
-                                _dir = null;
+                                _dirs.Remove(Job.Dir);
                             }
                         }
                     }
@@ -352,10 +338,11 @@ namespace Azure.SignalRBench.Coordinator
                     await Task.Delay(StaticRandom.Next(5000));
                     lock (UnitLock)
                     {
-                        if (_unitTotal >= Job.ServiceSetting[0].UnitLimit ||
-                            _instanceTotal >= Job.ServiceSetting[0].InstanceLimit) continue;
-                        _unitTotal += ss.Size.Value;
-                        _instanceTotal++;
+                        var dirConfig=_dirs[Job.Dir];
+                        if (dirConfig._unitTotal >= Job.ServiceSetting[0].UnitLimit ||
+                            dirConfig._instanceTotal >= Job.ServiceSetting[0].InstanceLimit) continue;
+                        dirConfig._unitTotal += ss.Size.Value;
+                        dirConfig._instanceTotal++;
                         break;
                     }
                 }
@@ -509,12 +496,12 @@ namespace Azure.SignalRBench.Coordinator
             MessageClient messageClient,
             CancellationToken cancellationToken)
         {
-            while (Interlocked.CompareExchange(ref _scaleLock, 1, 0) == 1)
-            {
-                await UpdateTestStatus("Deployment queueing..");
-                _logger.LogInformation("Wait for deployment to be ready. Avoid race condition...");
-                await Task.Delay(5000);
-            }
+            // while (Interlocked.CompareExchange(ref _scaleLock, 1, 0) == 1)
+            // {
+            //     await UpdateTestStatus("Deployment queueing..");
+            //     _logger.LogInformation("Wait for deployment to be ready. Avoid race condition...");
+            //     await Task.Delay(5000);
+            // }
 
             try
             {
@@ -546,8 +533,8 @@ namespace Azure.SignalRBench.Coordinator
             }
             finally
             {
-                _logger.LogInformation("Reset scale control to 0.");
-                Interlocked.CompareExchange(ref _scaleLock, 0, 1);
+                // _logger.LogInformation("Reset scale control to 0.");
+               // Interlocked.CompareExchange(ref _scaleLock, 0, 1);
             }
         }
 
@@ -680,6 +667,13 @@ namespace Azure.SignalRBench.Coordinator
                 });
             await task;
             _logger.LogInformation(" Stop client connections acked.");
+        }
+
+        private class directory
+        {
+            public   int _finishedJob = 0;
+            public   int _unitTotal = 0;
+            public   int _instanceTotal = 0; 
         }
     }
 }
