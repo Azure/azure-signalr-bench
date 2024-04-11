@@ -61,7 +61,7 @@ namespace Azure.SignalRBench.Client.ClientAgent
         }
 
         //This method should be sent directly to appserver to lower pressure on wps runtime 
-        public Task BroadcastAsync(string payload)
+        public virtual Task BroadcastAsync(string payload)
         {
             var data = new RawWebsocketData()
             {
@@ -72,7 +72,7 @@ namespace Azure.SignalRBench.Client.ClientAgent
             return SendToAppServer(data);
         }
 
-        public Task EchoAsync(string payload)
+        public virtual Task EchoAsync(string payload)
         {
             var data = new RawWebsocketData()
             {
@@ -83,7 +83,7 @@ namespace Azure.SignalRBench.Client.ClientAgent
             return Connection.SendEventAsync(NameConverter.GenerateHubName(Context.TestId), data);
         }
 
-        public Task GroupBroadcastAsync(string group, string payload)
+        public virtual Task GroupBroadcastAsync(string group, string payload)
         {
             var data = new RawWebsocketData()
             {
@@ -94,7 +94,7 @@ namespace Azure.SignalRBench.Client.ClientAgent
         }
         
         //This method is sent directly to appserver to lower pressure on wps runtime 
-        public Task SendToClientAsync(int index, string payload)
+        public virtual Task SendToClientAsync(int index, string payload)
         {
             var data = new RawWebsocketData()
             {
@@ -211,7 +211,7 @@ namespace Azure.SignalRBench.Client.ClientAgent
             }
         }
 
-        private async Task SendToAppServer(RawWebsocketData data)
+        protected async Task SendToAppServer(RawWebsocketData data)
         {
             var request = new HttpRequestMessage(HttpMethod.Post, _appserverUrl)
             {

@@ -87,6 +87,9 @@ while [[ "$#" > 0 ]]; do
     LOCATION="$1"
     shift
     ;;
+  --wpspyserver)
+    WPSPYSERVER=true
+    ;;
   --all | -a)
     ALL=true
     ;;
@@ -175,6 +178,18 @@ if [[ $ALL || $SIOSERVER ]]; then
   echo "start to build $Pod"
   npm run build
   zip -r ${Pod}.zip *
+  upload $Pod
+fi
+
+if [[ $ALL || $WPSPYSERVER ]]; then
+  Pod=WpsPyServer
+  cd $DIR/../src/Pods/$Pod
+  echo "start to build $Pod"
+  python3 -m venv venv
+  source venv/bin/activate
+  pip install pip-tools
+  python3 -m build 
+  cd dist && zip -r ${Pod}.zip *
   upload $Pod
 fi
 
