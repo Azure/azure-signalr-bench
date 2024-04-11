@@ -11,7 +11,7 @@ import Terminal from 'terminal-in-react';
 export class TestConfig extends Component {
     constructor(props) {
         super(props);
-        this.defaultObj={ signalRUnitSize: 1, mode: "Default", service: "SignalR", scenario: "Echo", framework: "Netcore", env: "AzureGlobal", createMode: "ConnectionString" };
+        this.defaultObj={ signalRUnitSize: 1, mode: "Default", service: "SignalR", scenario: "Echo", serverSdk:"CSharp", framework: "Netcore", env: "AzureGlobal", createMode: "ConnectionString" };
         this.state = {
             show: false, loading: true, obj:JSON.parse(JSON.stringify(this.defaultObj)),
             showjson: false,
@@ -125,12 +125,14 @@ export class TestConfig extends Component {
             var obj = this.state.obj;
             obj[e.target.name] = e.target.value;
             if (e.target.name == "service") {
+                obj["serverSdk"]="SignalR"
                 if (e.target.value == "SignalR") {
                     obj["protocol"]="WebSocketsWithJson"
                 } else if(e.target.value == "SocketIO"){
                     obj["protocol"]= "SocketIO";
                     obj["serverExpectClientAck"] = "False";
                     obj["clientExpectServerAck"] = "False";
+                    obj["serverSdk"]="NodeJs"
                 } else{
                     obj["protocol"]="RawWebSocketJson"
                 }
@@ -542,7 +544,17 @@ export class TestConfig extends Component {
                                     <code> https://{window.location.hostname}/upstream/{"{hub}"}/api/{"{category}"}/{"{event}"}</code>
                                 </div>
                             }
-                             {(this.state.obj.service == "RawWebsocket" ) &&
+                            {(this.state.obj.service == "RawWebsocket") &&
+                                <div>
+                                    SDK
+                                    <Form.Control name="serverSdk" type="select" onChange={this.handleChange} as="select"
+                                                  defaultValue={this.state.obj.serverSdk}>
+                                        <option>CSharp</option>
+                                        <option>Python</option>
+                                    </Form.Control>
+                                </div>
+                            }
+                            {(this.state.obj.service == "RawWebsocket") &&
                                 <div>
                                     <strong>Add upstream settings: </strong>
                                     <code> https://{window.location.hostname}/upstream/{"{event}"}</code>

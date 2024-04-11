@@ -29,6 +29,8 @@ namespace Portal.Entity
         
         public string? ServerUrl { get; set; }
 
+        public string ServerSdk { get; set; } 
+
         public int SignalRUnitSize { get; set; }
 
         public int ServerNum { get; set; } = -1;
@@ -109,7 +111,15 @@ namespace Portal.Entity
             switch (Service)
             {
                 case "RawWebsocket":
-                    testCategory = TestCategory.RawWebsocket;
+                    switch (ServerSdk)
+                    {
+                        case "Python":
+                            testCategory = TestCategory.WebPubSubPythonSdk;
+                            break;
+                        default:
+                            testCategory = TestCategory.RawWebsocket;
+                            break;
+                    }
                     break;
                 case "SignalR" when serviceMode == SignalRServiceMode.Serverless:
                     testCategory = TestCategory.AspnetCoreSignalRServerless;

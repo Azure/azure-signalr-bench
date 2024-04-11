@@ -13,8 +13,9 @@ dependencies = [
     'fastapi',
     'pydantic',
     'uvicorn',
+    'aioredis'
 ]
-requires-python = ">=3.9"
+requires-python = ">=3.8"
 
 [project.scripts]
 start-server = "pyserver.main:start_app"

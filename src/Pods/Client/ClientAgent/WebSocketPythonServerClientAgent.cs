@@ -16,10 +16,10 @@ using Newtonsoft.Json.Serialization;
 
 namespace Azure.SignalRBench.Client.ClientAgent
 {
-    class WebSocketClientAgentPythonServer : WebSocketClientAgent
+    class WebSocketPythonServerClientAgent : WebSocketClientAgent
     {
         
-        public WebSocketClientAgentPythonServer(string url, string appserverUrl, Protocol protocol, string[] groups,
+        public WebSocketPythonServerClientAgent(string url, string appserverUrl, Protocol protocol, string[] groups,
             int globalIndex,
             ClientAgentContext context,
             ILoggerFactory loggerFactory):base(url, appserverUrl, protocol, groups, globalIndex, context, loggerFactory)

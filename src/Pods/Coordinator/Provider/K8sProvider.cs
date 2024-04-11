@@ -121,6 +121,7 @@ namespace Azure.SignalRBench.Coordinator.Provider
                 TestCategory.AspnetSignalR => "AspNetAppServer",
                 TestCategory.RawWebsocket => "WpsUpstream",
                 TestCategory.SocketIO => "SioServer",
+                TestCategory.WebPubSubPythonSdk => "WpsPyServer",
                 _ => "AppServer"
             };
 
@@ -450,6 +451,11 @@ namespace Azure.SignalRBench.Coordinator.Provider
                     return new List<string>
                     {
                         $"cp /mnt/perf/manifest/{server}/{server}.zip /home ; cd /home ; unzip {server}.zip ; NODE_ENV=production node server.js;"
+                    };
+                case TestCategory.WebPubSubPythonSdk:
+                    return new List<string>
+                    {
+                        $"cp /mnt/perf/manifest/{server}/{server}.zip /home ; cd /home ; unzip {server}.zip ; pip install pyserver-1.0.0-py3-none-any.whl; start-server;"
                     };
                 default:
                     return
