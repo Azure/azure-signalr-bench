@@ -290,7 +290,7 @@ namespace Azure.SignalRBench.Coordinator.Provider
             {
                 return asrsConnectionStrings[0];
             }
-            else if (testCategory == TestCategory.RawWebsocket )
+            else if (testCategory == TestCategory.RawWebsocket || testCategory == TestCategory.WebPubSubPythonSdk)
             {
                 return asrsConnectionStrings[0] + "," + name;
             }

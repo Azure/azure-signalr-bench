@@ -26,7 +26,7 @@ namespace Azure.SignalRBench.Client.ClientAgent
         {
         }
 
-        public Task GroupBroadcastAsync(string group, string payload)
+        public override Task GroupBroadcastAsync(string group, string payload)
         {
             var data = new RawWebsocketData()
             {
