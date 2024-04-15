@@ -23,6 +23,7 @@ Arguments
    --server                             [Optional] publish server
    --client                             [Optional] publish client
    --sioserver                          [Optional] publish socket.io server
+   --wpspyserver                        [Optional] publish wps python server
    --help|-h                            Print help
 EOF
 }
@@ -187,7 +188,7 @@ if [[ $ALL || $WPSPYSERVER ]]; then
   echo "start to build $Pod"
   python3 -m venv venv
   source venv/bin/activate
-#  pip install pip-tools
+  pip install pip-tools
   python3 -m build 
   cd dist && zip -r ${Pod}.zip *
   upload $Pod

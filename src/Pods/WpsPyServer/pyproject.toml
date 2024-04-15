@@ -8,8 +8,8 @@ build-backend = "setuptools.build_meta"
 name = "pyserver"
 version = "1.0.0"
 dependencies = [
-   'azure-messaging-webpubsubclient',
-    'azure-messaging-webpubsubservice',
+    'azure-messaging-webpubsubclient >= 1.1.0',
+    'azure-messaging-webpubsubservice >= 1.0.0b1',
     'fastapi',
     'pydantic',
     'uvicorn',

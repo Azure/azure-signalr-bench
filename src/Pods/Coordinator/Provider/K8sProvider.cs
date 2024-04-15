@@ -455,7 +455,7 @@ namespace Azure.SignalRBench.Coordinator.Provider
                 case TestCategory.WebPubSubPythonSdk:
                     return new List<string>
                     {
-                        $"cp /mnt/perf/manifest/{server}/{server}.zip /home ; cd /home ; unzip {server}.zip ; pip install pyserver-1.0.0-py3-none-any.whl; start-server;"
+                        $"cp /mnt/perf/manifest/{server}/{server}.zip /home ; cd /home ; unzip {server}.zip ; pip install azure_messaging_webpubsubclient-1.1.0-py3-none-any.whl pyserver-1.0.0-py3-none-any.whl; start-server;"
                     };
                 default:
                     return
