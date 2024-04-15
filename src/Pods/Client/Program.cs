@@ -61,6 +61,9 @@ namespace Azure.SignalRBench.Client
                         case nameof(TestCategory.SocketIO):
                             services.AddSingleton<IClientAgentFactory, SioClientAgentFactory>();
                             break;
+                        case nameof(TestCategory.WebPubSubPythonSdk):
+                            services.AddSingleton<IClientAgentFactory, WebsocketPythonServerClientAgentFactory>();
+                            break;
                         default:
                             Console.WriteLine(
                                 $"Unknown testCategory:{hostContext.Configuration[PerfConstants.ConfigurationKeys.TestCategory]}");

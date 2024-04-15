@@ -1,0 +1,21 @@
+# pyproject.toml
+
+[build-system]
+requires      = ["setuptools>=61.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pyserver"
+version = "1.0.0"
+dependencies = [
+    'azure-messaging-webpubsubclient >= 1.1.0',
+    'azure-messaging-webpubsubservice >= 1.0.0b1',
+    'fastapi',
+    'pydantic',
+    'uvicorn',
+    'aioredis'
+]
+requires-python = ">=3.8"
+
+[project.scripts]
+start-server = "pyserver.main:start_app"

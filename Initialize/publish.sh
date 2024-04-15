@@ -23,6 +23,7 @@ Arguments
    --server                             [Optional] publish server
    --client                             [Optional] publish client
    --sioserver                          [Optional] publish socket.io server
+   --wpspyserver                        [Optional] publish wps python server
    --help|-h                            Print help
 EOF
 }
@@ -87,6 +88,9 @@ while [[ "$#" > 0 ]]; do
     LOCATION="$1"
     shift
     ;;
+  --wpspyserver)
+    WPSPYSERVER=true
+    ;;
   --all | -a)
     ALL=true
     ;;
@@ -135,7 +139,7 @@ if [[ $ALL || $PORTAL ]]; then
   echo "tenant is $tenant"
   cd $DIR/../src/Pods/Portal
   cat appsettings.template.json | replace CLIENTID_PLACE_HOLDER $appId | replace TENANTID_PLACE_HOLDER $tenant > appsettings.json
-  publish Portal
+#  publish Portal
   cd $DIR/yaml/portal
   kubectl delete deployment portal  > /dev/null 2>&1 || true
   cat portal.yaml | replace KVURL_PLACE_HOLDER $KVURL | replace MSI_PLACE_HOLDER $AGENTPOOL_MSI_CLIENT_ID | replace IMAGE_PLACE_HOLDER $image | kubectl apply -f -
@@ -175,6 +179,18 @@ if [[ $ALL || $SIOSERVER ]]; then
   echo "start to build $Pod"
   npm run build
   zip -r ${Pod}.zip *
+  upload $Pod
+fi
+
+if [[ $ALL || $WPSPYSERVER ]]; then
+  Pod=WpsPyServer
+  cd $DIR/../src/Pods/$Pod
+  echo "start to build $Pod"
+  python3 -m venv venv
+  source venv/bin/activate
+  pip install pip-tools
+  python3 -m build 
+  cd dist && zip -r ${Pod}.zip *
   upload $Pod
 fi
 

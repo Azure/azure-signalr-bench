@@ -62,6 +62,7 @@ namespace Azure.SignalRBench.Common
         AspnetCoreSignalRServerless,
         AspnetSignalR,
         RawWebsocket,
+        WebPubSubPythonSdk,
         SocketIO,
     }
 

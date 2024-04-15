@@ -328,3 +328,6 @@ ASALocalRun/
 
 # MFractors (Xamarin productivity tool) working folder 
 .mfractor/
+/src/Pods/Py3Server/dist/
+/src/Pods/Py3Server/perf_wps_server.egg-info/
+/src/Pods/Py3Server/venv/
