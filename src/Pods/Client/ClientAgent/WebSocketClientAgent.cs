@@ -145,6 +145,8 @@ namespace Azure.SignalRBench.Client.ClientAgent
                 _logger = logger;
 
                 _socket.Disconnected += _ => { _closed = true; return _context.OnClosed(_agent); };
+                _socket.Connected += _ => { _closed = false;
+                    return _context.OnConnected(_agent, true);};
             }
 
             public void On(Action<long, string> callback)
