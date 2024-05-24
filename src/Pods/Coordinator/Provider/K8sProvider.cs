@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Net.Http;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -39,7 +40,15 @@ namespace Azure.SignalRBench.Coordinator.Provider
         public void Initialize(string config)
         {
             using var stream = new MemoryStream(Encoding.UTF8.GetBytes(config));
-            _k8S = new Kubernetes(KubernetesClientConfiguration.BuildConfigFromConfigFile(stream));
+            var handler = new HttpClientHandler
+            {
+                ClientCertificateOptions = ClientCertificateOption.Manual,
+                ServerCertificateCustomValidationCallback = (message, cert, chain, sslPolicyErrors) =>
+                {
+                    return true;
+                }
+            };
+            _k8S = new Kubernetes(KubernetesClientConfiguration.BuildConfigFromConfigFile(stream), new HttpClient(handler));
         }
 
         public async Task<string> CreateServerPodsAsync(string testId, string[] asrsConnectionStrings,
@@ -455,7 +464,7 @@ namespace Azure.SignalRBench.Coordinator.Provider
                 case TestCategory.WebPubSubPythonSdk:
                     return new List<string>
                     {
-                        $"cp /mnt/perf/manifest/{server}/{server}.zip /home ; cd /home ; unzip {server}.zip ; pip install azure_messaging_webpubsubclient-1.1.0-py3-none-any.whl pyserver-1.0.0-py3-none-any.whl; start-server;"
+                        $"cp /mnt/perf/manifest/{server}/{server}.zip /home ; cd /home ; unzip {server}.zip ; pip install pyserver-1.0.0-py3-none-any.whl --break-system-packages; start-server;"
                     };
                 default:
                     return
