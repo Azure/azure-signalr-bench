@@ -57,6 +57,7 @@ namespace Azure.SignalRBench.AppServer
                 option.ConnectionCount = Configuration[PerfConstants.ConfigurationKeys.ConnectionNum] != null
                     ? Configuration.GetValue<int>(PerfConstants.ConfigurationKeys.ConnectionNum)
                     : 50;
+                option.AllowStatefulReconnects = true;
                 var connectString = Configuration[PerfConstants.ConfigurationKeys.ConnectionString];
                 // multiple endpoint
                 var endpoints = connectString.Split(" ");
