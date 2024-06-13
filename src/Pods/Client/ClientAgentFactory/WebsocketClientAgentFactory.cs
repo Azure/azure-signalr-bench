@@ -63,7 +63,7 @@ namespace Azure.SignalRBench.Client.ClientAgentFactory
         protected static Uri Uri(string endpoint, string key, int userId)
         {
             var serviceClient = new WebPubSubServiceClient(new Uri(endpoint), PerfConstants.Name.HubName, new AzureKeyCredential(key));
-            var token = serviceClient.GenerateClientAccessUri(TimeSpan.FromHours(10), "user"+userId.ToString(),
+            var token = serviceClient.GetClientAccessUri(TimeSpan.FromHours(10), "user".ToString(),
                 new[] {"webpubsub.sendToGroup", "webpubsub.joinLeaveGroup"});
             return token;
         }

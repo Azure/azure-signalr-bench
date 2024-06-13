@@ -4,6 +4,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using Azure.SignalRBench.AppServer.Hub;
 using Azure.SignalRBench.AppServer.Router;
 using Azure.SignalRBench.Common;
@@ -68,6 +69,12 @@ namespace Azure.SignalRBench.AppServer
                 {
                     option.Endpoints = endpoints.Select(e => new ServiceEndpoint(e)).ToArray();
                 }
+                //
+                // option.ClaimsProvider = context => new[]
+                // {
+                //     new Claim(ClaimTypes.NameIdentifier, "user"),
+                //     new Claim("customClaim", "claim")
+                // };
             });
             services.AddSingleton<MessageClientHolder>();
             services.AddHostedService<ServerHostedService>();
