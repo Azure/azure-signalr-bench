@@ -10,5 +10,7 @@ namespace Azure.SignalRBench.Client
         public int GlobalIndex { get; set; }
         public bool ClientExpectServerAck { get; set; }
         public bool ServerExpectClientAck { get; set; }
+        public int PublishQos { get; set; }
+        public int SubscribeQos { get; set; }
     }
 }

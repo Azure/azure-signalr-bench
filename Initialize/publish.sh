@@ -139,7 +139,7 @@ if [[ $ALL || $PORTAL ]]; then
   echo "tenant is $tenant"
   cd $DIR/../src/Pods/Portal
   cat appsettings.template.json | replace CLIENTID_PLACE_HOLDER $appId | replace TENANTID_PLACE_HOLDER $tenant > appsettings.json
-#  publish Portal
+``  publish Portal
   cd $DIR/yaml/portal
   kubectl delete deployment portal  > /dev/null 2>&1 || true
   cat portal.yaml | replace KVURL_PLACE_HOLDER $KVURL | replace MSI_PLACE_HOLDER $AGENTPOOL_MSI_CLIENT_ID | replace IMAGE_PLACE_HOLDER $image | kubectl apply -f -

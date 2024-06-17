@@ -133,6 +133,11 @@ export class TestConfig extends Component {
                     obj["serverExpectClientAck"] = "False";
                     obj["clientExpectServerAck"] = "False";
                     obj["serverSdk"]="NodeJs"
+                } else if(e.target.value == "Mqtt"){
+                    obj["protocol"]= "Mqtt";
+                    obj["publishQos"] = "0";
+                    obj["subscribeQos"] = "0";
+                    obj["scenario"]="GroupBroadcast"
                 } else{
                     obj["protocol"]="RawWebSocketJson"
                 }
@@ -516,13 +521,15 @@ export class TestConfig extends Component {
                             </Form.Group>
                             <Form.Group  >
                                 <Form.Label>Service Name</Form.Label>
-                                <Form.Control name="service" type="select" onChange={this.handleChange} as="select" defaultValue={this.state.obj.service}>
+                                <Form.Control name="service" type="select" onChange={this.handleChange} as="select"
+                                              defaultValue={this.state.obj.service}>
                                     <option>SignalR</option>
                                     <option>RawWebsocket</option>
                                     <option>SocketIO</option>
+                                    <option>Mqtt</option>
                                 </Form.Control>
                             </Form.Group>
-                          
+
                             {this.state.obj.service == "SignalR" && <Form.Group  >
                                 <Form.Label>Service Mode</Form.Label>
                                 <Form.Control name="mode" type="select" onChange={this.handleChange} as="select" defaultValue={this.state.obj.mode}>
@@ -611,7 +618,7 @@ export class TestConfig extends Component {
                             <Form.Group  >
                                 <Form.Label>Testing Scenario</Form.Label>
                                 <Form.Control name="scenario" type="select" onChange={this.handleChange} as="select" defaultValue={this.state.obj.scenario}>
-                                    <option>Echo</option>
+                                    {this.state.obj.service !== "Mqtt"  &&<option>Echo</option>}
                                     <option>Broadcast</option>
                                     <option>GroupBroadcast</option>
                                     <option>P2P</option>
@@ -621,7 +628,7 @@ export class TestConfig extends Component {
                                 <Form.Label>GroupSize</Form.Label>
                                 <Form.Control name="groupSize" onChange={this.handleChangeNum} placeholder="set connection count inside a group. (Default:100)" defaultValue={this.state.obj.groupSize}/>
                             </Form.Group>}
-                            {this.state.obj.service !="SocketIO" &&<Form.Group  >
+                            {this.state.obj.service !="SocketIO" &&this.state.obj.service !="Mqtt" &&<Form.Group  >
                                 <Form.Label>Protocol</Form.Label>
                                 <Form.Control name="protocol" onChange={this.handleChange} as="select" defaultValue={this.state.obj.protocol}>
                                     {this.state.obj.service == "SignalR" && <option>WebSocketsWithJson</option> }
@@ -648,7 +655,25 @@ export class TestConfig extends Component {
                                     <option>True</option>
                                 </Form.Control>
                             </Form.Group>}
-                            <Form.Group >
+                            {this.state.obj.service =="Mqtt" &&<Form.Group  >
+                                <Form.Label>PublishQos</Form.Label>
+                                <Form.Control name="publishQos" onChange={this.handleChange} as="select"
+                                              defaultValue={this.state.obj.publishQos}>
+                                    <option>0</option>
+                                    <option>1</option>
+                                    <option>2</option>
+                                </Form.Control>
+                            </Form.Group>}
+                            {this.state.obj.service =="Mqtt" &&<Form.Group  >
+                                <Form.Label>SubscribeQos</Form.Label>
+                                <Form.Control name="subscribeQos" onChange={this.handleChange} as="select"
+                                              defaultValue={this.state.obj.subscribeQos}>
+                                    <option>0</option>
+                                    <option>1</option>
+                                    <option>2</option>
+                                </Form.Control>
+                            </Form.Group>}
+                            <Form.Group>
                                 <Form.Label>Connection Rate</Form.Label>
                                 <Form.Control name="rate" onChange={this.handleChangeNum} placeholder="set the Connection Rate. (Default:200)" defaultValue={this.state.obj.rate}/>
                             </Form.Group>
