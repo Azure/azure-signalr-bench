@@ -21,7 +21,8 @@ namespace Azure.SignalRBench.Common
         RawWebSocketJson,
         RawWebSocketReliableJson,
         RawWebSocketReliableProtobuf,
-        SocketIO
+        SocketIO,
+        Mqtt
     }
 
     public static class ProtocolExtentions
@@ -64,6 +65,7 @@ namespace Azure.SignalRBench.Common
         RawWebsocket,
         WebPubSubPythonSdk,
         SocketIO,
+        Mqtt,
     }
 
     public enum TestState

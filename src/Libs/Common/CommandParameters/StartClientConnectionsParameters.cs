@@ -15,5 +15,7 @@ namespace Azure.SignalRBench.Common
         public GroupDefinition[] GroupDefinitions { get; set; } = Array.Empty<GroupDefinition>();
         public bool ClientExpectServerAck { get; set; }
         public bool ServerExpectClientAck { get; set; }
+        public int PublishQos { get; set; }
+        public int SubscribeQos { get; set; }
     }
 }

@@ -30,6 +30,18 @@
     <ProjectReference Include="..\Coordinator\Coordinator.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <_ContentIncludedByDefault Remove="publish\appsettings.Development.json" />
+    <_ContentIncludedByDefault Remove="publish\appsettings.json" />
+    <_ContentIncludedByDefault Remove="publish\appsettings.template.json" />
+    <_ContentIncludedByDefault Remove="publish\ClientApp\build\asset-manifest.json" />
+    <_ContentIncludedByDefault Remove="publish\ClientApp\build\manifest.json" />
+    <_ContentIncludedByDefault Remove="publish\Coordinator.deps.json" />
+    <_ContentIncludedByDefault Remove="publish\Coordinator.runtimeconfig.json" />
+    <_ContentIncludedByDefault Remove="publish\Portal.deps.json" />
+    <_ContentIncludedByDefault Remove="publish\Portal.runtimeconfig.json" />
+  </ItemGroup>
+
   <Target Name="DebugEnsureNodeEnv" BeforeTargets="Build" Condition=" '$(Configuration)' == 'Debug' And !Exists('$(SpaRoot)node_modules') ">
     <!-- Ensure Node.js is installed -->
     <Exec Command="node --version" ContinueOnError="true">

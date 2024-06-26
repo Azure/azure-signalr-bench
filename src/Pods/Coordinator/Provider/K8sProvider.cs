@@ -131,6 +131,7 @@ namespace Azure.SignalRBench.Coordinator.Provider
                 TestCategory.RawWebsocket => "WpsUpstream",
                 TestCategory.SocketIO => "SioServer",
                 TestCategory.WebPubSubPythonSdk => "WpsPyServer",
+                TestCategory.Mqtt => "WpsUpstream",
                 _ => "AppServer"
             };
 
@@ -299,7 +300,7 @@ namespace Azure.SignalRBench.Coordinator.Provider
             {
                 return asrsConnectionStrings[0];
             }
-            else if (testCategory == TestCategory.RawWebsocket || testCategory == TestCategory.WebPubSubPythonSdk)
+            else if (testCategory == TestCategory.RawWebsocket || testCategory == TestCategory.WebPubSubPythonSdk || testCategory == TestCategory.Mqtt)
             {
                 return asrsConnectionStrings[0] + "," + name;
             }

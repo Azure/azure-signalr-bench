@@ -33,6 +33,7 @@ namespace Azure.SignalRBench.Client
             string url,
             ClientLifetimeDefinition lifetimeDefinition, IClientAgentFactory agentFactory,
             bool clientExpectServerAck, bool serverExpectClientAck,
+            int publishQos, int subscribeQos,
             ILoggerFactory loggerFactory)
         {
             MessageClientHolder = messageClientHolder;
@@ -60,6 +61,8 @@ namespace Azure.SignalRBench.Client
             LifetimeDefinition = lifetimeDefinition;
             ClientExpectServerAck = clientExpectServerAck;
             ServerExpectClientAck = serverExpectClientAck;
+            PublishQos = publishQos;
+            SubscribeQos = subscribeQos;
             _agentFactory = agentFactory;
         }
 
@@ -72,6 +75,10 @@ namespace Azure.SignalRBench.Client
         public bool ClientExpectServerAck { get; set; }
         
         public bool ServerExpectClientAck { get; set; }
+        
+        public int PublishQos { get; set; }
+        
+        public int SubscribeQos { get; set; }
 
         public bool IsAnonymous { get; }
 
@@ -115,6 +122,8 @@ namespace Azure.SignalRBench.Client
                     Groups = GroupFunc(i),
                     ClientExpectServerAck = ClientExpectServerAck,
                     ServerExpectClientAck = ServerExpectClientAck,
+                    PublishQos = PublishQos,
+                    SubscribeQos = SubscribeQos,
                 };
                 _clients[i] = _agentFactory.Create(clientAgentConfig, _context);
             }

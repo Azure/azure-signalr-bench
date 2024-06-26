@@ -16,6 +16,8 @@ namespace Azure.SignalRBench.Common
         public Protocol Protocol { get; set; }
         public bool ClientExpectServerAck { get; set; }
         public bool ServerExpectClientAck { get; set; }
+        public int PublishQos { get; set; }
+        public int SubscribeQos { get; set; }
         public double Rate { get; set; }
     }
 }

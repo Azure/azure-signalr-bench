@@ -564,7 +564,9 @@ namespace Azure.SignalRBench.Coordinator
                     Rate = Job.ScenarioSetting.Rate / _clients.Count,
                     Url = _url,
                     ClientExpectServerAck = Job.ScenarioSetting.ClientExpectServerAck,
-                    ServerExpectClientAck = Job.ScenarioSetting.ServerExpectClientAck
+                    ServerExpectClientAck = Job.ScenarioSetting.ServerExpectClientAck,
+                    PublishQos = Job.ScenarioSetting.PublishQos,
+                    SubscribeQos = Job.ScenarioSetting.SubscribeQos,
                 });
             await task;
             _logger.LogInformation(" start  client connections acked.");

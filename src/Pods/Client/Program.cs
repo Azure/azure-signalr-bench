@@ -11,6 +11,7 @@ using Azure.SignalRBench.Common;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using MQTTnet;
 
 namespace Azure.SignalRBench.Client
 {
@@ -63,6 +64,9 @@ namespace Azure.SignalRBench.Client
                             break;
                         case nameof(TestCategory.WebPubSubPythonSdk):
                             services.AddSingleton<IClientAgentFactory, WebsocketPythonServerClientAgentFactory>();
+                            break;
+                        case nameof(TestCategory.Mqtt):
+                            services.AddSingleton<IClientAgentFactory, MqttClientAgentFactory>();
                             break;
                         default:
                             Console.WriteLine(

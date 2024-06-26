@@ -62,6 +62,10 @@ namespace Portal.Entity
 
         public string ClientExpectServerAck { get; set; } = "False";
 
+        public string PublishQos { get; set; } = "0";
+        
+        public string SubscribeQos { get; set; } = "0";
+        
         public int Rate { get; set; } = 200;
 
         public string Cron { get; set; } = "0";
@@ -130,6 +134,9 @@ namespace Portal.Entity
                 case "SocketIO":
                     testCategory = TestCategory.SocketIO;
                     break;
+                case "Mqtt":
+                    testCategory = TestCategory.Mqtt;
+                    break;
             }
 
             for (var i = 0; i < RoundNum; i++)
@@ -182,6 +189,8 @@ namespace Portal.Entity
                         : throw new Exception($"Unknown Protocol {Protocol}"),
                     ClientExpectServerAck = bool.Parse(ClientExpectServerAck),
                     ServerExpectClientAck = bool.Parse(ServerExpectClientAck),
+                    PublishQos = int.Parse(PublishQos),
+                    SubscribeQos = int.Parse(SubscribeQos),
                     Rate = Rate,
                     ClientLifetime = new ClientLifetimeDefinition()
                     {
