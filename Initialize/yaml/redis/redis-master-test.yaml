@@ -7,7 +7,6 @@ metadata:
     role: master
     tier: backend
 spec:
-  loadBalancerIP: 
   type: LoadBalancer
   ports:
   - port: 6379

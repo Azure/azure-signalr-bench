@@ -51,9 +51,7 @@ namespace Azure.SignalRBench.Coordinator
             var ppeServicePrincipalTask =
                 _secretClient.GetSecretAsync(PerfConstants.KeyVaultKeys.PPEServicePrincipalKey);
             var cloudTask = _secretClient.GetSecretAsync(PerfConstants.KeyVaultKeys.CloudKey);
-            var k8sTask = _secretClient.GetSecretAsync(PerfConstants.KeyVaultKeys.KubeConfigKey);
             _storageProvider.Initialize((await storageTask).Value.Value);
-            _k8sProvider.Initialize((await k8sTask).Value.Value);
             var prefix = (await prefixTask).Value.Value;
             var subscription = (await subscriptionTask).Value.Value;
             var location = (await locationTask).Value.Value;
