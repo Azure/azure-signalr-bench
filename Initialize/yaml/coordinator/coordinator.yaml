@@ -1,3 +1,35 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  # "namespace" omitted since ClusterRoles are not namespaced
+  name: root
+rules:
+  - apiGroups: ["*"]
+    #
+    # at the HTTP level, the name of the resource for accessing Secret
+    # objects is "secrets"
+    resources: ["*"]
+    verbs: ["*"]
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: coordinator-account
+---
+apiVersion: rbac.authorization.k8s.io/v1
+# This cluster role binding allows anyone in the "manager" group to read secrets in any namespace.
+kind: ClusterRoleBinding
+metadata:
+  name: coordinator-role-binding
+subjects:
+  - kind: ServiceAccount
+    name: coordinator-account
+    namespace: default
+roleRef:
+  kind: ClusterRole
+  name: root
+  apiGroup: rbac.authorization.k8s.io
+---
 apiVersion: apps/v1 # for versions before 1.9.0 use apps/v1beta2
 kind: Deployment
 metadata:
@@ -12,6 +44,7 @@ spec:
       labels:
         app: coordinator
     spec:
+      serviceAccountName: coordinator-account
       nodeSelector:
         agentpool: captain
       containers:

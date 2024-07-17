@@ -35,20 +35,12 @@ namespace Azure.SignalRBench.Coordinator.Provider
             _domain = configuration[PerfConstants.ConfigurationKeys.DomainKey];
             _image = configuration[PerfConstants.ConfigurationKeys.Image];
             _internal = bool.Parse(configuration[PerfConstants.ConfigurationKeys.Internal]);
-        }
-
-        public void Initialize(string config)
-        {
-            using var stream = new MemoryStream(Encoding.UTF8.GetBytes(config));
             var handler = new HttpClientHandler
             {
                 ClientCertificateOptions = ClientCertificateOption.Manual,
-                ServerCertificateCustomValidationCallback = (message, cert, chain, sslPolicyErrors) =>
-                {
-                    return true;
-                }
+                ServerCertificateCustomValidationCallback = (message, cert, chain, sslPolicyErrors) => true
             };
-            _k8S = new Kubernetes(KubernetesClientConfiguration.BuildConfigFromConfigFile(stream), new HttpClient(handler));
+            _k8S = new Kubernetes(KubernetesClientConfiguration.BuildDefaultConfig(), new HttpClient(handler));
         }
 
         public async Task<string> CreateServerPodsAsync(string testId, string[] asrsConnectionStrings,

@@ -17,6 +17,5 @@ namespace Azure.SignalRBench.Coordinator
 
         Task DeleteClientPodsAsync(string testId);
         Task DeleteServerPodsAsync(string testId, bool upstream);
-        void Initialize(string config);
     }
 }
