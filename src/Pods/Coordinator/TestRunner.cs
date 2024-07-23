@@ -38,10 +38,14 @@ namespace Azure.SignalRBench.Coordinator
         private ITableAccessor<TestStatusEntity> _testStatusAccessor;
         private TestStatusEntity _testStatusEntity;
 
+        private ClientCommandHistory _history = new ClientCommandHistory();
+        private ClientCommandRound _currentRound;
+        
         private string _url = "http://localhost:8080/";
         private static int _scaleLock = 0;
         private static Dictionary<string,directory> _dirs= new Dictionary<string,directory >();
         private static readonly object UnitLock = new object();
+        private Action _cb;
 
         public TestRunner(
             TestJob job,
@@ -52,6 +56,7 @@ namespace Azure.SignalRBench.Coordinator
             SignalRProvider signalRProvider,
             IPerfStorage perfStorage,
             string defaultLocation,
+            Action cb,
             ILogger<TestRunner> logger)
         {
             Job = job;
@@ -62,6 +67,7 @@ namespace Azure.SignalRBench.Coordinator
             SignalRProvider = signalRProvider;
             PerfStorage = perfStorage;
             DefaultLocation = defaultLocation;
+            _cb = cb;
             _logger = logger;
         }
 
@@ -81,7 +87,9 @@ namespace Azure.SignalRBench.Coordinator
 
         public string DefaultLocation { get; }
 
-        public async Task RunAsync(CancellationToken cancellationToken)
+        public CancellationTokenSource Cts { get; set; } = new CancellationTokenSource();
+
+        public async Task RunAsync(CancellationToken cancellationToken0)
         {
             if (Job.ServiceSetting.Length == 0)
             {
@@ -96,12 +104,13 @@ namespace Azure.SignalRBench.Coordinator
                     _dirs.TryAdd(Job.Dir, new directory());
                 }
             }  
-
+            
+            var cancellationToken = CancellationTokenSource.CreateLinkedTokenSource(Cts.Token, cancellationToken0).Token;
             _timer.Start();
             _testStatusAccessor =
                 await PerfStorage.GetTableAsync<TestStatusEntity>(PerfConstants.TableNames.TestStatus);
             var pairs = Job.TestId.Split("--");
-            Job.TestId = Job.TestId.Replace("--", "-");
+            // Job.TestId = Job.TestId.Replace("--", "-");
             _testStatusEntity =
                 await _testStatusAccessor.GetAsync(pairs[0], pairs[1]);
             var clientAgentCount = Job.ScenarioSetting.TotalConnectionCount;
@@ -142,70 +151,100 @@ namespace Azure.SignalRBench.Coordinator
                     _clientStatus.Clear();
                     await SetScenarioAsync(messageClient, round, cancellationToken);
                     await UpdateTestStatus($"Round {i}: Testing");
-                    await StartScenarioAsync(messageClient, cancellationToken);
+                    await StartScenarioAsync(messageClient, i == Job.ScenarioSetting.Rounds.Length ,cancellationToken);
                     await Task.Delay(TimeSpan.FromSeconds(round.DurationInSeconds), cancellationToken);
                     await StopScenarioAsync(messageClient, cancellationToken);
                     //wait for the last message to come back
                     await Task.Delay(5000);
                     suspiciousCount = await UpdateTestReports(round, _roundTotalConnected, suspiciousCount);
                 }
-                
-                await StopTestAsync(messageClient, cancellationToken);
-                // await UpdateTestStatus("Stopping client connections");
-                // await StopClientConnectionsAsync(messageClient, cancellationToken);
-                await UpdateTestStatus("Test Finishes", testState: TestState.Finished);
+
+                if (_testStatusEntity.LongRun)
+                {
+                    // Trigger long run 
+                    await StartScenarioAsync(messageClient, false, cancellationToken);
+                    await ArchiveLongRunTestStatus();
+                }
+                else
+                {
+                    await StopTestAsync(messageClient, cancellationToken);
+                    // await UpdateTestStatus("Stopping client connections");
+                    // await StopClientConnectionsAsync(messageClient, cancellationToken);
+                    await UpdateTestStatus("Test Finishes", testState: TestState.Cleaning);
+                }
             }
             catch (Exception e)
             {
-                await UpdateTestStatus("Testing Round failed ", false, e, TestState.Failed);
+                if (e is OperationCanceledException)
+                {
+                    await UpdateTestStatus("Testing is canceling ", true, e, TestState.Cleaning);
+                }
+                else
+                {
+                    await UpdateTestStatus("Testing Round failed ", false, e, TestState.Cleaning);
+                }
             }
             finally
             {
                 if (scheduleCts != null && !scheduleCts.IsCancellationRequested)
                     scheduleCts.Cancel();
                 _timer.Stop();
-                try
+
+                if (_testStatusEntity.JobState != TestState.Longrun.ToString())
                 {
-                    _logger.LogInformation("Test job {testId}: Removing service instances.", Job.TestId);
-                    await Task.WhenAll(
-                        from ss in Job.ServiceSetting
-                        where ss.AsrsConnectionString == null
-                        group ss by ss.Env
-                        into env
-                        select SignalRProvider.GetSignalRProvider(env.Key).DeleteResourceGroupAsync(Job.TestId));
-                    _logger.LogInformation("Test job {testId}: Removing hashTable in redis.", Job.TestId);
-                    await messageClient.DeleteHashTableAsync();
-                    _logger.LogInformation("Test job {testId}: Removing client pods.", Job.TestId);
-                    await K8SProvider.DeleteClientPodsAsync(Job.TestId);
-                    _logger.LogInformation("Test job {testId}: Removing server pods.", Job.TestId);
-                    await K8SProvider.DeleteServerPodsAsync(Job.TestId,
-                        Job.TestMethod == TestCategory.AspnetCoreSignalRServerless ||
-                        Job.TestMethod == TestCategory.RawWebsocket);
-                }
-                catch (Exception ignore)
-                {
-                    await UpdateTestStatus("Clean up failed", false, ignore, TestState.Failed);
-                }
-                finally
-                {
-                    lock (UnitLock)
+                    try
                     {
-                        if (Job.Dir != null)
+                        _logger.LogInformation("Test job {testId}: Removing service instances.", Job.TestId);
+                        await Task.WhenAll(
+                            from ss in Job.ServiceSetting
+                            where ss.AsrsConnectionString == null
+                            group ss by ss.Env
+                            into env
+                            select SignalRProvider.GetSignalRProvider(env.Key).DeleteResourceGroupAsync(Job.TestId));
+                        _logger.LogInformation("Test job {testId}: Removing hashTable in redis.", Job.TestId);
+                        await messageClient.DeleteHashTableAsync();
+                        _logger.LogInformation("Test job {testId}: Removing client pods.", Job.TestId);
+                        await K8SProvider.DeleteClientPodsAsync(Job.TestId);
+                        _logger.LogInformation("Test job {testId}: Removing server pods.", Job.TestId);
+                        await K8SProvider.DeleteServerPodsAsync(Job.TestId,
+                            Job.TestMethod == TestCategory.AspnetCoreSignalRServerless ||
+                            Job.TestMethod == TestCategory.RawWebsocket);
+                        if (_testStatusEntity.JobState == TestState.Cleaning.ToString())
                         {
-                            var dirConfig=_dirs[Job.Dir];
-                            dirConfig._unitTotal -= Job.ServiceSetting[0].Size.Value;
-                            dirConfig._instanceTotal--;
-                            dirConfig._finishedJob++;
-                            if (dirConfig._finishedJob == Job.Total)
+                            await UpdateTestStatus("Test cancelled", true, null, TestState.Cleaned);
+                        }
+                    }
+                    catch (Exception ignore)
+                    {
+                        await UpdateTestStatus("Clean up failed", false, ignore, TestState.Cleaning);
+                    }
+                    finally
+                    {
+                        lock (UnitLock)
+                        {
+                            if (Job.Dir != null)
                             {
-                                _dirs.Remove(Job.Dir);
+                                var dirConfig = _dirs[Job.Dir];
+                                dirConfig._unitTotal -= Job.ServiceSetting[0].Size.Value;
+                                dirConfig._instanceTotal--;
+                                dirConfig._finishedJob++;
+                                if (dirConfig._finishedJob == Job.Total)
+                                {
+                                    _dirs.Remove(Job.Dir);
+                                }
                             }
                         }
                     }
                 }
+                _cb();
             }
         }
-
+        
+        public async Task StopAsync()
+        {
+            Cts.Cancel();
+        }
+        
         public int GetTotalConnectionDeltaCurrentRound(int i)
         {
             double percent = 1;
@@ -270,6 +309,14 @@ namespace Azure.SignalRBench.Coordinator
                     _testStatusEntity.ErrorInfo += "   \n  \n     " + e;
             }
 
+            await _testStatusAccessor.UpdateAsync(_testStatusEntity);
+        }
+
+        public async Task ArchiveLongRunTestStatus()
+        {
+            _testStatusEntity.Status = "In long run";
+            _testStatusEntity.JobState = TestState.Longrun.ToString();
+            _testStatusEntity.LongRunContext = JsonConvert.SerializeObject(_history);
             await _testStatusAccessor.UpdateAsync(_testStatusEntity);
         }
 
@@ -485,6 +532,11 @@ namespace Azure.SignalRBench.Coordinator
                 Commands.Clients.SetClientRange,
                 cancellationToken);
             await Task.WhenAll(_clients.Select(pair => messageClient.SetClientRangeAsync(pair.Key, pair.Value)));
+            _currentRound = new ClientCommandRound();
+            foreach (var pair in _clients)
+            {
+                _currentRound.SetClientRangeParameters[pair.Key] = pair.Value;
+            }
             await clientCompleteTask;
         }
 
@@ -518,7 +570,7 @@ namespace Azure.SignalRBench.Coordinator
                     serverPodCount, Job.TestMethod, Job.ScenarioSetting.Protocol.GetFormatProtocol(),Job.ScenarioSetting.TotalConnectionCount/Job.PodSetting.ServerCount,Job.ScenarioSetting.Rounds[0].ClientSettings[0].Behavior,
                     cancellationToken);
                 _logger.LogInformation("Test job {testId}: Creating client pods.", Job.TestId);
-                await K8SProvider.CreateClientPodsAsync(Job.TestId, Job.TestMethod, clientPodCount, cancellationToken);
+                await K8SProvider.CreateClientPodsAsync(Job, _testStatusEntity, clientPodCount, cancellationToken);
                 await Task.WhenAll(
                     Task.Run(async () =>
                     {
@@ -553,21 +605,21 @@ namespace Azure.SignalRBench.Coordinator
                 Job.ScenarioSetting.GroupDefinitions[0].GroupCount =
                     _roundTotalConnected / groupSize + (_roundTotalConnected % groupSize == 0 ? 0 : 1);
             }
-
-            await messageClient.StartClientConnectionsAsync(
-                new StartClientConnectionsParameters
-                {
-                    ClientLifetime = Job.ScenarioSetting.ClientLifetime,
-                    GroupDefinitions = Job.ScenarioSetting.GroupDefinitions,
-                    IsAnonymous = Job.ScenarioSetting.IsAnonymous,
-                    Protocol = Job.ScenarioSetting.Protocol,
-                    Rate = Job.ScenarioSetting.Rate / _clients.Count,
-                    Url = _url,
-                    ClientExpectServerAck = Job.ScenarioSetting.ClientExpectServerAck,
-                    ServerExpectClientAck = Job.ScenarioSetting.ServerExpectClientAck,
-                    PublishQos = Job.ScenarioSetting.PublishQos,
-                    SubscribeQos = Job.ScenarioSetting.SubscribeQos,
-                });
+            var startClientConnectionsParameters =  new StartClientConnectionsParameters
+            {
+                ClientLifetime = Job.ScenarioSetting.ClientLifetime,
+                GroupDefinitions = Job.ScenarioSetting.GroupDefinitions,
+                IsAnonymous = Job.ScenarioSetting.IsAnonymous,
+                Protocol = Job.ScenarioSetting.Protocol,
+                Rate = Job.ScenarioSetting.Rate / _clients.Count,
+                Url = _url,
+                ClientExpectServerAck = Job.ScenarioSetting.ClientExpectServerAck,
+                ServerExpectClientAck = Job.ScenarioSetting.ServerExpectClientAck,
+                PublishQos = Job.ScenarioSetting.PublishQos,
+                SubscribeQos = Job.ScenarioSetting.SubscribeQos,
+            };
+            await messageClient.StartClientConnectionsAsync(startClientConnectionsParameters);
+            _currentRound.StartClientConnectionsParameters = startClientConnectionsParameters;
             await task;
             _logger.LogInformation(" start  client connections acked.");
         }
@@ -581,54 +633,55 @@ namespace Azure.SignalRBench.Coordinator
                 _clients.Keys,
                 Commands.Clients.SetScenario,
                 cancellationToken);
-            await messageClient.SetScenarioAsync(
-                new SetScenarioParameters
-                {
-                    Scenarios = Array.ConvertAll(
-                        round.ClientSettings,
-                        cs =>
-                        {
-                            var sd = new ScenarioDefinition {ClientBehavior = cs.Behavior};
-                            if (cs.Behavior == ClientBehavior.GroupBroadcast)
-                                sd.SetDetail(
-                                    new GroupClientBehaviorDetailDefinition
-                                    {
-                                        Count = cs.Count,
-                                        Interval = TimeSpan.FromMilliseconds(cs.IntervalInMilliseconds),
-                                        MessageSize = cs.MessageSize,
-                                        GroupFamily = cs.GroupFamily ??
-                                                      throw new InvalidDataException("Group family is required.")
-                                    });
-                            else
-                                sd.SetDetail(
-                                    new ClientBehaviorDetailDefinition
-                                    {
-                                        Count = cs.Count,
-                                        Interval = TimeSpan.FromMilliseconds(cs.IntervalInMilliseconds),
-                                        MessageSize = cs.MessageSize
-                                    });
+            var setScenarioParameters= new SetScenarioParameters
+            {
+                Scenarios = Array.ConvertAll(
+                    round.ClientSettings,
+                    cs =>
+                    {
+                        var sd = new ScenarioDefinition {ClientBehavior = cs.Behavior};
+                        if (cs.Behavior == ClientBehavior.GroupBroadcast)
+                            sd.SetDetail(
+                                new GroupClientBehaviorDetailDefinition
+                                {
+                                    Count = cs.Count,
+                                    Interval = TimeSpan.FromMilliseconds(cs.IntervalInMilliseconds),
+                                    MessageSize = cs.MessageSize,
+                                    GroupFamily = cs.GroupFamily ??
+                                        throw new InvalidDataException("Group family is required.")
+                                });
+                        else
+                            sd.SetDetail(
+                                new ClientBehaviorDetailDefinition
+                                {
+                                    Count = cs.Count,
+                                    Interval = TimeSpan.FromMilliseconds(cs.IntervalInMilliseconds),
+                                    MessageSize = cs.MessageSize
+                                });
 
-                            return sd;
-                        })
-                });
+                        return sd;
+                    })};
+            await messageClient.SetScenarioAsync(setScenarioParameters);
             await task;
+            _currentRound.SetScenarioParameters = setScenarioParameters;
             _logger.LogInformation(" set scenario acked.");
         }
 
         private async Task StartScenarioAsync(
-            MessageClient messageClient,
+            MessageClient messageClient, bool save,
             CancellationToken cancellationToken)
         {
             var task = await messageClient.GetWhenAllAckAsync(
                 _clients.Keys,
                 Commands.Clients.StartScenario,
                 cancellationToken);
-            await messageClient.StartScenarioAsync(
-                new StartScenarioParameters()
-                {
-                    CoordinatorTime = DateTime.UtcNow.Ticks
-                });
+            var  startScenarioParameters =   new StartScenarioParameters()
+            {
+                Save = save
+            };
+            await messageClient.StartScenarioAsync(startScenarioParameters);
             await task;
+            _currentRound.StartScenarioParameters = startScenarioParameters;
             _logger.LogInformation(" Start scenario acked.");
         }
 
@@ -640,9 +693,11 @@ namespace Azure.SignalRBench.Coordinator
                 _clients.Keys,
                 Commands.Clients.StopScenario,
                 cancellationToken);
-            await messageClient.StopScenarioAsync(
-                new StopScenarioParameters());
+            var stopScenarioParameters = new StopScenarioParameters();
+            await messageClient.StopScenarioAsync(stopScenarioParameters);
             await task;
+            _currentRound.StopScenarioParameters = stopScenarioParameters;
+            _history.Histories.Add(_currentRound);
             _logger.LogInformation(" Stop scenario acked.");
         }
         

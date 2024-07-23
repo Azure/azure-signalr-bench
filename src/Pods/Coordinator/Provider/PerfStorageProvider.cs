@@ -10,12 +10,14 @@ namespace Azure.SignalRBench.Coordinator
     {
         private PerfStorage? _storage;
         public string? ConnectionString { get; private set; }
+        public string? CosmosConnectionString { get; private set; }
 
         public PerfStorage Storage => _storage ?? throw new InvalidOperationException();
 
-        public void Initialize(string connectionString)
+        public void Initialize(string connectionString, string cdbConnectionString )
         {
             ConnectionString = connectionString;
+            CosmosConnectionString = cdbConnectionString;
             // _storage = new PerfStorage(connectionString);
         }
     }

@@ -16,6 +16,7 @@ namespace Azure.SignalRBench.Client
         private readonly ILogger<MessageClientHolder> _logger;
 
         private MessageClient? _client;
+        private MessageClient? _timeCoordinatorClient;
 
         public MessageClientHolder(IScenarioState scenarioState, ILogger<MessageClientHolder> logger)
         {
@@ -43,9 +44,14 @@ namespace Azure.SignalRBench.Client
                     StopClientConnections),
                 MessageHandler.CreateCommandHandler(Roles.Clients, Commands.Clients.SetScenario, SetScenario),
                 MessageHandler.CreateCommandHandler(Roles.Clients, Commands.Clients.StartScenario, StartScenario),
-                MessageHandler.CreateCommandHandler(Roles.Clients, Commands.Clients.StopScenario, StopScenario));
+                MessageHandler.CreateCommandHandler(Roles.Clients, Commands.Clients.StopScenario, StopScenario)
+               );
             await _client.ReportReadyAsync(new ReportReadyParameters() { Role = Roles.Clients });
             _logger.LogInformation("Message client handlers inited.");
+            
+            _timeCoordinatorClient = await MessageClient.ConnectAsync(connectionString, PerfConstants.Channel.All, podName);
+            await _timeCoordinatorClient.WithHandlers(
+                MessageHandler.CreateCommandHandler(Roles.Clients, Commands.Clients.SetCoordinatorTime, SetCoordinatorTime));
         }
 
         private Task Crash(CommandMessage commandMessage)
@@ -147,10 +153,23 @@ namespace Azure.SignalRBench.Client
                 await Client.AckFaultedAsync(commandMessage, error);
                 return;
             }
-
             _scenarioState.StartSenario(startScenarioParameters);
             await Client.AckCompletedAsync(commandMessage);
             _logger.LogInformation("Start scenario acked.");
+        }
+        
+        private async Task SetCoordinatorTime(CommandMessage commandMessage)
+        {
+            _logger.LogInformation("Set CoordinatorTime: {parameter}",
+                JsonConvert.SerializeObject(commandMessage.Parameters));
+            var setCoordinatorTimeParameters = commandMessage.Parameters?.ToObject<SetCoordinatorTimeParameters>();
+            if (setCoordinatorTimeParameters == null)
+            {
+                const string error = "Unable to handle set coordinatorTime message, parameter cannot be null.";
+                _logger.LogError(error);
+                return;
+            }
+            ClientAgentContext.CoordinatorTime(setCoordinatorTimeParameters.CoordinatorTime);
         }
 
         private async Task StopScenario(CommandMessage commandMessage)

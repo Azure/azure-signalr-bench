@@ -32,7 +32,18 @@ namespace Azure.SignalRBench.Messages
         #endregion
 
         #region Commands To Clients
-
+        
+        public static async Task<CommandMessage> BroadcastCoordinateTime(this IMessageClient client)
+        {
+            var command = new SetCoordinatorTimeParameters()
+            {
+                CoordinatorTime = DateTime.UtcNow.Ticks,
+            };
+            var message = new CommandMessage { Command = Commands.Clients.SetCoordinatorTime, Parameters = JObject.FromObject(command) };
+            await client.SendCommandAsync(Roles.Clients, message);
+            return message;
+        }
+        
         public static async Task<CommandMessage> StartClientConnectionsAsync(this IMessageClient client, StartClientConnectionsParameters parameters)
         {
             var message = new CommandMessage { Command = Commands.Clients.StartClientConnections, Parameters = JObject.FromObject(parameters) };

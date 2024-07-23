@@ -165,7 +165,9 @@ export class TestConfig extends Component {
         e.persist()
         e.target.setAttribute("class", "ui teal loading mini button")
         var key = e.target.getAttribute("value")
-        const response = await fetch('testconfig/starttest/' + key, {
+        var longRun = e.target.getAttribute("data-longrun")
+        const url = longRun === 'true' ? "testconfig/startlongruntest/" : "testconfig/starttest/"
+        const response = await fetch(url + key, {
             method: 'POST',
             headers: {
                 'Accept': 'application/json',
@@ -474,13 +476,24 @@ export class TestConfig extends Component {
                                                 <td>{testConfig.timestamp}</td>
                                                 <td>{testConfig.clientCons}</td>
                                                 <td>{testConfig.user}</td>
-                                                <td><Icon size="large" name='file code outline' value={json} onClick={this.handleJsonShow} /></td>
-                                                <td><Icon size="large" name='pencil alternate' value={json} onClick={this.handleEdit} /></td>
-                                                <td><Icon size="large" name='gay' value={json} onClick={this.handleFork} /></td>
-                                                <td ><Button color="teal" size='mini' value={testConfig["partitionKey"]} onClick={this.handleStart}>Run</Button></td>
-                                                <td ><Button color="orange" size='mini' value={testConfig["partitionKey"]} onClick={this.handleDelete}>Delete</Button></td>
+                                                <td><Icon size="large" name='file code outline' value={json}
+                                                          onClick={this.handleJsonShow}/></td>
+                                                <td><Icon size="large" name='pencil alternate' value={json}
+                                                          onClick={this.handleEdit}/></td>
+                                                <td><Icon size="large" name='gay' value={json}
+                                                          onClick={this.handleFork}/></td>
+                                                <td><Button color="teal" size='mini' value={testConfig["partitionKey"]}
+                                                            onClick={this.handleStart}>Run</Button></td>
+                                                <td><Button color="teal" size='mini'
+                                                            value={testConfig["partitionKey"]}
+                                                            data-longrun={true}
+                                                            onClick={this.handleStart}>LongRun</Button></td>
+                                                <td><Button color="orange" size='mini'
+                                                            value={testConfig["partitionKey"]}
+                                                            onClick={this.handleDelete}>Delete</Button></td>
+
                                             </tr>
-                                        }
+                                            }
                                         )}
                                     </tbody>
                                 </table>

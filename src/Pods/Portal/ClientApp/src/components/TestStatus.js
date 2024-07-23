@@ -17,6 +17,7 @@ export class TestStatus extends Component {
             currentTestStatus: {}
         };
         this.report = this.report.bind(this)
+        this.cancel = this.cancel.bind(this)
         this.errorInfo = this.errorInfo.bind(this)
     }
 
@@ -31,6 +32,31 @@ export class TestStatus extends Component {
         var json = JSON.parse(e.target.getAttribute("value"))
         this.setState({ show: true, currentTestStatus: json })
     }
+
+    async cancel(e) {
+        console.log("report")
+
+        e.persist()
+        e.target.setAttribute("class", "ui orange loading mini button")
+        var json = JSON.parse(e.target.getAttribute("value"))
+        var key = json.testId
+        const response = await fetch("teststatus/cancel/" + key, {
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+            },
+            body: { key: key },
+            redirect: 'manual'
+        })
+        if (response.type === 'opaqueredirect') {
+            alert("No permission")
+            e.target.setAttribute("class", "ui orange mini button")
+            return
+        }
+        await Util.CheckAuth(response)
+        e.target.setAttribute("class", "ui orange mini button")
+    }
+    
     async errorInfo(e) {
         var error = e.target.getAttribute("value")
         this.setState({ errorShow: true, error: error })
@@ -99,15 +125,20 @@ export class TestStatus extends Component {
                             <td>{testStatus.rowKey}</td>
                             <td>{testStatus.timestamp}</td>
                             <td>{testStatus.user}</td>
-                            <td><Icon size="large" name='file code outline' value={testStatus.config} onClick={this.handleJsonShow} /></td>
-                            <td ><font color={colorstyle}>{testStatus.status}</font></td>
-                            <td ><button className={clz} value={data} onClick={cb}>Report</button></td>
-                        </tr>
-                    }
+                            <td><Icon size="large" name='file code outline' value={testStatus.config}
+                                      onClick={this.handleJsonShow}/></td>
+                            <td><font color={colorstyle}>{testStatus.status}</font></td>
+                            <td>
+                                <button className={clz} value={data} onClick={cb}>Report</button>
+                            </td>
+                            <td><Button color="orange" size='mini'
+                                        value={data} onClick={this.cancel}>Cancel</Button></td>
 
+                        </tr>
+                        }
                     )}
                 </tbody>
-            </table >
+            </table>
             </div>
         );
     }

@@ -49,6 +49,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Libs\Common\Common.csproj" />
+    <ProjectReference Include="..\..\Libs\Storage\Storage.csproj" />
   </ItemGroup>
   <ItemGroup>
 	<Protobuf Include="Protobuf\client.proto" />

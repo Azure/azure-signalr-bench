@@ -71,8 +71,9 @@ namespace Azure.SignalRBench.Common
     public enum TestState
     {
         InProgress,
-        Failed,
-        Finished
+        Longrun,
+        Cleaning,
+        Cleaned,
     }
 
     [JsonConverter(typeof(StringEnumConverter))]

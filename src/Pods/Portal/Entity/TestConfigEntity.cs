@@ -39,6 +39,8 @@ namespace Portal.Entity
 
         public int InstanceIndex { get; set; } = 0;
 
+        public int LongRunIndex { get; set; } = 0;
+
         public int Start { get; set; } = 1;
 
         public int RoundNum { get; set; } = 5;
