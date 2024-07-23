@@ -3,9 +3,11 @@
 
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Azure.SignalRBench.Common;
+using Azure.SignalRBench.Coordinator.Entities;
 using Azure.SignalRBench.Storage;
 using Microsoft.Extensions.Logging;
 
@@ -39,8 +41,8 @@ namespace Azure.SignalRBench.Coordinator
         {
             _defaultLocation = defaultLocation;
             var queue = await PerfStorage.GetQueueAsync<TestJob>(PerfConstants.QueueNames.PortalJob, true);
-            // create table.
             _ = RunAsync(queue, _cts.Token);
+            _ = ScanAsync(_cts);
         }
 
         public async Task StopAsync()
@@ -59,12 +61,62 @@ namespace Azure.SignalRBench.Coordinator
         {
             await foreach (var message in queue.Consume(TimeSpan.FromMinutes(30), cancellationToken))
             {
-                _logger.LogInformation("Receive test job: {testId}.", message.Value.TestId);
-                //Keep reference of task. Or the async state machine will be GC because we use taskCompleteSource to track pod ready
-                _runningTasks.Add(RunOneAsync(queue, message, cancellationToken));
-                _runningTasks.RemoveAll(t => t.IsCompleted);
+                if (message.Value.Cancel)
+                {
+                    _logger.LogInformation("Receive cancel job: {testId}.", message.Value.TestId);
+                    _=StopJobAsync(message.Value.TestId);
+                }
+                else
+                {
+                    _logger.LogInformation("Receive test job: {testId}.", message.Value.TestId);
+                    //Keep reference of task. Or the async state machine will be GC because we use taskCompleteSource to track pod ready
+                    _runningTasks.Add(RunOneAsync(queue, message, cancellationToken));
+                    _runningTasks.RemoveAll(t => t.IsCompleted);
+                }
             }
         }
+
+        private async Task ScanAsync(CancellationTokenSource cancellationTokenSource)
+        {
+            while (true)
+            {
+                await Task.Delay(5*60*1000, cancellationTokenSource.Token);
+                try
+                {
+                    var table = await PerfStorage.GetTableAsync<TestStatusEntity>(PerfConstants.TableNames.TestStatus);
+                    var fiveMinutesAgo = new DateTimeOffset(DateTime.UtcNow.AddMinutes(-5));
+
+                    var result = await table
+                        .QueryAsync(from row in table.Rows
+                            where  row.JobState == TestState.Cleaning.ToString()
+                            select row).ToListAsync();
+                   
+                    foreach (var test in result)
+                    {
+                        if (test.Timestamp > fiveMinutesAgo)
+                        {
+                            continue;
+                        }
+                        var testId = test.TestId;
+                        try
+                        {
+                            _logger.LogInformation("Test {testId} is in LongrunTerminating state, stop it.", testId);
+                            await TestRunnerFactory.Stop(testId);
+                        }
+                        catch (Exception e)
+                        {
+                            _logger.LogError(e, "Stop test {testId} error.", testId);
+                        }
+                    }
+                }
+                catch (Exception e)
+                {
+                    _logger.LogError(e, "Get test status error");
+                    throw;
+                }
+            }
+        }
+        
 
         private async Task RunOneAsync(IQueue<TestJob> queue, QueueMessage<TestJob> message,
             CancellationToken cancellationToken)
@@ -95,6 +147,11 @@ namespace Azure.SignalRBench.Coordinator
         private Task RunJobAsync(TestJob job, CancellationToken cancellationToken)
         {
             return TestRunnerFactory.Create(job, DefaultLocation).RunAsync(cancellationToken);
+        }
+        
+        private Task StopJobAsync(string testId)
+        {
+            return TestRunnerFactory.Stop(testId);
         }
     }
 }

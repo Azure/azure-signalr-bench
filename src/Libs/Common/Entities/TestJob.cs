@@ -14,5 +14,6 @@ namespace Azure.SignalRBench.Common
         public PodSetting PodSetting { get; set; } = new PodSetting();
         public string? Dir { get; set; }
         public int Total { get; set; } = 1;
+        public bool Cancel { get; set; }
     }
 }

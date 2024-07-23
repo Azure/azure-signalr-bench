@@ -8,6 +8,7 @@ namespace Azure.SignalRBench.Common
         public static class KeyVaultKeys
         {
             public const string StorageConnectionStringKey = "sa-accessKey";
+            public const string CosmosConnectionStringKey = "cdb-accessKey";
             public const string PrefixKey = "prefix";
             public const string SubscriptionKey = "subscription";
             public const string PPESubscriptionKey = "ppe-subscription";
@@ -26,6 +27,7 @@ namespace Azure.SignalRBench.Common
             public const string KeyVaultUrlKey = "kvUrl";
             public const string TestIdKey = "testId";
             public const string StorageConnectionStringKey = "storage";
+            public const string CosmosConnectionStringKey = "cosmos";
             public const string RedisConnectionStringKey = "redis";
             public const string PodNameStringKey = "Podname";
             public const string ConnectionString = "connectionString";
@@ -37,6 +39,8 @@ namespace Azure.SignalRBench.Common
             public const string Protocol = "protocol";
             public const string Image = "Image";
             public const string Internal = "internal";
+            public const string TestStatusPartitionKey = "testStatusPartitionKey";
+            public const string TestStatusRowKey = "testStatusRowKey";
         }
 
         public static class TableNames
@@ -56,6 +60,11 @@ namespace Azure.SignalRBench.Common
             public const string Contributor = "Contributor";
             public const string Reader = "Reader";
             public const string Pipeline = "Pipeline";
+        }
+
+        public static class Channel
+        {
+            public const string All = "All";
         }
 
         public static class Policy

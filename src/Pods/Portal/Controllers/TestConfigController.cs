@@ -146,6 +146,47 @@ namespace Portal.Controllers
                 throw;
             }
         }
+        
+        [Authorize(Policy = PerfConstants.Policy.RoleLogin,
+            Roles = PerfConstants.Roles.Contributor)]
+        [HttpPost("StartLongRunTest/{testConfigEntityKey}")]
+        public async Task StartLongRunTestAsync(string testConfigEntityKey)
+        {
+            var statusTable = await _perfStorage.GetTableAsync<TestStatusEntity>(PerfConstants.TableNames.TestStatus);
+            var configTable = await _perfStorage.GetTableAsync<TestConfigEntity>(PerfConstants.TableNames.TestConfig);
+            
+            var latestTestConfig = await configTable.GetFirstOrDefaultAsync(from row in configTable.Rows
+                where row.PartitionKey == testConfigEntityKey
+                select row);
+            
+            latestTestConfig.LongRunIndex += 1;
+            await configTable.UpdateAsync(latestTestConfig);
+            var queue = await _perfStorage.GetQueueAsync<TestJob>(PerfConstants.QueueNames.PortalJob);
+            var testEntity = new TestStatusEntity
+            {
+                User = User.Identity.Name,
+                PartitionKey = latestTestConfig.PartitionKey,
+                RowKey = $"longrun-{latestTestConfig.LongRunIndex.ToString()}",
+                Status = "Init",
+                Healthy = true,
+                Report = "",
+                ErrorInfo = "",
+                LongRun = true,
+                Dir = latestTestConfig.Dir,
+                Config = JsonConvert.SerializeObject(latestTestConfig)
+            };
+            try
+            {
+               
+                await statusTable.InsertAsync(testEntity);
+                await queue.SendAsync(latestTestConfig.ToTestJob(_clusterState,testEntity.RowKey ));
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "Start long run test error");
+                throw;
+            }
+        }
 
         [Authorize(Policy = PerfConstants.Policy.RoleLogin,
             Roles = PerfConstants.Roles.Contributor)]

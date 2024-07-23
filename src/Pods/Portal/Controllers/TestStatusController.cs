@@ -62,6 +62,25 @@ namespace Portal.Controllers
                 throw;
             }
         }
+        
+        [HttpPost("cancel/{testId}")]
+        public async Task Cancel(string testId)
+        {
+            try
+            {
+                var queue = await _perfStorage.GetQueueAsync<TestJob>(PerfConstants.QueueNames.PortalJob);
+                await queue.SendAsync(new TestJob()
+                {
+                    TestId = testId,
+                    Cancel = true
+                });
+            }
+            catch (Exception e)
+            {
+                _logger.LogError(e, "Cancel test status error");
+                throw;
+            }
+        }
 
         [HttpGet("dir/list/{dir?}")]
         public async Task<IEnumerable<TestStatusEntity>> DirList(string dir, string index)
@@ -103,13 +122,6 @@ namespace Portal.Controllers
                         return new TestResult()
                         {
                             Status = "wait"
-                        };
-                    }
-                    else if (state == TestState.Failed)
-                    {
-                        return new TestResult()
-                        {
-                            Status = "fail"
                         };
                     }
                     else if (!(row.Healthy && string.IsNullOrWhiteSpace(row.Check) &&

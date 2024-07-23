@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Azure.Messaging.WebPubSub;
 using Azure.SignalRBench.Client.ClientAgentFactory;
 using Azure.SignalRBench.Common;
+using Azure.SignalRBench.Storage;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -44,6 +45,12 @@ namespace Azure.SignalRBench.Client
                 {
                     services.AddSingleton<MessageClientHolder>();
                     services.AddSingleton<IScenarioState, ScenarioState>();
+                    services.AddSingleton<IPerfStorage>(sp =>
+                    {
+                        var saConnectionString = hostContext.Configuration[PerfConstants.ConfigurationKeys.StorageConnectionStringKey];
+                        var cdbConnectionString = hostContext.Configuration[PerfConstants.ConfigurationKeys.CosmosConnectionStringKey];
+                        return new PerfStorage(saConnectionString, cdbConnectionString);
+                    });
                     switch (hostContext.Configuration[PerfConstants.ConfigurationKeys.TestCategory])
                     {
                         case nameof(TestCategory.AspnetCoreSignalR):

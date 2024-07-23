@@ -9,6 +9,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Azure.SignalRBench.Common;
+using Azure.SignalRBench.Coordinator.Entities;
 using k8s;
 using k8s.Models;
 using Microsoft.Extensions.Configuration;
@@ -302,12 +303,14 @@ namespace Azure.SignalRBench.Coordinator.Provider
             }
         }
 
-        public async Task CreateClientPodsAsync(string testId, TestCategory testCategory, int clientPodCount,
+        public async Task CreateClientPodsAsync(TestJob testJob,TestStatusEntity statusEntity, int clientPodCount,
             CancellationToken cancellationToken)
         {
+            var testId = testJob.TestId;
+            var testCategory = testJob.TestMethod;
             var name = Client + '-' + testId;
             name = NameConverter.Truncate(name);
-            V1Deployment deployment = new V1Deployment
+            V1StatefulSet statefulSet = new V1StatefulSet()
             {
                 Metadata = new V1ObjectMeta
                 {
@@ -323,9 +326,10 @@ namespace Azure.SignalRBench.Coordinator.Provider
                         [PerfConstants.ConfigurationKeys.TestIdKey] = testId
                     }
                 },
-                Spec = new V1DeploymentSpec
+                Spec = new V1StatefulSetSpec()
                 {
                     Replicas = clientPodCount,
+                    ServiceName = name,
                     Selector = new V1LabelSelector
                     {
                         MatchLabels = new Dictionary<string, string>
@@ -399,10 +403,14 @@ namespace Azure.SignalRBench.Coordinator.Provider
                                         new V1EnvVar(PerfConstants.ConfigurationKeys.TestIdKey, testId),
                                         new V1EnvVar(PerfConstants.ConfigurationKeys.StorageConnectionStringKey,
                                             _perfStorageProvider.ConnectionString),
+                                        new V1EnvVar(PerfConstants.ConfigurationKeys.CosmosConnectionStringKey,
+                                            _perfStorageProvider.CosmosConnectionString),
                                         new V1EnvVar(PerfConstants.ConfigurationKeys.RedisConnectionStringKey,
                                             _redisConnectionString),
                                         new V1EnvVar(PerfConstants.ConfigurationKeys.TestCategory,
-                                            testCategory.ToString())
+                                            testCategory.ToString()),
+                                        new V1EnvVar(PerfConstants.ConfigurationKeys.TestStatusPartitionKey,statusEntity.PartitionKey),
+                                        new V1EnvVar(PerfConstants.ConfigurationKeys.TestStatusRowKey,statusEntity.RowKey),
                                     }
                                 }
                             },
@@ -417,14 +425,21 @@ namespace Azure.SignalRBench.Coordinator.Provider
                     }
                 }
             };
-            await _k8S.CreateNamespacedDeploymentAsync(deployment, Default, cancellationToken: cancellationToken);
+            await _k8S.CreateNamespacedStatefulSetAsync(statefulSet, Default, cancellationToken: cancellationToken);
         }
 
         public async Task DeleteClientPodsAsync(string testId)
         {
             string name = Client + '-' + testId;
             name = NameConverter.Truncate(name);
-            await _k8S.DeleteNamespacedDeploymentAsync(name, Default);
+            // await _k8S.DeleteNamespacedDeploymentAsync(name, Default);
+            try
+            {
+                await _k8S.DeleteNamespacedStatefulSetAsync(name, Default);
+            }catch (Microsoft.Rest.HttpOperationException e) when (e.Response.StatusCode == System.Net.HttpStatusCode.NotFound)
+            {
+                // ignore
+            }
         }
 
         public async Task DeleteServerPodsAsync(string testId, bool upstream)
@@ -434,9 +449,21 @@ namespace Azure.SignalRBench.Coordinator.Provider
             await _k8S.DeleteNamespacedServiceAsync(name, Default);
             if (upstream)
             {
-                await _k8S.DeleteNamespacedIngress1Async(NameConverter.Truncate(Upstream + "-" + testId), Default);
+                try
+                {
+                    await _k8S.DeleteNamespacedIngress1Async(NameConverter.Truncate(Upstream + "-" + testId), Default);
+                }catch (Microsoft.Rest.HttpOperationException e) when (e.Response.StatusCode == System.Net.HttpStatusCode.NotFound)
+                {
+                    // ignore
+                }
             }
-            await _k8S.DeleteNamespacedDeploymentAsync(name, Default);
+            try
+            {
+                await _k8S.DeleteNamespacedDeploymentAsync(name, Default);
+            }catch (Microsoft.Rest.HttpOperationException e) when (e.Response.StatusCode == System.Net.HttpStatusCode.NotFound)
+            {
+                // ignore
+            }
         }
 
         private static IList<string> GetStartArg(TestCategory testCategory, string server)
