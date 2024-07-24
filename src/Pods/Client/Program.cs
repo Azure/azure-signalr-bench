@@ -20,6 +20,9 @@ namespace Azure.SignalRBench.Client
     {
         private static void Main(string[] args)
         {
+            using var server = new Prometheus.KestrelMetricServer(port: 8080);
+            server.Start();
+            ClientMetrics.Init("biqian","biqian-resource");
             CreateHostBuilder(args).Build().Run();
         }
 

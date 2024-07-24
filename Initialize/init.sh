@@ -91,6 +91,7 @@ if [[ -z $(az storage account show -n $STORAGE_ACCOUNT -g $RESOURCE_GROUP 2>/dev
     az keyvault secret set --vault-name $KEYVAULT -n $KV_SA_ACCESS_KEY --value "$access_key"
     echo "storage account $STORAGE_ACCOUNT created."
     az storage share create --account-name $STORAGE_ACCOUNT --quota 20 -n $SA_SHARE
+    az storage share create --account-name $STORAGE_ACCOUNT --quota 60 -n prometheus
     echo "create dir:manifest"
     az storage directory create -n "manifest" --account-name $STORAGE_ACCOUNT -s $SA_SHARE
 else
