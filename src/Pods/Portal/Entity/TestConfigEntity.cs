@@ -40,6 +40,8 @@ namespace Portal.Entity
         public int InstanceIndex { get; set; } = 0;
 
         public int LongRunIndex { get; set; } = 0;
+        
+        public string? TargetLocation { get; set; }
 
         public int Start { get; set; } = 1;
 
@@ -103,7 +105,7 @@ namespace Portal.Entity
             }
         }
 
-        public TestJob ToTestJob(ClusterState clusterState,string index=null,int unitLimit=100,int instanceLimit=10,string dir=null,int total=1)
+        public TestJob ToTestJob(PerfState perfState,string index=null,int unitLimit=100,int instanceLimit=10,string dir=null,int total=1)
         {
             //creating round settings
             var roundsettings = new List<RoundSetting>();
@@ -171,7 +173,7 @@ namespace Portal.Entity
                     new ServiceSetting
                     {
                         AsrsConnectionString =ServerUrl ?? ConnectionString?.Trim(),
-                        Location = Env.ToLower().Contains("ppe") ? clusterState.PPELocation : clusterState.Location,
+                        Location = Env.ToLower().Contains("ppe") ? perfState.PPELocation : perfState.Location,
                         Tier = "standard",
                         Size = SignalRUnitSize,
                         Env = Env,

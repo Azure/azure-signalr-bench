@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Azure.SignalRBench.Common;
 using Azure.SignalRBench.Coordinator.Entities;
 using Azure.SignalRBench.Storage;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
 namespace Azure.SignalRBench.Coordinator
@@ -19,15 +20,24 @@ namespace Azure.SignalRBench.Coordinator
         private readonly ILogger<TestScheduler> _logger;
         private readonly List<Task> _runningTasks = new List<Task>();
         private string? _defaultLocation;
+        private string _queueName;
 
         public TestScheduler(
             IPerfStorage perfStorage,
             TestRunnerFactory testRunnerFactory,
+            IConfiguration configuration,
             ILogger<TestScheduler> logger)
         {
             PerfStorage = perfStorage;
             TestRunnerFactory = testRunnerFactory;
+            var hostLocation = configuration[PerfConstants.ConfigurationKeys.LocationKey];
+            _queueName = PerfConstants.QueueNames.PortalJob;
+            if (hostLocation != null && !hostLocation.Contains(PerfConstants.ConfigurationKeys.PlaceHolder))
+            {
+                _queueName = $"{_queueName}-{hostLocation}";
+            }
             _logger = logger;
+            _logger.LogInformation("queue name: {queueName}", _queueName);
         }
 
         public IPerfStorage PerfStorage { get; }
@@ -40,7 +50,7 @@ namespace Azure.SignalRBench.Coordinator
         public async Task StartAsync(string defaultLocation)
         {
             _defaultLocation = defaultLocation;
-            var queue = await PerfStorage.GetQueueAsync<TestJob>(PerfConstants.QueueNames.PortalJob, true);
+            var queue = await PerfStorage.GetQueueAsync<TestJob>(_queueName, true);
             _ = RunAsync(queue, _cts.Token);
             _ = ScanAsync(_cts);
         }

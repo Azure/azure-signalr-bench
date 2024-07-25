@@ -23,6 +23,8 @@ namespace Azure.SignalRBench.Coordinator.Entities
         
         public bool LongRun { get; set; }
         
+        public string? QueueName { get; set; }
+        
         public string? TestId  => $"{PartitionKey}--{RowKey}";
         
         public string? LongRunContext { get; set; }

@@ -21,15 +21,15 @@ namespace Portal.Controllers
     [ApiController]
     public class TestConfigController : ControllerBase
     {
-        private readonly ClusterState _clusterState;
+        private readonly PerfState _perfState;
         private readonly ILogger<TestConfigController> _logger;
         private readonly IPerfStorage _perfStorage;
 
-        public TestConfigController(IPerfStorage perfStorage, ClusterState clusterState,
+        public TestConfigController(IPerfStorage perfStorage, PerfState perfState,
             ILogger<TestConfigController> logger)
         {
             _perfStorage = perfStorage;
-            _clusterState = clusterState;
+            _perfState = perfState;
             _logger = logger;
         }
 
@@ -114,7 +114,8 @@ namespace Portal.Controllers
                 select row);
             latestTestConfig.InstanceIndex += 1;
             await configTable.UpdateAsync(latestTestConfig);
-            var queue = await _perfStorage.GetQueueAsync<TestJob>(PerfConstants.QueueNames.PortalJob);
+            var queueName = _perfState.GetQueueName(latestTestConfig.TargetLocation);
+            var queue = await _perfStorage.GetQueueAsync<TestJob>(queueName);
             var statusTable = await _perfStorage.GetTableAsync<TestStatusEntity>(PerfConstants.TableNames.TestStatus);
             var testEntity = new TestStatusEntity
             {
@@ -125,6 +126,7 @@ namespace Portal.Controllers
                 Healthy = true,
                 Report = "",
                 ErrorInfo = "",
+                QueueName = queueName,
                 Dir = latestTestConfig.Dir,
                 Config = JsonConvert.SerializeObject(latestTestConfig)
             };
@@ -138,7 +140,7 @@ namespace Portal.Controllers
                     await statusTable.DeleteAsync(exist);
                 }
                 await statusTable.InsertAsync(testEntity);
-                await queue.SendAsync(latestTestConfig.ToTestJob(_clusterState));
+                await queue.SendAsync(latestTestConfig.ToTestJob(_perfState));
             }
             catch (Exception e)
             {
@@ -161,7 +163,8 @@ namespace Portal.Controllers
             
             latestTestConfig.LongRunIndex += 1;
             await configTable.UpdateAsync(latestTestConfig);
-            var queue = await _perfStorage.GetQueueAsync<TestJob>(PerfConstants.QueueNames.PortalJob);
+            var queueName = _perfState.GetQueueName(latestTestConfig.TargetLocation);
+            var queue = await _perfStorage.GetQueueAsync<TestJob>(queueName);
             var testEntity = new TestStatusEntity
             {
                 User = User.Identity.Name,
@@ -173,13 +176,14 @@ namespace Portal.Controllers
                 ErrorInfo = "",
                 LongRun = true,
                 Dir = latestTestConfig.Dir,
+                QueueName = queueName,
                 Config = JsonConvert.SerializeObject(latestTestConfig)
             };
             try
             {
                
                 await statusTable.InsertAsync(testEntity);
-                await queue.SendAsync(latestTestConfig.ToTestJob(_clusterState,testEntity.RowKey ));
+                await queue.SendAsync(latestTestConfig.ToTestJob(_perfState,testEntity.RowKey ));
             }
             catch (Exception e)
             {
@@ -406,7 +410,7 @@ namespace Portal.Controllers
                         }
 
                         await statusTable.InsertAsync(testEntity);
-                        await queue.SendAsync(testConfigEntity.ToTestJob(_clusterState, index, unitLimit, instanceLimit,
+                        await queue.SendAsync(testConfigEntity.ToTestJob(_perfState, index, unitLimit, instanceLimit,
                             dir, total));
                     }
                     catch (Exception e)

@@ -40,7 +40,8 @@ export class TestStatus extends Component {
         e.target.setAttribute("class", "ui orange loading mini button")
         var json = JSON.parse(e.target.getAttribute("value"))
         var key = json.testId
-        const response = await fetch("teststatus/cancel/" + key, {
+        var queueName = json.queueName
+        const response = await fetch("teststatus/cancel/" + key+"/" + queueName, {
             method: 'POST',
             headers: {
                 'Accept': 'application/json',

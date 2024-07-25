@@ -20,10 +20,12 @@ namespace Portal.Controllers
     {
         private readonly ILogger<TestStatusController> _logger;
         private readonly IPerfStorage _perfStorage;
+        private readonly PerfState _perfState;
 
-        public TestStatusController(IPerfStorage perfStorage, ILogger<TestStatusController> logger)
+        public TestStatusController(IPerfStorage perfStorage, PerfState perfState,ILogger<TestStatusController> logger)
         {
             _perfStorage = perfStorage;
+            _perfState = perfState;
             _logger = logger;
         }
 
@@ -63,12 +65,16 @@ namespace Portal.Controllers
             }
         }
         
-        [HttpPost("cancel/{testId}")]
-        public async Task Cancel(string testId)
+        [HttpPost("cancel/{testId}/{queueName}")]
+        public async Task Cancel(string testId, string queueName)
         {
             try
             {
-                var queue = await _perfStorage.GetQueueAsync<TestJob>(PerfConstants.QueueNames.PortalJob);
+                if (string.IsNullOrEmpty(queueName))
+                {
+                    return;
+                }
+                var queue = await _perfStorage.GetQueueAsync<TestJob>(queueName, false);
                 await queue.SendAsync(new TestJob()
                 {
                     TestId = testId,
