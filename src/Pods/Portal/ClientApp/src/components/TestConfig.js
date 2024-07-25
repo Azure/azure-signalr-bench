@@ -454,18 +454,19 @@ export class TestConfig extends Component {
                             <Accordion.Content active={this.state.activeIndex[pair[0]]}>
                                 <table className='table table-striped' aria-labelledby="tabelLabel" >
                                     <thead>
-                                        <tr>
-                                            <th>TestName</th>
-                                            <th>timestamp</th>
-                                            <th>ClientConnections</th>
-                                            <th>Creater</th>
-                                            <th>Config</th>
-                                            <th>Edit</th>
-                                            <th>Fork</th>
-                                            <th>Start</th>
-                                            <th>Remove</th>
+                                    <tr>
+                                        <th>TestName</th>
+                                        <th>timestamp</th>
+                                        <th>ClientConnections</th>
+                                        <th>Creater</th>
+                                        <th>Config</th>
+                                        <th>Edit</th>
+                                        <th>Fork</th>
+                                        <th>Start</th>
+                                        <th>LongRun</th>
+                                        <th>Remove</th>
 
-                                        </tr>
+                                    </tr>
                                     </thead>
                                     <tbody>
                                         {pair[1].map(testConfig => {
@@ -512,6 +513,9 @@ export class TestConfig extends Component {
         //remove the terminal blank. The autofocus is removed by https://github.com/nitin42/terminal-in-react/issues/59
         var terminal = document.querySelector('.terminal')
         terminal && terminal.children[0].classList.remove('gSZAyM')
+        const hostLocations = window.hostLocations
+        console.log(hostLocations)
+        console.log("hostLocations")
         if(this.state.obj.createMode==null)
            this.state.obj.createMode=this.state.obj.serverUrl!=null?"SelfHostedServer":this.state.obj.connectionString!=null?"ConnectionString":"CreateByPerf";
         return (
@@ -635,6 +639,18 @@ export class TestConfig extends Component {
                                     <option>Broadcast</option>
                                     <option>GroupBroadcast</option>
                                     <option>P2P</option>
+                                </Form.Control>
+                            </Form.Group>
+                            <Form.Group  >
+                                <Form.Label>Locations for test to be run</Form.Label>
+                                <Form.Control name="targetLocation" type="select" onChange={this.handleChange} as="select"
+                                              defaultValue={this.state.obj.targetLocation}>
+                                    <option>Default</option>
+                                    {hostLocations?.map((location, index) => (
+                                        <option>
+                                            {location}
+                                        </option>
+                                    ))}
                                 </Form.Control>
                             </Form.Group>
                             {this.state.obj.scenario == "GroupBroadcast" && <Form.Group >

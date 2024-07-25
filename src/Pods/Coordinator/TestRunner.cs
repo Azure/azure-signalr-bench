@@ -209,7 +209,7 @@ namespace Azure.SignalRBench.Coordinator
                         await K8SProvider.DeleteServerPodsAsync(Job.TestId,
                             Job.TestMethod == TestCategory.AspnetCoreSignalRServerless ||
                             Job.TestMethod == TestCategory.RawWebsocket);
-                        if (_testStatusEntity.JobState == TestState.Cleaning.ToString())
+                        if (cancellationToken.IsCancellationRequested)
                         {
                             await UpdateTestStatus("Test cancelled", true, null, TestState.Cleaned);
                         }

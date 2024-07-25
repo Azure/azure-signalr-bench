@@ -81,6 +81,8 @@ spec:
               value: IMAGE_PLACE_HOLDER
             - name: internal
               value: INTERNAL_PLACE_HOLDER
+            - name: location
+              value: LOCATION_PLACE_HOLDER
       volumes:
         - name: volume
           azureFile:

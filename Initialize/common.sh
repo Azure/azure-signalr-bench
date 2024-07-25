@@ -9,6 +9,7 @@ function init_common() {
     COSMOSDB_ACCOUNT="${PREFIX_PERF}ca"
     KEYVAULT="${PREFIX_PERF}kv"
     KUBERNETES_SEVICES="${PREFIX_PERF}aks"
+    ACR_NAME="${PREFIX_PERF}acr"
     PORTAL_IP_NAME="${PREFIX_PERF}ip"
     KV_SA_ACCESS_KEY="sa-accessKey"
     KV_CA_ACCESS_KEY="cdb-accessKey"

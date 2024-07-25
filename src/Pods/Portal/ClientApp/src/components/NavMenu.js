@@ -63,6 +63,7 @@ export class NavMenu extends Component {
         console.log(data)
         window.perflocation=data['location']
         window.perfppe=data['ppeEnabled']
+        window.hostLocations=data['hostLocations']
         this.setState({user:data['user']})
     }
 }

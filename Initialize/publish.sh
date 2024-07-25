@@ -24,6 +24,7 @@ Arguments
    --client                             [Optional] publish client
    --sioserver                          [Optional] publish socket.io server
    --wpspyserver                        [Optional] publish wps python server
+   --aksregion|-ar                      [Optional] use aks in different region
    --help|-h                            Print help
 EOF
 }
@@ -91,6 +92,10 @@ while [[ "$#" > 0 ]]; do
   --wpspyserver)
     WPSPYSERVER=true
     ;;
+  --aksregion | -ar)
+    AKSLCOATION="$1"
+    shift
+    ;;
   --all | -a)
     ALL=true
     ;;
@@ -127,6 +132,10 @@ function upload(){
 throw_if_empty "prefix" $PREFIX
 
 init_common
+## If akslocation is not empty, change KUBERNETES_SEVICES to KUBERNETES_SEVICES-$AKSLCOATION
+if [[ ! -z $AKSLCOATION ]]; then
+  KUBERNETES_SEVICES="${KUBERNETES_SEVICES}-${AKSLCOATION}"
+fi
 init_aks_group
 
 image=$( az keyvault secret show --vault-name $KEYVAULT -n "image" | jq ".value" -r )
@@ -156,7 +165,7 @@ if [[ $ALL || $COORDINATOR ]]; then
   kubectl delete deployment coordinator  > /dev/null 2>&1 || true
   access_key=$(az storage account show-connection-string -n $STORAGE_ACCOUNT -g $RESOURCE_GROUP --query connectionString -o tsv)
   domain=$(az network public-ip show -n $PORTAL_IP_NAME -g $RESOURCE_GROUP --query dnsSettings.fqdn -o tsv)
-  cat coordinator.yaml | replace KVURL_PLACE_HOLDER $KVURL | replace MSI_PLACE_HOLDER $AGENTPOOL_MSI_CLIENT_ID | replace STORAGE_PLACE_HOLDER $access_key | replace DOMAIN_PLACE_HOLDER $domain | replace IMAGE_PLACE_HOLDER $image | replace INTERNAL_PLACE_HOLDER $internal | kubectl apply -f -
+  cat coordinator.yaml | replace KVURL_PLACE_HOLDER $KVURL | replace MSI_PLACE_HOLDER $AGENTPOOL_MSI_CLIENT_ID | replace STORAGE_PLACE_HOLDER $access_key | replace DOMAIN_PLACE_HOLDER $domain | replace IMAGE_PLACE_HOLDER $image | replace INTERNAL_PLACE_HOLDER $internal | replace LOCATION_PLACE_HOLDER $AKSLCOATION | kubectl apply -f -
 fi
 
 if [[ $ALL || $COMPILER ]]; then
@@ -218,11 +227,9 @@ if [[ $ALL || $WPSUPSTREAM ]]; then
   publish WpsUpstream
 fi
 
-
 if [[ $ALL || $REDIS ]]; then
   ##This redis has only one instance. Change this to cluster mode later
   cd $DIR/yaml/redis
-  PORTAL_IP=$(az network public-ip show -n $PORTAL_IP_NAME -g $RESOURCE_GROUP --query "ipAddress" -o tsv)
   kubectl apply -f redis-master-deployment.yaml
   kubectl apply -f redis-master-service.yaml
   # cat redis-master-test.yaml | replace RESOURCE_GROUP_PLACE_HOLDER $RESOURCE_GROUP | kubectl apply -f -

@@ -100,7 +100,7 @@ namespace Portal
                 }
             );
             services.AddSingleton<ICronScheduler, CronScheduler>();
-            services.AddSingleton<ClusterState>();
+            services.AddSingleton<PerfState>();
             services.AddControllersWithViews().AddJsonOptions(options =>
             {
                 options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
@@ -134,7 +134,7 @@ namespace Portal
 
             //  app.UseHttpsRedirection();
             app.ApplicationServices.GetRequiredService<ICronScheduler>().Start();
-            app.ApplicationServices.GetRequiredService<ClusterState>().Init().Wait();
+            app.ApplicationServices.GetRequiredService<PerfState>().Init().Wait();
             app.UseRouting();
 
             app.UseSpaStaticFiles();

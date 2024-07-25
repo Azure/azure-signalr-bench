@@ -14,14 +14,14 @@ namespace Portal.Cron
 {
     public class CronScheduler : ICronScheduler
     {
-        private readonly ClusterState _clusterState;
+        private readonly PerfState _perfState;
         private readonly ILogger<CronScheduler> _logger;
         private readonly IPerfStorage _perfStorage;
 
-        public CronScheduler(IPerfStorage perfStorage, ClusterState clusterState, ILogger<CronScheduler> logger)
+        public CronScheduler(IPerfStorage perfStorage, PerfState perfState, ILogger<CronScheduler> logger)
         {
             _perfStorage = perfStorage;
-            _clusterState = clusterState;
+            _perfState = perfState;
             _logger = logger;
         }
 
@@ -71,7 +71,7 @@ namespace Portal.Cron
                                     };
                                     await configTable.UpdateAsync(testConfigEntity);
                                     await statusTable.InsertAsync(testEntity);
-                                    await queue.SendAsync(testConfigEntity.ToTestJob(_clusterState));
+                                    await queue.SendAsync(testConfigEntity.ToTestJob(_perfState));
                                 }
                                 catch (Exception e)
                                 {

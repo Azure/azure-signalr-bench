@@ -21,18 +21,18 @@ namespace Portal.Controllers
     [ApiController]
     public class HomeController : ControllerBase
     {
-        private readonly ClusterState _clusterState;
+        private readonly PerfState _perfState;
         private ILogger<HomeController> _logger;
         private IPerfStorage _perfStorage;
         private SecretClient _secretClient;
 
 
         public HomeController(IPerfStorage perfStorage, SecretClient secretClient, ILogger<HomeController> logger,
-            ClusterState clusterState)
+            PerfState perfState)
         {
             _perfStorage = perfStorage;
             _secretClient = secretClient;
-            _clusterState = clusterState;
+            _perfState = perfState;
             _logger = logger;
         }
 
@@ -42,8 +42,9 @@ namespace Portal.Controllers
             var basicInfo = new BasicInfo
             {
                 User = User.Identity.Name,
-                Location = _clusterState.Location,
-                PPEEnabled = _clusterState.PPEEnabled
+                Location = _perfState.Location,
+                PPEEnabled = _perfState.PPEEnabled,
+                HostLocations = _perfState.HostLocations
             };
             return basicInfo;
         }
@@ -54,7 +55,7 @@ namespace Portal.Controllers
         public async Task<ActionResult> Auth(string userName, string role)
         {
             var password = Guid.NewGuid().ToString();
-            var rsa = _clusterState.AuthCert.GetRSAPublicKey();
+            var rsa = _perfState.AuthCert.GetRSAPublicKey();
             var key = UserService.GenerateKey(userName, password, role);
             var signature = UserService.CalculateSignature(key, rsa);
             var userIdentity = new UserIdentity()

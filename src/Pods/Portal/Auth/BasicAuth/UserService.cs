@@ -12,13 +12,13 @@ namespace Portal.BasicAuth
     public class UserService : IUserService
     {
         private readonly IPerfStorage _perfStorage;
-        private readonly ClusterState _clusterState;
+        private readonly PerfState _perfState;
 
 
-        public UserService(IPerfStorage perfStorage, ClusterState clusterState)
+        public UserService(IPerfStorage perfStorage, PerfState perfState)
         {
             _perfStorage = perfStorage;
-            _clusterState = clusterState;
+            _perfState = perfState;
         }
 
         public async Task<UserIdentity> Authenticate(string userName, string password)
@@ -31,7 +31,7 @@ namespace Portal.BasicAuth
                 return null;
             var key = GenerateKey(userName, password, user.Role);
             var decodedKey = DecodeSignature(user.Signature,
-                _clusterState.AuthCert.GetRSAPrivateKey());
+                _perfState.AuthCert.GetRSAPrivateKey());
             return key == decodedKey ? user : null;
         }
 

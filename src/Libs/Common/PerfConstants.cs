@@ -13,6 +13,7 @@ namespace Azure.SignalRBench.Common
             public const string SubscriptionKey = "subscription";
             public const string PPESubscriptionKey = "ppe-subscription";
             public const string LocationKey = "location";
+            public const string DefaultHostLocationKey = "default-host-location";
             public const string PPELocationKey = "ppe-location";
             public const string EncryptCert = "authEncrypt";
             public const string CloudKey = "cloud";
@@ -41,6 +42,8 @@ namespace Azure.SignalRBench.Common
             public const string Internal = "internal";
             public const string TestStatusPartitionKey = "testStatusPartitionKey";
             public const string TestStatusRowKey = "testStatusRowKey";
+            public const string LocationKey = "location";
+            public const string PlaceHolder = "PLACE_HOLDER";
         }
 
         public static class TableNames
@@ -48,6 +51,7 @@ namespace Azure.SignalRBench.Common
             public const string TestConfig = "testConfig";
             public const string TestStatus = "testStatus";
             public const string UserIdentity = "userIdentity";
+            public const string HostCluster = "hostcluster";
         }
 
         public static class QueueNames
