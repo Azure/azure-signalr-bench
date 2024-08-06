@@ -278,6 +278,7 @@ namespace Azure.SignalRBench.Client
                         {
                             await Task.Delay(1000, cancellationToken);
                          //   _logger.LogInformation("reportClientStatus");
+                            ClientMetrics.SetConnectedClientCount(_context.ConnectedAgentCount);
                             await MessageClientHolder.Client.ReportClientStatusAsync(_context.ClientStatus());
                         }
                         catch (Exception e)

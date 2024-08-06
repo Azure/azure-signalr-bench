@@ -102,6 +102,8 @@ export class TestStatus extends Component {
                         <th>Config</th>
                         <th>Status</th>
                         <th>Report</th>
+                        <th>Cancel</th>
+                        <th>Links</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -134,7 +136,28 @@ export class TestStatus extends Component {
                             </td>
                             <td><Button color="orange" size='mini'
                                         value={data} onClick={this.cancel}>Cancel</Button></td>
+                            <td>
+                                <a href={testStatus.grafanaPath ? testStatus.grafanaPath : '#'}
+                                   target="_blank"
+                                   style={testStatus.grafanaPath ? {} : {
+                                       color: 'gray',
+                                       pointerEvents: 'none',
+                                       textDecoration: 'none'
+                                   }}>
+                                    Metrics
+                                </a>
+                                &nbsp;&nbsp;
+                                <a href={testStatus.k8sPath ? testStatus.k8sPath : '#'}
+                                   target="_blank"
+                                   style={testStatus.k8sPath ? {} : {
+                                       color: 'gray',
+                                       pointerEvents: 'none',
+                                       textDecoration: 'none'
+                                   }}>
+                                    K8s
+                                </a>
 
+                            </td>
                         </tr>
                         }
                     )}

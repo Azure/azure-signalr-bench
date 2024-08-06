@@ -344,7 +344,8 @@ namespace Azure.SignalRBench.Coordinator.Provider
                             CreationTimestamp = null,
                             Labels = new Dictionary<string, string>
                             {
-                                ["app"] = name
+                                ["app"] = name,
+                                ["type"]= Client
                             }
                         },
                         Spec = new V1PodSpec
@@ -362,7 +363,7 @@ namespace Azure.SignalRBench.Coordinator.Provider
                             },
                             NodeSelector = new Dictionary<string, string>
                             {
-                                [PerfConstants.Name.OsLabel] = PerfConstants.Name.Linux
+                                // [PerfConstants.Name.OsLabel] = PerfConstants.Name.Linux
                             },
                             Containers = new List<V1Container>
                             {
@@ -394,6 +395,14 @@ namespace Azure.SignalRBench.Coordinator.Provider
                                     Args = new List<string>
                                     {
                                         "cp /mnt/perf/manifest/Client/Client.zip /home ; cd /home ; unzip Client.zip ; exec ./Client"
+                                    },
+                                    Ports = new List<V1ContainerPort>()
+                                    {
+                                        new V1ContainerPort()
+                                        {
+                                            ContainerPort = 8080,
+                                            Name = "metrics"
+                                        }
                                     },
                                     Env = new List<V1EnvVar>
                                     {
@@ -446,7 +455,15 @@ namespace Azure.SignalRBench.Coordinator.Provider
         {
             string name = Appserver + '-' + testId;
             name = NameConverter.Truncate(name);
-            await _k8S.DeleteNamespacedServiceAsync(name, Default);
+            
+            try
+            {
+                await _k8S.DeleteNamespacedServiceAsync(name, Default);
+            }catch (Microsoft.Rest.HttpOperationException e) when (e.Response.StatusCode == System.Net.HttpStatusCode.NotFound)
+            {
+                // ignore
+            }
+            
             if (upstream)
             {
                 try
@@ -457,6 +474,7 @@ namespace Azure.SignalRBench.Coordinator.Provider
                     // ignore
                 }
             }
+            
             try
             {
                 await _k8S.DeleteNamespacedDeploymentAsync(name, Default);

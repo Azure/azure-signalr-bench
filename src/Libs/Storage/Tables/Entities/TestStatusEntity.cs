@@ -25,11 +25,16 @@ namespace Azure.SignalRBench.Coordinator.Entities
         
         public string? QueueName { get; set; }
         
+        public string? Location { get; set; }
+        
         public string? TestId  => $"{PartitionKey}--{RowKey}";
         
         public string? LongRunContext { get; set; }
         
         public string? Check { get; set; }
+        
+        public string? GrafanaPath { get; set; }
+        public string? K8sPath { get; set; }
         
         public string JobState { get; set; } = TestState.InProgress.ToString();
     }

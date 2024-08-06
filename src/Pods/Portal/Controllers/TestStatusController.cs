@@ -42,6 +42,10 @@ namespace Portal.Controllers
                         .QueryAsync(from row in table.Rows where row.Timestamp > onedayAgo select row).ToListAsync();
                     result.Sort((a, b) =>
                         b.Timestamp.CompareTo(a.Timestamp));
+                    result.ForEach(r =>
+                    {
+                        _perfState.SetLinkPath(r);
+                    });
                     return result;
                 }
 
@@ -56,6 +60,10 @@ namespace Portal.Controllers
                 rows.Sort((a, b) =>
                     b.Timestamp.CompareTo(a.Timestamp)
                 );
+                rows.ForEach(row =>
+                {
+                   _perfState.SetLinkPath(row);
+                });
                 return rows;
             }
             catch (Exception e)
