@@ -126,6 +126,7 @@ namespace Portal.Controllers
                 Healthy = true,
                 Report = "",
                 ErrorInfo = "",
+                Location = _perfState.GetLocation(latestTestConfig.TargetLocation),
                 QueueName = queueName,
                 Dir = latestTestConfig.Dir,
                 Config = JsonConvert.SerializeObject(latestTestConfig)
@@ -176,6 +177,7 @@ namespace Portal.Controllers
                 ErrorInfo = "",
                 LongRun = true,
                 Dir = latestTestConfig.Dir,
+                Location = _perfState.GetLocation(latestTestConfig.TargetLocation),
                 QueueName = queueName,
                 Config = JsonConvert.SerializeObject(latestTestConfig)
             };
