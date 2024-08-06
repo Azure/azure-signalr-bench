@@ -18,20 +18,20 @@ namespace Azure.SignalRBench.Client.ClientAgent
             Groups = groups;
             GlobalIndex = globalIndex;
             var  transferFormat=(TransferFormat)((int)protocol >> 4);
-            var builder=
-             new HubConnectionBuilder()
-                .WithUrl(
-                    urlWithHub,
-                    o =>
-                    {
-                        o.Transports = (HttpTransportType) ((int) protocol & 0xF);
-                        o.DefaultTransferFormat = transferFormat;
-                        if (userName != null)
+            var builder =
+                new HubConnectionBuilder()
+                    .WithUrl(
+                        urlWithHub,
+                        o =>
                         {
-                            o.Headers.Add("user", userName);
+                            o.Transports = (HttpTransportType)((int)protocol & 0xF);
+                            o.DefaultTransferFormat = transferFormat;
+                            if (userName != null)
+                            {
+                                o.Headers.Add("user", userName);
+                            }
                         }
-                    }
-                ).WithAutomaticReconnect(context.RetryPolicy);
+                    ).WithAutomaticReconnect(context.RetryPolicy).WithStatefulReconnect();
             if (transferFormat == TransferFormat.Binary)
             {
                 builder.AddMessagePackProtocol();

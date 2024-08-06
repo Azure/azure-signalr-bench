@@ -69,6 +69,7 @@ namespace Azure.SignalRBench.AppServer
                 {
                     option.Endpoints = endpoints.Select(e => new ServiceEndpoint(e)).ToArray();
                 }
+                option.AllowStatefulReconnects = true;
                 //
                 // option.ClaimsProvider = context => new[]
                 // {
