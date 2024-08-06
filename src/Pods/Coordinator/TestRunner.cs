@@ -213,6 +213,10 @@ namespace Azure.SignalRBench.Coordinator
                         {
                             await UpdateTestStatus("Test cancelled", true, null, TestState.Cleaned);
                         }
+                        else
+                        {
+                            await UpdateTestStatus("Test Finishes", testState: TestState.Cleaned); 
+                        }
                     }
                     catch (Exception ignore)
                     {

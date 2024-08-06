@@ -83,7 +83,6 @@ namespace Azure.SignalRBench.Coordinator
                     testStatusEntity.JobState = TestState.Cleaning.ToString();
                     testStatusEntity.Status = "Cancelling and cleaning resources";
                     await testStatusAccessor.UpdateAsync(testStatusEntity);
-                    _logger.LogWarning("TestRunner {testId} is already cleaning", testId);
                     _logger.LogInformation("Test job {testId}: Removing hashTable in redis.", testId);
                     // await messageClient.DeleteHashTableAsync();
                     _logger.LogInformation("Test job {testId}: Removing client pods.", testId);

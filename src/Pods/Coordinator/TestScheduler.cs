@@ -90,27 +90,27 @@ namespace Azure.SignalRBench.Coordinator
         {
             while (true)
             {
-                await Task.Delay(5*60*1000, cancellationTokenSource.Token);
+                await Task.Delay(60*1000, cancellationTokenSource.Token);
                 try
                 {
                     var table = await PerfStorage.GetTableAsync<TestStatusEntity>(PerfConstants.TableNames.TestStatus);
                     var fiveMinutesAgo = new DateTimeOffset(DateTime.UtcNow.AddMinutes(-5));
-
+                    var cleaning = TestState.Cleaning.ToString();
                     var result = await table
                         .QueryAsync(from row in table.Rows
-                            where  row.JobState == TestState.Cleaning.ToString()
+                            where  row.JobState == cleaning
                             select row).ToListAsync();
                    
                     foreach (var test in result)
                     {
-                        if (test.Timestamp > fiveMinutesAgo)
+                        if (test.Timestamp > fiveMinutesAgo || test.QueueName != _queueName)
                         {
                             continue;
                         }
                         var testId = test.TestId;
                         try
                         {
-                            _logger.LogInformation("Test {testId} is in LongrunTerminating state, stop it.", testId);
+                            _logger.LogInformation("Test {testId} is in cleaning state, stop it.", testId);
                             await TestRunnerFactory.Stop(testId);
                         }
                         catch (Exception e)
