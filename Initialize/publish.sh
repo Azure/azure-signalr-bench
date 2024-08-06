@@ -25,6 +25,8 @@ Arguments
    --sioserver                          [Optional] publish socket.io server
    --wpspyserver                        [Optional] publish wps python server
    --aksregion|-ar                      [Optional] use aks in different region
+   --grafana|-g                         [Optional] publish grafana
+   --skipInitAks|-ska                   [Optional] skip init aks
    --help|-h                            Print help
 EOF
 }
@@ -92,6 +94,15 @@ while [[ "$#" > 0 ]]; do
   --wpspyserver)
     WPSPYSERVER=true
     ;;
+  --grafana | -g)
+    GRAFANA=true
+    ;;
+  --kubedashboard | -kd)
+    KUBEDASHBOARD=true
+    ;;
+  --skipInitAks | -ska)
+    SKIP_INIT_AKS=true
+    ;;
   --aksregion | -ar)
     AKSLCOATION="$1"
     shift
@@ -136,10 +147,14 @@ init_common
 if [[ ! -z $AKSLCOATION ]]; then
   KUBERNETES_SEVICES="${KUBERNETES_SEVICES}-${AKSLCOATION}"
 fi
-init_aks_group
+
+if [[ -z $SKIP_INIT_AKS ]]; then
+  init_aks_group
+fi
 
 image=$( az keyvault secret show --vault-name $KEYVAULT -n "image" | jq ".value" -r )
 internal=$( az keyvault secret show --vault-name $KEYVAULT -n "internal" | jq ".value"  )
+domain=$(az network public-ip show -n $PORTAL_IP_NAME -g $RESOURCE_GROUP --query dnsSettings.fqdn -o tsv)
 
 if [[ $ALL || $PORTAL ]]; then
   echo "replace the clientId and tenantId in src/Pods/Portal/appsettings.json"
@@ -148,7 +163,7 @@ if [[ $ALL || $PORTAL ]]; then
   echo "tenant is $tenant"
   cd $DIR/../src/Pods/Portal
   cat appsettings.template.json | replace CLIENTID_PLACE_HOLDER $appId | replace TENANTID_PLACE_HOLDER $tenant > appsettings.json
-``  publish Portal
+  publish Portal
   cd $DIR/yaml/portal
   kubectl delete deployment portal  > /dev/null 2>&1 || true
   cat portal.yaml | replace KVURL_PLACE_HOLDER $KVURL | replace MSI_PLACE_HOLDER $AGENTPOOL_MSI_CLIENT_ID | replace IMAGE_PLACE_HOLDER $image | kubectl apply -f -
@@ -270,6 +285,17 @@ if [[ $ALL || $AUTOSCALE ]]; then
     --cluster-autoscaler-profile scale-down-delay-after-add=60m scale-down-unneeded-time=60m scale-down-utilization-threshold=0.5 skip-nodes-with-system-pods=false new-pod-scale-up-delay=1s ok-total-unready-count=100  max-total-unready-percentage=0.9
 fi
 
+if [[ $ALL || $GRAFANA ]]; then
+  cd $DIR/yaml/grafana
+  kubectl delete deployment grafana  > /dev/null 2>&1 || true
+  cat  grafana.yaml | replace PORTAL_DOMAIN_PLACE_HOLDER  $domain | kubectl apply -f -
+fi
+
+if [[ $ALL || $KUBEDASHBOARD ]]; then
+  cd $DIR/yaml/kubedashboard
+  kubectl apply -f dashboard.yaml
+fi
+
 if [[ $ALL || $PPE ]]; then
   echo "skip ppe"
   # internal test only
@@ -342,5 +368,4 @@ if [[ $ALL || $INGRESS ]]; then
   cat portal-ingress.yaml | replace PORTAL_DOMAIN_PLACE_HOLDER $domain | kubectl apply -f -
 fi
 
-domain=$(az network public-ip show -n $PORTAL_IP_NAME -g $RESOURCE_GROUP --query dnsSettings.fqdn -o tsv)
 echo "portal url: https://$domain "

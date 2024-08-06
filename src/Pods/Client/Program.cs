@@ -20,6 +20,8 @@ namespace Azure.SignalRBench.Client
     {
         private static void Main(string[] args)
         {
+            using var server = new Prometheus.KestrelMetricServer(port: 8080);
+            server.Start();
             CreateHostBuilder(args).Build().Run();
         }
 
@@ -43,6 +45,9 @@ namespace Azure.SignalRBench.Client
                 })
                 .ConfigureServices((hostContext, services) =>
                 {
+                    var testId = hostContext.Configuration[PerfConstants.ConfigurationKeys.TestIdKey];
+                    var tmp = testId.Split("--");
+                    ClientMetrics.Init(tmp[0],tmp[1]);
                     services.AddSingleton<MessageClientHolder>();
                     services.AddSingleton<IScenarioState, ScenarioState>();
                     services.AddSingleton<IPerfStorage>(sp =>

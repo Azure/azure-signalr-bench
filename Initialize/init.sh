@@ -91,6 +91,7 @@ if [[ -z $(az storage account show -n $STORAGE_ACCOUNT -g $RESOURCE_GROUP 2>/dev
     az keyvault secret set --vault-name $KEYVAULT -n $KV_SA_ACCESS_KEY --value "$access_key"
     echo "storage account $STORAGE_ACCOUNT created."
     az storage share create --account-name $STORAGE_ACCOUNT --quota 20 -n $SA_SHARE
+    az storage share create --account-name $STORAGE_ACCOUNT --quota 60 -n prometheus
     echo "create dir:manifest"
     az storage directory create -n "manifest" --account-name $STORAGE_ACCOUNT -s $SA_SHARE
 else
@@ -115,7 +116,7 @@ if [[ -z $(az aks show --name $KUBERNETES_SEVICES -g $RESOURCE_GROUP 2>/dev/null
     echo "start getting kube/config"
     rm ~/.kube/perf || true
     az aks get-credentials -a -n $KUBERNETES_SEVICES --overwrite-existing -f ~/.kube/perf
-    kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.3.1/aio/deploy/recommended.yaml --kubeconfig ~/.kube/perf
+    kubectl apply -f https://raw.githubusercontent.com/kubernetes/dashboard/v2.7.0/aio/deploy/recommended.yaml --kubeconfig ~/.kube/perf
     echo "upload kube/config to $KEYVAULT"
     az keyvault secret set --vault-name $KEYVAULT -n $KV_KUBE_CONFIG -f ~/.kube/perf >/dev/null
     agentpool_msi_object_id=$(az aks show -n $KUBERNETES_SEVICES --query identityProfile.kubeletidentity.objectId -o tsv)

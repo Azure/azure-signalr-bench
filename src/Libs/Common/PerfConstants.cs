@@ -59,6 +59,11 @@ namespace Azure.SignalRBench.Common
             public const string PortalJob = "portal-job";
         }
 
+        public static class Locations
+        {
+            public const string Default = "default";
+        }
+
         public static class Roles
         {
             public const string Contributor = "Contributor";

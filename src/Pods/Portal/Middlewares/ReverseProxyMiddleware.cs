@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 using Portal.Auth;
 
 namespace Portal
@@ -13,8 +14,10 @@ namespace Portal
         private static HttpClient _httpClient;
         private readonly RequestDelegate _nextMiddleware;
         private readonly string token;
+        private readonly PerfState _perfState;
+        private ILogger<ReverseProxyMiddleware> _logger;
 
-        public ReverseProxyMiddleware(RequestDelegate nextMiddleware)
+        public ReverseProxyMiddleware(RequestDelegate nextMiddleware,  ILogger<ReverseProxyMiddleware> logger, PerfState perfState)
         {
             var httpClientHandler = new HttpClientHandler();
             httpClientHandler.ServerCertificateCustomValidationCallback = (message, cert, chain, errors) =>
@@ -23,6 +26,8 @@ namespace Portal
             };
             _httpClient = new HttpClient(httpClientHandler);
             _nextMiddleware = nextMiddleware;
+            _perfState = perfState;
+            _logger = logger;
             token = File.ReadAllText("/var/run/secrets/kubernetes.io/serviceaccount/token");
         }
 
@@ -39,12 +44,13 @@ namespace Portal
                     return;
                 }
                 var targetRequestMessage = CreateTargetMessage(context, targetUri);
-                targetRequestMessage.Headers.Add("Authorization", $"Bearer {token}");
+                AddAuthorizationHeader(context.Request, targetRequestMessage);
 
                 using (var responseMessage = await _httpClient.SendAsync(targetRequestMessage,
                     HttpCompletionOption.ResponseHeadersRead, context.RequestAborted))
                 {
                     context.Response.StatusCode = (int) responseMessage.StatusCode;
+                    _logger.LogInformation($"Proxying request to {targetUri} ,Received response with status code {responseMessage.StatusCode}");
 
                     CopyFromTargetResponseHeaders(context, responseMessage);
 
@@ -116,11 +122,29 @@ namespace Portal
 
         private Uri BuildTargetUri(HttpRequest request)
         {
-            Uri targetUri = null;
+            string targetUri = null;
             PathString remainingPath;
             if (request.Path.StartsWithSegments("/k8s", out remainingPath))
-                targetUri = new Uri("https://kubernetes-dashboard.kubernetes-dashboard.svc.cluster.local" + remainingPath);
-            return targetUri;
+                targetUri = "https://kubernetes-dashboard.kubernetes-dashboard.svc.cluster.local" + remainingPath;
+            else if(request.Path.StartsWithSegments("/grafana", out remainingPath))
+                targetUri = "http://grafana:3000" + remainingPath;
+            foreach (var kv in _perfState.K8sProxy)
+            {
+                if (request.Path.StartsWithSegments($"/{kv.Key}", out remainingPath))
+                {
+                    targetUri = kv.Value + remainingPath;
+                    break;
+                }
+            }
+            if(request.QueryString.HasValue)
+                targetUri +=  request.QueryString;
+            return targetUri == null ? null : new Uri(targetUri);
+        }
+
+        private void AddAuthorizationHeader(HttpRequest request, HttpRequestMessage requestMessage)
+        {
+            if (request.Path.StartsWithSegments("/k8s"))
+                requestMessage.Headers.Add("Authorization", $"Bearer {token}");
         }
     }
 }

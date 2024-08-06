@@ -76,6 +76,7 @@ namespace Azure.SignalRBench.Client
         {
             Interlocked.Increment(ref _recievedMessageCount);
             long latency = CoordinatedUtcNow() - ticks;
+            ClientMetrics.ObserveClientLatency((double)latency/TimeSpan.TicksPerSecond);
             if (latency < TimeSpan.TicksPerMillisecond * 50)
             {
                 Interlocked.Increment(ref _latency.LessThan50ms);
@@ -131,7 +132,10 @@ namespace Azure.SignalRBench.Client
             _dict.AddOrUpdate(agent, ClientAgentStatus.Connected, (a, s) =>
             {
                 if (s == ClientAgentStatus.Reconnecting)
+                {
                     Interlocked.Increment(ref _totalReconnectedCount);
+                    ClientMetrics.IncClientReconnectCount();
+                }
                 return ClientAgentStatus.Connected;
             });
             

@@ -5,6 +5,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using Azure.Security.KeyVault.Secrets;
 using Azure.SignalRBench.Common;
+using Azure.SignalRBench.Coordinator.Entities;
 using Azure.SignalRBench.Storage;
 using Microsoft.Extensions.Logging;
 using Portal.Entity;
@@ -30,7 +31,9 @@ namespace Portal
         public string PPELocation { get; private set; } = "";
         public X509Certificate2 AuthCert { get; private set; }
         public string DefaultHostLocation { get; private set; } 
-        public IList<string> HostLocations { get; private set; } = new List<string>();
+        public IList<string> HostLocations => _hostClusters.Keys.ToList();
+        public IDictionary<string,string> K8sProxy => _hostClusters.ToDictionary(kv => kv.Value.K8sKey, kv => kv.Value.K8SEndpoint);      
+        private volatile IDictionary<string,HostCluster> _hostClusters = new Dictionary<string, HostCluster>();
 
         public async Task Init()
         {
@@ -55,13 +58,20 @@ namespace Portal
 
             _ = Task.Run(async () =>
             {
-                await Task.Delay(60 * 1000);
-                await Refresh();
+                while (true)
+                {
+                    await Task.Delay(60 * 1000);
+                    await Refresh();  
+                }
             });
         }
 
         public string GetQueueName(string? targetLocation)
         {
+            if (targetLocation?.ToLower() == PerfConstants.Locations.Default)
+            {
+                targetLocation = null;
+            }
             if (string.IsNullOrEmpty(targetLocation))
             {
                 if (string.IsNullOrEmpty(DefaultHostLocation))
@@ -76,6 +86,40 @@ namespace Portal
             else
             {
                 return $"{PerfConstants.QueueNames.PortalJob}-{targetLocation}";
+            }
+        }
+        
+        public string? GetLocation(string? targetLocation)
+        {
+            if (targetLocation?.ToLower() == PerfConstants.Locations.Default)
+            {
+                targetLocation = null;
+            }
+            if (string.IsNullOrEmpty(targetLocation))
+            {
+                return string.IsNullOrEmpty(DefaultHostLocation) ? null : DefaultHostLocation;
+            }
+            else
+            {
+                return targetLocation;
+            }
+        }
+
+        public void SetLinkPath(TestStatusEntity testStatusEntity)
+        {
+            var location= testStatusEntity.Location;
+            if (!string.IsNullOrEmpty(location) && _hostClusters.TryGetValue(location, out HostCluster value))
+            {
+                var hostCluster = value;
+                if (hostCluster.GrafanaPath != null)
+                {
+                    testStatusEntity.GrafanaPath =
+                        $"{hostCluster.GrafanaPath}?var-testName={testStatusEntity.PartitionKey}&var-index={testStatusEntity.RowKey}";
+                }
+                if (hostCluster.K8sKey != null && hostCluster.K8SEndpoint != null)
+                {
+                    testStatusEntity.K8sPath = $"/{hostCluster.K8sKey}/#/search?q={testStatusEntity.TestId}&namespace=default";
+                }
             }
         }
 
@@ -93,7 +137,12 @@ namespace Portal
             
             var table = await _perfStorage.GetTableAsync<HostCluster>(PerfConstants.TableNames.HostCluster);
             var list=await table.QueryAsync(table.Rows).ToListAsync();
-            HostLocations = list.Select(x => x.Location).ToList();
+            var dict = new Dictionary<string, HostCluster>();
+            foreach (var hostCluster in list)
+            {
+                dict[hostCluster.Location] = hostCluster;
+            }
+            _hostClusters = dict;
         }
     }
 }
