@@ -36,35 +36,42 @@ namespace Portal.Controllers
             {
                 var table = await _perfStorage.GetTableAsync<TestStatusEntity>(PerfConstants.TableNames.TestStatus);
                 var onedayAgo = new DateTimeOffset(DateTime.UtcNow.AddDays(-1));
+                List<TestStatusEntity> results = null;
+
                 if (string.IsNullOrEmpty(key))
                 {
-                    var result = await table
+                    results = await table
                         .QueryAsync(from row in table.Rows where row.Timestamp > onedayAgo select row).ToListAsync();
-                    result.Sort((a, b) =>
-                        b.Timestamp.CompareTo(a.Timestamp));
-                    result.ForEach(r =>
-                    {
-                        _perfState.SetLinkPath(r);
-                    });
-                    return result;
                 }
-
-                List<TestStatusEntity> rows = null;
-                if (string.IsNullOrEmpty(index))
-                    rows = await table.QueryAsync(
-                        from row in table.Rows where row.PartitionKey == key select row).ToListAsync();
                 else
-                    rows = await table.QueryAsync(
-                            from row in table.Rows where row.PartitionKey == key && row.RowKey == index select row)
-                        .ToListAsync();
-                rows.Sort((a, b) =>
+                {
+                    if (string.IsNullOrEmpty(index))
+                        results = await table.QueryAsync(
+                            from row in table.Rows where row.PartitionKey == key select row).ToListAsync();
+                    else
+                        results = await table.QueryAsync(
+                                from row in table.Rows where row.PartitionKey == key && row.RowKey == index select row)
+                            .ToListAsync();
+                }
+                
+                // pull the long running test status
+                var longruns = await table.QueryAsync(
+                        from row in table.Rows where row.JobState == nameof(TestState.Longrun) select row)
+                    .ToListAsync();
+                var hashSet = new HashSet<string>();
+                foreach (var entity in results)
+                {
+                    hashSet.Add(entity.TestId);
+                }
+                results.AddRange(longruns.Where(entity => !hashSet.Contains(entity.TestId)));
+                results.Sort((a, b) =>
                     b.Timestamp.CompareTo(a.Timestamp)
                 );
-                rows.ForEach(row =>
+                results.ForEach(row =>
                 {
                    _perfState.SetLinkPath(row);
                 });
-                return rows;
+                return results;
             }
             catch (Exception e)
             {
