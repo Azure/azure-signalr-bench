@@ -25,7 +25,6 @@ namespace Azure.SignalRBench.Client
 
         private static string? _testName;
         private static string? _index;
-        private static string? _podName;
         
         public static void Init(string testName, string index)
         {
@@ -35,17 +34,17 @@ namespace Azure.SignalRBench.Client
         
         public static void SetConnectedClientCount(double value)
         {
-            _connectedClientCount.WithLabels(_testName, _index, _podName).Set(value);
+            _connectedClientCount.WithLabels(_testName, _index).Set(value);
         }
         
         public static void IncClientReconnectCount()
         {
-            _clientReconnectCount.WithLabels(_testName, _index, _podName).Inc();
+            _clientReconnectCount.WithLabels(_testName, _index).Inc();
         }
         
         public static void ObserveClientLatency(double value)
         {
-            _clientLatency.WithLabels(_testName, _index, _podName).Observe(value);
+            _clientLatency.WithLabels(_testName, _index).Observe(value);
         }
     }
 }

@@ -48,8 +48,7 @@ namespace Azure.SignalRBench.Coordinator.Provider
             int serverPodCount, TestCategory testCategory, string formatProtocol, int perPodConnection,
             ClientBehavior behavior, CancellationToken cancellationToken)
         {
-            var name = Appserver + "-" + testId;
-            name = NameConverter.Truncate(name);
+            var name = NameConverter.Truncate(testId);
             var service = new V1Service
             {
                 Metadata = new V1ObjectMeta
@@ -64,7 +63,8 @@ namespace Azure.SignalRBench.Coordinator.Provider
                     },
                     Selector = new Dictionary<string, string>
                     {
-                        ["app"] = name
+                        ["app"] = name,
+                        ["type"] = Appserver
                     }
                 }
             };
@@ -75,7 +75,7 @@ namespace Azure.SignalRBench.Coordinator.Provider
                 {
                     Metadata = new V1ObjectMeta
                     {
-                        Name = NameConverter.Truncate(Upstream + "-" + testId),
+                        Name = NameConverter.Truncate(testId),
                         Annotations = new Dictionary<string, string>
                         {
                             ["kubernetes.io/ingress.class"] = "nginx",
@@ -140,8 +140,7 @@ namespace Azure.SignalRBench.Coordinator.Provider
                     },
                     Annotations = new Dictionary<string, string>
                     {
-                        ["cluster-autoscaler.kubernetes.io/safe-to-evict"] = "false",
-                        [PerfConstants.ConfigurationKeys.TestIdKey] = testId
+                        ["cluster-autoscaler.kubernetes.io/safe-to-evict"] = "false"
                     }
                 },
                 Spec = new V1DeploymentSpec
@@ -151,7 +150,8 @@ namespace Azure.SignalRBench.Coordinator.Provider
                     {
                         MatchLabels = new Dictionary<string, string>
                         {
-                            { "app", name }
+                            ["app"]=name,
+                            ["type"] = Appserver
                         }
                     },
                     Template = new V1PodTemplateSpec
@@ -161,7 +161,8 @@ namespace Azure.SignalRBench.Coordinator.Provider
                             CreationTimestamp = null,
                             Labels = new Dictionary<string, string>
                             {
-                                ["app"] = name
+                                ["app"] = name,
+                                ["type"] = Appserver
                             }
                         },
                         Spec = new V1PodSpec
@@ -308,8 +309,7 @@ namespace Azure.SignalRBench.Coordinator.Provider
         {
             var testId = testJob.TestId;
             var testCategory = testJob.TestMethod;
-            var name = Client + '-' + testId;
-            name = NameConverter.Truncate(name);
+            var name = NameConverter.Truncate(testId);
             V1StatefulSet statefulSet = new V1StatefulSet()
             {
                 Metadata = new V1ObjectMeta
@@ -439,8 +439,7 @@ namespace Azure.SignalRBench.Coordinator.Provider
 
         public async Task DeleteClientPodsAsync(string testId)
         {
-            string name = Client + '-' + testId;
-            name = NameConverter.Truncate(name);
+            var name = NameConverter.Truncate(testId);
             // await _k8S.DeleteNamespacedDeploymentAsync(name, Default);
             try
             {
@@ -453,8 +452,7 @@ namespace Azure.SignalRBench.Coordinator.Provider
 
         public async Task DeleteServerPodsAsync(string testId, bool upstream)
         {
-            string name = Appserver + '-' + testId;
-            name = NameConverter.Truncate(name);
+            var name = NameConverter.Truncate(testId);
             
             try
             {
@@ -468,7 +466,7 @@ namespace Azure.SignalRBench.Coordinator.Provider
             {
                 try
                 {
-                    await _k8S.DeleteNamespacedIngress1Async(NameConverter.Truncate(Upstream + "-" + testId), Default);
+                    await _k8S.DeleteNamespacedIngress1Async(NameConverter.Truncate(testId), Default);
                 }catch (Microsoft.Rest.HttpOperationException e) when (e.Response.StatusCode == System.Net.HttpStatusCode.NotFound)
                 {
                     // ignore

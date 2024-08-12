@@ -381,8 +381,8 @@ namespace Portal.Controllers
             {
                 return BadRequest($"Dir {dir} doesn't exist");
             }
-
-            var queue = await _perfStorage.GetQueueAsync<TestJob>(PerfConstants.QueueNames.PortalJob);
+            var queueName = _perfState.GetQueueName(configs[0].TargetLocation);
+            var queue = await _perfStorage.GetQueueAsync<TestJob>(queueName);
             var statusTable = await _perfStorage.GetTableAsync<TestStatusEntity>(PerfConstants.TableNames.TestStatus);
             var tasks = new List<Task>();
             foreach (var testConfigEntity in configs)
@@ -398,6 +398,8 @@ namespace Portal.Controllers
                         Healthy = true,
                         Report = "",
                         ErrorInfo = "",
+                        Location = _perfState.GetLocation(testConfigEntity.TargetLocation),
+                        QueueName = queueName,
                         Dir = testConfigEntity.Dir,
                         Config = JsonConvert.SerializeObject(testConfigEntity)
                     };

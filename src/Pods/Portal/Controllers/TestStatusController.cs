@@ -35,13 +35,13 @@ namespace Portal.Controllers
             try
             {
                 var table = await _perfStorage.GetTableAsync<TestStatusEntity>(PerfConstants.TableNames.TestStatus);
-                var onedayAgo = new DateTimeOffset(DateTime.UtcNow.AddDays(-1));
+                var dateTimeOffset = new DateTimeOffset(DateTime.UtcNow.AddDays(-7));
                 List<TestStatusEntity> results = null;
 
                 if (string.IsNullOrEmpty(key))
                 {
                     results = await table
-                        .QueryAsync(from row in table.Rows where row.Timestamp > onedayAgo select row).ToListAsync();
+                        .QueryAsync(from row in table.Rows where row.Timestamp > dateTimeOffset select row).ToListAsync();
                 }
                 else
                 {

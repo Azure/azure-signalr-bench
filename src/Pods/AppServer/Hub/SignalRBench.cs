@@ -8,10 +8,10 @@ using Microsoft.Extensions.Logging;
 
 namespace Azure.SignalRBench.AppServer.Hub
 {
-    public class BenchHub : Microsoft.AspNetCore.SignalR.Hub
+    public class SignalRBench : Microsoft.AspNetCore.SignalR.Hub
     {
-        private ILogger<BenchHub> _logger;
-        public BenchHub(ILogger<BenchHub> logger)
+        private ILogger<SignalRBench> _logger;
+        public SignalRBench(ILogger<SignalRBench> logger)
         {
             _logger = logger;
         }

@@ -136,9 +136,11 @@ namespace Portal
                     break;
                 }
             }
+            if (targetUri == null)
+                return null;
             if(request.QueryString.HasValue)
                 targetUri +=  request.QueryString;
-            return targetUri == null ? null : new Uri(targetUri);
+            return new Uri(targetUri);
         }
 
         private void AddAuthorizationHeader(HttpRequest request, HttpRequestMessage requestMessage)

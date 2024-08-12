@@ -86,7 +86,7 @@ namespace Azure.SignalRBench.AppServer
         {
             app.UseRouting();
 
-            app.UseAzureSignalR(routes => { routes.MapHub<BenchHub>(HUB_NAME); });
+            app.UseAzureSignalR(routes => { routes.MapHub<Hub.SignalRBench>(HUB_NAME); });
         }
     }
 }

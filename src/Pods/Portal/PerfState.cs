@@ -118,7 +118,7 @@ namespace Portal
                 }
                 if (hostCluster.K8sKey != null && hostCluster.K8SEndpoint != null)
                 {
-                    testStatusEntity.K8sPath = $"/{hostCluster.K8sKey}/#/search?q={testStatusEntity.TestId}&namespace=default";
+                    testStatusEntity.K8sPath = $"/{hostCluster.K8sKey}/#/search?q={NameConverter.Truncate(testStatusEntity.TestId)}&namespace=default";
                 }
             }
         }
