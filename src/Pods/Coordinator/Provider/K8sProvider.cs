@@ -328,6 +328,7 @@ namespace Azure.SignalRBench.Coordinator.Provider
                 },
                 Spec = new V1StatefulSetSpec()
                 {
+                    PodManagementPolicy = "Parallel", 
                     Replicas = clientPodCount,
                     ServiceName = name,
                     Selector = new V1LabelSelector
