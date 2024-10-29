@@ -20,7 +20,7 @@ spec:
         agentpool: captain
       containers:
       - name: master
-        image: redis
+        image: signalrperfv2acr.azurecr.io/signalrbenchmark/redis
         resources:
           requests:
             cpu: 1000m

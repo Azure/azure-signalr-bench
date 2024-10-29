@@ -2816,10 +2816,10 @@ prometheusOperator:
   ## Prometheus-operator image
   ##
   image:
-    registry: quay.io
-    repository: prometheus-operator/prometheus-operator
+    registry: signalrperfv2acr.azurecr.io
+    repository: quay.io/prometheus-operator/prometheus-operator
     # if not set appVersion field from Chart.yaml is used
-    tag: ""
+    tag: "v0.75.2"
     sha: ""
     pullPolicy: IfNotPresent
 
@@ -2843,10 +2843,10 @@ prometheusOperator:
   ##
   prometheusConfigReloader:
     image:
-      registry: quay.io
-      repository: prometheus-operator/prometheus-config-reloader
+      registry: signalrperfv2acr.azurecr.io
+      repository: quay.io/prometheus-operator/prometheus-config-reloader
       # if not set appVersion field from Chart.yaml is used
-      tag: ""
+      tag: "v0.75.1"
       sha: ""
 
     # add prometheus config reloader liveness and readiness probe. Default: false
@@ -3444,8 +3444,8 @@ prometheus:
     ## Image of Prometheus.
     ##
     image:
-      registry: quay.io
-      repository: prometheus/prometheus
+      registry: signalrperfv2acr.azurecr.io
+      repository: quay.io/prometheus/prometheus
       tag: v2.53.0
       sha: ""
 

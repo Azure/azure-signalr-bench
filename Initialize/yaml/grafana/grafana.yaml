@@ -31,7 +31,7 @@ spec:
           - 0
       containers:
         - name: grafana
-          image: grafana/grafana:10.4.6
+          image: signalrperfv2acr.azurecr.io/grafana/grafana:10.4.6
           imagePullPolicy: IfNotPresent
           env:
             - name: GF_AUTH_ANONYMOUS_ENABLED
@@ -94,4 +94,3 @@ spec:
   selector:
     app: grafana
   sessionAffinity: None
-  type: LoadBalancer
