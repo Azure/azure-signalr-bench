@@ -136,7 +136,7 @@ namespace Portal
             }
             
             var table = await _perfStorage.GetTableAsync<HostCluster>(PerfConstants.TableNames.HostCluster);
-            var list=await table.QueryAsync(table.Rows).ToListAsync();
+            var list=await table.QueryAsync(FilterExpression.All()).ToListAsync();
             var dict = new Dictionary<string, HostCluster>();
             foreach (var hostCluster in list)
             {

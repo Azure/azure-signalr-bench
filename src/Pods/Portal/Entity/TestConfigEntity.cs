@@ -2,13 +2,14 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
+using Azure;
 using Azure.SignalRBench.Common;
-using Microsoft.Azure.Cosmos.Table;
+using Azure.SignalRBench.Coordinator.Entities;
 using Newtonsoft.Json;
 
 namespace Portal.Entity
 {
-    public class TestConfigEntity : TableEntity
+    public class TestConfigEntity : IPerfTableEntity
     {
         public static Regex TagsRegex =
             new Regex("^(([a-zA-Z0-9]{1,}=[a-zA-Z0-9]{1,};){0,}([a-zA-Z0-9]{1,}=[a-zA-Z0-9]{1,}){0,1})$");
@@ -309,5 +310,11 @@ namespace Portal.Entity
                 _ => 200
             };
         }
+
+        public string PartitionKey { get; set; }
+        public string RowKey { get; set; }
+        public DateTimeOffset? Timestamp { get; set; }
+        public ETag ETag { get; set; }
+        public DateTimeOffset? LastModified { get; set; }
     }
 }

@@ -126,7 +126,7 @@ export class TestStatus extends Component {
                         return <tr key={trkey}>
                             <td>{testStatus.partitionKey}</td>
                             <td>{testStatus.rowKey}</td>
-                            <td>{testStatus.timestamp}</td>
+                            <td>{testStatus.lastModified===null?testStatus.timestamp:testStatus.lastModified}</td>
                             <td>{testStatus.user}</td>
                             <td><Icon size="large" name='file code outline' value={testStatus.config}
                                       onClick={this.handleJsonShow}/></td>

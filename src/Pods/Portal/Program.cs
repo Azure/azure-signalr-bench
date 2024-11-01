@@ -1,15 +1,25 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Azure.Data.Tables;
+using Azure.Identity;
+using Azure.SignalRBench.Coordinator.Entities;
+using Azure.SignalRBench.Storage;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Portal.Entity;
 
 namespace Portal
 {
     public class Program
     {
-        public static void Main(string[] args)
+        public static async Task Main(string[] args)
         {
             CreateHostBuilder(args).Build().Run();
         }
+        
 
         public static IHostBuilder CreateHostBuilder(string[] args)
         {

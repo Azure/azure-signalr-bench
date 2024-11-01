@@ -32,12 +32,6 @@ namespace Azure.SignalRBench.Coordinator
                         options.DisableColors = false;
                         options.TimestampFormat = "hh:mm:ss yyyy/MM/dd";
                     });
-                    if (!context.HostingEnvironment.IsDevelopment())
-                        logging.AddProvider(
-                            new BlobLoggerProvider(
-                                $"{Roles.Coordinator}/{Roles.Coordinator}_{context.Configuration[PerfConstants.ConfigurationKeys.PodNameStringKey]}",
-                                ".log",
-                                context.Configuration[PerfConstants.ConfigurationKeys.StorageConnectionStringKey]));
                 })
                 .ConfigureServices((hostContext, services) =>
                 {
@@ -52,11 +46,13 @@ namespace Azure.SignalRBench.Coordinator
                     services.AddSingleton<IPerfStorage>(sp =>
                         {
                             var secretClient = sp.GetService<SecretClient>();
-                            var saConnectionString = secretClient.GetSecretAsync("sa-accessKey").GetAwaiter().GetResult()
+                            var queueUrl = secretClient.GetSecretAsync(PerfConstants.KeyVaultKeys.StorageQueueUrlKey).GetAwaiter().GetResult()
                                 .Value.Value;
-                            var cdbConnectionString = secretClient.GetSecretAsync("cdb-accessKey").GetAwaiter().GetResult()
+                            var cdbUrl = secretClient.GetSecretAsync(PerfConstants.KeyVaultKeys.CosmosUrlKey).GetAwaiter().GetResult()
                                 .Value.Value;
-                            return new PerfStorage(saConnectionString,cdbConnectionString);
+                            var blobUrl = secretClient.GetSecretAsync(PerfConstants.KeyVaultKeys.StorageBlobUrlKey).GetAwaiter().GetResult()
+                                .Value.Value;
+                            return new PerfStorage(queueUrl,cdbUrl,blobUrl,hostContext.Configuration[PerfConstants.ConfigurationKeys.MsiAppId]);
                         }
                     );
                     services.AddSingleton<PerfStorageProvider>();

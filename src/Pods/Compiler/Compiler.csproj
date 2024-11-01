@@ -7,6 +7,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Azure.Identity" Version="1.13.1" />
+    <PackageReference Include="Azure.Storage.Queues" Version="12.20.1" />
     <PackageReference Include="Microsoft.Caching.Redis" Version="3.0.38" />
   </ItemGroup>
 

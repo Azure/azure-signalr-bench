@@ -96,10 +96,9 @@ namespace Azure.SignalRBench.Coordinator
                     var table = await PerfStorage.GetTableAsync<TestStatusEntity>(PerfConstants.TableNames.TestStatus);
                     var fiveMinutesAgo = new DateTimeOffset(DateTime.UtcNow.AddMinutes(-5));
                     var cleaning = TestState.Cleaning.ToString();
+                    var filter = FilterExpression.KeyEqual(nameof(TestStatusEntity.JobState), cleaning);
                     var result = await table
-                        .QueryAsync(from row in table.Rows
-                            where  row.JobState == cleaning
-                            select row).ToListAsync();
+                        .QueryAsync(filter).ToListAsync();
                    
                     foreach (var test in result)
                     {

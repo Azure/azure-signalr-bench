@@ -41,7 +41,8 @@ namespace Azure.SignalRBench.Client
                         new BlobLoggerProvider(
                             $"{context.Configuration[PerfConstants.ConfigurationKeys.TestIdKey]}/{Roles.Clients}_{context.Configuration[PerfConstants.ConfigurationKeys.PodNameStringKey]}",
                             ".log",
-                            context.Configuration[PerfConstants.ConfigurationKeys.StorageConnectionStringKey]));
+                            context.Configuration[PerfConstants.ConfigurationKeys.BlobUrlKey],
+                            context.Configuration[PerfConstants.ConfigurationKeys.MsiAppId]));
                 })
                 .ConfigureServices((hostContext, services) =>
                 {
@@ -52,9 +53,10 @@ namespace Azure.SignalRBench.Client
                     services.AddSingleton<IScenarioState, ScenarioState>();
                     services.AddSingleton<IPerfStorage>(sp =>
                     {
-                        var saConnectionString = hostContext.Configuration[PerfConstants.ConfigurationKeys.StorageConnectionStringKey];
-                        var cdbConnectionString = hostContext.Configuration[PerfConstants.ConfigurationKeys.CosmosConnectionStringKey];
-                        return new PerfStorage(saConnectionString, cdbConnectionString);
+                        var queueUrl = hostContext.Configuration[PerfConstants.ConfigurationKeys.QueueUrlKey];
+                        var cdbUrl = hostContext.Configuration[PerfConstants.ConfigurationKeys.CosmosUrlKey];
+                        var blobUrl = hostContext.Configuration[PerfConstants.ConfigurationKeys.BlobUrlKey];
+                        return new PerfStorage(queueUrl, cdbUrl, blobUrl,hostContext.Configuration[PerfConstants.ConfigurationKeys.MsiAppId]);
                     });
                     switch (hostContext.Configuration[PerfConstants.ConfigurationKeys.TestCategory])
                     {

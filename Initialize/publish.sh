@@ -27,6 +27,7 @@ Arguments
    --aksregion|-ar                      [Optional] use aks in different region
    --grafana|-g                         [Optional] publish grafana
    --skipInitAks|-ska                   [Optional] skip init aks
+   --adhoc                              [Optional] run adhoc
    --help|-h                            Print help
 EOF
 }
@@ -105,7 +106,10 @@ while [[ "$#" > 0 ]]; do
     ;;
   --aksregion | -ar)
     AKSLCOATION="$1"
-    shift
+    shift    
+    ;;
+  --adhoc)
+    ADHOC=true
     ;;
   --all | -a)
     ALL=true
@@ -368,4 +372,9 @@ if [[ $ALL || $INGRESS ]]; then
   cat portal-ingress.yaml | replace PORTAL_DOMAIN_PLACE_HOLDER $domain | kubectl apply -f -
 fi
 
+if [[ $ALL || $ADHOC ]]; then
+  echo "run adhoc"
+  
+  echo "finished adhoc"
+fi
 echo "portal url: https://$domain "

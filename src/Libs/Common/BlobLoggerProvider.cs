@@ -10,6 +10,7 @@ using System.IO;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using Azure.Identity;
 
 namespace Azure.SignalRBench.Common
 {
@@ -28,9 +29,11 @@ namespace Azure.SignalRBench.Common
         private AppendBlobClient? _current;
         private DateTime _expiresAt;
 
-        public BlobLoggerProvider(string prefix, string suffix, string connectionString)
+        public BlobLoggerProvider(string prefix, string suffix, string blobEndpoint, string msiClientId)
         {
-            var serviceClient = new BlobServiceClient(connectionString);
+            var serviceClient = new BlobServiceClient(new Uri(blobEndpoint),new DefaultAzureCredential(
+                new DefaultAzureCredentialOptions { ManagedIdentityClientId = msiClientId}
+            ));
             _prefix = prefix;
             _suffix = suffix;
             _client = serviceClient.GetBlobContainerClient("logs"); 

@@ -8,7 +8,10 @@ namespace Azure.SignalRBench.Common
         public static class KeyVaultKeys
         {
             public const string StorageConnectionStringKey = "sa-accessKey";
+            public const string StorageQueueUrlKey = "queue-url";
+            public const string StorageBlobUrlKey = "blob-url";
             public const string CosmosConnectionStringKey = "cdb-accessKey";
+            public const string CosmosUrlKey = "cosmos-url";
             public const string PrefixKey = "prefix";
             public const string SubscriptionKey = "subscription";
             public const string PPESubscriptionKey = "ppe-subscription";
@@ -28,7 +31,10 @@ namespace Azure.SignalRBench.Common
             public const string KeyVaultUrlKey = "kvUrl";
             public const string TestIdKey = "testId";
             public const string StorageConnectionStringKey = "storage";
+            public const string BlobUrlKey = "blobUrl";
+            public const string QueueUrlKey = "queueUrl";
             public const string CosmosConnectionStringKey = "cosmos";
+            public const string CosmosUrlKey = "cosmosUrl";
             public const string RedisConnectionStringKey = "redis";
             public const string PodNameStringKey = "Podname";
             public const string ConnectionString = "connectionString";

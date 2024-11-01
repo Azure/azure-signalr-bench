@@ -85,11 +85,13 @@ namespace Portal
                     var secretClient = sp.GetService<SecretClient>();
                     try
                     {
-                        var saConnectionString = secretClient.GetSecretAsync("sa-accessKey").GetAwaiter().GetResult()
+                        var queueUrl = secretClient.GetSecretAsync(PerfConstants.KeyVaultKeys.StorageQueueUrlKey).GetAwaiter().GetResult()
                             .Value.Value;
-                        var cdbConnectionString = secretClient.GetSecretAsync("cdb-accessKey").GetAwaiter().GetResult()
+                        var cdbUrl = secretClient.GetSecretAsync(PerfConstants.KeyVaultKeys.CosmosUrlKey).GetAwaiter().GetResult()
                             .Value.Value;
-                        return new PerfStorage(saConnectionString, cdbConnectionString);
+                        var blobUrl = secretClient.GetSecretAsync(PerfConstants.KeyVaultKeys.StorageBlobUrlKey).GetAwaiter().GetResult()
+                            .Value.Value;
+                        return new PerfStorage(queueUrl,cdbUrl,blobUrl,Configuration[PerfConstants.ConfigurationKeys.MsiAppId]);
                     }
                     catch (Exception e)
                     {

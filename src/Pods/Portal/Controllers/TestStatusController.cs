@@ -1,13 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Threading.Tasks;
 using Azure.SignalRBench.Common;
 using Azure.SignalRBench.Coordinator.Entities;
 using Azure.SignalRBench.Storage;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Azure.Cosmos.Table;
 using Microsoft.Extensions.Logging;
 
 // For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
@@ -41,22 +41,28 @@ namespace Portal.Controllers
                 if (string.IsNullOrEmpty(key))
                 {
                     results = await table
-                        .QueryAsync(from row in table.Rows where row.Timestamp > dateTimeOffset select row).ToListAsync();
+                        .QueryAsync(
+                            FilterExpression.Expression<TestStatusEntity>(x => x.LastModified > dateTimeOffset))
+                        .ToListAsync();
                 }
                 else
                 {
                     if (string.IsNullOrEmpty(index))
                         results = await table.QueryAsync(
-                            from row in table.Rows where row.PartitionKey == key select row).ToListAsync();
+                            FilterExpression.KeyEqual(nameof(TestStatusEntity.PartitionKey), key)).ToListAsync();
                     else
-                        results = await table.QueryAsync(
-                                from row in table.Rows where row.PartitionKey == key && row.RowKey == index select row)
-                            .ToListAsync();
+                    {
+                        var testStatus = await table.GetAsync(key,index);
+                        if (testStatus != null)
+                        {
+                            results = new List<TestStatusEntity> {testStatus};
+                        } 
+                    }
                 }
                 
                 // pull the long running test status
                 var longruns = await table.QueryAsync(
-                        from row in table.Rows where row.JobState == nameof(TestState.Longrun) select row)
+                        FilterExpression.KeyEqual(nameof(TestStatusEntity.JobState), nameof(TestState.Longrun)))
                     .ToListAsync();
                 var hashSet = new HashSet<string>();
                 foreach (var entity in results)
@@ -65,7 +71,7 @@ namespace Portal.Controllers
                 }
                 results.AddRange(longruns.Where(entity => !hashSet.Contains(entity.TestId)));
                 results.Sort((a, b) =>
-                    b.Timestamp.CompareTo(a.Timestamp)
+                    b.Timestamp!.Value.CompareTo(a.Timestamp!.Value)
                 );
                 results.ForEach(row =>
                 {
@@ -110,10 +116,12 @@ namespace Portal.Controllers
             {
                 index = index.ToLower();
                 var table = await _perfStorage.GetTableAsync<TestStatusEntity>(PerfConstants.TableNames.TestStatus);
+                Expression<Func<TestStatusEntity, bool>> filterExpression = x => x.Dir == dir && x.RowKey ==index;
+
                 var rows = await table.QueryAsync(
-                    from row in table.Rows where (row.Dir == dir) && (row.RowKey == index) select row).ToListAsync();
+                    FilterExpression.Expression<TestStatusEntity>( x => x.Dir == dir && x.RowKey ==index)).ToListAsync();
                 rows.Sort((a, b) =>
-                    b.Timestamp.CompareTo(a.Timestamp)
+                    b.Timestamp!.Value.CompareTo(a.Timestamp!.Value)
                 );
                 return rows;
             }
@@ -134,7 +142,7 @@ namespace Portal.Controllers
                 index = index.ToLower();
                 var table = await _perfStorage.GetTableAsync<TestStatusEntity>(PerfConstants.TableNames.TestStatus);
                 var rows = await table.QueryAsync(
-                    from row in table.Rows where (row.Dir == dir) && (row.RowKey == index) select row).ToListAsync();
+                    FilterExpression.Expression<TestStatusEntity>( x => x.Dir == dir && x.RowKey ==index)).ToListAsync();
                 foreach (var row in rows)
                 {
                     var state = Enum.Parse<TestState>(row.JobState);

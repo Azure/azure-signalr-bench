@@ -24,9 +24,7 @@ namespace Portal.BasicAuth
         public async Task<UserIdentity> Authenticate(string userName, string password)
         {
             var table = await _perfStorage.GetTableAsync<UserIdentity>(PerfConstants.TableNames.UserIdentity);
-            var user = await table.GetFirstOrDefaultAsync(from row in table.Rows
-                where row.PartitionKey == userName
-                select row);
+            var user = await table.GetAsync(userName,userName);
             if (user == null)
                 return null;
             var key = GenerateKey(userName, password, user.Role);
