@@ -36,9 +36,8 @@ namespace Portal.Cron
                         var configTable =
                             await _perfStorage.GetTableAsync<TestConfigEntity>(PerfConstants.TableNames.TestConfig);
                         var configs =
-                            await configTable.QueryAsync(from row in configTable.Rows
-                                where row.Cron != "0"
-                                select row).ToListAsync();
+                            await configTable.QueryAsync(
+                                FilterExpression.Expression<TestConfigEntity>(x => x.Cron != "0")).ToListAsync();
                         if (configs.Count == 0) continue;
                         var tasks = (from testConfigEntity in configs
                             let schedule = CrontabSchedule.Parse(testConfigEntity.Cron)

@@ -25,7 +25,6 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
-    <PackageReference Include="Azure.Identity" Version="1.1.1" />
     <PackageReference Include="Azure.Security.KeyVault.Secrets" Version="4.0.3" />
     <PackageReference Include="KubernetesClient" Version="5.0.20" />
     <PackageReference Include="Microsoft.Azure.Management.Fluent" Version="1.38.1" />
@@ -44,8 +43,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\Libs\Common\Common.csproj" />
-    <ProjectReference Include="..\..\Libs\Messages\Messages.csproj" />
-    <ProjectReference Include="..\..\Libs\Storage\Storage.csproj" />
   </ItemGroup>
 
 </Project>

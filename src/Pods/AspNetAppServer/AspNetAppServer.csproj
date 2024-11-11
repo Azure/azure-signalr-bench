@@ -18,7 +18,6 @@
 
     <ItemGroup>
         <ProjectReference Include="..\..\Libs\Common\Common.csproj" />
-        <ProjectReference Include="..\..\Libs\Messages\Messages.csproj" />
     </ItemGroup>
 
     <ItemGroup>

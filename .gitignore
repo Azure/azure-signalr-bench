@@ -331,3 +331,4 @@ ASALocalRun/
 /src/Pods/Py3Server/dist/
 /src/Pods/Py3Server/perf_wps_server.egg-info/
 /src/Pods/Py3Server/venv/
+/src/Pods/WpsPyServer/venv/

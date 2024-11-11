@@ -37,9 +37,9 @@ namespace Portal.Controllers
         public async Task<IEnumerable<TestConfigEntity>> Get()
         {
             var table = await _perfStorage.GetTableAsync<TestConfigEntity>(PerfConstants.TableNames.TestConfig);
-            var rows = await table.QueryAsync(table.Rows
+            var rows = await table.QueryAsync(FilterExpression.All()
             ).ToListAsync();
-            rows.Sort((a, b) => b.Timestamp.CompareTo(a.Timestamp));
+            rows.Sort((a, b) => b.Timestamp!.Value.CompareTo(a.Timestamp!.Value));
             return rows;
         }
 
@@ -49,16 +49,13 @@ namespace Portal.Controllers
         public async Task<ActionResult> CreateTestConfig(TestConfigEntity testConfigEntity)
         {
             var table = await _perfStorage.GetTableAsync<TestConfigEntity>(PerfConstants.TableNames.TestConfig);
-            var exist = await table.GetFirstOrDefaultAsync(from row in table.Rows
-                where row.PartitionKey == testConfigEntity.PartitionKey
-                select row);
+            var exist = await table.GetAsync(testConfigEntity.PartitionKey,testConfigEntity.RowKey);
             if (exist != null)
             {
                 return BadRequest($"Test name :{testConfigEntity.PartitionKey} already exist!");
             }
 
             testConfigEntity.User = User.Identity.Name;
-            testConfigEntity.PartitionKey = testConfigEntity.RowKey;
             try
             {
                 testConfigEntity.Init();
@@ -79,16 +76,13 @@ namespace Portal.Controllers
         public async Task<ActionResult> PatchTestConfig(TestConfigEntity testConfigEntity)
         {
             var table = await _perfStorage.GetTableAsync<TestConfigEntity>(PerfConstants.TableNames.TestConfig);
-            var exist = await table.GetFirstOrDefaultAsync(from row in table.Rows
-                where row.PartitionKey == testConfigEntity.PartitionKey
-                select row);
+            var exist = await table.GetAsync(testConfigEntity.PartitionKey,testConfigEntity.RowKey);
             if (exist == null)
             {
                 return BadRequest($"Test name :{testConfigEntity.PartitionKey} don't exist!");
             }
 
             testConfigEntity.User = User.Identity.Name;
-            testConfigEntity.PartitionKey = testConfigEntity.RowKey;
             try
             {
                 testConfigEntity.Init();
@@ -109,9 +103,7 @@ namespace Portal.Controllers
         public async Task StartTestAsync(string testConfigEntityKey)
         {
             var configTable = await _perfStorage.GetTableAsync<TestConfigEntity>(PerfConstants.TableNames.TestConfig);
-            var latestTestConfig = await configTable.GetFirstOrDefaultAsync(from row in configTable.Rows
-                where row.PartitionKey == testConfigEntityKey
-                select row);
+            var latestTestConfig = await configTable.GetAsync(testConfigEntityKey,testConfigEntityKey);
             latestTestConfig.InstanceIndex += 1;
             await configTable.UpdateAsync(latestTestConfig);
             var queueName = _perfState.GetQueueName(latestTestConfig.TargetLocation);
@@ -133,9 +125,7 @@ namespace Portal.Controllers
             };
             try
             {
-                var exist = await statusTable.GetFirstOrDefaultAsync(from row in statusTable.Rows
-                    where row.PartitionKey == testEntity.PartitionKey && row.RowKey == testEntity.RowKey
-                    select row);
+                var exist = await statusTable.GetAsync(testEntity.PartitionKey , testEntity.RowKey);
                 if (exist != null)
                 {
                     await statusTable.DeleteAsync(exist);
@@ -158,9 +148,7 @@ namespace Portal.Controllers
             var statusTable = await _perfStorage.GetTableAsync<TestStatusEntity>(PerfConstants.TableNames.TestStatus);
             var configTable = await _perfStorage.GetTableAsync<TestConfigEntity>(PerfConstants.TableNames.TestConfig);
             
-            var latestTestConfig = await configTable.GetFirstOrDefaultAsync(from row in configTable.Rows
-                where row.PartitionKey == testConfigEntityKey
-                select row);
+            var latestTestConfig = await configTable.GetAsync(testConfigEntityKey,testConfigEntityKey);
             
             latestTestConfig.LongRunIndex += 1;
             await configTable.UpdateAsync(latestTestConfig);
@@ -201,9 +189,7 @@ namespace Portal.Controllers
         {
             var configTable = await _perfStorage.GetTableAsync<TestConfigEntity>(PerfConstants.TableNames.TestConfig);
             var config =
-                await configTable.GetFirstOrDefaultAsync(from row in configTable.Rows
-                    where row.PartitionKey == key
-                    select row);
+                await configTable.GetAsync(key, key);
             await configTable.DeleteAsync(config);
         }
 
@@ -219,9 +205,7 @@ namespace Portal.Controllers
                     var configTable =
                         await _perfStorage.GetTableAsync<TestConfigEntity>(PerfConstants.TableNames.TestConfig);
                     var config =
-                        await configTable.GetFirstOrDefaultAsync(from row in configTable.Rows
-                            where row.PartitionKey == source
-                            select row);
+                        await configTable.GetAsync(source, source);
                     if (config == null) return BadRequest($"testName {source} doesn't exist");
                     config.Dir = target;
                     await configTable.UpdateAsync(config);
@@ -231,10 +215,9 @@ namespace Portal.Controllers
                 {
                     var configTable =
                         await _perfStorage.GetTableAsync<TestConfigEntity>(PerfConstants.TableNames.TestConfig);
+                    var filter = FilterExpression.KeyEqual(nameof(TestConfigEntity.Dir), source);
                     var configs =
-                        await configTable.QueryAsync(from row in configTable.Rows
-                            where row.Dir == source
-                            select row).ToListAsync();
+                        await configTable.QueryAsync(filter).ToListAsync();
                     if (configs.Count == 0) return BadRequest($"dir {source} doesn't exist");
                     var tasks = new List<Task>();
                     foreach (var testConfigEntity in configs)
@@ -259,24 +242,20 @@ namespace Portal.Controllers
             var configTable =
                 await _perfStorage.GetTableAsync<TestConfigEntity>(PerfConstants.TableNames.TestConfig);
             var oldOne =
-                await configTable.GetFirstOrDefaultAsync(from row in configTable.Rows
-                    where row.PartitionKey == source
-                    select row);
+                await configTable.GetAsync(source, source);
             if (oldOne == null) return BadRequest($"testName {source} doesn't exist");
-            var newOne = await configTable.GetFirstOrDefaultAsync(from row in configTable.Rows
-                where row.PartitionKey == target
-                select row);
+            var newOne = await configTable.GetAsync(target, target);
             if (newOne != null) return BadRequest($"testName {target} already exist");
             var statusTable = await _perfStorage.GetTableAsync<TestStatusEntity>(PerfConstants.TableNames.TestStatus);
             var newTestStatusEntities = await statusTable.QueryAsync(
-                from row in statusTable.Rows where row.PartitionKey == target select row).ToListAsync();
+                FilterExpression.KeyEqual(nameof(TestStatusEntity.PartitionKey), target)).ToListAsync();
             if (newTestStatusEntities.Count != 0) return BadRequest($"teststatus for {target} already exist");
             //create new config
             oldOne.PartitionKey = target;
             oldOne.RowKey = target;
             await configTable.InsertAsync(oldOne);
             var oldTestStatusEntities = await statusTable.QueryAsync(
-                from row in statusTable.Rows where row.PartitionKey == source select row).ToListAsync();
+                FilterExpression.KeyEqual(nameof(TestStatusEntity.PartitionKey), source)).ToListAsync();
             //create new teststatus
             foreach (var status in oldTestStatusEntities)
             {
@@ -311,9 +290,7 @@ namespace Portal.Controllers
             var configTable =
                 await _perfStorage.GetTableAsync<TestConfigEntity>(PerfConstants.TableNames.TestConfig);
             var config =
-                await configTable.GetFirstOrDefaultAsync(from row in configTable.Rows
-                    where row.PartitionKey == key
-                    select row);
+                await configTable.GetAsync(key, key);
             if (config == null) return BadRequest($"testName {key} doesn't exist");
             config.Cron = cron;
             await configTable.UpdateAsync(config);
@@ -326,9 +303,7 @@ namespace Portal.Controllers
         public async Task<ActionResult> Batch(string testName, string dir, string units)
         {
             var table = await _perfStorage.GetTableAsync<TestConfigEntity>(PerfConstants.TableNames.TestConfig);
-            var testConfig = await table.GetFirstOrDefaultAsync(from row in table.Rows
-                where row.PartitionKey == testName
-                select row);
+            var testConfig = await table.GetAsync(testName, testName);
             if (testConfig == null)
             {
                 return BadRequest($"Test name :{testName} doesn't exist!");
@@ -344,9 +319,7 @@ namespace Portal.Controllers
                     testConfigEntity.User = User.Identity.Name;
                     tasks.Add(Task.Run(async () =>
                     {
-                        var exist = await table.GetFirstOrDefaultAsync(from row in table.Rows
-                            where row.PartitionKey == testConfigEntity.PartitionKey
-                            select row);
+                        var exist = await table.GetAsync(testConfigEntity.PartitionKey, testConfigEntity.RowKey);
                         if (exist != null)
                         {
                             await Delete(exist.PartitionKey);
@@ -373,9 +346,8 @@ namespace Portal.Controllers
         {
             index = index.ToLower();
             var configTable = await _perfStorage.GetTableAsync<TestConfigEntity>(PerfConstants.TableNames.TestConfig);
-            var configs = await configTable.QueryAsync(from row in configTable.Rows
-                where row.Dir == dir
-                select row).ToListAsync();
+            var configs = await configTable.QueryAsync(
+                FilterExpression.KeyEqual(nameof(TestConfigEntity.Dir), dir)).ToListAsync();
             var total = configs.Count;
             if (total == 0)
             {
@@ -405,9 +377,7 @@ namespace Portal.Controllers
                     };
                     try
                     {
-                        var exist = await statusTable.GetFirstOrDefaultAsync(from row in statusTable.Rows
-                            where row.PartitionKey == testEntity.PartitionKey && row.RowKey == testEntity.RowKey
-                            select row);
+                        var exist = await statusTable.GetAsync(testEntity.PartitionKey, testEntity.RowKey);
                         if (exist != null)
                         {
                             await statusTable.DeleteAsync(exist);

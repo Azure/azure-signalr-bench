@@ -10,6 +10,5 @@ namespace Azure.SignalRBench.Common
         public static readonly string Clients = "Clients";
         public static readonly string ServerlessServer = "ServerlessServer";
         public static readonly string WpsServerlessServer = "WpsServerlessServer";
-
     }
 }

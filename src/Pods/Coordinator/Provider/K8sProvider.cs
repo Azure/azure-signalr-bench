@@ -10,6 +10,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Azure.SignalRBench.Common;
 using Azure.SignalRBench.Coordinator.Entities;
+using Azure.SignalRBench.Storage;
 using k8s;
 using k8s.Models;
 using Microsoft.Extensions.Configuration;
@@ -23,18 +24,20 @@ namespace Azure.SignalRBench.Coordinator.Provider
         private const string Client = "client";
         private const string Upstream = "upstream";
         private readonly string _domain;
-        private readonly PerfStorageProvider _perfStorageProvider;
+        private readonly IPerfStorage _perfStorageProvider;
         private readonly string _redisConnectionString;
         private readonly string _image;
         private Kubernetes? _k8S;
         private readonly bool _internal;
+        private readonly string _msiAppId;
 
-        public K8SProvider(PerfStorageProvider perfStorageProvider, IConfiguration configuration)
+        public K8SProvider(IPerfStorage perfStorageProvider, IConfiguration configuration)
         {
             _perfStorageProvider = perfStorageProvider;
             _redisConnectionString = configuration[PerfConstants.ConfigurationKeys.RedisConnectionStringKey];
             _domain = configuration[PerfConstants.ConfigurationKeys.DomainKey];
             _image = configuration[PerfConstants.ConfigurationKeys.Image];
+            _msiAppId = configuration[PerfConstants.ConfigurationKeys.MsiAppId];
             _internal = bool.Parse(configuration[PerfConstants.ConfigurationKeys.Internal]);
             var handler = new HttpClientHandler
             {
@@ -227,8 +230,14 @@ namespace Azure.SignalRBench.Coordinator.Provider
                                         new V1EnvVar(PerfConstants.ConfigurationKeys.TestIdKey, testId),
                                         new V1EnvVar(PerfConstants.ConfigurationKeys.ConnectionString,
                                             string.Join(",", asrsConnectionStrings)),
-                                        new V1EnvVar(PerfConstants.ConfigurationKeys.StorageConnectionStringKey,
-                                            _perfStorageProvider.ConnectionString),
+                                        new V1EnvVar(PerfConstants.ConfigurationKeys.QueueUrlKey,
+                                            _perfStorageProvider.QueueUrl),
+                                        new V1EnvVar(PerfConstants.ConfigurationKeys.CosmosUrlKey,
+                                            _perfStorageProvider.TableUrl),
+                                        new V1EnvVar(PerfConstants.ConfigurationKeys.BlobUrlKey,
+                                            _perfStorageProvider.BlobUrl),
+                                        new V1EnvVar(PerfConstants.ConfigurationKeys.MsiAppId,_msiAppId
+                                            ),
                                         new V1EnvVar(PerfConstants.ConfigurationKeys.RedisConnectionStringKey,
                                             _redisConnectionString),
                                         new V1EnvVar(PerfConstants.ConfigurationKeys.Protocol,
@@ -411,10 +420,14 @@ namespace Azure.SignalRBench.Coordinator.Provider
                                             valueFrom: new V1EnvVarSource(
                                                 fieldRef: new V1ObjectFieldSelector("metadata.name"))),
                                         new V1EnvVar(PerfConstants.ConfigurationKeys.TestIdKey, testId),
-                                        new V1EnvVar(PerfConstants.ConfigurationKeys.StorageConnectionStringKey,
-                                            _perfStorageProvider.ConnectionString),
-                                        new V1EnvVar(PerfConstants.ConfigurationKeys.CosmosConnectionStringKey,
-                                            _perfStorageProvider.CosmosConnectionString),
+                                        new V1EnvVar(PerfConstants.ConfigurationKeys.QueueUrlKey,
+                                            _perfStorageProvider.QueueUrl),
+                                        new V1EnvVar(PerfConstants.ConfigurationKeys.CosmosUrlKey,
+                                            _perfStorageProvider.TableUrl),
+                                        new V1EnvVar(PerfConstants.ConfigurationKeys.BlobUrlKey,
+                                            _perfStorageProvider.BlobUrl),
+                                        new V1EnvVar(PerfConstants.ConfigurationKeys.MsiAppId,_msiAppId
+                                            ),
                                         new V1EnvVar(PerfConstants.ConfigurationKeys.RedisConnectionStringKey,
                                             _redisConnectionString),
                                         new V1EnvVar(PerfConstants.ConfigurationKeys.TestCategory,

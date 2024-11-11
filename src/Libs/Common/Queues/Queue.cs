@@ -4,7 +4,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-
+using Azure.Core;
 using Azure.Storage.Queues;
 using Newtonsoft.Json;
 
@@ -14,9 +14,9 @@ namespace Azure.SignalRBench.Storage
     {
         private readonly QueueClient _client;
 
-        internal Queue(string connectionString, string queueName)
+        public Queue(string endpoint, TokenCredential tokenCredential, string queueName)
         {
-            _client = new QueueClient(connectionString, queueName);
+            _client = new QueueClient(new Uri(endpoint + queueName), tokenCredential);
         }
 
         public Task CreateIfNotExistedAsync() =>
@@ -28,7 +28,8 @@ namespace Azure.SignalRBench.Storage
         {
             while (true)
             {
-                var messages = await _client.ReceiveMessagesAsync(1, visibilityTimeout ?? TimeSpan.FromMinutes(5), cancellationToken);
+                var messages = await _client.ReceiveMessagesAsync(1, visibilityTimeout ?? TimeSpan.FromMinutes(5),
+                    cancellationToken);
 
                 if (messages.Value.Length == 0)
                 {
@@ -40,16 +41,19 @@ namespace Azure.SignalRBench.Storage
                     await _client.DeleteMessageAsync(msg.MessageId, msg.PopReceipt, cancellationToken);
                     continue;
                 }
-                return new QueueMessage<T>(msg.MessageId, msg.PopReceipt, JsonConvert.DeserializeObject<T>(msg.MessageText));
+                return new QueueMessage<T>(msg.MessageId, msg.PopReceipt,
+                    JsonConvert.DeserializeObject<T>(msg.MessageText));
             }
         }
 
         public Task SendAsync(T message, CancellationToken cancellationToken) =>
             _client.SendMessageAsync(JsonConvert.SerializeObject(message), cancellationToken);
 
-        public async Task UpdateAsync(QueueMessage<T> message, TimeSpan visibilityTimeout, CancellationToken cancellationToken)
+        public async Task UpdateAsync(QueueMessage<T> message, TimeSpan visibilityTimeout,
+            CancellationToken cancellationToken)
         {
-            var response = await _client.UpdateMessageAsync(message.MessageId, message.PopReceipt, JsonConvert.SerializeObject(message.Value), visibilityTimeout, cancellationToken);
+            var response = await _client.UpdateMessageAsync(message.MessageId, message.PopReceipt,
+                JsonConvert.SerializeObject(message.Value), visibilityTimeout, cancellationToken);
             message.PopReceipt = response.Value.PopReceipt;
         }
 

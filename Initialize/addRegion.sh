@@ -57,6 +57,21 @@ echo "start getting kube/config"
 rm ~/.kube/perf || true
 az aks get-credentials -a -n $KUBERNETES_SEVICES --overwrite-existing -f ~/.kube/perf
 agentpool_msi_object_id=$(az aks show -n $KUBERNETES_SEVICES --query identityProfile.kubeletidentity.objectId -o tsv)
+
+echo "grant aks-agent-pool-msi storage account blob data contributor"
+az role assignment create --role "Storage Blob Data Contributor" --assignee $agentpool_msi_object_id --scope "/subscriptions/$SUBSCTIPTION/resourceGroups/$RESOURCE_GROUP/providers/Microsoft.Storage/storageAccounts/$STORAGE_ACCOUNT"
+echo "grant aks-agent-pool-msi storage account queue data contributor"
+az role assignment create --role "Storage Queue Data Contributor" --assignee $agentpool_msi_object_id --scope "/subscriptions/$SUBSCTIPTION/resourceGroups/$RESOURCE_GROUP/providers/Microsoft.Storage/storageAccounts/$STORAGE_ACCOUNT"
+
+cosmosdbid=="/SUBSCRIPTIONS/$SUBSCTIPTION/RESOURCEGROUPS/$RESOURCE_GROUP/PROVIDERS/MICROSOFT.DOCUMENTDB/DATABASEACCOUNTS/$COSMOSDB_ACCOUNT"
+echo "grant aks-agent-pool-msi cosmosdb table data contributor"
+roleassignid=$(echo -n "$cosmosdbid" | md5sum | cut -d ' ' -f 1 | sed 's/^\(........\)\(....\)\(....\)\(....\)\(............\)$/\1-\2-\3-\4-\5/')
+echo "roleassignid is $roleassignid"
+az rest \
+    --method "PUT" \
+    --url "$cosmosdbid/tableRoleAssignments/$roleassignid?api-version=2023-04-15" \
+    --body "{\"properties\": {\"roleDefinitionId\": \"$cosmosdbid/tableRoleDefinitions/00000000-0000-0000-0000-000000000002\", \"scope\": \"$cosmosdbid\", \"principalId\": \"$agentpool_msi_object_id\"}}"
+
 echo "grant aks-agent-pool-msi keyvault permission"
 az keyvault set-policy --name $KEYVAULT --object-id $agentpool_msi_object_id --secret-permissions delete get list set >/dev/null
 STORAGE_KEY=$(az storage account keys list --resource-group $RESOURCE_GROUP --account-name $STORAGE_ACCOUNT --query "[0].value" -o tsv)

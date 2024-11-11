@@ -33,7 +33,8 @@ namespace SignalRUpstream
                         new BlobLoggerProvider(
                             $"{context.Configuration[PerfConstants.ConfigurationKeys.TestIdKey]}/{Roles.ServerlessServer}_{context.Configuration[PerfConstants.ConfigurationKeys.PodNameStringKey]}",
                             ".log",
-                            context.Configuration[PerfConstants.ConfigurationKeys.StorageConnectionStringKey]));
+                            context.Configuration[PerfConstants.ConfigurationKeys.BlobUrlKey],
+                            context.Configuration[PerfConstants.ConfigurationKeys.MsiAppId]));
                 })
                 .ConfigureWebHostDefaults(webBuilder =>
                 {

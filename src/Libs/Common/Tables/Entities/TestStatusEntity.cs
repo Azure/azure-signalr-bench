@@ -1,11 +1,9 @@
 ﻿using System;
-using System.Runtime.InteropServices.ComTypes;
 using Azure.SignalRBench.Common;
-using Microsoft.Azure.Cosmos.Table;
 
 namespace Azure.SignalRBench.Coordinator.Entities
 {
-    public class TestStatusEntity : TableEntity
+    public class TestStatusEntity : IPerfTableEntity
     {
         public string User { get; set; }
 
@@ -37,5 +35,10 @@ namespace Azure.SignalRBench.Coordinator.Entities
         public string? K8sPath { get; set; }
         
         public string JobState { get; set; } = TestState.InProgress.ToString();
+        public string PartitionKey { get; set; }
+        public string RowKey { get; set; }
+        public DateTimeOffset? Timestamp { get; set; }
+        public ETag ETag { get; set; }
+        public DateTimeOffset? LastModified { get; set; }
     }
 }

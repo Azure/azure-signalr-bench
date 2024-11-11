@@ -120,6 +120,22 @@ if [[ -z $(az aks show --name $KUBERNETES_SEVICES -g $RESOURCE_GROUP 2>/dev/null
     echo "upload kube/config to $KEYVAULT"
     az keyvault secret set --vault-name $KEYVAULT -n $KV_KUBE_CONFIG -f ~/.kube/perf >/dev/null
     agentpool_msi_object_id=$(az aks show -n $KUBERNETES_SEVICES --query identityProfile.kubeletidentity.objectId -o tsv)
+    echo "agent pool msi object id is $agentpool_msi_object_id"
+    
+    echo "grant aks-agent-pool-msi storage account blob data contributor"
+    az role assignment create --role "Storage Blob Data Contributor" --assignee $agentpool_msi_object_id --scope "/subscriptions/$SUBSCTIPTION/resourceGroups/$RESOURCE_GROUP/providers/Microsoft.Storage/storageAccounts/$STORAGE_ACCOUNT"
+    echo "grant aks-agent-pool-msi storage account queue data contributor"
+    az role assignment create --role "Storage Queue Data Contributor" --assignee $agentpool_msi_object_id --scope "/subscriptions/$SUBSCTIPTION/resourceGroups/$RESOURCE_GROUP/providers/Microsoft.Storage/storageAccounts/$STORAGE_ACCOUNT"
+   
+    cosmosdbid=="/SUBSCRIPTIONS/$SUBSCTIPTION/RESOURCEGROUPS/$RESOURCE_GROUP/PROVIDERS/MICROSOFT.DOCUMENTDB/DATABASEACCOUNTS/$COSMOSDB_ACCOUNT"
+    echo "grant aks-agent-pool-msi cosmosdb table data contributor"
+    roleassignid=$(echo -n "$cosmosdbid" | md5sum | cut -d ' ' -f 1 | sed 's/^\(........\)\(....\)\(....\)\(....\)\(............\)$/\1-\2-\3-\4-\5/')
+    echo "roleassignid is $roleassignid"
+    az rest \
+        --method "PUT" \
+        --url "$cosmosdbid/tableRoleAssignments/$roleassignid?api-version=2023-04-15" \
+        --body "{\"properties\": {\"roleDefinitionId\": \"$cosmosdbid/tableRoleDefinitions/00000000-0000-0000-0000-000000000002\", \"scope\": \"$cosmosdbid\", \"principalId\": \"$agentpool_msi_object_id\"}}"
+
     echo "grant aks-agent-pool-msi keyvault permission"
     az keyvault set-policy --name $KEYVAULT --object-id $agentpool_msi_object_id --secret-permissions delete get list set >/dev/null
     STORAGE_KEY=$(az storage account keys list --resource-group $RESOURCE_GROUP --account-name $STORAGE_ACCOUNT --query "[0].value" -o tsv)
@@ -161,7 +177,26 @@ az keyvault secret set --vault-name $KEYVAULT -n "appid" --value $appId
 az keyvault secret set --vault-name $KEYVAULT -n "image" --value "mcr.microsoft.com/signalrbenchmark/base:1.1.0"
 az keyvault secret set --vault-name $KEYVAULT -n "internal" --value "false"
 
-
+bloburl=$(az storage account show \
+    --name $STORAGE_ACCOUNT \
+    --resource-group $RESOURCE_GROUP \
+    --query "primaryEndpoints.blob" \
+    --output tsv)
+echo "blob url is ${bloburl}"  
+az keyvault secret set --vault-name $KEYVAULT -n "blob-url" --value $bloburl
+echo "set blob url in keyvault"
+queueurl=$(az storage account show \
+      --name $STORAGE_ACCOUNT \
+      --resource-group $RESOURCE_GROUP \
+      --query "primaryEndpoints.queue" \
+      --output tsv)
+echo "queue url is ${queueurl}"  
+az keyvault secret set --vault-name $KEYVAULT -n "queue-url" --value $queueurl
+echo "set queue url in keyvault"
+cosmosurl="https://$COSMOSDB_ACCOUNT.table.cosmos.azure.com:443/"
+echo "cosmos url is ${cosmosurl}" 
+az keyvault secret set --vault-name $KEYVAULT -n "cosmos-url" --value $cosmosurl
+echo "set cosmos url in keyvault"
 
 az ad app update --id $appId --web-redirect-uris  $redirectUrl --enable-id-token-issuance  --only-show-errors
 az ad app update --id $appId --app-roles "[{\"allowedMemberTypes\":[\"User\"],\"description\":\"Contributor\",\"displayName\":\"Contributor\",\"isEnabled\":\"true\",\"value\":\"Contributor\"}]" 2>&1 >/dev/null  || true
