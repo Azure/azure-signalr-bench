@@ -224,6 +224,8 @@ namespace Azure.SignalRBench.Coordinator
                     }
                     finally
                     {
+                        // Ensure cleanup testId in TestRunnerFactory
+                        _cb(); 
                         lock (UnitLock)
                         {
                             if (Job.Dir != null)
@@ -240,7 +242,10 @@ namespace Azure.SignalRBench.Coordinator
                         }
                     }
                 }
-                _cb();
+                else
+                {
+                    _cb();  
+                }
             }
         }
         

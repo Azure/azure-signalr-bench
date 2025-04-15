@@ -1,6 +1,7 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Azure.SignalRBench.Common;
@@ -16,7 +17,7 @@ namespace Azure.SignalRBench.Coordinator
         private readonly ILogger<TestRunner> _logger;
         private readonly string _podName;
         private readonly string _redisConnectionString;
-        private readonly IDictionary<string, TestRunner> _testRunners = new Dictionary<string, TestRunner>();
+        private readonly IDictionary<string, TestRunner> _testRunners = new ConcurrentDictionary<string, TestRunner>();
 
         public TestRunnerFactory(
             IConfiguration configuration,
