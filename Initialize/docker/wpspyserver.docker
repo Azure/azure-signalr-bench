@@ -1,0 +1,33 @@
+# Declare build-time args before any FROM
+ARG IMAGE
+ARG POD
+
+# Stage 1: build
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+ARG POD  # Re-declare ARG if used in this stage
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends \
+      python3 \
+      python3-venv \
+      python3-pip \
+      python-is-python3 \
+ && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /src
+COPY . .
+WORKDIR /src/Pods/${POD}
+RUN python -m venv venv \
+ && . venv/bin/activate \
+ && python -m pip install --upgrade pip \
+ && pip install --no-cache-dir pip-tools \
+ && pip-compile pyproject.toml \
+ && python -m build
+
+# Stage 2: runtime
+FROM ${IMAGE} AS runtime
+ARG POD  # Re-declare ARG if used in this stage
+WORKDIR /app
+COPY --from=build /src/Pods/${POD}/dist ./
+RUN pip install pyserver-1.0.0-py3-none-any.whl --break-system-packages
+ENTRYPOINT start-server;
+

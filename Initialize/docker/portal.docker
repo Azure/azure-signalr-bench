@@ -1,0 +1,27 @@
+# Declare build-time args before any FROM
+ARG IMAGE
+ARG POD
+
+# Stage 1: build
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+ARG POD  # Re-declare ARG if used in this stage
+WORKDIR /src
+COPY . .
+
+# Conditionally install Node.js & npm if INSTALL_NODE=true
+RUN  \
+      apt-get update && \
+      apt-get install -y curl gnupg && \
+      curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
+      apt-get install -y nodejs && \
+      rm -rf /var/lib/apt/lists/* ; 
+
+RUN dotnet publish Pods/${POD}/${POD}.csproj -c Release -o /app 
+
+# Stage 2: runtime
+FROM ${IMAGE} AS runtime
+ARG POD  # Re-declare ARG in this stage if used
+WORKDIR /app
+ENV POD=${POD} 
+COPY --from=build /app ./
+ENTRYPOINT dotnet ${POD}.dll

@@ -1,0 +1,19 @@
+# Declare build-time args before any FROM
+ARG IMAGE
+ARG POD
+
+# Stage 1: build
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+ARG POD  # Re-declare ARG if used in this stage
+WORKDIR /src
+COPY . .
+
+RUN dotnet publish Pods/${POD}/${POD}.csproj -c Release -o /app 
+
+# Stage 2: runtime
+FROM ${IMAGE} AS runtime
+ARG POD  # Re-declare ARG in this stage if used
+WORKDIR /app
+ENV POD=${POD} 
+COPY --from=build /app ./
+ENTRYPOINT dotnet ${POD}.dll

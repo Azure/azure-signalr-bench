@@ -1,0 +1,80 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  # "namespace" omitted since ClusterRoles are not namespaced
+  name: root
+rules:
+  - apiGroups: ["*"]
+    #
+    # at the HTTP level, the name of the resource for accessing Secret
+    # objects is "secrets"
+    resources: ["*"]
+    verbs: ["*"]
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: coordinator-account
+---
+apiVersion: rbac.authorization.k8s.io/v1
+# This cluster role binding allows anyone in the "manager" group to read secrets in any namespace.
+kind: ClusterRoleBinding
+metadata:
+  name: coordinator-role-binding
+subjects:
+  - kind: ServiceAccount
+    name: coordinator-account
+    namespace: default
+roleRef:
+  kind: ClusterRole
+  name: root
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: apps/v1 # for versions before 1.9.0 use apps/v1beta2
+kind: Deployment
+metadata:
+  name: coordinator
+spec:
+  selector:
+    matchLabels:
+      app: coordinator
+  replicas: 1 
+  template:
+    metadata:
+      labels:
+        app: coordinator
+    spec:
+      serviceAccountName: coordinator-account
+      nodeSelector:
+        agentpool: captain
+      containers:
+        - name: coordinator
+          image: IMAGE_PLACE_HOLDER
+          resources:
+            requests:
+              cpu: 1000m
+              memory: 1024Mi
+            limits:
+              cpu: 1000m
+              memory: 1024Mi
+          env:
+            - name: kvUrl
+              value: KVURL_PLACE_HOLDER
+            - name: PodName
+              valueFrom:
+                fieldRef:
+                   fieldPath: metadata.name
+            - name: redis
+              value: redis-master
+            - name: msiAppId
+              value: MSI_PLACE_HOLDER
+            - name: storage
+              value: STORAGE_PLACE_HOLDER
+            - name: domain
+              value: DOMAIN_PLACE_HOLDER
+            - name: image
+              value: IMAGE_PLACE_HOLDER
+            - name: internal
+              value: INTERNAL_PLACE_HOLDER
+            - name: location
+              value: LOCATION_PLACE_HOLDER

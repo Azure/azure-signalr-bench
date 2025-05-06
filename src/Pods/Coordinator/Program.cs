@@ -56,7 +56,22 @@ namespace Azure.SignalRBench.Coordinator
                         }
                     );
                     services.AddSingleton<PerfStorageProvider>();
-                    services.AddSingleton<IK8sProvider, K8SProvider>();
+                    services.AddSingleton<IK8sProvider>(sp =>
+                    {
+                        var secretClient = sp.GetService<SecretClient>();
+                        var enableDockerImageStr = secretClient.GetSecretAsync(PerfConstants.KeyVaultKeys.EnableDockerImage).GetAwaiter().GetResult()
+                            .Value.Value;
+                        var enableDockerImage = bool.TryParse(enableDockerImageStr, out var result) && result;
+                        var perfStorage = sp.GetService<IPerfStorage>();
+                        if (enableDockerImage)
+                        {
+                            return new K8SProviderDocker(perfStorage, hostContext.Configuration, secretClient);
+                        }
+                        else
+                        {
+                           return new K8SProvider(perfStorage, hostContext.Configuration); 
+                        }
+                    });
                     services.AddSingleton<IAksProvider, AksProvider>();
                     services.AddSingleton<SignalRProvider>();
                     services.AddSingleton<TestScheduler>();

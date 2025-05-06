@@ -1,0 +1,32 @@
+apiVersion: apps/v1 # for versions before 1.9.0 use apps/v1beta2
+kind: Deployment
+metadata:
+  name: portal
+spec:
+  selector:
+    matchLabels:
+      app: portal
+  replicas: 1 # tells deployment to run 2 pods matching the template
+  template:
+    metadata:
+      labels:
+        app: portal
+    spec:
+      serviceAccountName: perfdashboard
+      nodeSelector:
+        agentpool: captain
+      containers:
+        - name: portal
+          image: IMAGE_PLACE_HOLDER
+          resources:
+            requests:
+              cpu: 1000m
+              memory: 1024Mi
+            limits:
+              cpu: 1000m
+              memory: 1024Mi
+          env:
+            - name: kvUrl
+              value: KVURL_PLACE_HOLDER
+            - name: msiAppId
+              value: MSI_PLACE_HOLDER
