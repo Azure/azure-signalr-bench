@@ -1,0 +1,10 @@
+#node_modules
+#Pods/**/node_modules
+#.git
+#dist
+#build
+#*.log
+## Ignore build artifacts folders everywhere
+#**/obj/
+#**/bin/
+#**/publish/

@@ -22,6 +22,7 @@ namespace Azure.SignalRBench.Common
             public const string CloudKey = "cloud";
             public const string ServicePrincipalKey = "service-principal";
             public const string PPEServicePrincipalKey = "ppe-service-principal";
+            public const string EnableDockerImage = "enable-docker-image";
 
             public const string KubeConfigKey = "kube-config";
         }

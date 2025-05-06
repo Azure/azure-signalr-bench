@@ -8,9 +8,9 @@ from pydantic import BaseModel
 
 import os
 import json
+from redis.asyncio import Redis
 
 connectionString = os.getenv('connectionString')
-
 
 class Data(BaseModel):
     Type: str
@@ -39,12 +39,12 @@ class Client:
 
 
 async def report_ready():
-    import aioredis
     test_id = os.getenv("testId")
     pod_name = os.getenv("Podname")
-    redis_connection_string = os.getenv("redis")
+    redis_conn = os.getenv("redis")
 
-    redis = aioredis.from_url(f"redis://{redis_connection_string}:6379")
+    # create an asyncio-enabled Redis client
+    client = Redis.from_url(f"redis://{redis_conn}:6379")
 
     channel = f"{test_id}:Coordinator:ReportReady:Command"
     message = {
@@ -55,8 +55,13 @@ async def report_ready():
             "Role": "AppServers"
         }
     }
-    await redis.publish(channel, json.dumps(message))
-    time.sleep(2)
+
+    # publish and wait
+    await client.publish(channel, json.dumps(message))
+    await asyncio.sleep(2)
+
+    # clean up
+    await client.close()
 
 @app.post("/")
 async def send(data: Data):

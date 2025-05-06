@@ -10,6 +10,7 @@ function init_common() {
     KEYVAULT="${PREFIX_PERF}kv"
     KUBERNETES_SEVICES="${PREFIX_PERF}aks"
     ACR_NAME="${PREFIX_PERF}acr"
+    IMAGE_PREFIX="${ACR_NAME}.azurecr.io/pods/"
     PORTAL_IP_NAME="${PREFIX_PERF}ip"
     KV_SA_ACCESS_KEY="sa-accessKey"
     KV_CA_ACCESS_KEY="cdb-accessKey"

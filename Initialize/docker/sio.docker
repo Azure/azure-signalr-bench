@@ -1,0 +1,32 @@
+# Declare build-time args before any FROM
+ARG IMAGE
+ARG POD
+
+# Stage 1: build
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+ARG POD  # Re-declare ARG if used in this stage
+WORKDIR /src
+COPY . .
+RUN apt-get update --allow-releaseinfo-change && \
+    apt-get install -y --no-install-recommends \
+      debian-archive-keyring apt-transport-https ca-certificates gnupg curl && \
+    # only rewrite if the file exists
+    if [ -f /etc/apt/sources.list ]; then \
+      sed -i 's|http://deb.debian.org/|https://deb.debian.org/|g' /etc/apt/sources.list; \
+    fi && \
+    apt-get update && \
+    curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
+    apt-get install -y --no-install-recommends nodejs && \
+    rm -rf /var/lib/apt/lists/*
+WORKDIR /src/Pods/${POD}
+RUN npm install
+RUN npm run build 
+
+# Stage 2: runtime
+FROM ${IMAGE} AS runtime
+ARG POD  # Re-declare ARG if used in this stage
+WORKDIR /app
+COPY --from=build /src/Pods/${POD} ./
+ENV NODE_ENV=production
+ENTRYPOINT node server.js
+# ENTRYPOINT ["sleep","infinity"]
