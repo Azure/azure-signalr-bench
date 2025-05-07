@@ -389,6 +389,7 @@ namespace Azure.SignalRBench.Coordinator
             {
                 var ss = Job.ServiceSetting[i];
                 await UpdateTestStatus("task queueing..");
+                var testJobDelay = false;
                 while (Job.Dir != null)
                 {
                     await Task.Delay(StaticRandom.Next(5000));
@@ -399,8 +400,15 @@ namespace Azure.SignalRBench.Coordinator
                             dirConfig._instanceTotal >= Job.ServiceSetting[0].InstanceLimit) continue;
                         dirConfig._unitTotal += ss.Size.Value;
                         dirConfig._instanceTotal++;
+                        testJobDelay = true;
                         break;
                     }
+                }
+
+                if (testJobDelay)
+                {
+                    // Task in one dir normally use the same race. Give enough time to finish
+                    await Task.Delay(30000);
                 }
 
                 await UpdateTestStatus("Creating SignalR instance..");
