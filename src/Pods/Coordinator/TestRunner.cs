@@ -1,4 +1,4 @@
-﻿// Copyright (c) Microsoft. All rights reserved.
+// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
@@ -396,11 +396,20 @@ namespace Azure.SignalRBench.Coordinator
                     lock (UnitLock)
                     {
                         var dirConfig=_dirs[Job.Dir];
+                        _logger.LogInformation(
+                            "Test job {testId}: Queue check - Dir={dir}, unitTotal={unitTotal}, instanceTotal={instanceTotal}, UnitLimit={unitLimit}, InstanceLimit={instanceLimit}",
+                            Job.TestId, Job.Dir, dirConfig._unitTotal, dirConfig._instanceTotal,
+                            Job.ServiceSetting[0].UnitLimit, Job.ServiceSetting[0].InstanceLimit);
                         if (dirConfig._unitTotal >= Job.ServiceSetting[0].UnitLimit ||
-                            dirConfig._instanceTotal >= Job.ServiceSetting[0].InstanceLimit) continue;
+                            dirConfig._instanceTotal >= Job.ServiceSetting[0].InstanceLimit)
+                        {
+                            _logger.LogInformation("Test job {testId}: Queue blocked, waiting...", Job.TestId);
+                            continue;
+                        }
                         dirConfig._unitTotal += ss.Size.Value;
                         dirConfig._instanceTotal++;
                         testJobDelay = true;
+                        _logger.LogInformation("Test job {testId}: Queue acquired, proceeding.", Job.TestId);
                         break;
                     }
                 }

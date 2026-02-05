@@ -332,3 +332,13 @@ ASALocalRun/
 /src/Pods/Py3Server/perf_wps_server.egg-info/
 /src/Pods/Py3Server/venv/
 /src/Pods/WpsPyServer/venv/
+/Initialize/perf-test.sh
+
+# macOS system files
+.DS_Store
+
+# NuGet config (local overrides)
+src/NuGet.config
+
+# npm lock files
+**/package-lock.json
