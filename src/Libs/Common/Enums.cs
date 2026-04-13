@@ -12,12 +12,27 @@ namespace Azure.SignalRBench.Common
     /// </summary>
     [JsonConverter(typeof(StringEnumConverter))]
     public enum Protocol
-    {
-        WebSocketsWithMessagePack,
-        WebSocketsWithJson,
-        ServerSideEventsWithJson,
-        LongPollingWithMessagePack,
-        LongPollingWithJson,
+    {   /// <summary>
+        /// HttpTransportType.WebSockets = 1, TransferFormat.Binary = 1
+        /// </summary>
+        WebSocketsWithMessagePack = 1 | 0x10,
+        /// <summary>
+        /// HttpTransportType.WebSockets = 1, TransferFormat.Text = 2
+        /// </summary>
+        WebSocketsWithJson = 1 | 0x20,
+        /// <summary>
+        /// HttpTransportType.ServerSentEvents = 2, TransferFormat.Text = 2
+        /// </summary>
+        ServerSideEventsWithJson = 2 | 0x20,
+        /// <summary>
+        /// HttpTransportType.LongPolling = 4, TransferFormat.Binary = 1
+        /// </summary>
+        LongPollingWithMessagePack = 4 | 0x10,
+        /// <summary>
+        /// HttpTransportType.LongPolling = 4, TransferFormat.Text = 2
+        /// </summary>
+        LongPollingWithJson = 4 | 0x20,
+
         RawWebSocketJson,
         RawWebSocketReliableJson,
         RawWebSocketReliableProtobuf,
