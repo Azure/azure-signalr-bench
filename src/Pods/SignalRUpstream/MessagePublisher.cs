@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Azure.SignalRBench.Common;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Azure.SignalR;
 using Microsoft.Azure.SignalR.Management;
 using Microsoft.Extensions.Logging;
 using SignalRUpstream.Entities;
@@ -17,23 +18,25 @@ namespace SignalRUpstream
         private readonly ServiceTransportType _serviceTransportType;
         private IServiceHubContext[] _hubContext;
 
-        public MessagePublisher(string connectionString,string testId, ServiceTransportType serviceTransportType)
+        public MessagePublisher(string connectionString, string testId, ServiceTransportType serviceTransportType,
+            string managedIdentityClientId)
         {
             _connectionString = connectionString;
             _hubName = NameConverter.GenerateHubName(testId);
             _serviceTransportType = serviceTransportType;
-            InitAsync().Wait();
+            InitAsync(managedIdentityClientId).Wait();
         }
 
-        public async Task InitAsync()
+        public async Task InitAsync(string managedIdentityClientId)
         {
-            var connectionStrings = _connectionString.Split(" ");
-            _hubContext = new IServiceHubContext[connectionStrings.Length];
-            for (var i = 0; i < connectionStrings.Length; i++)
+            var endpoints = SignalRManagedIdentity.ParseEndpoints(_connectionString);
+            var credential = SignalRManagedIdentity.CreateCredential(managedIdentityClientId);
+            _hubContext = new IServiceHubContext[endpoints.Length];
+            for (var i = 0; i < endpoints.Length; i++)
             {
                 var serviceManager = new ServiceManagerBuilder().WithOptions(option =>
                 {
-                    option.ConnectionString = connectionStrings[i];
+                    option.ServiceEndpoints = new[] {new ServiceEndpoint(endpoints[i], credential)};
                     option.ServiceTransportType = _serviceTransportType;
                 }).Build();
                 _hubContext[i] = await serviceManager.CreateHubContextAsync(_hubName, new LoggerFactory());

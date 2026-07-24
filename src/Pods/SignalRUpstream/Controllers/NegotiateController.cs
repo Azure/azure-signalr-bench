@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using Azure.SignalRBench.Common;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Azure.SignalR;
 using Microsoft.Azure.SignalR.Management;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -17,12 +18,15 @@ namespace SignalRUpstream.Controllers
         public NegotiateController(ILogger<UpStreamController> logger, IConfiguration configuration)
         {
             _logger = logger;
-            var connectionStrings = configuration[PerfConstants.ConfigurationKeys.ConnectionString].Split(" ");
-            _serviceManager = new IServiceManager[connectionStrings.Length];
-            for (var i = 0; i < connectionStrings.Length; i++)
+            var endpoints = SignalRManagedIdentity.ParseEndpoints(
+                configuration[PerfConstants.ConfigurationKeys.ConnectionString]);
+            var credential = SignalRManagedIdentity.CreateCredential(
+                configuration[PerfConstants.ConfigurationKeys.MsiAppId]);
+            _serviceManager = new IServiceManager[endpoints.Length];
+            for (var i = 0; i < endpoints.Length; i++)
             {
                 _serviceManager[i] = new ServiceManagerBuilder()
-                    .WithOptions(o => o.ConnectionString = connectionStrings[i])
+                    .WithOptions(o => o.ServiceEndpoints = new[] {new ServiceEndpoint(endpoints[i], credential)})
                     .Build();
             }
         }

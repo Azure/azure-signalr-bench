@@ -43,7 +43,7 @@ namespace Azure.SignalRBench.Coordinator
             return ResourceManagementClient.ResourceGroups.Define(resourceGroup).WithRegion(_location).CreateAsync();
         }
 
-        public async Task CreateInstanceAsync(string resourceGroup, string name, string location, string tier, int size,
+        public async Task<string> CreateInstanceAsync(string resourceGroup, string name, string location, string tier, int size,
             string tags,
             SignalRServiceMode mode, CancellationToken cancellationToken)
         {
@@ -71,7 +71,12 @@ namespace Azure.SignalRBench.Coordinator
 
             var param = new SignalRResource(name: name, location: location, kind: "SignalR", sku: sku, tags: tagsParam,
                 features: features, upstream: upstreamSettings);
-            await SignalROperations.CreateOrUpdateAsync(resourceGroup, name, param, cancellationToken);
+            var resource = await SignalROperations.CreateOrUpdateAsync(resourceGroup, name, param, cancellationToken);
+            if (string.IsNullOrWhiteSpace(resource.HostName))
+            {
+                throw new InvalidOperationException($"Azure SignalR resource '{name}' did not return a host name.");
+            }
+            return new UriBuilder(Uri.UriSchemeHttps, resource.HostName).Uri.AbsoluteUri;
         }
 
         public async Task<string> GetKeyAsync(string resourceGroup, string name,

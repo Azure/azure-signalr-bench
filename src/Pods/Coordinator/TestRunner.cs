@@ -426,7 +426,10 @@ namespace Azure.SignalRBench.Coordinator
                         await CreateAsrsAsync(ss, PerfConstants.ConfigurationKeys.PerfV2 + "-" + Job.TestId + '-' + i,
                             cancellationToken);
                 else
-                    asrsConnectionStrings[i] = ss.AsrsConnectionString;
+                    asrsConnectionStrings[i] = Job.TestMethod.UsesSignalRManagedIdentity()
+                        ? string.Join(" ", SignalRManagedIdentity.ParseEndpoints(ss.AsrsConnectionString)
+                            .Select(endpoint => endpoint.AbsoluteUri))
+                        : ss.AsrsConnectionString;
             }
 
             return asrsConnectionStrings;
@@ -437,7 +440,7 @@ namespace Azure.SignalRBench.Coordinator
             _logger.LogInformation("Test job {testId}: Creating SignalR service instance.", Job.TestId);
             var signalRProvider = SignalRProvider.GetSignalRProvider(ss.Env);
             await signalRProvider.CreateResourceGroupAsync(Job.TestId);
-            await signalRProvider.CreateInstanceAsync(
+            var endpoint = await signalRProvider.CreateInstanceAsync(
                 Job.TestId,
                 name,
                 ss.Location ?? DefaultLocation,
@@ -446,6 +449,11 @@ namespace Azure.SignalRBench.Coordinator
                 Job.TestMethod.GetServiceMode(),
                 cancellationToken);
             _logger.LogInformation("Test job {testId}: SignalR service instance created.", Job.TestId);
+            if (Job.TestMethod.UsesSignalRManagedIdentity())
+            {
+                return endpoint;
+            }
+
             _logger.LogInformation("Test job {testId}: Retrieving SignalR service connection string.", Job.TestId);
             var result =
                 await signalRProvider.GetKeyAsync(Job.TestId, name, cancellationToken);

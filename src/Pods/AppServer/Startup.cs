@@ -58,17 +58,12 @@ namespace Azure.SignalRBench.AppServer
                 option.ConnectionCount = Configuration[PerfConstants.ConfigurationKeys.ConnectionNum] != null
                     ? Configuration.GetValue<int>(PerfConstants.ConfigurationKeys.ConnectionNum)
                     : 50;
-                var connectString = Configuration[PerfConstants.ConfigurationKeys.ConnectionString];
-                // multiple endpoint
-                var endpoints = connectString.Split(" ");
-                if (endpoints.Length <= 1)
-                {
-                    option.ConnectionString = Configuration[PerfConstants.ConfigurationKeys.ConnectionString];
-                }
-                else
-                {
-                    option.Endpoints = endpoints.Select(e => new ServiceEndpoint(e)).ToArray();
-                }
+                var credential = SignalRManagedIdentity.CreateCredential(
+                    Configuration[PerfConstants.ConfigurationKeys.MsiAppId]);
+                option.Endpoints = SignalRManagedIdentity.ParseEndpoints(
+                        Configuration[PerfConstants.ConfigurationKeys.ConnectionString])
+                    .Select(endpoint => new ServiceEndpoint(endpoint, credential))
+                    .ToArray();
                 option.AllowStatefulReconnects = true;
                 //
                 // option.ClaimsProvider = context => new[]

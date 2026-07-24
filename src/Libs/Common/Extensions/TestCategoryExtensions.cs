@@ -20,5 +20,10 @@ namespace Azure.SignalRBench.Common
                     throw new ArgumentOutOfRangeException(nameof(category));
             }
         }
+
+        public static bool UsesSignalRManagedIdentity(this TestCategory category) =>
+            category == TestCategory.AspnetCoreSignalR ||
+            category == TestCategory.AspnetCoreSignalRServerless ||
+            category == TestCategory.AspnetSignalR;
     }
 }

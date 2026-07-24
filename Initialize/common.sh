@@ -37,6 +37,13 @@ function init_aks_group() {
     echo "init aks configs"
     AKS_RESOURCE_GROUP=$(az aks show -g $RESOURCE_GROUP -n $KUBERNETES_SEVICES --query nodeResourceGroup -o tsv)
     AGENTPOOL_MSI_CLIENT_ID=$(az aks show -n $KUBERNETES_SEVICES -g $RESOURCE_GROUP --query identityProfile.kubeletidentity.clientId -o tsv)
+    AGENTPOOL_MSI_OBJECT_ID=$(az aks show -n $KUBERNETES_SEVICES -g $RESOURCE_GROUP --query identityProfile.kubeletidentity.objectId -o tsv)
+    signalr_role_scope="/subscriptions/$SUBSCTIPTION"
+    signalr_role_assignment=$(az role assignment list --assignee "$AGENTPOOL_MSI_OBJECT_ID" --role "SignalR Service Owner" --scope "$signalr_role_scope" --query "[0].id" -o tsv)
+    if [[ -z "$signalr_role_assignment" ]]; then
+        echo "grant aks-agent-pool-msi SignalR Service Owner"
+        az role assignment create --role "SignalR Service Owner" --assignee-object-id "$AGENTPOOL_MSI_OBJECT_ID" --assignee-principal-type ServicePrincipal --scope "$signalr_role_scope"
+    fi
     az aks get-credentials -g $RESOURCE_GROUP -n $KUBERNETES_SEVICES -a  --overwrite-existing
 }
 
