@@ -342,3 +342,4 @@ src/NuGet.config
 
 # npm lock files
 **/package-lock.json
+!/src/Pods/SioServer/package-lock.json

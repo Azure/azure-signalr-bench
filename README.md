@@ -2,7 +2,7 @@
 
 ## Dependency
 1. [WSL](https://docs.microsoft.com/en-us/windows/wsl/install) or Linux 
-2. [az cli](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli-linux?pivots=apt) [Version >=2.37]
+2. [az cli](https://docs.microsoft.com/en-us/cli/azure/install-azure-cli-linux?pivots=apt) [Version >=2.72]
 3. [.NET 6 sdk](https://dotnet.microsoft.com/en-us/download/dotnet/6.0)
 4. A tenant you are allowed to [register AAD applications](https://docs.microsoft.com/en-us/azure/active-directory/develop/howto-create-service-principal-portal#permissions-required-for-registering-an-app) 
 5. [jq](https://stedolan.github.io/jq/) , [nodejs](https://nodejs.org/en/) , [npm](https://www.npmjs.com/package/npm), [helm](https://helm.sh/docs/intro/install/#from-pkg-freebsd)
@@ -134,6 +134,17 @@ When upgrading an existing deployment:
 2. Publish **Client, AppServer, SignalRUpstream, WpsUpstream, SioServer and
    WpsPyServer** first. Update legacy ASP.NET/Windows or source packages too if used.
 3. Deploy **Coordinator**, then **Portal**, and verify a small test with a fresh index.
+
+`publish_docker.sh` builds images in ACR, so local Docker is not required.
+Its `--coordinator` and `--portal` options also replace running deployments;
+do not use them during an active test.
+
+For local Socket.IO builds, use Node.js 22 and the committed lockfile:
+```bash
+cd src/Pods/SioServer
+npm ci --include=dev --engine-strict
+npm run build
+```
 
 # Contributing
 
