@@ -103,6 +103,7 @@ namespace Portal
             );
             services.AddSingleton<ICronScheduler, CronScheduler>();
             services.AddSingleton<PerfState>();
+            services.AddSingleton<PerfTestService>();
             services.AddControllersWithViews().AddJsonOptions(options =>
             {
                 options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());

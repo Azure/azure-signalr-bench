@@ -18,6 +18,8 @@ namespace Azure.SignalRBench.Coordinator.Entities
         public bool Healthy { get; set; }
         
         public string Dir { get; set; }
+
+        public int DirectoryTestCount { get; set; }
         
         public bool LongRun { get; set; }
         
