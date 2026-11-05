@@ -61,6 +61,60 @@ After that, you need to init the deployments inside the aks
 3. What's the portal domain? Run below command to get the urls
 >  ./publish -p [prefix] 
 
+## Use the perf tool from an AI agent (MCP)
+
+The portal exposes an [MCP](https://modelcontextprotocol.io) endpoint so agents such
+as GitHub Copilot can manage test configs, start or cancel tests, and read results.
+The agent signs in with your Microsoft Entra account: `Reader` can read data;
+`Contributor` can also change configs and runs. Service access keys are masked.
+
+1. Configure the portal's app registration and deploy the MCP-enabled portal:
+   ```bash
+   cd Initialize
+   bash ./enable_mcp.sh -p [prefix] --resource-url https://[portal domain]/mcp
+   ./publish_docker.sh -p [prefix] -ar [aks region] --portal
+   ```
+   Use the portal's external domain, verified in its Entra tenant. The URL must
+   match `resource` in `https://[portal domain]/.well-known/oauth-protected-resource/mcp`.
+   The script enables v2 access tokens for the portal app; check any other API
+   consumers before changing an existing registration. Skip publishing if the
+   MCP endpoint is already deployed.
+2. Add the server to VS Code's workspace or user `mcp.json`:
+   ```json
+   {
+     "servers": {
+       "perf": { "type": "http", "url": "https://[portal domain]/mcp" }
+     }
+   }
+   ```
+   Start `perf` and complete sign-in when prompted. VS Code discovers the tools
+   your role can use; no static bearer token is needed.
+
+### Run a pipeline-style batch
+
+Use `start_test_batch` to submit existing test directories with the same admission
+limits as the pipeline. This submits tests, not the pipeline's approval and
+dependency stages. Preview the batch first:
+
+```json
+{
+  "directories": ["directory-a", "directory-b"],
+  "index": "repro-1",
+  "unitLimit": 300,
+  "instanceLimit": 1,
+  "dryRun": true
+}
+```
+
+Check the planned tests and host locations, then set `dryRun` to `false` to submit.
+Use a **new index for each attempt**: lowercase letters, digits and single hyphens,
+with test name plus `--` plus index no longer than 63 characters. A failed
+submission may have queued some tests, so inspect that index before retrying.
+
+Monitor with `list_test_runs` using the exact `index`, then `get_test_run` for
+reports. If authentication expires, reconnect `perf` and sign in again; tests
+continue independently, so resume monitoring rather than submitting them again.
+
 ## Test results and upgrades
 
 A cleaned-up test is not necessarily a passed test. Check its result and report:
