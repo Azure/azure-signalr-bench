@@ -221,7 +221,6 @@ namespace Portal.Entity
                 Dir = dir,
                 Total = total
             };
-            Console.WriteLine(JsonConvert.SerializeObject(testJob));
             return testJob;
         }
 

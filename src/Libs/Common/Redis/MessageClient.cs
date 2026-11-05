@@ -2,6 +2,8 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
@@ -17,6 +19,9 @@ namespace Azure.SignalRBench.Messages
         private readonly string _sender;
         private readonly IDatabase _database;
         private int _ackId;
+        private readonly object _subscriptionsLock = new object();
+        private readonly HashSet<HandlerScope> _subscriptions = new HashSet<HandlerScope>();
+        private bool _disposed;
 
         private MessageClient(IConnectionMultiplexer connection, ISubscriber subscriber, IDatabase database,
             string testId, string sender)
@@ -59,24 +64,51 @@ namespace Azure.SignalRBench.Messages
             return result;
         }
 
-        public async Task WithHandlers(params MessageHandler[] handlers)
+        public async Task<IDisposable> WithHandlers(params MessageHandler[] handlers)
         {
-            foreach (var handler in handlers ?? throw new ArgumentNullException(nameof(handlers)))
+            var scope = new HandlerScope(this);
+            try
             {
-                var cmq = await _subscriber.SubscribeAsync(
-                    $"{TestId}:{handler.Role ?? _sender}:{handler.Command}:{handler.Type}");
-                cmq.OnMessage(cm => handler.Handle(cm.Message));
+                foreach (var handler in handlers ?? throw new ArgumentNullException(nameof(handlers)))
+                {
+                    var cmq = await _subscriber.SubscribeAsync(
+                        $"{TestId}:{handler.Role ?? _sender}:{handler.Command}:{handler.Type}");
+                    scope.Add(cmq);
+                    cmq.OnMessage((Func<ChannelMessage, Task>)(cm =>
+                        scope.IsDisposed ? Task.CompletedTask : handler.Handle(cm.Message)));
+                }
+                lock (_subscriptionsLock)
+                {
+                    if (_disposed)
+                        throw new ObjectDisposedException(nameof(MessageClient));
+                    _subscriptions.Add(scope);
+                }
+                return scope;
+            }
+            catch
+            {
+                scope.Dispose();
+                throw;
             }
         }
 
-        public async Task SendCommandAsync(string target, CommandMessage commandMessage)
+        public CommandMessage PrepareCommand(CommandMessage commandMessage)
         {
-            var ackId = Interlocked.Increment(ref _ackId);
+            if (commandMessage == null)
+                throw new ArgumentNullException(nameof(commandMessage));
             commandMessage.Sender = _sender;
-            commandMessage.AckId = ackId;
+            commandMessage.AckId = Interlocked.Increment(ref _ackId);
+            return commandMessage;
+        }
+
+        public async Task PublishPreparedCommandAsync(string target, CommandMessage commandMessage)
+        {
             await _subscriber.PublishAsync($"{TestId}:{target}:{commandMessage.Command}:{nameof(MessageType.Command)}",
                 JsonConvert.SerializeObject(commandMessage));
         }
+
+        public Task SendCommandAsync(string target, CommandMessage commandMessage) =>
+            PublishPreparedCommandAsync(target, PrepareCommand(commandMessage));
 
         public async Task AckAsync(CommandMessage commandMessage, AckStatus status, string? error = null,
             double? progress = null)
@@ -90,7 +122,63 @@ namespace Azure.SignalRBench.Messages
 
         public void Dispose()
         {
-            _connection.Dispose();
+            HandlerScope[] scopes;
+            lock (_subscriptionsLock)
+            {
+                if (_disposed)
+                    return;
+                _disposed = true;
+                scopes = _subscriptions.ToArray();
+            }
+            try
+            {
+                Exception? failure = null;
+                foreach (var scope in scopes)
+                {
+                    try { scope.Dispose(); }
+                    catch (Exception e) { failure ??= e; }
+                }
+                if (failure != null)
+                    throw failure;
+            }
+            finally
+            {
+                _connection.Dispose();
+            }
+        }
+
+        private sealed class HandlerScope : IDisposable
+        {
+            private readonly MessageClient _owner;
+            private readonly List<ChannelMessageQueue> _queues = new List<ChannelMessageQueue>();
+            private int _disposed;
+
+            public HandlerScope(MessageClient owner) => _owner = owner;
+            public bool IsDisposed => Volatile.Read(ref _disposed) != 0;
+            public void Add(ChannelMessageQueue queue) => _queues.Add(queue);
+
+            public void Dispose()
+            {
+                if (Interlocked.Exchange(ref _disposed, 1) != 0)
+                    return;
+                try
+                {
+                    Exception? failure = null;
+                    foreach (var queue in _queues)
+                    {
+                        try { queue.Unsubscribe(); }
+                        catch (Exception e) { failure ??= e; }
+                    }
+                    if (failure != null)
+                        throw failure;
+                }
+                finally
+                {
+                    _queues.Clear();
+                    lock (_owner._subscriptionsLock)
+                        _owner._subscriptions.Remove(this);
+                }
+            }
         }
     }
 }

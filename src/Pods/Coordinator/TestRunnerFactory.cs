@@ -1,8 +1,10 @@
 ﻿// Copyright (c) Microsoft. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Threading;
 using System.Threading.Tasks;
 using Azure.SignalRBench.Common;
 using Azure.SignalRBench.Coordinator.Entities;
@@ -18,6 +20,8 @@ namespace Azure.SignalRBench.Coordinator
         private readonly string _podName;
         private readonly string _redisConnectionString;
         private readonly IDictionary<string, TestRunner> _testRunners = new ConcurrentDictionary<string, TestRunner>();
+        // Cancellation requests and the cleanup scan can target the same inactive run.
+        private readonly SemaphoreSlim _stopLock = new SemaphoreSlim(1, 1);
 
         public TestRunnerFactory(
             IConfiguration configuration,
@@ -71,29 +75,61 @@ namespace Azure.SignalRBench.Coordinator
             if (_testRunners.TryGetValue(testId, out var runner))
             {
                 await runner.StopAsync();
-                _testRunners.Remove(testId);
-                _logger.LogInformation("TestRunner {testId} stopped", testId);
+                _logger.LogInformation("TestRunner {testId} stop requested", testId);
             }
             else
             {
-                var pairs = testId.Split("--");
-               var  testStatusAccessor =
-                    await PerfStorage.GetTableAsync<TestStatusEntity>(PerfConstants.TableNames.TestStatus);
-                var testStatusEntity =
-                    await testStatusAccessor.GetAsync(pairs[0], pairs[1]);
+                await _stopLock.WaitAsync();
+                try
+                {
+                    if (_testRunners.TryGetValue(testId, out runner))
+                    {
+                        await runner.StopAsync();
+                        return;
+                    }
+                    var pairs = testId.Split("--");
+                    var testStatusAccessor =
+                        await PerfStorage.GetTableAsync<TestStatusEntity>(PerfConstants.TableNames.TestStatus);
+                    var testStatusEntity = await testStatusAccessor.GetAsync(pairs[0], pairs[1]);
+                    if (testStatusEntity == null || testStatusEntity.JobState == TestState.Cleaned.ToString())
+                        return;
+                    if ((testStatusEntity.JobState == TestState.InProgress.ToString() ||
+                         testStatusEntity.JobState == TestState.Longrun.ToString()) &&
+                        testStatusEntity.Check != "Failed" && testStatusEntity.Check != "Cancelled")
+                    {
+                        testStatusEntity.Healthy = false;
+                        testStatusEntity.Check = "Cancelled";
+                        testStatusEntity.Status = testStatusEntity.LongRun ? "Long run cancelled" : "Test cancelled";
+                    }
                     testStatusEntity.JobState = TestState.Cleaning.ToString();
-                    testStatusEntity.Status = "Cancelling and cleaning resources";
                     await testStatusAccessor.UpdateAsync(testStatusEntity);
-                    _logger.LogInformation("Test job {testId}: Removing hashTable in redis.", testId);
-                    // await messageClient.DeleteHashTableAsync();
-                    _logger.LogInformation("Test job {testId}: Removing client pods.", testId);
-                    await K8sProvider.DeleteClientPodsAsync(testId);
-                    _logger.LogInformation("Test job {testId}: Removing server pods.",testId);
-                    await K8sProvider.DeleteServerPodsAsync(testId,false);
-                    testStatusEntity.JobState = TestState.Cleaned.ToString();
-                    testStatusEntity.Status = testStatusEntity.LongRun? "Long run cancelled" : "Test cancelled";
-                    await testStatusAccessor.UpdateAsync(testStatusEntity);
-                    _logger.LogInformation("Test job {testId}: cleaned.", testId);
+                    try
+                    {
+                        _logger.LogInformation("Test job {testId}: Removing hashTable in redis.", testId);
+                        // await messageClient.DeleteHashTableAsync();
+                        _logger.LogInformation("Test job {testId}: Removing client pods.", testId);
+                        await K8sProvider.DeleteClientPodsAsync(testId);
+                        _logger.LogInformation("Test job {testId}: Removing server pods.",testId);
+                        await K8sProvider.DeleteServerPodsAsync(testId,false);
+                        testStatusEntity.JobState = TestState.Cleaned.ToString();
+                        await testStatusAccessor.UpdateAsync(testStatusEntity);
+                        _logger.LogInformation("Test job {testId}: cleaned.", testId);
+                    }
+                    catch (Exception e)
+                    {
+                        testStatusEntity.Healthy = false;
+                        if (testStatusEntity.Check != "Failed" && testStatusEntity.Check != "Cancelled")
+                            testStatusEntity.Check = "Failed";
+                        testStatusEntity.Status += "; cleanup failed";
+                        testStatusEntity.ErrorInfo += Environment.NewLine + e;
+                        await testStatusAccessor.UpdateAsync(testStatusEntity);
+                        throw;
+                    }
+                }
+                finally
+                {
+                    _stopLock.Release();
+                }
             }
         }
     }

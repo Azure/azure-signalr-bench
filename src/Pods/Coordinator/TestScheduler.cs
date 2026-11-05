@@ -141,7 +141,7 @@ namespace Azure.SignalRBench.Coordinator
             try
             {
                 await jobTask;
-                _logger.LogInformation("Test job {testId} completed.", message.Value.TestId);
+                _logger.LogInformation("Test job {testId} workflow returned; persisted Check/Healthy/Report determine the result.", message.Value.TestId);
             }
             catch (OperationCanceledException)
             {

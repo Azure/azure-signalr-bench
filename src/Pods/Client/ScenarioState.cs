@@ -44,7 +44,7 @@ namespace Azure.SignalRBench.Client
         public void StartSenario(StartScenarioParameters startScenarioParameters) =>
             _state.StartSenario(startScenarioParameters);
 
-        public void StopSenario(StopScenarioParameters stopScenario) =>
+        public Task StopSenario(StopScenarioParameters stopScenario) =>
             _state.StopSenario(stopScenario);
 
         public Task StopClientConnections(StopClientConnectionsParameters stopClientConnectionsParameters) =>
@@ -84,7 +84,7 @@ namespace Azure.SignalRBench.Client
             public virtual void StartSenario(StartScenarioParameters startScenarioParameters) =>
                 throw new InvalidScenarioStateException();
 
-            public virtual void StopSenario(StopScenarioParameters stopScenario) =>
+            public virtual Task StopSenario(StopScenarioParameters stopScenario) =>
                 throw new InvalidScenarioStateException();
 
             public virtual Task
@@ -429,10 +429,14 @@ namespace Azure.SignalRBench.Client
                 {
                     Save();
                 }
-                ClientAgentContainer.StartScenario(
+                var workers = ClientAgentContainer.StartScenario(
                     index => Settings.GetClientAgentBehavior(ScenarioState.indexMap[index], GetLogger<IClientAgent>()), cts.Token);
                 SetState(new RunningState(ScenarioState, ClientAgentContainer, Settings,
-                    cts));
+                    cts, workers));
+                if (workers.IsFaulted || workers.IsCanceled)
+                {
+                    workers.GetAwaiter().GetResult();
+                }
             }
         }
 
@@ -442,12 +446,18 @@ namespace Azure.SignalRBench.Client
                 ScenarioState scenarioState,
                 ClientAgentContainer clientAgentContainer,
                 ClientAgentBehaviorSettings settings,
-                CancellationTokenSource cts)
+                CancellationTokenSource cts,
+                Task workers)
                 : base(scenarioState)
             {
                 ClientAgentContainer = clientAgentContainer;
                 Settings = settings;
                 Cts = cts;
+                Workers = workers;
+                _ = workers.ContinueWith(task =>
+                    GetLogger<RunningState>().LogError(task.Exception, "Scenario workers failed."),
+                    CancellationToken.None, TaskContinuationOptions.OnlyOnFaulted | TaskContinuationOptions.ExecuteSynchronously,
+                    TaskScheduler.Default);
             }
 
             public ClientAgentContainer ClientAgentContainer { get; }
@@ -455,11 +465,21 @@ namespace Azure.SignalRBench.Client
             public ClientAgentBehaviorSettings Settings { get; }
 
             public CancellationTokenSource Cts { get; }
+            private Task Workers { get; }
 
-            public override void StopSenario(StopScenarioParameters stopScenario)
+            public override async Task StopSenario(StopScenarioParameters stopScenario)
             {
                 Cts.Cancel();
+                try
+                {
+                    await Workers;
+                }
+                catch (OperationCanceledException ex) when (
+                    Workers.IsCanceled && ex.CancellationToken == Cts.Token && Cts.IsCancellationRequested)
+                {
+                }
                 SetState(ScenarioState._save);
+                Cts.Dispose();
             }
         }
     }

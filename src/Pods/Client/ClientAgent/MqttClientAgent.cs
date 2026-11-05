@@ -95,9 +95,21 @@ namespace Azure.SignalRBench.Client.ClientAgent
                     })
                 .Build();
 
-            await Connection.SubscribeAsync(mqttSubscribeOptions, CancellationToken.None);
+            var result = await Connection.SubscribeAsync(mqttSubscribeOptions, CancellationToken.None);
+            foreach (var item in result.Items)
+            {
+                switch (item.ResultCode)
+                {
+                    case MqttClientSubscribeResultCode.GrantedQoS0:
+                    case MqttClientSubscribeResultCode.GrantedQoS1:
+                    case MqttClientSubscribeResultCode.GrantedQoS2:
+                        break;
+                    default:
+                        throw new InvalidOperationException(
+                            $"MQTT subscription failed: topic='{Groups[0]}', code={item.ResultCode}.");
+                }
+            }
         }
-
 
         public async Task StopAsync()
         {
@@ -105,7 +117,7 @@ namespace Azure.SignalRBench.Client.ClientAgent
         }
 
         //This method should be sent directly to appserver to lower pressure on wps runtime 
-        public Task BroadcastAsync(string payload)
+        public Task BroadcastAsync(string payload, CancellationToken cancellationToken = default)
         {
             var data = new RawWebsocketData()
             {
@@ -113,15 +125,15 @@ namespace Azure.SignalRBench.Client.ClientAgent
                 Ticks = ClientAgentContext.CoordinatedUtcNow(),
                 Payload = payload
             };
-            return SendToAppServer(data);
+            return SendToAppServer(data, cancellationToken);
         }
 
-        public Task EchoAsync(string payload)
+        public Task EchoAsync(string payload, CancellationToken cancellationToken = default)
         {
             throw new NotImplementedException();
         }
 
-        public Task GroupBroadcastAsync(string group, string payload)
+        public Task GroupBroadcastAsync(string group, string payload, CancellationToken cancellationToken = default)
         {
             // Reuse the RawWebsocketData as a wrapper for the payload, adding timestamp
             var data = new RawWebsocketData()
@@ -134,11 +146,11 @@ namespace Azure.SignalRBench.Client.ClientAgent
                 .WithQualityOfServiceLevel((MqttQualityOfServiceLevel)_publishQos)
                 .WithPayload(data.Serilize())
                 .Build();
-            return Connection.PublishAsync(applicationMessage, CancellationToken.None);
+            return Connection.PublishAsync(applicationMessage, cancellationToken);
         }
 
         //This method is sent directly to appserver to lower pressure on wps runtime 
-        public Task SendToClientAsync(int index, string payload)
+        public Task SendToClientAsync(int index, string payload, CancellationToken cancellationToken = default)
         {
             var data = new RawWebsocketData()
             {
@@ -147,19 +159,19 @@ namespace Azure.SignalRBench.Client.ClientAgent
                 Payload = payload,
                 Target = $"user{index}"
             };
-            return SendToAppServer(data);
+            return SendToAppServer(data, cancellationToken);
         }
 
 
-        private async Task SendToAppServer(RawWebsocketData data)
+        private async Task SendToAppServer(RawWebsocketData data, CancellationToken cancellationToken)
         {
-            var request = new HttpRequestMessage(HttpMethod.Post, _appserverUrl)
+            using var request = new HttpRequestMessage(HttpMethod.Post, _appserverUrl)
             {
                 Version = HttpVersion.Version20,
             };
             var binaryData = BinaryData.FromObjectAsJson(data);
             request.Content = new StringContent(binaryData.ToString(), Encoding.UTF8, "application/json");
-            await HttpClient.SendAsync(request);
+            using var response = await HttpClient.SendAsync(request, cancellationToken);
         }
     }
 

@@ -1,0 +1,6 @@
+# Build context is src/ (Initialize/publish_docker.sh). Images restore and build inside the container,
+# so local build outputs and installed packages are never needed and only slow down the context upload.
+**/node_modules
+**/bin
+**/obj
+**/publish

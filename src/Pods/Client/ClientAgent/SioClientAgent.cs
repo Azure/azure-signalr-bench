@@ -88,58 +88,59 @@ namespace Azure.SignalRBench.Client.ClientAgent
             return Client.DisconnectAsync();
         }
 
-        public async Task EchoAsync(string payload)
+        public async Task EchoAsync(string payload, CancellationToken cancellationToken = default)
         {
             var eventName = "Echo" + (ServerExpectClientAck ? "WithAck" : string.Empty);
             if (ClientExpectServerAck)
             {
-                await Client.EmitAsync(eventName, ServerAckClient, ClientAgentContext.CoordinatedUtcNow(), payload);
+                await Client.EmitAsync(eventName, cancellationToken, ServerAckClient, ClientAgentContext.CoordinatedUtcNow(), payload);
             }
             else
             {
-                await Client.EmitAsync(eventName, ClientAgentContext.CoordinatedUtcNow(), payload);
+                await Client.EmitAsync(eventName, cancellationToken, ClientAgentContext.CoordinatedUtcNow(), payload);
             }
         }
 
-        public async Task SendToClientAsync(int index, string payload)
+        public async Task SendToClientAsync(int index, string payload, CancellationToken cancellationToken = default)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             var eventName = "SendToSocket" + (ServerExpectClientAck ? "WithAck" : string.Empty);
             var connectionId = await Context.GetConnectionIdAsync(index);
             if (ClientExpectServerAck)
             {
-                await Client.EmitAsync(eventName, ServerAckClient, connectionId,
+                await Client.EmitAsync(eventName, cancellationToken, ServerAckClient, connectionId,
                     ClientAgentContext.CoordinatedUtcNow(), payload);
             }
             else
             {
-                await Client.EmitAsync(eventName, connectionId, ClientAgentContext.CoordinatedUtcNow(), payload);
+                await Client.EmitAsync(eventName, cancellationToken, connectionId, ClientAgentContext.CoordinatedUtcNow(), payload);
             }
         }
 
-        public async Task BroadcastAsync(string payload)
+        public async Task BroadcastAsync(string payload, CancellationToken cancellationToken = default)
         {
             var eventName = "Broadcast" + (ServerExpectClientAck ? "WithAck" : string.Empty);
             if (ClientExpectServerAck)
             {
-                await Client.EmitAsync(eventName, ServerAckClient, ClientAgentContext.CoordinatedUtcNow(), payload);
+                await Client.EmitAsync(eventName, cancellationToken, ServerAckClient, ClientAgentContext.CoordinatedUtcNow(), payload);
             }
             else
             {
-                await Client.EmitAsync(eventName, ClientAgentContext.CoordinatedUtcNow(), payload);
+                await Client.EmitAsync(eventName, cancellationToken, ClientAgentContext.CoordinatedUtcNow(), payload);
             }
         }
 
-        public async Task GroupBroadcastAsync(string group, string payload)
+        public async Task GroupBroadcastAsync(string group, string payload, CancellationToken cancellationToken = default)
         {
             var eventName = "SendToGroup" + (ServerExpectClientAck ? "WithAck" : string.Empty);
             if (ClientExpectServerAck)
             {
-                await Client.EmitAsync(eventName, ServerAckClient, group, ClientAgentContext.CoordinatedUtcNow(),
+                await Client.EmitAsync(eventName, cancellationToken, ServerAckClient, group, ClientAgentContext.CoordinatedUtcNow(),
                     payload);
             }
             else
             {
-                await Client.EmitAsync(eventName, group, ClientAgentContext.CoordinatedUtcNow(), payload);
+                await Client.EmitAsync(eventName, cancellationToken, group, ClientAgentContext.CoordinatedUtcNow(), payload);
             }
         }
 

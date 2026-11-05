@@ -140,8 +140,8 @@ fi
 
 base_image=$( az keyvault secret show --vault-name $KEYVAULT -n "image" | jq ".value" -r )
 internal=$( az keyvault secret show --vault-name $KEYVAULT -n "internal" | jq ".value"  )
-az acr login -n $ACR_NAME
 
+# Images are built and pushed by ACR Tasks (az acr build), so no local docker daemon is needed.
 function publish() {
   local Pod=$1
   local DockerFile=$2
@@ -149,18 +149,16 @@ function publish() {
   pod_lower=$(echo "$Pod" | tr '[:upper:]' '[:lower:]')
 
   local timestamp
-  timestamp=$(date +%Y%m%d)
   timestamp=$(date +%Y%m%d%H%M%S)
 
   image=${IMAGE_PREFIX}${pod_lower}:${timestamp}
 
-  docker build -f docker/${DockerFile}.docker -t "${image}" \
+  echo "Building $Pod image in ACR: ${image}"
+  az acr build -r "${ACR_NAME}" -t "pods/${pod_lower}:${timestamp}" \
+    -f "$DIR/docker/${DockerFile}.docker" \
     --build-arg IMAGE="${base_image}" \
     --build-arg POD="${Pod}" \
-    ../src
-
-  echo "Building $Pod image: ${image}"
-  docker push "${image}"
+    "$DIR/../src"
   az keyvault secret set \
     --vault-name "${KEYVAULT}" \
     -n "Image-${Pod}" \

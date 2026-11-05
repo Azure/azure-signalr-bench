@@ -19,6 +19,7 @@ using Microsoft.Identity.Web;
 using Microsoft.Identity.Web.UI;
 using Portal.BasicAuth;
 using Portal.Cron;
+using Portal.Mcp;
 
 namespace Portal
 {
@@ -67,6 +68,7 @@ namespace Portal
                     .RequireRole(PerfConstants.Roles.Contributor, PerfConstants.Roles.Reader)
                     .Build();
             });
+            services.AddPerfMcp(Configuration);
 
             services
                 .AddRazorPages()
@@ -103,6 +105,7 @@ namespace Portal
             );
             services.AddSingleton<ICronScheduler, CronScheduler>();
             services.AddSingleton<PerfState>();
+            services.AddSingleton<PerfTestService>();
             services.AddControllersWithViews().AddJsonOptions(options =>
             {
                 options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
@@ -152,6 +155,7 @@ namespace Portal
             {
                 endpoints.MapControllers();
                 endpoints.MapRazorPages();
+                endpoints.MapPerfMcp();
             });
             app.UseSpa(spa =>
             {

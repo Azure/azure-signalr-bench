@@ -61,7 +61,7 @@ namespace Azure.SignalRBench.Client.ClientAgent
         }
 
         //This method should be sent directly to appserver to lower pressure on wps runtime 
-        public virtual Task BroadcastAsync(string payload)
+        public virtual Task BroadcastAsync(string payload, CancellationToken cancellationToken = default)
         {
             var data = new RawWebsocketData()
             {
@@ -69,10 +69,10 @@ namespace Azure.SignalRBench.Client.ClientAgent
                 Ticks = ClientAgentContext.CoordinatedUtcNow(),
                 Payload = payload
             };
-            return SendToAppServer(data);
+            return SendToAppServer(data, cancellationToken);
         }
 
-        public virtual Task EchoAsync(string payload)
+        public virtual Task EchoAsync(string payload, CancellationToken cancellationToken = default)
         {
             var data = new RawWebsocketData()
             {
@@ -80,21 +80,21 @@ namespace Azure.SignalRBench.Client.ClientAgent
                 Ticks = ClientAgentContext.CoordinatedUtcNow(),
                 Payload = payload
             };
-            return Connection.SendEventAsync(NameConverter.GenerateHubName(Context.TestId), data);
+            return Connection.SendEventAsync(NameConverter.GenerateHubName(Context.TestId), data, cancellationToken);
         }
 
-        public virtual Task GroupBroadcastAsync(string group, string payload)
+        public virtual Task GroupBroadcastAsync(string group, string payload, CancellationToken cancellationToken = default)
         {
             var data = new RawWebsocketData()
             {
                 Ticks = ClientAgentContext.CoordinatedUtcNow(),
                 Payload = payload
             };
-            return Connection.SendToGroup(group, data);
+            return Connection.SendToGroup(group, data, cancellationToken);
         }
         
         //This method is sent directly to appserver to lower pressure on wps runtime 
-        public virtual Task SendToClientAsync(int index, string payload)
+        public virtual Task SendToClientAsync(int index, string payload, CancellationToken cancellationToken = default)
         {
             var data = new RawWebsocketData()
             {
@@ -103,7 +103,7 @@ namespace Azure.SignalRBench.Client.ClientAgent
                 Payload = payload,
                 Target = $"user{index}"
             };
-            return SendToAppServer(data);
+            return SendToAppServer(data, cancellationToken);
         }
 
 
@@ -146,7 +146,7 @@ namespace Azure.SignalRBench.Client.ClientAgent
 
                 _socket.Disconnected += _ => { _closed = true; return _context.OnClosed(_agent); };
                 _socket.Connected += _ => { _closed = false;
-                    return _context.OnConnected(_agent, true);};
+                    return _context.OnConnected(_agent, _agent.Groups.Length > 0);};
             }
 
             public void On(Action<long, string> callback)
@@ -178,7 +178,7 @@ namespace Azure.SignalRBench.Client.ClientAgent
                 return _socket.JoinGroupAsync(group);
             }
 
-            public Task SendToGroup(string group, RawWebsocketData value)
+            public Task SendToGroup(string group, RawWebsocketData value, CancellationToken cancellationToken)
             {
                 if (active && _closed)
                 {
@@ -186,10 +186,11 @@ namespace Azure.SignalRBench.Client.ClientAgent
                     active = false;
                 }
 
-                return _socket.SendToGroupAsync(group, BinaryData.FromObjectAsJson(value), WebPubSubDataType.Json, fireAndForget: true);
+                return _socket.SendToGroupAsync(group, BinaryData.FromObjectAsJson(value), WebPubSubDataType.Json,
+                    fireAndForget: true, cancellationToken: cancellationToken);
             }
 
-            public Task SendEventAsync(string eventName, RawWebsocketData payload)
+            public Task SendEventAsync(string eventName, RawWebsocketData payload, CancellationToken cancellationToken)
             {
                 if (active && _closed)
                 {
@@ -197,7 +198,8 @@ namespace Azure.SignalRBench.Client.ClientAgent
                     active = false;
                 }
 
-                return _socket.SendEventAsync(eventName, BinaryData.FromObjectAsJson(payload), WebPubSubDataType.Json, fireAndForget: true);
+                return _socket.SendEventAsync(eventName, BinaryData.FromObjectAsJson(payload), WebPubSubDataType.Json,
+                    fireAndForget: true, cancellationToken: cancellationToken);
             }
 
             public async Task StartAsync(CancellationToken cancellationToken)
@@ -213,15 +215,15 @@ namespace Azure.SignalRBench.Client.ClientAgent
             }
         }
 
-        protected async Task SendToAppServer(RawWebsocketData data)
+        protected async Task SendToAppServer(RawWebsocketData data, CancellationToken cancellationToken)
         {
-            var request = new HttpRequestMessage(HttpMethod.Post, _appserverUrl)
+            using var request = new HttpRequestMessage(HttpMethod.Post, _appserverUrl)
             {
                 Version = HttpVersion.Version20,
             };
             var binaryData=BinaryData.FromObjectAsJson(data);
             request.Content = new StringContent(binaryData.ToString(), Encoding.UTF8, "application/json");
-            await HttpClient.SendAsync(request);
+            using var response = await HttpClient.SendAsync(request, cancellationToken);
         }
 
         //
