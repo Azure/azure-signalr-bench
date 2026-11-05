@@ -166,6 +166,10 @@ namespace Azure.SignalRBench.Coordinator.Provider
                             {
                                 ["app"] = name,
                                 ["type"] = Appserver
+                            },
+                            Annotations = new Dictionary<string, string>
+                            {
+                                ["cluster-autoscaler.kubernetes.io/safe-to-evict"] = "false"
                             }
                         },
                         Spec = new V1PodSpec
@@ -356,6 +360,10 @@ namespace Azure.SignalRBench.Coordinator.Provider
                             {
                                 ["app"] = name,
                                 ["type"]= Client
+                            },
+                            Annotations = new Dictionary<string, string>
+                            {
+                                ["cluster-autoscaler.kubernetes.io/safe-to-evict"] = "false"
                             }
                         },
                         Spec = new V1PodSpec

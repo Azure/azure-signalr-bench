@@ -26,7 +26,7 @@ namespace Azure.SignalRBench.Client.ClientAgent
         {
         }
 
-        public override Task GroupBroadcastAsync(string group, string payload)
+        public override Task GroupBroadcastAsync(string group, string payload, CancellationToken cancellationToken = default)
         {
             var data = new RawWebsocketData()
             {
@@ -35,7 +35,7 @@ namespace Azure.SignalRBench.Client.ClientAgent
                 Ticks = ClientAgentContext.CoordinatedUtcNow(),
                 Payload = payload
             };
-            return SendToAppServer(data);
+            return SendToAppServer(data, cancellationToken);
         }
     }
     

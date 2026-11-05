@@ -61,8 +61,23 @@ After that, you need to init the deployments inside the aks
 3. What's the portal domain? Run below command to get the urls
 >  ./publish -p [prefix] 
 
+## Test results and upgrades
 
+A cleaned-up test is not necessarily a passed test. Check its result and report:
+command errors or participant replacement fail the run, and cancellation remains
+cancelled after cleanup.
 
+Stopping a scenario cancels sends and waits for them to finish before the next
+round. Legacy ASP.NET SignalR 2.x cannot cancel an active send, so its stop may
+still wait for that send to finish.
+
+Older participant images do not support the coordinator's new readiness checks.
+When upgrading an existing deployment:
+
+1. Finish active tests and pause new submissions.
+2. Publish **Client, AppServer, SignalRUpstream, WpsUpstream, SioServer and
+   WpsPyServer** first. Update legacy ASP.NET/Windows or source packages too if used.
+3. Deploy **Coordinator**, then **Portal**, and verify a small test with a fresh index.
 
 # Contributing
 

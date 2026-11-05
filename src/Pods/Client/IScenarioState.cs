@@ -17,7 +17,7 @@ namespace Azure.SignalRBench.Client
 
         public void StartSenario(StartScenarioParameters startScenarioParameters);
 
-        public void StopSenario(StopScenarioParameters stopScenario);
+        public Task StopSenario(StopScenarioParameters stopScenario);
 
         public Task StopClientConnections(StopClientConnectionsParameters StopClientConnectionsParameters);
 

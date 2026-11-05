@@ -1,5 +1,6 @@
 import asyncio
 import time
+import uuid
 
 from azure.messaging.webpubsubclient.aio import WebPubSubClient as WebPubSubClientAio
 from azure.messaging.webpubsubservice.aio import WebPubSubServiceClient as WebPubSubServiceClientAio
@@ -11,6 +12,7 @@ import json
 from redis.asyncio import Redis
 
 connectionString = os.getenv('connectionString')
+instance_id = uuid.uuid4().hex
 
 class Data(BaseModel):
     Type: str
@@ -52,7 +54,8 @@ async def report_ready():
         "Command": "ReportReady",
         "AckId": 1,
         "Parameters": {
-            "Role": "AppServers"
+            "Role": "AppServers",
+            "InstanceId": instance_id
         }
     }
 

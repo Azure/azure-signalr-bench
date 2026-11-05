@@ -89,20 +89,32 @@ namespace Azure.SignalRBench.Client.ClientAgent
             return Task.CompletedTask;
         }
 
-        public Task EchoAsync(string payload) =>
-            HubProxy.Invoke("Echo", ClientAgentContext.CoordinatedUtcNow(), payload);
-
-        public async Task SendToClientAsync(int index, string payload)
+        // The legacy SDK cannot cancel an active invocation without stopping the shared connection.
+        public Task EchoAsync(string payload, CancellationToken cancellationToken = default)
         {
+            cancellationToken.ThrowIfCancellationRequested();
+            return HubProxy.Invoke("Echo", ClientAgentContext.CoordinatedUtcNow(), payload);
+        }
+
+        public async Task SendToClientAsync(int index, string payload, CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
             var connectionId = await Context.GetConnectionIdAsync(index);
+            cancellationToken.ThrowIfCancellationRequested();
             await HubProxy.Invoke("SendToConnection", connectionId, ClientAgentContext.CoordinatedUtcNow(), payload);
         }
 
-        public Task BroadcastAsync(string payload) =>
-            HubProxy.Invoke("Broadcast", ClientAgentContext.CoordinatedUtcNow(), payload);
+        public Task BroadcastAsync(string payload, CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return HubProxy.Invoke("Broadcast", ClientAgentContext.CoordinatedUtcNow(), payload);
+        }
 
-        public Task GroupBroadcastAsync(string group, string payload) =>
-            HubProxy.Invoke("GroupBroadcast", group, ClientAgentContext.CoordinatedUtcNow(), payload);
+        public Task GroupBroadcastAsync(string group, string payload, CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return HubProxy.Invoke("GroupBroadcast", group, ClientAgentContext.CoordinatedUtcNow(), payload);
+        }
 
         public Task JoinGroupAsync() => Task.WhenAll(Groups.Select(g => HubProxy.Invoke("JoinGroup", g)));
 
