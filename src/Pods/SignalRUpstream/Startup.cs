@@ -3,12 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Azure.SignalRBench.AppServer;
-using Azure.SignalRBench.Common;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Azure.SignalR.Management;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -29,11 +27,11 @@ namespace SignalRUpstream
         // For more information on how to configure your application, visit https://go.microsoft.com/fwlink/?LinkID=398940
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddSingleton(new MessagePublisher(
-                Configuration[PerfConstants.ConfigurationKeys.ConnectionString],
-                Configuration[PerfConstants.ConfigurationKeys.TestIdKey],
-                ServiceTransportType.Transient,
-                Configuration[PerfConstants.ConfigurationKeys.MsiAppId]));
+            services.AddSingleton<EndpointHubContexts>();
+            // Hosted services start in registration order: the hub contexts must be ready before
+            // ServerHostedService reports Ready to the coordinator.
+            services.AddHostedService(sp => sp.GetRequiredService<EndpointHubContexts>());
+            services.AddSingleton<MessagePublisher>();
             services.AddControllers();
             services.AddSingleton<MessageClientHolder>();
             services.AddHostedService<ServerHostedService>();
