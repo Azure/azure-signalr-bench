@@ -488,7 +488,8 @@ namespace Azure.SignalRBench.Coordinator
                 if (suspiciousCount > 0)
                     suspiciousCount--;
                 if (suspiciousCount == 0 && _terminalCheck == null)
-                    _testStatusEntity.Check = null;
+                    // Table Merge ignores null, so explicitly overwrite any stored warning.
+                    _testStatusEntity.Check = string.Empty;
             }
 
             _roundStatusList.Add(roundStatus);

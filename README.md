@@ -122,6 +122,8 @@ command errors or participant replacement fail the run, and cancellation remains
 cancelled after cleanup. Directory checks pass only when all submitted finite
 runs and their configured round reports are complete. Historical runs without
 the new batch metadata remain viewable but cannot pass this check.
+`Suspicious` can clear as later rounds recover; the per-round report still
+records any earlier delivery problems.
 
 Stopping a scenario cancels sends and waits for them to finish before the next
 round. Legacy ASP.NET SignalR 2.x cannot cancel an active send, so its stop may
