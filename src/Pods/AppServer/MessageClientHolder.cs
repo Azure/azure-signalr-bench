@@ -24,6 +24,10 @@ namespace Azure.SignalRBench.AppServer
         public MessageClient MessageClient =>
             _messageClient ?? throw new InvalidOperationException();
 
+        /// <summary>
+        /// Connects to the coordinator and registers command handlers. Ready is reported separately by
+        /// <see cref="ReportReadyAsync"/> once the server can serve.
+        /// </summary>
         public async Task InitializeAsync(string testId, string connectionString, string podName)
         {
             if (_messageClient != null)
@@ -36,7 +40,11 @@ namespace Azure.SignalRBench.AppServer
                 MessageHandler.CreateCommandHandler(Roles.AppServers, Commands.AppServer.GracefulShutdown, Stop),
                 MessageHandler.CreateCommandHandler(Roles.AppServers, Commands.General.Crash, Crash));
             _logger.LogInformation("Message handlers inited.");
-            await _messageClient.ReportReadyAsync(new ReportReadyParameters() { Role = Roles.AppServers });
+        }
+
+        public async Task ReportReadyAsync()
+        {
+            await MessageClient.ReportReadyAsync(new ReportReadyParameters() { Role = Roles.AppServers });
             _logger.LogInformation("Server ready acked.");
         }
 

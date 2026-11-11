@@ -18,8 +18,8 @@ namespace SignalRUpstream
     /// acquiring a new key for every negotiate or REST call.
     /// </summary>
     /// <remarks>
-    /// Registered as a hosted service before <c>ServerHostedService</c>, so the server only reports Ready after every
-    /// endpoint has been initialized and has successfully issued a client token.
+    /// Initialized as a hosted service; <c>ServerHostedService</c> reports Ready only after all hosted services have
+    /// started, so a ready server has every endpoint initialized and able to issue client tokens.
     /// </remarks>
     public sealed class EndpointHubContexts : IHostedService, IAsyncDisposable
     {

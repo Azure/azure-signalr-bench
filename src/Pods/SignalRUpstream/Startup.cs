@@ -28,8 +28,6 @@ namespace SignalRUpstream
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddSingleton<EndpointHubContexts>();
-            // Hosted services start in registration order: the hub contexts must be ready before
-            // ServerHostedService reports Ready to the coordinator.
             services.AddHostedService(sp => sp.GetRequiredService<EndpointHubContexts>());
             services.AddSingleton<MessagePublisher>();
             services.AddControllers();

@@ -129,6 +129,12 @@ Stopping a scenario cancels sends and waits for them to finish before the next
 round. Legacy ASP.NET SignalR 2.x cannot cancel an active send, so its stop may
 still wait for that send to finish.
 
+App servers report Ready only once they can serve clients: after their web
+server listens and, for Default-mode SignalR, after every configured endpoint
+accepts both server connections and client negotiation. A server that is not
+ready within 2 minutes fails startup with the endpoint and last error instead of
+reporting Ready.
+
 Older participant images do not support the coordinator's new readiness checks.
 When upgrading an existing deployment:
 
