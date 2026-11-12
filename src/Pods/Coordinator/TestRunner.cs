@@ -418,7 +418,7 @@ namespace Azure.SignalRBench.Coordinator
                 _testStatusEntity.Check = _terminalCheck;
             _testStatusEntity.JobState = testState.ToString();
             if (e != null)
-                _testStatusEntity.ErrorInfo += "   \n  \n     " + e;
+                _testStatusEntity.RecordError(e);
             if (_testStatusEntity.Healthy)
                 _logger.LogInformation(currentStatus);
             else
@@ -476,9 +476,12 @@ namespace Azure.SignalRBench.Coordinator
                 }
             }
 
-            //ugly code. Just to avoid to much suspicious result
-            if (!roundStatus.Check())
+            roundStatus.CheckFailures = roundStatus.GetCheckFailures();
+            if (roundStatus.CheckFailures.Length > 0)
             {
+                foreach (var failure in roundStatus.CheckFailures)
+                    _logger.LogWarning("Test {testId}, round {round}: {metric}; required {required}, actual {actual}.",
+                        Job.TestId, _roundStatusList.Count + 1, failure.Metric, failure.Required, failure.Actual);
                 if (_terminalCheck == null)
                     _testStatusEntity.Check = "Suspicious";
                 suspiciousCount++;

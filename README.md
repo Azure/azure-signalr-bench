@@ -125,6 +125,15 @@ the new batch metadata remain viewable but cannot pass this check.
 `Suspicious` can clear as later rounds recover; the per-round report still
 records any earlier delivery problems.
 
+New runs save every triggered round check as a metric, required standard and
+actual value. The Report dialog shows these side by side above the statistics,
+without re-evaluating the checks in the browser. Common connection, command
+timeout and participant-readiness errors get short developer-facing summaries
+when the first error is recorded; unrecognized errors keep their original
+message. Failed and cancelled runs retain completed rounds and expandable raw
+error details. Earlier round check failures remain visible even if later rounds
+clear `Suspicious`.
+
 Stopping a scenario cancels sends and waits for them to finish before the next
 round. Legacy ASP.NET SignalR 2.x cannot cancel an active send, so its stop may
 still wait for that send to finish.

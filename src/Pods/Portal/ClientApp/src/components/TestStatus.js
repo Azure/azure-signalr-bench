@@ -1,8 +1,9 @@
-﻿import React, { Component, useEffect, useState } from 'react';
+﻿import React, { Component } from 'react';
 import Modal from 'react-bootstrap/Modal'
 import ReactJson from 'react-json-view'
+import { TestReport } from './TestReport'
 import { Util } from './Util'
-import { Search, Grid, Header, Segment, Divider, Button, Icon, Accordion, Dropdown } from 'semantic-ui-react'
+import { Button, Icon } from 'semantic-ui-react'
 
 export class TestStatus extends Component {
     constructor(props) {
@@ -10,15 +11,11 @@ export class TestStatus extends Component {
         this.state = {
             loading: true,
             show: false,
-            // report:[],
             showjson:false,
-            errorShow: false,
-            error: "",
             currentTestStatus: {}
         };
         this.report = this.report.bind(this)
         this.cancel = this.cancel.bind(this)
-        this.errorInfo = this.errorInfo.bind(this)
     }
 
 
@@ -57,12 +54,6 @@ export class TestStatus extends Component {
         await Util.CheckAuth(response)
         e.target.setAttribute("class", "ui orange mini button")
     }
-    
-    async errorInfo(e) {
-        var error = e.target.getAttribute("value")
-        this.setState({ errorShow: true, error: error })
-    }
-
     handleJsonShow=(e)=> {
         var content = JSON.parse(e.target.getAttribute("value"))
         console.log(content)
@@ -112,11 +103,8 @@ export class TestStatus extends Component {
                         var colorstyle = testStatus.healthy ? "green" : "red";
                         var clz = "ui disabled mini button"
                         var data = JSON.stringify(testStatus)
-                        var cb = this.report
                         if (!testStatus.healthy) {
                             clz = "ui red mini button"
-                            data = testStatus.errorInfo
-                            cb = this.errorInfo
                         } else if (testStatus.report) {
                             if (!testStatus.check || testStatus.check == "pass")
                                 clz = "ui teal mini button"
@@ -132,7 +120,7 @@ export class TestStatus extends Component {
                                       onClick={this.handleJsonShow}/></td>
                             <td><font color={colorstyle}>{testStatus.status}</font></td>
                             <td>
-                                <button className={clz} value={data} onClick={cb}>Report</button>
+                                <button className={clz} value={data} onClick={this.report}>Report</button>
                             </td>
                             <td><Button color="orange" size='mini'
                                         value={data} onClick={this.cancel}>Cancel</Button></td>
@@ -170,25 +158,6 @@ export class TestStatus extends Component {
         let contents = this.state.loading
             ? <p><em>Loading...</em></p>
             : this.renderTestStatusTable(this.state.testStatuses);
-        const state = this.state.currentTestStatus;
-        var report = [];
-        var config = {};
-        var label = "";
-        if (state['report'] != undefined) {
-            report = JSON.parse(state['report'])
-        }
-        if (state['config'] != undefined) {
-            config = JSON.parse(state['config'])
-            var totalCon = config['ClientCons'];
-            var protocal = config['Protocol'];
-            var scenario = config['Scenario'];
-            var groupSize = config['GroupSize'];
-            label = "{ Total connection:" + totalCon + ", Protocal: " + protocal + ", Scenario:" + scenario;
-            if (scenario == "GroupBroadcast") {
-                label += " [Size:" + groupSize + "]"
-            }
-            label += " }"
-        }
         return (
             <>
                 <div>
@@ -198,73 +167,16 @@ export class TestStatus extends Component {
 
                 <Modal show={this.state.show} dialogClassName="modalCss" onHide={() => this.setState({ show: false })}>
                     <Modal.Header closeButton>
-                        {/* <Modal.Title>Test Report </Modal.Title> */}
-                    </Modal.Header>
-                    <Modal.Body  >
-                        <h4 class="configCss"> {label}</h4>
-                        <table className='table table-striped' aria-labelledby="tabelLabel">
-                            <thead>
-                                <tr>
-                                    <th>Round</th>
-                                    <th>Connected</th>
-                                    <th>Active</th>
-                                    <th>Send</th>
-                                    <th>Receive</th>
-                                    <th>Reconnected</th>
-                                    <th>Reconnecting</th>
-                                    <th>0-50ms</th>
-                                    <th>50-100ms</th>
-                                    <th>100-200ms</th>
-                                    <th>200-500ms</th>
-                                    <th>500-1000ms</th>
-                                    <th>1-2s</th>
-                                    <th>2-5s</th>
-                                    <th>5+s</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {
-                                    report.map((v, i) => {
-                                        return <tr key={i}>
-                                            <td>{i + 1}</td>
-                                            <td>{v.ConnectedCount}/{v.RoundConnected}</td>
-                                            <th>{v.ActiveConnection}</th>
-                                            {v.ClientReceivedServerAckCount>0 &&<td>{v.ClientReceivedServerAckCount}/{v.MessageSent}</td>}
-                                            {v.ClientReceivedServerAckCount <=0 &&<td>{v.MessageSent}</td>}
-                                            <td>{v.MessageRecieved}/{v.ExpectedRecievedMessageCount}</td>
-                                            <td>{v.TotalReconnectCount}</td>
-                                            <td>{v.ReconnectingCount}</td>
-                                            <td>{(parseFloat(v.Latency.LessThan50ms / v.MessageRecieved * 100).toFixed(2) + "%")}</td>
-                                            <td>{(parseFloat(v.Latency.LessThan100ms / v.MessageRecieved * 100).toFixed(2) + "%")}</td>
-                                            <td>{(parseFloat(v.Latency.LessThan200ms / v.MessageRecieved * 100).toFixed(2) + "%")}</td>
-                                            <td>{(parseFloat(v.Latency.LessThan500ms / v.MessageRecieved * 100).toFixed(2) + "%")}</td>
-                                            <td>{(parseFloat(v.Latency.LessThan1s / v.MessageRecieved * 100).toFixed(2) + "%")}</td>
-                                            <td>{(parseFloat(v.Latency.LessThan2s / v.MessageRecieved * 100).toFixed(2) + "%")}</td>
-                                            <td>{(parseFloat(v.Latency.LessThan5s / v.MessageRecieved * 100).toFixed(2) + "%")}</td>
-                                            <td>{(parseFloat(v.Latency.MoreThan5s / v.MessageRecieved * 100).toFixed(2) + "%")}</td>
-                                        </tr>
-                                    }
-                                    )
-                                }
-                            </tbody>
-                        </table >
-                    </Modal.Body>
-                    <Modal.Footer>
-                    </Modal.Footer>
-
-
-                </Modal>
-                <Modal show={this.state.errorShow} size="lg" onHide={() => this.setState({ errorShow: false })}>
-                    <Modal.Header closeButton>
-                        <Modal.Title>Test Report</Modal.Title>
+                        <Modal.Title>Test Report: {this.state.currentTestStatus.testId}</Modal.Title>
                     </Modal.Header>
                     <Modal.Body>
-                        {this.state.error}
+                        <TestReport testStatus={this.state.currentTestStatus} />
                     </Modal.Body>
                     <Modal.Footer>
                     </Modal.Footer>
-                </Modal>
 
+
+                </Modal>
             </>
         );
     }

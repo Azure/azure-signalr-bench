@@ -121,7 +121,7 @@ namespace Azure.SignalRBench.Coordinator
                         if (testStatusEntity.Check != "Failed" && testStatusEntity.Check != "Cancelled")
                             testStatusEntity.Check = "Failed";
                         testStatusEntity.Status += "; cleanup failed";
-                        testStatusEntity.ErrorInfo += Environment.NewLine + e;
+                        testStatusEntity.RecordError(e);
                         await testStatusAccessor.UpdateAsync(testStatusEntity);
                         throw;
                     }
