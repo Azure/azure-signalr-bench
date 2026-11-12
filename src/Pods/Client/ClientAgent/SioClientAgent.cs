@@ -1,3 +1,4 @@
+using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Azure.SignalRBench.Common;
@@ -35,6 +36,8 @@ namespace Azure.SignalRBench.Client.ClientAgent
             {
                 Path = $"/clients/socketio/hubs/{PerfConstants.Name.HubName}",
                 Transport = TransportProtocol.WebSocket,
+                // SocketIOClient cannot cancel a connect, so its own timeout bounds each connection attempt.
+                ConnectionTimeout = TimeSpan.FromSeconds(15),
             });
 
             Client.OnDisconnected += (sender, args) => { Context.OnClosed(this); };

@@ -135,6 +135,10 @@ accepts both server connections and client negotiation. A server that is not
 ready within 2 minutes fails startup with the endpoint and last error instead of
 reporting Ready.
 
+Every round must reach its configured connection count. Each connection gets up
+to 3 attempts of 15 seconds; if any connection still fails, the run fails with
+the number of failed connections and the first error.
+
 Older participant images do not support the coordinator's new readiness checks.
 When upgrading an existing deployment:
 
