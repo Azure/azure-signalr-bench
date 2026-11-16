@@ -2,9 +2,6 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
 using System.Threading.Tasks;
 
 using Azure.SignalRBench.Common;
@@ -14,6 +11,8 @@ namespace Azure.SignalRBench.Messages
 {
     public static class MessageClientExtensions
     {
+        private static readonly string ProcessInstanceId = Guid.NewGuid().ToString("N");
+
         #region General
 
         public static async Task<CommandMessage> CrashAsync(this IMessageClient client, string instanceId)
@@ -110,6 +109,7 @@ namespace Azure.SignalRBench.Messages
 
         public static async Task<CommandMessage> ReportReadyAsync(this IMessageClient client, ReportReadyParameters parameters)
         {
+            parameters.InstanceId = ProcessInstanceId;
             var message = new CommandMessage { Command = Commands.Coordinator.ReportReady, Parameters = JObject.FromObject(parameters) };
             await client.SendCommandAsync(Roles.Coordinator, message);
             return message;
@@ -137,64 +137,6 @@ namespace Azure.SignalRBench.Messages
 
         public static Task AckProgressAsync(this IMessageClient client, CommandMessage command, double progress) =>
             client.AckAsync(command, AckStatus.Running, progress: progress);
-
-        public static async Task<Task> GetWhenAllAckAsync(
-            this MessageClient messageClient,
-            IReadOnlyCollection<string> senders,
-            string command,
-            CancellationToken cancellationToken)
-        {
-            var acks = new Dictionary<string, TaskCompletionSource<bool>>();
-
-            foreach (var sender in senders)
-            {
-                acks[sender] = new TaskCompletionSource<bool>();
-            }
-
-            await messageClient.WithHandlers(
-                MessageHandler.CreateAckHandler(
-                    command,
-                    ack =>
-                    {
-                        if (acks.TryGetValue(ack.Sender, out var tcs))
-                        {
-                            switch (ack.Status)
-                            {
-                                case AckStatus.Canceled:
-                                    tcs.TrySetCanceled();
-                                    break;
-                                case AckStatus.Faulted:
-                                    tcs.TrySetException(new RpcFaultedException(ack.Error ?? string.Empty));
-                                    break;
-                                case AckStatus.Completed:
-                                    tcs.TrySetResult(true);
-                                    break;
-                                case AckStatus.Running:
-                                default:
-                                    break;
-                            }
-                        }
-                        return Task.CompletedTask;
-                    }));
-
-            _ = CancelAfter(TimeSpan.FromMinutes(60));
-            return Task.WhenAll(acks.Select(x => x.Value.Task));
-
-            async Task CancelAfter(TimeSpan span)
-            {
-                try
-                {
-                    await Task.Delay(span, cancellationToken);
-                }
-                finally
-                {
-                    foreach (var pair in acks)
-                    {
-                        pair.Value.TrySetCanceled();
-                    }
-                }
-            }
-        }
 
         #endregion
     }

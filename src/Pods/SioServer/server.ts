@@ -1,6 +1,7 @@
 import {Server} from "socket.io";
 
 const {useAzureSocketIO} = require("@azure/web-pubsub-socket.io");
+const instanceId = require("crypto").randomBytes(16).toString("hex");
 
 const AckTimeout = 10000;
 const AckMessage = "AckMessage";
@@ -138,7 +139,8 @@ async function reportReady() {
         "Command": "ReportReady",
         "AckId": 1,
         "Parameters": {
-            "Role": "AppServers"
+            "Role": "AppServers",
+            "InstanceId": instanceId
         }
     }
     console.log("Publishing message: ", message)
@@ -146,4 +148,3 @@ async function reportReady() {
 }
 
 main();
-

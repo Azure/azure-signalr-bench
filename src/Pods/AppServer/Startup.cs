@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
 using Azure.SignalRBench.AppServer.Hub;
+using Azure.SignalRBench.AppServer.Readiness;
 using Azure.SignalRBench.AppServer.Router;
 using Azure.SignalRBench.Common;
 using Microsoft.AspNetCore.Builder;
@@ -73,6 +74,7 @@ namespace Azure.SignalRBench.AppServer
                 // };
             });
             services.AddSingleton<MessageClientHolder>();
+            services.AddSingleton<IReadinessCheck, AzureSignalRReadinessCheck>();
             services.AddHostedService<ServerHostedService>();
         }
 

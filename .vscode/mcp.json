@@ -1,0 +1,8 @@
+{
+  "servers": {
+    "perf": {
+      "type": "http",
+      "url": "https://one.signalrperf.azure.com/mcp"
+    }
+  }
+}

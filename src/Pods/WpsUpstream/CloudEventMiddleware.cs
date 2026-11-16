@@ -37,17 +37,16 @@ namespace WpsUpstreamServer
                         await context.Response.CompleteAsync();
                         break;
                     case "p2p":
+                        await _client.SendToUserAsync(data.Target, body);
                         response.StatusCode = 204;
                         response.ContentLength = 0;
                         await context.Response.CompleteAsync();
-                        _ = _client.SendToUserAsync(data.Target, body);
                         break;
                     case "broadcast":
+                        await _client.SendToAllAsync(body);
                         response.StatusCode = 204;
                         response.ContentLength = 0;
                         await context.Response.CompleteAsync();
-                        //async methods have bugs
-                        _client.SendToAll(body);
                         break;
                 }
             }
