@@ -148,6 +148,10 @@ Every round must reach its configured connection count. Each connection gets up
 to 3 attempts of 15 seconds; if any connection still fails, the run fails with
 the number of failed connections and the first error.
 
+For investigating failed or `Suspicious` runs, see the orthogonal
+troubleshooting guide in [`tsg/README.md`](./tsg/README.md) (and follow
+[`tsg/META.md`](./tsg/META.md) when adding new findings).
+
 Older participant images do not support the coordinator's new readiness checks.
 When upgrading an existing deployment:
 

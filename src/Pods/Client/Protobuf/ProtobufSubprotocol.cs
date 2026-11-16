@@ -35,7 +35,13 @@ namespace Azure.SignalRBench.Client.Protobuf
             return writer.WrittenMemory;
         }
 
-        public override WebPubSubMessage ParseMessage(ReadOnlySequence<byte> input)
+        public override IReadOnlyList<WebPubSubMessage> ParseMessage(ReadOnlySequence<byte> input)
+        {
+            var message = ParseSingleMessage(input);
+            return message == null ? Array.Empty<WebPubSubMessage>() : new[] { message };
+        }
+
+        private static WebPubSubMessage ParseSingleMessage(ReadOnlySequence<byte> input)
         {
             var downstreamMessage = DownstreamMessage.Parser.ParseFrom(input);
             switch (downstreamMessage.MessageCase)
@@ -46,11 +52,11 @@ namespace Azure.SignalRBench.Client.Protobuf
                     {
                         error = new AckMessageError(downstreamMessage.AckMessage.Error.Name, downstreamMessage.AckMessage.Error.Message);
                     }
-                    return new AckMessage(downstreamMessage.AckMessage.AckId, downstreamMessage.AckMessage.Success, error);
+                    return new AckMessage((long)downstreamMessage.AckMessage.AckId, downstreamMessage.AckMessage.Success, error);
 
                 case DownstreamMessage.MessageOneofCase.DataMessage:
                     var from = downstreamMessage.DataMessage.From;
-                    var sequenceId = downstreamMessage.DataMessage.SequenceId;
+                    var sequenceId = (long)downstreamMessage.DataMessage.SequenceId;
                     if (!TryParseMessageData(downstreamMessage.DataMessage.Data, out var dataType, out var binaryData))
                     {
                         return null;
@@ -92,14 +98,14 @@ namespace Azure.SignalRBench.Client.Protobuf
             switch (message)
             {
                 case SequenceAckMessage sequenceAck:
-                    new UpstreamMessage { SequenceAckMessage = new UpstreamMessage.Types.SequenceAckMessage { SequenceId = sequenceAck.SequenceId } }.WriteTo(output);
+                    new UpstreamMessage { SequenceAckMessage = new UpstreamMessage.Types.SequenceAckMessage { SequenceId = (ulong)sequenceAck.SequenceId } }.WriteTo(output);
                     break;
 
                 case JoinGroupMessage joinGroupMessage:
                     var joinGroup = new UpstreamMessage.Types.JoinGroupMessage { Group = joinGroupMessage.Group };
                     if (joinGroupMessage.AckId.HasValue)
                     {
-                        joinGroup.AckId = joinGroupMessage.AckId.Value;
+                        joinGroup.AckId = (ulong)joinGroupMessage.AckId.Value;
                     }
                     new UpstreamMessage { JoinGroupMessage = joinGroup }.WriteTo(output);
                     break;
@@ -107,7 +113,7 @@ namespace Azure.SignalRBench.Client.Protobuf
                     var leaveGroup = new UpstreamMessage.Types.LeaveGroupMessage { Group = leaveGroupMessage.Group };
                     if (leaveGroupMessage.AckId.HasValue)
                     {
-                        leaveGroup.AckId = leaveGroupMessage.AckId.Value;
+                        leaveGroup.AckId = (ulong)leaveGroupMessage.AckId.Value;
                     }
                     new UpstreamMessage { LeaveGroupMessage = leaveGroup }.WriteTo(output);
                     break;
@@ -115,7 +121,7 @@ namespace Azure.SignalRBench.Client.Protobuf
                     var groupMessage = new UpstreamMessage.Types.SendToGroupMessage { Group = sendToGroupMessage.Group, NoEcho = sendToGroupMessage.NoEcho };
                     if (sendToGroupMessage.AckId.HasValue)
                     {
-                        groupMessage.AckId = sendToGroupMessage.AckId.Value;
+                        groupMessage.AckId = (ulong)sendToGroupMessage.AckId.Value;
                     }
                     groupMessage.Data = WriteData(sendToGroupMessage.DataType, sendToGroupMessage.Data);
                     new UpstreamMessage { SendToGroupMessage = groupMessage }.WriteTo(output);
@@ -124,7 +130,7 @@ namespace Azure.SignalRBench.Client.Protobuf
                     var eventMessage = new UpstreamMessage.Types.EventMessage { Event = sendEventMessage.EventName };
                     if (sendEventMessage.AckId.HasValue)
                     {
-                        eventMessage.AckId = sendEventMessage.AckId.Value;
+                        eventMessage.AckId = (ulong)sendEventMessage.AckId.Value;
                     }
                     eventMessage.Data = WriteData(sendEventMessage.DataType, sendEventMessage.Data);
                     new UpstreamMessage { EventMessage = eventMessage }.WriteTo(output);

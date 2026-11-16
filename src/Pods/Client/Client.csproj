@@ -37,7 +37,7 @@
     <PackageReference Include="prometheus-net.AspNetCore" Version="8.2.1" />
     <PackageReference Include="SocketIOClient" Version="3.0.8" />
     <PackageReference Include="System.Net.NameResolution" Version="4.3.0" />
-    <PackageReference Include="Azure.Messaging.WebPubSub.Client" Version="1.0.0-beta.1" />
+    <PackageReference Include="Azure.Messaging.WebPubSub.Client" Version="1.0.0" />
 	<PackageReference Include="Google.Protobuf" VersionOverride="3.21.9" Version="3.22.1" />
 	<PackageReference Include="Grpc.Tools" VersionOverride="2.50.0" Version="2.52.0">
 		<PrivateAssets>all</PrivateAssets>
