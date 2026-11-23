@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using Azure.SignalRBench.Common;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -23,10 +24,18 @@ namespace Portal.Mcp
     {
         public const string Path = "/mcp";
 
+        public const string InstallPath = Path + "/install";
+
         // Delegated permission exposed by the portal app registration, see Initialize/enable_mcp.sh.
         public const string Scope = "user_impersonation";
 
         public const string PolicyName = "PerfMcp";
+
+        private const string ServerInstructions =
+            "Perf portal for Azure SignalR and Web PubSub benchmarks. When the user asks why a test run failed, " +
+            "is Suspicious or did not meet thresholds: read the run with get_test_run, call get_troubleshooting_guide " +
+            "without a path for the index, open the symptom document that matches the run's ErrorInfo, Check and report, " +
+            "and follow its links into the debugging documents. Base conclusions on evidence and say which checks you could not run.";
 
         public static IServiceCollection AddPerfMcp(this IServiceCollection services, IConfiguration configuration)
         {
@@ -64,7 +73,7 @@ namespace Portal.Mcp
                 .RequireRole(PerfConstants.Roles.Contributor, PerfConstants.Roles.Reader)
                 .RequireAssertion(context => HasScope(context.User, Scope))));
 
-            services.AddMcpServer()
+            services.AddMcpServer(options => options.ServerInstructions = ServerInstructions)
                 .WithHttpTransport(options => options.Stateless = true)
                 .AddAuthorizationFilters()
                 .WithTools<PerfMcpTools>();
@@ -73,6 +82,10 @@ namespace Portal.Mcp
 
         public static IEndpointConventionBuilder MapPerfMcp(this IEndpointRouteBuilder endpoints)
         {
+            // Anonymous so a user's agent can fetch it before the MCP server is installed; it only reveals the MCP URL.
+            endpoints.MapGet(InstallPath, (HttpContext context) => Results.Text(
+                    McpInstallPage.Render($"{context.Request.Scheme}://{context.Request.Host}{Path}"), "text/plain; charset=utf-8"))
+                .AllowAnonymous();
             return endpoints.MapMcp(Path).RequireAuthorization(PolicyName);
         }
 

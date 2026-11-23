@@ -216,7 +216,7 @@ namespace Portal.Mcp
         }
 
         [McpServerTool(Name = "get_test_run", Title = "Get test run", ReadOnly = true, Idempotent = true, OpenWorld = false)]
-        [Description("Returns one test run including its status, error info, report and the config it ran with. Service access keys are masked.")]
+        [Description("Returns one test run including its status, error info, report and the config it ran with. Service access keys are masked. To find out why a run failed or missed thresholds, follow get_troubleshooting_guide.")]
         public async Task<string> GetTestRun(
             [Description("Test config name.")] string name,
             [Description("Run index, as returned by start_test or list_test_runs.")] string index)
@@ -259,6 +259,27 @@ namespace Portal.Mcp
 
             await _perfTestService.CancelAsync(run.TestId!, run.QueueName);
             return Serialize(new { run.TestId, CancelRequested = true });
+        }
+
+        [McpServerTool(Name = "get_troubleshooting_guide", Title = "Get troubleshooting guide", ReadOnly = true, Idempotent = true, OpenWorld = false)]
+        [Description("Returns a perf troubleshooting guide (TSG) document in Markdown, for diagnosing failed, Suspicious or thresholds-not-met test runs. Call without path first for the index, which routes a run's symptoms to the right documents.")]
+        public string GetTroubleshootingGuide(
+            [Description("Document path under tsg/ as listed in the index, e.g. symptoms/high-latency.md. Relative links from inside a document are accepted as written.")] string? path = null)
+        {
+            if (string.IsNullOrWhiteSpace(path))
+            {
+                TroubleshootingGuides.TryRead(TroubleshootingGuides.IndexPath, out _, out var index);
+                return $"{index}\n\n---\nDocuments (pass one as path): {string.Join(", ", TroubleshootingGuides.Paths)}\n" +
+                    $"Links that leave tsg/ (e.g. ../../src/...) point to files in {TroubleshootingGuides.SourceBaseUrl}\n";
+            }
+
+            if (!TroubleshootingGuides.TryRead(path, out var documentPath, out var content))
+            {
+                throw new McpException(
+                    $"Troubleshooting guide '{path}' doesn't exist. Documents: {string.Join(", ", TroubleshootingGuides.Paths)}.");
+            }
+
+            return $"Document: tsg/{documentPath}\n\n{content}";
         }
 
         private static object Summarize(TestStatusEntity run) => new

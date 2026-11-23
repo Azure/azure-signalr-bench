@@ -142,9 +142,11 @@ base_image=$( az keyvault secret show --vault-name $KEYVAULT -n "image" | jq ".v
 internal=$( az keyvault secret show --vault-name $KEYVAULT -n "internal" | jq ".value"  )
 
 # Images are built and pushed by ACR Tasks (az acr build), so no local docker daemon is needed.
+# The build context defaults to src/; pass a third argument to use another directory.
 function publish() {
   local Pod=$1
   local DockerFile=$2
+  local Context=${3:-"$DIR/../src"}
   local pod_lower
   pod_lower=$(echo "$Pod" | tr '[:upper:]' '[:lower:]')
 
@@ -158,7 +160,7 @@ function publish() {
     -f "$DIR/docker/${DockerFile}.docker" \
     --build-arg IMAGE="${base_image}" \
     --build-arg POD="${Pod}" \
-    "$DIR/../src"
+    "$Context"
   az keyvault secret set \
     --vault-name "${KEYVAULT}" \
     -n "Image-${Pod}" \
@@ -173,7 +175,8 @@ if [[ $ALL || $PORTAL ]]; then
   cd $DIR/../src/Pods/Portal
   cat appsettings.template.json | replace CLIENTID_PLACE_HOLDER $appId | replace TENANTID_PLACE_HOLDER $tenant > appsettings.json
   cd $DIR
-  publish Portal portal
+  # The repository root context includes tsg/, which the portal embeds for its MCP server.
+  publish Portal portal "$DIR/.."
   cd $DIR/yaml/portal
   kubectl delete deployment portal  > /dev/null 2>&1 || true
   cat portal_docker.yaml | replace KVURL_PLACE_HOLDER $KVURL | replace MSI_PLACE_HOLDER $AGENTPOOL_MSI_CLIENT_ID | replace IMAGE_PLACE_HOLDER $image | kubectl apply -f -

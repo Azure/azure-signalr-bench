@@ -31,6 +31,17 @@
     <ProjectReference Include="..\Coordinator\Coordinator.csproj" />
   </ItemGroup>
 
+  <!-- The MCP server serves the repository's troubleshooting guides; the Docker build context must be the repository root. -->
+  <PropertyGroup>
+    <TsgRoot>$(MSBuildThisFileDirectory)..\..\..\tsg\</TsgRoot>
+  </PropertyGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="$(TsgRoot)**\*.md" LogicalName="tsg/%(RecursiveDir)%(Filename)%(Extension)" Link="tsg\%(RecursiveDir)%(Filename)%(Extension)" />
+  </ItemGroup>
+  <Target Name="EnsureTroubleshootingGuides" BeforeTargets="BeforeBuild" Condition="!Exists('$(TsgRoot)README.md')">
+    <Error Text="Troubleshooting guides not found at $(TsgRoot). Build the portal from a full repository checkout." />
+  </Target>
+
   <ItemGroup>
     <_ContentIncludedByDefault Remove="publish\appsettings.Development.json" />
     <_ContentIncludedByDefault Remove="publish\appsettings.json" />

@@ -90,6 +90,14 @@ The agent signs in with your Microsoft Entra account: `Reader` can read data;
    Start `perf` and complete sign-in when prompted. VS Code discovers the tools
    your role can use; no static bearer token is needed.
 
+   Or let your agent install it: open `https://[portal domain]/mcp/install`
+   (no sign-in needed) and send the prompt on that page to your agent.
+
+To find out why a run failed, ask the agent, e.g. "why did `[test]` run
+`[index]` fail?". The `get_troubleshooting_guide` tool serves the guides in
+[`tsg/`](./tsg/README.md). The portal embeds them when it is built, so changes
+reach users when the portal is published.
+
 ### Run a pipeline-style batch
 
 Use `start_test_batch` to submit existing test directories with the same admission
