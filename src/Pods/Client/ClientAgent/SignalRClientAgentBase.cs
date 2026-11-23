@@ -67,10 +67,10 @@ namespace Azure.SignalRBench.Client.ClientAgent
         }
 
         public Task StopAsync() => Connection.StopAsync();
-        public abstract Task EchoAsync(string payload);
-        public abstract Task SendToClientAsync(int index, string payload);
-        public abstract Task BroadcastAsync(string payload);
-        public abstract Task GroupBroadcastAsync(string group, string payload);
+        public abstract Task EchoAsync(string payload, CancellationToken cancellationToken = default);
+        public abstract Task SendToClientAsync(int index, string payload, CancellationToken cancellationToken = default);
+        public abstract Task BroadcastAsync(string payload, CancellationToken cancellationToken = default);
+        public abstract Task GroupBroadcastAsync(string group, string payload, CancellationToken cancellationToken = default);
         public abstract Task JoinGroupAsync();
         
     }

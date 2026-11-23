@@ -69,7 +69,7 @@ namespace Azure.SignalRBench.Client
                    _scenarioState.SetClientRange(setClientRange);
                    _logger.LogInformation("Set client range");
                    var startClientConnections = round.StartClientConnectionsParameters;
-                   _scenarioState.StartClientConnections(_messageClientHolder,startClientConnections);
+                   await _scenarioState.StartClientConnections(_messageClientHolder,startClientConnections);
                    _logger.LogInformation("Start client connections");
                    var setScenario = round.SetScenarioParameters;
                    _scenarioState.SetSenario(setScenario);
@@ -78,7 +78,7 @@ namespace Azure.SignalRBench.Client
                    _scenarioState.StartSenario(startScenario);
                    _logger.LogInformation("Start scenario");
                    var stopScenario = round.StopScenarioParameters;
-                   _scenarioState.StopSenario(stopScenario);
+                   await _scenarioState.StopSenario(stopScenario);
                    _logger.LogInformation("Stop scenario");
                 }
                 

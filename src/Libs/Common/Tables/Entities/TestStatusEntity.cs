@@ -14,10 +14,13 @@ namespace Azure.SignalRBench.Coordinator.Entities
         public string Config { get; set; }
 
         public string? ErrorInfo { get; set; }
+        public string? ErrorSummary { get; set; }
 
         public bool Healthy { get; set; }
         
         public string Dir { get; set; }
+
+        public int DirectoryTestCount { get; set; }
         
         public bool LongRun { get; set; }
         
@@ -40,5 +43,12 @@ namespace Azure.SignalRBench.Coordinator.Entities
         public DateTimeOffset? Timestamp { get; set; }
         public ETag ETag { get; set; }
         public DateTimeOffset? LastModified { get; set; }
+
+        public void RecordError(Exception error)
+        {
+            if (string.IsNullOrWhiteSpace(ErrorInfo))
+                ErrorSummary = TestFailureSummary.Describe(error);
+            ErrorInfo += Environment.NewLine + error;
+        }
     }
 }

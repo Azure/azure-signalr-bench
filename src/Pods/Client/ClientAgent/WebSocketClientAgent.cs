@@ -46,7 +46,6 @@ namespace Azure.SignalRBench.Client.ClientAgent
         public async Task StartAsync(CancellationToken cancellationToken = default)
         {
             await Connection.StartAsync(cancellationToken);
-            await Context.OnConnected(this, Groups.Length > 0);
         }
         
         public async Task JoinGroupAsync()
@@ -61,7 +60,7 @@ namespace Azure.SignalRBench.Client.ClientAgent
         }
 
         //This method should be sent directly to appserver to lower pressure on wps runtime 
-        public virtual Task BroadcastAsync(string payload)
+        public virtual Task BroadcastAsync(string payload, CancellationToken cancellationToken = default)
         {
             var data = new RawWebsocketData()
             {
@@ -69,10 +68,10 @@ namespace Azure.SignalRBench.Client.ClientAgent
                 Ticks = ClientAgentContext.CoordinatedUtcNow(),
                 Payload = payload
             };
-            return SendToAppServer(data);
+            return SendToAppServer(data, cancellationToken);
         }
 
-        public virtual Task EchoAsync(string payload)
+        public virtual Task EchoAsync(string payload, CancellationToken cancellationToken = default)
         {
             var data = new RawWebsocketData()
             {
@@ -80,21 +79,21 @@ namespace Azure.SignalRBench.Client.ClientAgent
                 Ticks = ClientAgentContext.CoordinatedUtcNow(),
                 Payload = payload
             };
-            return Connection.SendEventAsync(NameConverter.GenerateHubName(Context.TestId), data);
+            return Connection.SendEventAsync(NameConverter.GenerateHubName(Context.TestId), data, cancellationToken);
         }
 
-        public virtual Task GroupBroadcastAsync(string group, string payload)
+        public virtual Task GroupBroadcastAsync(string group, string payload, CancellationToken cancellationToken = default)
         {
             var data = new RawWebsocketData()
             {
                 Ticks = ClientAgentContext.CoordinatedUtcNow(),
                 Payload = payload
             };
-            return Connection.SendToGroup(group, data);
+            return Connection.SendToGroup(group, data, cancellationToken);
         }
         
         //This method is sent directly to appserver to lower pressure on wps runtime 
-        public virtual Task SendToClientAsync(int index, string payload)
+        public virtual Task SendToClientAsync(int index, string payload, CancellationToken cancellationToken = default)
         {
             var data = new RawWebsocketData()
             {
@@ -103,50 +102,73 @@ namespace Azure.SignalRBench.Client.ClientAgent
                 Payload = payload,
                 Target = $"user{index}"
             };
-            return SendToAppServer(data);
+            return SendToAppServer(data, cancellationToken);
         }
 
 
         private sealed class WebSocketHubConnection
         {
             private readonly WebPubSubClient _socket;
-            private readonly CancellationTokenSource _connectionStoppedCts = new CancellationTokenSource();
             private readonly WebSocketClientAgent _agent;
-            private readonly ILogger _logger;
+            private readonly ClientAgentContext _context;
 
+            private volatile bool _started;
+            private volatile bool _stopping;
             private volatile bool _closed;
-            private ClientAgentContext _context;
+            private volatile bool _reconnecting;
             public Uri ResourceUri { get; }
 
             public WebSocketHubConnection(string url, WebSocketClientAgent agent, Protocol protocol,
                 ClientAgentContext context, ILogger logger)
             {
                 ResourceUri = new Uri(url);
-                switch (protocol)
+                var options = new WebPubSubClientOptions
                 {
-                    case Protocol.RawWebSocketReliableJson:
-                        _socket = new WebPubSubClient(ResourceUri);
-                        break;
-                    case Protocol.RawWebSocketJson:
-                        var options = new WebPubSubClientOptions();
-                        options.Protocol = new WebPubSubJsonProtocol();
-                        _socket = new WebPubSubClient(ResourceUri, options);
-                        break;
-                    case Protocol.RawWebSocketReliableProtobuf:
-                        options = new WebPubSubClientOptions();
-                        options.Protocol = new ProtobufSubprotocol();
-                        _socket = new WebPubSubClient(ResourceUri, options);
-                        break;
-                    default:
-                        throw new Exception($"Unsupported protocol {protocol}");
-                }
+                    // ClientAgentContext.OnConnected owns group joins (with SDK retry) and status transitions.
+                    AutoRejoinGroups = false,
+                    Protocol = protocol switch
+                    {
+                        Protocol.RawWebSocketReliableJson => new WebPubSubJsonReliableProtocol(),
+                        Protocol.RawWebSocketJson => new WebPubSubJsonProtocol(),
+                        Protocol.RawWebSocketReliableProtobuf => new ProtobufSubprotocol(),
+                        _ => throw new Exception($"Unsupported protocol {protocol}"),
+                    },
+                };
+                _socket = new WebPubSubClient(ResourceUri, options);
                 _agent = agent;
                 _context = context;
-                _logger = logger;
 
-                _socket.Disconnected += _ => { _closed = true; return _context.OnClosed(_agent); };
-                _socket.Connected += _ => { _closed = false;
-                    return _context.OnConnected(_agent, true);};
+                _socket.Disconnected += _ =>
+                {
+                    _closed = true;
+                    if (_stopping)
+                    {
+                        _reconnecting = false;
+                        return _context.OnClosed(_agent);
+                    }
+                    if (!_started)
+                    {
+                        return Task.CompletedTask;
+                    }
+                    _reconnecting = true;
+                    return _context.OnReconnecting(_agent);
+                };
+                _socket.Connected += _ =>
+                {
+                    _closed = false;
+                    if (!_reconnecting)
+                    {
+                        return Task.CompletedTask;
+                    }
+                    _reconnecting = false;
+                    return _context.OnConnected(_agent, _agent.Groups.Length > 0);
+                };
+                _socket.Stopped += _ =>
+                {
+                    _closed = true;
+                    _reconnecting = false;
+                    return _context.OnClosed(_agent);
+                };
             }
 
             public void On(Action<long, string> callback)
@@ -165,63 +187,51 @@ namespace Azure.SignalRBench.Client.ClientAgent
                 };
             }
 
-            public volatile bool active = false;
+            public Task JoinGroup(string group) => _socket.JoinGroupAsync(group);
 
-            public Task JoinGroup(string group)
-            {
-                if (active && _closed)
-                {
-                    _context.OnClosed(_agent);
-                    active = false;
-                }
+            public Task SendToGroup(string group, RawWebsocketData value, CancellationToken cancellationToken) =>
+                _socket.SendToGroupAsync(group, BinaryData.FromObjectAsJson(value), WebPubSubDataType.Json,
+                    fireAndForget: true, cancellationToken: cancellationToken);
 
-                return _socket.JoinGroupAsync(group);
-            }
-
-            public Task SendToGroup(string group, RawWebsocketData value)
-            {
-                if (active && _closed)
-                {
-                    _context.OnClosed(_agent);
-                    active = false;
-                }
-
-                return _socket.SendToGroupAsync(group, BinaryData.FromObjectAsJson(value), WebPubSubDataType.Json, fireAndForget: true);
-            }
-
-            public Task SendEventAsync(string eventName, RawWebsocketData payload)
-            {
-                if (active && _closed)
-                {
-                    _context.OnClosed(_agent);
-                    active = false;
-                }
-
-                return _socket.SendEventAsync(eventName, BinaryData.FromObjectAsJson(payload), WebPubSubDataType.Json, fireAndForget: true);
-            }
+            public Task SendEventAsync(string eventName, RawWebsocketData payload, CancellationToken cancellationToken) =>
+                _socket.SendEventAsync(eventName, BinaryData.FromObjectAsJson(payload), WebPubSubDataType.Json,
+                    fireAndForget: true, cancellationToken: cancellationToken);
 
             public async Task StartAsync(CancellationToken cancellationToken)
             {
+                _stopping = false;
+                _reconnecting = false;
+                _closed = false;
+                _started = false;
                 await _socket.StartAsync(cancellationToken);
-                active = true;
+                await _context.OnConnected(_agent, _agent.Groups.Length > 0);
+                _started = true;
+                if (_closed && !_stopping)
+                {
+                    _reconnecting = true;
+                    await _context.OnReconnecting(_agent);
+                }
             }
 
             public async Task StopAsync()
             {
+                _stopping = true;
+                _reconnecting = false;
                 await _socket.StopAsync();
-                _connectionStoppedCts.Cancel();
+                await _context.OnClosed(_agent);
             }
         }
 
-        protected async Task SendToAppServer(RawWebsocketData data)
+        protected async Task SendToAppServer(RawWebsocketData data, CancellationToken cancellationToken)
         {
-            var request = new HttpRequestMessage(HttpMethod.Post, _appserverUrl)
+            using var request = new HttpRequestMessage(HttpMethod.Post, _appserverUrl)
             {
                 Version = HttpVersion.Version20,
             };
-            var binaryData=BinaryData.FromObjectAsJson(data);
+            var binaryData = BinaryData.FromObjectAsJson(data);
             request.Content = new StringContent(binaryData.ToString(), Encoding.UTF8, "application/json");
-            await HttpClient.SendAsync(request);
+            using var response = await HttpClient.SendAsync(request, cancellationToken);
+            response.EnsureSuccessStatusCode();
         }
 
         //

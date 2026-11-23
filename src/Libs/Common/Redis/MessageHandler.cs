@@ -25,7 +25,7 @@ namespace Azure.SignalRBench.Messages
             new CommandHandler(null, command, handler);
 
         public static MessageHandler CreateAckHandler(string command, Func<AckMessage, Task> handler) =>
-            new AckHandler(command, handler);
+            new AckMessageHandler(command, handler);
 
         private sealed class CommandHandler : MessageHandler
         {
@@ -47,11 +47,11 @@ namespace Azure.SignalRBench.Messages
             public override Task Handle(string text) => _handler(JsonConvert.DeserializeObject<CommandMessage>(text));
         }
 
-        private sealed class AckHandler : MessageHandler
+        private sealed class AckMessageHandler : MessageHandler
         {
             private readonly Func<AckMessage, Task> _handler;
 
-            public AckHandler(string name, Func<AckMessage, Task> handler)
+            public AckMessageHandler(string name, Func<AckMessage, Task> handler)
             {
                 Command = name;
                 _handler = handler;

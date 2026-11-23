@@ -1,5 +1,9 @@
 import asyncio
+import socket
+import subprocess
+import sys
 import time
+import uuid
 
 from azure.messaging.webpubsubclient.aio import WebPubSubClient as WebPubSubClientAio
 from azure.messaging.webpubsubservice.aio import WebPubSubServiceClient as WebPubSubServiceClientAio
@@ -11,6 +15,7 @@ import json
 from redis.asyncio import Redis
 
 connectionString = os.getenv('connectionString')
+instance_id = uuid.uuid4().hex
 
 class Data(BaseModel):
     Type: str
@@ -52,7 +57,8 @@ async def report_ready():
         "Command": "ReportReady",
         "AckId": 1,
         "Parameters": {
-            "Role": "AppServers"
+            "Role": "AppServers",
+            "InstanceId": instance_id
         }
     }
 
@@ -77,10 +83,32 @@ async def send(data: Data):
         print("Not supported type:" + data.Type)
 
 
+def wait_until_listening(server, port, timeout_seconds=120):
+    deadline = time.monotonic() + timeout_seconds
+    while time.monotonic() < deadline:
+        if server.poll() is not None:
+            raise RuntimeError(f"Server exited with code {server.returncode} before listening on port {port}")
+        try:
+            with socket.create_connection(("127.0.0.1", port), timeout=1):
+                return
+        except OSError:
+            time.sleep(0.2)
+    raise TimeoutError(f"Server did not listen on port {port} within {timeout_seconds}s")
+
+
 def start_app():
     import multiprocessing
-    asyncio.run(report_ready())
-    os.system(f"uvicorn pyserver.main:app --host 0.0.0.0 --port 8080 --workers {multiprocessing.cpu_count()}")
+    server = subprocess.Popen(["uvicorn", "pyserver.main:app", "--host", "0.0.0.0", "--port", "8080",
+                               "--workers", str(multiprocessing.cpu_count())])
+    try:
+        # Ready must mean the server can serve, so report it only once uvicorn accepts connections.
+        wait_until_listening(server, 8080)
+        asyncio.run(report_ready())
+    except BaseException:
+        server.terminate()
+        server.wait()
+        raise
+    sys.exit(server.wait())
 
 
 if __name__ == "__main__":

@@ -66,6 +66,7 @@ namespace Portal.Cron
                                         Healthy = true,
                                         Report = "",
                                         ErrorInfo = "",
+                                        DirectoryTestCount = 1,
                                         Config = JsonConvert.SerializeObject(testConfigEntity)
                                     };
                                     await configTable.UpdateAsync(testConfigEntity);

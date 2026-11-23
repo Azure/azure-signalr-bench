@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System;
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Linq;
 using System.Net;
@@ -17,12 +18,15 @@ namespace Azure.SignalRBench.Client
 {
     public class ClientAgentContainer
     {
+        private const int MaxConnectAttempts = 3;
+        private static readonly TimeSpan ConnectAttemptTimeout = TimeSpan.FromSeconds(15);
+        private static readonly TimeSpan ConnectRetryDelay = TimeSpan.FromSeconds(1);
+
         private readonly ClientAgentContext _context;
         public MessageClientHolder MessageClientHolder { get; }
         private IClientAgent[] _clients = new IClientAgent[0];
         private readonly ILogger<ClientAgentContainer> _logger;
 
-        private bool _slowDown = false;
         private int _startReport = 1;
         private readonly IClientAgentFactory _agentFactory;
 
@@ -109,7 +113,7 @@ namespace Azure.SignalRBench.Client
         public async Task StartAsync(int continueIndex, double rate, CancellationToken cancellationToken)
         {
             //Just in case socket in server hasn't opened
-            await Task.Delay(1000);
+            await Task.Delay(1000, cancellationToken);
             _context.Reset();
             for (var i = continueIndex; i < _clients.Length; i++)
             {
@@ -131,9 +135,10 @@ namespace Azure.SignalRBench.Client
             ScheduleReportedStatus(cancellationToken);
             using var cts = new CancellationTokenSource();
             using var linkSource = CancellationTokenSource.CreateLinkedTokenSource(cts.Token, cancellationToken);
-            using var semaphore = GetRateControlSemaphore(rate, linkSource.Token);
+            using var semaphore = GetRateControlSemaphore(rate, linkSource.Token, out var rateControl);
             var index = continueIndex;
             var count = continueIndex;
+            var failures = new ConcurrentQueue<Exception>();
             try
             {
                 await Task.WhenAll(
@@ -143,43 +148,81 @@ namespace Azure.SignalRBench.Client
                             return;
                         var current = Interlocked.Increment(ref index);
                         await semaphore.WaitAsync(cancellationToken);
-                        while (!cancellationToken.IsCancellationRequested)
+                        var stopWatch = Stopwatch.StartNew();
+                        try
                         {
-                            var stopWatch = new Stopwatch();
-                            stopWatch.Start();
-                            try
-                            {
-                                _logger.LogInformation($"{current} start to connect");
-                                using var delayCts = new CancellationTokenSource();
-                                using var lts = CancellationTokenSource.CreateLinkedTokenSource(delayCts.Token, cancellationToken);
-                                lts.CancelAfter(15000);                              
-                                await c.StartAsync(lts.Token);
-                                stopWatch.Stop();
-                                Interlocked.Add(ref count, 1);
-                                _logger.LogInformation(
-                                    $" Total {Volatile.Read(ref count)}, current {current} Connected. rate :{rate} Time cost:{stopWatch.ElapsedMilliseconds}");
+                            _logger.LogInformation($"{current} start to connect");
+                            await ConnectWithRetryAsync(c, current, cancellationToken);
+                            Interlocked.Add(ref count, 1);
+                            _logger.LogInformation(
+                                $" Total {Volatile.Read(ref count)}, current {current} Connected. rate :{rate} Time cost:{stopWatch.ElapsedMilliseconds}");
 
-                                ManageConnectionLifeTime(c, cancellationToken);
-                                return;
-                            }
-                            catch (Exception ex)
-                            {
-                                stopWatch.Stop();
-                                Volatile.Write(ref _slowDown, true);
-                                _logger.LogError(ex,
-                                    $"Failed to start { current} client.,fail Time cost:{stopWatch.ElapsedMilliseconds}");
-                                return;
-                            }
+                            ManageConnectionLifeTime(c, cancellationToken);
+                        }
+                        catch (Exception ex) when (!cancellationToken.IsCancellationRequested)
+                        {
+                            _logger.LogError(ex,
+                                $"Failed to start {current} client after {MaxConnectAttempts} attempts. Time cost:{stopWatch.ElapsedMilliseconds}");
+                            failures.Enqueue(ex);
                         }
                     }));
-            }
-            catch (Exception e)
-            {
-                _logger.LogError(e, "Start connections error");
             }
             finally
             {
                 cts.Cancel();
+                try
+                {
+                    await rateControl;
+                }
+                catch (OperationCanceledException ex) when (ex.CancellationToken == linkSource.Token)
+                {
+                }
+            }
+
+            // The test must reach its configured connection count: after retries, any missing connection fails it.
+            if (failures.TryPeek(out var firstFailure))
+            {
+                var message = $"{failures.Count} of {_clients.Length - continueIndex} connections failed to connect " +
+                              $"after {MaxConnectAttempts} attempts. First error: {firstFailure.Message}";
+                _logger.LogError(firstFailure, message);
+                throw new InvalidOperationException(message, firstFailure);
+            }
+        }
+
+        // Transient failures of single connections are retried; failures that persist are real and surface to the caller.
+        private async Task ConnectWithRetryAsync(IClientAgent client, int current, CancellationToken cancellationToken)
+        {
+            for (var attempt = 1; ; attempt++)
+            {
+                try
+                {
+                    using var attemptTimeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+                    attemptTimeout.CancelAfter(ConnectAttemptTimeout);
+                    await client.StartAsync(attemptTimeout.Token);
+                    return;
+                }
+                catch (Exception ex) when (attempt < MaxConnectAttempts && !cancellationToken.IsCancellationRequested)
+                {
+                    _logger.LogWarning(ex, "Client {Client} failed to connect (attempt {Attempt}/{MaxAttempts}), retrying.",
+                        current, attempt, MaxConnectAttempts);
+                }
+
+                await StopQuietlyAsync(client);
+                await Task.Delay(ConnectRetryDelay, cancellationToken);
+            }
+        }
+
+        // A failed attempt can leave an agent half started (e.g. connected but not in its groups), so reset it before
+        // the next attempt.
+        private async Task StopQuietlyAsync(IClientAgent client)
+        {
+            try
+            {
+                await client.StopAsync().WaitAsync(ConnectAttemptTimeout);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogDebug(ex, "Failed to stop a client before retrying its connection.");
             }
         }
 
@@ -187,7 +230,7 @@ namespace Azure.SignalRBench.Client
         {
             var ms = LifetimeDefinition.AvgLifetimeInSeconds;
             if (ms <= 0) return;
-            async Task? Function()
+            async Task Function()
             {
                 while (true)
                 {
@@ -197,7 +240,7 @@ namespace Azure.SignalRBench.Client
                     await c.StartAsync(cancellationToken);
                 }
             }
-            _=Task.Run(function: Function, cancellationToken);
+            ObserveBackgroundTask(Task.Run(Function, cancellationToken), "Connection lifetime failed.");
         }
         public async Task StopAsync(double rate)
         {
@@ -221,20 +264,19 @@ namespace Azure.SignalRBench.Client
             }
         }
 
-        public void StartScenario(Func<int, Action<IClientAgent, CancellationToken>> func,
+        public Task StartScenario(Func<int, Func<IClientAgent, CancellationToken, Task>> func,
             CancellationToken cancellationToken)
         {
-            for (int i = 0; i < _clients.Length; i++)
-            {
-                func(i)(_clients[i], cancellationToken);
-            }
+            return Task.WhenAll(_clients.Select(async (client, index) =>
+                await func(index)(client, cancellationToken)));
         }
 
-        private SemaphoreSlim GetRateControlSemaphore(double rate, CancellationToken cancellationToken)
+        private SemaphoreSlim GetRateControlSemaphore(double rate, CancellationToken cancellationToken,
+            out Task rateControl)
         {
             int maxCount = (int) Math.Ceiling(rate);
             var result = new SemaphoreSlim(0, maxCount);
-            _ = ControlRate(result, rate, maxCount, cancellationToken);
+            rateControl = ControlRate(result, rate, maxCount, cancellationToken);
             return result;
         }
 
@@ -255,12 +297,6 @@ namespace Azure.SignalRBench.Client
                 var releaseCount = Math.Min((int) releaseCountRaw, maxCount - semaphore.CurrentCount);
                 if (releaseCount > 0)
                 {
-                    if (Volatile.Read(ref _slowDown))
-                    {
-                        await Task.Delay(20, cancellationToken);
-                        Volatile.Write(ref _slowDown, false);
-                    }
-
                     semaphore.Release(releaseCount);
                 }
             }
@@ -270,24 +306,35 @@ namespace Azure.SignalRBench.Client
         {
             if (Interlocked.CompareExchange(ref _startReport, 0, 1) == 1)
             {
-                Task.Run(async () =>
+                ObserveBackgroundTask(Task.Run(async () =>
                 {
-                    while (true)
+                    while (!cancellationToken.IsCancellationRequested)
                     {
                         try
                         {
                             await Task.Delay(1000, cancellationToken);
-                         //   _logger.LogInformation("reportClientStatus");
                             ClientMetrics.SetConnectedClientCount(_context.ConnectedAgentCount);
                             await MessageClientHolder.Client.ReportClientStatusAsync(_context.ClientStatus());
+                        }
+                        catch (OperationCanceledException ex) when (
+                            cancellationToken.IsCancellationRequested && ex.CancellationToken == cancellationToken)
+                        {
+                            return;
                         }
                         catch (Exception e)
                         {
                             _logger.LogError(e,"report error");
                         }
                     }
-                });
+                }), "Client status reporting failed.");
             }
+        }
+
+        private void ObserveBackgroundTask(Task task, string message)
+        {
+            _ = task.ContinueWith(faulted => _logger.LogError(faulted.Exception, message),
+                CancellationToken.None, TaskContinuationOptions.OnlyOnFaulted | TaskContinuationOptions.ExecuteSynchronously,
+                TaskScheduler.Default);
         }
         
         public sealed class RetryPolicy : IRetryPolicy

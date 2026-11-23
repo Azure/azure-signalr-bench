@@ -200,6 +200,7 @@ echo "set cosmos url in keyvault"
 
 az ad app update --id $appId --web-redirect-uris  $redirectUrl --enable-id-token-issuance  --only-show-errors
 az ad app update --id $appId --app-roles "[{\"allowedMemberTypes\":[\"User\"],\"description\":\"Contributor\",\"displayName\":\"Contributor\",\"isEnabled\":\"true\",\"value\":\"Contributor\"}]" 2>&1 >/dev/null  || true
+enable_mcp_auth $appId
 echo "init has completed."
 echo "grant user/group permission in aad for service principle ${SERVICE_PRINCIPAL} "
 

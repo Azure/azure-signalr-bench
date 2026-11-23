@@ -1,10 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using Azure.SignalRBench.Common;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Azure.SignalR;
 using Microsoft.Azure.SignalR.Management;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
 namespace SignalRUpstream.Controllers
@@ -12,39 +10,35 @@ namespace SignalRUpstream.Controllers
     [ApiController]
     public class NegotiateController : ControllerBase
     {
-        private readonly IServiceManager[] _serviceManager;
-        private ILogger<UpStreamController> _logger;
+        private readonly EndpointHubContexts _hubContexts;
+        private readonly ILogger<NegotiateController> _logger;
 
-        public NegotiateController(ILogger<UpStreamController> logger, IConfiguration configuration)
+        public NegotiateController(EndpointHubContexts hubContexts, ILogger<NegotiateController> logger)
         {
+            _hubContexts = hubContexts;
             _logger = logger;
-            var endpoints = SignalRManagedIdentity.ParseEndpoints(
-                configuration[PerfConstants.ConfigurationKeys.ConnectionString]);
-            var credential = SignalRManagedIdentity.CreateCredential(
-                configuration[PerfConstants.ConfigurationKeys.MsiAppId]);
-            _serviceManager = new IServiceManager[endpoints.Length];
-            for (var i = 0; i < endpoints.Length; i++)
-            {
-                _serviceManager[i] = new ServiceManagerBuilder()
-                    .WithOptions(o => o.ServiceEndpoints = new[] {new ServiceEndpoint(endpoints[i], credential)})
-                    .Build();
-            }
         }
 
         [HttpPost("{hub}/negotiate")]
-        public ActionResult Index(string hub)
+        public async Task<ActionResult> Index(string hub)
         {
-            var user = Request.Headers["user"];
-            _logger.LogInformation($"user :{user} try to negotiate hub: {hub}");
+            string user = Request.Headers["user"];
+            _logger.LogInformation("user :{User} try to negotiate hub: {Hub}", user, hub);
             if (string.IsNullOrEmpty(user))
             {
                 return BadRequest("User ID is null or empty.");
             }
-            var index = StaticRandom.Next(_serviceManager.Length);
-            return new JsonResult(new Dictionary<string, string>()
+            if (!string.Equals(hub, _hubContexts.HubName, StringComparison.OrdinalIgnoreCase))
             {
-                {"url", _serviceManager[index].GetClientEndpoint(hub)},
-                {"accessToken", _serviceManager[index].GenerateClientAccessToken(hub, user)}
+                return NotFound($"Hub '{hub}' is not served by this server.");
+            }
+
+            var negotiation = await _hubContexts.PickRandom().NegotiateAsync(
+                new NegotiationOptions { UserId = user }, HttpContext.RequestAborted);
+            return new JsonResult(new Dictionary<string, string>
+            {
+                {"url", negotiation.Url},
+                {"accessToken", negotiation.AccessToken}
             });
         }
     }

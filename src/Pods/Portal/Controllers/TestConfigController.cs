@@ -24,23 +24,21 @@ namespace Portal.Controllers
         private readonly PerfState _perfState;
         private readonly ILogger<TestConfigController> _logger;
         private readonly IPerfStorage _perfStorage;
+        private readonly PerfTestService _perfTestService;
 
         public TestConfigController(IPerfStorage perfStorage, PerfState perfState,
-            ILogger<TestConfigController> logger)
+            PerfTestService perfTestService, ILogger<TestConfigController> logger)
         {
             _perfStorage = perfStorage;
             _perfState = perfState;
+            _perfTestService = perfTestService;
             _logger = logger;
         }
 
         [HttpGet]
         public async Task<IEnumerable<TestConfigEntity>> Get()
         {
-            var table = await _perfStorage.GetTableAsync<TestConfigEntity>(PerfConstants.TableNames.TestConfig);
-            var rows = await table.QueryAsync(FilterExpression.All()
-            ).ToListAsync();
-            rows.Sort((a, b) => b.Timestamp!.Value.CompareTo(a.Timestamp!.Value));
-            return rows;
+            return await _perfTestService.ListConfigsAsync();
         }
 
         [Authorize(Policy = PerfConstants.Policy.RoleLogin,
@@ -48,25 +46,15 @@ namespace Portal.Controllers
         [HttpPut]
         public async Task<ActionResult> CreateTestConfig(TestConfigEntity testConfigEntity)
         {
-            var table = await _perfStorage.GetTableAsync<TestConfigEntity>(PerfConstants.TableNames.TestConfig);
-            var exist = await table.GetAsync(testConfigEntity.PartitionKey,testConfigEntity.RowKey);
-            if (exist != null)
-            {
-                return BadRequest($"Test name :{testConfigEntity.PartitionKey} already exist!");
-            }
-
-            testConfigEntity.User = User.Identity.Name;
             try
             {
-                testConfigEntity.Init();
+                await _perfTestService.CreateConfigAsync(testConfigEntity, User.Identity.Name);
             }
-            catch (Exception e)
+            catch (PerfRequestException e)
             {
                 return BadRequest(e.Message);
             }
 
-            await table.InsertAsync(testConfigEntity);
-            _logger.LogInformation($"Create Test config:{JsonConvert.SerializeObject(testConfigEntity)}");
             return Ok();
         }
         
@@ -75,69 +63,33 @@ namespace Portal.Controllers
         [HttpPatch]
         public async Task<ActionResult> PatchTestConfig(TestConfigEntity testConfigEntity)
         {
-            var table = await _perfStorage.GetTableAsync<TestConfigEntity>(PerfConstants.TableNames.TestConfig);
-            var exist = await table.GetAsync(testConfigEntity.PartitionKey,testConfigEntity.RowKey);
-            if (exist == null)
-            {
-                return BadRequest($"Test name :{testConfigEntity.PartitionKey} don't exist!");
-            }
-
-            testConfigEntity.User = User.Identity.Name;
             try
             {
-                testConfigEntity.Init();
+                await _perfTestService.UpdateConfigAsync(testConfigEntity, User.Identity.Name);
             }
-            catch (Exception e)
+            catch (PerfRequestException e)
             {
                 return BadRequest(e.Message);
             }
 
-            await table.UpdateAsync(testConfigEntity);
-            _logger.LogInformation($"Update Test config:{JsonConvert.SerializeObject(testConfigEntity)}");
             return Ok();
         }
 
         [Authorize(Policy = PerfConstants.Policy.RoleLogin,
             Roles = PerfConstants.Roles.Contributor + "," + PerfConstants.Roles.Pipeline)]
         [HttpPost("StartTest/{testConfigEntityKey}")]
-        public async Task StartTestAsync(string testConfigEntityKey)
+        public async Task<ActionResult> StartTestAsync(string testConfigEntityKey)
         {
-            var configTable = await _perfStorage.GetTableAsync<TestConfigEntity>(PerfConstants.TableNames.TestConfig);
-            var latestTestConfig = await configTable.GetAsync(testConfigEntityKey,testConfigEntityKey);
-            latestTestConfig.InstanceIndex += 1;
-            await configTable.UpdateAsync(latestTestConfig);
-            var queueName = _perfState.GetQueueName(latestTestConfig.TargetLocation);
-            var queue = await _perfStorage.GetQueueAsync<TestJob>(queueName);
-            var statusTable = await _perfStorage.GetTableAsync<TestStatusEntity>(PerfConstants.TableNames.TestStatus);
-            var testEntity = new TestStatusEntity
-            {
-                User = User.Identity.Name,
-                PartitionKey = latestTestConfig.PartitionKey,
-                RowKey = latestTestConfig.InstanceIndex.ToString(),
-                Status = "Init",
-                Healthy = true,
-                Report = "",
-                ErrorInfo = "",
-                Location = _perfState.GetLocation(latestTestConfig.TargetLocation),
-                QueueName = queueName,
-                Dir = latestTestConfig.Dir,
-                Config = JsonConvert.SerializeObject(latestTestConfig)
-            };
             try
             {
-                var exist = await statusTable.GetAsync(testEntity.PartitionKey , testEntity.RowKey);
-                if (exist != null)
-                {
-                    await statusTable.DeleteAsync(exist);
-                }
-                await statusTable.InsertAsync(testEntity);
-                await queue.SendAsync(latestTestConfig.ToTestJob(_perfState));
+                await _perfTestService.StartTestAsync(testConfigEntityKey, User.Identity.Name);
             }
-            catch (Exception e)
+            catch (PerfRequestException e)
             {
-                _logger.LogError(e, "Start test error");
-                throw;
+                return BadRequest(e.Message);
             }
+
+            return Ok();
         }
         
         [Authorize(Policy = PerfConstants.Policy.RoleLogin,
@@ -165,6 +117,7 @@ namespace Portal.Controllers
                 ErrorInfo = "",
                 LongRun = true,
                 Dir = latestTestConfig.Dir,
+                DirectoryTestCount = 1,
                 Location = _perfState.GetLocation(latestTestConfig.TargetLocation),
                 QueueName = queueName,
                 Config = JsonConvert.SerializeObject(latestTestConfig)
@@ -344,64 +297,13 @@ namespace Portal.Controllers
         public async Task<ActionResult> StartTestAsync(string dir, string index, int unitLimit = 300,
             int instanceLimit = 10)
         {
-            index = index.ToLower();
-            var configTable = await _perfStorage.GetTableAsync<TestConfigEntity>(PerfConstants.TableNames.TestConfig);
-            var configs = await configTable.QueryAsync(
-                FilterExpression.KeyEqual(nameof(TestConfigEntity.Dir), dir)).ToListAsync();
-            var total = configs.Count;
-            if (total == 0)
-            {
-                return BadRequest($"Dir {dir} doesn't exist");
-            }
-            var queueName = _perfState.GetQueueName(configs[0].TargetLocation);
-            var queue = await _perfStorage.GetQueueAsync<TestJob>(queueName);
-            var statusTable = await _perfStorage.GetTableAsync<TestStatusEntity>(PerfConstants.TableNames.TestStatus);
-            var tasks = new List<Task>();
-            foreach (var testConfigEntity in configs)
-            {
-                var task = Task.Run(async () =>
-                {
-                    var testEntity = new TestStatusEntity
-                    {
-                        User = User.Identity.Name,
-                        PartitionKey = testConfigEntity.PartitionKey,
-                        RowKey = index,
-                        Status = "Init",
-                        Healthy = true,
-                        Report = "",
-                        ErrorInfo = "",
-                        Location = _perfState.GetLocation(testConfigEntity.TargetLocation),
-                        QueueName = queueName,
-                        Dir = testConfigEntity.Dir,
-                        Config = JsonConvert.SerializeObject(testConfigEntity)
-                    };
-                    try
-                    {
-                        var exist = await statusTable.GetAsync(testEntity.PartitionKey, testEntity.RowKey);
-                        if (exist != null)
-                        {
-                            await statusTable.DeleteAsync(exist);
-                        }
-
-                        await statusTable.InsertAsync(testEntity);
-                        await queue.SendAsync(testConfigEntity.ToTestJob(_perfState, index, unitLimit, instanceLimit,
-                            dir, total));
-                    }
-                    catch (Exception e)
-                    {
-                        _logger.LogError(e, "Start test error");
-                        throw;
-                    }
-                });
-                tasks.Add(task);
-            }
-
             try
             {
-                await Task.WhenAll(tasks);
+                await _perfTestService.StartBatchAsync(new[] { dir }, index, User.Identity.Name,
+                    unitLimit, instanceLimit, replaceExisting: true);
                 return Ok();
             }
-            catch (Exception e)
+            catch (PerfRequestException e)
             {
                 return BadRequest(e.Message);
             }

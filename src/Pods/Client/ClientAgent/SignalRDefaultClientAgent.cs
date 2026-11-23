@@ -2,6 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Azure.SignalRBench.Common;
 using Microsoft.AspNetCore.SignalR.Client;
@@ -15,20 +16,21 @@ namespace Azure.SignalRBench.Client.ClientAgent
         {
         }
 
-        public override Task EchoAsync(string payload) =>
-            Connection.SendAsync("Echo", ClientAgentContext.CoordinatedUtcNow(), payload);
+        public override Task EchoAsync(string payload, CancellationToken cancellationToken = default) =>
+            Connection.SendAsync("Echo", ClientAgentContext.CoordinatedUtcNow(), payload, cancellationToken);
 
-        public override async Task SendToClientAsync(int index, string payload)
+        public override async Task SendToClientAsync(int index, string payload, CancellationToken cancellationToken = default)
         {
+            cancellationToken.ThrowIfCancellationRequested();
             var connectionId = await Context.GetConnectionIdAsync(index);
-            await Connection.SendAsync("SendToConnection", connectionId, ClientAgentContext.CoordinatedUtcNow(), payload);
+            await Connection.SendAsync("SendToConnection", connectionId, ClientAgentContext.CoordinatedUtcNow(), payload, cancellationToken);
         }
 
-        public override Task BroadcastAsync(string payload) =>
-            Connection.SendAsync("Broadcast", ClientAgentContext.CoordinatedUtcNow(), payload);
+        public override Task BroadcastAsync(string payload, CancellationToken cancellationToken = default) =>
+            Connection.SendAsync("Broadcast", ClientAgentContext.CoordinatedUtcNow(), payload, cancellationToken);
 
-        public override Task GroupBroadcastAsync(string group, string payload) =>
-            Connection.SendAsync("GroupBroadcast", group, ClientAgentContext.CoordinatedUtcNow(), payload);
+        public override Task GroupBroadcastAsync(string group, string payload, CancellationToken cancellationToken = default) =>
+            Connection.SendAsync("GroupBroadcast", group, ClientAgentContext.CoordinatedUtcNow(), payload, cancellationToken);
 
         public override Task JoinGroupAsync() => Task.WhenAll(Groups.Select(g => Connection.InvokeAsync("JoinGroup", g)));
     }
